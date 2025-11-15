@@ -232,9 +232,16 @@ class CustomUserAdmin(UserAdmin):
 
         if request.method == 'POST':
             obj_display = force_str(obj)
+            deleting_current_user = obj.pk == getattr(request.user, 'pk', None)
+            pre_logged_entry = None
+            # Log before deletion only if we're deleting the currently logged-in user.
+            if deleting_current_user:
+                pre_logged_entry = self.log_deletion(request, obj, obj_display)
             try:
                 self._delete_user_rows([obj.pk])
             except ProgrammingError as e:
+                if pre_logged_entry:
+                    pre_logged_entry.delete()
                 error_str = str(e)
                 if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
                     messages.error(
@@ -246,6 +253,8 @@ class CustomUserAdmin(UserAdmin):
                     )
                 raise
             except Exception as e:
+                if pre_logged_entry:
+                    pre_logged_entry.delete()
                 # Catch any other errors and display them
                 import logging
                 logger = logging.getLogger(__name__)
@@ -258,7 +267,8 @@ class CustomUserAdmin(UserAdmin):
                     reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
                 )
 
-            self.log_deletion(request, obj, obj_display)
+            if not deleting_current_user:
+                self.log_deletion(request, obj, obj_display)
             messages.success(request, _('Ο χρήστης "%(obj)s" διαγράφηκε επιτυχώς.') % {'obj': obj_display})
             return HttpResponseRedirect(reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist'))
 
@@ -300,9 +310,21 @@ class CustomUserAdmin(UserAdmin):
         if not ids:
             return
         
+        current_user_pk = getattr(request.user, 'pk', None)
+        pre_logged_ids = set()
+        pre_logged_entries = []
+        if current_user_pk in ids:
+            for obj in objects:
+                if obj.pk == current_user_pk:
+                    entry = self.log_deletion(request, obj, force_str(obj))
+                    pre_logged_entries.append(entry)
+                    pre_logged_ids.add(obj.pk)
+        
         try:
             self._delete_user_rows(ids)
         except ProgrammingError as e:
+            for entry in pre_logged_entries:
+                entry.delete()
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
                 messages.error(
@@ -311,8 +333,14 @@ class CustomUserAdmin(UserAdmin):
                 )
                 return
             raise
+        except Exception:
+            for entry in pre_logged_entries:
+                entry.delete()
+            raise
 
         for obj in objects:
+            if obj.pk in pre_logged_ids:
+                continue
             self.log_deletion(request, obj, force_str(obj))
         
         if protected_users.exists():
