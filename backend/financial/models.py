@@ -586,6 +586,14 @@ class Transaction(models.Model):
         from datetime import datetime
         if self.date and isinstance(self.date, datetime) and timezone.is_naive(self.date):
             self.date = timezone.make_aware(self.date)
+        
+        # Ensure created_at is timezone-aware if manually set
+        if hasattr(self, '_state') and self._state.adding:
+            # New instance - Django will set created_at automatically
+            pass
+        elif self.created_at and timezone.is_naive(self.created_at):
+            # If created_at was manually set and is naive, make it aware
+            self.created_at = timezone.make_aware(self.created_at)
 
         super().save(*args, **kwargs)
 
