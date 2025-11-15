@@ -3,6 +3,30 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Popover/Dropdown colors */
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  
+  /* Accent colors */
+  --accent: #f4f4f5;
+  --accent-foreground: #171717;
+  
+  /* Muted colors */
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  
+  /* Border and input */
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #3b82f6;
+  
+  /* Card colors */
+  --card: #ffffff;
+  --card-foreground: #171717;
+  
+  /* Radius */
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -16,6 +40,27 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    
+    /* Popover/Dropdown colors - dark mode */
+    --popover: #18181b;
+    --popover-foreground: #ededed;
+    
+    /* Accent colors - dark mode */
+    --accent: #27272a;
+    --accent-foreground: #ededed;
+    
+    /* Muted colors - dark mode */
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    
+    /* Border and input - dark mode */
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #3b82f6;
+    
+    /* Card colors - dark mode */
+    --card: #18181b;
+    --card-foreground: #ededed;
   }
 }
 
