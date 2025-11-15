@@ -268,6 +268,28 @@ class MonthlyBalanceService:
             )
             total = management_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
+        # FALLBACK #2: Αν δεν υπάρχουν ούτε Transaction ούτε Expense records,
+        # αλλά το κτίριο έχει ορισμένο management_fee_per_apartment, χρησιμοποιούμε την τιμή του κτιρίου.
+        if total == Decimal('0.00'):
+            fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
+            if fee_per_apartment > 0:
+                # Ελέγχουμε το financial_system_start_date ώστε να μην χρεώνονται μήνες πριν την έναρξη.
+                should_charge = True
+                if self.building.financial_system_start_date:
+                    should_charge = month_start >= self.building.financial_system_start_date
+                
+                if should_charge:
+                    apartments_count = Apartment.objects.filter(building=self.building).count()
+                    total = fee_per_apartment * Decimal(apartments_count)
+                    logger.debug(
+                        "   🛠️  No management fee transactions for %02d/%d – using building default: %s x %s = %s",
+                        month,
+                        year,
+                        fee_per_apartment,
+                        apartments_count,
+                        total
+                    )
+
         return total
     
     def _calculate_reserve_fund(self, year: int, month: int) -> Decimal:
@@ -516,4 +538,3 @@ class MonthlyBalanceService:
             'summary_issues': all_issues,
             'summary_warnings': all_warnings
         }
-
