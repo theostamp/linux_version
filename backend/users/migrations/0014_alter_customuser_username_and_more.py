@@ -20,6 +20,22 @@ def create_tenant_invitation_table_if_not_exists(apps, schema_editor):
         """, [db_table])
         table_exists = cursor.fetchone()[0]
         
+        if table_exists:
+            # Check if columns have wrong type (UUID instead of BIGINT)
+            cursor.execute("""
+                SELECT data_type 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' 
+                AND table_name = %s 
+                AND column_name = 'created_user_id';
+            """, [db_table])
+            result = cursor.fetchone()
+            
+            if result and result[0] == 'uuid':
+                # Table exists with wrong column types - drop and recreate
+                cursor.execute(f"DROP TABLE IF EXISTS {db_table} CASCADE;")
+                table_exists = False
+        
         if not table_exists:
             # Create the table using raw SQL
             # Note: CustomUser.id is bigint (from AbstractBaseUser), not UUID
