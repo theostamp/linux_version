@@ -35,6 +35,15 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
 
+  const resolveMonthParam = () => {
+    if (settings?.month) {
+      return settings.month;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const monthParam = resolveMonthParam();
+
   useEffect(() => {
     const fetchDebts = async () => {
       if (!effectiveBuildingId) {
@@ -45,7 +54,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
       try {
         setLoading(true);
         // Use the dashboard API that shows correct net_obligation values
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}&month=2025-10`;
+        const monthQuery = monthParam ? `&month=${monthParam}` : '';
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}${monthQuery}`;
         const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json',
@@ -94,7 +104,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     // Refresh every 5 minutes
     const interval = setInterval(fetchDebts, 300000);
     return () => clearInterval(interval);
-  }, [effectiveBuildingId, retryCount]);
+  }, [effectiveBuildingId, retryCount, monthParam]);
 
   // Fetch summary data separately (includes payment coverage)
   useEffect(() => {
@@ -102,7 +112,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
       if (!effectiveBuildingId) return;
       
       try {
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}&month=2025-10`;
+        const monthQuery = monthParam ? `&month=${monthParam}` : '';
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}${monthQuery}`;
         const response = await fetch(apiUrl);
         if (response.ok) {
           const result = await response.json();
@@ -118,7 +129,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     // Refresh every 5 minutes
     const interval = setInterval(fetchSummary, 300000);
     return () => clearInterval(interval);
-  }, [effectiveBuildingId]);
+  }, [effectiveBuildingId, monthParam]);
 
   if (isLoading || loading) {
     return (
@@ -277,5 +288,4 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     </div>
   );
 }
-
 

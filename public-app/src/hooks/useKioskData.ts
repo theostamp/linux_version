@@ -63,6 +63,26 @@ export interface KioskFinancialInfo {
   }>;
   total_expenses?: number;
   pending_payments?: number;
+  overdue_payments?: number;
+  total_payments?: number;
+  total_obligations?: number;
+  current_obligations?: number;
+  top_debtors?: Array<{
+    apartment_number?: string;
+    amount?: number;
+    net_obligation?: number;
+    occupant_name?: string | null;
+    owner_name?: string | null;
+    tenant_name?: string | null;
+    status?: string;
+  }>;
+  apartment_balances?: Array<{
+    apartment_number?: string;
+    net_obligation?: number;
+    owner_name?: string | null;
+    tenant_name?: string | null;
+    status?: string;
+  }>;
 }
 
 export interface KioskMaintenanceInfo {
@@ -123,6 +143,28 @@ interface PublicFinancialInfo {
   collection_rate?: number;
   reserve_fund?: number;
   recent_expenses?: PublicExpense[];
+  total_payments?: number;
+  pending_payments?: number;
+  overdue_payments?: number;
+  total_collected?: number;
+  total_obligations?: number;
+  current_obligations?: number;
+  top_debtors?: Array<{
+    apartment_number?: string;
+    net_obligation?: number;
+    amount?: number;
+    owner_name?: string | null;
+    tenant_name?: string | null;
+    occupant_name?: string | null;
+    status?: string;
+  }>;
+  apartment_balances?: Array<{
+    apartment_number?: string;
+    net_obligation?: number;
+    owner_name?: string | null;
+    tenant_name?: string | null;
+    status?: string;
+  }>;
 }
 
 interface PublicMaintenanceTask {
@@ -149,6 +191,7 @@ interface PublicInfoResponse {
   announcements?: PublicAnnouncement[];
   votes?: unknown[];
   financial?: PublicFinancialInfo;
+  financial_info?: PublicFinancialInfo;
   maintenance?: PublicMaintenanceInfo;
 }
 
@@ -199,7 +242,13 @@ export const useKioskData = (buildingId: number | null = 1) => {
       });
 
       // Use real financial data from backend
-      const financialSource = publicData.financial;
+      const financialSource = publicData.financial || publicData.financial_info;
+      const apartmentBalancesSource = Array.isArray(financialSource?.apartment_balances)
+        ? financialSource?.apartment_balances
+        : [];
+      const topDebtorsSource = Array.isArray(financialSource?.top_debtors)
+        ? financialSource?.top_debtors
+        : [];
       const financialResult: KioskFinancialInfo = {
         collection_rate: financialSource?.collection_rate || 0,
         reserve_fund: financialSource?.reserve_fund || 0,
@@ -208,7 +257,14 @@ export const useKioskData = (buildingId: number | null = 1) => {
           description: expense.description,
           amount: expense.amount,
           date: expense.date
-        }))
+        })),
+        total_payments: financialSource?.total_payments || 0,
+        pending_payments: financialSource?.pending_payments || 0,
+        overdue_payments: financialSource?.overdue_payments || 0,
+        total_obligations: financialSource?.total_obligations || 0,
+        current_obligations: financialSource?.current_obligations || financialSource?.pending_payments || 0,
+        apartment_balances: apartmentBalancesSource,
+        top_debtors: topDebtorsSource,
       };
 
       // Use real maintenance data from backend

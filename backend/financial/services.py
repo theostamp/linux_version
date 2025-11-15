@@ -1212,6 +1212,7 @@ class FinancialDashboardService:
                 'number': apartment.number,
                 'apartment_number': apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
+                'tenant_name': apartment.tenant_name or None,
                 'current_balance': calculated_balance,
                 'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
                 'reserve_fund_share': reserve_fund_share,  # ← ΝΕΟ FIELD - Αποθεματικό

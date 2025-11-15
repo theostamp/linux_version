@@ -8,6 +8,7 @@ from announcements.models import Announcement
 from votes.models import Vote
 from buildings.models import Building
 from django.utils import timezone
+from financial.services import FinancialDashboardService
 
 @ensure_csrf_cookie
 def csrf(request):
@@ -64,7 +65,17 @@ def public_info(request, building_id=None):
     
     # Get building information
     building_info = None
-    financial_info = None
+    financial_info = {
+        'total_payments': 0,
+        'pending_payments': 0,
+        'overdue_payments': 0,
+        'total_collected': 0,
+        'collection_rate': 0,
+        'total_obligations': 0,
+        'current_obligations': 0,
+        'top_debtors': [],
+        'apartment_balances': [],
+    }
     if building_id and building_id != 0:  # 0 means "all buildings"
         try:
             building = Building.objects.get(id=building_id)
@@ -120,14 +131,48 @@ def public_info(request, building_id=None):
                     paid_apartments = apartments.filter(current_balance__gte=0).count()
                     collection_rate = round((paid_apartments / total_apartments) * 100, 1)
                 
-                financial_info = {
+                financial_info.update({
                     'total_payments': int(total_payments) if total_payments else 0,
                     'pending_payments': pending_payments,
                     'overdue_payments': overdue_payments,
                     'total_collected': total_collected,
                     'collection_rate': collection_rate,
-                }
+                })
                 print(f"[DEBUG] Financial info created: {financial_info}")
+                
+                try:
+                    dashboard_service = FinancialDashboardService(building_id=building_id)
+                    apartment_balances = dashboard_service.get_apartment_balances()
+                    
+                    total_obligations_amount = 0.0
+                    apartment_balances_payload = []
+                    
+                    for balance in apartment_balances:
+                        net_value = float(max(0, balance.get('net_obligation') or 0))
+                        total_obligations_amount += net_value
+                        apartment_balances_payload.append({
+                            'apartment_number': balance.get('apartment_number') or balance.get('number'),
+                            'net_obligation': net_value,
+                            'owner_name': balance.get('owner_name'),
+                            'tenant_name': balance.get('tenant_name'),
+                            'status': balance.get('status'),
+                        })
+                    
+                    top_debtors = sorted(
+                        [apt for apt in apartment_balances_payload if apt['net_obligation'] > 0],
+                        key=lambda item: item['net_obligation'],
+                        reverse=True
+                    )
+                    
+                    financial_info.update({
+                        'total_obligations': round(total_obligations_amount, 2),
+                        'current_obligations': round(total_obligations_amount, 2),
+                        'apartment_balances': apartment_balances_payload,
+                        'top_debtors': top_debtors[:5],
+                    })
+                    
+                except Exception as balance_error:
+                    print(f"[DEBUG] Unable to load apartment balances for public info: {balance_error}")
                 
             except Exception as e:
                 # If financial data cannot be loaded, provide default values

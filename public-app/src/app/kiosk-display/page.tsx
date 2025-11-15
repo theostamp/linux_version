@@ -55,6 +55,17 @@ export default function KioskDisplayPage() {
 
   // Extract apartment debts from financial data
   const apartmentDebts = useMemo(() => {
+    const maskName = (name?: string | null) => {
+      if (!name) {
+        return '';
+      }
+      const parts = name.trim().split(' ');
+      if (parts.length === 1) {
+        return `${parts[0]} ***`;
+      }
+      return `${parts[0]} ${parts[1][0]}***`;
+    };
+
     if (!kioskData?.financial) {
       return {
         totalDebt: '€0',
@@ -63,28 +74,39 @@ export default function KioskDisplayPage() {
     }
 
     const financial = kioskData.financial;
-    const totalDebt = financial.total_obligations || financial.current_obligations || 0;
-    
-    // Get top debtors from apartment balances if available
-    const topDebtors: Array<{ apartment: string; amount: string }> = [];
-    if (financial.apartment_balances && Array.isArray(financial.apartment_balances)) {
-      const sorted = financial.apartment_balances
-        .filter((apt: { total_obligations?: number }) => (apt.total_obligations || 0) > 0)
-        .sort((a: { total_obligations?: number }, b: { total_obligations?: number }) => 
-          (b.total_obligations || 0) - (a.total_obligations || 0)
-        )
-        .slice(0, 3);
-      
-      sorted.forEach((apt: { apartment_number?: string; total_obligations?: number }) => {
-        topDebtors.push({
-          apartment: apt.apartment_number || 'N/A',
-          amount: `€${(apt.total_obligations || 0).toFixed(0)}`,
-        });
+    const totalDebtValue =
+      typeof financial.total_obligations === 'number'
+        ? financial.total_obligations
+        : (financial.apartment_balances || []).reduce(
+            (sum: number, apt: { net_obligation?: number }) => sum + Math.max(0, apt.net_obligation || 0),
+            0
+          );
+
+    const rawDebtors =
+      financial.top_debtors && financial.top_debtors.length > 0
+        ? financial.top_debtors
+        : (financial.apartment_balances || []).filter(
+            (apt: { net_obligation?: number }) => (apt.net_obligation || 0) > 0
+          );
+
+    const topDebtors = rawDebtors
+      .sort(
+        (a: { amount?: number; net_obligation?: number }, b: { amount?: number; net_obligation?: number }) =>
+          (b.amount ?? b.net_obligation ?? 0) - (a.amount ?? a.net_obligation ?? 0)
+      )
+      .slice(0, 3)
+      .map((debtor: any) => {
+        const amountValue = debtor.amount ?? debtor.net_obligation ?? 0;
+        const occupantName = maskName(debtor.occupant_name || debtor.tenant_name || debtor.owner_name);
+        return {
+          apartment: debtor.apartment_number || '—',
+          occupant: occupantName,
+          amount: `€${amountValue.toFixed(0)}`,
+        };
       });
-    }
 
     return {
-      totalDebt: `€${totalDebt.toFixed(0)}`,
+      totalDebt: `€${totalDebtValue.toFixed(0)}`,
       topDebtors,
     };
   }, [kioskData?.financial]);
@@ -270,9 +292,14 @@ export default function KioskDisplayPage() {
               {apartmentDebts.topDebtors.length > 0 ? (
                 apartmentDebts.topDebtors.map((debtor, index) => (
                   <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-red-300" />
-                      <span className="font-medium">{debtor.apartment}</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-red-300" />
+                        <span className="font-medium">{debtor.apartment}</span>
+                      </div>
+                      {debtor.occupant && (
+                        <p className="text-xs text-indigo-200 mt-0.5">{debtor.occupant}</p>
+                      )}
                     </div>
                     <span className="text-red-300 font-semibold">{debtor.amount}</span>
                   </div>
