@@ -60,10 +60,10 @@ export default function BuildingSelectorButton({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleOpen]);
 
-  const handleOpen = () => setIsOpen(true);
-  const handleClose = () => setIsOpen(false);
+  const handleOpen = React.useCallback(() => setIsOpen(true), []);
+  const handleClose = React.useCallback(() => setIsOpen(false), []);
 
   const handleBuildingSelect = (building: Building | null) => {
     onBuildingSelect(building);
