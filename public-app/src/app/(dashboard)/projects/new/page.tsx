@@ -123,15 +123,31 @@ export default function NewProjectPage() {
       return;
     }
 
+    if (!formData.building) {
+      toast({
+        title: 'Σφάλμα',
+        description: 'Πρέπει να επιλέξετε κτίριο',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
-        ...formData,
+        title: formData.title,
+        description: formData.description || '',
+        building: formData.building,
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,
+        priority: formData.priority,
         deadline: formData.deadline || null,
         tender_deadline: formData.tender_deadline || null,
         general_assembly_date: formData.general_assembly_date || null,
-        payment_terms: formData.payment_terms || null,
+        assembly_time: formData.assembly_time || null,
+        assembly_is_online: formData.assembly_is_online,
+        assembly_is_physical: formData.assembly_is_physical,
+        assembly_location: formData.assembly_location || null,
+        assembly_zoom_link: formData.assembly_zoom_link || null,
         assembly_zoom_meeting_id: formData.assembly_zoom_settings.meetingId || null,
         assembly_zoom_password: formData.assembly_zoom_settings.password || null,
         assembly_zoom_waiting_room: formData.assembly_zoom_settings.waitingRoom,
@@ -140,6 +156,7 @@ export default function NewProjectPage() {
         assembly_zoom_mute_on_entry: formData.assembly_zoom_settings.muteOnEntry,
         assembly_zoom_auto_record: formData.assembly_zoom_settings.autoRecord,
         assembly_zoom_notes: formData.assembly_zoom_settings.notes || null,
+        payment_terms: formData.payment_terms || null,
       };
 
       const response = await api.post('/projects/projects/', payload);
