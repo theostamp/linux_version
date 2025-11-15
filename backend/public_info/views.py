@@ -10,14 +10,30 @@ from buildings.models import Building
 from financial.models import Transaction, Expense
 from maintenance.models import MaintenanceTicket
 from .serializers import AnnouncementPublicSerializer, VotePublicSerializer
+from tenants.models import Domain as TenantDomain
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def building_info(request, building_id: int):
     today = timezone.now().date()
-    
-    # Use demo tenant schema since the data is there
-    with schema_context('demo'):
+    requested_host = (
+        request.headers.get('X-Tenant-Host')
+        or request.headers.get('x-forwarded-host')
+        or request.headers.get('host')
+        or ''
+    ).split(':')[0].lower()
+
+    schema_name = 'demo'
+    if requested_host:
+        domain_entry = (
+            TenantDomain.objects.filter(domain__iexact=requested_host)
+            .select_related('tenant')
+            .first()
+        )
+        if domain_entry and domain_entry.tenant:
+            schema_name = domain_entry.tenant.schema_name
+
+    with schema_context(schema_name):
         # Get building information
         try:
             building = Building.objects.get(id=building_id)
