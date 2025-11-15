@@ -54,6 +54,10 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'\n🔍 Found tenant: {tenant.name} (schema: {schema_name})'))
 
+        # Store domain count BEFORE deletion (outside schema context, before tenant deletion)
+        domain_count = Domain.objects.filter(tenant=tenant).count()
+        all_domains_before = Domain.objects.count()
+
         # Count related data BEFORE deletion
         with schema_context(schema_name):
             counts_before = {
