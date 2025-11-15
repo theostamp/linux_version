@@ -244,22 +244,32 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
 
               <!-- ✅ Επιμέρους Δαπάνες από API - ΜΟΝΟ επιμέρους, όχι fallback -->
               ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
-                ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => `
-                  <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 6px 8px;
-                    background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 3px;
-                    margin-bottom: 4px;
-                  ">
-                    <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${index + 1}</span>
-                    <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">${expense.category_display}</span>
-                    <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(expense.amount)}€</span>
-                  </div>
-                `).join('')
+                ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => {
+                    // Διακριτικό κείμενο: Ε (Ένοικος) ή Δ (Ιδιοκτήτης)
+                    const isOwner = expense.payer_responsibility === 'owner';
+                    const payerColor = isOwner ? '#dc2626' : '#059669';
+                    const payerText = isOwner ? 'Δ' : 'Ε';
+                    
+                    return `
+                      <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 6px 8px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 3px;
+                        margin-bottom: 4px;
+                      ">
+                        <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${index + 1}</span>
+                        <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">
+                          <span style="font-weight: bold; font-size: 11px; color: ${payerColor}; margin-right: 4px;">${payerText}</span>
+                          ${expense.category_display || expense.expense_title || 'Δαπάνη'}
+                        </span>
+                        <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(expense.amount || expense.share_amount || 0)}€</span>
+                      </div>
+                    `;
+                  }).join('')
                 : ''
               }
 
