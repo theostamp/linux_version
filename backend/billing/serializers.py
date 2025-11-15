@@ -45,7 +45,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             'id', 'plan', 'plan_id', 'status', 'billing_interval',
             'trial_start', 'trial_end', 'current_period_start', 'current_period_end',
             'price', 'currency', 'is_trial',
-            'cancel_at_period_end', 'cancelled_at',
+            'canceled_at',
             'tenant_domain',  # Added for frontend redirect
             'created_at', 'updated_at'
         ]
