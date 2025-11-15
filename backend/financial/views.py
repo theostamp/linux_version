@@ -35,8 +35,14 @@ from core.permissions import IsManager, IsRelatedToBuilding
 from .audit import FinancialAuditLog
 from .services import CommonExpenseAutomationService
 from django.db import models
-from system_health_validator import run_system_health_check
-from auto_fix_system_issues import run_auto_fix
+try:
+    from system_health_validator import run_system_health_check
+except ImportError:
+    run_system_health_check = None
+try:
+    from auto_fix_system_issues import run_auto_fix
+except ImportError:
+    run_auto_fix = None
 
 
 class ExpenseFilter(filters.FilterSet):
