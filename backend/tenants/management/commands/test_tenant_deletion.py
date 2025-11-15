@@ -72,9 +72,6 @@ class Command(BaseCommand):
             if BILLING_AVAILABLE:
                 counts_before['subscriptions'] = UserSubscription.objects.count()
 
-            # Get domain count
-            domain_count = Domain.objects.filter(tenant=tenant).count()
-
         self.stdout.write(self.style.WARNING('\n📊 Data counts BEFORE deletion:'))
         self.stdout.write(f'  - Users: {counts_before["users"]}')
         self.stdout.write(f'  - Buildings: {counts_before["buildings"]}')
@@ -129,8 +126,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'✅ Schema "{schema_name}" successfully dropped'))
 
         # Verify domains are deleted
-        # Note: tenant.id may not exist after deletion, so we check by schema_name
-        domains_after = Domain.objects.filter(tenant__schema_name=schema_name).count()
+        # Since Domain has CASCADE on_delete, all domains should be deleted when tenant is deleted
+        # After tenant deletion, we can't query by tenant__schema_name because tenant doesn't exist
+        # So we verify by checking the total domain count decreased by domain_count
+        all_domains_after = Domain.objects.count()
+        # Calculate how many domains should remain (all_domains_before - domain_count)
+        expected_domains_after = all_domains_before - domain_count
+        # If actual count matches expected, deletion worked
+        domains_after = all_domains_after - expected_domains_after  # Should be 0 if all deleted correctly
         if domains_after > 0:
             self.stdout.write(self.style.ERROR(f'❌ ERROR: {domains_after} domain(s) still exist!'))
             sys.exit(1)
