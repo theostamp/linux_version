@@ -203,12 +203,13 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             <p className="text-xs text-purple-400 mt-1">Κανένα κοινόχρηστο για τον τρέχοντα μήνα</p>
           </div>
         ) : (
-          debts.map((apt: any) => {
-            const amount = apt.net_obligation || apt.displayAmount || apt.current_balance;
+          debts.map((apt: ApartmentDebt) => {
+            const amount = apt.net_obligation || apt.displayAmount || apt.current_balance || 0;
             // Green if zero balance, orange if has debt - check the net_obligation from dashboard API
             const hasDebt = (apt.net_obligation || 0) > 0;
             const hasZeroBalance = (apt.net_obligation || 0) === 0;
-            const maskedOwnerName = maskName(apt.owner_name);
+            // Use tenant_name with fallback to owner_name
+            const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
             
             
 
@@ -221,7 +222,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
                     <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
                     <span className="text-xs text-white truncate font-medium leading-tight">
-                      {maskedOwnerName}
+                      {occupant}
                     </span>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-1">
