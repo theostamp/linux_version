@@ -34,6 +34,8 @@ def sync_project_todo(sender, instance: Project, created, **kwargs):
         # Δημιουργία ξεχωριστής ανακοίνωσης για γενική συνέλευση αν υπάρχει
         if instance.general_assembly_date:
             create_assembly_announcement(instance)
+            # Δημιουργία αυτόματης ψηφοφορίας για έγκριση έργου
+            create_project_vote(instance)
     else:
         # Αν ενημερώνεται το έργο και προστέθηκε general_assembly_date
         # ελέγχουμε αν υπάρχει ήδη ανακοίνωση για τη συνέλευση
@@ -461,6 +463,64 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to create assembly announcement for project {project.id}: {e}")
+
+
+def create_project_vote(project: Project):
+    """Δημιουργεί αυτόματα ψηφοφορία για έγκριση έργου"""
+    try:
+        from votes.models import Vote
+        
+        # Έλεγχος αν υπάρχει ήδη ψηφοφορία για αυτό το έργο
+        existing_vote = Vote.objects.filter(
+            project=project,
+            is_active=True
+        ).first()
+        
+        if existing_vote:
+            # Αν υπάρχει ήδη ενεργή ψηφοφορία, δεν δημιουργούμε νέα
+            return
+        
+        # Δημιουργία νέας ψηφοφορίας
+        vote = Vote.objects.create(
+            building=project.building,
+            project=project,
+            creator=project.created_by,
+            title=f"Έγκριση Έργου: {project.title}",
+            description=f"""Ψηφοφορία για την έγκριση του έργου "{project.title}".
+
+**Περιγραφή:** {project.description or 'Δεν έχει δοθεί περιγραφή'}
+
+{f'**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}' if project.estimated_cost else '**Εκτιμώμενο Κόστος:** Δεν έχει καθοριστεί'}
+
+{f'**Ημερομηνία Γενικής Συνελεύσης:** {project.general_assembly_date.strftime("%d/%m/%Y")}' if project.general_assembly_date else ''}
+
+{f'**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime("%d/%m/%Y")}' if project.deadline else ''}
+
+Όλοι οι ιδιοκτήτες καλούνται να συμμετάσχουν στην ψηφοφορία για την έγκριση του έργου.""",
+            start_date=project.created_at.date(),
+            end_date=project.general_assembly_date,
+            is_active=True,
+            is_urgent=True,
+            min_participation=0,  # Default - μπορεί να αλλάξει από τον διαχειριστή
+        )
+        
+        # Ενημέρωση με WebSocket
+        publish_building_event(
+            building_id=project.building_id,
+            event_type="vote.created",
+            payload={
+                "id": vote.id,
+                "title": vote.title,
+                "project_id": str(project.id),
+                "is_urgent": vote.is_urgent,
+            },
+        )
+        
+    except Exception as e:
+        # Log the error but don't fail the project creation
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create vote for project {project.id}: {e}")
 
 
 def deactivate_offer_announcements(project: Project):
