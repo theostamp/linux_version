@@ -22,6 +22,7 @@ def create_tenant_invitation_table_if_not_exists(apps, schema_editor):
         
         if not table_exists:
             # Create the table using raw SQL
+            # Note: CustomUser.id is bigint (from AbstractBaseUser), not UUID
             cursor.execute("""
                 CREATE TABLE users_tenantinvitation (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -33,8 +34,8 @@ def create_tenant_invitation_table_if_not_exists(apps, schema_editor):
                     accepted_at TIMESTAMP WITH TIME ZONE,
                     declined_at TIMESTAMP WITH TIME ZONE,
                     message TEXT NOT NULL DEFAULT '',
-                    created_user_id UUID REFERENCES users_customuser(id) ON DELETE SET NULL,
-                    invited_by_id UUID NOT NULL REFERENCES users_customuser(id) ON DELETE CASCADE
+                    created_user_id BIGINT REFERENCES users_customuser(id) ON DELETE SET NULL,
+                    invited_by_id BIGINT NOT NULL REFERENCES users_customuser(id) ON DELETE CASCADE
                 );
             """)
             
