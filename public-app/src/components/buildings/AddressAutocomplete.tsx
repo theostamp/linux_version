@@ -39,14 +39,51 @@ export default function AddressAutocomplete({
   }, [value]);
 
   useEffect(() => {
-    // Initialize Google Places Autocomplete if available
-    if (
-      typeof window !== 'undefined' &&
-      window.google?.maps?.places &&
-      inputRef.current &&
-      !autocompleteRef.current
-    ) {
-      try {
+    // Load Google Maps script if not already loaded
+    const loadGoogleMapsScript = () => {
+      if (typeof window === 'undefined') return;
+      
+      // Check if script is already loaded
+      if (window.google?.maps?.places) {
+        initializeAutocomplete();
+        return;
+      }
+
+      // Check if script is already being loaded
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        // Wait for script to load
+        existingScript.addEventListener('load', initializeAutocomplete);
+        return;
+      }
+
+      // Load the script
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        console.warn('[AddressAutocomplete] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set');
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeAutocomplete;
+      script.onerror = () => {
+        console.error('[AddressAutocomplete] Failed to load Google Maps script');
+      };
+      document.head.appendChild(script);
+    };
+
+    const initializeAutocomplete = () => {
+      // Initialize Google Places Autocomplete if available
+      if (
+        typeof window !== 'undefined' &&
+        window.google?.maps?.places &&
+        inputRef.current &&
+        !autocompleteRef.current
+      ) {
+        try {
         const autocomplete = new window.google.maps.places.Autocomplete(
           inputRef.current,
           {
@@ -116,7 +153,9 @@ export default function AddressAutocomplete({
       } catch (error) {
         console.warn('[AddressAutocomplete] Google Places API not available:', error);
       }
-    }
+    };
+
+    loadGoogleMapsScript();
 
     return () => {
       if (autocompleteRef.current) {

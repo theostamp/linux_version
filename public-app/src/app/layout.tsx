@@ -46,11 +46,26 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {googleMapsApiKey && (
+        {googleMapsApiKey ? (
           <Script
+            id="google-maps-script"
             src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
             strategy="lazyOnload"
+            onLoad={() => {
+              if (typeof window !== 'undefined') {
+                console.log('[Google Maps] Script loaded successfully');
+              }
+            }}
+            onError={() => {
+              console.error('[Google Maps] Failed to load script. Check API key and billing.');
+            }}
           />
+        ) : (
+          <Script id="google-maps-warning" strategy="afterInteractive">
+            {`
+              console.warn('[Google Maps] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set. Address autocomplete will not work.');
+            `}
+          </Script>
         )}
         <AppProviders>{children}</AppProviders>
       </body>
