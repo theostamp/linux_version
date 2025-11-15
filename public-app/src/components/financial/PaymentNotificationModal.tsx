@@ -286,15 +286,21 @@ export default function PaymentNotificationModal({
                 <Building className="w-4 h-4" />
                 Στοιχεία Διαμερίσματος
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className={`grid gap-4 ${apartment.tenant_name ? 'grid-cols-1 md:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
                 <div>
                   <span className="text-sm text-gray-600">Αριθμός Διαμερίσματος:</span>
                   <div className="font-medium text-lg">{apartment.apartment_number}</div>
                 </div>
                 <div>
                   <span className="text-sm text-gray-600">Ιδιοκτήτης:</span>
-                  <div className="font-medium">{apartment.owner_name}</div>
+                  <div className="font-medium">{apartment.owner_name || 'Μη καταχωρημένος'}</div>
                 </div>
+                {apartment.tenant_name && (
+                  <div>
+                    <span className="text-sm text-gray-600">Ένοικος:</span>
+                    <div className="font-medium">{maskOccupant(apartment.tenant_name)}</div>
+                  </div>
+                )}
                 <div>
                   <span className="text-sm text-gray-600">Χιλιοστά Συμμετοχής:</span>
                   <div className="font-medium">{apartment.participation_mills}</div>
