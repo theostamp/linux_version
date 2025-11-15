@@ -60,7 +60,10 @@ export default function AddressAutocomplete({
       // Load the script
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
-        console.warn('[AddressAutocomplete] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set');
+        // Only log in development - in production, address autocomplete will be disabled silently
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[AddressAutocomplete] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set. Address autocomplete will not work.');
+        }
         return;
       }
 

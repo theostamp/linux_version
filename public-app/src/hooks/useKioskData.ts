@@ -252,7 +252,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
           }
 
           const fallbackResponse = await apiGet<{ results?: PublicAnnouncement[] } | PublicAnnouncement[]>(
-            '/announcements/',
+            '/api/announcements/',
             fallbackParams
           );
 
@@ -260,25 +260,28 @@ export const useKioskData = (buildingId: number | null = 1) => {
             ? fallbackResponse
             : fallbackResponse.results || [];
 
-          announcementsResult = fallbackAnnouncements.map((announcement) => {
-            const priorityScore = typeof announcement.priority === 'number' ? announcement.priority : 0;
-            const computedPriority: PriorityLevel = (announcement.is_urgent || priorityScore > 5) ? 'high' : 'medium';
-            const description = announcement.description || '';
+          if (fallbackAnnouncements.length > 0) {
+            announcementsResult = fallbackAnnouncements.map((announcement) => {
+              const priorityScore = typeof announcement.priority === 'number' ? announcement.priority : 0;
+              const computedPriority: PriorityLevel = (announcement.is_urgent || priorityScore > 5) ? 'high' : 'medium';
+              const description = announcement.description || '';
 
-            return {
-              id: announcement.id,
-              title: announcement.title || 'Ανακοίνωση',
-              description,
-              content: description,
-              created_at: announcement.created_at || announcement.start_date || new Date().toISOString(),
-              date: announcement.start_date || announcement.created_at,
-              start_date: announcement.start_date,
-              end_date: announcement.end_date,
-              priority: computedPriority
-            };
-          });
+              return {
+                id: announcement.id,
+                title: announcement.title || 'Ανακοίνωση',
+                description,
+                content: description,
+                created_at: announcement.created_at || announcement.start_date || new Date().toISOString(),
+                date: announcement.start_date || announcement.created_at,
+                start_date: announcement.start_date,
+                end_date: announcement.end_date,
+                priority: computedPriority
+              };
+            });
+          }
         } catch (fallbackError) {
-          console.warn('[useKioskData] Fallback announcements fetch failed:', fallbackError);
+          // Silently fail - fallback is optional, main data source is public-info endpoint
+          console.debug('[useKioskData] Fallback announcements fetch failed (non-critical):', fallbackError instanceof Error ? fallbackError.message : String(fallbackError));
         }
       }
 
