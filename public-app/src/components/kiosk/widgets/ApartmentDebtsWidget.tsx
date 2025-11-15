@@ -8,10 +8,13 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 interface ApartmentDebt {
   apartment_id: number;
   apartment_number: string;
-  owner_name: string;
+  owner_name: string | null;
+  tenant_name?: string | null;
   net_obligation: number;
   current_balance: number;
   previous_balance: number;
+  resident_expenses?: number;
+  owner_expenses?: number;
   status: string;
 }
 
@@ -22,7 +25,13 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const [debts, setDebts] = useState<ApartmentDebt[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<any>(null);
+  interface ApartmentBalancesSummary {
+    total_balance?: number;
+    total_obligations?: number;
+    total_payments?: number;
+    [key: string]: unknown;
+  }
+  const [summary, setSummary] = useState<ApartmentBalancesSummary | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -55,7 +64,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             ...apt,
             displayAmount: apt.net_obligation || apt.current_balance || 0
           }))
-          .sort((a: any, b: any) => 
+          .sort((a: ApartmentDebt, b: ApartmentDebt) => 
             // Ταξινόμηση: αριθμητικά (1, 2, 3, 10) όχι αλφαβητικά
             parseInt(a.apartment_number) - parseInt(b.apartment_number)
           );
@@ -150,7 +159,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     );
   }
 
-  const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
+  const totalExpenses = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance || 0), 0);
   // Calculate payment coverage - include both paid and unpaid apartments
   const totalObligations = debts.reduce((sum, apt: any) => sum + 8, 0); // 10 apartments × 8€ = 80€
   const totalPayments = summary?.total_payments || 0;
@@ -158,21 +167,14 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const showWarning = paymentCoveragePercentage < 75;
   const currentDay = new Date().getDate();
 
-  // GDPR: Mask surnames after 2nd letter
-  const maskName = (fullName: string): string => {
-    if (!fullName) return 'Μη καταχωρημένος';
+  // GDPR: Mask occupant name (first name + first letter of surname + ***)
+  const maskOccupant = (name: string | null | undefined): string => {
+    if (!name) return 'Μη καταχωρημένος';
     
-    const parts = fullName.trim().split(' ');
-    if (parts.length === 1) return fullName; // Only first name
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return `${parts[0]} ***`;
     
-    // Keep first name, mask surname(s)
-    const firstName = parts[0];
-    const maskedSurnames = parts.slice(1).map(surname => {
-      if (surname.length <= 2) return surname;
-      return surname.substring(0, 2) + '****';
-    });
-    
-    return [firstName, ...maskedSurnames].join(' ');
+    return `${parts[0]} ${parts[1][0]}***`;
   };
 
   return (

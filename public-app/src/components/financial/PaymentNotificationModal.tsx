@@ -22,7 +22,8 @@ import { formatCurrency } from '@/lib/utils';
 interface ApartmentBalance {
   apartment_id: number;
   apartment_number: string;
-  owner_name: string;
+  owner_name: string | null;
+  tenant_name?: string | null;
   participation_mills: number;
   current_balance: number;
   previous_balance: number;
@@ -30,6 +31,8 @@ interface ApartmentBalance {
   total_obligations: number;
   total_payments: number;
   net_obligation: number;
+  resident_expenses?: number;
+  owner_expenses?: number;
   status: string;
   expense_breakdown: ExpenseBreakdown[];
   payment_breakdown: PaymentBreakdown[];
@@ -68,6 +71,16 @@ interface PaymentNotificationModalProps {
   apartment: ApartmentBalance | null;
   onPaymentClick: () => void;
 }
+
+// GDPR: Mask occupant name (first name + first letter of surname + ***)
+const maskOccupant = (name: string | null | undefined): string => {
+  if (!name) return 'Μη καταχωρημένος';
+  
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return `${parts[0]} ***`;
+  
+  return `${parts[0]} ${parts[1][0]}***`;
+};
 
 export default function PaymentNotificationModal({
   isOpen,
