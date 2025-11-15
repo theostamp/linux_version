@@ -202,9 +202,14 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
 /**
  * GET request helper with throttling & caching
  */
+/**
+ * GET request helper with query parameters support
+ * Supports string, number, and boolean values for filters
+ * Automatically filters out undefined/null values
+ */
 export async function apiGet<T>(
   path: string,
-  params?: Record<string, string | number | undefined>,
+  params?: Record<string, string | number | boolean | undefined>,
 ): Promise<T> {
   const apiUrl = getApiUrl(path);
   const url = new URL(apiUrl);
@@ -217,7 +222,11 @@ export async function apiGet<T>(
   
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
+      // Filter out undefined and null values
       if (v !== undefined && v !== null) {
+        // Convert boolean to string ('true'/'false')
+        // Convert number to string
+        // Keep string as-is
         url.searchParams.set(k, String(v));
       }
     });
@@ -1036,7 +1045,24 @@ export async function fetchBuildingResidents(buildingId: number): Promise<Buildi
  * Uses fetch-based apiGet/apiPost/etc internally
  */
 export const api = {
-  get: async <T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> => {
+  /**
+   * GET request with optional query parameters/filters
+   * @param path - API path (e.g., '/maintenance/scheduled/')
+   * @param params - Query parameters object (e.g., { building: 1, status: 'active', priority: 'high' })
+   * @example
+   * // Simple GET
+   * const data = await api.get('/users/me/');
+   * 
+   * // GET with filters
+   * const scheduled = await api.get('/maintenance/scheduled/', {
+   *   building: 1,
+   *   status: 'in_progress',
+   *   priority: 'urgent',
+   *   ordering: 'scheduled_date',
+   *   limit: 100
+   * });
+   */
+  get: async <T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> => {
     return apiGet<T>(path, params);
   },
   post: async <T>(path: string, body?: unknown): Promise<T> => {
