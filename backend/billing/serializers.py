@@ -44,7 +44,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'plan', 'plan_id', 'status', 'billing_interval',
             'trial_start', 'trial_end', 'current_period_start', 'current_period_end',
-            'price', 'currency', 'auto_renew', 'is_trial',
+            'price', 'currency', 'is_trial',
             'cancel_at_period_end', 'cancelled_at',
             'tenant_domain',  # Added for frontend redirect
             'created_at', 'updated_at'
@@ -289,6 +289,5 @@ class SubscriptionSummarySerializer(serializers.Serializer):
                 'storage_gb': subscription.plan.max_storage_gb,
             }
         }
-
 
 
