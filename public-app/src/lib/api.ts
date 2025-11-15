@@ -200,10 +200,7 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
 }
 
 /**
- * GET request helper with throttling & caching
- */
-/**
- * GET request helper with query parameters support
+ * GET request helper with query parameters support and throttling & caching
  * Supports string, number, and boolean values for filters
  * Automatically filters out undefined/null values
  */
