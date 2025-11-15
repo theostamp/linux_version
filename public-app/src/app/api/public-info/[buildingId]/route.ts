@@ -56,17 +56,47 @@ export async function GET(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-    const requestHost =
-      request.headers.get('x-tenant-host') ||
-      request.headers.get('host') ||
-      request.headers.get('x-forwarded-host') ||
-      'demo.localhost';
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const referer = request.headers.get('referer');
+    const origin = request.headers.get('origin');
+    const requestHost = request.headers.get('host') ?? '';
+
+    let publicHostname = request.headers.get('x-tenant-host') || requestHost;
+
+    if (origin) {
+      try {
+        publicHostname = new URL(origin).host;
+      } catch {
+        // ignore invalid origin
+      }
+    }
+
+    if (
+      (publicHostname.includes('railway.app') || publicHostname.includes('vercel.app')) &&
+      referer
+    ) {
+      try {
+        publicHostname = new URL(referer).host;
+      } catch {
+        // ignore invalid referer
+      }
+    }
+
+    if (
+      forwardedHost &&
+      !forwardedHost.includes('railway.app') &&
+      !forwardedHost.includes('vercel.app')
+    ) {
+      publicHostname = forwardedHost;
+    }
+
+    const finalHost = publicHostname || 'demo.localhost';
 
     const headers = {
       'Content-Type': 'application/json',
-      Host: requestHost,
-      'X-Forwarded-Host': requestHost,
-      'X-Tenant-Host': requestHost,
+      Host: finalHost,
+      'X-Forwarded-Host': finalHost,
+      'X-Tenant-Host': finalHost,
       'X-Forwarded-Proto': request.headers.get('x-forwarded-proto') ?? 'https',
     };
 
