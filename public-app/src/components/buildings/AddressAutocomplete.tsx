@@ -153,6 +153,7 @@ export default function AddressAutocomplete({
       } catch (error) {
         console.warn('[AddressAutocomplete] Google Places API not available:', error);
       }
+      }
     };
 
     loadGoogleMapsScript();
