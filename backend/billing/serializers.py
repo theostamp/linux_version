@@ -52,7 +52,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'plan', 'status', 'trial_start', 'trial_end',
             'current_period_start', 'current_period_end',
-            'price', 'currency', 'is_trial', 'cancelled_at',
+            'price', 'currency', 'is_trial', 'canceled_at',
             'tenant_domain',  # Read-only field set by backend
             'created_at', 'updated_at'
         ]
