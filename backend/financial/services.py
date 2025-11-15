@@ -355,6 +355,7 @@ class CommonExpenseCalculator:
                 category='reserve_fund',
                 expense_type='reserve_fund',
                 distribution_type='by_participation_mills',
+                payer_responsibility='owner',  # ✅ ΚΡΙΣΙΜΟ: Αποθεματικό πληρώνεται από ιδιοκτήτες
                 notes=f"Αυτόματη δημιουργία - Μηνιαία εισφορά αποθεματικού (στόχος: €{self.building.reserve_fund_goal})"
             )
             
@@ -1139,9 +1140,11 @@ class FinancialDashboardService:
                         apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
                     
                     # Διαχωρισμός ανά payer_responsibility
-                    if expense.payer_responsibility == 'owner':
+                    # Αν δεν έχει οριστεί, χρησιμοποιούμε default από κατηγορία
+                    payer = expense.payer_responsibility or Expense.get_default_payer_for_category(expense.category) or 'resident'
+                    if payer == 'owner':
                         previous_owner_expenses += apartment_share
-                    else:
+                    else:  # resident or shared
                         previous_resident_expenses += apartment_share
 
                 # 2. Current month expense share (για net_obligation)
@@ -1165,7 +1168,9 @@ class FinancialDashboardService:
                     expense_share += apartment_share
 
                     # ΝΕΟ: Διαχωρισμός ανά payer_responsibility
-                    if expense.payer_responsibility == 'owner':
+                    # Αν δεν έχει οριστεί, χρησιμοποιούμε default από κατηγορία
+                    payer = expense.payer_responsibility or Expense.get_default_payer_for_category(expense.category) or 'resident'
+                    if payer == 'owner':
                         current_owner_expenses += apartment_share
                     else:  # resident or shared
                         current_resident_expenses += apartment_share
