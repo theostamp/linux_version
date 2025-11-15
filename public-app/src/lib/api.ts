@@ -204,12 +204,37 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
  * Supports string, number, and boolean values for filters
  * Automatically filters out undefined/null values
  */
+type ApiQueryValue = string | number | boolean | undefined;
+type ApiQueryParams = Record<string, ApiQueryValue>;
+
+function normalizeQueryParams(params?: Record<string, unknown> | { params?: Record<string, unknown> }): ApiQueryParams | undefined {
+  if (!params) return undefined;
+
+  const candidate =
+    'params' in params && params.params && typeof params.params === 'object'
+      ? params.params
+      : params;
+
+  const normalized: ApiQueryParams = {};
+  Object.entries(candidate).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      normalized[key] = value;
+    } else {
+      normalized[key] = String(value);
+    }
+  });
+
+  return Object.keys(normalized).length ? normalized : undefined;
+}
+
 export async function apiGet<T>(
   path: string,
-  params?: Record<string, string | number | boolean | undefined>,
+  params?: Record<string, unknown> | { params?: Record<string, unknown> },
 ): Promise<T> {
   const apiUrl = getApiUrl(path);
   const url = new URL(apiUrl);
+  const normalizedParams = normalizeQueryParams(params);
   
   // Preserve trailing slash - URL constructor removes it from pathname
   const hadTrailingSlash = apiUrl.endsWith('/') && !apiUrl.includes('?');
@@ -217,8 +242,8 @@ export async function apiGet<T>(
     url.pathname = `${url.pathname}/`;
   }
   
-  if (params) {
-    Object.entries(params).forEach(([k, v]) => {
+  if (normalizedParams) {
+    Object.entries(normalizedParams).forEach(([k, v]) => {
       // Filter out undefined and null values
       if (v !== undefined && v !== null) {
         // Convert boolean to string ('true'/'false')
@@ -230,7 +255,7 @@ export async function apiGet<T>(
   }
   
   const urlString = url.toString();
-  const cacheKey = getCacheKey(urlString, params);
+  const cacheKey = getCacheKey(urlString, normalizedParams);
   
   // Check cache first
   const cached = getCachedOrInFlight<T>(cacheKey);
@@ -1044,13 +1069,14 @@ export async function fetchBuildingResidents(buildingId: number): Promise<Buildi
 export const api = {
   /**
    * GET request with optional query parameters/filters
+   * Supports both direct params object and axios-style { params: {...} } format
    * @param path - API path (e.g., '/maintenance/scheduled/')
-   * @param params - Query parameters object (e.g., { building: 1, status: 'active', priority: 'high' })
+   * @param params - Query parameters object (e.g., { building: 1, status: 'active' }) or axios-style { params: { building: 1 } }
    * @example
    * // Simple GET
    * const data = await api.get('/users/me/');
    * 
-   * // GET with filters
+   * // GET with direct params (recommended)
    * const scheduled = await api.get('/maintenance/scheduled/', {
    *   building: 1,
    *   status: 'in_progress',
@@ -1058,8 +1084,11 @@ export const api = {
    *   ordering: 'scheduled_date',
    *   limit: 100
    * });
+   * 
+   * // GET with axios-style params (backward compatibility)
+   * const offers = await api.get('/projects/offers/', { params: { status: 'submitted' } });
    */
-  get: async <T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> => {
+  get: async <T>(path: string, params?: Record<string, unknown> | { params?: Record<string, unknown> }): Promise<T> => {
     return apiGet<T>(path, params);
   },
   post: async <T>(path: string, body?: unknown): Promise<T> => {
