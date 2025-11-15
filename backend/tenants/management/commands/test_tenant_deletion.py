@@ -129,7 +129,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'✅ Schema "{schema_name}" successfully dropped'))
 
         # Verify domains are deleted
-        domains_after = Domain.objects.filter(tenant_id=tenant.id).count()
+        # Note: tenant.id may not exist after deletion, so we check by schema_name
+        domains_after = Domain.objects.filter(tenant__schema_name=schema_name).count()
         if domains_after > 0:
             self.stdout.write(self.style.ERROR(f'❌ ERROR: {domains_after} domain(s) still exist!'))
             sys.exit(1)
