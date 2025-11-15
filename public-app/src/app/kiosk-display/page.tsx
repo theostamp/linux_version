@@ -28,6 +28,7 @@ export default function KioskDisplayPage() {
   const [dashboardUrl, setDashboardUrl] = useState(
     () => (typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '')
   );
+  const [lastRefreshTime, setLastRefreshTime] = useState<string>('');
 
   // Fetch real data
   const { data: kioskData, isLoading: kioskLoading, error: kioskError } = useKioskData(selectedBuildingId);
@@ -47,6 +48,10 @@ export default function KioskDisplayPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setLastRefreshTime(new Date().toLocaleTimeString('el-GR'));
+  }, [kioskLoading, weatherLoading, kioskData, weather]);
 
   const currentSidebarWidget = useMemo(() => SIDEBAR_WIDGETS[sidebarIndex], [sidebarIndex]);
 
@@ -276,7 +281,7 @@ export default function KioskDisplayPage() {
               <h2 className="text-2xl font-semibold">Συνεδρίες & Ψηφοφορίες</h2>
             </div>
             <div className="text-right">
-              <p className="text-sm">Τελευταία ενημέρωση: {new Date().toLocaleTimeString('el-GR')}</p>
+              <p className="text-sm">Τελευταία ενημέρωση: {lastRefreshTime || '—'}</p>
             </div>
           </section>
         </div>
