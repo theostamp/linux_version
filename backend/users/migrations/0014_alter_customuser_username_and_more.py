@@ -33,7 +33,7 @@ def create_tenant_invitation_table_if_not_exists(apps, schema_editor):
             
             if result and result[0] == 'uuid':
                 # Table exists with wrong column types - drop and recreate
-                cursor.execute(f"DROP TABLE IF EXISTS {db_table} CASCADE;")
+                cursor.execute("DROP TABLE IF EXISTS %s CASCADE;", [db_table])
                 table_exists = False
         
         if not table_exists:
