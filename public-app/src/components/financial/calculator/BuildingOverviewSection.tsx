@@ -91,6 +91,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshingReserve, setRefreshingReserve] = useState(false);
+  const [isCancellingReserve, setIsCancellingReserve] = useState(false);
   const [editingGoal, setEditingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState('');
   const [newInstallments, setNewInstallments] = useState('12'); // Προεπιλογή 12 μήνες
@@ -182,13 +183,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   // Helper functions for localStorage persistence
   const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
+  const reserveStorageKeys = ['goal', 'start_date', 'target_date', 'duration_months', 'monthly_target'];
+  
+  const clearReserveFundStorage = () => {
+    reserveStorageKeys.forEach(key => {
+      localStorage.removeItem(getStorageKey(key));
+    });
+  };
   
   // Clean old localStorage data and reset to new defaults if needed
   const cleanOldReserveFundData = () => {
-    const storageKeys = ['goal', 'start_date', 'target_date', 'duration_months', 'monthly_target'];
     let hasOldData = false;
     
-    storageKeys.forEach(key => {
+    reserveStorageKeys.forEach(key => {
       const storageKey = getStorageKey(key);
       const value = localStorage.getItem(storageKey);
       if (value && key === 'start_date' && value.includes('2024')) {
@@ -198,9 +205,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     
     if (hasOldData) {
       console.log('🧹 Clearing old reserve fund data from localStorage (2024 dates detected)');
-      storageKeys.forEach(key => {
-        localStorage.removeItem(getStorageKey(key));
-      });
+      clearReserveFundStorage();
       return true;
     }
     return false;
@@ -747,6 +752,61 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       console.error('Error updating reserve fund goal:', error);
       // Αφαιρέθηκε το error notification
       // toast.error('Αποτυχία ενημέρωσης στόχου αποθεματικού');
+    }
+  };
+
+  const handleCancelReserveFund = async () => {
+    if (!financialSummary || (financialSummary.reserve_fund_goal || 0) <= 0) {
+      return;
+    }
+
+    const shouldCancel = confirm(
+      '⚠️ Η ακύρωση θα αφαιρέσει όλες τις μελλοντικές χρεώσεις αποθεματικού από τον επιλεγμένο μήνα και μετά.\n\n' +
+      'Το ποσό που έχει συλλεχθεί έως τώρα θα παραμείνει ως πίστωση.\n\n' +
+      'Θέλετε να συνεχίσετε;'
+    );
+
+    if (!shouldCancel) {
+      return;
+    }
+
+    try {
+      setIsCancellingReserve(true);
+      const payload: { effective_month?: string } = {};
+      if (selectedMonth) {
+        payload.effective_month = selectedMonth;
+      }
+
+      const response = await api.post(
+        `/buildings/list/${buildingId}/cancel_reserve_fund/`,
+        payload
+      );
+
+      clearReserveFundStorage();
+      setFinancialSummary(prev => prev ? {
+        ...prev,
+        reserve_fund_goal: 0,
+        reserve_fund_duration_months: 0,
+        reserve_fund_monthly_target: 0,
+        reserve_fund_contribution: 0,
+        reserve_fund_debt: 0,
+        reserve_fund_start_date: undefined,
+        reserve_fund_target_date: undefined
+      } : null);
+      setEditingGoal(false);
+      setEditingTimeline(false);
+      setNewGoal('0');
+      setNewInstallments('0');
+      setNewDurationMonths('');
+      setNewStartMonth('');
+      setNewStartYear('');
+
+      await fetchFinancialSummary(true);
+      console.log('✅ Reserve fund cancelled:', response.data);
+    } catch (error) {
+      console.error('Error cancelling reserve fund:', error);
+    } finally {
+      setIsCancellingReserve(false);
     }
   };
 
@@ -1655,6 +1715,32 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
               Διαχείριση στόχου αποθεματικού και προγράμματος συλλογής
             </DialogDescription>
           </DialogHeader>
+          {(financialSummary?.reserve_fund_goal || 0) > 0 && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-gray-500">
+                Μπορείτε να ακυρώσετε το πρόγραμμα για να σταματήσει η συλλογή από τον τρέχοντα μήνα και μετά.
+              </p>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="flex items-center gap-2"
+                onClick={handleCancelReserveFund}
+                disabled={isCancellingReserve}
+              >
+                {isCancellingReserve ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                Ακύρωση προγράμματος
+              </Button>
+            </div>
+          )}
+          {isCancellingReserve && (
+            <div className="rounded border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-700">
+              Γίνεται ακύρωση προγράμματος αποθεματικού...
+            </div>
+          )}
           <div className="space-y-6">
             {editingGoal ? (
               <div className="space-y-3">

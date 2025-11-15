@@ -9,11 +9,19 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.http import JsonResponse  
 from django.utils import timezone  
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
+from django.db.models import Sum
+from datetime import datetime, date
+from decimal import Decimal
 import logging
 
 from .models import Building, BuildingMembership, ServicePackage
 from .serializers import BuildingSerializer, BuildingMembershipSerializer, ServicePackageSerializer
 from users.models import CustomUser
+from financial.models import Expense, Transaction, Payment, MonthlyBalance
+from financial.monthly_balance_service import MonthlyBalanceService
+from financial.utils.date_helpers import get_month_first_day, parse_month_string
+from notifications.services import NotificationEventService
 
 
 @ensure_csrf_cookie
@@ -305,6 +313,130 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 BuildingViewSet.update() response: {response.data}")
         print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
         return response
+
+    @action(detail=True, methods=['post'], url_path='cancel_reserve_fund')
+    def cancel_reserve_fund(self, request, pk=None):
+        """Ακύρωση ενεργού στόχου αποθεματικού και καθαρισμός μελλοντικών χρεώσεων."""
+        building = self.get_object()
+        logger = logging.getLogger(__name__)
+
+        if not any([
+            building.reserve_fund_goal,
+            building.reserve_fund_duration_months,
+            building.reserve_fund_start_date,
+            building.reserve_fund_target_date
+        ]):
+            return Response(
+                {"detail": "Δεν υπάρχει ενεργό πρόγραμμα αποθεματικού για αυτό το κτίριο."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        effective_month = request.data.get('effective_month')
+        today = timezone.now().date()
+
+        try:
+            if effective_month:
+                year, month_number = parse_month_string(effective_month)
+                cancel_start_date = get_month_first_day(year, month_number)
+            else:
+                cancel_start_date = date(today.year, today.month, 1)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if building.reserve_fund_start_date:
+            cancel_start_date = max(cancel_start_date, building.reserve_fund_start_date)
+
+        cancel_start_datetime = timezone.make_aware(
+            datetime.combine(cancel_start_date, datetime.min.time())
+        )
+
+        with transaction.atomic():
+            future_expenses = Expense.objects.filter(
+                building=building,
+                category='reserve_fund',
+                date__gte=cancel_start_date
+            )
+            expenses_count = future_expenses.count()
+            expenses_total = future_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            future_expenses.delete()
+
+            future_transactions = Transaction.objects.filter(
+                building=building,
+                type='reserve_fund_charge',
+                date__gte=cancel_start_datetime
+            )
+            transactions_count = future_transactions.count()
+            future_transactions.delete()
+
+            credited_amount = Payment.objects.filter(
+                apartment__building=building,
+                reserve_fund_amount__gt=0,
+                date__lt=cancel_start_date
+            ).aggregate(total=Sum('reserve_fund_amount'))['total'] or Decimal('0.00')
+
+            building.reserve_fund_goal = None
+            building.reserve_fund_duration_months = None
+            building.reserve_fund_start_date = None
+            building.reserve_fund_target_date = None
+            building.reserve_contribution_per_apartment = Decimal('0.00')
+            building.save(update_fields=[
+                'reserve_fund_goal',
+                'reserve_fund_duration_months',
+                'reserve_fund_start_date',
+                'reserve_fund_target_date',
+                'reserve_contribution_per_apartment'
+            ])
+
+        start_year, start_month = cancel_start_date.year, cancel_start_date.month
+        monthly_service = MonthlyBalanceService(building)
+        months_recalculated = 0
+
+        last_balance = MonthlyBalance.objects.filter(building=building).order_by('-year', '-month').first()
+        if last_balance:
+            start_tuple = (start_year, start_month)
+            end_tuple = (last_balance.year, last_balance.month)
+            if start_tuple > end_tuple:
+                monthly_service.create_or_update_monthly_balance(start_year, start_month, recalculate=True)
+                months_recalculated = 1
+            else:
+                monthly_service.recalculate_all_months(
+                    start_year=start_year,
+                    start_month=start_month,
+                    end_year=last_balance.year,
+                    end_month=last_balance.month
+                )
+                months_recalculated = (
+                    (last_balance.year - start_year) * 12 +
+                    (last_balance.month - start_month) + 1
+                )
+        else:
+            monthly_service.create_or_update_monthly_balance(start_year, start_month, recalculate=True)
+            months_recalculated = 1
+
+        try:
+            NotificationEventService.create_event(
+                event_type='common_expense',
+                building=building,
+                title="Ακύρωση στόχου αποθεματικού",
+                description=(
+                    f"Το πρόγραμμα αποθεματικού ακυρώθηκε από {cancel_start_date.strftime('%B %Y')} και μετά. "
+                    f"Ποσό {credited_amount:.2f}€ παραμένει διαθέσιμο ως πίστωση."
+                ),
+                url=f"/financial?building={building.id}&tab=balances",
+                icon="🏦"
+            )
+        except Exception as exc:
+            logger.warning("Failed to create notification event for reserve fund cancellation: %s", exc)
+
+        return Response({
+            "status": "cancelled",
+            "effective_month": cancel_start_date.strftime('%Y-%m'),
+            "removed_expenses": expenses_count,
+            "removed_expense_total": float(expenses_total),
+            "removed_transactions": transactions_count,
+            "credited_amount": float(credited_amount),
+            "months_recalculated": months_recalculated
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_path="assign-resident")
     def assign_resident(self, request):
