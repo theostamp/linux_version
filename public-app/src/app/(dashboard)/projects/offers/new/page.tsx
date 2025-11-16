@@ -156,6 +156,7 @@ function NewOfferPageContent() {
         payload.completion_time = formState.completion_time.trim();
       }
 
+      console.log('[New Offer] Payload:', JSON.stringify(payload, null, 2));
       return api.post('/projects/offers/', payload);
     },
     onSuccess: (response: any) => {
@@ -169,6 +170,10 @@ function NewOfferPageContent() {
       router.push(destination);
     },
     onError: (error: any) => {
+      console.error('[New Offer] Error:', error);
+      console.error('[New Offer] Error response:', error?.response);
+      console.error('[New Offer] Error body:', error?.response?.body);
+      
       const message =
         error?.response?.body ||
         error?.message ||
