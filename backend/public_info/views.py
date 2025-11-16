@@ -1,3 +1,5 @@
+import re
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -168,17 +170,20 @@ def building_info(request, building_id: int):
                         'status': balance.get('status'),
                     })
 
+                def sort_key(item):
+                    number = item.get('apartment_number') or ''
+                    return tuple(int(part) if part.isdigit() else part for part in re.split(r'(\d+)', number))
+
                 top_debtors = sorted(
-                    [apt for apt in apartment_balances_payload if apt['net_obligation'] > 0],
-                    key=lambda item: item['net_obligation'],
-                    reverse=True
+                    [apt for apt in apartment_balances_payload],
+                    key=sort_key
                 )
 
                 financial_data.update({
                     'total_obligations': round(total_obligations_amount, 2),
                     'current_obligations': round(total_obligations_amount, 2),
                     'apartment_balances': apartment_balances_payload,
-                    'top_debtors': top_debtors[:5],
+                    'top_debtors': top_debtors,
                 })
             except Exception as balance_error:
                 print(f"[public_info] Unable to load apartment balances: {balance_error}")

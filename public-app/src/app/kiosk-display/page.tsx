@@ -95,17 +95,21 @@ export default function KioskDisplayPage() {
           );
 
     const topDebtors = rawDebtors
-      .sort(
-        (a: { amount?: number; net_obligation?: number }, b: { amount?: number; net_obligation?: number }) =>
-          (b.amount ?? b.net_obligation ?? 0) - (a.amount ?? a.net_obligation ?? 0)
-      )
+      .sort((a: any, b: any) => {
+        const aApartment = (a.apartment_number || '').toString();
+        const bApartment = (b.apartment_number || '').toString();
+        return aApartment.localeCompare(bApartment, 'el-GR', { numeric: true });
+      })
       .map((debtor: any) => {
-        const amountValue = debtor.amount ?? debtor.net_obligation ?? 0;
+        const rawAmount = debtor.amount ?? debtor.net_obligation ?? 0;
+        const amountValue = Number(rawAmount) || 0;
         const occupantName = maskName(debtor.occupant_name || debtor.tenant_name || debtor.owner_name);
         return {
           apartment: debtor.apartment_number || '—',
           occupant: occupantName,
           amount: `€${amountValue.toFixed(0)}`,
+          numericAmount: amountValue,
+          hasDebt: amountValue > 0,
         };
       });
 
@@ -298,14 +302,22 @@ export default function KioskDisplayPage() {
                   <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
                     <div>
                       <div className="flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-red-300" />
-                        <span className="font-medium">{debtor.apartment}</span>
+                        {debtor.hasDebt ? (
+                          <ShieldAlert className="w-4 h-4 text-orange-300" />
+                        ) : (
+                          <span className="text-green-300 text-lg" aria-hidden>
+                            ✓
+                          </span>
+                        )}
+                        <span className="font-medium text-white">{debtor.apartment}</span>
                       </div>
                       {debtor.occupant && (
                         <p className="text-xs text-indigo-200 mt-0.5">{debtor.occupant}</p>
                       )}
                     </div>
-                    <span className="text-red-300 font-semibold">{debtor.amount}</span>
+                    <span className={debtor.hasDebt ? 'text-orange-300 font-semibold' : 'text-white font-semibold'}>
+                      {debtor.hasDebt ? debtor.amount : '€0'}
+                    </span>
                   </div>
                 ))
               ) : (
