@@ -223,7 +223,9 @@ function NewOfferPageContent() {
         title: 'Η προσφορά δημιουργήθηκε',
         description: 'Η εργοληπτική προσφορά καταχωρήθηκε επιτυχώς.',
       });
-      const destination = selectedProject?.id ? `/projects/${selectedProject.id}` : '/projects';
+      const destination = formState.project && selectedProject?.id 
+        ? `/projects/${selectedProject.id}` 
+        : '/projects/offers';
       router.push(destination);
     } catch (error: any) {
       console.error('[New Offer] Error:', error);
