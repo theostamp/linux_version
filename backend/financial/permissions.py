@@ -162,8 +162,10 @@ class ExpensePermission(permissions.BasePermission, FinancialPermissionMixin):
         
         # RBAC: Ανάγνωση - Managers και Residents
         if request.method in permissions.SAFE_METHODS:
-            return (user.groups.filter(name='Manager').exists() or 
-                   user.groups.filter(name='Resident').exists())
+            if user.groups.filter(name='Manager').exists() or user.groups.filter(name='Resident').exists():
+                return True
+            # Επιτρέπουμε και legacy ρόλους (role=manager/admin κ.λπ.)
+            return self.has_financial_permission(user)
         
         # RBAC: Δημιουργία/Επεξεργασία - Μόνο Managers
         elif request.method in ['POST', 'PUT', 'PATCH']:
@@ -193,12 +195,15 @@ class ExpensePermission(permissions.BasePermission, FinancialPermissionMixin):
         if request.method in permissions.SAFE_METHODS:
             is_manager = user.groups.filter(name='Manager').exists()
             is_resident = user.groups.filter(name='Resident').exists()
+            building = getattr(obj, 'building', None)
             
             if is_manager:
                 return True  # Managers βλέπουν όλα
             elif is_resident:
                 # Residents βλέπουν μόνο τα κτίριά τους
                 return IsRelatedToBuilding().has_object_permission(request, view, obj)
+            else:
+                return self.has_financial_permission(user, building)
         
         # RBAC: Δημιουργία/Επεξεργασία/Διαγραφή - Μόνο Managers
         else:
