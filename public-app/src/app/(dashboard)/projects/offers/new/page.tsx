@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
 import { getActiveBuildingId } from '@/lib/api';
