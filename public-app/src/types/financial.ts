@@ -31,6 +31,10 @@ export interface Expense {
   category_display?: string;
   distribution_type: string;
   distribution_type_display?: string;
+  payer_responsibility?: 'owner' | 'resident' | 'shared';
+  payer_responsibility_display?: string;
+  suggested_payer?: 'owner' | 'resident' | 'shared';
+  split_ratio?: number | null;
   supplier?: number;
   supplier_name?: string;
   supplier_details?: Supplier;
@@ -226,6 +230,8 @@ export interface ExpenseFormData {
   date: string;
   category: string;
   distribution_type: string;
+  payer_responsibility?: 'owner' | 'resident' | 'shared';
+  split_ratio?: number | null;
   supplier?: number;
   notes?: string;
   attachment?: File;

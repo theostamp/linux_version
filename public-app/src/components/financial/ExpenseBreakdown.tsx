@@ -330,12 +330,32 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{formatCurrency(expense.amount)}</div>
-                      <Badge 
-                        variant="outline" 
-                        className={getCategoryColor(expense.category as ExpenseCategory)}
-                      >
-                        {getCategoryLabel(expense.category as ExpenseCategory)}
-                      </Badge>
+                      <div className="flex gap-2 justify-end mt-1">
+                        <Badge 
+                          variant="outline" 
+                          className={getCategoryColor(expense.category as ExpenseCategory)}
+                        >
+                          {getCategoryLabel(expense.category as ExpenseCategory)}
+                        </Badge>
+                        {expense.payer_responsibility && (
+                          <Badge 
+                            variant="outline"
+                            className={
+                              expense.payer_responsibility === 'owner' 
+                                ? 'bg-red-50 text-red-700 border-red-200' 
+                                : expense.payer_responsibility === 'resident'
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }
+                          >
+                            {expense.payer_responsibility === 'owner' 
+                              ? 'Δ' 
+                              : expense.payer_responsibility === 'resident'
+                              ? 'Ε'
+                              : 'Κ'}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

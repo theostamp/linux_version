@@ -37,9 +37,19 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΑΠΟ ΜΕΤΑΦΟΡΑ</TableHead>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 στήλες ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ + ΔΙΑΧΕΙΡΙΣΗ */}
-            <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</TableHead>
+            <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>
+              <div className="flex items-center justify-center gap-1">
+                ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ
+                <span className="bg-green-600 text-white text-xs px-1 py-0.5 rounded">Ε</span>
+              </div>
+            </TableHead>
             {/* ✅ ΤΡΟΠΟΠΟΙΗΘΗΚΕ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ με 2 υποστήλες (Έργα + Αποθεματικό) */}
-            <TableHead className="text-center border font-bold text-xs text-white" colSpan={2} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</TableHead>
+            <TableHead className="text-center border font-bold text-xs text-white" colSpan={2} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>
+              <div className="flex items-center justify-center gap-1">
+                ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ
+                <span className="bg-red-600 text-white text-xs px-1 py-0.5 rounded">Δ</span>
+              </div>
+            </TableHead>
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
           </TableRow>
           <TableRow className="bg-gray-100">

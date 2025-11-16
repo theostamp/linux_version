@@ -475,8 +475,18 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Α/Δ</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Ιδιοκτήτης</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Χιλιοστά</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Δαπάνες Ενοίκου</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Δαπάνες Ιδιοκτήτη</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">
+                    <div className="flex items-center justify-end gap-1">
+                      Δαπάνες Ενοίκου
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-1 py-0">Ε</Badge>
+                    </div>
+                  </th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">
+                    <div className="flex items-center justify-end gap-1">
+                      Δαπάνες Ιδιοκτήτη
+                      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-1 py-0">Δ</Badge>
+                    </div>
+                  </th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Συνολική Οφειλή</th>
                   <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Κατάσταση</th>
                   <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Ενέργειες</th>
@@ -496,23 +506,37 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-xs">{apartment.participation_mills}</td>
                     {/* Δαπάνες Ενοίκου */}
                     <td className="py-2 px-2 text-xs text-right">
-                      <span className={`font-medium ${
-                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        Math.abs(apartment.resident_expenses || 0) <= 0.30 ? 'text-gray-500' :
-                        (apartment.resident_expenses || 0) > 0.30 ? 'text-blue-600' : 'text-gray-500'
-                      }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.resident_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.resident_expenses || 0)}
-                      </span>
+                      <div className="flex items-center justify-end gap-1">
+                        <span className={`font-medium ${
+                          Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                          Math.abs(apartment.resident_expenses || 0) <= 0.30 ? 'text-gray-500' :
+                          (apartment.resident_expenses || 0) > 0.30 ? 'text-green-600' : 'text-gray-500'
+                        }`}>
+                          {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.resident_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.resident_expenses || 0)}
+                        </span>
+                        {(apartment.resident_expenses || 0) > 0.30 && (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-1 py-0">
+                            Ε
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     {/* Δαπάνες Ιδιοκτήτη */}
                     <td className="py-2 px-2 text-xs text-right">
-                      <span className={`font-medium ${
-                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        Math.abs(apartment.owner_expenses || 0) <= 0.30 ? 'text-gray-500' :
-                        (apartment.owner_expenses || 0) > 0.30 ? 'text-purple-600' : 'text-gray-500'
-                      }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.owner_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.owner_expenses || 0)}
-                      </span>
+                      <div className="flex items-center justify-end gap-1">
+                        <span className={`font-medium ${
+                          Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                          Math.abs(apartment.owner_expenses || 0) <= 0.30 ? 'text-gray-500' :
+                          (apartment.owner_expenses || 0) > 0.30 ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.owner_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.owner_expenses || 0)}
+                        </span>
+                        {(apartment.owner_expenses || 0) > 0.30 && (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-1 py-0">
+                            Δ
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${

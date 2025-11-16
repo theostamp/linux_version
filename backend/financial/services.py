@@ -1142,7 +1142,12 @@ class FinancialDashboardService:
                     # Διαχωρισμός ανά payer_responsibility
                     if expense.payer_responsibility == 'owner':
                         previous_owner_expenses += apartment_share
-                    else:
+                    elif expense.payer_responsibility == 'shared':
+                        # Αν υπάρχει split_ratio, χρησιμοποιούμε αυτό, αλλιώς 50-50
+                        split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
+                        previous_owner_expenses += apartment_share * split_ratio
+                        previous_resident_expenses += apartment_share * (Decimal('1.0') - split_ratio)
+                    else:  # resident
                         previous_resident_expenses += apartment_share
 
                 # 2. Current month expense share (για net_obligation)
@@ -1168,7 +1173,12 @@ class FinancialDashboardService:
                     # ΝΕΟ: Διαχωρισμός ανά payer_responsibility
                     if expense.payer_responsibility == 'owner':
                         current_owner_expenses += apartment_share
-                    else:  # resident or shared
+                    elif expense.payer_responsibility == 'shared':
+                        # Αν υπάρχει split_ratio, χρησιμοποιούμε αυτό, αλλιώς 50-50
+                        split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
+                        current_owner_expenses += apartment_share * split_ratio
+                        current_resident_expenses += apartment_share * (Decimal('1.0') - split_ratio)
+                    else:  # resident
                         current_resident_expenses += apartment_share
                 
                 # ✅ ΚΡΙΣΙΜΟ: Προσθήκη previous στα totals για UI display!
@@ -2309,7 +2319,10 @@ class AdvancedCommonExpenseCalculator:
                     'heating_expenses': Decimal('0.00'),
                     'equal_share_expenses': Decimal('0.00'),
                     'individual_expenses': Decimal('0.00'),
-                    'reserve_fund_contribution': Decimal('0.00')
+                    'reserve_fund_contribution': Decimal('0.00'),
+                    # ΝΕΑ: Διαχωρισμός owner vs resident expenses
+                    'owner_expenses': Decimal('0.00'),
+                    'resident_expenses': Decimal('0.00'),
                 },
                 'heating_breakdown': {
                     'fixed_cost': Decimal('0.00'),
@@ -2329,7 +2342,16 @@ class AdvancedCommonExpenseCalculator:
             'elevator': Decimal('0.00'),
             'heating': Decimal('0.00'),
             'equal_share': Decimal('0.00'),
-            'individual': Decimal('0.00')
+            'individual': Decimal('0.00'),
+            # ΝΕΑ: Διαχωρισμός owner vs resident expenses
+            'owner_general': Decimal('0.00'),
+            'resident_general': Decimal('0.00'),
+            'owner_elevator': Decimal('0.00'),
+            'resident_elevator': Decimal('0.00'),
+            'owner_heating': Decimal('0.00'),
+            'resident_heating': Decimal('0.00'),
+            'owner_equal_share': Decimal('0.00'),
+            'resident_equal_share': Decimal('0.00'),
         }
         
         # Αντιστοίχιση κατηγοριών δαπανών με κανόνες κατανομής
@@ -2372,20 +2394,44 @@ class AdvancedCommonExpenseCalculator:
         ]
         
         for expense in self.expenses:
+            # Υπολογισμός ποσού ανά payer_responsibility
+            if expense.payer_responsibility == 'owner':
+                owner_amount = expense.amount
+                resident_amount = Decimal('0.00')
+            elif expense.payer_responsibility == 'shared':
+                # Αν υπάρχει split_ratio, χρησιμοποιούμε αυτό, αλλιώς 50-50
+                split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
+                owner_amount = expense.amount * split_ratio
+                resident_amount = expense.amount * (Decimal('1.0') - split_ratio)
+            else:  # resident
+                owner_amount = Decimal('0.00')
+                resident_amount = expense.amount
+            
+            # Κατανομή ανά κατηγορία
             if expense.category in general_categories:
                 totals['general'] += expense.amount
+                totals['owner_general'] += owner_amount
+                totals['resident_general'] += resident_amount
             elif expense.category in elevator_categories:
                 totals['elevator'] += expense.amount
+                totals['owner_elevator'] += owner_amount
+                totals['resident_elevator'] += resident_amount
             elif expense.category in heating_categories:
                 totals['heating'] += expense.amount
+                totals['owner_heating'] += owner_amount
+                totals['resident_heating'] += resident_amount
             elif expense.category in equal_share_categories:
                 totals['equal_share'] += expense.amount
+                totals['owner_equal_share'] += owner_amount
+                totals['resident_equal_share'] += resident_amount
             elif expense.distribution_type == 'specific_apartments':
                 totals['individual'] += expense.amount
         
         # Προσθήκη δαπανών διαχείρισης στις γενικές δαπάνες
+        # Management fees είναι resident expenses (τακτικά κοινόχρηστα)
         total_management_fees = (self.building.management_fee_per_apartment or Decimal('0.00')) * len(self.apartments)
         totals['general'] += total_management_fees
+        totals['resident_general'] += total_management_fees
         
         return totals
     
@@ -2505,6 +2551,17 @@ class AdvancedCommonExpenseCalculator:
                 general_share = pure_general_total * (participation_mills / total_participation_mills_decimal)
                 shares[apartment_id]['breakdown']['general_expenses'] = general_share
                 shares[apartment_id]['total_amount'] += general_share
+                
+                # ΝΕΟ: Διαχωρισμός owner vs resident για γενικές δαπάνες
+                pure_owner_general = expense_totals['owner_general']
+                pure_resident_general = expense_totals['resident_general'] - management_total  # Management fees είναι resident
+                if pure_resident_general < 0:
+                    pure_resident_general = Decimal('0.00')
+                
+                owner_general_share = pure_owner_general * (participation_mills / total_participation_mills_decimal)
+                resident_general_share = pure_resident_general * (participation_mills / total_participation_mills_decimal)
+                shares[apartment_id]['breakdown']['owner_expenses'] += owner_general_share
+                shares[apartment_id]['breakdown']['resident_expenses'] += resident_general_share
             
             # β. Υπολογισμός Δαπανών Ανελκυστήρα
             if total_elevator_mills > 0:
@@ -2512,6 +2569,12 @@ class AdvancedCommonExpenseCalculator:
                 elevator_share = expense_totals['elevator'] * (elevator_mills / total_elevator_mills_decimal)
                 shares[apartment_id]['breakdown']['elevator_expenses'] = elevator_share
                 shares[apartment_id]['total_amount'] += elevator_share
+                
+                # ΝΕΟ: Διαχωρισμός owner vs resident για δαπάνες ανελκυστήρα
+                owner_elevator_share = expense_totals['owner_elevator'] * (elevator_mills / total_elevator_mills_decimal)
+                resident_elevator_share = expense_totals['resident_elevator'] * (elevator_mills / total_elevator_mills_decimal)
+                shares[apartment_id]['breakdown']['owner_expenses'] += owner_elevator_share
+                shares[apartment_id]['breakdown']['resident_expenses'] += resident_elevator_share
             
             # γ. Υπολογισμός Δαπανών Θέρμανσης
             if total_heating_mills > 0:
@@ -2545,11 +2608,30 @@ class AdvancedCommonExpenseCalculator:
                 
                 shares[apartment_id]['breakdown']['heating_expenses'] = total_heating_share
                 shares[apartment_id]['total_amount'] += total_heating_share
+                
+                # ΝΕΟ: Διαχωρισμός owner vs resident για δαπάνες θέρμανσης
+                # Υπολογίζουμε το ποσοστό του total_heating_share που αντιστοιχεί σε owner vs resident
+                if heating_costs['total_cost'] > 0:
+                    owner_heating_ratio = expense_totals['owner_heating'] / heating_costs['total_cost']
+                    resident_heating_ratio = expense_totals['resident_heating'] / heating_costs['total_cost']
+                    owner_heating_share = total_heating_share * owner_heating_ratio
+                    resident_heating_share = total_heating_share * resident_heating_ratio
+                else:
+                    owner_heating_share = Decimal('0.00')
+                    resident_heating_share = Decimal('0.00')
+                shares[apartment_id]['breakdown']['owner_expenses'] += owner_heating_share
+                shares[apartment_id]['breakdown']['resident_expenses'] += resident_heating_share
             
             # δ. Υπολογισμός Ισόποσων Δαπανών
             equal_share_amount = expense_totals['equal_share'] / len(self.apartments)
             shares[apartment_id]['breakdown']['equal_share_expenses'] = equal_share_amount
             shares[apartment_id]['total_amount'] += equal_share_amount
+            
+            # ΝΕΟ: Διαχωρισμός owner vs resident για ισόποσες δαπάνες
+            owner_equal_share = expense_totals['owner_equal_share'] / len(self.apartments)
+            resident_equal_share = expense_totals['resident_equal_share'] / len(self.apartments)
+            shares[apartment_id]['breakdown']['owner_expenses'] += owner_equal_share
+            shares[apartment_id]['breakdown']['resident_expenses'] += resident_equal_share
             
             # ε. Υπολογισμός Εισφοράς Αποθεματικού (κατανομή ανά χιλιοστά)
             # FIXED: Add obligations check like Basic Calculator (excluding reserve fund to avoid circular dependency)
@@ -2601,6 +2683,9 @@ class AdvancedCommonExpenseCalculator:
             shares[apartment_id]['breakdown']['management_fee'] = management_fee
             shares[apartment_id]['breakdown']['general_expenses'] += management_fee  # Προσθήκη στις γενικές δαπάνες
             shares[apartment_id]['total_amount'] += management_fee
+            
+            # ΝΕΟ: Management fees είναι resident expenses
+            shares[apartment_id]['breakdown']['resident_expenses'] += management_fee
     
     def _add_individual_charges(self, shares: Dict):
         """Προσθήκη ατομικών χρεώσεων"""
@@ -2665,7 +2750,9 @@ class AdvancedCommonExpenseCalculator:
                 'category': expense.category,
                 'distribution_type': expense.distribution_type,
                 'date': expense.date.isoformat() if expense.date else None,
-                'supplier_name': expense.supplier.name if expense.supplier else None
+                'supplier_name': expense.supplier.name if expense.supplier else None,
+                'payer_responsibility': expense.payer_responsibility,  # ΝΕΟ: Ευθύνη πληρωμής
+                'split_ratio': float(expense.split_ratio) if expense.split_ratio is not None else None  # ΝΕΟ: Ποσοστό κατανομής
             }
             
             if expense.category in general_categories:

@@ -224,6 +224,36 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
                   <p className="font-medium">{DISTRIBUTION_TYPES[expense.distribution_type] || expense.distribution_type}</p>
                 </div>
               </div>
+
+              {/* Payer Responsibility */}
+              {expense.payer_responsibility && (
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Ευθύνη Πληρωμής</p>
+                    <Badge 
+                      className={
+                        expense.payer_responsibility === 'owner' 
+                          ? 'bg-red-50 text-red-700 border-red-200' 
+                          : expense.payer_responsibility === 'resident'
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }
+                    >
+                      {expense.payer_responsibility === 'owner' 
+                        ? 'Χρεώνεται σε Ιδιοκτήτες' 
+                        : expense.payer_responsibility === 'resident'
+                        ? 'Χρεώνεται σε Ενοίκους'
+                        : 'Κοινή Ευθύνη'}
+                    </Badge>
+                    {expense.payer_responsibility === 'shared' && expense.split_ratio && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {Math.round(expense.split_ratio * 100)}% ιδιοκτήτης, {Math.round((1 - expense.split_ratio) * 100)}% ένοικος
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column */}

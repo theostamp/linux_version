@@ -178,6 +178,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMo
   const selectedSupplier = watch('supplier');
   const selectedTitle = watch('title');
   const selectedDate = watch('date');
+  const selectedPayerResponsibility = watch('payer_responsibility');
 
   // Get selected supplier details
   const selectedSupplierDetails = suppliers.find(s => s.id === selectedSupplier);
@@ -200,8 +201,37 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMo
           setValue('title', suggestions[0]);
         }
       }
+      
+      // Auto-set payer_responsibility based on category defaults
+      // Fetch suggested payer from API
+      const fetchSuggestedPayer = async () => {
+        try {
+          const response = await fetch(`/api/financial/expenses/category-payer-defaults/?category=${selectedCategory}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.suggested_payer) {
+              setValue('payer_responsibility', data.suggested_payer);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching suggested payer:', error);
+          // Fallback: use default based on category
+          // Most expenses are resident, except reserve_fund, project, etc.
+          const ownerCategories = ['reserve_fund', 'project', 'maintenance_project', 'building_insurance', 'building_maintenance'];
+          if (ownerCategories.includes(selectedCategory)) {
+            setValue('payer_responsibility', 'owner');
+          } else {
+            setValue('payer_responsibility', 'resident');
+          }
+        }
+      };
+      
+      // Only auto-set if payer_responsibility is not already set
+      if (!selectedPayerResponsibility) {
+        fetchSuggestedPayer();
+      }
     }
-  }, [selectedCategory, selectedSupplierDetails, setValue, getSuggestedDistribution, getSuggestedDate, selectedTitle, selectedMonth]);
+  }, [selectedCategory, selectedSupplierDetails, setValue, getSuggestedDistribution, getSuggestedDate, selectedTitle, selectedMonth, selectedPayerResponsibility]);
 
   const getDefaultDistributionType = (category: ExpenseCategory): DistributionType => {
     const heatingCategories: ExpenseCategory[] = ['heating_fuel', 'heating_gas'];
@@ -508,6 +538,66 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMo
                   <p className="text-sm text-red-600">{errors.distribution_type.message}</p>
                 )}
               </div>
+
+              {/* Ευθύνη Πληρωμής */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Ευθύνη Πληρωμής *
+                  {selectedCategory && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      Αυτόματη
+                    </Badge>
+                  )}
+                </label>
+                <select
+                  {...register('payer_responsibility', { required: 'Απαιτείται' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="resident">Ένοικος</option>
+                  <option value="owner">Ιδιοκτήτης</option>
+                  <option value="shared">Κοινή Ευθύνη</option>
+                </select>
+                {errors.payer_responsibility && (
+                  <p className="text-sm text-red-600">{errors.payer_responsibility.message}</p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Καθορίζει ποιος πληρώνει: Ιδιοκτήτης (έργα, αποθεματικό) ή Ένοικος (τακτικά κοινόχρηστα)
+                </p>
+              </div>
+
+              {/* Ποσοστό Κατανομής (μόνο για κοινή ευθύνη) */}
+              {selectedPayerResponsibility === 'shared' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Ποσοστό Κατανομής (Ιδιοκτήτης %)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    min="0"
+                    max="1"
+                    {...register('split_ratio', {
+                      valueAsNumber: true,
+                      validate: (value) => {
+                        if (value !== null && value !== undefined) {
+                          if (value < 0 || value > 1) {
+                            return 'Το ποσοστό πρέπει να είναι μεταξύ 0 και 1';
+                          }
+                        }
+                        return true;
+                      }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.5 (50% ιδιοκτήτης, 50% ένοικος)"
+                  />
+                  {errors.split_ratio && (
+                    <p className="text-sm text-red-600">{errors.split_ratio.message}</p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Ποσοστό που πληρώνει ο ιδιοκτήτης (0.0-1.0). Αν αφεθεί κενό, χρησιμοποιείται 50-50.
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

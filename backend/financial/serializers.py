@@ -52,7 +52,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'building', 'building_name', 'title', 'amount', 'date',
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
-            'payer_responsibility', 'payer_responsibility_display', 'suggested_payer',
+            'payer_responsibility', 'payer_responsibility_display', 'suggested_payer', 'split_ratio',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
             'notes', 'due_date', 'add_to_calendar', 'expense_type', 'created_at', 'updated_at',
             'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
@@ -112,6 +112,26 @@ class ExpenseSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise serializers.ValidationError(f"Σφάλμα στο αρχείο: {str(e)}")
         return value
+    
+    def validate_split_ratio(self, value):
+        """Επιβεβαίωση ότι το split_ratio είναι μεταξύ 0 και 1"""
+        if value is not None:
+            if value < 0 or value > 1:
+                raise serializers.ValidationError("Το ποσοστό κατανομής πρέπει να είναι μεταξύ 0 και 1.")
+        return value
+    
+    def validate(self, data):
+        """Επιβεβαίωση ότι το split_ratio χρησιμοποιείται μόνο με shared payer_responsibility"""
+        payer_responsibility = data.get('payer_responsibility')
+        split_ratio = data.get('split_ratio')
+        
+        # Αν το split_ratio έχει οριστεί, πρέπει το payer_responsibility να είναι 'shared'
+        if split_ratio is not None and payer_responsibility != 'shared':
+            raise serializers.ValidationError({
+                'split_ratio': "Το ποσοστό κατανομής μπορεί να χρησιμοποιηθεί μόνο όταν η ευθύνη πληρωμής είναι 'Κοινή Ευθύνη'."
+            })
+        
+        return data
 
     def get_linked_service_receipt(self, obj):
         try:

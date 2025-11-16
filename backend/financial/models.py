@@ -373,6 +373,18 @@ class Expense(models.Model):
         verbose_name="Ευθύνη Πληρωμής",
         help_text="Καθορίζει ποιος πληρώνει: Ιδιοκτήτης (έργα, αποθεματικό) ή Ένοικος (τακτικά κοινόχρηστα)"
     )
+    
+    # Πεδίο για ποσοστό κατανομής σε περιπτώσεις κοινής ευθύνης
+    # Αν payer_responsibility='shared', το split_ratio καθορίζει το ποσοστό που πληρώνει ο ιδιοκτήτης
+    # π.χ. split_ratio=0.6 σημαίνει 60% ιδιοκτήτης, 40% ένοικος
+    split_ratio = models.DecimalField(
+        max_digits=5,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name="Ποσοστό Κατανομής",
+        help_text="Ποσοστό που πληρώνει ο ιδιοκτήτης σε περιπτώσεις κοινής ευθύνης (0.0-1.0). Αν είναι null, χρησιμοποιείται 50-50."
+    )
 
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name="Προμηθευτής")
 

@@ -100,6 +100,20 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
     return totals;
   }, [state.shares]);
 
+  // Calculate totals by payer_responsibility
+  const payerTotals = useMemo(() => {
+    let ownerTotal = 0;
+    let residentTotal = 0;
+    
+    Object.values(state.shares).forEach((share: any) => {
+      const breakdown = share.breakdown || {};
+      ownerTotal += toNumber(breakdown.owner_expenses || 0);
+      residentTotal += toNumber(breakdown.resident_expenses || 0);
+    });
+
+    return { ownerTotal, residentTotal };
+  }, [state.shares]);
+
   // Calculate total expenses
   const totalExpenses = useMemo(() => {
     return Object.values(categoryTotals).reduce((sum, amount) => sum + amount, 0);
@@ -230,6 +244,53 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
 
               {/* Summary Cards */}
               <div className="space-y-4">
+                {/* Payer Responsibility Breakdown */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Κατανομή ανά Ευθύνη Πληρωμής</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50 border-green-200">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                          Ε
+                        </Badge>
+                        <div>
+                          <p className="font-medium text-sm">Δαπάνες Ενοίκων</p>
+                          <p className="text-xs text-gray-600">
+                            {totalExpenses > 0 ? ((payerTotals.residentTotal / totalExpenses) * 100).toFixed(1) : '0'}% του συνόλου
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-sm text-green-700">{formatCurrency(payerTotals.residentTotal)}</p>
+                        <p className="text-xs text-gray-600">
+                          {apartmentsCount > 0 ? formatCurrency(payerTotals.residentTotal / apartmentsCount) : '0,00 €'}/διαμ.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg bg-red-50 border-red-200">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
+                          Δ
+                        </Badge>
+                        <div>
+                          <p className="font-medium text-sm">Δαπάνες Ιδιοκτητών</p>
+                          <p className="text-xs text-gray-600">
+                            {totalExpenses > 0 ? ((payerTotals.ownerTotal / totalExpenses) * 100).toFixed(1) : '0'}% του συνόλου
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-sm text-red-700">{formatCurrency(payerTotals.ownerTotal)}</p>
+                        <p className="text-xs text-gray-600">
+                          {apartmentsCount > 0 ? formatCurrency(payerTotals.ownerTotal / apartmentsCount) : '0,00 €'}/διαμ.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Σύνοψη Δαπανών</CardTitle>
