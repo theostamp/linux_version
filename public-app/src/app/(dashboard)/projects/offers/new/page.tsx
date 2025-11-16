@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
@@ -558,3 +558,8 @@ export default function NewOfferPage() {
     </AuthGate>
   );
 }
+  useEffect(() => {
+    if (!selectedBuilding && buildings.length > 0) {
+      setSelectedBuilding(buildings[0]);
+    }
+  }, [selectedBuilding, buildings, setSelectedBuilding]);
