@@ -155,21 +155,29 @@ function NewOfferPageContent() {
   const { create: createOffer } = useOfferMutations();
 
   const handleSubmit = async () => {
-      if (!formState.project || !formState.project.trim()) {
-        throw new Error('Πρέπει να επιλέξετε έργο');
+      // Only contractor_name and amount are required
+      if (!formState.contractor_name || !formState.contractor_name.trim()) {
+        throw new Error('Το όνομά του συνεργείου είναι υποχρεωτικό');
       }
       
-      const projectId = parseInt(formState.project, 10);
-      if (Number.isNaN(projectId) || projectId <= 0) {
-        throw new Error('Μη έγκυρο έργο');
+      if (!formState.amount || Number.isNaN(parseFloat(formState.amount)) || parseFloat(formState.amount) <= 0) {
+        throw new Error('Το ποσό είναι υποχρεωτικό και πρέπει να είναι μεγαλύτερο από 0');
       }
       
       const payload: Record<string, any> = {
-        project: projectId,
         contractor_name: formState.contractor_name.trim(),
+        amount: parseFloat(formState.amount),
         description: formState.description.trim() || '',
         payment_method: formState.payment_method || 'one_time',
       };
+      
+      // Project is optional
+      if (formState.project && formState.project.trim()) {
+        const projectId = parseInt(formState.project, 10);
+        if (!Number.isNaN(projectId) && projectId > 0) {
+          payload.project = projectId;
+        }
+      }
 
       // Only include optional fields if they have values
       if (formState.contractor_contact?.trim()) {
@@ -184,9 +192,7 @@ function NewOfferPageContent() {
       if (formState.contractor_address?.trim()) {
         payload.contractor_address = formState.contractor_address.trim();
       }
-      if (formState.amount && !Number.isNaN(parseFloat(formState.amount))) {
-        payload.amount = parseFloat(formState.amount);
-      }
+      // Amount is already set above as required
       if (formState.payment_terms?.trim()) {
         payload.payment_terms = formState.payment_terms.trim();
       }
@@ -241,9 +247,7 @@ function NewOfferPageContent() {
     
     switch (field) {
       case 'project':
-        if (!value || !value.trim()) {
-          errors.project = 'Πρέπει να επιλέξετε έργο';
-        }
+        // Project is optional - no validation needed
         break;
       case 'contractor_name':
         if (!value || !value.trim()) {
@@ -286,18 +290,19 @@ function NewOfferPageContent() {
   };
 
   const canSubmit = Boolean(
-    formState.project &&
-      formState.project.trim() &&
-      !Number.isNaN(parseInt(formState.project, 10)) &&
-      parseInt(formState.project, 10) > 0 &&
+    // Only contractor_name and amount are required
+    formState.contractor_name &&
       formState.contractor_name.trim() &&
       formState.amount &&
       !Number.isNaN(parseFloat(formState.amount)) &&
       parseFloat(formState.amount) > 0 &&
-      Object.keys(fieldErrors).length === 0 &&
-      // Extra check: if payment_method is installments, installments must be provided
+      // No field errors for required fields
+      !fieldErrors.contractor_name &&
+      !fieldErrors.amount &&
+      // If payment_method is installments, installments must be valid (if provided)
       (formState.payment_method !== 'installments' || 
-       (formState.installments && !Number.isNaN(parseInt(formState.installments, 10)) && parseInt(formState.installments, 10) > 0)),
+       !formState.installments || 
+       (!Number.isNaN(parseInt(formState.installments, 10)) && parseInt(formState.installments, 10) > 0)),
   );
 
   return (
@@ -377,14 +382,9 @@ function NewOfferPageContent() {
                       <Select 
                         value={formState.project} 
                         onValueChange={(value) => handleFieldChange('project', value)}
-                        onOpenChange={(open) => {
-                          if (!open && formState.project) {
-                            handleFieldBlur('project');
-                          }
-                        }}
                       >
-                        <SelectTrigger className={fieldErrors.project ? 'border-red-500' : ''}>
-                          <SelectValue placeholder="Επιλέξτε έργο" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Επιλέξτε έργο (προαιρετικό)" />
                         </SelectTrigger>
                         <SelectContent>
                           {projects.map((project) => (
@@ -394,9 +394,6 @@ function NewOfferPageContent() {
                           ))}
                         </SelectContent>
                       </Select>
-                      {fieldErrors.project && (
-                        <p className="text-sm text-red-500">{fieldErrors.project}</p>
-                      )}
                     </>
                   )}
                 </div>
