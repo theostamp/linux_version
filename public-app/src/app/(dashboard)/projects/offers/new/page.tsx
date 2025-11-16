@@ -114,11 +114,17 @@ function NewOfferPageContent() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!formState.project) {
+      if (!formState.project || !formState.project.trim()) {
         throw new Error('Πρέπει να επιλέξετε έργο');
       }
+      
+      const projectId = parseInt(formState.project, 10);
+      if (Number.isNaN(projectId) || projectId <= 0) {
+        throw new Error('Μη έγκυρο έργο');
+      }
+      
       const payload: Record<string, any> = {
-        project: Number(formState.project),
+        project: projectId,
         contractor_name: formState.contractor_name.trim(),
         description: formState.description.trim() || '',
         payment_method: formState.payment_method || 'one_time',
@@ -188,9 +194,13 @@ function NewOfferPageContent() {
 
   const canSubmit = Boolean(
     formState.project &&
+      formState.project.trim() &&
+      !Number.isNaN(parseInt(formState.project, 10)) &&
+      parseInt(formState.project, 10) > 0 &&
       formState.contractor_name.trim() &&
       formState.amount &&
-      !Number.isNaN(parseFloat(formState.amount)),
+      !Number.isNaN(parseFloat(formState.amount)) &&
+      parseFloat(formState.amount) > 0,
   );
 
   return (
