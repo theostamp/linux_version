@@ -148,11 +148,19 @@ def public_info(request, building_id=None):
                     apartment_balances_payload = []
                     
                     for balance in apartment_balances:
-                        net_value = float(max(0, balance.get('net_obligation') or 0))
-                        total_obligations_amount += net_value
+                        # Οφειλή = negative current_balance (ή negative net_obligation)
+                        # Χρησιμοποιούμε το absolute value για να δείξουμε το ποσό οφειλής
+                        current_balance = balance.get('current_balance') or 0
+                        net_obligation = balance.get('net_obligation') or 0
+                        
+                        # Αν το balance είναι αρνητικό, είναι οφειλή
+                        debt_amount = abs(float(current_balance)) if current_balance < 0 else 0.0
+                        total_obligations_amount += debt_amount
+                        
                         apartment_balances_payload.append({
                             'apartment_number': balance.get('apartment_number') or balance.get('number'),
-                            'net_obligation': net_value,
+                            'net_obligation': debt_amount,  # Θετικό ποσό οφειλής
+                            'current_balance': float(current_balance),
                             'owner_name': balance.get('owner_name'),
                             'tenant_name': balance.get('tenant_name'),
                             'status': balance.get('status'),
