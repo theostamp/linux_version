@@ -71,6 +71,12 @@ def building_info(request, building_id: int):
             end_date__gte=today,
         ).order_by('-start_date')
 
+        requested_month = request.query_params.get('month') if hasattr(request, 'query_params') else request.GET.get('month')
+        if requested_month:
+            requested_month = requested_month.strip()
+        else:
+            requested_month = timezone.now().strftime('%Y-%m')
+
         # Calculate financial data
         try:
             # Get total credits and debits for collection rate
@@ -125,19 +131,30 @@ def building_info(request, building_id: int):
         if building_info:
             try:
                 dashboard_service = FinancialDashboardService(building_id=building_id)
-                apartment_balances = dashboard_service.get_apartment_balances()
+                apartment_balances = dashboard_service.get_apartment_balances(month=requested_month)
 
                 total_obligations_amount = 0.0
                 apartment_balances_payload = []
 
                 for balance in apartment_balances:
-                    current_balance = balance.get('current_balance') or 0
+                    raw_current_balance = balance.get('current_balance') or 0
+                    raw_net_obligation = balance.get('net_obligation') or 0
+
                     try:
-                        current_balance_value = float(current_balance)
+                        current_balance_value = float(raw_current_balance)
                     except (TypeError, ValueError):
                         current_balance_value = 0.0
 
-                    debt_amount = abs(current_balance_value) if current_balance_value < 0 else 0.0
+                    try:
+                        net_obligation_value = float(raw_net_obligation)
+                    except (TypeError, ValueError):
+                        net_obligation_value = 0.0
+
+                    # FinancialDashboardService returns positive balances for debts in current view.
+                    debt_amount = net_obligation_value if net_obligation_value > 0 else 0.0
+                    if debt_amount == 0.0 and current_balance_value > 0:
+                        debt_amount = current_balance_value
+
                     if debt_amount:
                         total_obligations_amount += debt_amount
 
@@ -147,7 +164,7 @@ def building_info(request, building_id: int):
                         'current_balance': current_balance_value,
                         'owner_name': balance.get('owner_name'),
                         'tenant_name': balance.get('tenant_name'),
-                        'occupant_name': balance.get('occupant_name'),
+                        'occupant_name': balance.get('occupant_name') or balance.get('tenant_name') or balance.get('owner_name'),
                         'status': balance.get('status'),
                     })
 
