@@ -373,7 +373,7 @@ function ProjectsDashboardContent() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects/projects">
+              <Link href="/projects">
                 <FileText className="w-6 h-6 mb-2" />
                 <span>Όλα τα Έργα</span>
               </Link>
@@ -385,13 +385,13 @@ function ProjectsDashboardContent() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects/contracts">
+              <Link href="/projects">
                 <Users className="w-6 h-6 mb-2" />
                 <span>Συμβόλαια</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects/reports">
+              <Link href="/projects">
                 <TrendingUp className="w-6 h-6 mb-2" />
                 <span>Αναφορές</span>
               </Link>
