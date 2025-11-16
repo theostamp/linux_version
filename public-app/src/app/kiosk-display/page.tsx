@@ -99,7 +99,6 @@ export default function KioskDisplayPage() {
         (a: { amount?: number; net_obligation?: number }, b: { amount?: number; net_obligation?: number }) =>
           (b.amount ?? b.net_obligation ?? 0) - (a.amount ?? a.net_obligation ?? 0)
       )
-      .slice(0, 3)
       .map((debtor: any) => {
         const amountValue = debtor.amount ?? debtor.net_obligation ?? 0;
         const occupantName = maskName(debtor.occupant_name || debtor.tenant_name || debtor.owner_name);
