@@ -117,22 +117,44 @@ function NewOfferPageContent() {
       if (!formState.project) {
         throw new Error('Πρέπει να επιλέξετε έργο');
       }
-      const payload = {
+      const payload: Record<string, any> = {
         project: Number(formState.project),
         contractor_name: formState.contractor_name.trim(),
-        contractor_contact: formState.contractor_contact.trim() || null,
-        contractor_phone: formState.contractor_phone.trim() || null,
-        contractor_email: formState.contractor_email.trim() || null,
-        contractor_address: formState.contractor_address.trim() || null,
-        amount: formState.amount ? parseFloat(formState.amount) : 0,
         description: formState.description.trim() || '',
-        payment_terms: formState.payment_terms.trim() || null,
         payment_method: formState.payment_method || 'one_time',
-        installments: formState.installments ? parseInt(formState.installments, 10) : null,
-        advance_payment: formState.advance_payment ? parseFloat(formState.advance_payment) : null,
-        warranty_period: formState.warranty_period.trim() || null,
-        completion_time: formState.completion_time.trim() || null,
       };
+
+      // Only include optional fields if they have values
+      if (formState.contractor_contact?.trim()) {
+        payload.contractor_contact = formState.contractor_contact.trim();
+      }
+      if (formState.contractor_phone?.trim()) {
+        payload.contractor_phone = formState.contractor_phone.trim();
+      }
+      if (formState.contractor_email?.trim()) {
+        payload.contractor_email = formState.contractor_email.trim();
+      }
+      if (formState.contractor_address?.trim()) {
+        payload.contractor_address = formState.contractor_address.trim();
+      }
+      if (formState.amount && !Number.isNaN(parseFloat(formState.amount))) {
+        payload.amount = parseFloat(formState.amount);
+      }
+      if (formState.payment_terms?.trim()) {
+        payload.payment_terms = formState.payment_terms.trim();
+      }
+      if (formState.installments && !Number.isNaN(parseInt(formState.installments, 10))) {
+        payload.installments = parseInt(formState.installments, 10);
+      }
+      if (formState.advance_payment && !Number.isNaN(parseFloat(formState.advance_payment))) {
+        payload.advance_payment = parseFloat(formState.advance_payment);
+      }
+      if (formState.warranty_period?.trim()) {
+        payload.warranty_period = formState.warranty_period.trim();
+      }
+      if (formState.completion_time?.trim()) {
+        payload.completion_time = formState.completion_time.trim();
+      }
 
       return api.post('/projects/offers/', payload);
     },
