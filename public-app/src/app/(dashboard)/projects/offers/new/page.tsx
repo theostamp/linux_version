@@ -196,8 +196,6 @@ function NewOfferPageContent() {
     }
   };
 
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
   const validateField = (field: keyof OfferFormState, value: string) => {
     const errors: Record<string, string> = {};
     
