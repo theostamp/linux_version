@@ -64,6 +64,20 @@ class OfferSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['submitted_at', 'files_count']
 
+    def validate_contractor_name(self, value):
+        """Ensure contractor_name is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Το όνομά του συνεργείου είναι υποχρεωτικό.")
+        return value.strip()
+
+    def validate_amount(self, value):
+        """Ensure amount is positive"""
+        if value is None:
+            raise serializers.ValidationError("Το ποσό είναι υποχρεωτικό.")
+        if value <= 0:
+            raise serializers.ValidationError("Το ποσό πρέπει να είναι μεγαλύτερο από 0.")
+        return value
+
     def get_files_count(self, obj):
         return obj.files.count()
 
