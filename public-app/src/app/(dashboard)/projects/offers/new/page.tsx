@@ -150,7 +150,7 @@ function NewOfferPageContent() {
     pageSize: 1000,
   });
 
-  const selectedProject = projects.find((project) => project.id === Number(formState.project));
+  const selectedProject = projects.find((project) => String(project.id) === formState.project);
 
   const { create: createOffer } = useOfferMutations();
 
@@ -158,11 +158,6 @@ function NewOfferPageContent() {
       // Required fields: project, contractor_name, and amount
       if (!formState.project || !formState.project.trim()) {
         throw new Error('Πρέπει να επιλέξετε έργο');
-      }
-      
-      const projectId = parseInt(formState.project, 10);
-      if (Number.isNaN(projectId) || projectId <= 0) {
-        throw new Error('Μη έγκυρο έργο');
       }
       
       if (!formState.contractor_name || !formState.contractor_name.trim()) {
@@ -174,7 +169,7 @@ function NewOfferPageContent() {
       }
       
       const payload: Record<string, any> = {
-        project: projectId,
+        project: formState.project.trim(), // UUID string
         contractor_name: formState.contractor_name.trim(),
         amount: parseFloat(formState.amount),
         description: formState.description.trim() || '',
@@ -294,11 +289,9 @@ function NewOfferPageContent() {
   };
 
   const canSubmit = Boolean(
-    // Required fields: project, contractor_name, and amount
+    // Required fields: project (UUID string), contractor_name, and amount
     formState.project &&
       formState.project.trim() &&
-      !Number.isNaN(parseInt(formState.project, 10)) &&
-      parseInt(formState.project, 10) > 0 &&
       formState.contractor_name &&
       formState.contractor_name.trim() &&
       formState.amount &&
