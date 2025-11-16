@@ -90,9 +90,12 @@ function NewOfferPageContent() {
   // Auto-validate installments when payment_method changes to installments
   useEffect(() => {
     if (formState.payment_method === 'installments') {
-      validateField('installments', formState.installments);
+      // Only validate if there's no current error or if field is empty (to show error)
+      if (!formState.installments || formState.installments.trim() === '' || fieldErrors.installments) {
+        validateField('installments', formState.installments);
+      }
     }
-  }, [formState.payment_method, formState.installments]);
+  }, [formState.payment_method]);
 
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     // Update form state
