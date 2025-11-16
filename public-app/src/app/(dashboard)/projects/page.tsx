@@ -265,6 +265,19 @@ function ProjectsDashboardContent() {
       danger: "bg-red-50 text-red-600",
     };
 
+    const handleClick = (e: React.MouseEvent) => {
+      if (href && href.includes('#')) {
+        const [path, hash] = href.split('#');
+        if (path === window.location.pathname || path === '') {
+          e.preventDefault();
+          const element = document.getElementById(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }
+    };
+
     const cardContent = (
       <Card className="h-full">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -283,7 +296,7 @@ function ProjectsDashboardContent() {
     );
 
     return href ? (
-      <Link href={href} className="block hover:shadow-md transition-shadow">
+      <Link href={href} className="block hover:shadow-md transition-shadow" onClick={handleClick}>
         {cardContent}
       </Link>
     ) : (
@@ -335,7 +348,7 @@ function ProjectsDashboardContent() {
           description="Όλα τα έργα"
           icon={<FileText className="w-4 h-4" />}
           color="default"
-          href="/projects"
+          href="/projects#projects-list"
         />
         <StatCard
           title="Ενεργά Έργα"
@@ -454,11 +467,20 @@ function ProjectsDashboardContent() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects">
-                <FileText className="w-6 h-6 mb-2" />
-                <span>Όλα τα Έργα</span>
-              </Link>
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 flex-col"
+              onClick={() => {
+                const element = document.getElementById('projects-list');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  router.push('/projects#projects-list');
+                }
+              }}
+            >
+              <FileText className="w-6 h-6 mb-2" />
+              <span>Όλα τα Έργα</span>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
               <Link href="/projects/offers">
@@ -513,7 +535,7 @@ function ProjectsDashboardContent() {
       </Card>
 
       {/* Projects List */}
-      <Card>
+      <Card id="projects-list">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
