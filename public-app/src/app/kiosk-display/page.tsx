@@ -119,6 +119,13 @@ export default function KioskDisplayPage() {
     };
   }, [kioskData?.financial]);
 
+  const showPaymentNotice = useMemo(() => {
+    if (!apartmentDebts.topDebtors.length) return false;
+    const today = new Date();
+    const hasDebts = apartmentDebts.topDebtors.some((debtor) => debtor.hasDebt);
+    return hasDebts && today.getDate() > 15;
+  }, [apartmentDebts.topDebtors]);
+
   // Management office info
   const managementOffice = {
     name: kioskData?.building_info?.management_office_name || 'Γραφείο Διαχείρισης',
@@ -290,13 +297,9 @@ export default function KioskDisplayPage() {
         </div>
 
         {/* Right column - 23% */}
-        <div className="w-[23%] p-4">
-          <section className="h-full rounded-2xl bg-[#222D59] border border-indigo-200/30 shadow-2xl p-4 flex flex-col justify-between">
-            <div>
-              <p className="text-sm text-indigo-200 mb-2">Οφειλές Διαμερισμάτων</p>
-              <h2 className="text-3xl font-bold">{apartmentDebts.totalDebt}</h2>
-            </div>
-            <div className="space-y-3 mt-4">
+        <div className="w-[23%] p-4 flex flex-col">
+          <section className="flex-1 rounded-2xl bg-[#222D59] border border-indigo-200/30 shadow-2xl p-4 flex flex-col">
+            <div className="space-y-3 overflow-y-auto pr-1">
               {apartmentDebts.topDebtors.length > 0 ? (
                 apartmentDebts.topDebtors.map((debtor, index) => (
                   <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
@@ -326,6 +329,12 @@ export default function KioskDisplayPage() {
                 </div>
               )}
             </div>
+            {showPaymentNotice && (
+              <div className="mt-4 rounded-xl bg-yellow-400/10 border border-yellow-300/30 px-3 py-2 text-sm text-yellow-200 flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <p>Υπάρχουν καθυστερήσεις στις πληρωμές για τον τρέχοντα μήνα.</p>
+              </div>
+            )}
           </section>
         </div>
       </div>
