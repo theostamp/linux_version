@@ -245,17 +245,16 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
       if (!announcementsResult.length) {
         try {
-          const fallbackParams: Record<string, string | number> = {
-            page_size: 5,
+          const fallbackParams = new URLSearchParams({
+            page_size: '5',
             ordering: '-created_at',
-          };
+          });
           if (buildingId) {
-            fallbackParams.building = buildingId;
+            fallbackParams.set('building', String(buildingId));
           }
 
           const fallbackResponse = await apiGet<{ results?: PublicAnnouncement[] } | PublicAnnouncement[]>(
-            '/api/announcements/',
-            fallbackParams
+            `/api/announcements/?${fallbackParams.toString()}`
           );
 
           const fallbackAnnouncements = Array.isArray(fallbackResponse)
