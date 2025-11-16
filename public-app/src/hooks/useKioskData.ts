@@ -35,6 +35,7 @@ export interface KioskBuildingInfo {
   office_logo?: string | null;
   management_office_name?: string | null;
   management_office_phone?: string | null;
+  management_office_email?: string | null;
   management_office_address?: string | null;
   internal_manager_name?: string | null;
   internal_manager_phone?: string | null;
@@ -220,6 +221,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         name: 'Άγνωστο Κτίριο',
         address: '',
         city: '',
+        management_office_email: null,
       };
 
       // Transform announcements to match KioskAnnouncement interface
@@ -383,6 +385,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
           office_logo: buildingInfo.office_logo ?? null,
           management_office_name: buildingInfo.management_office_name ?? null,
           management_office_phone: buildingInfo.management_office_phone ?? null,
+           management_office_email: buildingInfo.management_office_email ?? null,
           management_office_address: buildingInfo.management_office_address ?? null,
           internal_manager_name: buildingInfo.internal_manager_name ?? null,
           internal_manager_phone: buildingInfo.internal_manager_phone ?? null
