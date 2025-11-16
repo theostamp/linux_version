@@ -11,6 +11,7 @@ from financial.models import Transaction, Expense
 from maintenance.models import MaintenanceTicket
 from .serializers import AnnouncementPublicSerializer, VotePublicSerializer
 from tenants.models import Domain as TenantDomain
+from financial.services import FinancialDashboardService
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -102,7 +103,11 @@ def building_info(request, building_id: int):
                 'reserve_fund': round(reserve_fund, 2),
                 'recent_expenses': list(recent_expenses),
                 'total_credits': round(total_credits, 2),
-                'total_debits': round(total_debits, 2)
+                'total_debits': round(total_debits, 2),
+                'total_obligations': 0,
+                'current_obligations': 0,
+                'apartment_balances': [],
+                'top_debtors': [],
             }
         except Exception as e:
             financial_data = {
@@ -110,8 +115,56 @@ def building_info(request, building_id: int):
                 'reserve_fund': 0,
                 'recent_expenses': [],
                 'total_credits': 0,
-                'total_debits': 0
+                'total_debits': 0,
+                'total_obligations': 0,
+                'current_obligations': 0,
+                'apartment_balances': [],
+                'top_debtors': [],
             }
+
+        if building_info:
+            try:
+                dashboard_service = FinancialDashboardService(building_id=building_id)
+                apartment_balances = dashboard_service.get_apartment_balances()
+
+                total_obligations_amount = 0.0
+                apartment_balances_payload = []
+
+                for balance in apartment_balances:
+                    current_balance = balance.get('current_balance') or 0
+                    try:
+                        current_balance_value = float(current_balance)
+                    except (TypeError, ValueError):
+                        current_balance_value = 0.0
+
+                    debt_amount = abs(current_balance_value) if current_balance_value < 0 else 0.0
+                    if debt_amount:
+                        total_obligations_amount += debt_amount
+
+                    apartment_balances_payload.append({
+                        'apartment_number': balance.get('apartment_number') or balance.get('number'),
+                        'net_obligation': debt_amount,
+                        'current_balance': current_balance_value,
+                        'owner_name': balance.get('owner_name'),
+                        'tenant_name': balance.get('tenant_name'),
+                        'occupant_name': balance.get('occupant_name'),
+                        'status': balance.get('status'),
+                    })
+
+                top_debtors = sorted(
+                    [apt for apt in apartment_balances_payload if apt['net_obligation'] > 0],
+                    key=lambda item: item['net_obligation'],
+                    reverse=True
+                )
+
+                financial_data.update({
+                    'total_obligations': round(total_obligations_amount, 2),
+                    'current_obligations': round(total_obligations_amount, 2),
+                    'apartment_balances': apartment_balances_payload,
+                    'top_debtors': top_debtors[:5],
+                })
+            except Exception as balance_error:
+                print(f"[public_info] Unable to load apartment balances: {balance_error}")
 
         # Calculate maintenance data
         try:
