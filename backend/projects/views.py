@@ -133,6 +133,19 @@ def update_project_schedule(project, offer=None):
         total_amount = project.final_cost or project.estimated_cost or Decimal('0.00')
         installments = project.installments or 1
         advance_payment = project.advance_payment or Decimal('0.00')
+        
+        # 🔧 DEBUG: Log payment details για debugging
+        logger.info(
+            f"update_project_schedule: Payment details for project {project.id}",
+            extra={
+                'project_id': str(project.id),
+                'payment_method': project.payment_method,
+                'installments': installments,
+                'advance_payment': float(advance_payment),
+                'total_amount': float(total_amount),
+                'will_create_installments': installments > 1 and total_amount > 0,
+            }
+        )
 
         # Επιλογή κατηγορίας
         category = 'project'
@@ -221,6 +234,23 @@ def update_project_schedule(project, offer=None):
             
         # Διαγραφή μόνο αν πέρασε όλους τους ελέγχους
         old_expenses.delete()
+
+        # 🔧 FIX: Ελέγχος αν το payment_method είναι 'installments' αλλά installments <= 1
+        # Σε αυτή την περίπτωση, πρέπει να χρησιμοποιήσουμε το installments από το project
+        if project.payment_method == 'installments' and installments <= 1:
+            logger.warning(
+                f"⚠️ Project {project.id} has payment_method='installments' but installments={installments}. "
+                f"This should not happen - check if installments was saved correctly."
+            )
+            # Αν το project έχει installments > 1, χρησιμοποίησε αυτό
+            if project.installments and project.installments > 1:
+                installments = project.installments
+                logger.info(f"Using project.installments={installments} instead")
+            else:
+                logger.error(
+                    f"❌ Project {project.id} has payment_method='installments' but installments is not set correctly. "
+                    f"Will create one-time expense instead of installments."
+                )
 
         # Αν έχουμε δόσεις, δημιουργούμε επιμερισμένες δαπάνες
         if installments > 1 and total_amount > 0:
@@ -759,10 +789,33 @@ class OfferViewSet(viewsets.ModelViewSet):
             # ΒΗΜΑ 3: Ενημερώνει το έργο με ΟΛΑ τα payment fields
             # ⚠️ ΚΡΙΣΙΜΟ: Πρέπει να αντιγραφούν ΟΛΑ τα πεδία από την προσφορά
             project = offer.project
+            
+            # 🔧 FIX: Αν το payment_method είναι 'installments' αλλά installments είναι None, 
+            # χρησιμοποιούμε προεπιλεγμένη τιμή 1 (αλλά θα πρέπει να έχει οριστεί από τον χρήστη)
+            installments_value = offer.installments
+            if offer.payment_method == 'installments' and (not installments_value or installments_value < 1):
+                logger.warning(
+                    f"⚠️ Offer {offer.id} has payment_method='installments' but installments={installments_value}. "
+                    f"Using default value 1, but this should be set by the user."
+                )
+                installments_value = 1
+            
+            logger.info(
+                f"Updating project {project.id} with payment details",
+                extra={
+                    'project_id': str(project.id),
+                    'offer_id': str(offer.id),
+                    'payment_method': offer.payment_method,
+                    'installments': installments_value,
+                    'advance_payment': float(offer.advance_payment) if offer.advance_payment else None,
+                    'amount': float(offer.amount) if offer.amount else None,
+                }
+            )
+            
             project.selected_contractor = offer.contractor_name  # ΑΠΑΡΑΙΤΗΤΟ για ScheduledMaintenance
             project.final_cost = offer.amount                    # ΑΠΑΡΑΙΤΗΤΟ για δαπάνες
             project.payment_method = offer.payment_method        # ΑΠΑΡΑΙΤΗΤΟ για τύπο πληρωμής
-            project.installments = offer.installments or 1       # ΑΠΑΡΑΙΤΗΤΟ για δόσεις
+            project.installments = installments_value or 1       # ΑΠΑΡΑΙΤΗΤΟ για δόσεις
             project.advance_payment = offer.advance_payment      # ΑΠΑΡΑΙΤΗΤΟ για προκαταβολή
             project.payment_terms = offer.payment_terms
             project.status = 'approved'
