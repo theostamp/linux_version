@@ -208,8 +208,11 @@ export const useKioskData = (buildingId: number | null = 1) => {
     setError(null);
 
     try {
+      const today = new Date();
+      const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
       // Use unified public-info endpoint that returns all kiosk data
-      const publicData = await apiGet<PublicInfoResponse>(`/api/public-info/${buildingId}/`);
+      const publicData = await apiGet<PublicInfoResponse>(`/api/public-info/${buildingId}/?month=${currentMonth}`);
 
       console.log('[useKioskData] API response:', {
         announcementsCount: publicData.announcements?.length || 0,
