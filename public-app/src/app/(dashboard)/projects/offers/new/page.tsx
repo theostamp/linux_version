@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
 import { getActiveBuildingId } from '@/lib/api';
@@ -78,6 +78,14 @@ function NewOfferPageContent() {
     ...INITIAL_FORM,
     project: '',
   });
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!selectedBuilding && buildings.length > 0) {
+      setSelectedBuilding(buildings[0]);
+    }
+  }, [selectedBuilding, buildings, setSelectedBuilding]);
 
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
@@ -634,8 +642,3 @@ export default function NewOfferPage() {
     </AuthGate>
   );
 }
-  useEffect(() => {
-    if (!selectedBuilding && buildings.length > 0) {
-      setSelectedBuilding(buildings[0]);
-    }
-  }, [selectedBuilding, buildings, setSelectedBuilding]);
