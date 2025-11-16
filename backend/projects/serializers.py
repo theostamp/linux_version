@@ -112,11 +112,11 @@ class ProjectExpenseSerializer(serializers.ModelSerializer):
 class ProjectDetailSerializer(ProjectSerializer):
     """Extended serializer for project detail view with related data"""
     offers = OfferSerializer(many=True, read_only=True)
-    votes = ProjectVoteSerializer(many=True, read_only=True)
+    project_votes = ProjectVoteSerializer(many=True, read_only=True, source='project_votes')
     expenses = ProjectExpenseSerializer(many=True, read_only=True)
     
     class Meta(ProjectSerializer.Meta):
-        fields = ProjectSerializer.Meta.fields + ['offers', 'votes', 'expenses']
+        fields = ProjectSerializer.Meta.fields + ['offers', 'project_votes', 'expenses']
 
 
 class OfferDetailSerializer(OfferSerializer):
