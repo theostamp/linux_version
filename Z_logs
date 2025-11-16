@@ -1,258 +1,130 @@
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AuthContext] loadUserOnMount starting...
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [API CALL] Attempting to fetch /api/users/me/
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AuthContext] Token check interval disabled to debug hanging issue
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Current pathname: /buildings/new
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is Dashboard: true
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is Kiosk Mode: false
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is Info Screen: false
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is No Sidebar Route: false
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 AuthContext: Refreshed user data: etherm2021@gmail.com
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [API CALL] Fetching buildings from /buildings/
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [API CALL] Fetching buildings from /buildings/
-76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AuthContext] Token check interval disabled to debug hanging issue
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Loaded buildings: 1 buildings
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Restored stored building: Αλκμάνος 22 (ID: 2)
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] ✓ Auto-selected building: Αλκμάνος 22 (ID: 2)
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Loaded buildings: 1 buildings
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Restored stored building: Αλκμάνος 22 (ID: 2)
-11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] ✓ Auto-selected building: Αλκμάνος 22 (ID: 2)
-
-
-Επιστροφή
-Νέο Κτίριο
-Δημιουργία νέου κτιρίου στο σύστημα
-
-⚠️ Component Missing
-Το CreateBuildingForm component λείπει. Χρειάζεται να δημιουργηθεί για να λειτουργήσει αυτή η σελίδα.
-
-Το component χρειάζεται: AddressAutocomplete, StreetViewImage, και fetchBuildingResidents/fetchApartments API functions.
-
-
-2025-11-13T21:55:25.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/ff4c1217-dd11-472f-bbf2-d3e84b8b7d3c/vol_zybfcqlvz8kkv1o6
-2025-11-13T21:55:26.000000000Z [inf]  Starting Container
-2025-11-13T21:55:27.110865214Z [inf]  🚀 DIGITAL CONCIERGE - CONTAINER STARTUP
-2025-11-13T21:55:27.110869289Z [inf]  ========================================
-2025-11-13T21:55:27.110873104Z [inf]  📅 Deployment: 2025-11-13 21:55:26
-2025-11-13T21:55:27.110877322Z [inf]  📁 Logs directory ready
-2025-11-13T21:55:27.110881320Z [inf]  ⏳ Waiting for Postgres (postgres.railway.internal:5432)...
-2025-11-13T21:55:27.110885364Z [inf]  ✅ Postgres is up!
-2025-11-13T21:55:27.110890678Z [inf]  ⏳ Waiting 5 seconds for Postgres to fully initialize...
-2025-11-13T21:55:31.372541025Z [inf]  ✅ Postgres ready!
-2025-11-13T21:55:31.372550264Z [inf]  
-2025-11-13T21:55:31.372556709Z [inf]  🎯 Running auto-initialization...
-2025-11-13T21:55:33.089848652Z [inf]  🎯 ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ NEW CONCIERGE PLATFORM
-2025-11-13T21:55:33.089854344Z [inf]  ============================================================
-2025-11-13T21:55:33.089859731Z [inf]  🚀 Complete System with Authentication, Authorization, Billing & Analytics
-2025-11-13T21:55:33.089865005Z [inf]  ============================================================
-2025-11-13T21:55:33.242606303Z [inf]  
-2025-11-13T21:55:33.242616746Z [inf]  🔄 Εκτέλεση migrations...
-2025-11-13T21:55:33.242623517Z [inf]  🔍 Έλεγχος για unmigrated changes...
-2025-11-13T21:55:33.242639358Z [inf]  ✅ Σύνδεση βάσης δεδομένων: OK
-2025-11-13T21:55:33.536479305Z [inf]  Migrations for 'financial':
-2025-11-13T21:55:33.536484145Z [inf]    financial/migrations/0051_delete_financialauditlog.py
-2025-11-13T21:55:33.536489256Z [inf]      - Delete model FinancialAuditLog
-2025-11-13T21:55:33.536494956Z [inf]  📦 Shared migrations...
-2025-11-13T21:55:33.536499759Z [inf]  === Starting migration
-2025-11-13T21:55:33.581340246Z [inf]  Operations to perform:
-2025-11-13T21:55:33.581345407Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
-2025-11-13T21:55:34.141170318Z [inf]  === Starting migration
-2025-11-13T21:55:34.141179908Z [inf]  Operations to perform:
-2025-11-13T21:55:34.141186546Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
-2025-11-13T21:55:34.141196932Z [inf]  Running migrations:
-2025-11-13T21:55:34.141201781Z [inf]    No migrations to apply.
-2025-11-13T21:55:34.141212276Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
-2025-11-13T21:55:34.141218034Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
-2025-11-13T21:55:34.141222633Z [inf]  🏢 Tenant migrations...
-2025-11-13T21:55:34.213261782Z [inf]  Running migrations:
-2025-11-13T21:55:34.213279990Z [inf]    No migrations to apply.
-2025-11-13T21:55:34.309579745Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
-2025-11-13T21:55:34.309594884Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
-2025-11-13T21:55:34.565082974Z [inf]  === Starting migration
-2025-11-13T21:55:34.608915662Z [inf]  Operations to perform:
-2025-11-13T21:55:34.608920990Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
-2025-11-13T21:55:35.334251476Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
-2025-11-13T21:55:35.334257213Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
-2025-11-13T21:55:35.334263824Z [inf]  ✅ Tenant migrations ολοκληρώθηκαν για 1 tenant(s)
-2025-11-13T21:55:35.334270231Z [inf]  ✅ Migrations ολοκληρώθηκαν
-2025-11-13T21:55:35.334275366Z [inf]  
-2025-11-13T21:55:35.334280445Z [inf]  🔐 Ρύθμιση RBAC System...
-2025-11-13T21:55:35.334285373Z [inf]  ✅ RBAC System ρυθμίστηκε
-2025-11-13T21:55:35.334289944Z [inf]  
-2025-11-13T21:55:35.334295253Z [inf]  💳 Ρύθμιση Billing System...
-2025-11-13T21:55:35.334300866Z [inf]  ℹ️ Subscription plans υπάρχουν ήδη
-2025-11-13T21:55:35.334305598Z [inf]  
-2025-11-13T21:55:35.334310123Z [inf]  🏠 Δημιουργία public tenant...
-2025-11-13T21:55:35.334314268Z [inf]  ℹ️ Υπάρχει ήδη public tenant
-2025-11-13T21:55:35.334318651Z [inf]  ℹ️ Υπάρχει ήδη domain: localhost
-2025-11-13T21:55:35.334323322Z [inf]  ℹ️ Υπάρχει ήδη Railway domain: linuxversion-production.up.railway.app
-2025-11-13T21:55:35.334328508Z [inf]  Running migrations:
-2025-11-13T21:55:35.334328652Z [inf]  
-2025-11-13T21:55:35.334335744Z [inf]  👑 Δημιουργία Ultra-Superuser...
-2025-11-13T21:55:35.334341081Z [inf]    No migrations to apply.
-2025-11-13T21:55:35.334341283Z [inf]  ✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com
-2025-11-13T21:55:35.532754195Z [inf]  🌐 Demo Tenant Access:
-2025-11-13T21:55:35.532765605Z [inf]     Frontend: http://demo.localhost:8080
-2025-11-13T21:55:35.532772356Z [inf]     Backend API: http://demo.localhost:8000/api/
-2025-11-13T21:55:35.532778175Z [inf]     ✅ Authentication verified - login will work!
-2025-11-13T21:55:35.532780881Z [inf]     Admin Panel: http://demo.localhost:8000/admin/
-2025-11-13T21:55:35.532786887Z [inf]  📄 Credentials αποθηκεύτηκαν: backend/logs/demo_credentials.log
-2025-11-13T21:55:35.532787178Z [inf]  
-2025-11-13T21:55:35.532793962Z [inf]  
-2025-11-13T21:55:35.532797531Z [inf]  ============================================================
-2025-11-13T21:55:35.532802416Z [inf]  🔥 Starting frontend warm-up in background...
-2025-11-13T21:55:35.532805026Z [inf]  ✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ!
-2025-11-13T21:55:35.532810400Z [inf]  
-2025-11-13T21:55:35.532810897Z [inf]  ============================================================
-2025-11-13T21:55:35.532818598Z [inf]  🔥 Frontend Warm-up...
-2025-11-13T21:55:35.532825064Z [inf]  ==================================================
-2025-11-13T21:55:35.532826861Z [inf]  🎯 NEW CONCIERGE PLATFORM - PRODUCTION READY!
-2025-11-13T21:55:35.532833377Z [inf]  ============================================================
-2025-11-13T21:55:35.532838098Z [inf]  
-2025-11-13T21:55:35.532842405Z [inf]  👑 Ultra-Superuser (System Administrator):
-2025-11-13T21:55:35.532847542Z [inf]     URL: http://localhost:8000/admin/
-2025-11-13T21:55:35.532852792Z [inf]     Email: theostam1966@gmail.com
-2025-11-13T21:55:35.532857335Z [inf]     Password: theo123!@#
-2025-11-13T21:55:35.532862152Z [inf]     Permissions: Complete system management
-2025-11-13T21:55:35.532866371Z [inf]  
-2025-11-13T21:55:35.534211646Z [inf]     ✅ Stripe Integration: Ready for payment processing
-2025-11-13T21:55:35.534216091Z [inf]     Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
-2025-11-13T21:55:35.534218229Z [inf]     ✅ Advanced Analytics: Business intelligence
-2025-11-13T21:55:35.534224798Z [inf]  
-2025-11-13T21:55:35.534224997Z [inf]     Mills: 1000/1000/1000 (Participation/Heating/Elevator)
-2025-11-13T21:55:35.534225300Z [inf]     API Documentation: http://demo.localhost:8000/api/docs/
-2025-11-13T21:55:35.534231951Z [inf]  🔐 Security Features:
-2025-11-13T21:55:35.534232567Z [inf]     Financial Data: Zero demo amounts
-2025-11-13T21:55:35.534238511Z [inf]     ✅ RBAC System: Manager & Resident roles
-2025-11-13T21:55:35.534238601Z [inf]  
-2025-11-13T21:55:35.534240338Z [inf]  
-2025-11-13T21:55:35.534244734Z [inf]     ✅ Email Verification: All users verified
-2025-11-13T21:55:35.534246480Z [inf]  💳 Billing System Features:
-2025-11-13T21:55:35.534247031Z [inf]  👥 Demo Users (RBAC Enabled):
-2025-11-13T21:55:35.534251669Z [inf]     ✅ Subscription Plans: Starter, Professional, Enterprise
-2025-11-13T21:55:35.534254957Z [inf]     🔧 Admin: admin@demo.localhost / admin123456
-2025-11-13T21:55:35.534256948Z [inf]     ✅ Demo Subscription: Manager has Starter plan
-2025-11-13T21:55:35.534262336Z [inf]     👨‍💼 Manager: manager@demo.localhost / manager123456
-2025-11-13T21:55:35.534262719Z [inf]     ✅ Usage Tracking: Real-time usage monitoring
-2025-11-13T21:55:35.534267710Z [inf]     👤 Resident 1: resident1@demo.localhost / resident123456
-2025-11-13T21:55:35.534272296Z [inf]     👤 Resident 2: resident2@demo.localhost / resident123456
-2025-11-13T21:55:35.534276863Z [inf]  
-2025-11-13T21:55:35.534281934Z [inf]  🏢 Demo Building: Αλκμάνος 22
-2025-11-13T21:55:35.534287887Z [inf]     Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα
-2025-11-13T21:55:35.536158089Z [inf]     ✅ JWT Authentication: Secure token-based auth
-2025-11-13T21:55:35.536164471Z [inf]     ✅ Rate Limiting: API protection
-2025-11-13T21:55:35.536166236Z [inf]     🧪 API Testing: API_TESTING_GUIDE.md
-2025-11-13T21:55:35.536169387Z [inf]     ✅ Audit Logging: Security monitoring
-2025-11-13T21:55:35.536174718Z [inf]  
-2025-11-13T21:55:35.536175605Z [inf]     🚀 Deployment: DEPLOYMENT_GUIDE.md
-2025-11-13T21:55:35.536179736Z [inf]  📊 System Capabilities:
-2025-11-13T21:55:35.536181452Z [inf]     ⚡ Quick Start: QUICK_START.md
-2025-11-13T21:55:35.536185545Z [inf]     ✅ Complete API: 70+ endpoints
-2025-11-13T21:55:35.536191632Z [inf]     ✅ Admin Portal: System management
-2025-11-13T21:55:35.536193587Z [inf]     📋 Project Summary: PROJECT_SUMMARY.md
-2025-11-13T21:55:35.536198604Z [inf]     ✅ User Management: Full lifecycle
-2025-11-13T21:55:35.536198971Z [inf]     📄 Credentials: backend/logs/demo_credentials.log
-2025-11-13T21:55:35.536204839Z [inf]     ✅ Analytics: Revenue, customer, usage analytics
-2025-11-13T21:55:35.536205627Z [inf]  
-2025-11-13T21:55:35.536211477Z [inf]  🚀 READY FOR PRODUCTION!
-2025-11-13T21:55:35.536213322Z [inf]     ✅ Documentation: Complete user guides
-2025-11-13T21:55:35.536219502Z [inf]     The New Concierge platform is fully operational
-2025-11-13T21:55:35.536221032Z [inf]  
-2025-11-13T21:55:35.536226790Z [inf]     with complete Authentication, Authorization, Billing,
-2025-11-13T21:55:35.536228683Z [inf]  📄 Documentation:
-2025-11-13T21:55:35.536231632Z [inf]     and Analytics systems ready for immediate use!
-2025-11-13T21:55:35.536235931Z [inf]     📚 User Guides: USER_GUIDES.md
-2025-11-13T21:55:35.536241878Z [inf]     ⚙️ System Admin: SYSTEM_ADMINISTRATION_GUIDE.md
-2025-11-13T21:55:36.182521592Z [inf]  
-2025-11-13T21:55:36.182528605Z [inf]  💳 Creating Stripe Prices...
-2025-11-13T21:55:37.361469640Z [inf]  ======================================================================
-2025-11-13T21:55:37.361476491Z [inf]    💳 CREATING STRIPE PRICES
-2025-11-13T21:55:37.361481229Z [inf]  ======================================================================
-2025-11-13T21:55:37.361486884Z [inf]  
-2025-11-13T21:55:37.524609261Z [inf]  📦 Processing plan: Starter
-2025-11-13T21:55:37.524616066Z [inf]     ℹ️  Product already exists: prod_TOFuyDd8xL00Qj
-2025-11-13T21:55:37.524620640Z [inf]     ℹ️  Monthly price already exists: price_1SRTOWRpRJxSaTlvGW7HG6nV
-2025-11-13T21:55:37.524624671Z [inf]     ℹ️  Yearly price already exists: price_1SRTOWRpRJxSaTlvjenESiFp
-2025-11-13T21:55:37.524630397Z [inf]     💾 Plan saved with Stripe IDs
-2025-11-13T21:55:37.524634603Z [inf]  
-2025-11-13T21:55:37.524638412Z [inf]  📦 Processing plan: Professional
-2025-11-13T21:55:37.524642713Z [inf]     ℹ️  Product already exists: prod_TOFu4XWM2Nkhmz
-2025-11-13T21:55:37.524646677Z [inf]     ℹ️  Monthly price already exists: price_1SRTOXRpRJxSaTlvGxr0dG80
-2025-11-13T21:55:37.524650608Z [inf]     ℹ️  Yearly price already exists: price_1SRTOXRpRJxSaTlvpDkyhk4c
-2025-11-13T21:55:37.526113118Z [inf]     💾 Plan saved with Stripe IDs
-2025-11-13T21:55:37.526119331Z [inf]  
-2025-11-13T21:55:37.526123861Z [inf]  📦 Processing plan: Enterprise
-2025-11-13T21:55:37.526128675Z [inf]     ℹ️  Product already exists: prod_TOFuZdgY8iNsC7
-2025-11-13T21:55:37.526134219Z [inf]     ℹ️  Monthly price already exists: price_1SRTOXRpRJxSaTlvlN1NVzHu
-2025-11-13T21:55:37.526134471Z [inf]     ℹ️  Yearly price already exists: price_1SRTOYRpRJxSaTlvIsi8rcDG
-2025-11-13T21:55:37.534824546Z [inf]     💾 Plan saved with Stripe IDs
-2025-11-13T21:55:37.534832309Z [inf]  
-2025-11-13T21:55:37.534836933Z [inf]  ======================================================================
-2025-11-13T21:55:37.534837818Z [inf]        Product ID: prod_TOFu4XWM2Nkhmz
-2025-11-13T21:55:37.534841189Z [inf]    ✅ STRIPE PRICES CREATED SUCCESSFULLY!
-2025-11-13T21:55:37.534845429Z [inf]  ======================================================================
-2025-11-13T21:55:37.534849862Z [inf]  
-2025-11-13T21:55:37.534855020Z [inf]  📊 Summary:
-2025-11-13T21:55:37.534855518Z [inf]        Monthly Price ID: price_1SRTOXRpRJxSaTlvGxr0dG80
-2025-11-13T21:55:37.534859623Z [inf]     Starter:
-2025-11-13T21:55:37.534864592Z [inf]        Product ID: prod_TOFuyDd8xL00Qj
-2025-11-13T21:55:37.534864965Z [inf]        Yearly Price ID: price_1SRTOXRpRJxSaTlvpDkyhk4c
-2025-11-13T21:55:37.534869569Z [inf]        Monthly Price ID: price_1SRTOWRpRJxSaTlvGW7HG6nV
-2025-11-13T21:55:37.534873956Z [inf]  
-2025-11-13T21:55:37.534874485Z [inf]        Yearly Price ID: price_1SRTOWRpRJxSaTlvjenESiFp
-2025-11-13T21:55:37.534879964Z [inf]  
-2025-11-13T21:55:37.534882763Z [inf]     Enterprise:
-2025-11-13T21:55:37.534885312Z [inf]     Professional:
-2025-11-13T21:55:37.534890322Z [inf]        Product ID: prod_TOFuZdgY8iNsC7
-2025-11-13T21:55:37.534901362Z [inf]        Monthly Price ID: price_1SRTOXRpRJxSaTlvlN1NVzHu
-2025-11-13T21:55:37.534907672Z [inf]        Yearly Price ID: price_1SRTOYRpRJxSaTlvIsi8rcDG
-2025-11-13T21:55:37.534913721Z [inf]  
-2025-11-13T21:55:37.714572192Z [inf]  
-2025-11-13T21:55:37.714578918Z [inf]  🔄 Running additional migrations...
-2025-11-13T21:55:37.714583686Z [inf]     AUTO_MAKEMIGRATIONS=unset
-2025-11-13T21:55:37.714588158Z [inf]  
-2025-11-13T21:55:37.714592279Z [inf]  📦 Collecting static files...
-2025-11-13T21:55:39.370818148Z [inf]  
-2025-11-13T21:55:39.370824732Z [inf]  163 static files copied to '/app/staticfiles'.
-2025-11-13T21:55:39.533171537Z [inf]  
-2025-11-13T21:55:39.533177538Z [inf]  🔥 Initiating frontend warm-up process...
-2025-11-13T21:55:39.533186043Z [inf]  🚂 Railway deployment detected - skipping frontend warm-up
-2025-11-13T21:55:39.533190527Z [inf]     Frontend is deployed separately on Vercel
-2025-11-13T21:55:39.533194427Z [inf]  
-2025-11-13T21:55:39.533198169Z [inf]  🚀 Launching Django server...
-2025-11-13T21:55:39.533202394Z [inf]     🌐 Production mode detected
-2025-11-13T21:55:39.533206468Z [inf]     Starting gunicorn on port 8080
-2025-11-13T21:55:40.388616178Z [err]  [2025-11-13 21:55:40 +0000] [17] [INFO] Booting worker with pid: 17
-2025-11-13T21:55:40.388763158Z [err]  [2025-11-13 21:55:40 +0000] [1] [INFO] Starting gunicorn 21.2.0
-2025-11-13T21:55:40.388768187Z [err]  [2025-11-13 21:55:40 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
-2025-11-13T21:55:40.388772774Z [err]  [2025-11-13 21:55:40 +0000] [1] [INFO] Using worker: sync
-2025-11-13T21:55:40.388777265Z [err]  [2025-11-13 21:55:40 +0000] [16] [INFO] Booting worker with pid: 16
-2025-11-13T21:56:39.749739000Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-2025-11-13T21:56:39.749749417Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-2025-11-13T21:56:39.749757586Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-2025-11-13T21:56:39.749764819Z [inf]  100.64.0.2 - - [13/Nov/2025:23:56:37 +0200] "GET /api/users/me/ HTTP/1.1" 200 424 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-2025-11-13T21:56:39.749772096Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-2025-11-13T21:56:39.749779796Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-2025-11-13T21:56:39.749786238Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-2025-11-13T21:56:39.749796265Z [inf]  🔍 BuildingViewSet.list() called
-2025-11-13T21:56:39.749803100Z [err]  INFO 2025-11-13 23:56:38,473 views 16 140720062122880 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 806) in tenant: theo
-2025-11-13T21:56:39.749809679Z [err]  INFO 2025-11-13 23:56:38,473 views 16 140720062122880 User is superuser/staff. Returning all buildings.
-2025-11-13T21:56:39.749816378Z [err]  /usr/local/lib/python3.12/site-packages/rest_framework/pagination.py:207: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'buildings.models.Building'> QuerySet.
-2025-11-13T21:56:39.749822761Z [err]    paginator = self.django_paginator_class(queryset, page_size)
-2025-11-13T21:56:39.749828972Z [inf]  🔍 BuildingViewSet.list() response count: 1
-2025-11-13T21:56:39.751037086Z [inf]  🔍 First building street view image: None
-2025-11-13T21:56:39.751041120Z [inf]  100.64.0.2 - - [13/Nov/2025:23:56:38 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 1086 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-2025-11-13T21:57:29.766802501Z [inf]  🔍 BuildingViewSet.list() response count: 1
-2025-11-13T21:57:29.766811020Z [inf]  🔍 First building street view image: None
-2025-11-13T21:57:29.766816691Z [inf]  100.64.0.2 - - [13/Nov/2025:23:57:21 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 1086 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-2025-11-13T21:57:29.766836865Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-2025-11-13T21:57:29.766842349Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-2025-11-13T21:57:29.766848042Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-2025-11-13T21:57:29.766853332Z [inf]  100.64.0.2 - - [13/Nov/2025:23:57:20 +0200] "GET /api/users/me/ HTTP/1.1" 200 424 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-2025-11-13T21:57:29.766858717Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-2025-11-13T21:57:29.766936540Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-2025-11-13T21:57:29.766942400Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-2025-11-13T21:57:29.766948257Z [inf]  🔍 BuildingViewSet.list() called
-2025-11-13T21:57:29.766955401Z [err]  INFO 2025-11-13 23:57:21,267 views 16 140720062122880 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 806) in tenant: theo
-2025-11-13T21:57:29.766961348Z [err]  INFO 2025-11-13 23:57:21,267 views 16 140720062122880 User is superuser/staff. Returning all buildings.
+DEBUG 2025-11-16 08:29:46,552 monthly_balance_service 17 139773160139648    📊 Παλαιότερες οφειλές: €0.00
+DEBUG 2025-11-16 08:29:46,557 monthly_balance_service 17 139773160139648    🏢 Διαχειριστικά έξοδα: €0.00
+DEBUG 2025-11-16 08:29:46,562 monthly_balance_service 17 139773160139648    🏦 Αποθεματικό: €1000.00
+DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    🔧 Προγραμματισμένα έργα: €0.00
+DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    ⚖️ Καθαρό αποτέλεσμα: €-1000.00
+DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    🔄 Carry Forward: €1000.00
+INFO 2025-11-16 08:29:46,570 monthly_balance_service 17 139773160139648    ✅ Ενημερώθηκε υπάρχον record για 11/2025
+📊 Apartment Α1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €100.00
+   Payments This Month: €0.00
+   Net Obligation: €100.00
+📊 Apartment Α2 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €97.00
+   Payments This Month: €0.00
+   Net Obligation: €97.00
+📊 Apartment Α3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €88.00
+   Payments This Month: €0.00
+   Net Obligation: €88.00
+📊 Apartment Β1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €110.00
+   Payments This Month: €0.00
+   Net Obligation: €110.00
+📊 Apartment Β2 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €105.00
+   Payments This Month: €0.00
+   Net Obligation: €105.00
+📊 Apartment Β3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €98.00
+   Payments This Month: €0.00
+   Net Obligation: €98.00
+📊 Apartment Γ1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €92.00
+   Payments This Month: €0.00
+   Net Obligation: €92.00
+📊 Apartment Γ2 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €115.00
+   Payments This Month: €0.00
+   Net Obligation: €115.00
+📊 Apartment Γ3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €108.00
+   Payments This Month: €0.00
+   Net Obligation: €108.00
+📊 Apartment Δ1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €87.00
+   Payments This Month: €0.00
+   Net Obligation: €87.00
+/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2025-11-01 00:00:00) while time zone support is active.
+  warnings.warn(
+/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2025-12-01 00:00:00) while time zone support is active.
+⚠️ MonthlyBalance not found for 10/2025, using raw calculation
+   ✅ Overall activity: True
+   📤 Has expenses: True
+🔍 FinancialDashboard (snapshot_2025-11): current_reserve=-1000.00, total_obligations=0.00
+   📥 Has payments: False
+🔍 FinancialDashboard (snapshot_2025-11): total_balance=-2000.00
+   📋 Has issued expenses: True
+   Previous obligations for 2025-11: €0.00
+   System start date: 2025-11-01
+   Expenses before month (from 2025-11-01): €0.00
+   Payments before month (from 2025-11-01): €0.00
+🔧 TOTAL BALANCE: current_reserve=-1000.00 - current_obligations=1000.00 = -2000.00
+🔧 CURRENT MONTH EXPENSES: 1000.00 = 1000.00 - 0.00
+100.64.0.3 - - [16/Nov/2025:08:29:46 +0200] "GET /api/financial/dashboard/summary/?building_id=1&month=2025-11 HTTP/1.1" 200 9681 "https://theo.newconcierge.app/financial?month=2025-12&building=1&tab=balances" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+  warnings.warn(
+🔍 Monthly Activity Check for 2025-11:
+📊 Apartment Α1 - 2025-11:
+   Current Month Expenses: €110.00
+   Previous Balance: €0.00
+   Current Month Expenses: €100.00
+   Payments This Month: €0.00
+   Payments This Month: €0.00
+   Net Obligation: €100.00
+   Net Obligation: €110.00
+📊 Apartment Α2 - 2025-11:
+   Previous Balance: €0.00
+📊 Apartment Β2 - 2025-11:
+   Current Month Expenses: €97.00
+   Payments This Month: €0.00
+   Net Obligation: €97.00
+📊 Apartment Α3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €88.00
+   Payments This Month: €0.00
+   Net Obligation: €88.00
+📊 Apartment Β1 - 2025-11:
+   Previous Balance: €0.00
+🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+   Previous Balance: €0.00
+   Current Month Expenses: €105.00
+   Payments This Month: €0.00
+   Net Obligation: €105.00
+📊 Apartment Β3 - 2025-11:
+   Previous Balance: €0.00
+   Previous Balance: €0.00
+   Current Month Expenses: €115.00
+   Current Month Expenses: €98.00
+   Payments This Month: €0.00
+   Payments This Month: €0.00
+   Net Obligation: €98.00
+📊 Apartment Γ1 - 2025-11:
+   Previous Balance: €0.00
+   Net Obligation: €115.00
+   Current Month Expenses: €92.00
+📊 Apartment Γ3 - 2025-11:
+   Payments This Month: €0.00
+   Previous Balance: €0.00
+   Net Obligation: €92.00
+   Current Month Expenses: €108.00
+📊 Apartment Γ2 - 2025-11:
+   Payments This Month: €0.00
+   Net Obligation: €108.00
+📊 Apartment Δ1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €87.00
+   Payments This Month: €0.00
+   Net Obligation: €87.00
+100.64.0.3 - - [16/Nov/2025:08:29:47 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=1&month=2025-11 HTTP/1.1" 200 4603 "https://theo.newconcierge.app/financial?month=2025-12&building=1&tab=balances" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
