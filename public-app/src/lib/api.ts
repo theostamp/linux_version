@@ -327,11 +327,25 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const res = await fetch(url, {
+      const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+      const headers = getHeaders('POST');
+      if (isFormData) {
+        delete headers['Content-Type'];
+      }
+      const requestInit: RequestInit = {
         method: "POST",
-        headers: getHeaders('POST'),
-        body: JSON.stringify(body),
+        headers,
         credentials: "include",
+      };
+      if (body !== undefined && body !== null) {
+        requestInit.body = isFormData ? (body as FormData) : JSON.stringify(body);
+      } else if (!isFormData) {
+        // For empty JSON bodies ensure correct header but no body
+        delete headers['Content-Type'];
+      }
+
+      const res = await fetch(url, {
+        ...requestInit,
       });
       
       if (!res.ok) {
@@ -388,13 +402,23 @@ async function exponentialBackoff(attempt: number, maxAttempts: number = 3): Pro
  */
 export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   const url = getApiUrl(path);
-  
-  const res = await fetch(url, {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const headers = getHeaders('PUT');
+  if (isFormData) {
+    delete headers['Content-Type'];
+  }
+  const requestInit: RequestInit = {
     method: "PUT",
-    headers: getHeaders('PUT'),
-    body: JSON.stringify(body),
+    headers,
     credentials: "include",
-  });
+  };
+  if (body !== undefined && body !== null) {
+    requestInit.body = isFormData ? (body as FormData) : JSON.stringify(body);
+  } else if (!isFormData) {
+    delete headers['Content-Type'];
+  }
+
+  const res = await fetch(url, requestInit);
   
   if (!res.ok) {
     const text = await res.text();
@@ -410,13 +434,23 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
  */
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   const url = getApiUrl(path);
-  
-  const res = await fetch(url, {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const headers = getHeaders('PATCH');
+  if (isFormData) {
+    delete headers['Content-Type'];
+  }
+  const requestInit: RequestInit = {
     method: "PATCH",
-    headers: getHeaders('PATCH'),
-    body: JSON.stringify(body),
+    headers,
     credentials: "include",
-  });
+  };
+  if (body !== undefined && body !== null) {
+    requestInit.body = isFormData ? (body as FormData) : JSON.stringify(body);
+  } else if (!isFormData) {
+    delete headers['Content-Type'];
+  }
+
+  const res = await fetch(url, requestInit);
   
   if (!res.ok) {
     const text = await res.text();

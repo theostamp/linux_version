@@ -84,11 +84,7 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
         formData.append('add_to_calendar', data.add_to_calendar.toString());
       }
 
-      const response = await api.post('/financial/expenses/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post('/financial/expenses/', formData);
 
       // Refresh expenses list after creating new expense
       await loadExpenses();
