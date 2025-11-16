@@ -324,29 +324,31 @@ function NewOfferPageContent() {
                       Δεν υπάρχουν διαθέσιμα έργα για το κτίριο. Δημιουργήστε πρώτα ένα έργο.
                     </p>
                   ) : (
-                    <Select 
-                      value={formState.project} 
-                      onValueChange={(value) => handleFieldChange('project', value)}
-                      onOpenChange={(open) => {
-                        if (!open && formState.project) {
-                          handleFieldBlur('project');
-                        }
-                      }}
-                    >
-                      <SelectTrigger className={fieldErrors.project ? 'border-red-500' : ''}>
-                        <SelectValue placeholder="Επιλέξτε έργο" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={String(project.id)}>
-                            {project.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {fieldErrors.project && (
-                      <p className="text-sm text-red-500">{fieldErrors.project}</p>
-                    )}
+                    <>
+                      <Select 
+                        value={formState.project} 
+                        onValueChange={(value) => handleFieldChange('project', value)}
+                        onOpenChange={(open) => {
+                          if (!open && formState.project) {
+                            handleFieldBlur('project');
+                          }
+                        }}
+                      >
+                        <SelectTrigger className={fieldErrors.project ? 'border-red-500' : ''}>
+                          <SelectValue placeholder="Επιλέξτε έργο" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={String(project.id)}>
+                              {project.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldErrors.project && (
+                        <p className="text-sm text-red-500">{fieldErrors.project}</p>
+                      )}
+                    </>
                   )}
                 </div>
 
