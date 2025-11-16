@@ -87,6 +87,13 @@ function NewOfferPageContent() {
     }
   }, [selectedBuilding, buildings, setSelectedBuilding]);
 
+  // Auto-validate installments when payment_method changes to installments
+  useEffect(() => {
+    if (formState.payment_method === 'installments') {
+      validateField('installments', formState.installments);
+    }
+  }, [formState.payment_method]);
+
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     // Update form state
     setFormState((prev) => ({ ...prev, [field]: value }));
@@ -109,16 +116,8 @@ function NewOfferPageContent() {
           delete newErrors.installments;
           return newErrors;
         });
-      } else if (value === 'installments') {
-        // Auto-validate installments when switching to installments
-        // Use setTimeout to ensure formState is updated
-        setTimeout(() => {
-          setFormState((currentState) => {
-            validateField('installments', currentState.installments);
-            return currentState;
-          });
-        }, 0);
       }
+      // Note: Auto-validation of installments when switching to installments is handled by useEffect
     }
     
     // Auto-clear installments error when typing valid number
