@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
 import { getActiveBuildingId } from '@/lib/api';
@@ -87,22 +87,6 @@ function NewOfferPageContent() {
     }
   }, [selectedBuilding, buildings, setSelectedBuilding]);
 
-  // Auto-validate installments when payment_method changes
-  useEffect(() => {
-    if (formState.payment_method === 'installments') {
-      validateField('installments', formState.installments);
-    } else {
-      // Clear installments error if payment_method is not installments
-      if (fieldErrors.installments) {
-        setFieldErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors.installments;
-          return newErrors;
-        });
-      }
-    }
-  }, [formState.payment_method]);
-
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
@@ -110,6 +94,15 @@ function NewOfferPageContent() {
       setFieldErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        return newErrors;
+      });
+    }
+    
+    // Auto-clear installments error when payment method changes away from installments
+    if (field === 'payment_method' && value !== 'installments' && fieldErrors.installments) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.installments;
         return newErrors;
       });
     }
@@ -270,9 +263,10 @@ function NewOfferPageContent() {
       formState.amount &&
       !Number.isNaN(parseFloat(formState.amount)) &&
       parseFloat(formState.amount) > 0 &&
-      // If payment_method is installments, installments must be provided
-      (formState.payment_method !== 'installments' || (formState.installments && formState.installments.trim() !== '' && !Number.isNaN(parseInt(formState.installments, 10)) && parseInt(formState.installments, 10) > 0)) &&
-      Object.keys(fieldErrors).length === 0,
+      Object.keys(fieldErrors).length === 0 &&
+      // Extra check: if payment_method is installments, installments must be provided
+      (formState.payment_method !== 'installments' || 
+       (formState.installments && !Number.isNaN(parseInt(formState.installments, 10)) && parseInt(formState.installments, 10) > 0)),
   );
 
   return (
