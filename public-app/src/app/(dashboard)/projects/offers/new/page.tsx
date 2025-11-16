@@ -92,7 +92,7 @@ function NewOfferPageContent() {
     if (formState.payment_method === 'installments') {
       validateField('installments', formState.installments);
     }
-  }, [formState.payment_method]);
+  }, [formState.payment_method, formState.installments]);
 
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     // Update form state
