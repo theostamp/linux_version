@@ -30,12 +30,12 @@ def sync_project_todo(sender, instance: Project, created, **kwargs):
     # Δημιουργία ανακοίνωσης για νέο έργο
     if created:
         create_project_announcement(instance)
+        # Δημιουργία αυτόματης ψηφοφορίας για έγκριση έργου (ΠΑΝΤΑ για νέα έργα)
+        create_project_vote(instance)
 
         # Δημιουργία ξεχωριστής ανακοίνωσης για γενική συνέλευση αν υπάρχει
         if instance.general_assembly_date:
             create_assembly_announcement(instance)
-            # Δημιουργία αυτόματης ψηφοφορίας για έγκριση έργου
-            create_project_vote(instance)
     else:
         # Αν ενημερώνεται το έργο και προστέθηκε general_assembly_date
         # ελέγχουμε αν υπάρχει ήδη ανακοίνωση για τη συνέλευση
@@ -480,6 +480,13 @@ def create_project_vote(project: Project):
             # Αν υπάρχει ήδη ενεργή ψηφοφορία, δεν δημιουργούμε νέα
             return
         
+        # Προσδιορισμός end_date: προτεραιότητα σε general_assembly_date, μετά deadline, μετά None
+        end_date = None
+        if project.general_assembly_date:
+            end_date = project.general_assembly_date
+        elif project.deadline:
+            end_date = project.deadline
+        
         # Δημιουργία νέας ψηφοφορίας
         vote = Vote.objects.create(
             building=project.building,
@@ -498,7 +505,7 @@ def create_project_vote(project: Project):
 
 Όλοι οι ιδιοκτήτες καλούνται να συμμετάσχουν στην ψηφοφορία για την έγκριση του έργου.""",
             start_date=project.created_at.date(),
-            end_date=project.general_assembly_date,
+            end_date=end_date,
             is_active=True,
             is_urgent=True,
             min_participation=0,  # Default - μπορεί να αλλάξει από τον διαχειριστή

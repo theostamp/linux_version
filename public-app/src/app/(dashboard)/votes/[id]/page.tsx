@@ -278,13 +278,14 @@ export default function VoteDetailPage() {
         )
       )}
 
-      {results && voteWithExtras.choices && (
+      {results && results.results && voteWithExtras.choices && (
         <div className="bg-white border rounded-lg p-6">
           <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">📊 Αποτελέσματα Ψηφοφορίας</h2>
           <div className="space-y-4">
             {voteWithExtras.choices.map((choice: string) => {
-              const count = results.results[choice] || 0;
-              const percent = ((count / (results.total || 1)) * 100).toFixed(1);
+              const count = results.results?.[choice] || 0;
+              const total = results.total || 0;
+              const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
               return (
                 <div key={choice} className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -305,7 +306,7 @@ export default function VoteDetailPage() {
 
             <div className="pt-4 border-t border-gray-200">
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Σύνολο ψήφων: {results.total}</span>
+                <span>Σύνολο ψήφων: {results.total || 0}</span>
                 {voteWithExtras.participation_percentage !== undefined && (
                   <span>Συμμετοχή: {voteWithExtras.participation_percentage}%</span>
                 )}

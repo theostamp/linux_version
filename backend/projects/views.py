@@ -38,6 +38,20 @@ def update_project_schedule(project, offer=None):
     - OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(
+        f"update_project_schedule called for project {project.id}",
+        extra={
+            'project_id': str(project.id),
+            'project_title': project.title,
+            'offer_id': str(offer.id) if offer else None,
+            'contractor_name': offer.contractor_name if offer else project.selected_contractor,
+            'final_cost': float(project.final_cost) if project.final_cost else None,
+        }
+    )
+    
     try:
         from financial.models import Expense
         from maintenance.models import ScheduledMaintenance, PaymentSchedule
@@ -78,6 +92,24 @@ def update_project_schedule(project, offer=None):
                 'created_by': project.created_by,
             }
         )
+        
+        if created:
+            logger.info(
+                f"ScheduledMaintenance created for project {project.id}",
+                extra={
+                    'scheduled_maintenance_id': scheduled_maintenance.id,
+                    'project_id': str(project.id),
+                    'title': scheduled_maintenance.title,
+                }
+            )
+        else:
+            logger.info(
+                f"ScheduledMaintenance updated for project {project.id}",
+                extra={
+                    'scheduled_maintenance_id': scheduled_maintenance.id,
+                    'project_id': str(project.id),
+                }
+            )
 
         if not created:
             # Ενημέρωση υπάρχοντος ScheduledMaintenance
@@ -245,6 +277,15 @@ def update_project_schedule(project, offer=None):
                         'created_at': datetime.now().isoformat(),
                     },
                 )
+                logger.info(
+                    f"Advance payment expense created for project {project.id}",
+                    extra={
+                        'expense_id': advance_expense.id,
+                        'project_id': str(project.id),
+                        'amount': float(advance_payment),
+                        'date': str(advance_date),
+                    }
+                )
 
             # Δημιουργία δόσεων (μελλοντικοί μήνες)
             # ΔΙΟΡΘΩΣΗ: Οι δόσεις ξεκινούν από τον ΕΠΟΜΕΝΟ μήνα μετά την προκαταβολή
@@ -312,6 +353,17 @@ def update_project_schedule(project, offer=None):
                         'created_at': datetime.now().isoformat(),
                     },
                 )
+                logger.info(
+                    f"Installment expense {i}/{installments} created for project {project.id}",
+                    extra={
+                        'expense_id': installment_expense.id,
+                        'project_id': str(project.id),
+                        'installment_number': i,
+                        'total_installments': installments,
+                        'amount': float(installment_amount),
+                        'date': str(installment_date),
+                    }
+                )
 
         else:
             # Αν δεν έχουμε δόσεις, δημιουργούμε μία δαπάνη
@@ -342,6 +394,15 @@ def update_project_schedule(project, offer=None):
             # Σύνδεση του έργου με τη δαπάνη
             project.linked_expense = expense
             project.save(update_fields=['linked_expense'])
+            logger.info(
+                f"One-time expense created for project {project.id}",
+                extra={
+                    'expense_id': expense.id,
+                    'project_id': str(project.id),
+                    'amount': float(total_amount),
+                    'date': str(project.created_at.date()),
+                }
+            )
 
         # Ενημέρωση με WebSocket
         publish_building_event(
@@ -355,11 +416,26 @@ def update_project_schedule(project, offer=None):
             },
         )
         
+        logger.info(
+            f"update_project_schedule completed successfully for project {project.id}",
+            extra={
+                'project_id': str(project.id),
+                'scheduled_maintenance_id': scheduled_maintenance.id if scheduled_maintenance else None,
+                'expenses_created': True,
+            }
+        )
+        
     except Exception as e:
         # Log the error but don't fail the project approval
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to update project schedule for project {project.id}: {e}")
+        logger.error(
+            f"Failed to update project schedule for project {project.id}: {e}",
+            extra={
+                'project_id': str(project.id),
+                'error_type': type(e).__name__,
+                'error_message': str(e),
+            },
+            exc_info=True
+        )
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -588,6 +664,55 @@ class OfferViewSet(viewsets.ModelViewSet):
             return OfferDetailSerializer
         return OfferSerializer
 
+    def create(self, request, *args, **kwargs):
+        """Create offer with detailed logging"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(
+            f"Offer creation attempt by user {request.user.id}",
+            extra={
+                'user_id': request.user.id,
+                'user_email': getattr(request.user, 'email', None),
+                'payload': request.data,
+                'building_id': request.data.get('project') and self._get_project_building_id(request.data.get('project')),
+            }
+        )
+        
+        try:
+            response = super().create(request, *args, **kwargs)
+            offer_id = response.data.get('id') if hasattr(response, 'data') else None
+            logger.info(
+                f"Offer created successfully: {offer_id}",
+                extra={
+                    'offer_id': offer_id,
+                    'user_id': request.user.id,
+                    'project_id': request.data.get('project'),
+                }
+            )
+            return response
+        except Exception as e:
+            logger.error(
+                f"Offer creation failed: {str(e)}",
+                extra={
+                    'user_id': request.user.id,
+                    'payload': request.data,
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                },
+                exc_info=True
+            )
+            raise
+
+    def _get_project_building_id(self, project_id):
+        """Helper to get building ID from project ID"""
+        try:
+            from .models import Project
+            project = Project.objects.filter(id=project_id).first()
+            return project.building_id if project else None
+        except:
+            return None
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """
@@ -602,7 +727,21 @@ class OfferViewSet(viewsets.ModelViewSet):
         Δείτε: OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         offer = self.get_object()
+        logger.info(
+            f"Approving offer {offer.id} for project {offer.project.id}",
+            extra={
+                'offer_id': str(offer.id),
+                'project_id': str(offer.project.id),
+                'contractor_name': offer.contractor_name,
+                'amount': float(offer.amount) if offer.amount else None,
+                'user_id': request.user.id,
+            }
+        )
+        
         with transaction.atomic():
             # ΒΗΜΑ 1: Εγκρίνει την προσφορά
             offer.status = 'accepted'
@@ -632,8 +771,20 @@ class OfferViewSet(viewsets.ModelViewSet):
             # ΒΗΜΑ 4: 🔴 ΚΡΙΣΙΜΟ - ΜΗΝ ΑΦΑΙΡΕΣΕΤΕ ΑΥΤΗ ΤΗ ΓΡΑΜΜΗ
             # Δημιουργεί αυτόματα ScheduledMaintenance και Expenses
             # Χωρίς αυτήν ΔΕΝ θα υπάρξει σύνδεση με το maintenance module!
+            logger.info(f"Calling update_project_schedule for project {project.id}")
             update_project_schedule(project, offer)
+            logger.info(f"update_project_schedule completed for project {project.id}")
 
+        logger.info(
+            f"Offer {offer.id} approved successfully",
+            extra={
+                'offer_id': str(offer.id),
+                'project_id': str(offer.project.id),
+                'project_status': project.status,
+                'project_final_cost': float(project.final_cost) if project.final_cost else None,
+            }
+        )
+        
         publish_building_event(
             building_id=offer.project.building_id,
             event_type='offer.approved',

@@ -302,21 +302,18 @@ export default function KioskDisplayPage() {
             <div className="space-y-3 overflow-y-auto pr-1">
               {apartmentDebts.topDebtors.length > 0 ? (
                 apartmentDebts.topDebtors.map((debtor, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        {debtor.hasDebt ? (
-                          <ShieldAlert className="w-4 h-4 text-orange-300" />
-                        ) : (
-                          <span className="text-green-300 text-lg" aria-hidden>
-                            ✓
-                          </span>
-                        )}
-                        <span className="font-medium text-white">{debtor.apartment}</span>
-                      </div>
-                      {debtor.occupant && (
-                        <p className="text-xs text-indigo-200 mt-0.5">{debtor.occupant}</p>
+                  <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                    <div className="flex items-center gap-2">
+                      {debtor.hasDebt ? (
+                        <ShieldAlert className="w-4 h-4 text-orange-300" />
+                      ) : (
+                        <span className="text-green-300 text-base leading-none" aria-hidden>
+                          ✓
+                        </span>
                       )}
+                      <span className="text-white font-medium">
+                        {`${debtor.apartment} · ${debtor.occupant || '—'}`}
+                      </span>
                     </div>
                     <span className={debtor.hasDebt ? 'text-orange-300 font-semibold' : 'text-white font-semibold'}>
                       {debtor.hasDebt ? debtor.amount : '€0'}
