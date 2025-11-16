@@ -88,8 +88,37 @@ function NewOfferPageContent() {
   }, [selectedBuilding, buildings, setSelectedBuilding]);
 
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
-    const newFormState = { ...formState, [field]: value };
-    setFormState(newFormState);
+    setFormState((prev) => {
+      const newFormState = { ...prev, [field]: value };
+      
+      // Handle payment_method changes - validate installments when switching to installments
+      if (field === 'payment_method' && value === 'installments') {
+        // Auto-validate installments when switching to installments
+        setTimeout(() => {
+          validateField('installments', newFormState.installments);
+        }, 0);
+      }
+      
+      // Auto-validate installments when typing in installments field and payment_method is installments
+      if (field === 'installments' && newFormState.payment_method === 'installments' && value.trim() !== '') {
+        const num = parseInt(value, 10);
+        if (!Number.isNaN(num) && num > 0) {
+          // Clear error if valid
+          setTimeout(() => {
+            setFieldErrors((prev) => {
+              if (prev.installments) {
+                const newErrors = { ...prev };
+                delete newErrors.installments;
+                return newErrors;
+              }
+              return prev;
+            });
+          }, 0);
+        }
+      }
+      
+      return newFormState;
+    });
     
     // Clear error when user starts typing
     if (fieldErrors[field]) {
@@ -100,36 +129,13 @@ function NewOfferPageContent() {
       });
     }
     
-    // Handle payment_method changes
-    if (field === 'payment_method') {
-      if (value !== 'installments' && fieldErrors.installments) {
-        // Clear installments error when switching away from installments
-        setFieldErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors.installments;
-          return newErrors;
-        });
-      } else if (value === 'installments') {
-        // Auto-validate installments when switching to installments
-        setTimeout(() => {
-          validateField('installments', newFormState.installments);
-        }, 0);
-      }
-    }
-    
-    // Auto-validate installments when typing in installments field and payment_method is installments
-    if (field === 'installments' && newFormState.payment_method === 'installments' && value.trim() !== '') {
-      const num = parseInt(value, 10);
-      if (!Number.isNaN(num) && num > 0) {
-        // Clear error if valid
-        if (fieldErrors.installments) {
-          setFieldErrors((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors.installments;
-            return newErrors;
-          });
-        }
-      }
+    // Auto-clear installments error when payment method changes away from installments
+    if (field === 'payment_method' && value !== 'installments' && fieldErrors.installments) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.installments;
+        return newErrors;
+      });
     }
   };
 
