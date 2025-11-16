@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
-import { api, extractResults, getActiveBuildingId } from '@/lib/api';
+import { getActiveBuildingId } from '@/lib/api';
 import type { Project } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useProjects } from '@/hooks/useProjects';
+import { useOfferMutations } from '@/hooks/useOffers';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -70,7 +71,6 @@ const INITIAL_FORM: OfferFormState = {
 
 function NewOfferPageContent() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { buildings, selectedBuilding, setSelectedBuilding } = useBuilding();
   const defaultBuildingId = selectedBuilding?.id ?? getActiveBuildingId();
@@ -81,39 +81,32 @@ function NewOfferPageContent() {
 
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleFieldBlur = (field: keyof OfferFormState) => {
+    validateField(field, formState[field]);
   };
 
   const buildingId = selectedBuilding?.id ?? defaultBuildingId ?? null;
 
-  const {
-    data: projectsResponse,
-    isLoading: projectsLoading,
-    isError: projectsError,
-  } = useQuery({
-    queryKey: ['projects', 'offer-form', buildingId],
-    queryFn: async () => {
-      if (!buildingId) return [];
-      const response = await api.get('/projects/projects/', {
-        params: {
-          building: buildingId,
-          page_size: 1_000,
-        },
-      });
-      // api.get returns the data directly (or response.data if backward compat shim exists)
-      return response.data ?? response;
-    },
-    enabled: Boolean(buildingId),
+  const { projects, isLoading: projectsLoading, isError: projectsError } = useProjects({
+    buildingId: buildingId ?? undefined,
+    pageSize: 1000,
   });
-
-  const projects = useMemo<Project[]>(() => {
-    if (!projectsResponse) return [];
-    return extractResults<Project>(projectsResponse);
-  }, [projectsResponse]);
 
   const selectedProject = projects.find((project) => project.id === Number(formState.project));
 
-  const mutation = useMutation({
-    mutationFn: async () => {
+  const { create: createOffer } = useOfferMutations();
+
+  const handleSubmit = async () => {
       if (!formState.project || !formState.project.trim()) {
         throw new Error('Πρέπει να επιλέξετε έργο');
       }
@@ -163,19 +156,22 @@ function NewOfferPageContent() {
       }
 
       console.log('[New Offer] Payload:', JSON.stringify(payload, null, 2));
-      return api.post('/projects/offers/', payload);
-    },
-    onSuccess: (response: any) => {
-      const createdOffer = response?.data ?? response;
+      return createOffer.mutateAsync(payload);
+    };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || createOffer.isPending) return;
+    
+    try {
+      await handleSubmit();
       toast({
         title: 'Η προσφορά δημιουργήθηκε',
         description: 'Η εργοληπτική προσφορά καταχωρήθηκε επιτυχώς.',
       });
-      void queryClient.invalidateQueries({ queryKey: ['offers'] });
       const destination = selectedProject?.id ? `/projects/${selectedProject.id}` : '/projects';
       router.push(destination);
-    },
-    onError: (error: any) => {
+    } catch (error: any) {
       console.error('[New Offer] Error:', error);
       console.error('[New Offer] Error response:', error?.response);
       console.error('[New Offer] Error body:', error?.response?.body);
@@ -189,8 +185,59 @@ function NewOfferPageContent() {
         description: message,
         variant: 'destructive',
       });
-    },
-  });
+    }
+  };
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateField = (field: keyof OfferFormState, value: string) => {
+    const errors: Record<string, string> = {};
+    
+    switch (field) {
+      case 'project':
+        if (!value || !value.trim()) {
+          errors.project = 'Πρέπει να επιλέξετε έργο';
+        }
+        break;
+      case 'contractor_name':
+        if (!value || !value.trim()) {
+          errors.contractor_name = 'Το όνομά του συνεργείου είναι υποχρεωτικό';
+        }
+        break;
+      case 'amount':
+        if (!value || value.trim() === '') {
+          errors.amount = 'Το ποσό είναι υποχρεωτικό';
+        } else {
+          const num = parseFloat(value);
+          if (Number.isNaN(num) || num <= 0) {
+            errors.amount = 'Το ποσό πρέπει να είναι μεγαλύτερο από 0';
+          }
+        }
+        break;
+      case 'advance_payment':
+        if (value && value.trim() !== '') {
+          const num = parseFloat(value);
+          const amount = parseFloat(formState.amount);
+          if (!Number.isNaN(num) && !Number.isNaN(amount) && num > amount) {
+            errors.advance_payment = 'Η προκαταβολή δεν μπορεί να είναι μεγαλύτερη από το συνολικό ποσό';
+          }
+        }
+        break;
+      case 'installments':
+        if (formState.payment_method === 'installments' && (!value || value.trim() === '')) {
+          errors.installments = 'Ο αριθμός δόσεων είναι υποχρεωτικός όταν ο τρόπος πληρωμής είναι "Δόσεις"';
+        } else if (value && value.trim() !== '') {
+          const num = parseInt(value, 10);
+          if (Number.isNaN(num) || num <= 0) {
+            errors.installments = 'Ο αριθμός δόσεων πρέπει να είναι μεγαλύτερος από 0';
+          }
+        }
+        break;
+    }
+    
+    setFieldErrors((prev) => ({ ...prev, ...errors }));
+    return Object.keys(errors).length === 0;
+  };
 
   const canSubmit = Boolean(
     formState.project &&
@@ -200,7 +247,8 @@ function NewOfferPageContent() {
       formState.contractor_name.trim() &&
       formState.amount &&
       !Number.isNaN(parseFloat(formState.amount)) &&
-      parseFloat(formState.amount) > 0,
+      parseFloat(formState.amount) > 0 &&
+      Object.keys(fieldErrors).length === 0,
   );
 
   return (
@@ -258,12 +306,7 @@ function NewOfferPageContent() {
           </CardHeader>
           <CardContent>
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (canSubmit) {
-                  mutation.mutate();
-                }
-              }}
+              onSubmit={handleFormSubmit}
               className="space-y-5"
             >
               <div className="grid gap-4">
@@ -281,8 +324,16 @@ function NewOfferPageContent() {
                       Δεν υπάρχουν διαθέσιμα έργα για το κτίριο. Δημιουργήστε πρώτα ένα έργο.
                     </p>
                   ) : (
-                    <Select value={formState.project} onValueChange={(value) => handleFieldChange('project', value)}>
-                      <SelectTrigger>
+                    <Select 
+                      value={formState.project} 
+                      onValueChange={(value) => handleFieldChange('project', value)}
+                      onOpenChange={(open) => {
+                        if (!open && formState.project) {
+                          handleFieldBlur('project');
+                        }
+                      }}
+                    >
+                      <SelectTrigger className={fieldErrors.project ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Επιλέξτε έργο" />
                       </SelectTrigger>
                       <SelectContent>
@@ -293,6 +344,9 @@ function NewOfferPageContent() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.project && (
+                      <p className="text-sm text-red-500">{fieldErrors.project}</p>
+                    )}
                   )}
                 </div>
 
@@ -322,8 +376,13 @@ function NewOfferPageContent() {
                       placeholder="Π.χ. Εργοληπτική Α.Ε."
                       value={formState.contractor_name}
                       onChange={(e) => handleFieldChange('contractor_name', e.target.value)}
+                      onBlur={() => handleFieldBlur('contractor_name')}
                       required
+                      className={fieldErrors.contractor_name ? 'border-red-500' : ''}
                     />
+                    {fieldErrors.contractor_name && (
+                      <p className="text-sm text-red-500">{fieldErrors.contractor_name}</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Υπεύθυνος επικοινωνίας</Label>
@@ -375,8 +434,13 @@ function NewOfferPageContent() {
                       placeholder="π.χ. 12500"
                       value={formState.amount}
                       onChange={(e) => handleFieldChange('amount', e.target.value)}
+                      onBlur={() => handleFieldBlur('amount')}
                       required
+                      className={fieldErrors.amount ? 'border-red-500' : ''}
                     />
+                    {fieldErrors.amount && (
+                      <p className="text-sm text-red-500">{fieldErrors.amount}</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label>Προκαταβολή (€)</Label>
@@ -387,7 +451,12 @@ function NewOfferPageContent() {
                       placeholder="π.χ. 2000"
                       value={formState.advance_payment}
                       onChange={(e) => handleFieldChange('advance_payment', e.target.value)}
+                      onBlur={() => handleFieldBlur('advance_payment')}
+                      className={fieldErrors.advance_payment ? 'border-red-500' : ''}
                     />
+                    {fieldErrors.advance_payment && (
+                      <p className="text-sm text-red-500">{fieldErrors.advance_payment}</p>
+                    )}
                   </div>
                 </div>
 
@@ -419,7 +488,12 @@ function NewOfferPageContent() {
                       placeholder="π.χ. 3"
                       value={formState.installments}
                       onChange={(e) => handleFieldChange('installments', e.target.value)}
+                      onBlur={() => handleFieldBlur('installments')}
+                      className={fieldErrors.installments ? 'border-red-500' : ''}
                     />
+                    {fieldErrors.installments && (
+                      <p className="text-sm text-red-500">{fieldErrors.installments}</p>
+                    )}
                   </div>
                 </div>
 
@@ -476,8 +550,8 @@ function NewOfferPageContent() {
                   <Button type="button" variant="outline" onClick={() => router.push('/projects')}>
                     Ακύρωση
                   </Button>
-                  <Button type="submit" disabled={!canSubmit || mutation.isPending}>
-                    {mutation.isPending ? (
+                  <Button type="submit" disabled={!canSubmit || createOffer.isPending}>
+                    {createOffer.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
                         Αποθήκευση...

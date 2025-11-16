@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { getActiveBuildingId } from '@/lib/api';
+import { useProjects } from '@/hooks/useProjects';
+import { useOffers } from '@/hooks/useOffers';
 import { getRelativeTimeEl } from '@/lib/date';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   FileText, 
   Users, 
@@ -18,7 +22,14 @@ import {
   Clock,
   Award,
   Building,
-  FileCheck
+  FileCheck,
+  Eye,
+  DollarSign,
+  Search,
+  Filter,
+  ArrowUpDown,
+  Grid3x3,
+  List
 } from 'lucide-react';
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
@@ -38,22 +49,93 @@ interface ProjectStats {
 }
 
 function ProjectsDashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
-  const projectsQ = useQuery({ queryKey: ['projects', { building: buildingId }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, page_size: 1_000 } })).data });
-  const activeProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'in_progress' }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, status: 'in_progress', page_size: 1_000 } })).data });
-  const completedProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'completed' }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, status: 'completed', page_size: 1_000 } })).data });
-  const pendingOffersQ = useQuery({ queryKey: ['offers', { status: 'submitted' }], queryFn: async () => (await api.get('/projects/offers/', { params: { status: 'submitted', page_size: 1_000 } })).data });
-  const approvedOffersQ = useQuery({ queryKey: ['offers', { status: 'accepted' }], queryFn: async () => (await api.get('/projects/offers/', { params: { status: 'accepted', page_size: 1_000 } })).data });
+  
+  // Filters state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'amount' | 'status'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  
+  const { projects, isLoading: projectsLoading } = useProjects({ buildingId, pageSize: 1000 });
+  const { projects: activeProjects, isLoading: activeProjectsLoading } = useProjects({ buildingId, status: 'in_progress', pageSize: 1000 });
+  const { projects: completedProjects, isLoading: completedProjectsLoading } = useProjects({ buildingId, status: 'completed', pageSize: 1000 });
+  const { offers: pendingOffers, isLoading: pendingOffersLoading } = useOffers({ buildingId, status: 'submitted', pageSize: 1000 });
+  const { offers: approvedOffers, isLoading: approvedOffersLoading } = useOffers({ buildingId, status: 'accepted', pageSize: 1000 });
+  
+  // Filtered and sorted projects
+  const filteredProjects = useMemo(() => {
+    let filtered = [...projects];
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((p: any) => 
+        p.title?.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query) ||
+        p.selected_contractor?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((p: any) => p.status === statusFilter);
+    }
+    
+    // Priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter((p: any) => p.priority === priorityFilter);
+    }
+    
+    // Sorting
+    filtered.sort((a: any, b: any) => {
+      let aVal: any, bVal: any;
+      
+      switch (sortBy) {
+        case 'title':
+          aVal = a.title || '';
+          bVal = b.title || '';
+          break;
+        case 'amount':
+          aVal = parseFloat(a.final_cost || a.estimated_cost || '0');
+          bVal = parseFloat(b.final_cost || b.estimated_cost || '0');
+          break;
+        case 'status':
+          aVal = a.status || '';
+          bVal = b.status || '';
+          break;
+        case 'date':
+        default:
+          aVal = new Date(a.created_at || a.updated_at || 0).getTime();
+          bVal = new Date(b.created_at || b.updated_at || 0).getTime();
+          break;
+      }
+      
+      if (typeof aVal === 'string') {
+        return sortOrder === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      
+      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    
+    return filtered;
+  }, [projects, searchQuery, statusFilter, priorityFilter, sortBy, sortOrder]);
 
-  const loading = projectsQ.isLoading || activeProjectsQ.isLoading || completedProjectsQ.isLoading || pendingOffersQ.isLoading || approvedOffersQ.isLoading;
+  const loading = projectsLoading || activeProjectsLoading || completedProjectsLoading || pendingOffersLoading || approvedOffersLoading;
   const stats: ProjectStats = {
-    total_projects: extractCount(projectsQ.data ?? []),
-    active_projects: extractCount(activeProjectsQ.data ?? []),
-    completed_projects: extractCount(completedProjectsQ.data ?? []),
-    pending_offers: extractCount(pendingOffersQ.data ?? []),
-    active_contracts: extractCount(approvedOffersQ.data ?? []),
+    total_projects: projects.length,
+    active_projects: activeProjects.length,
+    completed_projects: completedProjects.length,
+    pending_offers: pendingOffers.length,
+    active_contracts: approvedOffers.length,
     total_budget: 0,
     total_spent: 0,
     average_completion_rate: 0,
@@ -90,10 +172,10 @@ function ProjectsDashboardContent() {
     created_at?: string;
   };
   
-  const projectsRows = extractResults<ProjectRow>(projectsQ.data ?? []);
-  const completedRows = extractResults<ProjectRow>(completedProjectsQ.data ?? []);
-  const pendingOffersRows = extractResults<OfferRow>(pendingOffersQ.data ?? []);
-  const approvedOffersRows = extractResults<OfferRow>(approvedOffersQ.data ?? []);
+  const projectsRows = projects as ProjectRow[];
+  const completedRows = completedProjects as ProjectRow[];
+  const pendingOffersRows = pendingOffers as OfferRow[];
+  const approvedOffersRows = approvedOffers as OfferRow[];
 
   const getProjectRelevantDate = (r: ProjectRow): Date | null => {
     return (
@@ -425,6 +507,356 @@ function ProjectsDashboardContent() {
                   <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
                 </div>
               ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Projects List */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Όλα τα Έργα</CardTitle>
+              <CardDescription>
+                {filteredProjects.length} από {projects.length} έργα
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </Button>
+              </div>
+              {(isAdmin || isManager) && (
+                <Button asChild>
+                  <Link href="/projects/new">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Νέο Έργο
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Filters */}
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-wrap gap-4">
+              {/* Search */}
+              <div className="flex-1 min-w-[200px]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Αναζήτηση έργων..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Κατάσταση" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Όλες οι Καταστάσεις</SelectItem>
+                  <SelectItem value="planning">Σχεδιασμός</SelectItem>
+                  <SelectItem value="tendering">Διαγωνισμός</SelectItem>
+                  <SelectItem value="evaluation">Αξιολόγηση</SelectItem>
+                  <SelectItem value="approved">Εγκεκριμένο</SelectItem>
+                  <SelectItem value="in_progress">Σε Εξέλιξη</SelectItem>
+                  <SelectItem value="completed">Ολοκληρωμένο</SelectItem>
+                  <SelectItem value="cancelled">Ακυρωμένο</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Priority Filter */}
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Προτεραιότητα" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Όλες οι Προτεραιότητες</SelectItem>
+                  <SelectItem value="low">Χαμηλή</SelectItem>
+                  <SelectItem value="medium">Μεσαία</SelectItem>
+                  <SelectItem value="high">Υψηλή</SelectItem>
+                  <SelectItem value="urgent">Επείγον</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Sort */}
+              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
+                const [by, order] = value.split('-');
+                setSortBy(by as any);
+                setSortOrder(order as any);
+              }}>
+                <SelectTrigger className="w-[180px]">
+                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Ταξινόμηση" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Νεότερα πρώτα</SelectItem>
+                  <SelectItem value="date-asc">Παλαιότερα πρώτα</SelectItem>
+                  <SelectItem value="title-asc">Τίτλος (Α-Ω)</SelectItem>
+                  <SelectItem value="title-desc">Τίτλος (Ω-Α)</SelectItem>
+                  <SelectItem value="amount-desc">Μεγαλύτερο ποσό</SelectItem>
+                  <SelectItem value="amount-asc">Μικρότερο ποσό</SelectItem>
+                  <SelectItem value="status-asc">Κατάσταση</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Loading State */}
+          {projectsLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-lg p-4 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                  <div className="flex gap-4">
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <div className="text-center py-12">
+              {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' ? (
+                <>
+                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Δεν βρέθηκαν έργα</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Δοκιμάστε να αλλάξετε τα φίλτρα αναζήτησης.
+                  </p>
+                  <Button variant="outline" onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setPriorityFilter('all');
+                  }}>
+                    Καθαρισμός Φίλτρων
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Δεν υπάρχουν έργα</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Δημιουργήστε το πρώτο έργο για να ξεκινήσετε.
+                  </p>
+                  {(isAdmin || isManager) && (
+                    <Button asChild>
+                      <Link href="/projects/new">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Δημιουργία Έργου
+                      </Link>
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className={viewMode === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+              {filteredProjects.map((project: any) => {
+                const projectOffers = pendingOffers.filter((o: any) => o.project === project.id || o.project_id === project.id);
+                const approvedProjectOffers = approvedOffers.filter((o: any) => o.project === project.id || o.project_id === project.id);
+                
+                const priorityColors: Record<string, string> = {
+                  low: 'bg-gray-100 text-gray-700',
+                  medium: 'bg-blue-100 text-blue-700',
+                  high: 'bg-orange-100 text-orange-700',
+                  urgent: 'bg-red-100 text-red-700',
+                };
+                
+                const statusColors: Record<string, string> = {
+                  completed: 'bg-green-100 text-green-700',
+                  in_progress: 'bg-blue-100 text-blue-700',
+                  approved: 'bg-purple-100 text-purple-700',
+                  planning: 'bg-gray-100 text-gray-700',
+                  tendering: 'bg-yellow-100 text-yellow-700',
+                  evaluation: 'bg-amber-100 text-amber-700',
+                  cancelled: 'bg-red-100 text-red-700',
+                };
+                
+                const statusLabels: Record<string, string> = {
+                  completed: 'Ολοκληρωμένο',
+                  in_progress: 'Σε Εξέλιξη',
+                  approved: 'Εγκεκριμένο',
+                  planning: 'Σχεδιασμός',
+                  tendering: 'Διαγωνισμός',
+                  evaluation: 'Αξιολόγηση',
+                  cancelled: 'Ακυρωμένο',
+                };
+                
+                if (viewMode === 'grid') {
+                  return (
+                    <Card
+                      key={project.id}
+                      className="hover:shadow-lg transition-all cursor-pointer h-full flex flex-col"
+                      onClick={() => router.push(`/projects/${project.id}`)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base mb-2 line-clamp-2">{project.title || 'Άτιτλο Έργο'}</CardTitle>
+                            <div className="flex flex-wrap gap-1">
+                              <Badge className={statusColors[project.status] || 'bg-gray-100 text-gray-700'} variant="outline">
+                                {statusLabels[project.status] || project.status || 'Σχεδιασμός'}
+                              </Badge>
+                              {project.priority && (
+                                <Badge className={priorityColors[project.priority] || 'bg-gray-100 text-gray-700'} variant="outline">
+                                  {project.priority === 'low' ? 'Χαμηλή' : project.priority === 'medium' ? 'Μεσαία' : project.priority === 'high' ? 'Υψηλή' : 'Επείγον'}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        {project.description && (
+                          <p className="text-sm text-gray-600 mb-4 line-clamp-3 flex-1">{project.description}</p>
+                        )}
+                        <div className="space-y-2 text-sm">
+                          {project.estimated_cost && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <DollarSign className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">Εκτιμ.: {typeof project.estimated_cost === 'number' ? `€${project.estimated_cost.toLocaleString()}` : project.estimated_cost}</span>
+                            </div>
+                          )}
+                          {project.final_cost && (
+                            <div className="flex items-center gap-2 text-green-600 font-medium">
+                              <DollarSign className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">Τελικό: {typeof project.final_cost === 'number' ? `€${project.final_cost.toLocaleString()}` : project.final_cost}</span>
+                            </div>
+                          )}
+                          {project.deadline && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Calendar className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{new Date(project.deadline).toLocaleDateString('el-GR')}</span>
+                            </div>
+                          )}
+                          {(projectOffers.length > 0 || approvedProjectOffers.length > 0) && (
+                            <div className="flex items-center gap-2 pt-2 border-t">
+                              {projectOffers.length > 0 && (
+                                <Badge variant="outline" className="text-yellow-700 border-yellow-300">
+                                  <Award className="w-3 h-3 mr-1" />
+                                  {projectOffers.length}
+                                </Badge>
+                              )}
+                              {approvedProjectOffers.length > 0 && (
+                                <Badge variant="outline" className="text-green-700 border-green-300">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  {approvedProjectOffers.length}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                
+                return (
+                  <Card
+                    key={project.id}
+                    className="hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => router.push(`/projects/${project.id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="text-lg font-semibold truncate">{project.title || 'Άτιτλο Έργο'}</h3>
+                                <Badge className={statusColors[project.status] || 'bg-gray-100 text-gray-700'}>
+                                  {statusLabels[project.status] || project.status || 'Σχεδιασμός'}
+                                </Badge>
+                                {project.priority && (
+                                  <Badge className={priorityColors[project.priority] || 'bg-gray-100 text-gray-700'} variant="outline">
+                                    {project.priority === 'low' ? 'Χαμηλή' : project.priority === 'medium' ? 'Μεσαία' : project.priority === 'high' ? 'Υψηλή' : 'Επείγον'}
+                                  </Badge>
+                                )}
+                              </div>
+                              {project.description && (
+                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{project.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            {project.estimated_cost && (
+                              <div className="flex items-center gap-1.5 text-gray-600">
+                                <DollarSign className="w-4 h-4 flex-shrink-0" />
+                                <span>Εκτιμ.: {typeof project.estimated_cost === 'number' ? `€${project.estimated_cost.toLocaleString()}` : project.estimated_cost}</span>
+                              </div>
+                            )}
+                            {project.final_cost && (
+                              <div className="flex items-center gap-1.5 text-green-600 font-medium">
+                                <DollarSign className="w-4 h-4 flex-shrink-0" />
+                                <span>Τελικό: {typeof project.final_cost === 'number' ? `€${project.final_cost.toLocaleString()}` : project.final_cost}</span>
+                              </div>
+                            )}
+                            {project.deadline && (
+                              <div className="flex items-center gap-1.5 text-gray-600">
+                                <Calendar className="w-4 h-4 flex-shrink-0" />
+                                <span>{new Date(project.deadline).toLocaleDateString('el-GR')}</span>
+                              </div>
+                            )}
+                            {project.selected_contractor && (
+                              <div className="flex items-center gap-1.5 text-gray-600">
+                                <Building className="w-4 h-4 flex-shrink-0" />
+                                <span className="truncate max-w-[200px]">{project.selected_contractor}</span>
+                              </div>
+                            )}
+                            {projectOffers.length > 0 && (
+                              <Badge variant="outline" className="text-yellow-700 border-yellow-300">
+                                <Award className="w-3 h-3 mr-1" />
+                                {projectOffers.length} εκκρεμείς
+                              </Badge>
+                            )}
+                            {approvedProjectOffers.length > 0 && (
+                              <Badge variant="outline" className="text-green-700 border-green-300">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                {approvedProjectOffers.length} εγκεκριμένη
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex-shrink-0"
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            router.push(`/projects/${project.id}`); 
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Προβολή
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>

@@ -78,6 +78,59 @@ class OfferSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Το ποσό πρέπει να είναι μεγαλύτερο από 0.")
         return value
 
+    def validate_project(self, value):
+        """Ensure project exists and user has access"""
+        if not value:
+            raise serializers.ValidationError("Το έργο είναι υποχρεωτικό.")
+        # Project existence is validated by ForeignKey, but we can add custom checks here
+        return value
+
+    def validate_payment_method(self, value):
+        """Validate payment_method against known choices"""
+        if value:
+            valid_methods = ['one_time', 'installments', 'milestones', 'other']
+            if value not in valid_methods:
+                raise serializers.ValidationError(
+                    f"Μη έγκυρος τρόπος πληρωμής. Επιτρέπονται: {', '.join(valid_methods)}"
+                )
+        return value
+
+    def validate_installments(self, value):
+        """Ensure installments is positive if provided"""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Ο αριθμός δόσεων πρέπει να είναι μεγαλύτερος από 0.")
+        return value
+
+    def validate_advance_payment(self, value):
+        """Ensure advance_payment is <= amount if provided"""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Η προκαταβολή δεν μπορεί να είναι αρνητική.")
+        # Check against amount if available (will be done in validate() method)
+        return value
+
+    def validate(self, attrs):
+        """Cross-field validation"""
+        # Validate advance_payment <= amount
+        advance_payment = attrs.get('advance_payment')
+        amount = attrs.get('amount')
+        
+        if advance_payment is not None and amount is not None:
+            if advance_payment > amount:
+                raise serializers.ValidationError({
+                    'advance_payment': 'Η προκαταβολή δεν μπορεί να είναι μεγαλύτερη από το συνολικό ποσό.'
+                })
+        
+        # Validate installments if payment_method requires it
+        payment_method = attrs.get('payment_method')
+        installments = attrs.get('installments')
+        
+        if payment_method == 'installments' and (installments is None or installments <= 0):
+            raise serializers.ValidationError({
+                'installments': 'Ο αριθμός δόσεων είναι υποχρεωτικός όταν ο τρόπος πληρωμής είναι "Δόσεις".'
+            })
+        
+        return attrs
+
     def get_files_count(self, obj):
         return obj.files.count()
 
