@@ -88,7 +88,9 @@ function NewOfferPageContent() {
   }, [selectedBuilding, buildings, setSelectedBuilding]);
 
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
-    setFormState((prev) => ({ ...prev, [field]: value }));
+    const newFormState = { ...formState, [field]: value };
+    setFormState(newFormState);
+    
     // Clear error when user starts typing
     if (fieldErrors[field]) {
       setFieldErrors((prev) => {
@@ -98,13 +100,36 @@ function NewOfferPageContent() {
       });
     }
     
-    // Auto-clear installments error when payment method changes away from installments
-    if (field === 'payment_method' && value !== 'installments' && fieldErrors.installments) {
-      setFieldErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.installments;
-        return newErrors;
-      });
+    // Handle payment_method changes
+    if (field === 'payment_method') {
+      if (value !== 'installments' && fieldErrors.installments) {
+        // Clear installments error when switching away from installments
+        setFieldErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.installments;
+          return newErrors;
+        });
+      } else if (value === 'installments') {
+        // Auto-validate installments when switching to installments
+        setTimeout(() => {
+          validateField('installments', newFormState.installments);
+        }, 0);
+      }
+    }
+    
+    // Auto-validate installments when typing in installments field and payment_method is installments
+    if (field === 'installments' && newFormState.payment_method === 'installments' && value.trim() !== '') {
+      const num = parseInt(value, 10);
+      if (!Number.isNaN(num) && num > 0) {
+        // Clear error if valid
+        if (fieldErrors.installments) {
+          setFieldErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.installments;
+            return newErrors;
+          });
+        }
+      }
     }
   };
 
