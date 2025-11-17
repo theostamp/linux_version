@@ -86,10 +86,13 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
 
   const handleApprove = async () => {
     try {
-      await approve.mutateAsync(offerId);
+      console.log('[Offer Detail] Approving offer:', offerId);
+      const result = await approve.mutateAsync(offerId);
+      console.log('[Offer Detail] ✓ Offer approved successfully:', result);
+      
       toast({
-        title: 'Η προσφορά εγκρίθηκε',
-        description: 'Η προσφορά έχει εγκριθεί επιτυχώς.',
+        title: '✓ Η προσφορά εγκρίθηκε',
+        description: 'Η προσφορά εγκρίθηκε επιτυχώς. Οι υπόλοιπες προσφορές απορρίφθηκαν αυτόματα και δημιουργήθηκαν οι σχετικές δαπάνες.',
       });
       router.refresh();
     } catch (error: any) {

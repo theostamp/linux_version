@@ -128,10 +128,13 @@ function OffersPageContent() {
 
   const handleApprove = async (offerId: string | number) => {
     try {
-      await approve.mutateAsync(offerId);
+      console.log('[Offers List] Approving offer:', offerId);
+      const result = await approve.mutateAsync(offerId);
+      console.log('[Offers List] ✓ Offer approved successfully:', result);
+      
       toast({
-        title: 'Η προσφορά εγκρίθηκε',
-        description: 'Η προσφορά εγκρίθηκε επιτυχώς και δημιουργήθηκαν οι σχετικές δαπάνες.',
+        title: '✓ Η προσφορά εγκρίθηκε',
+        description: 'Η προσφορά εγκρίθηκε επιτυχώς. Οι υπόλοιπες προσφορές απορρίφθηκαν αυτόματα και δημιουργήθηκαν οι σχετικές δαπάνες.',
       });
     } catch (error: any) {
       toast({

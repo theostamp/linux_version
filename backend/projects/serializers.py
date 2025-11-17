@@ -129,6 +129,12 @@ class OfferSerializer(serializers.ModelSerializer):
                 'installments': 'Ο αριθμός δόσεων είναι υποχρεωτικός όταν ο τρόπος πληρωμής είναι "Δόσεις".'
             })
         
+        # 🔴 ΝΕΟ: Validate that one_time payment should not have installments > 1
+        if payment_method == 'one_time' and installments is not None and installments > 1:
+            raise serializers.ValidationError({
+                'installments': 'Η εφάπαξ πληρωμή δεν μπορεί να έχει δόσεις. Επιλέξτε "Δόσεις" ως τρόπο πληρωμής ή αφήστε τις δόσεις κενές.'
+            })
+        
         return attrs
 
     def get_files_count(self, obj):

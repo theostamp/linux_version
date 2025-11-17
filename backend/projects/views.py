@@ -183,7 +183,18 @@ def update_project_schedule(project, offer=None):
             title__icontains=project.title
         )
         
+        logger.info(
+            f"🔍 Checking for existing expenses for project '{project.title}'",
+            extra={
+                'project_id': str(project.id),
+                'building_id': project.building_id,
+                'existing_expenses_count': old_expenses.count(),
+            }
+        )
+        
         if old_expenses.exists():
+            logger.info(f"   Found {old_expenses.count()} existing expenses: {list(old_expenses.values('id', 'title', 'amount', 'date', 'paid_amount', 'created_at'))}")
+            
             # Έλεγχος 1: Έχουν πληρωθεί;
             paid_expenses = old_expenses.exclude(
                 paid_amount__isnull=True
@@ -196,6 +207,7 @@ def update_project_schedule(project, offer=None):
                 )
                 logger.info(f"   Πληρωμένες δαπάνες: {list(paid_expenses.values('id', 'title', 'amount', 'paid_amount'))}")
                 # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
+                logger.info("   ❌ Aborting expense creation due to paid expenses")
                 return
             
             # Έλεγχος 2: Είναι παλιές (> 24 ώρες);
@@ -209,6 +221,7 @@ def update_project_schedule(project, offer=None):
                 )
                 logger.info(f"   Παλιές δαπάνες: {list(old_cutoff_expenses.values('id', 'title', 'created_at'))}")
                 # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
+                logger.info("   ❌ Aborting expense creation due to old expenses (>24h)")
                 return
             
             # Έλεγχος 3: Έχουν συνδεθεί με πληρωμές μέσω maintenance;
@@ -223,6 +236,7 @@ def update_project_schedule(project, offer=None):
                 )
                 logger.info(f"   Δαπάνες με receipts: {list(expenses_with_receipts.values('id', 'title'))}")
                 # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
+                logger.info("   ❌ Aborting expense creation due to expenses with receipts")
                 return
             
             # Αν όλοι οι έλεγχοι πέρασαν, κάνε log και διέγραψε
@@ -232,8 +246,12 @@ def update_project_schedule(project, offer=None):
             )
             logger.debug(f"   Δαπάνες προς διαγραφή: {list(old_expenses.values('id', 'title', 'amount', 'date'))}")
             
-        # Διαγραφή μόνο αν πέρασε όλους τους ελέγχους
-        old_expenses.delete()
+            # Διαγραφή μόνο αν πέρασε όλους τους ελέγχους
+            deleted_count = old_expenses.count()
+            old_expenses.delete()
+            logger.info(f"   ✓ Deleted {deleted_count} old expenses")
+        else:
+            logger.info(f"   ✓ No existing expenses found, proceeding with expense creation")
 
         # 🔧 FIX: Ελέγχος αν το payment_method είναι 'installments' αλλά installments <= 1
         # Σε αυτή την περίπτωση, πρέπει να χρησιμοποιήσουμε το installments από το project
@@ -446,12 +464,21 @@ def update_project_schedule(project, offer=None):
             },
         )
         
+        # Μέτρηση δημιουργημένων δαπανών
+        created_expenses = Expense.objects.filter(
+            building=project.building,
+            title__icontains=project.title
+        )
+        
         logger.info(
-            f"update_project_schedule completed successfully for project {project.id}",
+            f"✅ update_project_schedule completed successfully for project {project.id}",
             extra={
                 'project_id': str(project.id),
                 'scheduled_maintenance_id': scheduled_maintenance.id if scheduled_maintenance else None,
-                'expenses_created': True,
+                'payment_method': project.payment_method,
+                'installments': installments,
+                'total_expenses_created': created_expenses.count(),
+                'expenses_list': list(created_expenses.values('id', 'title', 'amount', 'date')),
             }
         )
         

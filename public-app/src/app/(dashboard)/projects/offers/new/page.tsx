@@ -280,6 +280,19 @@ function NewOfferPageContent() {
           if (Number.isNaN(num) || num <= 0) {
             errors.installments = 'Ο αριθμός δόσεων πρέπει να είναι μεγαλύτερος από 0';
           }
+          // 🔴 ΝΕΟ: Validate that one_time payment should not have installments > 1
+          if (formState.payment_method === 'one_time' && num > 1) {
+            errors.installments = 'Η εφάπαξ πληρωμή δεν μπορεί να έχει δόσεις. Επιλέξτε "Δόσεις" ως τρόπο πληρωμής ή αφήστε τις δόσεις κενές.';
+          }
+        }
+        break;
+      case 'payment_method':
+        // Validate that one_time payment should not have installments > 1
+        if (value === 'one_time' && formState.installments) {
+          const num = parseInt(formState.installments, 10);
+          if (!Number.isNaN(num) && num > 1) {
+            errors.installments = 'Η εφάπαξ πληρωμή δεν μπορεί να έχει δόσεις. Επιλέξτε "Δόσεις" ως τρόπο πληρωμής ή αφήστε τις δόσεις κενές.';
+          }
         }
         break;
     }
