@@ -112,6 +112,13 @@ const navigationGroups: NavigationGroup[] = [
         icon: <FileText className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
       },
+      {
+        href: '/documents',
+        label: 'Παραστατικά',
+        icon: <FileText className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        isBeta: true,
+      },
     ]
   },
   {
@@ -129,6 +136,43 @@ const navigationGroups: NavigationGroup[] = [
         href: '/apartments',
         label: 'Διαμερίσματα',
         icon: <Building className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/map-visualization',
+        label: 'Χάρτης',
+        icon: <MapPin className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/data-migration',
+        label: 'Μετανάστευση',
+        icon: <RefreshCw className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'collaboration',
+    title: 'Συνεργασίες',
+    colorKey: 'info',
+    links: [
+      {
+        href: '/teams',
+        label: 'Ομάδες',
+        icon: <Users className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/collaborators',
+        label: 'Συνεργάτες',
+        icon: <UserCheck className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/suppliers',
+        label: 'Προμηθευτές',
+        icon: <Truck className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
       },
     ]
@@ -168,6 +212,38 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Συνδρομή',
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'kiosk',
+    title: 'Kiosk',
+    colorKey: 'purple',
+    links: [
+      {
+        href: '/kiosk-management',
+        label: 'Διαχείριση',
+        icon: <Settings className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/kiosk',
+        label: 'Display',
+        icon: <Monitor className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'system',
+    title: 'Σύστημα',
+    colorKey: 'danger',
+    links: [
+      {
+        href: '/financial-tests',
+        label: 'Tests',
+        icon: <TestTube2 className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
       },
     ]
   },
