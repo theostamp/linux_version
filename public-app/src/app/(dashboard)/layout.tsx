@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import CollapsibleSidebar from '@/components/CollapsibleSidebar';
 import GlobalHeader from '@/components/GlobalHeader';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -45,11 +45,11 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar - Gets user from AuthContext */}
-      <Sidebar />
+      {/* Collapsible Sidebar - Gets user from AuthContext */}
+      <CollapsibleSidebar />
 
-      {/* Main Content */}
-      <div className="lg:pl-64">
+      {/* Main Content - Adjusted padding for collapsed sidebar (80px) */}
+      <div className="lg:pl-20">
         {/* Header */}
         <GlobalHeader />
 

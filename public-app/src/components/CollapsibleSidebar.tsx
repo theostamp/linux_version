@@ -1,0 +1,602 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
+import { CalculatorModal } from '@/components/ui/CalculatorModal';
+import { designSystem } from '@/lib/design-system';
+import {
+  Home,
+  Megaphone,
+  CheckSquare,
+  ClipboardList,
+  Building2,
+  Loader2,
+  Building,
+  MapPin,
+  Shield,
+  X,
+  Menu,
+  MessageCircle,
+  Wrench,
+  Euro,
+  FileText,
+  Users,
+  UserCheck,
+  Truck,
+  RefreshCw,
+  Calculator,
+  TestTube2,
+  Monitor,
+  Settings,
+  Send,
+  User,
+  CreditCard,
+  ChevronRight,
+} from 'lucide-react';
+
+// Navigation link interface
+interface NavigationLink {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  roles: string[];
+  isBeta?: boolean;
+}
+
+// Navigation group interface
+interface NavigationGroup {
+  id: string;
+  title: string;
+  colorKey: keyof typeof designSystem.colors;
+  links: NavigationLink[];
+}
+
+// Grouped navigation links with design system colors
+const navigationGroups: NavigationGroup[] = [
+  {
+    id: 'main',
+    title: 'Κύρια',
+    colorKey: 'primary',
+    links: [
+      {
+        href: '/dashboard',
+        label: 'Πίνακας Ελέγχου',
+        icon: <Home className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/announcements',
+        label: 'Ανακοινώσεις',
+        icon: <Megaphone className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/votes',
+        label: 'Ψηφοφορίες',
+        icon: <CheckSquare className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/requests',
+        label: 'Αιτήματα',
+        icon: <ClipboardList className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'financial',
+    title: 'Οικονομικά',
+    colorKey: 'orange',
+    links: [
+      {
+        href: '/financial',
+        label: 'Οικονομικά',
+        icon: <Euro className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/maintenance',
+        label: 'Υπηρεσίες',
+        icon: <Wrench className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/projects',
+        label: 'Προσφορές',
+        icon: <FileText className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'management',
+    title: 'Διαχείριση',
+    colorKey: 'success',
+    links: [
+      {
+        href: '/buildings',
+        label: 'Κτίρια',
+        icon: <Building2 className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/apartments',
+        label: 'Διαμερίσματα',
+        icon: <Building className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'communication',
+    title: 'Επικοινωνία',
+    colorKey: 'info',
+    links: [
+      {
+        href: '/chat',
+        label: 'Chat',
+        icon: <MessageCircle className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/notifications',
+        label: 'Ειδοποιήσεις',
+        icon: <Send className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'personal',
+    title: 'Προσωπικά',
+    colorKey: 'purple',
+    links: [
+      {
+        href: '/my-profile',
+        label: 'Προφίλ',
+        icon: <User className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/my-subscription',
+        label: 'Συνδρομή',
+        icon: <CreditCard className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+    ]
+  },
+];
+
+export default function CollapsibleSidebar() {
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const { user, isLoading: authIsLoading, isAuthReady } = useAuth();
+  const {
+    buildings,
+    currentBuilding,
+    isLoading: buildingsIsLoading,
+  } = useBuilding();
+  const { navigateWithLoading } = useNavigationWithLoading();
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close mobile menu on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
+  const handleNavigation = async (href: string) => {
+    setIsMobileMenuOpen(false);
+    await navigateWithLoading(href);
+  };
+
+  // Determine user role
+  let userRole: 'superuser' | 'staff' | 'manager' | 'resident' | undefined;
+  if (user?.is_superuser) {
+    userRole = 'superuser';
+  } else if (user?.is_staff) {
+    userRole = 'staff';
+  } else {
+    userRole = user?.profile?.role as 'manager' | 'resident' | undefined;
+  }
+
+  // Filter available groups and links based on user role
+  const availableGroups = navigationGroups.map(group => ({
+    ...group,
+    links: group.links.filter(link => userRole && link.roles.includes(userRole))
+  })).filter(group => group.links.length > 0);
+
+  const getColorScheme = (colorKey: keyof typeof designSystem.colors) => {
+    const colors = designSystem.colors[colorKey];
+    return {
+      bg: colors[50],
+      hover: colors[100],
+      text: colors[700],
+      icon: colors[600],
+      active: colors[500],
+    };
+  };
+
+  // Loading state
+  if (authIsLoading || !isAuthReady || buildingsIsLoading) {
+    return (
+      <>
+        {/* Mobile Menu Toggle */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border"
+          style={{ borderColor: designSystem.colors.gray[200] }}
+        >
+          <Menu className="w-5 h-5" style={{ color: designSystem.colors.gray[600] }} />
+        </button>
+
+        {/* Loading Sidebar */}
+        <aside 
+          className="hidden lg:flex fixed left-0 top-0 h-full bg-white shadow-xl border-r flex-col justify-center items-center z-40"
+          style={{ 
+            width: '80px',
+            borderColor: designSystem.colors.gray[200],
+          }}
+        >
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: designSystem.colors.primary[500] }} />
+        </aside>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* Mobile Menu Toggle */}
+      <button
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border"
+        style={{ borderColor: designSystem.colors.gray[200] }}
+      >
+        <Menu className="w-5 h-5" style={{ color: designSystem.colors.gray[600] }} />
+      </button>
+
+      {/* Desktop Sidebar - Collapsible */}
+      <aside
+        onMouseEnter={() => setIsExpanded(true)}
+        onMouseLeave={() => setIsExpanded(false)}
+        className={cn(
+          "hidden lg:flex fixed left-0 top-0 h-full bg-white shadow-xl border-r flex-col z-40 overflow-hidden",
+          "transition-all duration-300 ease-in-out"
+        )}
+        style={{
+          width: isExpanded ? '256px' : '80px',
+          borderColor: designSystem.colors.gray[200],
+          fontFamily: designSystem.typography.fontFamily.sans.join(', '),
+        }}
+      >
+        {/* Header */}
+        <div 
+          className="p-4 border-b flex items-center gap-3"
+          style={{ 
+            borderColor: designSystem.colors.gray[200],
+            minHeight: '64px',
+          }}
+        >
+          <div 
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
+            style={{ 
+              background: `linear-gradient(135deg, ${designSystem.colors.primary[500]}, ${designSystem.colors.primary[600]})`,
+            }}
+          >
+            <Building2 className="h-6 w-6 text-white" />
+          </div>
+          <div 
+            className={cn(
+              "transition-all duration-300 overflow-hidden",
+              isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+            )}
+          >
+            <h1 
+              className="font-bold tracking-tight whitespace-nowrap"
+              style={{ 
+                fontSize: designSystem.typography.fontSize.sm,
+                color: designSystem.colors.gray[900],
+              }}
+            >
+              Digital Concierge
+            </h1>
+            <p 
+              className="tracking-wide whitespace-nowrap"
+              style={{ 
+                fontSize: designSystem.typography.fontSize.xs,
+                color: designSystem.colors.gray[500],
+              }}
+            >
+              Διαχείριση Κτιρίων
+            </p>
+          </div>
+          
+          {/* Expand/Collapse Indicator */}
+          <div className={cn(
+            "ml-auto transition-all duration-300",
+            isExpanded ? "opacity-100" : "opacity-0"
+          )}>
+            <ChevronRight className="w-4 h-4" style={{ color: designSystem.colors.gray[400] }} />
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
+          {availableGroups.map((group) => {
+            const colors = getColorScheme(group.colorKey);
+            
+            return (
+              <div key={group.id} className="mb-4">
+                {/* Group Title - Only visible when expanded */}
+                {isExpanded && (
+                  <div
+                    className="px-3 py-1.5 mb-2 rounded-lg font-semibold tracking-wide uppercase whitespace-nowrap"
+                    style={{
+                      fontSize: '10px',
+                      color: colors.text,
+                      backgroundColor: colors.bg,
+                    }}
+                  >
+                    {group.title}
+                  </div>
+                )}
+                
+                {/* Links */}
+                <div className="space-y-1">
+                  {group.links.map((link) => {
+                    const isActive = pathname === link.href || 
+                      (pathname && pathname.startsWith(link.href) && link.href !== '/dashboard');
+                    
+                    return (
+                      <button
+                        key={link.href}
+                        onClick={() => handleNavigation(link.href)}
+                        title={!isExpanded ? link.label : undefined}
+                        className={cn(
+                          'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
+                          isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
+                          isActive && 'shadow-md',
+                        )}
+                        style={{
+                          fontSize: designSystem.typography.fontSize.sm,
+                          color: isActive ? 'white' : colors.text,
+                          backgroundColor: isActive ? colors.active : 'transparent',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = colors.hover;
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }
+                        }}
+                      >
+                        {/* Icon */}
+                        <span 
+                          className={cn(
+                            'transition-colors duration-200 flex-shrink-0',
+                            isExpanded && 'mr-3'
+                          )}
+                          style={{
+                            color: isActive ? 'white' : colors.icon,
+                          }}
+                        >
+                          {link.icon}
+                        </span>
+                        
+                        {/* Label */}
+                        <span 
+                          className={cn(
+                            "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                            isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                          )}
+                        >
+                          {link.label}
+                        </span>
+                        
+                        {/* Beta Badge */}
+                        {link.isBeta && isExpanded && (
+                          <span 
+                            className="ml-auto px-2 py-0.5 rounded-full font-bold"
+                            style={{
+                              fontSize: designSystem.typography.fontSize.xs,
+                              backgroundColor: isActive 
+                                ? 'rgba(255, 255, 255, 0.2)' 
+                                : colors.hover,
+                              color: isActive ? 'white' : colors.text,
+                            }}
+                          >
+                            BETA
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Calculator Tool */}
+        <div 
+          className="p-3 border-t"
+          style={{ borderColor: designSystem.colors.gray[200] }}
+        >
+          <CalculatorModal>
+            <button 
+              title={!isExpanded ? 'Αριθμομηχανή' : undefined}
+              className={cn(
+                'flex items-center w-full rounded-lg font-medium transition-all duration-200',
+                isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
+              )}
+              style={{
+                fontSize: designSystem.typography.fontSize.sm,
+                color: designSystem.colors.gray[700],
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = designSystem.colors.gray[100];
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <Calculator 
+                className={cn('w-5 h-5 transition-colors', isExpanded && 'mr-3')}
+                style={{ color: designSystem.colors.gray[500] }}
+              />
+              <span 
+                className={cn(
+                  "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                  isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                )}
+              >
+                Αριθμομηχανή
+              </span>
+            </button>
+          </CalculatorModal>
+        </div>
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={cn(
+          "lg:hidden fixed left-0 top-0 h-full w-64 bg-white shadow-xl border-r flex flex-col z-50",
+          "transform transition-transform duration-300",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        style={{
+          borderColor: designSystem.colors.gray[200],
+          fontFamily: designSystem.typography.fontFamily.sans.join(', '),
+        }}
+      >
+        {/* Mobile Header */}
+        <div 
+          className="p-4 border-b flex items-center justify-between"
+          style={{ borderColor: designSystem.colors.gray[200] }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
+              style={{ 
+                background: `linear-gradient(135deg, ${designSystem.colors.primary[500]}, ${designSystem.colors.primary[600]})`,
+              }}
+            >
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 
+                className="font-bold tracking-tight"
+                style={{ 
+                  fontSize: designSystem.typography.fontSize.sm,
+                  color: designSystem.colors.gray[900],
+                }}
+              >
+                Digital Concierge
+              </h1>
+              <p 
+                style={{ 
+                  fontSize: designSystem.typography.fontSize.xs,
+                  color: designSystem.colors.gray[500],
+                }}
+              >
+                Διαχείριση Κτιρίων
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2"
+            style={{ color: designSystem.colors.gray[500] }}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+          {availableGroups.map((group) => {
+            const colors = getColorScheme(group.colorKey);
+            
+            return (
+              <div key={group.id}>
+                <div
+                  className="px-3 py-1.5 mb-2 rounded-lg font-semibold tracking-wide uppercase"
+                  style={{
+                    fontSize: '10px',
+                    color: colors.text,
+                    backgroundColor: colors.bg,
+                  }}
+                >
+                  {group.title}
+                </div>
+                
+                <div className="space-y-1">
+                  {group.links.map((link) => {
+                    const isActive = pathname === link.href;
+                    
+                    return (
+                      <button
+                        key={link.href}
+                        onClick={() => handleNavigation(link.href)}
+                        className="flex items-center w-full px-3 py-2.5 rounded-lg font-medium transition-all duration-200"
+                        style={{
+                          fontSize: designSystem.typography.fontSize.sm,
+                          color: isActive ? 'white' : colors.text,
+                          backgroundColor: isActive ? colors.active : 'transparent',
+                        }}
+                      >
+                        <span className="mr-3" style={{ color: isActive ? 'white' : colors.icon }}>
+                          {link.icon}
+                        </span>
+                        <span>{link.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
