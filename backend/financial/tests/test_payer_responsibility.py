@@ -250,6 +250,15 @@ class TestFinancialDashboardPayerSeparation(TestCase):
                     Decimal(balance['owner_expenses']),
                     Decimal(balance['reserve_fund_share'])
                 )
+                # Χωρίς άλλες δαπάνες ή πληρωμές, η συνολική οφειλή πρέπει να ισούται με την εισφορά αποθεματικού
+                self.assertAlmostEqual(
+                    Decimal(balance['net_obligation']),
+                    Decimal(balance['reserve_fund_share'])
+                )
+                self.assertAlmostEqual(
+                    Decimal(balance['expense_share']),
+                    Decimal(balance['reserve_fund_share'])
+                )
 
     def test_apartment_balances_separate_owner_resident(self):
         """Test that apartment balances separate owner vs resident expenses"""

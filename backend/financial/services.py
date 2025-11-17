@@ -1215,7 +1215,10 @@ class FinancialDashboardService:
                             
                             reserve_fund_share += reserve_share
                             # ✅ Προσθήκη reserve_fund_share στο owner_expenses για σωστή εμφάνιση
+                            current_owner_expenses += reserve_share
                             owner_expenses += reserve_share
+                            # ✅ Πρέπει να ενσωματώνεται στα συνολικά έξοδα του μήνα (expense_share)
+                            expense_share += reserve_share
                 
                 # ✅ ΔΙΟΡΘΩΣΗ 2025-10-10: Management fees & Reserve fund είναι ΗΔΗ Expense records!
                 # ΣΗΜΕΙΩΣΗ: Αν το reserve fund υπολογίζεται δυναμικά (χωρίς Expense records),
@@ -1307,6 +1310,9 @@ class FinancialDashboardService:
                             # ✅ Προσθήκη reserve_fund_share στο owner_expenses (μόνο αν υπολογίστηκε δυναμικά)
                             if not month and not end_date:
                                 owner_expenses += reserve_share
+                            
+                            # ✅ Το fallback αποθεματικού πρέπει να μετράει στις δαπάνες μήνα
+                            expense_share += reserve_share
             
             # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
             if end_date:
