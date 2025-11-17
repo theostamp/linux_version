@@ -274,3 +274,4 @@ For issues or questions:
 3. Check backend logs for detailed error information
 4. Check browser console for frontend errors
 
+

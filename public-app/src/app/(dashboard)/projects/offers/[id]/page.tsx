@@ -413,3 +413,4 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
   );
 }
 
+

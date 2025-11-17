@@ -109,3 +109,4 @@ Failed: 0
 - Πάντα κάντε backup πριν τρέξετε το script σε production
 - Το script είναι idempotent - μπορείτε να το τρέξετε πολλές φορές
 
+

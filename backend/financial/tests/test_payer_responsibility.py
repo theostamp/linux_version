@@ -535,3 +535,4 @@ class TestSplitRatioValidation(TestCase):
             self.assertFalse(serializer2.is_valid())
             self.assertIn('split_ratio', serializer2.errors)
 
+

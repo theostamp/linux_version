@@ -308,3 +308,4 @@ Look for:
 3. Add automated tests (Cypress/Playwright) for critical flows
 4. Add backend DRF tests for validation edge cases
 
+
