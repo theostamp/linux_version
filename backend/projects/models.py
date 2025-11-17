@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from decimal import Decimal
 import uuid
@@ -97,7 +97,13 @@ class Project(models.Model):
     # Πεδία πληρωμής
     payment_terms = models.TextField(null=True, blank=True, verbose_name="Όροι Πληρωμής")
     payment_method = models.CharField(max_length=50, null=True, blank=True, verbose_name="Τρόπος Πληρωμής")
-    installments = models.PositiveIntegerField(null=True, blank=True, default=1, verbose_name="Αριθμός Δόσεων")
+    installments = models.PositiveIntegerField(
+        null=True, 
+        blank=True, 
+        default=1, 
+        verbose_name="Αριθμός Δόσεων",
+        validators=[MaxValueValidator(60, message="Ο μέγιστος αριθμός δόσεων είναι 60 (5 χρόνια)")]
+    )
     advance_payment = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -209,7 +215,13 @@ class Offer(models.Model):
     # Πεδία πληρωμής (ευθυγραμμισμένα με τα έργα)
     payment_terms = models.TextField(null=True, blank=True, verbose_name="Όροι Πληρωμής")
     payment_method = models.CharField(max_length=50, null=True, blank=True, verbose_name="Τρόπος Πληρωμής")
-    installments = models.PositiveIntegerField(null=True, blank=True, default=1, verbose_name="Αριθμός Δόσεων")
+    installments = models.PositiveIntegerField(
+        null=True, 
+        blank=True, 
+        default=1, 
+        verbose_name="Αριθμός Δόσεων",
+        validators=[MaxValueValidator(60, message="Ο μέγιστος αριθμός δόσεων είναι 60 (5 χρόνια)")]
+    )
     advance_payment = models.DecimalField(
         max_digits=10,
         decimal_places=2,
