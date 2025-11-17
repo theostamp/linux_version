@@ -1388,9 +1388,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
 class FinancialDashboardViewSet(viewsets.ViewSet):
     """ViewSet για το οικονομικό dashboard"""
-    # permission_classes = [FinancialReadPermission]  # Temporarily disabled for debugging
-    authentication_classes = []  # Temporarily disable authentication for debugging
-    permission_classes = []  # Temporarily disable permissions for debugging
+    permission_classes = [IsAuthenticated]
     
     @action(detail=False, methods=['get'])
     def summary(self, request):
