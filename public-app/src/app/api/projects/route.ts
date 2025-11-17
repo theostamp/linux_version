@@ -6,7 +6,7 @@ const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "projects",
-    resolvePath: () => "projects",
+    resolvePath: () => "projects/projects",
     ensureTrailingSlash: true,
   },
   methods,

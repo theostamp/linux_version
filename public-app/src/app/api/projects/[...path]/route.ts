@@ -14,8 +14,8 @@ const handlers = createTenantProxyHandlers(
           ? [pathParam]
           : [];
       return segments.length > 0
-        ? ["projects", ...segments].join("/")
-        : "projects";
+        ? ["projects/projects", ...segments].join("/")
+        : "projects/projects";
     },
     ensureTrailingSlash: true,
   },
