@@ -9,14 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-[#1abcbd] text-white hover:bg-[#17a8a9] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
-        secondary: 'bg-[#1abcbd] text-white hover:bg-[#17a8a9] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
-        destructive: 'bg-[#1abcbd] text-white hover:bg-[#17a8a9] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
+        default: 'bg-[#1abcbd] text-white hover:bg-[#026878] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
+        secondary: 'bg-[#1abcbd] text-white hover:bg-[#026878] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
+        destructive: 'bg-[#1abcbd] text-white hover:bg-[#026878] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
         outline: 'border-2 border-[#1abcbd] text-[#1abcbd] bg-white hover:bg-[#1abcbd] hover:text-white hover:shadow-md focus:ring-[#1abcbd] font-medium',
-        link: 'text-[#1abcbd] underline-offset-4 hover:underline hover:text-[#17a8a9] focus:ring-[#1abcbd] font-medium shadow-none',
-        ghost: 'bg-[#1abcbd] text-white hover:bg-[#17a8a9] hover:shadow-md focus:ring-[#1abcbd] font-medium',
-        success: 'bg-[#1abcbd] text-white hover:bg-[#17a8a9] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
-        warning: 'bg-[#1abcbd] text-white hover:bg-[#17a8a9] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
+        link: 'text-[#1abcbd] underline-offset-4 hover:underline hover:text-[#026878] focus:ring-[#1abcbd] font-medium shadow-none',
+        ghost: 'bg-[#1abcbd] text-white hover:bg-[#026878] hover:shadow-md focus:ring-[#1abcbd] font-medium',
+        success: 'bg-[#1abcbd] text-white hover:bg-[#026878] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
+        warning: 'bg-[#1abcbd] text-white hover:bg-[#026878] hover:shadow-md hover:scale-[1.01] focus:ring-[#1abcbd] font-medium',
       },
       size: {
         xs: 'h-8 px-3 text-xs',

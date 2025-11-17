@@ -63,3 +63,10 @@ FIXING TENANT 'theo' - Adding Demo Data
    Has demo building (Αλκμάνος 22): yes
 
 ⚠️ Force flag detected: removing existing demo building data...
+# Python cache files
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+

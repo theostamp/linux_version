@@ -9,11 +9,11 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-[#1abcbd] text-white hover:bg-[#17a8a9]",
+          "border-transparent bg-[#1abcbd] text-white hover:bg-[#026878]",
         secondary:
-          "border-transparent bg-[#1abcbd] text-white hover:bg-[#17a8a9]",
+          "border-transparent bg-[#1abcbd] text-white hover:bg-[#026878]",
         destructive:
-          "border-transparent bg-[#1abcbd] text-white hover:bg-[#17a8a9]",
+          "border-transparent bg-[#1abcbd] text-white hover:bg-[#026878]",
         outline: "text-gray-900 border-gray-300",
       },
     },
