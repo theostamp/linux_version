@@ -19,14 +19,19 @@
   /* Border and input */
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #3b82f6;
+  --ring: #1abcbd;
+  
+  /* Primary color - fancy turquoise */
+  --primary: #1abcbd;
+  --primary-foreground: #ffffff;
+  --primary-hover: #17a8a9;
   
   /* Card colors */
   --card: #ffffff;
   --card-foreground: #171717;
   
   /* Radius */
-  --radius: 0.5rem;
+  --radius: 0;
 }
 
 @theme inline {
@@ -34,6 +39,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-condensed: var(--font-ubuntu-condensed);
+}
+
+/* Headings use Ubuntu Condensed */
+h1, h2, h3, h4 {
+  font-family: var(--font-ubuntu-condensed), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,7 +67,7 @@
     /* Border and input - dark mode */
     --border: #27272a;
     --input: #27272a;
-    --ring: #3b82f6;
+    --ring: #1abcbd;
     
     /* Card colors - dark mode */
     --card: #18181b;

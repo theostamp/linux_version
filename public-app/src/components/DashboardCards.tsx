@@ -50,9 +50,9 @@ export default function DashboardCards({ data, cards }: Props) {
           <div
             key={card.key}
             onClick={handleClick}
-            className={`cursor-pointer rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-105 ${
+            className={`cursor-pointer rounded-none p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-105 ${
               card.bgColor || 'bg-white'
-            } ${card.borderColor || 'border border-gray-200'}`}
+            } ${card.borderColor || 'border-0'}`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className={`p-2 rounded-lg ${card.bgColor ? 'bg-white/20' : 'bg-gray-50'}`}>

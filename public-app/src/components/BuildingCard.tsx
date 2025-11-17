@@ -51,9 +51,9 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
   };
 
   return (
-    <div className="bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-white border-0 rounded-none overflow-hidden shadow-sm hover:shadow-md transition-all">
       {/* Header */}
-      <div className="bg-blue-50 p-3 border-b">
+      <div className="bg-blue-50 p-3 border-b border-gray-100">
         <div className="flex items-center">
           <h3 className={`${typography.cardTitle} truncate flex items-center`}>
             <BuildingIcon className="w-4 h-4 mr-2 text-blue-600" />
@@ -85,7 +85,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
         </div>
 
         {/* Actions */}
-        <div className="pt-3 mt-3 border-t flex justify-between items-center">
+        <div className="pt-3 mt-3 border-t border-gray-100 flex justify-between items-center">
           <Button
             variant="default"
             className="flex-1 mr-2"

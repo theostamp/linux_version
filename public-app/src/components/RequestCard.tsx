@@ -76,7 +76,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
   return (
     <Link
       href={`/requests/${id}`}
-      className="block border rounded-lg p-4 shadow hover:shadow-md transition-all duration-200 bg-white hover:bg-gray-50"
+      className="block border-0 rounded-none p-4 shadow-sm hover:shadow-md transition-all duration-200 bg-white hover:bg-gray-50"
     >
       {/* Header with priority and status */}
       <div className="flex justify-between items-start mb-3">

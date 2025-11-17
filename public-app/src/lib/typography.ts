@@ -11,13 +11,13 @@
 
 // 🎯 Core Typography Scale
 export const typography = {
-  // Headings - Main content hierarchy
-  pageTitle: 'text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50',
-  sectionHeader: 'text-2xl font-semibold tracking-tight text-gray-800 dark:text-gray-100',
-  subsectionHeader: 'text-xl font-semibold text-gray-800 dark:text-gray-100',
-  cardTitle: 'text-lg font-semibold text-gray-900 dark:text-gray-50',
-  modalTitle: 'text-lg font-semibold text-gray-900 dark:text-gray-50',
-  smallHeader: 'text-base font-medium text-gray-700 dark:text-gray-200',
+  // Headings - Main content hierarchy (Ubuntu Condensed)
+  pageTitle: 'text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50 font-[var(--font-ubuntu-condensed)]',
+  sectionHeader: 'text-2xl font-semibold tracking-tight text-gray-800 dark:text-gray-100 font-[var(--font-ubuntu-condensed)]',
+  subsectionHeader: 'text-xl font-semibold text-gray-800 dark:text-gray-100 font-[var(--font-ubuntu-condensed)]',
+  cardTitle: 'text-lg font-semibold text-gray-900 dark:text-gray-50 font-[var(--font-ubuntu-condensed)]',
+  modalTitle: 'text-lg font-semibold text-gray-900 dark:text-gray-50 font-[var(--font-ubuntu-condensed)]',
+  smallHeader: 'text-base font-medium text-gray-700 dark:text-gray-200 font-[var(--font-ubuntu-condensed)]',
 
   // Body Text
   bodyLarge: 'text-lg text-gray-600 dark:text-gray-300 leading-relaxed',

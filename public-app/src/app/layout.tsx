@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Ubuntu_Condensed } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import AppProviders from "@/components/AppProviders";
@@ -12,6 +13,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const ubuntuCondensed = Ubuntu_Condensed({
+  variable: "--font-ubuntu-condensed",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -44,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${ubuntuCondensed.variable} antialiased`}
       >
         {googleMapsApiKey ? (
           <Script

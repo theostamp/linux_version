@@ -71,7 +71,7 @@ export default function BuildingSelectorButton({
           onClick={handleOpen}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors ${className}`}
+          className={`flex items-center gap-2 px-4 py-2 bg-white border-0 rounded-none shadow-sm hover:bg-gray-50 hover:shadow-md transition-all ${className}`}
         >
           <BuildingIcon className="w-4 h-4 text-gray-600" />
           <span className="text-sm font-medium text-gray-700">

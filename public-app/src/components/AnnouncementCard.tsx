@@ -99,10 +99,10 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
 
   return (
     <motion.div
-      className={`p-4 rounded-2xl shadow text-gray-900 dark:text-gray-100 relative ${
+      className={`p-4 rounded-none shadow-sm text-gray-900 dark:text-gray-100 relative ${
         isAssembly 
-          ? 'bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200' 
-          : 'bg-white dark:bg-gray-800'
+          ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-0' 
+          : 'bg-white dark:bg-gray-800 border-0'
       }`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
