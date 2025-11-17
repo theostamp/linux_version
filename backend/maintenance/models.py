@@ -594,23 +594,49 @@ class ScheduledMaintenance(models.Model):
     def delete_linked_expense(self):
         """Delete linked expenses when maintenance is deleted"""
         from financial.models import Expense
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(
+            f"🗑️ Deleting linked expenses for ScheduledMaintenance {self.id}: '{self.title}'",
+            extra={
+                'maintenance_id': self.id,
+                'maintenance_title': self.title,
+                'building_id': self.building_id,
+            }
+        )
         
         # Delete the primary linked expense
         if self.linked_expense:
             expense = self.linked_expense
+            expense_id = expense.id
             self.linked_expense = None
             self.save(update_fields=['linked_expense'])
             expense.delete()
+            logger.info(f"   ✓ Deleted primary linked expense {expense_id}")
         
-        # Delete any additional expenses created for this maintenance (installments)
-        # Find expenses that reference this maintenance in their notes
-        related_expenses = Expense.objects.filter(
+        # Delete any additional expenses created for this maintenance
+        # Find expenses that reference this maintenance in their notes (installments, manual references)
+        all_related_expenses = Expense.objects.filter(
             building=self.building,
             notes__icontains=f"προγραμματισμένο έργο #{self.id}"
         )
+        expenses_count = all_related_expenses.count()
         
-        for expense in related_expenses:
-            expense.delete()
+        if expenses_count > 0:
+            logger.info(
+                f"   Found {expenses_count} additional expenses related to maintenance {self.id}",
+                extra={
+                    'maintenance_id': self.id,
+                    'expenses_count': expenses_count,
+                    'expenses_list': list(all_related_expenses.values('id', 'title', 'amount', 'date')),
+                }
+            )
+            
+            all_related_expenses.delete()
+            logger.info(f"   ✓ Deleted {expenses_count} additional related expenses")
+        else:
+            logger.info(f"   ✓ No additional related expenses found")
 
 
 class MaintenanceTicket(models.Model):
