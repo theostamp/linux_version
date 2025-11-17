@@ -23,7 +23,6 @@ import {
   ArrowUpDown,
   Filter,
   Trash2,
-  AlertTriangle,
 } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
@@ -35,16 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-yellow-100 text-yellow-700',
@@ -509,62 +499,21 @@ function OffersPageContent() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!offerToDelete} onOpenChange={(open) => !open && setOfferToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Διαγραφή Προσφοράς</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1 space-y-2">
-                  <p className="font-medium text-amber-900">
-                    Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;
-                  </p>
-                  {offerToDelete && (
-                    <div className="text-sm text-amber-800 space-y-1">
-                      <p><strong>Συνεργείο:</strong> {offerToDelete.contractor_name || 'Άγνωστο'}</p>
-                      {offerToDelete.project_title && (
-                        <p><strong>Έργο:</strong> {offerToDelete.project_title}</p>
-                      )}
-                      <p><strong>Ποσό:</strong> {formatCurrency(offerToDelete.amount)}</p>
-                      <p><strong>Κατάσταση:</strong> {STATUS_LABELS[offerToDelete.status] || offerToDelete.status}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {offerToDelete?.status === 'accepted' && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-800 font-medium">
-                    ⚠️ Προσοχή: Αυτή η προσφορά έχει εγκριθεί! Η διαγραφή της μπορεί να επηρεάσει σχετικές δαπάνες και έργα.
-                  </p>
-                </div>
-              )}
-              
-              <p className="text-sm text-gray-600 font-semibold">
-                Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Ακύρωση</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteOffer}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Διαγραφή...
-                </>
-              ) : (
-                'Διαγραφή Προσφοράς'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!offerToDelete}
+        onOpenChange={(open) => !open && setOfferToDelete(null)}
+        title="Διαγραφή Προσφοράς"
+        description={
+          offerToDelete
+            ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την προσφορά από "${offerToDelete.contractor_name || 'Άγνωστο Συνεργείο'}" για το έργο "${offerToDelete.project_title || 'Άγνωστο Έργο'}" (Ποσό: ${formatCurrency(offerToDelete.amount)})${offerToDelete.status === 'accepted' ? ' - ΠΡΟΣΟΧΗ: Η προσφορά έχει εγκριθεί!' : ''}? Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.`
+            : 'Είστε σίγουροι;'
+        }
+        confirmText="Διαγραφή Προσφοράς"
+        cancelText="Ακύρωση"
+        confirmVariant="destructive"
+        isConfirmLoading={isDeleting}
+        onConfirm={handleDeleteOffer}
+      />
     </div>
   );
 }
