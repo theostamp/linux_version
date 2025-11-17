@@ -1,5 +1,5 @@
-import { createTenantProxyHandlers } from "../../_utils/tenantProxy";
-import { exportHandlers } from "../../_utils/exportHandlers";
+import { createTenantProxyHandlers } from "../_utils/tenantProxy";
+import { exportHandlers } from "../_utils/exportHandlers";
 
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 
