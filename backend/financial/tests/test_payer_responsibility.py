@@ -170,6 +170,21 @@ class TestExpensePayerResponsibility(TestCase):
             
             self.assertEqual(expense.payer_responsibility, 'owner')
 
+    def test_expense_save_without_manager_sets_default_payer(self):
+        """Even manual Expense.save() should apply category defaults"""
+        with schema_context('demo'):
+            expense = Expense(
+                building=self.building,
+                title='Project Manual Save',
+                amount=Decimal('750.00'),
+                date=date.today(),
+                category='project',
+                distribution_type='by_participation_mills'
+            )
+            # Σκόπιμα δεν ορίζουμε payer_responsibility πριν το save
+            expense.save()
+            self.assertEqual(expense.payer_responsibility, 'owner')
+
 
 class TestFinancialDashboardPayerSeparation(TestCase):
     """Tests for FinancialDashboardService payer separation"""

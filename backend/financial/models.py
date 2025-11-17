@@ -92,6 +92,12 @@ class Supplier(models.Model):
 class Expense(models.Model):
     """Μοντέλο για τις δαπάνες κτιρίου"""
     
+    def __init__(self, *args, **kwargs):
+        # Καταγράφουμε αν δόθηκε ρητά η ευθύνη πληρωμής (ώστε να μην την αντικαταστήσουμε)
+        payer_provided = kwargs.get('payer_responsibility', None)
+        self._payer_responsibility_supplied = payer_provided is not None and payer_provided != ''
+        super().__init__(*args, **kwargs)
+    
     # Expense Type choices for easy identification and reversal
     EXPENSE_TYPE_CHOICES = [
         ('regular', 'Κανονική Δαπάνη'),
@@ -483,6 +489,21 @@ class Expense(models.Model):
             'owner'
         """
         return cls.EXPENSE_CATEGORY_DEFAULTS.get(category_key, 'resident')
+    
+    def save(self, *args, **kwargs):
+        """
+        Εξασφαλίζει ότι κάθε νέα δαπάνη λαμβάνει την προεπιλεγμένη ευθύνη πληρωμής
+        βάσει κατηγορίας, εκτός αν έχει οριστεί ρητά.
+        """
+        if self._state.adding and not getattr(self, '_payer_responsibility_supplied', False):
+            if self.category:
+                self.payer_responsibility = self.get_default_payer_for_category(self.category)
+            else:
+                # Fallback ώστε να αποφύγουμε NULL τιμές
+                self.payer_responsibility = self.payer_responsibility or 'resident'
+        super().save(*args, **kwargs)
+        # Μετά την αποθήκευση θεωρούμε ότι η ευθύνη έχει οριστεί
+        self._payer_responsibility_supplied = True
     
     def _create_apartment_transactions(self):
         """Δημιουργεί συναλλαγές για όλα τα διαμερίσματα"""

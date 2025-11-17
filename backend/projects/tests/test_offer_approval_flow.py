@@ -162,6 +162,14 @@ class OfferApprovalFlowTest(TransactionTestCase):
                 f"⚠️ ΚΡΙΣΙΜΟ: Πρέπει να δημιουργηθούν {expected_expense_count} δαπάνες (1 προκαταβολή + 6 δόσεις)"
             )
 
+            # Κάθε δαπάνη έργου πρέπει να χρεώνεται στους ιδιοκτήτες
+            for expense in expenses:
+                self.assertEqual(
+                    expense.payer_responsibility,
+                    'owner',
+                    f"Οι δαπάνες έργων πρέπει να έχουν payer_responsibility='owner' (expense {expense.id})"
+                )
+
             # Επαλήθευση προκαταβολής
             advance_expense = expenses.filter(title__icontains='Προκαταβολή').first()
             self.assertIsNotNone(advance_expense, "Πρέπει να υπάρχει δαπάνη προκαταβολής")
