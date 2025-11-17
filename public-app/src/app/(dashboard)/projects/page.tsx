@@ -13,14 +13,12 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { 
   FileText, 
@@ -962,11 +960,11 @@ function ProjectsDashboardContent() {
       </Card>
       
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Διαγραφή Έργου</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
+      <Dialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Διαγραφή Έργου</DialogTitle>
+            <DialogDescription className="space-y-3">
               <p>
                 Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο <strong>&quot;{projectToDelete?.title}&quot;</strong>;
               </p>
@@ -986,20 +984,22 @@ function ProjectsDashboardContent() {
               <p className="text-sm text-red-600 font-medium">
                 Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
               </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Ακύρωση</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProjectToDelete(null)} disabled={isDeleting}>
+              Ακύρωση
+            </Button>
+            <Button
               onClick={handleDeleteProject}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {isDeleting ? 'Διαγραφή...' : 'Διαγραφή Έργου'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

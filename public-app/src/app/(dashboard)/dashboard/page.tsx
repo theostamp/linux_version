@@ -79,7 +79,6 @@ function DashboardContent() {
       {effectiveBuildings.length > 0 && !dashboardData?.buildings?.length && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">🏢 Τα Κτίριά σας</h2>
-        {effectiveBuildings.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {effectiveBuildings.map((building) => (
               <Link
