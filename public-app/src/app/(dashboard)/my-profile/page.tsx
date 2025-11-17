@@ -57,9 +57,17 @@ export default function MyProfilePage() {
   }, [user]);
 
   const mutation = useMutation({
-    mutationFn: async (payload: ProfileFormState) => api.patch<User>('/users/me/', payload),
+    mutationFn: async (payload: ProfileFormState) => {
+      console.log('[MyProfile] Updating user profile:', payload);
+      const result = await api.patch<User>('/users/me/', payload);
+      console.log('[MyProfile] ✓ Profile update successful:', result);
+      return result;
+    },
     onSuccess: (updatedUser) => {
-      toast.success('Το προφίλ ενημερώθηκε με επιτυχία');
+      console.log('[MyProfile] Profile update confirmed, user data:', updatedUser);
+      toast.success('Το προφίλ ενημερώθηκε με επιτυχία', {
+        description: 'Οι αλλαγές αποθηκεύτηκαν στον server.',
+      });
       const mapped = createFormState(updatedUser);
       setFormState(mapped);
       setInitialState(mapped);

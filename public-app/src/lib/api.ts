@@ -450,14 +450,17 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     delete headers['Content-Type'];
   }
 
+  console.log(`[API CALL] PATCH ${url}`, body ? { body } : '');
   const res = await fetch(url, requestInit);
   
   if (!res.ok) {
     const text = await res.text();
+    console.error(`[API CALL] PATCH ${url} failed:`, res.status, text);
     throw createApiError("PATCH", url, res.status, text);
   }
   
   const data = attachApiResponseData(await res.json() as T);
+  console.log(`[API CALL] ✓ PATCH ${url} successful`, data);
   return data;
 }
 

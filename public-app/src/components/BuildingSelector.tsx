@@ -31,6 +31,7 @@ export default function BuildingSelector({
     if (isOpen) {
       loadBuildings();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const loadBuildings = async () => {
