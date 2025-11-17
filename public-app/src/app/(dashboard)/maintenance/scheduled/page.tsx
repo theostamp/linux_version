@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { Calendar, AlertTriangle, CheckCircle2, Clock, Filter, Plus, Wrench, Loader2 } from 'lucide-react';
+import { Calendar, AlertTriangle, CheckCircle2, Clock, Filter, Plus, Wrench, Loader2, Trash2 } from 'lucide-react';
 import { api, extractResults, getActiveBuildingId } from '@/lib/api';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { useRole } from '@/lib/auth';
@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -104,6 +105,8 @@ function ScheduledMaintenanceDashboard() {
   const initialStatus = (searchParams.get('status') as Status | null) ?? 'all';
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>(initialPriority);
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>(initialStatus);
+  const [taskToDelete, setTaskToDelete] = useState<ScheduledMaintenanceRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const priority = (searchParams.get('priority') as Priority | null) ?? 'all';
@@ -202,6 +205,33 @@ function ScheduledMaintenanceDashboard() {
 
   const handleStatusChange = (id: number, nextStatus: Status) => {
     statusMutation.mutate({ id, status: nextStatus });
+  };
+
+  const handleDeleteTask = async () => {
+    if (!taskToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await api.delete(`/maintenance/scheduled/${taskToDelete.id}/`);
+      
+      toast({
+        title: 'Διαγραφή Επιτυχής',
+        description: `Το έργο "${taskToDelete.title}" διαγράφηκε επιτυχώς μαζί με όλα τα σχετικά πεδία.`,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance-list'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+      setTaskToDelete(null);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: 'Σφάλμα Διαγραφής',
+        description: 'Αποτυχία διαγραφής του έργου. Παρακαλώ δοκιμάστε ξανά.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -357,6 +387,17 @@ function ScheduledMaintenanceDashboard() {
                             {row.status === 'scheduled' ? 'Έναρξη' : 'Ολοκλήρωση'}
                           </Button>
                         )}
+                        {canEdit && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTaskToDelete(row)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            title="Διαγραφή έργου"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -366,6 +407,23 @@ function ScheduledMaintenanceDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!taskToDelete}
+        onOpenChange={(open) => !open && setTaskToDelete(null)}
+        title="Διαγραφή Προγραμματισμένου Έργου"
+        description={
+          taskToDelete
+            ? `Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο "${taskToDelete.title}"${taskToDelete.contractor_name ? ` από το συνεργείο "${taskToDelete.contractor_name}"` : ''}? ΠΡΟΣΟΧΗ: Αυτή η ενέργεια θα διαγράψει και όλα τα σχετικά πεδία (δαπάνες, αποδείξεις, προσφορές). Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.`
+            : 'Είστε σίγουροι;'
+        }
+        confirmText="Διαγραφή Έργου"
+        cancelText="Ακύρωση"
+        confirmVariant="destructive"
+        isConfirmLoading={isDeleting}
+        onConfirm={handleDeleteTask}
+      />
     </div>
   );
 }
