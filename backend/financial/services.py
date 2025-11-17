@@ -656,7 +656,7 @@ class FinancialDashboardService:
         # Calculate reserve fund monthly target FIRST
         # Always show the calculated monthly target for all months
         # The system will stop collecting when the goal is reached
-        reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+        reserve_fund_monthly_target = self._get_reserve_fund_monthly_target(apartments_count)
         
         # Check if there's any financial activity for this month (διακανονισμός)
         has_monthly_activity = self._has_monthly_activity(month) if month else True
@@ -1039,6 +1039,9 @@ class FinancialDashboardService:
         from .balance_service import BalanceCalculationService
         
         apartments = Apartment.objects.filter(building_id=self.building_id)
+        apartment_count_total = apartments.count()
+        total_participation_mills = apartments.aggregate(total=Sum('participation_mills'))['total'] or 0
+        safe_apartment_count = apartment_count_total if apartment_count_total > 0 else 1
         balances = []
         
         # Υπολογισμός end_date αν δοθεί month
@@ -1128,9 +1131,8 @@ class FinancialDashboardService:
                     date__lt=month_start
                 )
                 
-                total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
-                    total=Sum('participation_mills'))['total'] or 1000
-                apartment_count = Apartment.objects.filter(building_id=apartment.building_id).count()
+                total_mills = total_participation_mills or 1000
+                apartment_count = safe_apartment_count
                 
                 for expense in previous_expenses:
                     # Υπολογισμός μεριδίου διαμερίσματος
@@ -1185,7 +1187,39 @@ class FinancialDashboardService:
                 resident_expenses = previous_resident_expenses + current_resident_expenses
                 owner_expenses = previous_owner_expenses + current_owner_expenses
                 
+                # ✅ ΔΙΟΡΘΩΣΗ: Υπολογισμός reserve_fund_share ξεχωριστά
+                # Ψάχνουμε για Expense records με category='reserve_fund' για τον μήνα
+                reserve_fund_expenses = month_expenses.filter(category='reserve_fund')
+                if reserve_fund_expenses.exists():
+                    # Αν υπάρχουν Expense records, υπολογίζουμε το μερίδιο από αυτά
+                    for reserve_expense in reserve_fund_expenses:
+                        # Reserve fund καταμερίζεται ανά χιλιοστά (όχι ισόποσα)
+                        reserve_share = (
+                            Decimal(apartment.participation_mills or 0) / Decimal(total_mills)
+                        ) * reserve_expense.amount
+                        reserve_fund_share += reserve_share
+                elif self.building.reserve_fund_start_date:
+                    # Αν δεν υπάρχουν Expense records, υπολογίζουμε δυναμικά από Building settings
+                    # month_start έχει ήδη υπολογιστεί παραπάνω (γραμμή 1114)
+                    if (month_start >= self.building.reserve_fund_start_date and
+                        (not self.building.reserve_fund_target_date or month_start <= self.building.reserve_fund_target_date)):
+                        
+                        monthly_reserve_target = self._get_reserve_fund_monthly_target(apartment_count)
+                        if monthly_reserve_target > 0:
+                            if total_mills > 0:
+                                reserve_share = (
+                                    Decimal(apartment.participation_mills or 0) / Decimal(total_mills)
+                                ) * monthly_reserve_target
+                            else:
+                                reserve_share = Decimal(monthly_reserve_target) / Decimal(apartment_count)
+                            
+                            reserve_fund_share += reserve_share
+                            # ✅ Προσθήκη reserve_fund_share στο owner_expenses για σωστή εμφάνιση
+                            owner_expenses += reserve_share
+                
                 # ✅ ΔΙΟΡΘΩΣΗ 2025-10-10: Management fees & Reserve fund είναι ΗΔΗ Expense records!
+                # ΣΗΜΕΙΩΣΗ: Αν το reserve fund υπολογίζεται δυναμικά (χωρίς Expense records),
+                # προστίθεται στο owner_expenses παραπάνω
                 # Δεν χρειάζεται δυναμική προσθήκη - περιλαμβάνονται στο loop παραπάνω (γραμμές 1073-1089)
                 # Αφαιρέθηκε η διπλή χρέωση management fees & reserve fund
                 
@@ -1203,8 +1237,76 @@ class FinancialDashboardService:
                 print(f"📊 Apartment {apartment.number} - {month}:")
                 print(f"   Previous Balance: €{previous_balance:.2f}")
                 print(f"   Current Month Expenses: €{expense_share:.2f}")
+                print(f"   Reserve Fund Share: €{reserve_fund_share:.2f}")
                 print(f"   Payments This Month: €{month_payments:.2f}")
                 print(f"   Net Obligation: €{net_obligation:.2f}")
+            else:
+                # ✅ ΔΙΟΡΘΩΣΗ: Για current view (χωρίς month), υπολογίζουμε reserve_fund_share για τον τρέχοντα μήνα
+                from datetime import date
+                today = date.today()
+                current_month_start = date(today.year, today.month, 1)
+                
+                # Ψάχνουμε για Expense records με category='reserve_fund' για τον τρέχοντα μήνα
+                current_month_expenses = Expense.objects.filter(
+                    building_id=apartment.building_id,
+                    date__gte=current_month_start,
+                    date__lt=end_date if end_date else date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
+                )
+                
+                total_mills_current = total_participation_mills or 1000
+                apartment_count_current = safe_apartment_count
+                
+                # ✅ ΔΙΟΡΘΩΣΗ: Για current view, υπολογίζουμε owner_expenses και resident_expenses από Expense records
+                if not month and not end_date:
+                    current_owner_expenses_current = Decimal('0.00')
+                    current_resident_expenses_current = Decimal('0.00')
+                    
+                    for expense in current_month_expenses:
+                        if expense.category == 'management_fees':
+                            apartment_share = expense.amount / apartment_count_current
+                        else:
+                            apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills_current) * expense.amount
+                        
+                        if expense.payer_responsibility == 'owner':
+                            current_owner_expenses_current += apartment_share
+                        elif expense.payer_responsibility == 'shared':
+                            split_ratio = expense.split_ratio if expense.split_ratio is not None else Decimal('0.5')
+                            current_owner_expenses_current += apartment_share * split_ratio
+                            current_resident_expenses_current += apartment_share * (Decimal('1.0') - split_ratio)
+                        else:  # resident
+                            current_resident_expenses_current += apartment_share
+                    
+                    owner_expenses = current_owner_expenses_current
+                    resident_expenses = current_resident_expenses_current
+                
+                # ✅ Υπολογισμός reserve_fund_share για current view
+                reserve_fund_expenses_current = current_month_expenses.filter(category='reserve_fund')
+                if reserve_fund_expenses_current.exists():
+                    # Αν υπάρχουν Expense records, υπολογίζουμε το μερίδιο από αυτά
+                    for reserve_expense in reserve_fund_expenses_current:
+                        reserve_share = Decimal(apartment.participation_mills) / Decimal(total_mills_current) * reserve_expense.amount
+                        reserve_fund_share += reserve_share
+                    # ΣΗΜΕΙΩΣΗ: Αν υπάρχουν Expense records, το reserve_fund_share περιλαμβάνεται ήδη στο owner_expenses
+                    # μέσω του loop παραπάνω, οπότε ΔΕΝ χρειάζεται να το προσθέσουμε ξανά
+                elif self.building.reserve_fund_start_date:
+                    # Αν δεν υπάρχουν Expense records, υπολογίζουμε δυναμικά από Building settings
+                    if (current_month_start >= self.building.reserve_fund_start_date and
+                        (not self.building.reserve_fund_target_date or current_month_start <= self.building.reserve_fund_target_date)):
+                        
+                        monthly_reserve_target = self._get_reserve_fund_monthly_target(apartment_count_current)
+                        if monthly_reserve_target > 0:
+                            if total_mills_current > 0:
+                                reserve_share = (
+                                    Decimal(apartment.participation_mills or 0) / Decimal(total_mills_current)
+                                ) * monthly_reserve_target
+                            else:
+                                reserve_share = Decimal(monthly_reserve_target) / Decimal(apartment_count_current)
+                            
+                            reserve_fund_share += reserve_share
+                            
+                            # ✅ Προσθήκη reserve_fund_share στο owner_expenses (μόνο αν υπολογίστηκε δυναμικά)
+                            if not month and not end_date:
+                                owner_expenses += reserve_share
             
             # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
             if end_date:
@@ -1366,6 +1468,20 @@ class FinancialDashboardService:
             })
 
         return breakdown
+
+    def _get_reserve_fund_monthly_target(self, apartment_count: int) -> Decimal:
+        """
+        Υπολογίζει το συνολικό μηνιαίο ποσό που πρέπει να συλλεχθεί για το αποθεματικό.
+        Υποστηρίζει τόσο στόχο/διάρκεια όσο και σταθερή εισφορά ανά διαμέρισμα.
+        """
+        contribution_per_apartment = self.building.reserve_contribution_per_apartment or Decimal('0.00')
+        if self.building.reserve_fund_goal and self.building.reserve_fund_duration_months:
+            duration = max(self.building.reserve_fund_duration_months, 1)
+            goal = self.building.reserve_fund_goal or Decimal('0.00')
+            return goal / Decimal(duration)
+        if contribution_per_apartment > 0 and apartment_count > 0:
+            return contribution_per_apartment * Decimal(apartment_count)
+        return Decimal('0.00')
 
 
 class PaymentProcessor:

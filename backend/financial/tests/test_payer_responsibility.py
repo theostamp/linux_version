@@ -222,6 +222,35 @@ class TestFinancialDashboardPayerSeparation(TestCase):
                 current_balance=Decimal('0.00')
             )
     
+    def test_per_apartment_reserve_contribution_distribution(self):
+        """Reserve fund shares should appear even without reserve_fund_goal"""
+        with schema_context('demo'):
+            self.building.reserve_contribution_per_apartment = Decimal('30.00')
+            self.building.reserve_fund_start_date = date(2025, 1, 1)
+            self.building.reserve_fund_goal = None
+            self.building.reserve_fund_duration_months = None
+            self.building.save(update_fields=[
+                'reserve_contribution_per_apartment',
+                'reserve_fund_start_date',
+                'reserve_fund_goal',
+                'reserve_fund_duration_months',
+            ])
+
+            service = FinancialDashboardService(self.building.id)
+            balances = service.get_apartment_balances('2025-08')
+
+            total_reserve = sum(Decimal(b['reserve_fund_share']) for b in balances)
+            # 2 apartments × 30€ = 60€ συνολικά
+            self.assertAlmostEqual(total_reserve, Decimal('60.00'))
+
+            # Κάθε διαμέρισμα πρέπει να εμφανίζει το μερίδιο του αποθεματικού ως δαπάνη ιδιοκτήτη
+            for balance in balances:
+                self.assertGreater(balance['reserve_fund_share'], Decimal('0.00'))
+                self.assertAlmostEqual(
+                    Decimal(balance['owner_expenses']),
+                    Decimal(balance['reserve_fund_share'])
+                )
+
     def test_apartment_balances_separate_owner_resident(self):
         """Test that apartment balances separate owner vs resident expenses"""
         with schema_context('demo'):
