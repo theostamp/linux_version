@@ -2006,6 +2006,229 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=False, methods=['get'])
+    def overview(self, request):
+        """
+        Λήψη aggregated overview για όλα τα κτίρια του χρήστη
+        Endpoint: /api/financial/dashboard/overview/
+        """
+        try:
+            from django.db.models import Sum, Count, Q
+            from datetime import datetime, timedelta
+            from announcements.models import Announcement
+            from votes.models import Vote
+            from maintenance.models import MaintenanceRequest
+            
+            # Get user's buildings
+            user = request.user
+            if not user.is_authenticated:
+                return Response(
+                    {'error': 'Authentication required'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Get all buildings accessible to user
+            buildings = Building.objects.filter(
+                Q(owner=user) | Q(manager=user) | Q(apartments__owner=user) | Q(apartments__tenant=user)
+            ).distinct()
+            
+            if not buildings.exists():
+                return Response({
+                    'buildings_count': 0,
+                    'apartments_count': 0,
+                    'total_balance': 0,
+                    'pending_obligations': 0,
+                    'announcements_count': 0,
+                    'votes_count': 0,
+                    'requests_count': 0,
+                    'urgent_items': 0,
+                    'financial_summary': None,
+                    'recent_activity': [],
+                    'buildings': []
+                })
+            
+            # Aggregate metrics
+            buildings_count = buildings.count()
+            apartments_count = Apartment.objects.filter(building__in=buildings).count()
+            
+            # Financial metrics - aggregate from all buildings
+            total_balance = 0
+            pending_obligations = 0
+            pending_expenses = 0
+            
+            buildings_data = []
+            for building in buildings:
+                try:
+                    service = FinancialDashboardService(building.id)
+                    summary = service.get_summary()
+                    
+                    building_balance = float(summary.get('current_reserve', 0) or 0)
+                    building_pending = float(summary.get('pending_expenses', 0) or 0)
+                    
+                    total_balance += building_balance
+                    pending_expenses += building_pending
+                    
+                    # Get apartment balances for this building
+                    apt_balances = service.get_apartment_balances()
+                    negative_balances = sum(
+                        float(apt.get('current_balance', 0)) 
+                        for apt in apt_balances 
+                        if float(apt.get('current_balance', 0)) < 0
+                    )
+                    pending_obligations += abs(negative_balances)
+                    
+                    buildings_data.append({
+                        'id': building.id,
+                        'name': building.name,
+                        'address': building.address,
+                        'apartments_count': building.apartments.count(),
+                        'balance': building_balance,
+                        'pending_obligations': abs(negative_balances),
+                        'health_score': self._calculate_building_health(building, summary, apt_balances)
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing building {building.id}: {str(e)}")
+                    buildings_data.append({
+                        'id': building.id,
+                        'name': building.name,
+                        'address': building.address,
+                        'apartments_count': building.apartments.count(),
+                        'balance': 0,
+                        'pending_obligations': 0,
+                        'health_score': 50
+                    })
+            
+            # Get announcements count
+            announcements_count = Announcement.objects.filter(
+                building__in=buildings,
+                is_active=True,
+                published=True
+            ).count()
+            
+            # Get active votes count
+            today = datetime.now().date()
+            votes_count = Vote.objects.filter(
+                building__in=buildings,
+                is_active=True,
+                start_date__lte=today,
+                end_date__gte=today
+            ).count()
+            
+            # Get maintenance requests count
+            try:
+                requests_count = MaintenanceRequest.objects.filter(
+                    building__in=buildings
+                ).count()
+                urgent_requests = MaintenanceRequest.objects.filter(
+                    building__in=buildings,
+                    priority='high'
+                ).count()
+            except Exception:
+                requests_count = 0
+                urgent_requests = 0
+            
+            # Calculate urgent items
+            urgent_items = urgent_requests + votes_count
+            
+            # Get recent activity (announcements + votes)
+            recent_announcements = Announcement.objects.filter(
+                building__in=buildings,
+                is_active=True,
+                published=True
+            ).order_by('-created_at')[:5]
+            
+            recent_votes = Vote.objects.filter(
+                building__in=buildings,
+                is_active=True
+            ).order_by('-created_at')[:5]
+            
+            recent_activity = []
+            for announcement in recent_announcements:
+                recent_activity.append({
+                    'type': 'announcement',
+                    'id': announcement.id,
+                    'title': announcement.title,
+                    'date': announcement.created_at.isoformat(),
+                    'is_urgent': announcement.is_urgent,
+                    'building_id': announcement.building_id
+                })
+            
+            for vote in recent_votes:
+                recent_activity.append({
+                    'type': 'vote',
+                    'id': vote.id,
+                    'title': vote.title,
+                    'date': vote.created_at.isoformat(),
+                    'is_urgent': vote.is_urgent,
+                    'building_id': vote.building_id
+                })
+            
+            # Sort by date
+            recent_activity.sort(key=lambda x: x['date'], reverse=True)
+            recent_activity = recent_activity[:10]
+            
+            return Response({
+                'buildings_count': buildings_count,
+                'apartments_count': apartments_count,
+                'total_balance': total_balance,
+                'pending_obligations': pending_obligations,
+                'pending_expenses': pending_expenses,
+                'announcements_count': announcements_count,
+                'votes_count': votes_count,
+                'requests_count': requests_count,
+                'urgent_items': urgent_items,
+                'financial_summary': {
+                    'total_reserve': total_balance,
+                    'total_pending_expenses': pending_expenses,
+                    'total_pending_obligations': pending_obligations,
+                    'collection_rate': (
+                        ((total_balance / (total_balance + pending_obligations)) * 100) 
+                        if (total_balance + pending_obligations) > 0 
+                        else 100
+                    )
+                },
+                'recent_activity': recent_activity,
+                'buildings': buildings_data
+            })
+            
+        except Exception as e:
+            print(f"Error in dashboard overview: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Error retrieving dashboard overview: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _calculate_building_health(self, building, summary, apt_balances):
+        """Calculate a health score (0-100) for a building based on various metrics"""
+        try:
+            score = 100
+            
+            # Deduct points for negative apartment balances
+            negative_count = len([apt for apt in apt_balances if float(apt.get('current_balance', 0)) < 0])
+            total_apts = len(apt_balances)
+            if total_apts > 0:
+                debt_ratio = negative_count / total_apts
+                score -= (debt_ratio * 30)  # Max 30 points deduction
+            
+            # Deduct points for pending expenses
+            pending_expenses = float(summary.get('pending_expenses', 0) or 0)
+            if pending_expenses > 1000:
+                score -= min(20, pending_expenses / 100)  # Max 20 points deduction
+            
+            # Deduct points for low reserve
+            current_reserve = float(summary.get('current_reserve', 0) or 0)
+            if current_reserve < 0:
+                score -= 20
+            elif current_reserve < 500:
+                score -= 10
+            
+            return max(0, min(100, int(score)))
+        except Exception:
+            return 50  # Default middle score if calculation fails
+
 
 class CommonExpenseViewSet(viewsets.ViewSet):
     """ViewSet για τη διαχείριση κοινοχρήστων"""
