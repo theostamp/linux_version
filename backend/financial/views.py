@@ -2017,7 +2017,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             from datetime import datetime, timedelta
             from announcements.models import Announcement
             from votes.models import Vote
-            from maintenance.models import MaintenanceRequest
+            from maintenance.models import MaintenanceTicket
             
             # Get user's buildings
             user = request.user
@@ -2117,12 +2117,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             
             # Get maintenance requests count
             try:
-                requests_count = MaintenanceRequest.objects.filter(
+                requests_count = MaintenanceTicket.objects.filter(
                     building__in=buildings
                 ).count()
-                urgent_requests = MaintenanceRequest.objects.filter(
+                urgent_requests = MaintenanceTicket.objects.filter(
                     building__in=buildings,
-                    priority='high'
+                    priority__in=['high', 'urgent']
                 ).count()
             except Exception:
                 requests_count = 0
