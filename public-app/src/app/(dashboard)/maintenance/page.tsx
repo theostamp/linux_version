@@ -448,7 +448,7 @@ function MaintenanceDashboardContent() {
   const approvedProjectsQ = useQuery({
     queryKey: ['approved-projects', { building: buildingId }],
     queryFn: async () => {
-      const response = await api.get('/projects/projects/', {
+      const response = await api.get('/projects/', {
         params: {
           building: buildingId,
           status__in: 'approved,in_progress',

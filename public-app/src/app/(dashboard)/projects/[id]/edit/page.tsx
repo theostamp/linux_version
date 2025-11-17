@@ -28,7 +28,7 @@ export default function EditProjectPage() {
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
-      const response = await api.get(`/projects/projects/${projectId}/`);
+      const response = await api.get(`/projects/${projectId}/`);
       return response.data;
     },
     enabled: !!projectId,
@@ -180,7 +180,7 @@ export default function EditProjectPage() {
         payment_terms: formData.payment_terms || null,
       };
 
-      await api.patch(`/projects/projects/${projectId}/`, payload);
+      await api.patch(`/projects/${projectId}/`, payload);
 
       toast({
         title: 'Επιτυχία',

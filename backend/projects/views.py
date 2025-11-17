@@ -547,20 +547,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 extra={
                     'project_id': str(instance.id),
                     'expenses_count': expenses_count,
-                    'expenses_list': list(related_expenses.values('id', 'title', 'amount', 'date', 'paid_amount')),
+                    'expenses_list': list(related_expenses.values('id', 'title', 'amount', 'date')),
                 }
             )
-            
-            # Έλεγχος αν κάποια δαπάνη έχει πληρωθεί
-            paid_expenses = related_expenses.exclude(paid_amount__isnull=True).exclude(paid_amount=0)
-            if paid_expenses.exists():
-                logger.warning(
-                    f"   ⚠️ {paid_expenses.count()} expenses have been paid! Deleting anyway.",
-                    extra={
-                        'project_id': str(instance.id),
-                        'paid_expenses_count': paid_expenses.count(),
-                    }
-                )
             
             # Διαγραφή των δαπανών
             related_expenses.delete()

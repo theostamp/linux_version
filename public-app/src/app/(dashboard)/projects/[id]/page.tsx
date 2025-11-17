@@ -63,7 +63,7 @@ export default function ProjectDetailPage() {
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
-      const response = await api.get(`/projects/projects/${projectId}/`);
+      const response = await api.get(`/projects/${projectId}/`);
       return response.data;
     },
     enabled: !!projectId,

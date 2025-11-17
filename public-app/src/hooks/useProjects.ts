@@ -27,7 +27,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         params.status = status;
       }
       
-      const response = await api.get('/projects/projects/', { params });
+      const response = await api.get('/projects/', { params });
       return response.data;
     },
     enabled: Boolean(activeBuildingId),
@@ -50,7 +50,7 @@ export function useProject(projectId: string | number | null) {
     queryKey: ['project', projectId],
     queryFn: async () => {
       if (!projectId) return null;
-      const response = await api.get(`/projects/projects/${projectId}/`);
+      const response = await api.get(`/projects/${projectId}/`);
       return response.data;
     },
     enabled: Boolean(projectId),
@@ -62,7 +62,7 @@ export function useProjectMutations() {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Project>) => {
-      const response = await api.post('/projects/projects/', data);
+      const response = await api.post('/projects/', data);
       return response.data;
     },
     onSuccess: () => {
@@ -72,7 +72,7 @@ export function useProjectMutations() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string | number; data: Partial<Project> }) => {
-      const response = await api.patch(`/projects/projects/${id}/`, data);
+      const response = await api.patch(`/projects/${id}/`, data);
       return response.data;
     },
     onSuccess: (_, variables) => {
@@ -83,7 +83,7 @@ export function useProjectMutations() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string | number) => {
-      await api.delete(`/projects/projects/${id}/`);
+      await api.delete(`/projects/${id}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });

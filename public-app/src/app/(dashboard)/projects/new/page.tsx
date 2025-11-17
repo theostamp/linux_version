@@ -159,7 +159,7 @@ export default function NewProjectPage() {
         payment_terms: formData.payment_terms || null,
       };
 
-      const response = await api.post('/projects/projects/', payload);
+      const response = await api.post('/projects/', payload);
 
       if (formData.should_create_vote) {
         const votePayload: CreateVotePayload = {

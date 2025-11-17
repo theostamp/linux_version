@@ -115,7 +115,7 @@ const handleDeleteProject = async () => {
 
 #### API Endpoint
 ```
-DELETE /api/projects/projects/{id}/
+DELETE /api/projects/{id}/
 ```
 
 **Method**: `DELETE`  
