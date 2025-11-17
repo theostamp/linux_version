@@ -2025,10 +2025,20 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            # Get all buildings accessible to user
-            buildings = Building.objects.filter(
-                Q(owner=user) | Q(manager=user) | Q(apartments__owner=user) | Q(apartments__tenant=user)
-            ).distinct()
+            # Get all buildings accessible to user (using same logic as BuildingViewSet)
+            if user.is_superuser or user.is_staff:
+                buildings = Building.objects.all()
+            else:
+                # Check if user is a manager
+                is_manager = hasattr(user, "is_manager") and user.is_manager
+                if is_manager:
+                    buildings = Building.objects.filter(manager_id=user.id)
+                else:
+                    # User is a resident - get buildings via BuildingMembership
+                    from buildings.models import BuildingMembership
+                    buildings = Building.objects.filter(buildingmembership__resident=user).distinct()
+            
+            buildings = buildings.distinct()
             
             if not buildings.exists():
                 return Response({
