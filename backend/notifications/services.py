@@ -629,5 +629,286 @@ class DigestService:
         return notification
 
 
+class MonthlyTaskService:
+    """Service for managing monthly notification tasks"""
+    
+    @staticmethod
+    def execute_task(task, user):
+        """
+        Execute a monthly notification task by creating and sending the notification.
+        
+        Args:
+            task: MonthlyNotificationTask instance
+            user: User who executes the task
+            
+        Returns:
+            Notification instance
+        """
+        from .models import MonthlyNotificationTask, NotificationTemplate
+        
+        if not task.template:
+            raise ValueError("Task must have a template to execute")
+        
+        # Build context for template rendering
+        context = MonthlyTaskService._build_context(task)
+        
+        # Render template
+        rendered = task.template.render(context)
+        
+        # Create notification
+        notification = NotificationService.create_notification(
+            building=task.building,
+            created_by=user,
+            subject=rendered['subject'],
+            body=rendered['body'],
+            sms_body=rendered.get('sms', ''),
+            notification_type='email',
+            priority='normal',
+            template=task.template
+        )
+        
+        # Add all apartments as recipients
+        NotificationService.add_recipients(notification, send_to_all=True)
+        
+        # Send notification
+        NotificationService.send_notification(notification)
+        
+        logger.info(f"Executed monthly task {task.id} - notification {notification.id} sent")
+        return notification
+    
+    @staticmethod
+    def _build_context(task):
+        """
+        Build context dictionary for template rendering.
+        
+        Args:
+            task: MonthlyNotificationTask instance
+            
+        Returns:
+            Dict with context variables
+        """
+        from financial.models import MonthlyBalance
+        from django.utils import timezone
+        
+        context = {
+            'building_name': task.building.name if task.building else '',
+            'month': task.period_month.strftime('%B'),
+            'year': task.period_month.year,
+            'period': task.period_month.strftime('%m/%Y'),
+        }
+        
+        # Add financial data if available
+        if task.building and task.task_type == 'common_expense':
+            try:
+                monthly_balance = MonthlyBalance.objects.filter(
+                    building=task.building,
+                    year=task.period_month.year,
+                    month=task.period_month.month
+                ).first()
+                
+                if monthly_balance:
+                    context['total_expenses'] = monthly_balance.total_expenses
+                    context['total_collected'] = monthly_balance.total_collected
+                    context['carry_forward'] = monthly_balance.carry_forward
+            except Exception as e:
+                logger.warning(f"Could not load financial data for task {task.id}: {e}")
+        
+        return context
+    
+    @staticmethod
+    def configure_task(building, task_type, day_of_month, time_to_send, template, 
+                      auto_send_enabled=False, period_month=None):
+        """
+        Configure or create a monthly notification task.
+        
+        Args:
+            building: Building instance (or None for all buildings)
+            task_type: Task type ('common_expense', 'balance_reminder', 'custom')
+            day_of_month: Day of month (1-31)
+            time_to_send: Time to send (HH:MM format)
+            template: NotificationTemplate instance
+            auto_send_enabled: Whether to enable auto-send
+            period_month: Date for period (defaults to next month)
+            
+        Returns:
+            MonthlyNotificationTask instance
+        """
+        from .models import MonthlyNotificationTask
+        from django.utils import timezone
+        from datetime import date
+        
+        if not period_month:
+            # Default to next month
+            now = timezone.now()
+            if now.month == 12:
+                period_month = date(now.year + 1, 1, 1)
+            else:
+                period_month = date(now.year, now.month + 1, 1)
+        
+        # Get or create task
+        task, created = MonthlyNotificationTask.objects.get_or_create(
+            building=building,
+            task_type=task_type,
+            period_month=period_month,
+            defaults={
+                'template': template,
+                'day_of_month': day_of_month,
+                'time_to_send': time_to_send,
+                'auto_send_enabled': auto_send_enabled,
+                'status': 'pending_confirmation'
+            }
+        )
+        
+        if not created:
+            # Update existing task
+            task.template = template
+            task.day_of_month = day_of_month
+            task.time_to_send = time_to_send
+            task.auto_send_enabled = auto_send_enabled
+            task.save()
+        
+        logger.info(f"{'Created' if created else 'Updated'} monthly task {task.id}")
+        return task
+    
+    @staticmethod
+    def preview_task(task_id, context=None):
+        """
+        Preview what notification would be sent for a task.
+        
+        Args:
+            task_id: MonthlyNotificationTask ID
+            context: Optional additional context variables
+            
+        Returns:
+            Dict with rendered subject, body, sms
+        """
+        from .models import MonthlyNotificationTask
+        
+        task = MonthlyNotificationTask.objects.get(id=task_id)
+        
+        if not task.template:
+            raise ValueError("Task must have a template to preview")
+        
+        # Build context
+        base_context = MonthlyTaskService._build_context(task)
+        if context:
+            base_context.update(context)
+        
+        # Render template
+        rendered = task.template.render(base_context)
+        
+        return {
+            'subject': rendered['subject'],
+            'body': rendered['body'],
+            'sms': rendered.get('sms', ''),
+            'task': {
+                'id': task.id,
+                'task_type': task.task_type,
+                'building_name': task.building.name if task.building else 'Όλα τα κτίρια',
+                'day_of_month': task.day_of_month,
+                'time_to_send': str(task.time_to_send),
+                'period_month': task.period_month.strftime('%Y-%m-%d'),
+            }
+        }
+    
+    @staticmethod
+    def test_send(task_id, test_email, user):
+        """
+        Send a test notification to a specific email address.
+        
+        Args:
+            task_id: MonthlyNotificationTask ID
+            test_email: Email address to send test to
+            user: User who triggers the test
+            
+        Returns:
+            Dict with send result
+        """
+        from .models import MonthlyNotificationTask
+        from apartments.models import Apartment
+        
+        task = MonthlyNotificationTask.objects.get(id=task_id)
+        
+        if not task.template:
+            raise ValueError("Task must have a template to test")
+        
+        # Build context
+        context = MonthlyTaskService._build_context(task)
+        
+        # Render template
+        rendered = task.template.render(context)
+        
+        # Create test notification
+        notification = NotificationService.create_notification(
+            building=task.building,
+            created_by=user,
+            subject=f"[TEST] {rendered['subject']}",
+            body=rendered['body'],
+            sms_body=rendered.get('sms', ''),
+            notification_type='email',
+            priority='normal',
+            template=task.template
+        )
+        
+        # Create a temporary recipient for test email
+        from .models import NotificationRecipient
+        
+        # Find an apartment to use as recipient (or create a dummy one)
+        apartment = None
+        if task.building:
+            apartment = Apartment.objects.filter(building=task.building).first()
+        
+        if apartment:
+            recipient = NotificationRecipient.objects.create(
+                notification=notification,
+                apartment=apartment,
+                recipient_name='Test Recipient',
+                email=test_email,
+                phone='',
+                status='pending'
+            )
+        else:
+            # Create without apartment if no building/apartment available
+            recipient = NotificationRecipient.objects.create(
+                notification=notification,
+                apartment=None,
+                recipient_name='Test Recipient',
+                email=test_email,
+                phone='',
+                status='pending'
+            )
+        
+        # Send test notification
+        try:
+            from django.core.mail import send_mail
+            from django.conf import settings
+            
+            send_mail(
+                subject=notification.subject,
+                message=notification.body,
+                from_email=settings.MAILERSEND_FROM_EMAIL or settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[test_email],
+                fail_silently=False,
+            )
+            
+            recipient.mark_as_sent()
+            notification.mark_as_sent()
+            
+            return {
+                'success': True,
+                'message': f'Test email sent successfully to {test_email}',
+                'notification_id': notification.id
+            }
+        except Exception as e:
+            recipient.mark_as_failed(str(e))
+            notification.mark_as_failed(str(e))
+            logger.error(f"Test send failed: {e}")
+            return {
+                'success': False,
+                'message': f'Failed to send test email: {str(e)}',
+                'notification_id': notification.id
+            }
+
+
 # Global email service instance
 email_service = EmailNotificationService()

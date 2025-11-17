@@ -26,6 +26,9 @@ from .serializers import (
     NotificationTemplatePreviewSerializer,
     MonthlyNotificationTaskSerializer,
     MonthlyTaskConfirmSerializer,
+    MonthlyTaskConfigureSerializer,
+    MonthlyTaskPreviewSerializer,
+    MonthlyTaskTestSendSerializer,
     NotificationEventSerializer,
     DigestPreviewSerializer,
     SendDigestSerializer,
@@ -34,7 +37,8 @@ from .services import (
     NotificationService,
     TemplateService,
     NotificationEventService,
-    DigestService
+    DigestService,
+    MonthlyTaskService
 )
 
 
@@ -505,6 +509,134 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             {'message': 'Auto-send disabled', 'auto_send_enabled': False},
             status=status.HTTP_200_OK
         )
+    
+    @action(detail=False, methods=['post'])
+    def configure(self, request):
+        """
+        Configure or create a monthly notification task.
+        
+        POST /api/notifications/monthly-tasks/configure/
+        Body: {
+            "task_type": "common_expense",
+            "building": 1,  // or null for all buildings
+            "day_of_month": 1,
+            "time_to_send": "09:00",
+            "template": 1,
+            "auto_send_enabled": false,
+            "period_month": "2025-11-01"  // optional
+        }
+        """
+        serializer = MonthlyTaskConfigureSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        data = serializer.validated_data
+        
+        # Get building
+        building = None
+        if data.get('building'):
+            from buildings.models import Building
+            building = get_object_or_404(Building, id=data['building'])
+        
+        # Get template
+        template = get_object_or_404(
+            NotificationTemplate,
+            id=data['template']
+        )
+        
+        # Configure task
+        task = MonthlyTaskService.configure_task(
+            building=building,
+            task_type=data['task_type'],
+            day_of_month=data['day_of_month'],
+            time_to_send=data['time_to_send'],
+            template=template,
+            auto_send_enabled=data.get('auto_send_enabled', False),
+            period_month=data.get('period_month')
+        )
+        
+        return Response(
+            MonthlyNotificationTaskSerializer(task).data,
+            status=status.HTTP_201_CREATED if task.status == 'pending_confirmation' else status.HTTP_200_OK
+        )
+    
+    @action(detail=False, methods=['get'])
+    def schedule(self, request):
+        """
+        Get all scheduled monthly tasks.
+        
+        GET /api/notifications/monthly-tasks/schedule/
+        Query params: building_id (optional)
+        """
+        queryset = self.get_queryset()
+        
+        # Filter by building if provided
+        building_id = request.query_params.get('building_id')
+        if building_id:
+            queryset = queryset.filter(
+                Q(building_id=building_id) | Q(building__isnull=True)
+            )
+        
+        # Order by period_month and day_of_month
+        queryset = queryset.order_by('period_month', 'day_of_month', 'time_to_send')
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def preview(self, request, pk=None):
+        """
+        Preview what notification would be sent for this task.
+        
+        POST /api/notifications/monthly-tasks/{id}/preview/
+        Body: {
+            "context": {}  // optional additional context
+        }
+        """
+        task = self.get_object()
+        
+        serializer = MonthlyTaskPreviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        context = serializer.validated_data.get('context')
+        
+        try:
+            preview = MonthlyTaskService.preview_task(task.id, context)
+            return Response(preview, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=True, methods=['post'])
+    def test(self, request, pk=None):
+        """
+        Send a test notification for this task.
+        
+        POST /api/notifications/monthly-tasks/{id}/test/
+        Body: {
+            "test_email": "test@example.com"
+        }
+        """
+        task = self.get_object()
+        
+        serializer = MonthlyTaskTestSendSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        test_email = serializer.validated_data['test_email']
+        
+        try:
+            result = MonthlyTaskService.test_send(task.id, test_email, request.user)
+            
+            if result['success']:
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class NotificationEventViewSet(viewsets.ReadOnlyModelViewSet):

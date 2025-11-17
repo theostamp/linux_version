@@ -393,3 +393,54 @@ class SendDigestSerializer(serializers.Serializer):
         required=False,
         help_text="Building ID (defaults to current building)"
     )
+
+
+class MonthlyTaskConfigureSerializer(serializers.Serializer):
+    """Serializer for configuring monthly notification tasks."""
+
+    task_type = serializers.ChoiceField(
+        choices=['common_expense', 'balance_reminder', 'custom'],
+        help_text="Type of monthly task"
+    )
+    building = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="Building ID (null = applies to all buildings)"
+    )
+    day_of_month = serializers.IntegerField(
+        min_value=1,
+        max_value=31,
+        help_text="Day of month to send (1-31)"
+    )
+    time_to_send = serializers.TimeField(
+        help_text="Time to send notification (HH:MM format)"
+    )
+    template = serializers.IntegerField(
+        help_text="NotificationTemplate ID"
+    )
+    auto_send_enabled = serializers.BooleanField(
+        default=False,
+        help_text="Enable automatic sending without confirmation"
+    )
+    period_month = serializers.DateField(
+        required=False,
+        help_text="Period month (YYYY-MM-DD format, defaults to next month)"
+    )
+
+
+class MonthlyTaskPreviewSerializer(serializers.Serializer):
+    """Serializer for previewing monthly task notifications."""
+
+    context = serializers.DictField(
+        child=serializers.CharField(),
+        required=False,
+        help_text="Additional context variables for template rendering"
+    )
+
+
+class MonthlyTaskTestSendSerializer(serializers.Serializer):
+    """Serializer for test sending monthly task notifications."""
+
+    test_email = serializers.EmailField(
+        help_text="Email address to send test notification to"
+    )

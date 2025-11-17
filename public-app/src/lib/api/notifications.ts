@@ -323,6 +323,68 @@ export const monthlyTasksApi = {
     // The apiClient returns data directly
     return response;
   },
+
+  /**
+   * Configure or create a monthly task
+   */
+  configure: async (data: {
+    task_type: 'common_expense' | 'balance_reminder' | 'custom';
+    building?: number | null;
+    day_of_month: number;
+    time_to_send: string;
+    template: number;
+    auto_send_enabled?: boolean;
+    period_month?: string;
+  }) => {
+    const response = await apiClient.post<import('@/types/notifications').MonthlyNotificationTask>(
+      `${BASE_URL}/monthly-tasks/configure/`,
+      data
+    );
+    return response;
+  },
+
+  /**
+   * Get scheduled tasks
+   */
+  schedule: async (params?: { building_id?: number }) => {
+    const response = await apiClient.get<import('@/types/notifications').MonthlyNotificationTask[]>(
+      `${BASE_URL}/monthly-tasks/schedule/`,
+      { params }
+    );
+    return Array.isArray(response) ? response : (response as { results?: any[] }).results || [];
+  },
+
+  /**
+   * Preview notification for a task
+   */
+  preview: async (id: number, context?: Record<string, string>) => {
+    const response = await apiClient.post<{
+      subject: string;
+      body: string;
+      sms: string;
+      task: {
+        id: number;
+        task_type: string;
+        building_name: string;
+        day_of_month: number;
+        time_to_send: string;
+        period_month: string;
+      };
+    }>(`${BASE_URL}/monthly-tasks/${id}/preview/`, { context });
+    return response;
+  },
+
+  /**
+   * Send test notification for a task
+   */
+  testSend: async (id: number, testEmail: string) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      notification_id: number;
+    }>(`${BASE_URL}/monthly-tasks/${id}/test/`, { test_email: testEmail });
+    return response;
+  },
 };
 
 /**
