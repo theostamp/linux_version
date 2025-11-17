@@ -120,28 +120,98 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
             </h3>
             
-            {/* Expense Breakdown Summary */}
+            {/* Expense Breakdown Summary - Ομαδοποιημένα ανά τύπο πληρωτή */}
             <div className="space-y-2">
-                {/* Αναλυτικές Δαπάνες - Φέρνουμε από το API */}
-                {monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 && (
-                  monthlyExpenses.expense_breakdown.map((expense, index) => {
-                    // Διακριτικό κείμενο: Ε (Ένοικος) ή Δ (Ιδιοκτήτης)
-                    const isOwner = expense.payer_responsibility === 'owner';
-                    const badgeColor = isOwner ? 'text-red-600' : 'text-emerald-600';
-                    const badgeText = isOwner ? 'Δ' : 'Ε';
-                    
-                    return (
-                      <div key={expense.category} className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-medium text-gray-600">{index + 1}</span>
-                          <span className={`text-xs font-bold ${badgeColor} flex-shrink-0`}>{badgeText}</span>
-                          <p className="text-xs font-semibold text-gray-700">{expense.category_display}</p>
-                        </div>
-                        <span className="text-xs font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
-                      </div>
-                    );
-                  })
-                )}
+                {/* Αναλυτικές Δαπάνες - Φέρνουμε από το API και τα ομαδοποιούμε */}
+                {(() => {
+                  const groupedExpenses = monthlyExpenses?.expense_breakdown?.reduce((groups, expense) => {
+                    const type = expense.payer_responsibility || 'shared';
+                    if (!groups[type]) groups[type] = [];
+                    groups[type].push(expense);
+                    return groups;
+                  }, {} as Record<string, typeof monthlyExpenses.expense_breakdown>);
+
+                  const totals = {
+                    resident: groupedExpenses?.resident?.reduce((sum, e) => sum + e.amount, 0) || 0,
+                    owner: groupedExpenses?.owner?.reduce((sum, e) => sum + e.amount, 0) || 0,
+                    shared: groupedExpenses?.shared?.reduce((sum, e) => sum + e.amount, 0) || 0,
+                  };
+
+                  let itemIndex = 0;
+
+                  return (
+                    <>
+                      {/* Δαπάνες Ενοίκων */}
+                      {groupedExpenses?.resident && groupedExpenses.resident.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-2 py-1 px-2 bg-green-50 rounded border border-green-200">
+                            <span className="text-xs font-bold text-green-700">🟢 ΔΑΠΑΝΕΣ ΕΝΟΙΚΩΝ</span>
+                          </div>
+                          {groupedExpenses.resident.map((expense) => (
+                            <div key={expense.category} className="flex items-center justify-between py-1.5 px-2 bg-white rounded border ml-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium text-gray-600">{++itemIndex}</span>
+                                <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex-shrink-0">Ε</span>
+                                <p className="text-xs font-semibold text-gray-700">{expense.category_display}</p>
+                              </div>
+                              <span className="text-xs font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-between py-1 px-2 bg-green-100 rounded border border-green-300 ml-2">
+                            <span className="text-xs font-bold text-green-800">Σύνολο Ενοίκων</span>
+                            <span className="text-xs font-bold text-green-800">{formatAmount(totals.resident)}€</span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Δαπάνες Ιδιοκτητών */}
+                      {groupedExpenses?.owner && groupedExpenses.owner.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-2 py-1 px-2 bg-red-50 rounded border border-red-200 mt-2">
+                            <span className="text-xs font-bold text-red-700">🔴 ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</span>
+                          </div>
+                          {groupedExpenses.owner.map((expense) => (
+                            <div key={expense.category} className="flex items-center justify-between py-1.5 px-2 bg-white rounded border ml-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium text-gray-600">{++itemIndex}</span>
+                                <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded flex-shrink-0">Δ</span>
+                                <p className="text-xs font-semibold text-gray-700">{expense.category_display}</p>
+                              </div>
+                              <span className="text-xs font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-between py-1 px-2 bg-red-100 rounded border border-red-300 ml-2">
+                            <span className="text-xs font-bold text-red-800">Σύνολο Ιδιοκτητών</span>
+                            <span className="text-xs font-bold text-red-800">{formatAmount(totals.owner)}€</span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Κοινές Δαπάνες */}
+                      {groupedExpenses?.shared && groupedExpenses.shared.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-2 py-1 px-2 bg-blue-50 rounded border border-blue-200 mt-2">
+                            <span className="text-xs font-bold text-blue-700">🔵 ΚΟΙΝΕΣ ΔΑΠΑΝΕΣ</span>
+                          </div>
+                          {groupedExpenses.shared.map((expense) => (
+                            <div key={expense.category} className="flex items-center justify-between py-1.5 px-2 bg-white rounded border ml-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium text-gray-600">{++itemIndex}</span>
+                                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">Κ</span>
+                                <p className="text-xs font-semibold text-gray-700">{expense.category_display}</p>
+                              </div>
+                              <span className="text-xs font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-between py-1 px-2 bg-blue-100 rounded border border-blue-300 ml-2">
+                            <span className="text-xs font-bold text-blue-800">Σύνολο Κοινών</span>
+                            <span className="text-xs font-bold text-blue-800">{formatAmount(totals.shared)}€</span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {/* Κόστος διαχείρισης */}
                 <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">

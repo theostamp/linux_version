@@ -32,12 +32,15 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'garbage_collection', label: 'Συλλογή Απορριμμάτων', group: 'Πάγιες Δαπάνες' },
   { value: 'security', label: 'Ασφάλεια Κτιρίου', group: 'Πάγιες Δαπάνες' },
   { value: 'concierge', label: 'Συνεργείο Καθαρισμού', group: 'Πάγιες Δαπάνες' },
+  { value: 'deh_maintenance_fee', label: 'Τέλος Συντήρησης ΔΕΗ', group: 'Πάγιες Δαπάνες' },
+  { value: 'water_sewage_fee', label: 'Τέλος Αποχέτευσης', group: 'Πάγιες Δαπάνες' },
   
   // Δαπάνες Ανελκυστήρα
   { value: 'elevator_maintenance', label: 'Ετήσια Συντήρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_repair', label: 'Επισκευή Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_inspection', label: 'Επιθεώρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_modernization', label: 'Αναβάθμιση Ανελκυστήρα', group: 'Ανελκυστήρας' },
+  { value: 'elevator_emergency', label: 'Εγκλωβισμός Ανελκυστήρα', group: 'Ανελκυστήρας' },
   
   // Δαπάνες Θέρμανσης
   { value: 'heating_fuel', label: 'Πετρέλαιο Θέρμανσης', group: 'Θέρμανση' },
@@ -53,6 +56,8 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'electrical_upgrade', label: 'Αναβάθμιση Ηλεκτρικών', group: 'Ηλεκτρικά' },
   { value: 'lighting_common', label: 'Φωτισμός Κοινοχρήστων', group: 'Ηλεκτρικά' },
   { value: 'intercom_system', label: 'Σύστημα Εσωτερικής Επικοινωνίας', group: 'Ηλεκτρικά' },
+  { value: 'generator_maintenance', label: 'Συντήρηση Γεννήτριας', group: 'Ηλεκτρικά' },
+  { value: 'generator_repair', label: 'Επισκευή Γεννήτριας', group: 'Ηλεκτρικά' },
   
   // Δαπάνες Υδραυλικών
   { value: 'plumbing_maintenance', label: 'Συντήρηση Υδραυλικών', group: 'Υδραυλικά' },
@@ -64,6 +69,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   // Δαπάνες Κτιρίου
   { value: 'building_insurance', label: 'Ασφάλεια Κτιρίου', group: 'Κτίριο' },
   { value: 'building_maintenance', label: 'Συντήρηση Κτιρίου', group: 'Κτίριο' },
+  { value: 'common_areas_renovation', label: 'Ανακαίνιση Κοινοχρήστων', group: 'Κτίριο' },
   { value: 'roof_maintenance', label: 'Συντήρηση Στέγης', group: 'Κτίριο' },
   { value: 'roof_repair', label: 'Επισκευή Στέγης', group: 'Κτίριο' },
   { value: 'facade_maintenance', label: 'Συντήρηση Πρόσοψης', group: 'Κτίριο' },

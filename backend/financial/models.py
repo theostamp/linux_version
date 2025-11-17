@@ -108,12 +108,15 @@ class Expense(models.Model):
         ('garbage_collection', 'Συλλογή Απορριμμάτων'),
         ('security', 'Ασφάλεια Κτιρίου'),
         ('concierge', 'Συνεργείο Καθαρισμού'),
+        ('deh_maintenance_fee', 'Τέλος Συντήρησης ΔΕΗ'),
+        ('water_sewage_fee', 'Τέλος Αποχέτευσης'),
         
         # Δαπάνες Ανελκυστήρα
         ('elevator_maintenance', 'Ετήσια Συντήρηση Ανελκυστήρα'),
         ('elevator_repair', 'Επισκευή Ανελκυστήρα'),
         ('elevator_inspection', 'Επιθεώρηση Ανελκυστήρα'),
         ('elevator_modernization', 'Αναβάθμιση Ανελκυστήρα'),
+        ('elevator_emergency', 'Εγκλωβισμός Ανελκυστήρα'),
         
         # Δαπάνες Θέρμανσης
         ('heating_fuel', 'Πετρέλαιο Θέρμανσης'),
@@ -129,6 +132,8 @@ class Expense(models.Model):
         ('electrical_upgrade', 'Αναβάθμιση Ηλεκτρικών'),
         ('lighting_common', 'Φωτισμός Κοινοχρήστων'),
         ('intercom_system', 'Σύστημα Εσωτερικής Επικοινωνίας'),
+        ('generator_maintenance', 'Συντήρηση Γεννήτριας'),
+        ('generator_repair', 'Επισκευή Γεννήτριας'),
         
         # Δαπάνες Υδραυλικών Εγκαταστάσεων
         ('plumbing_maintenance', 'Συντήρηση Υδραυλικών'),
@@ -140,6 +145,7 @@ class Expense(models.Model):
         # Δαπάνες Κτιρίου & Εξωτερικών Χώρων
         ('building_insurance', 'Ασφάλεια Κτιρίου'),
         ('building_maintenance', 'Συντήρηση Κτιρίου'),
+        ('common_areas_renovation', 'Ανακαίνιση Κοινοχρήστων'),
         ('roof_maintenance', 'Συντήρηση Στέγης'),
         ('roof_repair', 'Επισκευή Στέγης'),
         ('facade_maintenance', 'Συντήρηση Πρόσοψης'),
@@ -228,12 +234,15 @@ class Expense(models.Model):
         'garbage_collection': 'resident',
         'security': 'resident',
         'concierge': 'resident',
+        'deh_maintenance_fee': 'resident',      # Τέλος συντήρησης ΔΕΗ
+        'water_sewage_fee': 'resident',         # Τέλος αποχέτευσης
         
         # Δαπάνες Ανελκυστήρα
         'elevator_maintenance': 'resident',      # Ετήσια συντήρηση (υποχρεωτική)
         'elevator_repair': 'shared',             # Εξαρτάται: μικρή → ένοικος, μεγάλη → ιδιοκτήτης
         'elevator_inspection': 'resident',       # Υποχρεωτική επιθεώρηση
         'elevator_modernization': 'owner',       # Αναβάθμιση/αντικατάσταση
+        'elevator_emergency': 'resident',        # Εγκλωβισμός ανελκυστήρα (έκτακτη επέμβαση)
         
         # Δαπάνες Θέρμανσης
         'heating_fuel': 'resident',              # Κατανάλωση πετρελαίου
@@ -249,6 +258,8 @@ class Expense(models.Model):
         'electrical_upgrade': 'owner',           # Αναβάθμιση
         'lighting_common': 'resident',           # Φωτισμός (λάμπες, κατανάλωση)
         'intercom_system': 'resident',           # Συντήρηση συστήματος
+        'generator_maintenance': 'resident',     # Συντήρηση γεννήτριας
+        'generator_repair': 'owner',             # Επισκευή/αντικατάσταση γεννήτριας
         
         # Δαπάνες Υδραυλικών Εγκαταστάσεων
         'plumbing_maintenance': 'resident',      # Τακτική συντήρηση
@@ -260,12 +271,13 @@ class Expense(models.Model):
         # Δαπάνες Κτιρίου & Εξωτερικών Χώρων - ΙΔΙΟΚΤΗΤΗΣ (δομή κτιρίου)
         'building_insurance': 'owner',           # Ασφάλιση κτιρίου
         'building_maintenance': 'owner',         # Συντήρηση κτιρίου
+        'common_areas_renovation': 'owner',      # Ανακαίνιση κοινοχρήστων
         'roof_maintenance': 'owner',             # Στέγη
         'roof_repair': 'owner',                  # Επισκευή στέγης
         'facade_maintenance': 'owner',           # Πρόσοψη
         'facade_repair': 'owner',                # Επισκευή πρόσοψης
         'painting_exterior': 'owner',            # Βαψίματα εξωτερικών
-        'painting_interior': 'resident',         # Βαψίματα κοινοχρήστων εσωτερικών
+        'painting_interior': 'shared',           # Μικρά βαψίματα: ένοικος | Ανακαίνιση: ιδιοκτήτης
         'garden_maintenance': 'resident',        # Συντήρηση κήπου
         'parking_maintenance': 'resident',       # Χώροι στάθμευσης
         'entrance_maintenance': 'resident',      # Είσοδος

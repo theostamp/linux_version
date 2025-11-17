@@ -39,6 +39,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [payerFilter, setPayerFilter] = useState<string>('all');
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
 
@@ -320,10 +321,12 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                            (expense.category_display || expense.category).toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
+      
+      const matchesPayer = payerFilter === 'all' || expense.payer_responsibility === payerFilter;
 
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && matchesPayer;
     });
-  }, [expenses, searchTerm, categoryFilter]);
+  }, [expenses, searchTerm, categoryFilter, payerFilter]);
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -449,10 +452,11 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               onClick={() => {
                 setSearchTerm('');
                 setCategoryFilter('all');
+                setPayerFilter('all');
                 // Note: We don't clear selectedMonth as it's a primary filter
               }}
               className="text-xs"
-              title="Καθαρίζει αναζήτηση, κατηγορία και κατάσταση (διατηρεί τον μήνα)"
+              title="Καθαρίζει αναζήτηση, κατηγορία, ευθύνη πληρωμής (διατηρεί τον μήνα)"
             >
               🗑️ Καθαρισμός Φίλτρων
             </Button>
@@ -524,6 +528,20 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               </Select>
             </div>
             
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-600">Ευθύνη Πληρωμής</label>
+              <Select value={payerFilter} onValueChange={setPayerFilter}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Όλες" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">👥 Όλες οι δαπάνες</SelectItem>
+                  <SelectItem value="resident">🟢 Δαπάνες Ενοίκων</SelectItem>
+                  <SelectItem value="owner">🔴 Δαπάνες Ιδιοκτητών</SelectItem>
+                  <SelectItem value="shared">🔵 Κοινή Ευθύνη</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
           </div>
           
@@ -556,6 +574,13 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               {categoryFilter !== 'all' && (
                 <Badge variant="outline" className="text-xs">
                   📂 {categoryFilter}
+                </Badge>
+              )}
+              {payerFilter !== 'all' && (
+                <Badge variant="outline" className="text-xs">
+                  {payerFilter === 'resident' ? '🟢 Ένοικος' 
+                    : payerFilter === 'owner' ? '🔴 Ιδιοκτήτης' 
+                    : '🔵 Κοινή Ευθύνη'}
                 </Badge>
               )}
 
@@ -610,6 +635,19 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                         <Badge className={`${getCategoryColor(expense.category)} text-xs`}>
                           {expense.category_display || expense.category}
                         </Badge>
+                        {expense.payer_responsibility === 'resident' ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs font-semibold">
+                            🟢 Ένοικος
+                          </Badge>
+                        ) : expense.payer_responsibility === 'owner' ? (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-xs font-semibold">
+                            🔴 Ιδιοκτήτης
+                          </Badge>
+                        ) : expense.payer_responsibility === 'shared' ? (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs font-semibold">
+                            🔵 Κοινή Ευθύνη
+                          </Badge>
+                        ) : null}
                         {expense.title?.toLowerCase().includes('προκαταβολή') ? (
                           <Badge variant="default" className="bg-amber-500 hover:bg-amber-600 text-white text-xs">
                             💰 Προκαταβολή
