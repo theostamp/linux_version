@@ -120,10 +120,15 @@ const isNotFoundError = (error: unknown): boolean => {
 const normalizeApiPath = (path: string): string => {
   if (!path) return "/api/";
   const prefixed = path.startsWith("/") ? path : `/${path}`;
+  
   if (prefixed.startsWith("/api")) {
-    return prefixed.startsWith("/api/") ? prefixed : `${prefixed}/`;
+    // Ensure trailing slash for DRF compatibility
+    const withApiPrefix = prefixed.startsWith("/api/") ? prefixed : `${prefixed}/`;
+    return withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
   }
-  return `/api${prefixed}`;
+  
+  const withApiPrefix = `/api${prefixed}`;
+  return withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
 };
 
 /**
