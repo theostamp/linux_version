@@ -5,7 +5,7 @@ const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 
 const handlers = createTenantProxyHandlers(
   {
-    logLabel: "projects-projects",
+    logLabel: "projects",
     resolvePath: (_request, context) => {
       const pathParam = context.params?.path;
       const segments = Array.isArray(pathParam)
@@ -14,8 +14,8 @@ const handlers = createTenantProxyHandlers(
           ? [pathParam]
           : [];
       return segments.length > 0
-        ? ["projects/projects", ...segments].join("/")
-        : "projects/projects";
+        ? ["projects", ...segments].join("/")
+        : "projects";
     },
     ensureTrailingSlash: true,
   },
@@ -25,7 +25,7 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(
   handlers,
   methods,
-  "projects-projects",
+  "projects",
 );
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
