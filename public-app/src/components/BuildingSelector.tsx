@@ -37,6 +37,7 @@ export default function BuildingSelector({
     setIsLoading(true);
     try {
       const buildingsData = await fetchAllBuildingsPublic();
+      console.log('[BuildingSelector] Loaded buildings:', buildingsData.length);
       setBuildings(buildingsData);
     } catch (error) {
       console.error('Error loading buildings:', error);
@@ -48,17 +49,24 @@ export default function BuildingSelector({
 
   // Φιλτράρισμα κτιρίων βάσει του search term
   useEffect(() => {
+    // Αποκλείουμε το currentBuilding από τη λίστα για να μην εμφανίζεται δύο φορές
+    const buildingsToFilter = currentBuilding 
+      ? buildings.filter(b => b.id !== currentBuilding.id)
+      : buildings;
+    
     if (!searchTerm.trim()) {
-      setFilteredBuildings(buildings);
+      console.log('[BuildingSelector] Filtered buildings (no search):', buildingsToFilter.length, 'out of', buildings.length);
+      setFilteredBuildings(buildingsToFilter);
     } else {
-      const filtered = buildings.filter(building =>
+      const filtered = buildingsToFilter.filter(building =>
         building.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         building.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (building.city && building.city.toLowerCase().includes(searchTerm.toLowerCase()))
       );
+      console.log('[BuildingSelector] Filtered buildings (with search):', filtered.length, 'out of', buildingsToFilter.length);
       setFilteredBuildings(filtered);
     }
-  }, [searchTerm, buildings]);
+  }, [searchTerm, buildings, currentBuilding]);
 
   // Κλείσιμο modal με ESC
   useEffect(() => {
