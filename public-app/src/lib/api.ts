@@ -119,16 +119,23 @@ const isNotFoundError = (error: unknown): boolean => {
 
 const normalizeApiPath = (path: string): string => {
   if (!path) return "/api/";
-  const prefixed = path.startsWith("/") ? path : `/${path}`;
   
+  const [rawPath, ...queryParts] = path.split("?");
+  const queryString = queryParts.length > 0 ? queryParts.join("?") : "";
+  
+  const prefixed = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  
+  let normalizedPath: string;
   if (prefixed.startsWith("/api")) {
     // Ensure trailing slash for DRF compatibility
     const withApiPrefix = prefixed.startsWith("/api/") ? prefixed : `${prefixed}/`;
-    return withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
+    normalizedPath = withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
+  } else {
+    const withApiPrefix = `/api${prefixed}`;
+    normalizedPath = withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
   }
   
-  const withApiPrefix = `/api${prefixed}`;
-  return withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
+  return queryString ? `${normalizedPath}?${queryString}` : normalizedPath;
 };
 
 /**
