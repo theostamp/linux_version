@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getActiveBuildingId } from '@/lib/api';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useProjectMutations } from '@/hooks/useProjects';
 import { useOffers } from '@/hooks/useOffers';
 import { getRelativeTimeEl } from '@/lib/date';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,16 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/dialog';
 import { 
   FileText, 
   Users, 
@@ -29,7 +39,8 @@ import {
   Filter,
   ArrowUpDown,
   Grid3x3,
-  List
+  List,
+  Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
@@ -63,11 +74,35 @@ function ProjectsDashboardContent() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   
+  // Delete state
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const { projects, isLoading: projectsLoading } = useProjects({ buildingId, pageSize: 1000 });
   const { projects: activeProjects, isLoading: activeProjectsLoading } = useProjects({ buildingId, status: 'in_progress', pageSize: 1000 });
   const { projects: completedProjects, isLoading: completedProjectsLoading } = useProjects({ buildingId, status: 'completed', pageSize: 1000 });
   const { offers: pendingOffers, isLoading: pendingOffersLoading } = useOffers({ buildingId, status: 'submitted', pageSize: 1000 });
   const { offers: approvedOffers, isLoading: approvedOffersLoading } = useOffers({ buildingId, status: 'accepted', pageSize: 1000 });
+  
+  // Mutations
+  const { delete: deleteProject } = useProjectMutations();
+  
+  // Delete handler
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteProject.mutateAsync(projectToDelete.id);
+      setProjectToDelete(null);
+      // Success notification could be added here
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      // Error notification could be added here
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   // Filtered and sorted projects
   const filteredProjects = useMemo(() => {
@@ -790,6 +825,33 @@ function ProjectsDashboardContent() {
                               )}
                             </div>
                           )}
+                          {(isAdmin || isManager) && (
+                            <div className="pt-2 border-t mt-2 flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full"
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  router.push(`/projects/${project.id}`); 
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Προβολή
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setProjectToDelete(project);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -862,18 +924,33 @@ function ProjectsDashboardContent() {
                             )}
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex-shrink-0"
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            router.push(`/projects/${project.id}`); 
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Προβολή
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex-shrink-0"
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              router.push(`/projects/${project.id}`); 
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Προβολή
+                          </Button>
+                          {(isAdmin || isManager) && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setProjectToDelete(project);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -883,6 +960,46 @@ function ProjectsDashboardContent() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Διαγραφή Έργου</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο <strong>&quot;{projectToDelete?.title}&quot;</strong>;
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-800">
+                    <p className="font-semibold mb-1">Συνέπειες διαγραφής:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-1">
+                      <li>Οι σχετιζόμενες προσφορές θα διαγραφούν</li>
+                      <li>Οι ψηφοφορίες θα διαγραφούν</li>
+                      <li>Οι δαπάνες που συνδέονται με το έργο θα παραμείνουν, αλλά η σύνδεση τους με το έργο θα διαγραφεί</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-red-600 font-medium">
+                Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Ακύρωση</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? 'Διαγραφή...' : 'Διαγραφή Έργου'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
