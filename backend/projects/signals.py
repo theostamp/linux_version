@@ -315,65 +315,51 @@ def create_vote_announcement(project: Project):
         logger.error(f"Failed to create vote announcement for project {project.id}: {e}")
 
 
+def _build_assembly_topic(project: Project) -> str:
+    description = project.description or "Δεν υπάρχει περιγραφή"
+    trimmed_description = description if len(description) <= 200 else f"{description[:200]}..."
+
+    lines = [
+        "---",
+        f"### Θέμα: {project.title}",
+    ]
+
+    if project.estimated_cost:
+        lines.append(f"**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}")
+    if project.deadline:
+        lines.append(f"**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime('%d/%m/%Y')}")
+
+    lines.append(f"**Περιγραφή:** {trimmed_description}")
+    return "\n".join(line for line in lines if line.strip())
+
+
+def _build_assembly_description(projects, assembly_date, assembly_time_str, location_info):
+    header = (
+        "Καλείστε να παραστείτε στη Γενική Συνέλευση των ιδιοκτητών.\n\n"
+        f"**Ημερομηνία και Ώρα Συνέλευσης:** {assembly_date.strftime('%d/%m/%Y')} στις {assembly_time_str}{location_info}\n\n"
+        "**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**\n\n"
+    )
+
+    topics = "\n\n".join(_build_assembly_topic(project) for project in projects if project)
+    footer = (
+        "\n\n**Σημαντικό:** Η παρουσία σας είναι απαραίτητη για την απαρτία της συνέλευσης.\n\n"
+        "Για περισσότερες πληροφορίες και διευκρινήσεις, παρακαλούμε επικοινωνήστε με τη Διαχείρηση."
+    )
+
+    return f"{header}{topics}{footer}".strip()
+
+
 def create_assembly_announcement(project: Project, check_existing: bool = False):
     """Δημιουργεί ή ενημερώνει ανακοίνωση Γενικής Συνέλευσης (ομαδοποιημένα θέματα)"""
     try:
         from announcements.models import Announcement
-        from datetime import timedelta
 
         assembly_date = project.general_assembly_date
+        if not assembly_date:
+            return
+
         today = project.created_at.date() if hasattr(project, 'created_at') else assembly_date
-
-        # Αναζήτηση υπάρχουσας ανακοίνωσης για την ίδια ημερομηνία συνέλευσης
-        existing_announcement = Announcement.objects.filter(
-            building=project.building,
-            title__icontains="Σύγκληση Γενικής Συνέλευσης",
-            end_date=assembly_date,
-            is_active=True
-        ).first()
-
-        if existing_announcement:
-            # ΕΝΗΜΕΡΩΣΗ υπάρχουσας ανακοίνωσης - προσθήκη νέου θέματος
-            current_description = existing_announcement.description
-
-            # Βρίσκουμε πού τελειώνουν τα υπάρχοντα θέματα
-            if "**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**" in current_description:
-                # Προσθήκη νέου θέματος στη λίστα
-                new_topic = f"""
----
-
-### Θέμα: {project.title}
-
-{f'**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}' if project.estimated_cost else ''}
-{f'**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime("%d/%m/%Y")}' if project.deadline else ''}
-**Περιγραφή:** {project.description[:200]}{'...' if len(project.description) > 200 else ''}
-"""
-                # Προσθέτουμε το νέο θέμα πριν το "Σημαντικό:"
-                if "**Σημαντικό:**" in current_description:
-                    parts = current_description.split("**Σημαντικό:**")
-                    existing_announcement.description = parts[0] + new_topic + "\n\n**Σημαντικό:**" + parts[1]
-                else:
-                    existing_announcement.description = current_description + new_topic
-
-                existing_announcement.updated_at = timezone.now()
-                existing_announcement.save(update_fields=['description', 'updated_at'])
-                
-                # Προσθήκη του project στη ManyToMany σχέση
-                existing_announcement.projects.add(project)
-
-                # Ενημέρωση με WebSocket
-                publish_building_event(
-                    building_id=project.building_id,
-                    event_type="announcement.updated",
-                    payload={
-                        "id": existing_announcement.id,
-                        "title": existing_announcement.title,
-                        "is_urgent": existing_announcement.is_urgent,
-                    },
-                )
-                return  # Τελείωσε η ενημέρωση
-
-        # ΔΗΜΙΟΥΡΓΙΑ νέας ανακοίνωσης (πρώτο θέμα για αυτή την ημερομηνία)
+        title = f"Σύγκληση Γενικής Συνέλευσης - {assembly_date.strftime('%d/%m/%Y')}"
 
         # Στοιχεία συνέλευσης
         if project.assembly_time:
@@ -384,38 +370,66 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
         else:
             assembly_time_str = '20:00'
 
-        # Τοποθεσία/Zoom
         location_info = ""
         if project.assembly_is_online and project.assembly_zoom_link:
             location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {project.assembly_zoom_link}"
         elif project.assembly_location:
             location_info = f"\n**Τοποθεσία:** {project.assembly_location}"
 
+        # Εύρεση υπάρχουσας ανακοίνωσης (μόνο όσες σχετίζονται ήδη με έργα)
+        existing_announcement = (
+            Announcement.objects
+            .filter(
+                building=project.building,
+                title=title,
+                projects__isnull=False,
+            )
+            .distinct()
+            .first()
+        )
+
+        if existing_announcement:
+            projects_for_description = list(existing_announcement.projects.all())
+
+            if not any(p.id == project.id for p in projects_for_description):
+                projects_for_description.append(project)
+                existing_announcement.projects.add(project)
+
+            # Αναδόμηση περιγραφής με βάση όλα τα συνδεδεμένα έργα
+            projects_for_description = sorted(
+                projects_for_description,
+                key=lambda p: p.created_at or timezone.now()
+            )
+
+            existing_announcement.description = _build_assembly_description(
+                projects_for_description,
+                assembly_date,
+                assembly_time_str,
+                location_info,
+            )
+            if not existing_announcement.start_date:
+                existing_announcement.start_date = today
+            existing_announcement.end_date = assembly_date
+            existing_announcement.updated_at = timezone.now()
+            existing_announcement.save(update_fields=['description', 'start_date', 'end_date', 'updated_at'])
+
+            publish_building_event(
+                building_id=project.building_id,
+                event_type="announcement.updated",
+                payload={
+                    "id": existing_announcement.id,
+                    "title": existing_announcement.title,
+                    "is_urgent": existing_announcement.is_urgent,
+                },
+            )
+            return
+
+        # Αν δεν υπάρχει, δημιουργούμε νέα ανακοίνωση
         announcement = Announcement.objects.create(
             building=project.building,
             author=project.created_by,
-            title=f"Σύγκληση Γενικής Συνέλευσης - {assembly_date.strftime('%d/%m/%Y')}",
-            description=f"""
-Καλείστε να παραστείτε στη Γενική Συνέλευση των ιδιοκτητών.
-
-**Ημερομηνία και Ώρα Συνέλευσης:** {assembly_date.strftime('%d/%m/%Y')} στις {assembly_time_str}{location_info}
-
-**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**
-
----
-
-### Θέμα: {project.title}
-
-{f'**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}' if project.estimated_cost else ''}
-{f'**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime("%d/%m/%Y")}' if project.deadline else ''}
-**Περιγραφή:** {project.description[:200]}{'...' if len(project.description) > 200 else ''}
-
----
-
-**Σημαντικό:** Η παρουσία σας είναι απαραίτητη για την απαρτία της συνέλευσης.
-
-Για περισσότερες πληροφορίες και διευκρινήσεις, παρακαλούμε επικοινωνήστε με τη Διαχείρηση.
-            """.strip(),
+            title=title,
+            description=_build_assembly_description([project], assembly_date, assembly_time_str, location_info),
             published=True,
             is_active=True,
             is_urgent=True,
@@ -423,11 +437,9 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
             start_date=today,
             end_date=assembly_date,
         )
-        
-        # Προσθήκη του project στη ManyToMany σχέση
+
         announcement.projects.add(project)
 
-        # Ενημέρωση με WebSocket
         publish_building_event(
             building_id=project.building_id,
             event_type="announcement.created",
@@ -438,7 +450,6 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
             },
         )
 
-        # Δημιουργία NotificationEvent για το digest email
         try:
             from notifications.services import NotificationEventService
 
@@ -459,7 +470,6 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
             pass  # Αν δεν υπάρχει το NotificationEventService, συνεχίζουμε
 
     except Exception as e:
-        # Log the error but don't fail the project creation
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to create assembly announcement for project {project.id}: {e}")
