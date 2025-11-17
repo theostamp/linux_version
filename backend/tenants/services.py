@@ -383,7 +383,7 @@ class TenantService:
                 User = get_user_model()
                 
                 # Check if demo data already exists
-                if Building.objects.filter(name__icontains='Αλκμάνος').exists():
+                if Building.objects.filter(name__icontains='Αλκμάνος').exists() or Building.objects.filter(name__icontains='Βουλής').exists():
                     logger.info(f"Demo data already exists in schema {schema_name}")
                     return
                 
@@ -397,13 +397,13 @@ class TenantService:
                     # Don't return - try to create building anyway, BuildingMembership will be skipped
                     tenant_user = None
                 
-                # Create Αλκμάνος 22 building with full data matching auto_initialization.py
+                # Create Αλκμάνος 22 - Demo building with full data matching auto_initialization.py
                 from datetime import date
                 today = date.today()
                 financial_start_date = today.replace(day=1)  # First day of current month
                 
                 building = Building.objects.create(
-                    name='Αλκμάνος 22',
+                    name='Αλκμάνος 22 - Demo',
                     address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
                     city='Αθήνα',
                     postal_code='11528',
@@ -415,7 +415,7 @@ class TenantService:
                     longitude=23.7275,
                     financial_system_start_date=financial_start_date
                 )
-                logger.info(f"✅ Created building 'Αλκμάνος 22' with financial_system_start_date={financial_start_date}")
+                logger.info(f"✅ Created building 'Αλκμάνος 22 - Demo' with financial_system_start_date={financial_start_date}")
                 
                 # Create building membership for tenant user (if user exists)
                 if tenant_user:
@@ -500,11 +500,91 @@ class TenantService:
                         }
                     )
                     if created:
-                        logger.info(f"✅ Created apartment: {apt_data['number']} (Αλκμάνος 22)")
+                        logger.info(f"✅ Created apartment: {apt_data['number']} (Αλκμάνος 22 - Demo)")
                     else:
                         logger.info(f"ℹ️ Apartment {apt_data['number']} already exists, skipping creation")
                 
-                logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments and full data in schema {schema_name}")
+                logger.info(f"Created demo building 'Αλκμάνος 22 - Demo' with 10 apartments and full data in schema {schema_name}")
+                
+                # Create Βουλής 6 -Demo building with 15 apartments
+                building_voulis = Building.objects.create(
+                    name='Βουλής 6 -Demo',
+                    address='Βουλής 6, Αθήνα',
+                    city='Αθήνα',
+                    postal_code='10557',
+                    apartments_count=15,
+                    internal_manager_name='Γιάννης Παπαδόπουλος',
+                    internal_manager_phone='2107654321',
+                    heating_fixed_percentage=30.0,
+                    latitude=37.9755,
+                    longitude=23.7348,
+                    financial_system_start_date=financial_start_date
+                )
+                logger.info(f"✅ Created building 'Βουλής 6 -Demo' with financial_system_start_date={financial_start_date}")
+                
+                # Create building membership for tenant user (if user exists)
+                if tenant_user:
+                    BuildingMembership.objects.get_or_create(
+                        building=building_voulis,
+                        resident=tenant_user,
+                        defaults={'role': 'manager'}
+                    )
+                    logger.info(f"Created BuildingMembership for user {tenant_user.email} in schema {schema_name} for Βουλής 6 -Demo")
+                
+                # Create 15 apartments for Βουλής 6 -Demo with realistic Greek names
+                # First apartment has 100 mills and email theostam1966@gmail.com
+                # Remaining 14 apartments need to sum to 900 mills total
+                # All mills (participation, heating, elevator) must sum to 1000
+                vouli_apartments_data = [
+                    {'number': '1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': '2', 'floor': 0, 'owner_name': 'Ελένη Παπαδοπούλου', 'owner_phone': '2102345678', 'owner_email': 'eleni.papadopoulou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 66, 'heating_mills': 62, 'elevator_mills': 66},
+                    {'number': '3', 'floor': 0, 'owner_name': 'Νικόλαος Γεωργίου', 'owner_phone': '2103456789', 'owner_email': 'nikos.georgiou@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2104567890', 'tenant_email': 'maria.konstantinou@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 77, 'heating_mills': 68, 'elevator_mills': 77},
+                    {'number': '4', 'floor': 1, 'owner_name': 'Αικατερίνη Δημητρίου', 'owner_phone': '2105678901', 'owner_email': 'katerina.dimitriou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 70, 'heating_mills': 72, 'elevator_mills': 70},
+                    {'number': '5', 'floor': 1, 'owner_name': 'Δημήτριος Αντωνίου', 'owner_phone': '2106789012', 'owner_email': 'dimitris.antoniou@email.com', 'tenant_name': 'Σοφία Αλεξίου', 'tenant_phone': '2107890123', 'tenant_email': 'sofia.alexiou@email.com', 'is_rented': True, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 65, 'heating_mills': 66, 'elevator_mills': 65},
+                    {'number': '6', 'floor': 1, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2108901234', 'owner_email': 'giannis.michailidis@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 72, 'bedrooms': 1, 'participation_mills': 52, 'heating_mills': 53, 'elevator_mills': 52},
+                    {'number': '7', 'floor': 2, 'owner_name': 'Αννα Σταματίου', 'owner_phone': '2109012345', 'owner_email': 'anna.stamatiou@email.com', 'tenant_name': 'Χρήστος Παπαγεωργίου', 'tenant_phone': '2100123456', 'tenant_email': 'christos.papageorgiou@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 59, 'heating_mills': 60, 'elevator_mills': 59},
+                    {'number': '8', 'floor': 2, 'owner_name': 'Παναγιώτης Κωνσταντίνου', 'owner_phone': '2101234567', 'owner_email': 'panagiotis.konstantinou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 75, 'heating_mills': 76, 'elevator_mills': 75},
+                    {'number': '9', 'floor': 2, 'owner_name': 'Ευαγγελία Αλεξίου', 'owner_phone': '2102345678', 'owner_email': 'evangelia.alexiou@email.com', 'tenant_name': 'Δημήτριος Γεωργίου', 'tenant_phone': '2103456789', 'tenant_email': 'dimitris.georgiou@email.com', 'is_rented': True, 'square_meters': 78, 'bedrooms': 2, 'participation_mills': 57, 'heating_mills': 58, 'elevator_mills': 57},
+                    {'number': '10', 'floor': 3, 'owner_name': 'Μιχαήλ Παπαδόπουλος', 'owner_phone': '2104567890', 'owner_email': 'michalis.papadopoulos@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 68, 'heating_mills': 69, 'elevator_mills': 68},
+                    {'number': '11', 'floor': 3, 'owner_name': 'Σοφία Δημητρίου', 'owner_phone': '2105678901', 'owner_email': 'sofia.dimitriou@email.com', 'tenant_name': 'Ανδρέας Σταματίου', 'tenant_phone': '2106789012', 'tenant_email': 'andreas.stamatiou@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 63, 'heating_mills': 64, 'elevator_mills': 63},
+                    {'number': '12', 'floor': 3, 'owner_name': 'Γεώργιος Αντωνίου', 'owner_phone': '2107890123', 'owner_email': 'georgios.antoniou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 68, 'bedrooms': 1, 'participation_mills': 49, 'heating_mills': 50, 'elevator_mills': 49},
+                    {'number': '13', 'floor': 4, 'owner_name': 'Μαρία Μιχαηλίδου', 'owner_phone': '2108901234', 'owner_email': 'maria.michailidou@email.com', 'tenant_name': 'Νικόλαος Παπαδοπούλου', 'tenant_phone': '2109012345', 'tenant_email': 'nikos.papadopoulos@email.com', 'is_rented': True, 'square_meters': 92, 'bedrooms': 3, 'participation_mills': 69, 'heating_mills': 70, 'elevator_mills': 69},
+                    {'number': '14', 'floor': 4, 'owner_name': 'Κωνσταντίνος Γεωργίου', 'owner_phone': '2100123456', 'owner_email': 'konstantinos.georgiou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 65, 'heating_mills': 66, 'elevator_mills': 65},
+                    {'number': '15', 'floor': 4, 'owner_name': 'Αικατερίνη Αλεξίου', 'owner_phone': '2101234567', 'owner_email': 'katerina.alexiou@email.com', 'tenant_name': 'Ιωάννης Κωνσταντίνου', 'tenant_phone': '2102345678', 'tenant_email': 'giannis.konstantinou@email.com', 'is_rented': True, 'square_meters': 83, 'bedrooms': 2, 'participation_mills': 65, 'heating_mills': 66, 'elevator_mills': 65}
+                ]
+                
+                # Validate mills before creating apartments
+                if not validate_all_mills(vouli_apartments_data, building_voulis.name):
+                    raise ValueError(f"Invalid mills for building {building_voulis.name}")
+                
+                for apt_data in vouli_apartments_data:
+                    apartment, created = Apartment.objects.get_or_create(
+                        building=building_voulis,
+                        number=apt_data['number'],
+                        defaults={
+                            'identifier': apt_data['number'],
+                            'floor': apt_data['floor'],
+                            'owner_name': apt_data['owner_name'],
+                            'owner_phone': apt_data['owner_phone'],
+                            'owner_email': apt_data['owner_email'],
+                            'tenant_name': apt_data['tenant_name'],
+                            'tenant_phone': apt_data['tenant_phone'],
+                            'tenant_email': apt_data['tenant_email'],
+                            'is_rented': apt_data['is_rented'],
+                            'square_meters': apt_data['square_meters'],
+                            'bedrooms': apt_data['bedrooms'],
+                            'participation_mills': apt_data['participation_mills'],
+                            'heating_mills': apt_data['heating_mills'],
+                            'elevator_mills': apt_data['elevator_mills'],
+                            'notes': f"Διαμέρισμα {apt_data['number']} στο κτίριο {building_voulis.name} - Όροφος {apt_data['floor']}"
+                        }
+                    )
+                    if created:
+                        logger.info(f"✅ Created apartment: {apt_data['number']} (Βουλής 6 -Demo)")
+                    else:
+                        logger.info(f"ℹ️ Apartment {apt_data['number']} already exists, skipping creation")
+                
+                logger.info(f"Created demo building 'Βουλής 6 -Demo' with 15 apartments and full data in schema {schema_name}")
                 
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}", exc_info=True)
@@ -527,14 +607,14 @@ class TenantService:
                         today = date.today()
                         financial_start_date = today.replace(day=1)  # First day of current month
                         Building.objects.create(
-                            name='Αλκμάνος 22',
+                            name='Αλκμάνος 22 - Demo',
                             address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
                             city='Αθήνα',
                             postal_code='11528',
                             apartments_count=10,
                             financial_system_start_date=financial_start_date
                         )
-                        logger.info(f"Created minimal demo building 'Αλκμάνος 22' with financial_system_start_date={financial_start_date} in schema {schema_name}")
+                        logger.info(f"Created minimal demo building 'Αλκμάνος 22 - Demo' with financial_system_start_date={financial_start_date} in schema {schema_name}")
             except Exception as fallback_error:
                 logger.error(f"Failed to create minimal demo building in schema {schema_name}: {fallback_error}")
 
