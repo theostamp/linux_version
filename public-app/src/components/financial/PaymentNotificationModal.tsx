@@ -323,6 +323,37 @@ export default function PaymentNotificationModal({
                     {formatCurrency(Math.abs(apartment.net_obligation))}
                 </div>
               </div>
+
+              {/* Διακριτοί δείκτες δαπανών */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-white border border-green-200 rounded-lg p-3 flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    Δαπάνες Ενοίκου
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-1 py-0">
+                      Ε
+                    </Badge>
+                  </div>
+                  <div className="text-lg font-semibold text-green-700">
+                    {apartment.resident_expenses && Math.abs(apartment.resident_expenses) > 0.3
+                      ? formatCurrency(apartment.resident_expenses)
+                      : '-'}
+                  </div>
+                </div>
+
+                <div className="bg-white border border-red-200 rounded-lg p-3 flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    Δαπάνες Ιδιοκτήτη
+                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-1 py-0">
+                      Δ
+                    </Badge>
+                  </div>
+                  <div className="text-lg font-semibold text-red-600">
+                    {apartment.owner_expenses && Math.abs(apartment.owner_expenses) > 0.3
+                      ? formatCurrency(apartment.owner_expenses)
+                      : '-'}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Financial Breakdown */}
