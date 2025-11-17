@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { CheckCircle, XCircle, Loader2, Building, ArrowRight, Mail } from 'lucide-react';
 
 interface PaymentStatus {
-  status: 'loading' | 'success' | 'error' | 'pending';
+  status: 'loading' | 'success' | 'error' | 'pending' | 'awaiting_email';
   message: string;
   tenantUrl?: string | null;
   error?: string;
@@ -20,6 +20,26 @@ export default function VerifyPaymentPage() {
     status: 'loading',
     message: 'Επαληθεύουμε την πληρωμή σας...'
   });
+  
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -61,6 +81,13 @@ export default function VerifyPaymentPage() {
                   status: 'success',
                   message: message || 'Το workspace σας είναι έτοιμο!',
                   tenantUrl: tenantUrl || null
+                });
+                return;
+              } else if (status === 'awaiting_email') {
+                // Tenant is ready but waiting for email verification - stop polling
+                setPaymentStatus({
+                  status: 'awaiting_email',
+                  message: message || 'Η πληρωμή σας επιβεβαιώθηκε! Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ ελέγξτε το inbox σας.'
                 });
                 return;
               } else if (status === 'processing') {
@@ -130,8 +157,52 @@ export default function VerifyPaymentPage() {
         return <CheckCircle className="h-16 w-16 text-green-600" />;
       case 'error':
         return <XCircle className="h-16 w-16 text-red-600" />;
+      case 'awaiting_email':
+      case 'pending':
+        return <Mail className="h-16 w-16 text-blue-600" />;
       default:
         return <Loader2 className="h-16 w-16 text-blue-600 animate-spin" />;
+    }
+  };
+
+  const handleCheckAgain = () => {
+    // Reload the page to check status again
+    window.location.reload();
+  };
+
+  const handleResendEmail = async () => {
+    if (resendCooldown > 0 || isResending) return;
+    
+    setIsResending(true);
+    
+    try {
+      const response = await fetch('/api/resend-verification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        if (response.status === 429 && data.remainingSeconds) {
+          setResendCooldown(data.remainingSeconds);
+          alert(`Παρακαλώ περιμένετε ${data.remainingSeconds} δευτερόλεπτα πριν ξαναστείλετε email.`);
+        } else {
+          alert(data.message || 'Αποτυχία αποστολής email. Παρακαλώ δοκιμάστε ξανά αργότερα.');
+        }
+      } else {
+        // Success - set 60 second cooldown
+        setResendCooldown(60);
+        alert('Το email επιβεβαίωσης στάλθηκε επιτυχώς! Παρακαλώ ελέγξτε το inbox σας.');
+      }
+    } catch (error) {
+      console.error('Error resending email:', error);
+      alert('Προέκυψε σφάλμα κατά την αποστολή του email. Παρακαλώ δοκιμάστε ξανά.');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -141,6 +212,7 @@ export default function VerifyPaymentPage() {
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
           {paymentStatus.status === 'success' ? 'Καλώς ήρθατε στο New Concierge!' : 
            paymentStatus.status === 'error' ? 'Η Επαλήθευση Πληρωμής Απέτυχε' :
+           paymentStatus.status === 'awaiting_email' ? 'Ελέγξτε το Email σας' :
            paymentStatus.status === 'pending' ? 'Ελέγξτε το Email σας' :
            'Επεξεργασία Πληρωμής'}
         </h1>
@@ -176,7 +248,7 @@ export default function VerifyPaymentPage() {
           </div>
         )}
 
-        {paymentStatus.status === 'pending' && (
+        {(paymentStatus.status === 'pending' || paymentStatus.status === 'awaiting_email') && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-center mb-4">
               <Mail className="h-8 w-8 text-blue-600 mr-2" />
@@ -192,9 +264,28 @@ export default function VerifyPaymentPage() {
               <li>Κάντε click στο link επιβεβαίωσης</li>
               <li>Μετά την επιβεβαίωση, θα λάβετε email με τα στοιχεία login</li>
             </ol>
-            <p className="text-sm text-blue-600">
+            <p className="text-sm text-blue-600 mb-6">
               Αν δεν λάβατε email εντός 5 λεπτών, ελέγξτε το spam folder ή επικοινωνήστε μαζί μας.
             </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleCheckAgain}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center justify-center"
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Επιβεβαίωσα το Email - Ελέγξτε Ξανά
+              </button>
+              <button
+                onClick={handleResendEmail}
+                disabled={resendCooldown > 0 || isResending}
+                className="bg-white text-blue-600 border-2 border-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Mail className="h-5 w-5 mr-2" />
+                {isResending ? 'Αποστολή...' : 
+                 resendCooldown > 0 ? `Περιμένετε ${resendCooldown}s` : 
+                 'Επαναποστολή Email'}
+              </button>
+            </div>
           </div>
         )}
 

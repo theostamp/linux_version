@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const tenantSubdomain = metadata.tenant_subdomain;
 
     // Determine overall status
-    let verificationStatus: 'pending' | 'processing' | 'ready' | 'error' = 'pending';
+    let verificationStatus: 'pending' | 'processing' | 'ready' | 'error' | 'awaiting_email' = 'pending';
     let message = '';
     let tenantUrl: string | null = null;
     let emailSent = false;
@@ -89,7 +89,8 @@ export async function GET(request: NextRequest) {
               tenantUrl = tenantStatus.tenant_url || `${tenantSubdomain}.newconcierge.app`;
               emailSent = tenantStatus.email_sent || false;
             } else if (tenantStatus.tenant_ready && !tenantStatus.email_verified) {
-              verificationStatus = 'processing';
+              // Tenant is ready but waiting for email verification - stop polling
+              verificationStatus = 'awaiting_email';
               message = 'Η πληρωμή σας επιβεβαιώθηκε. Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ ελέγξτε το inbox σας.';
               emailSent = tenantStatus.email_sent || false;
             } else {
