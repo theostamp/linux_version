@@ -22,6 +22,8 @@ import {
   Search,
   ArrowUpDown,
   Filter,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
@@ -33,6 +35,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-yellow-100 text-yellow-700',
@@ -71,6 +83,8 @@ function OffersPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'contractor'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [offerToDelete, setOfferToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { offers, isLoading, isError } = useOffers({
     buildingId,
@@ -78,7 +92,7 @@ function OffersPageContent() {
     pageSize: 1000,
   });
 
-  const { approve, reject } = useOfferMutations();
+  const { approve, reject, delete: deleteOffer } = useOfferMutations();
   
   // Filtered and sorted offers
   const filteredOffers = useMemo(() => {
@@ -158,6 +172,29 @@ function OffersPageContent() {
         description: error?.message || 'Η απόρριψη της προσφοράς απέτυχε.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleDeleteOffer = async () => {
+    if (!offerToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteOffer.mutateAsync(offerToDelete.id);
+      setOfferToDelete(null);
+      toast({
+        title: 'Επιτυχής Διαγραφή',
+        description: 'Η προσφορά διαγράφηκε επιτυχώς.',
+      });
+    } catch (error: any) {
+      console.error('Failed to delete offer:', error);
+      toast({
+        title: 'Σφάλμα',
+        description: error?.message || 'Η διαγραφή της προσφοράς απέτυχε.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -453,12 +490,81 @@ function OffersPageContent() {
                       </Button>
                     </>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOfferToDelete(offer);
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!offerToDelete} onOpenChange={(open) => !open && setOfferToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Διαγραφή Προσφοράς</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <p className="font-medium text-amber-900">
+                    Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την προσφορά;
+                  </p>
+                  {offerToDelete && (
+                    <div className="text-sm text-amber-800 space-y-1">
+                      <p><strong>Συνεργείο:</strong> {offerToDelete.contractor_name || 'Άγνωστο'}</p>
+                      {offerToDelete.project_title && (
+                        <p><strong>Έργο:</strong> {offerToDelete.project_title}</p>
+                      )}
+                      <p><strong>Ποσό:</strong> {formatCurrency(offerToDelete.amount)}</p>
+                      <p><strong>Κατάσταση:</strong> {STATUS_LABELS[offerToDelete.status] || offerToDelete.status}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {offerToDelete?.status === 'accepted' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800 font-medium">
+                    ⚠️ Προσοχή: Αυτή η προσφορά έχει εγκριθεί! Η διαγραφή της μπορεί να επηρεάσει σχετικές δαπάνες και έργα.
+                  </p>
+                </div>
+              )}
+              
+              <p className="text-sm text-gray-600 font-semibold">
+                Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Ακύρωση</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOffer}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Διαγραφή...
+                </>
+              ) : (
+                'Διαγραφή Προσφοράς'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
