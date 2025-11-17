@@ -56,12 +56,6 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
       [ExpenseCategory.MISCELLANEOUS]: 0,
     };
 
-    const payerTotals = {
-      resident: 0,
-      owner: 0,
-      shared: 0,
-    };
-
     filteredExpenses.forEach(expense => {
       const category = expense.category as ExpenseCategory;
       const title = expense.title || 'Χωρίς τίτλο';
@@ -71,22 +65,12 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
       } else {
         categoryTotals[ExpenseCategory.MISCELLANEOUS] = (categoryTotals[ExpenseCategory.MISCELLANEOUS] || 0) + expense.amount;
       }
-
-      // Ομαδοποίηση ανά ευθύνη πληρωμής
-      if (expense.payer_responsibility === 'resident') {
-        payerTotals.resident += expense.amount;
-      } else if (expense.payer_responsibility === 'owner') {
-        payerTotals.owner += expense.amount;
-      } else if (expense.payer_responsibility === 'shared') {
-        payerTotals.shared += expense.amount;
-      }
     });
 
     const total = Object.values(categoryTotals).reduce((sum, amount) => sum + amount, 0);
 
     return {
       categoryTotals,
-      payerTotals,
       total,
       count: filteredExpenses.length,
       period,
@@ -200,69 +184,6 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
             </p>
           </div>
         </div>
-
-        {/* Payer Responsibility Breakdown */}
-        {breakdown.payerTotals && (breakdown.payerTotals.resident > 0 || breakdown.payerTotals.owner > 0 || breakdown.payerTotals.shared > 0) && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Κατανομή ανά Ευθύνη Πληρωμής</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {breakdown.payerTotals.resident > 0 && (
-                <div className="border rounded-lg p-4 bg-green-50 border-green-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
-                        🟢 Ε
-                      </Badge>
-                      <h4 className="font-semibold">Δαπάνες Ενοίκων</h4>
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">
-                    {formatCurrency(breakdown.payerTotals.resident)}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {breakdown.total ? ((breakdown.payerTotals.resident / breakdown.total) * 100).toFixed(1) : '0'}% του συνόλου
-                  </p>
-                </div>
-              )}
-              {breakdown.payerTotals.owner > 0 && (
-                <div className="border rounded-lg p-4 bg-red-50 border-red-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-red-100 text-red-700 border-red-300">
-                        🔴 Δ
-                      </Badge>
-                      <h4 className="font-semibold">Δαπάνες Ιδιοκτητών</h4>
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-red-700">
-                    {formatCurrency(breakdown.payerTotals.owner)}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {breakdown.total ? ((breakdown.payerTotals.owner / breakdown.total) * 100).toFixed(1) : '0'}% του συνόλου
-                  </p>
-                </div>
-              )}
-              {breakdown.payerTotals.shared > 0 && (
-                <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-                        🔵 Κ
-                      </Badge>
-                      <h4 className="font-semibold">Κοινές Δαπάνες</h4>
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-700">
-                    {formatCurrency(breakdown.payerTotals.shared)}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {breakdown.total ? ((breakdown.payerTotals.shared / breakdown.total) * 100).toFixed(1) : '0'}% του συνόλου
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Category Breakdown */}
         <div className="space-y-4">
@@ -409,32 +330,12 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{formatCurrency(expense.amount)}</div>
-                      <div className="flex gap-2 justify-end mt-1">
-                        <Badge 
-                          variant="outline" 
-                          className={getCategoryColor(expense.category as ExpenseCategory)}
-                        >
-                          {getCategoryLabel(expense.category as ExpenseCategory)}
-                        </Badge>
-                        {expense.payer_responsibility && (
-                          <Badge 
-                            variant="outline"
-                            className={
-                              expense.payer_responsibility === 'owner' 
-                                ? 'bg-red-50 text-red-700 border-red-200' 
-                                : expense.payer_responsibility === 'resident'
-                                ? 'bg-green-50 text-green-700 border-green-200'
-                                : 'bg-blue-50 text-blue-700 border-blue-200'
-                            }
-                          >
-                            {expense.payer_responsibility === 'owner' 
-                              ? 'Δ' 
-                              : expense.payer_responsibility === 'resident'
-                              ? 'Ε'
-                              : 'Κ'}
-                          </Badge>
-                        )}
-                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={getCategoryColor(expense.category as ExpenseCategory)}
+                      >
+                        {getCategoryLabel(expense.category as ExpenseCategory)}
+                      </Badge>
                     </div>
                   </div>
                 ))}

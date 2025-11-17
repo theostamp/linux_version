@@ -63,4 +63,3 @@ FIXING TENANT 'theo' - Adding Demo Data
    Has demo building (Αλκμάνος 22): yes
 
 ⚠️ Force flag detected: removing existing demo building data...
-[24~@20d532b07365:/app#    exit migrations to apply.inancialancial --fake====
