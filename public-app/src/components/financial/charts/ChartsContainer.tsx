@@ -20,6 +20,9 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   buildingId,
   selectedMonth,
 }) => {
+  // Debug: Log buildingId to verify it's correct
+  console.log('[ChartsContainer] BuildingId received:', buildingId, typeof buildingId);
+  
   const [activeChart, setActiveChart] = useState<ChartType>('heating');
   const [chartSubType, setChartSubType] = useState<string>('bar');
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
@@ -101,9 +104,17 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
           />
         );
       case 'heating':
+        if (!buildingId || buildingId <= 0) {
+          console.error('[ChartsContainer] Invalid buildingId for heating chart:', buildingId);
+          return (
+            <div className="flex items-center justify-center h-64 text-red-500">
+              <span>Σφάλμα: Μη έγκυρο ID κτιρίου</span>
+            </div>
+          );
+        }
         return (
           <HeatingConsumptionChart
-            buildingId={buildingId || 1}
+            buildingId={buildingId}
             heatingYear={heatingYear}
             compareYear={compareYear}
             showComparison={showComparison}
@@ -112,9 +123,17 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
           />
         );
       case 'electricity':
+        if (!buildingId || buildingId <= 0) {
+          console.error('[ChartsContainer] Invalid buildingId for electricity chart:', buildingId);
+          return (
+            <div className="flex items-center justify-center h-64 text-red-500">
+              <span>Σφάλμα: Μη έγκυρο ID κτιρίου</span>
+            </div>
+          );
+        }
         return (
           <ElectricityExpensesChart
-            buildingId={buildingId || 1}
+            buildingId={buildingId}
             year={electricityYear}
             compareYear={compareYear}
             showComparison={showComparison}

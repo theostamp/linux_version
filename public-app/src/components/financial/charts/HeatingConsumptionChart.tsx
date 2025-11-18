@@ -47,6 +47,18 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
   chartType = 'bar',
   height = 400,
 }) => {
+  // Debug: Log buildingId to verify it's correct
+  console.log('[HeatingChart] BuildingId received:', buildingId, typeof buildingId);
+  
+  if (!buildingId || buildingId <= 0) {
+    console.error('[HeatingChart] Invalid buildingId:', buildingId);
+    return (
+      <div className="flex items-center justify-center h-64 text-red-500">
+        <span>Σφάλμα: Μη έγκυρο ID κτιρίου</span>
+      </div>
+    );
+  }
+
   const months = getHeatingSeasonMonths(heatingYear);
   const startDate = months[0].date + '-01';
   const endDate = months[months.length - 1].date + '-31';
@@ -58,6 +70,13 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
 
   // Fetch heating expenses for the heating season
   const { data: expenses, isLoading: expensesLoading } = useExpenses({
+    building_id: buildingId,
+    expense_date_after: startDate,
+    expense_date_before: endDate,
+  });
+
+  // Debug: Log the API request parameters
+  console.log('[HeatingChart] API Request params:', {
     building_id: buildingId,
     expense_date_after: startDate,
     expense_date_before: endDate,
