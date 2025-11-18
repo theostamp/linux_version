@@ -64,6 +64,18 @@ export default function CreateBuildingForm({
   const { refreshBuildings } = useBuilding();
   const isEditMode = !!initialData;
 
+  // Map old heating_system values to new ones
+  const normalizeHeatingSystem = (value: string | undefined | null): string => {
+    if (!value) return 'none';
+    // Map old values to new backend choices
+    const mapping: Record<string, string> = {
+      'central': 'conventional',
+      'autonomous': 'hour_meters',
+      'mixed': 'conventional', // Default mixed to conventional
+    };
+    return mapping[value] || value;
+  };
+
   const [formData, setFormData] = useState<BuildingPayload>({
     name: initialData?.name || '',
     address: initialData?.address || '',
@@ -73,7 +85,7 @@ export default function CreateBuildingForm({
     latitude: normalizeCoordinate(initialData?.latitude),
     longitude: normalizeCoordinate(initialData?.longitude),
     total_apartments: initialData?.total_apartments || initialData?.apartments_count || undefined,
-    heating_system: initialData?.heating_system || 'none',
+    heating_system: normalizeHeatingSystem(initialData?.heating_system),
     heating_fixed_percentage: initialData?.heating_fixed_percentage || 30,
     internal_manager_name: initialData?.internal_manager_name || '',
     internal_manager_phone: initialData?.internal_manager_phone || '',
@@ -192,8 +204,21 @@ export default function CreateBuildingForm({
     }
   };
 
+  // Map old heating_system values to new ones
+  const normalizeHeatingSystem = (value: string | undefined | null): string => {
+    if (!value) return 'none';
+    // Map old values to new backend choices
+    const mapping: Record<string, string> = {
+      'central': 'conventional',
+      'autonomous': 'hour_meters',
+      'mixed': 'conventional', // Default mixed to conventional
+    };
+    return mapping[value] || value;
+  };
+
   useEffect(() => {
     if (initialData) {
+      const normalizedHeatingSystem = normalizeHeatingSystem(initialData.heating_system);
       setFormData({
         name: initialData.name || '',
         address: initialData.address || '',
@@ -203,7 +228,7 @@ export default function CreateBuildingForm({
         latitude: normalizeCoordinate(initialData.latitude),
         longitude: normalizeCoordinate(initialData.longitude),
         total_apartments: initialData.total_apartments || initialData.apartments_count || undefined,
-        heating_system: initialData.heating_system || 'none',
+        heating_system: normalizedHeatingSystem,
         heating_fixed_percentage: initialData.heating_fixed_percentage || 30,
         internal_manager_name: initialData.internal_manager_name || '',
         internal_manager_phone: initialData.internal_manager_phone || '',
