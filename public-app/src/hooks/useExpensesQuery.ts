@@ -13,6 +13,7 @@ interface ExpenseParams {
   expense_type?: string;
   category?: string;
   month?: string;
+  page_size?: number;
 }
 
 export const useExpenses = (
@@ -48,6 +49,8 @@ export const useExpenses = (
       if (params.expense_type) queryParams.append('expense_type', params.expense_type);
       if (params.category) queryParams.append('category', params.category);
       if (params.month) queryParams.append('month', params.month);
+      const pageSize = params.page_size ?? 500;
+      queryParams.append('page_size', pageSize.toString());
 
       // The api.get returns data directly, not response.data
       const response = await api.get<{ results?: Expense[] } | Expense[]>(`/financial/expenses/?${queryParams.toString()}`);

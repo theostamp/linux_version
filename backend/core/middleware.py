@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class CustomTenantMiddleware(TenantMainMiddleware):
+    BASE_DOMAIN_TENANT_MAP = {
+        "newconcierge.app": "theo",
+    }
     """
     Custom tenant middleware that handles frontend proxy requests.
 
@@ -108,6 +111,31 @@ class CustomTenantMiddleware(TenantMainMiddleware):
             )
             return tenant
         except domain_model.DoesNotExist:
+            canonical_hostname = hostname.lower()
+            if canonical_hostname in self.BASE_DOMAIN_TENANT_MAP:
+                schema_name = self.BASE_DOMAIN_TENANT_MAP[canonical_hostname]
+                tenant_model = get_tenant_model()
+                try:
+                    tenant = tenant_model.objects.get(schema_name=schema_name)
+                    logger.info(
+                        "🔍 [TENANT MIDDLEWARE] Resolved base domain '%s' -> tenant '%s' via static mapping",
+                        canonical_hostname,
+                        tenant.schema_name,
+                    )
+                    domain_model.objects.get_or_create(
+                        domain=canonical_hostname,
+                        defaults={
+                            "tenant": tenant,
+                            "is_primary": False,
+                        },
+                    )
+                    return tenant
+                except tenant_model.DoesNotExist:
+                    logger.warning(
+                        "❌ [TENANT MIDDLEWARE] Static mapping for '%s' points to missing tenant '%s'",
+                        canonical_hostname,
+                        schema_name,
+                    )
             logger.warning(
                 "⚠️ [TENANT MIDDLEWARE] Domain '%s' not found, trying subdomain fallback",
                 hostname,
