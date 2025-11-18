@@ -65,28 +65,53 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   });
   
   // Validate buildingId exists in available buildings
+  // Priority: URL parameter > prop buildingId > selectedBuilding
   useEffect(() => {
     if (buildings.length > 0) {
-      const initialId = selectedBuilding?.id || buildingId;
-      const buildingExists = buildings.some(b => b.id === initialId);
+      // Read buildingId from URL first
+      const urlBuildingId = searchParams.get('building');
+      const urlBuildingIdNum = urlBuildingId ? parseInt(urlBuildingId, 10) : null;
+      const validUrlBuildingId = urlBuildingIdNum && !isNaN(urlBuildingIdNum) && buildings.some(b => b.id === urlBuildingIdNum)
+        ? urlBuildingIdNum
+        : null;
       
-      if (!buildingExists) {
-        // Use selectedBuilding or first available building
-        const targetBuilding = selectedBuilding || buildings[0];
-        if (targetBuilding && targetBuilding.id !== initialId) {
-          console.warn(`[FinancialPage] Building ${initialId} not found. Using building ${targetBuilding.id} instead.`);
+      // Priority: URL > prop > selectedBuilding
+      const targetId = validUrlBuildingId || buildingId || selectedBuilding?.id;
+      const buildingExists = targetId && buildings.some(b => b.id === targetId);
+      
+      if (!buildingExists || !targetId) {
+        // Use first available building if target doesn't exist
+        const targetBuilding = buildings[0];
+        if (targetBuilding && targetBuilding.id !== activeBuildingId) {
+          console.warn(`[FinancialPage] Building ${targetId} not found or invalid. Using building ${targetBuilding.id} instead.`);
           setActiveBuildingId(targetBuilding.id);
-          // Redirect to financial page with correct building
-          router.replace('/financial');
+          // Update URL with correct building
+          const params = new URLSearchParams(window.location.search);
+          params.set('building', targetBuilding.id.toString());
+          router.replace(`/financial?${params.toString()}`);
         }
       } else {
-        // Update activeBuildingId if selectedBuilding changed
-        if (selectedBuilding?.id && selectedBuilding.id !== activeBuildingId) {
-          setActiveBuildingId(selectedBuilding.id);
+        // Only update activeBuildingId if it's different AND it's from URL or prop (not selectedBuilding override)
+        if (targetId !== activeBuildingId) {
+          // If URL has building parameter, use it (highest priority)
+          if (validUrlBuildingId) {
+            console.log(`[FinancialPage] Using URL buildingId: ${validUrlBuildingId}`);
+            setActiveBuildingId(validUrlBuildingId);
+          } 
+          // If prop buildingId is different, use it (second priority)
+          else if (buildingId && buildingId !== activeBuildingId) {
+            console.log(`[FinancialPage] Using prop buildingId: ${buildingId}`);
+            setActiveBuildingId(buildingId);
+          }
+          // Only use selectedBuilding if URL and prop don't have buildingId (lowest priority)
+          else if (!validUrlBuildingId && !buildingId && selectedBuilding?.id && selectedBuilding.id !== activeBuildingId) {
+            console.log(`[FinancialPage] Using selectedBuilding: ${selectedBuilding.id}`);
+            setActiveBuildingId(selectedBuilding.id);
+          }
         }
       }
     }
-  }, [buildings, buildingId, selectedBuilding, router, activeBuildingId]);
+  }, [buildings, buildingId, selectedBuilding, router, activeBuildingId, searchParams]);
   const [activeTab, setActiveTab] = useState(() => {
     // Check URL parameters for tab, apartment, and amount
     const params = new URLSearchParams(window.location.search);
