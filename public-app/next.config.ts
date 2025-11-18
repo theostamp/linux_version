@@ -50,6 +50,16 @@ const nextConfig: NextConfig = {
         destination: "/kiosk-display",
         permanent: false,
       },
+      {
+        source: "/financial/common-expenses",
+        destination: "/financial?tab=calculator",
+        permanent: false,
+      },
+      {
+        source: "/financial/reports",
+        destination: "/financial?tab=history",
+        permanent: false,
+      },
     ];
   },
   eslint: {

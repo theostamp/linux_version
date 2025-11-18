@@ -320,13 +320,13 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/financial/common-expenses">
+              <Link href="/financial?tab=calculator">
                 <Calendar className="w-6 h-6 mb-2" />
                 <span>Κοινόχρηστα</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/financial/reports">
+              <Link href="/financial?tab=history">
                 <CheckCircle className="w-6 h-6 mb-2" />
                 <span>Αναφορές</span>
               </Link>

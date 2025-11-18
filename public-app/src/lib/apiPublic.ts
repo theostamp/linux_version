@@ -4,8 +4,8 @@ import axios from 'axios';
 // Helper function to get the correct API base URL based on hostname
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    console.log(`[API PUBLIC] Current hostname: ${hostname}`);
+    const { hostname, origin, protocol, port } = window.location;
+    console.log(`[API PUBLIC] Current hostname: ${hostname}, origin: ${origin}`);
     
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
@@ -13,10 +13,33 @@ const getApiBaseUrl = () => {
       console.log(`[API PUBLIC] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
     }
+
+    // Σε production, πάντα χρησιμοποιούμε το same-origin URL (HTTPS)
+    const baseOrigin = origin && origin !== 'null'
+      ? origin.replace(/\/$/, '')
+      : `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+    const sameOriginUrl = `${baseOrigin}/api`;
+    console.log(`[API PUBLIC] Using same-origin API URL: ${sameOriginUrl}`);
+    return sameOriginUrl;
   }
-  // Χρησιμοποιούμε το backend container name για το kiosk mode
+
+  // Server-side: χρησιμοποιούμε environment variables
+  const envUrl =
+    process.env.NEXT_PUBLIC_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.API_BASE_URL ||
+    process.env.BACKEND_URL;
+
+  if (envUrl) {
+    const trimmed = envUrl.endsWith("/") ? envUrl.slice(0, -1) : envUrl;
+    const apiUrl = trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+    console.log(`[API PUBLIC] Using environment API URL: ${apiUrl}`);
+    return apiUrl;
+  }
+
+  // Server-side fallback (μόνο για SSR, όχι για browser)
   const defaultUrl = 'http://backend:8000/api';
-  console.log(`[API PUBLIC] Using backend container API URL: ${defaultUrl}`);
+  console.warn(`[API PUBLIC] Server-side fallback to backend container API URL: ${defaultUrl}`);
   return defaultUrl;
 };
 
