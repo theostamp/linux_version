@@ -81,6 +81,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         id: e.id,
         title: e.title,
         category: e.category,
+        distribution_type: e.distribution_type,
         expense_type: e.expense_type,
         expense_date: e.expense_date,
         date: e.date,
@@ -93,7 +94,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         const titleLower = e.title?.toLowerCase() || '';
         const descLower = e.description?.toLowerCase() || '';
         const categoryLower = e.category?.toLowerCase() || '';
-        const expenseType = e.expense_type || '';
+        const distributionType = e.distribution_type || '';
 
         // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
         // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
@@ -101,8 +102,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                           e.category === 'heating_gas' ||
                           categoryLower === 'heating_fuel' ||
                           categoryLower === 'heating_gas' ||
-                          // Αν είναι Μετρητές και έχει πετρέλαιο/αέριο στο title
-                          (expenseType === 'Μετρητές' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο'))) ||
+                          // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
+                          (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
                           titleLower.includes('πετρέλαιο') ||
                           titleLower.includes('πετρελαιο') ||
                           titleLower.includes('φυσικό αέριο') ||
@@ -120,11 +121,11 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         const result = isHeating && expenseInMonth;
         
         // Debug: Log expenses that match heating criteria
-        if (result && expenseType === 'Μετρητές') {
-          console.log('[HeatingChart] Matched Μετρητές expense:', {
+        if (result && distributionType === 'by_meters') {
+          console.log('[HeatingChart] Matched by_meters expense:', {
             id: e.id,
             title: e.title,
-            expense_type: expenseType,
+            distribution_type: distributionType,
             category: e.category,
             date: expenseDate,
             month: month.date,
@@ -148,7 +149,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
             const titleLower = e.title?.toLowerCase() || '';
             const descLower = e.description?.toLowerCase() || '';
             const categoryLower = e.category?.toLowerCase() || '';
-            const expenseType = e.expense_type || '';
+            const distributionType = e.distribution_type || '';
 
             // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
             // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
@@ -156,8 +157,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                               e.category === 'heating_gas' ||
                               categoryLower === 'heating_fuel' ||
                               categoryLower === 'heating_gas' ||
-                              // Αν είναι Μετρητές και έχει πετρέλαιο/αέριο στο title
-                              (expenseType === 'Μετρητές' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο'))) ||
+                              // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
+                              (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
                               titleLower.includes('πετρέλαιο') ||
                               titleLower.includes('πετρελαιο') ||
                               titleLower.includes('φυσικό αέριο') ||

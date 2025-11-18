@@ -55,6 +55,7 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
         id: e.id,
         title: e.title,
         category: e.category,
+        distribution_type: e.distribution_type,
         expense_type: e.expense_type,
         expense_date: e.expense_date,
         date: e.date,
@@ -63,17 +64,15 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
 
     // Filter for electricity expenses
     const electricityExpenses = expenses.filter(e => {
-      const expenseType = e.expense_type || '';
+      const distributionType = e.distribution_type || '';
       const titleLower = (e.title || '').toLowerCase();
       const descLower = (e.description || '').toLowerCase();
       
-      const isElectricity = expenseType === 'electricity' ||
-                            expenseType === 'elevator_electricity' ||
-                            // Αν είναι Χιλιοστά και έχει keywords ηλεκτρικού
-                            (expenseType === 'Χιλιοστά' && (titleLower.includes('δεη') || titleLower.includes('ρεύμα') || titleLower.includes('ηλεκτρ'))) ||
-                            e.category === 'electricity' ||
+      const isElectricity = e.category === 'electricity' ||
                             e.category === 'electricity_common' ||
                             e.category === 'utilities' ||
+                            // Αν είναι Χιλιοστά (by_participation_mills) και έχει keywords ηλεκτρικού
+                            (distributionType === 'by_participation_mills' && (titleLower.includes('δεη') || titleLower.includes('ρεύμα') || titleLower.includes('ηλεκτρ'))) ||
                             titleLower.includes('ρεύμα') ||
                             titleLower.includes('δεη') ||
                             titleLower.includes('ηλεκτρ') ||
@@ -96,11 +95,11 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
       const result = isElectricity && !isHeating;
       
       // Debug: Log expenses that match electricity criteria
-      if (result && expenseType === 'Χιλιοστά') {
-        console.log('[ElectricityChart] Matched Χιλιοστά expense:', {
+      if (result && distributionType === 'by_participation_mills') {
+        console.log('[ElectricityChart] Matched by_participation_mills expense:', {
           id: e.id,
           title: e.title,
-          expense_type: expenseType,
+          distribution_type: distributionType,
           category: e.category,
         });
       }
@@ -111,7 +110,7 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
     console.log('[ElectricityChart] Filtered electricity expenses:', {
       total: expenses.length,
       electricity: electricityExpenses.length,
-      with_Χιλιοστά: electricityExpenses.filter(e => e.expense_type === 'Χιλιοστά').length,
+      with_by_participation_mills: electricityExpenses.filter(e => e.distribution_type === 'by_participation_mills').length,
     });
 
     // Group by month
@@ -128,7 +127,10 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
         .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
 
       const elevator = monthExpenses
-        .filter(e => e.expense_type === 'elevator_electricity' ||
+        .filter(e => e.category === 'elevator_maintenance' ||
+                    e.category === 'elevator_repair' ||
+                    e.category === 'elevator_inspection' ||
+                    e.category === 'elevator_modernization' ||
                     (e.description && e.description.toLowerCase().includes('ανελκυστ')))
         .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
 
@@ -149,7 +151,10 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
           .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
 
         compareElevator = compareMonthExpenses
-          .filter(e => e.expense_type === 'elevator_electricity' ||
+          .filter(e => e.category === 'elevator_maintenance' ||
+                      e.category === 'elevator_repair' ||
+                      e.category === 'elevator_inspection' ||
+                      e.category === 'elevator_modernization' ||
                       (e.description && e.description.toLowerCase().includes('ανελκυστ')))
           .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
       }
