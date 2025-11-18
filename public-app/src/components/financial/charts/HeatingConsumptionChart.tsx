@@ -108,6 +108,19 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         description: e.description,
       })));
       
+      // Debug: List all unique categories
+      const uniqueCategories = [...new Set(expenses.map(e => e.category))];
+      console.log('[HeatingChart] All unique categories in expenses:', uniqueCategories);
+      
+      // Debug: Check each category against heating filter
+      expenses.slice(0, 5).forEach(e => {
+        const isHeatingCategory = e.category && (
+          e.category === 'heating' ||
+          e.category.startsWith('heating_')
+        );
+        console.log(`[HeatingChart] Expense ${e.id} "${e.title}": category="${e.category}", isHeatingCategory=${isHeatingCategory}, startsWithHeating=${e.category?.startsWith('heating_')}`);
+      });
+      
       // Log all expenses with heating-related keywords (excluding non-heating categories)
       const heatingRelated = expenses.filter(e => {
         const titleLower = (e.title || '').toLowerCase();
