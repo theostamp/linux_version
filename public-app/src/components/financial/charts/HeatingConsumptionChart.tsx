@@ -122,12 +122,19 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                                       categoryLower === 'reserve_fund' ||
                                       categoryLower === 'management_fees';
         
+        // Ελέγχουμε αν είναι κατηγορία θέρμανσης (όλες οι heating_* κατηγορίες)
+        const isHeatingCategory = e.category && (
+                                  e.category === 'heating' ||
+                                  e.category.startsWith('heating_') ||
+                                  categoryLower === 'heating' ||
+                                  categoryLower.startsWith('heating_')
+                                );
+        
         return !isNotHeatingCategory && (
+               isHeatingCategory ||
                titleLower.includes('πετρέλαιο') || 
                titleLower.includes('θέρμανσ') || 
                titleLower.includes('αέριο') ||
-               e.category === 'heating_fuel' ||
-               e.category === 'heating_gas' ||
                (e.distribution_type === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('θέρμανσ') || titleLower.includes('αέριο'))) ||
                (e.distribution_type === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('θέρμανσ') || titleLower.includes('αέριο')))
         );
@@ -168,13 +175,19 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                                       categoryLower === 'reserve_fund' ||
                                       categoryLower === 'management_fees';
 
-        // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
-        // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
+        // Ελέγχουμε αν είναι κατηγορία θέρμανσης (όλες οι heating_* κατηγορίες)
+        // Συμπεριλαμβάνει: heating_fuel, heating_gas, heating_maintenance, heating_repair, 
+        // heating_inspection, heating_modernization, κτλ
+        const isHeatingCategory = e.category && (
+                                  e.category === 'heating' ||
+                                  e.category.startsWith('heating_') ||
+                                  categoryLower === 'heating' ||
+                                  categoryLower.startsWith('heating_')
+                                );
+
+        // Μόνο δαπάνες θέρμανσης (όλες οι heating_* κατηγορίες + keyword matching)
         const isHeating = !isNotHeatingCategory && (
-                          e.category === 'heating_fuel' ||
-                          e.category === 'heating_gas' ||
-                          categoryLower === 'heating_fuel' ||
-                          categoryLower === 'heating_gas' ||
+                          isHeatingCategory ||
                           // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
                           (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
                           // Αν είναι Χιλιοστά (by_participation_mills) και έχει πετρέλαιο/αέριο στο title
@@ -241,13 +254,19 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                                           categoryLower === 'reserve_fund' ||
                                           categoryLower === 'management_fees';
 
-            // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
-            // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
+            // Ελέγχουμε αν είναι κατηγορία θέρμανσης (όλες οι heating_* κατηγορίες)
+            // Συμπεριλαμβάνει: heating_fuel, heating_gas, heating_maintenance, heating_repair, 
+            // heating_inspection, heating_modernization, κτλ
+            const isHeatingCategory = e.category && (
+                                      e.category === 'heating' ||
+                                      e.category.startsWith('heating_') ||
+                                      categoryLower === 'heating' ||
+                                      categoryLower.startsWith('heating_')
+                                    );
+
+            // Μόνο δαπάνες θέρμανσης (όλες οι heating_* κατηγορίες + keyword matching)
             const isHeating = !isNotHeatingCategory && (
-                              e.category === 'heating_fuel' ||
-                              e.category === 'heating_gas' ||
-                              categoryLower === 'heating_fuel' ||
-                              categoryLower === 'heating_gas' ||
+                              isHeatingCategory ||
                               // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
                               (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
                               // Αν είναι Χιλιοστά (by_participation_mills) και έχει πετρέλαιο/αέριο στο title
