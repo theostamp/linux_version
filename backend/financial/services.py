@@ -2509,7 +2509,40 @@ class AdvancedCommonExpenseCalculator:
             'heating_fuel', 'heating_gas', 'heating_maintenance',
             'heating_repair', 'heating_inspection', 'heating_modernization'
         ]
-        
+        heating_fuel_keywords = [
+            'πετρέλαιο', 'πετρελαιο', 'φυσικό αέριο', 'φυσικο αεριο',
+            'αέριο', 'αεριο', 'aerio', 'gas', 'μαζούτ', 'mazout'
+        ]
+        heating_general_keywords = [
+            'θέρμανσ', 'θερμανσ', 'heating', 'therm', 'radiator',
+            'boiler', 'καυστήρ', 'καυστηρ', 'burner', 'λέβητα', 'λεβητα'
+        ]
+        heating_excluded_categories = {
+            'reserve_fund', 'management_fees', 'electricity_common',
+            'water_common', 'garbage_collection', 'cleaning', 'security'
+        }
+        def _contains_keyword(text: str, keywords: list[str]) -> bool:
+            text = text or ''
+            return any(keyword in text for keyword in keywords)
+        def _is_heating_expense(expense: Expense) -> bool:
+            category_lower = (expense.category or '').lower()
+            if category_lower in heating_categories:
+                return True
+            title_lower = (expense.title or '').lower()
+            description_lower = (expense.description or '').lower()
+            distribution_type = (expense.distribution_type or '').lower()
+            has_fuel_keyword = _contains_keyword(title_lower, heating_fuel_keywords) or _contains_keyword(description_lower, heating_fuel_keywords)
+            has_general_keyword = _contains_keyword(title_lower, heating_general_keywords) or _contains_keyword(description_lower, heating_general_keywords)
+            has_distribution_hint = (
+                distribution_type in ['by_meters', 'by_participation_mills']
+                and (has_fuel_keyword or has_general_keyword)
+            )
+            if has_fuel_keyword or has_distribution_hint:
+                return True
+            if category_lower not in heating_excluded_categories and has_general_keyword:
+                return True
+            return False
+       
         equal_share_categories = [
             'special_contribution', 'reserve_fund', 'emergency_fund',
             'renovation_fund'
@@ -2530,7 +2563,11 @@ class AdvancedCommonExpenseCalculator:
                 resident_amount = expense.amount
             
             # Κατανομή ανά κατηγορία
-            if expense.category in general_categories:
+            if _is_heating_expense(expense):
+                totals['heating'] += expense.amount
+                totals['owner_heating'] += owner_amount
+                totals['resident_heating'] += resident_amount
+            elif expense.category in general_categories:
                 totals['general'] += expense.amount
                 totals['owner_general'] += owner_amount
                 totals['resident_general'] += resident_amount
@@ -2538,10 +2575,6 @@ class AdvancedCommonExpenseCalculator:
                 totals['elevator'] += expense.amount
                 totals['owner_elevator'] += owner_amount
                 totals['resident_elevator'] += resident_amount
-            elif expense.category in heating_categories:
-                totals['heating'] += expense.amount
-                totals['owner_heating'] += owner_amount
-                totals['resident_heating'] += resident_amount
             elif expense.category in equal_share_categories:
                 totals['equal_share'] += expense.amount
                 totals['owner_equal_share'] += owner_amount
