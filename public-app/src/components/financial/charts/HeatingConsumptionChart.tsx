@@ -89,16 +89,29 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         description: e.description,
       })));
       
-      // Log all expenses with heating-related keywords
+      // Log all expenses with heating-related keywords (excluding non-heating categories)
       const heatingRelated = expenses.filter(e => {
         const titleLower = (e.title || '').toLowerCase();
-        return titleLower.includes('πετρέλαιο') || 
+        const categoryLower = (e.category || '').toLowerCase();
+        const isNotHeatingCategory = e.category === 'reserve_fund' ||
+                                      e.category === 'management_fees' ||
+                                      e.category === 'electricity_common' ||
+                                      e.category === 'water_common' ||
+                                      e.category === 'garbage_collection' ||
+                                      e.category === 'cleaning' ||
+                                      e.category === 'security' ||
+                                      categoryLower === 'reserve_fund' ||
+                                      categoryLower === 'management_fees';
+        
+        return !isNotHeatingCategory && (
+               titleLower.includes('πετρέλαιο') || 
                titleLower.includes('θέρμανσ') || 
                titleLower.includes('αέριο') ||
                e.category === 'heating_fuel' ||
                e.category === 'heating_gas' ||
-               e.distribution_type === 'by_meters' ||
-               e.distribution_type === 'by_participation_mills';
+               (e.distribution_type === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('θέρμανσ') || titleLower.includes('αέριο'))) ||
+               (e.distribution_type === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('θέρμανσ') || titleLower.includes('αέριο')))
+        );
       });
       
       console.log('[HeatingChart] Heating-related expenses found:', heatingRelated.length, heatingRelated.map(e => ({
@@ -125,9 +138,21 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         const categoryLower = e.category?.toLowerCase() || '';
         const distributionType = e.distribution_type || '';
 
+        // Αποκλείουμε ρητά κατηγορίες που ΔΕΝ είναι θέρμανση
+        const isNotHeatingCategory = e.category === 'reserve_fund' ||
+                                      e.category === 'management_fees' ||
+                                      e.category === 'electricity_common' ||
+                                      e.category === 'water_common' ||
+                                      e.category === 'garbage_collection' ||
+                                      e.category === 'cleaning' ||
+                                      e.category === 'security' ||
+                                      categoryLower === 'reserve_fund' ||
+                                      categoryLower === 'management_fees';
+
         // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
         // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
-        const isHeating = e.category === 'heating_fuel' ||
+        const isHeating = !isNotHeatingCategory && (
+                          e.category === 'heating_fuel' ||
                           e.category === 'heating_gas' ||
                           categoryLower === 'heating_fuel' ||
                           categoryLower === 'heating_gas' ||
@@ -142,7 +167,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                           (titleLower.includes('αέριο') && !titleLower.includes('επισκευή') && !titleLower.includes('συντήρηση')) ||
                           (titleLower.includes('gas') && !titleLower.includes('repair') && !titleLower.includes('maintenance')) ||
                           descLower.includes('πετρέλαιο') ||
-                          descLower.includes('φυσικό αέριο');
+                          descLower.includes('φυσικό αέριο')
+                        );
 
         // Check if expense is in this month
         // Support both e.date and e.expense_date fields
@@ -185,9 +211,21 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
             const categoryLower = e.category?.toLowerCase() || '';
             const distributionType = e.distribution_type || '';
 
+            // Αποκλείουμε ρητά κατηγορίες που ΔΕΝ είναι θέρμανση
+            const isNotHeatingCategory = e.category === 'reserve_fund' ||
+                                          e.category === 'management_fees' ||
+                                          e.category === 'electricity_common' ||
+                                          e.category === 'water_common' ||
+                                          e.category === 'garbage_collection' ||
+                                          e.category === 'cleaning' ||
+                                          e.category === 'security' ||
+                                          categoryLower === 'reserve_fund' ||
+                                          categoryLower === 'management_fees';
+
             // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
             // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
-            const isHeating = e.category === 'heating_fuel' ||
+            const isHeating = !isNotHeatingCategory && (
+                              e.category === 'heating_fuel' ||
                               e.category === 'heating_gas' ||
                               categoryLower === 'heating_fuel' ||
                               categoryLower === 'heating_gas' ||
@@ -202,7 +240,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                               (titleLower.includes('αέριο') && !titleLower.includes('επισκευή') && !titleLower.includes('συντήρηση')) ||
                               (titleLower.includes('gas') && !titleLower.includes('repair') && !titleLower.includes('maintenance')) ||
                               descLower.includes('πετρέλαιο') ||
-                              descLower.includes('φυσικό αέριο');
+                              descLower.includes('φυσικό αέριο')
+                            );
             
             // Support both e.date and e.expense_date fields
             const expenseDate = e.date || e.expense_date || '';
