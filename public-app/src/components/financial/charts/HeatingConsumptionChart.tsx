@@ -97,7 +97,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                titleLower.includes('αέριο') ||
                e.category === 'heating_fuel' ||
                e.category === 'heating_gas' ||
-               e.distribution_type === 'by_meters';
+               e.distribution_type === 'by_meters' ||
+               e.distribution_type === 'by_participation_mills';
       });
       
       console.log('[HeatingChart] Heating-related expenses found:', heatingRelated.length, heatingRelated.map(e => ({
@@ -132,6 +133,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                           categoryLower === 'heating_gas' ||
                           // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
                           (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
+                          // Αν είναι Χιλιοστά (by_participation_mills) και έχει πετρέλαιο/αέριο στο title
+                          (distributionType === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
                           titleLower.includes('πετρέλαιο') ||
                           titleLower.includes('πετρελαιο') ||
                           titleLower.includes('φυσικό αέριο') ||
@@ -190,6 +193,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                               categoryLower === 'heating_gas' ||
                               // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
                               (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
+                              // Αν είναι Χιλιοστά (by_participation_mills) και έχει πετρέλαιο/αέριο στο title
+                              (distributionType === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
                               titleLower.includes('πετρέλαιο') ||
                               titleLower.includes('πετρελαιο') ||
                               titleLower.includes('φυσικό αέριο') ||
