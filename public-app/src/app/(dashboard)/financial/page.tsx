@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -15,6 +15,7 @@ function FinancialContent() {
   const { buildings, currentBuilding, selectedBuilding, isLoading: buildingLoading, error } = useBuilding();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const lastUpdatedBuildingId = useRef<number | null>(null);
 
   if (authLoading || buildingLoading) {
     return (
@@ -51,6 +52,11 @@ function FinancialContent() {
   // Update URL when selectedBuilding changes (but only if URL doesn't already have a valid building)
   useEffect(() => {
     if (!buildingLoading && buildings.length > 0 && selectedBuilding?.id) {
+      // Skip if we already updated for this buildingId (prevent infinite loop)
+      if (lastUpdatedBuildingId.current === selectedBuilding.id) {
+        return;
+      }
+      
       const currentUrlBuilding = searchParams.get('building');
       const currentUrlBuildingNum = currentUrlBuilding ? parseInt(currentUrlBuilding, 10) : null;
       const urlBuildingIsValid = currentUrlBuildingNum && !isNaN(currentUrlBuildingNum) && 
@@ -60,14 +66,21 @@ function FinancialContent() {
       // 1. URL doesn't have a building parameter, OR
       // 2. URL has an invalid building parameter, OR
       // 3. selectedBuilding is different from URL building
-      if (!urlBuildingIsValid || currentUrlBuildingNum !== selectedBuilding.id) {
+      if (!urlBuildingIsValid || (currentUrlBuildingNum !== null && currentUrlBuildingNum !== selectedBuilding.id)) {
         const params = new URLSearchParams(window.location.search);
         params.set('building', selectedBuilding.id.toString());
         
         // Preserve other URL parameters (like 'tab')
         const newUrl = `/financial?${params.toString()}`;
         console.log(`[FinancialPage] Updating URL to match selectedBuilding: ${newUrl}`);
+        
+        // Mark that we've updated for this buildingId
+        lastUpdatedBuildingId.current = selectedBuilding.id;
+        
         router.replace(newUrl, { scroll: false });
+      } else {
+        // URL already matches, update ref
+        lastUpdatedBuildingId.current = selectedBuilding.id;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
