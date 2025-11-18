@@ -221,6 +221,19 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
       };
     });
   }, [expenses, months, compareExpenses, compareMonths, showComparison]);
+  
+  // Summary debug log
+  if (expenses && expenses.length > 0) {
+    const totalHeatingExpenses = chartData.reduce((sum, d) => sum + d.expenseCount, 0);
+    const totalExpenseAmount = chartData.reduce((sum, d) => sum + d.expense, 0);
+    console.log('[HeatingChart] Summary:', {
+      totalExpenses: expenses.length,
+      totalHeatingExpenses,
+      totalExpenseAmount,
+      chartDataPoints: chartData.length,
+      monthsWithData: chartData.filter(d => d.expense > 0).length,
+    });
+  }
 
   if (expensesLoading) {
     return (
