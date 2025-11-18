@@ -29,9 +29,13 @@ export const useExpenses = (
 
       const queryParams = new URLSearchParams();
 
-      const buildingParam = params.building ?? params.building_id;
+      const buildingParam = params.building_id ?? params.building;
       if (buildingParam) {
-        queryParams.append('building', buildingParam.toString());
+        const buildingValue = buildingParam.toString();
+        queryParams.append('building_id', buildingValue);
+        // Keep legacy "building" parameter for backwards compatibility with any
+        // filters that still expect it downstream.
+        queryParams.append('building', buildingValue);
       } else {
         console.warn('[useExpensesQuery] Missing building parameter. Results may not be filtered correctly.');
       }
@@ -68,4 +72,3 @@ export const useExpenses = (
     enabled: options?.enabled !== false && !!params.building_id,
   });
 };
-
