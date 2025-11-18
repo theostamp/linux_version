@@ -84,7 +84,11 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
 
         const isHeating = (e as any).expense_type === 'heating' ||
                           (e as any).expense_type === 'Μετρητές' ||
+                          e.category === 'heating_fuel' ||
+                          e.category === 'heating_gas' ||
                           categoryLower === 'heating' ||
+                          categoryLower === 'heating_fuel' ||
+                          categoryLower === 'heating_gas' ||
                           categoryLower === 'utilities' ||
                           categoryLower === 'meters' ||
                           categoryLower === 'μετρητές' ||
@@ -124,7 +128,11 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
 
             const isHeating = (e as any).expense_type === 'heating' ||
                               (e as any).expense_type === 'Μετρητές' ||
+                              e.category === 'heating_fuel' ||
+                              e.category === 'heating_gas' ||
                               categoryLower === 'heating' ||
+                              categoryLower === 'heating_fuel' ||
+                              categoryLower === 'heating_gas' ||
                               categoryLower === 'utilities' ||
                               categoryLower === 'meters' ||
                               categoryLower === 'μετρητές' ||

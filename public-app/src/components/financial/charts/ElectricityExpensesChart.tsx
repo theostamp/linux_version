@@ -54,6 +54,7 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
       const isElectricity = (e as any).expense_type === 'electricity' ||
                             (e as any).expense_type === 'elevator_electricity' ||
                             e.category === 'electricity' ||
+                            e.category === 'electricity_common' ||
                             e.category === 'utilities' ||
                             (e.title && e.title.toLowerCase().includes('ρεύμα')) ||
                             (e.title && e.title.toLowerCase().includes('δεη')) ||
@@ -66,7 +67,9 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
       // Exclude heating expenses
       const isHeating = (e.title && e.title.toLowerCase().includes('θέρμανσ')) ||
                         (e.title && e.title.toLowerCase().includes('πετρέλαιο')) ||
-                        e.category === 'heating';
+                        e.category === 'heating' ||
+                        e.category === 'heating_fuel' ||
+                        e.category === 'heating_gas';
 
       return isElectricity && !isHeating;
     });
