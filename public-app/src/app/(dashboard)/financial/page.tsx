@@ -52,15 +52,21 @@ function FinancialContent() {
   // Update URL when selectedBuilding changes (but only if URL doesn't already have a valid building)
   useEffect(() => {
     if (!buildingLoading && buildings.length > 0 && selectedBuilding?.id) {
-      // Skip if we already updated for this buildingId (prevent infinite loop)
-      if (lastUpdatedBuildingId.current === selectedBuilding.id) {
-        return;
-      }
-      
       const currentUrlBuilding = searchParams.get('building');
       const currentUrlBuildingNum = currentUrlBuilding ? parseInt(currentUrlBuilding, 10) : null;
       const urlBuildingIsValid = currentUrlBuildingNum && !isNaN(currentUrlBuildingNum) && 
                                   buildings.some(b => b.id === currentUrlBuildingNum);
+      
+      // Skip if URL already has the correct buildingId (prevent unnecessary updates)
+      if (urlBuildingIsValid && currentUrlBuildingNum === selectedBuilding.id) {
+        lastUpdatedBuildingId.current = selectedBuilding.id;
+        return;
+      }
+      
+      // Skip if we already updated for this buildingId (prevent infinite loop)
+      if (lastUpdatedBuildingId.current === selectedBuilding.id) {
+        return;
+      }
       
       // Only update URL if:
       // 1. URL doesn't have a building parameter, OR
@@ -74,10 +80,11 @@ function FinancialContent() {
         const newUrl = `/financial?${params.toString()}`;
         console.log(`[FinancialPage] Updating URL to match selectedBuilding: ${newUrl}`);
         
-        // Mark that we've updated for this buildingId
+        // Mark that we've updated for this buildingId BEFORE calling router.replace
         lastUpdatedBuildingId.current = selectedBuilding.id;
         
-        router.replace(newUrl, { scroll: false });
+        // Use window.history.replaceState instead of router.replace to avoid re-render
+        window.history.replaceState({}, '', newUrl);
       } else {
         // URL already matches, update ref
         lastUpdatedBuildingId.current = selectedBuilding.id;
