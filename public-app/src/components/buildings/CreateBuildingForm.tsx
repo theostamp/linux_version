@@ -652,14 +652,14 @@ export default function CreateBuildingForm({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               disabled={loading}
             >
-              <option value="none">Κανένα</option>
-              <option value="central">Κεντρική Θέρμανση</option>
-              <option value="autonomous">Αυτόνομη Θέρμανση</option>
-              <option value="mixed">Μικτή</option>
+              <option value="none">Χωρίς Κεντρική Θέρμανση</option>
+              <option value="conventional">Συμβατικό (Κατανομή με χιλιοστά)</option>
+              <option value="hour_meters">Αυτονομία με Ωρομετρητές</option>
+              <option value="heat_meters">Αυτονομία με Θερμιδομετρητές</option>
             </select>
           </div>
 
-          {formData.heating_system === 'central' && (
+          {(formData.heating_system === 'hour_meters' || formData.heating_system === 'heat_meters') && (
             <div className="space-y-2">
               <Label htmlFor="heating_fixed_percentage">
                 Ποσοστό Καθόλου (0-100%)
