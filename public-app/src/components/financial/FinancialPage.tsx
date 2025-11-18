@@ -55,7 +55,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Use selectedBuilding ID if available, otherwise use the passed buildingId
   // But validate that the buildingId exists in available buildings
   const [activeBuildingId, setActiveBuildingId] = useState(() => {
-    return selectedBuilding?.id || buildingId;
+    const initialId = selectedBuilding?.id || buildingId;
+    console.log('[FinancialPage] Initial activeBuildingId:', {
+      selectedBuildingId: selectedBuilding?.id,
+      buildingIdProp: buildingId,
+      initialId,
+    });
+    return initialId;
   });
   
   // Validate buildingId exists in available buildings
@@ -775,7 +781,15 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         <TabsContent value="charts" className="space-y-4" data-tab="charts">
           <ProtectedFinancialRoute requiredPermission="financial_read">
-            <ChartsContainer buildingId={activeBuildingId} selectedMonth={selectedMonth} />
+            {(() => {
+              console.log('[FinancialPage] Passing buildingId to ChartsContainer:', {
+                activeBuildingId,
+                selectedBuildingId: selectedBuilding?.id,
+                buildingIdProp: buildingId,
+                urlBuilding: searchParams.get('building'),
+              });
+              return <ChartsContainer buildingId={activeBuildingId} selectedMonth={selectedMonth} />;
+            })()}
           </ProtectedFinancialRoute>
         </TabsContent>
         
