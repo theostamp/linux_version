@@ -51,18 +51,24 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
 
     // Filter for electricity expenses
     const electricityExpenses = expenses.filter(e => {
-      const isElectricity = (e as any).expense_type === 'electricity' ||
-                            (e as any).expense_type === 'elevator_electricity' ||
+      const expenseType = (e as any).expense_type || '';
+      const titleLower = (e.title || '').toLowerCase();
+      const descLower = ((e as any).description || '').toLowerCase();
+      
+      const isElectricity = expenseType === 'electricity' ||
+                            expenseType === 'elevator_electricity' ||
+                            // Αν είναι Χιλιοστά και έχει keywords ηλεκτρικού
+                            (expenseType === 'Χιλιοστά' && (titleLower.includes('δεη') || titleLower.includes('ρεύμα') || titleLower.includes('ηλεκτρ'))) ||
                             e.category === 'electricity' ||
                             e.category === 'electricity_common' ||
                             e.category === 'utilities' ||
-                            (e.title && e.title.toLowerCase().includes('ρεύμα')) ||
-                            (e.title && e.title.toLowerCase().includes('δεη')) ||
-                            (e.title && e.title.toLowerCase().includes('ηλεκτρ')) ||
-                            (e.title && e.title.toLowerCase().includes('ρευμα')) ||
-                            ((e as any).description && (e as any).description.toLowerCase().includes('ρεύμα')) ||
-                            ((e as any).description && (e as any).description.toLowerCase().includes('δεη')) ||
-                            ((e as any).description && (e as any).description.toLowerCase().includes('ηλεκτρ'));
+                            titleLower.includes('ρεύμα') ||
+                            titleLower.includes('δεη') ||
+                            titleLower.includes('ηλεκτρ') ||
+                            titleLower.includes('ρευμα') ||
+                            descLower.includes('ρεύμα') ||
+                            descLower.includes('δεη') ||
+                            descLower.includes('ηλεκτρ');
 
       // Exclude heating expenses
       const isHeating = (e.title && e.title.toLowerCase().includes('θέρμανσ')) ||
@@ -81,9 +87,11 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
     // Group by month
     const monthlyData = monthsInGreek.map((monthName, index) => {
       const monthNumber = (index + 1).toString().padStart(2, '0');
-      const monthExpenses = electricityExpenses.filter(e =>
-        (e as any).expense_date && (e as any).expense_date.startsWith(`${year}-${monthNumber}`)
-      );
+      const monthExpenses = electricityExpenses.filter(e => {
+        // Support both e.date and e.expense_date fields
+        const expenseDate = e.date || (e as any).expense_date || '';
+        return expenseDate && expenseDate.startsWith(`${year}-${monthNumber}`);
+      });
 
       const commonAreas = monthExpenses
         .filter(e => !(e as any).description || !(e as any).description.toLowerCase().includes('ανελκυστ'))
@@ -100,9 +108,11 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
 
       if (showComparison && compareExpenses && compareYear) {
         const compareMonthNumber = (index + 1).toString().padStart(2, '0');
-        const compareMonthExpenses = compareExpenses.filter(e =>
-          (e as any).expense_date && (e as any).expense_date.startsWith(`${compareYear}-${compareMonthNumber}`)
-        );
+        const compareMonthExpenses = compareExpenses.filter(e => {
+          // Support both e.date and e.expense_date fields
+          const expenseDate = e.date || (e as any).expense_date || '';
+          return expenseDate && expenseDate.startsWith(`${compareYear}-${compareMonthNumber}`);
+        });
 
         compareCommonAreas = compareMonthExpenses
           .filter(e => !(e as any).description || !(e as any).description.toLowerCase().includes('ανελκυστ'))
