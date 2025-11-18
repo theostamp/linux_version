@@ -77,7 +77,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
 
     // Debug: Log first few expenses to see their structure
     if (expenses.length > 0) {
-      console.log('[HeatingChart] Sample expenses:', expenses.slice(0, 3).map(e => ({
+      console.log('[HeatingChart] Sample expenses:', expenses.slice(0, 5).map(e => ({
         id: e.id,
         title: e.title,
         category: e.category,
@@ -85,8 +85,36 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         expense_type: e.expense_type,
         expense_date: e.expense_date,
         date: e.date,
+        amount: e.amount,
+        description: e.description,
+      })));
+      
+      // Log all expenses with heating-related keywords
+      const heatingRelated = expenses.filter(e => {
+        const titleLower = (e.title || '').toLowerCase();
+        return titleLower.includes('πετρέλαιο') || 
+               titleLower.includes('θέρμανσ') || 
+               titleLower.includes('αέριο') ||
+               e.category === 'heating_fuel' ||
+               e.category === 'heating_gas' ||
+               e.distribution_type === 'by_meters';
+      });
+      
+      console.log('[HeatingChart] Heating-related expenses found:', heatingRelated.length, heatingRelated.map(e => ({
+        id: e.id,
+        title: e.title,
+        category: e.category,
+        distribution_type: e.distribution_type,
+        date: e.date || e.expense_date,
       })));
     }
+    
+    console.log('[HeatingChart] Period:', {
+      startDate,
+      endDate,
+      months: months.map(m => m.date),
+      heatingYear,
+    });
 
     return months.map(month => {
       // Find heating expenses for this month
@@ -121,14 +149,17 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         const result = isHeating && expenseInMonth;
         
         // Debug: Log expenses that match heating criteria
-        if (result && distributionType === 'by_meters') {
-          console.log('[HeatingChart] Matched by_meters expense:', {
+        if (isHeating) {
+          console.log('[HeatingChart] Heating expense found:', {
             id: e.id,
             title: e.title,
-            distribution_type: distributionType,
             category: e.category,
+            distribution_type: distributionType,
             date: expenseDate,
             month: month.date,
+            expenseInMonth,
+            isHeating,
+            result,
           });
         }
 
