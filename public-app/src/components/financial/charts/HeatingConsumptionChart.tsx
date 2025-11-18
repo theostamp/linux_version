@@ -3,6 +3,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { useExpenses } from '@/hooks/useExpensesQuery';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import { Expense } from '@/types/financial';
 
 interface HeatingConsumptionChartProps {
   buildingId: number;
@@ -39,6 +40,99 @@ const getHeatingSeasonMonths = (year: string) => {
   return months;
 };
 
+const NON_HEATING_CATEGORY_EXCLUSIONS = new Set([
+  'reserve_fund',
+  'management_fees',
+  'electricity_common',
+  'water_common',
+  'garbage_collection',
+  'cleaning',
+  'security',
+]);
+
+const HEATING_FUEL_KEYWORDS = [
+  'πετρέλαιο',
+  'πετρελαιο',
+  'φυσικό αέριο',
+  'φυσικο αεριο',
+  'αέριο',
+  'αεριο',
+  'aerio',
+  'gas',
+  'μαζούτ',
+  'mazout',
+];
+
+const HEATING_GENERAL_KEYWORDS = [
+  'θέρμανσ',
+  'θερμανσ',
+  'heating',
+  'therm',
+  'radiator',
+  'boiler',
+  'καυστήρ',
+  'καυστηρ',
+  'burner',
+  'λέβητα',
+  'λεβητα',
+];
+
+const normalizeText = (value?: string | null) => (value || '').toLowerCase();
+
+const containsKeyword = (text: string, keywords: string[]) =>
+  keywords.some(keyword => text.includes(keyword));
+
+interface HeatingExpenseAnalysis {
+  matches: boolean;
+  isHeatingCategory: boolean;
+  hasFuelKeyword: boolean;
+  hasGeneralKeyword: boolean;
+  hasDistributionHint: boolean;
+  isExcludedCategory: boolean;
+}
+
+const analyzeHeatingExpense = (expense: Expense): HeatingExpenseAnalysis => {
+  const titleLower = normalizeText(expense.title);
+  const descLower = normalizeText(expense.description);
+  const categoryLower = normalizeText(expense.category);
+  const distributionType = expense.distribution_type || '';
+
+  const isHeatingCategory = !!expense.category && (
+    categoryLower === 'heating' ||
+    categoryLower.startsWith('heating_')
+  );
+
+  const hasFuelKeyword =
+    containsKeyword(titleLower, HEATING_FUEL_KEYWORDS) ||
+    containsKeyword(descLower, HEATING_FUEL_KEYWORDS);
+
+  const hasGeneralKeyword =
+    containsKeyword(titleLower, HEATING_GENERAL_KEYWORDS) ||
+    containsKeyword(descLower, HEATING_GENERAL_KEYWORDS);
+
+  const hasDistributionHint = (
+    distributionType === 'by_meters' ||
+    distributionType === 'by_participation_mills'
+  ) && (hasFuelKeyword || hasGeneralKeyword);
+
+  const isExcludedCategory = NON_HEATING_CATEGORY_EXCLUSIONS.has(categoryLower);
+
+  const matches =
+    isHeatingCategory ||
+    hasFuelKeyword ||
+    hasDistributionHint ||
+    (!isExcludedCategory && hasGeneralKeyword);
+
+  return {
+    matches,
+    isHeatingCategory,
+    hasFuelKeyword,
+    hasGeneralKeyword,
+    hasDistributionHint,
+    isExcludedCategory,
+  };
+};
+
 export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = ({
   buildingId,
   heatingYear = new Date().getFullYear().toString(),
@@ -49,24 +143,24 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
 }) => {
   // Debug: Log buildingId to verify it's correct
   console.log('[HeatingChart] BuildingId received:', buildingId, typeof buildingId);
-  
-  if (!buildingId || buildingId <= 0) {
-    console.error('[HeatingChart] Invalid buildingId:', buildingId);
-    return (
-      <div className="flex items-center justify-center h-64 text-red-500">
-        <span>Σφάλμα: Μη έγκυρο ID κτιρίου</span>
-      </div>
-    );
-  }
 
-  const months = getHeatingSeasonMonths(heatingYear);
-  const startDate = months[0].date + '-01';
-  const endDate = months[months.length - 1].date + '-31';
+  const months = useMemo(() => getHeatingSeasonMonths(heatingYear), [heatingYear]);
+  const startDate = useMemo(
+    () => (months[0]?.date ? `${months[0].date}-01` : ''),
+    [months]
+  );
+  const endDate = useMemo(
+    () => (months.length > 0 ? `${months[months.length - 1].date}-31` : ''),
+    [months]
+  );
 
   // Comparison period
-  const compareMonths = compareYear ? getHeatingSeasonMonths(compareYear) : [];
-  const compareStartDate = compareMonths.length > 0 ? compareMonths[0].date + '-01' : '';
-  const compareEndDate = compareMonths.length > 0 ? compareMonths[compareMonths.length - 1].date + '-31' : '';
+  const compareMonths = useMemo(
+    () => (compareYear ? getHeatingSeasonMonths(compareYear) : []),
+    [compareYear]
+  );
+  const compareStartDate = compareMonths.length > 0 ? `${compareMonths[0].date}-01` : '';
+  const compareEndDate = compareMonths.length > 0 ? `${compareMonths[compareMonths.length - 1].date}-31` : '';
 
   // Fetch heating expenses for the heating season
   const { data: expenses, isLoading: expensesLoading } = useExpenses({
@@ -94,6 +188,17 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
   const chartData = useMemo(() => {
     if (!expenses) return [];
 
+    const heatingAnalysisById = new Map<number, HeatingExpenseAnalysis>();
+    const getHeatingAnalysis = (expense: Expense) => {
+      if (expense?.id && heatingAnalysisById.has(expense.id)) {
+        return heatingAnalysisById.get(expense.id)!;
+      }
+      const analysis = analyzeHeatingExpense(expense);
+      if (expense?.id) {
+        heatingAnalysisById.set(expense.id, analysis);
+      }
+      return analysis;
+    };
     // Debug: Log first few expenses to see their structure
     if (expenses.length > 0) {
       console.log('[HeatingChart] Sample expenses:', expenses.slice(0, 5).map(e => ({
@@ -112,53 +217,28 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
       const uniqueCategories = [...new Set(expenses.map(e => e.category))];
       console.log('[HeatingChart] All unique categories in expenses:', uniqueCategories);
       
-      // Debug: Check each category against heating filter
+      // Debug: Check the first expenses against the heating detector
       expenses.slice(0, 5).forEach(e => {
-        const isHeatingCategory = e.category && (
-          e.category === 'heating' ||
-          e.category.startsWith('heating_')
-        );
-        console.log(`[HeatingChart] Expense ${e.id} "${e.title}": category="${e.category}", isHeatingCategory=${isHeatingCategory}, startsWithHeating=${e.category?.startsWith('heating_')}`);
+        const analysis = getHeatingAnalysis(e);
+        console.log(`[HeatingChart] Expense ${e.id} "${e.title}":`, {
+          category: e.category,
+          distribution_type: e.distribution_type,
+          analysis,
+        });
       });
       
-      // Log all expenses with heating-related keywords (excluding non-heating categories)
-      const heatingRelated = expenses.filter(e => {
-        const titleLower = (e.title || '').toLowerCase();
-        const categoryLower = (e.category || '').toLowerCase();
-        const isNotHeatingCategory = e.category === 'reserve_fund' ||
-                                      e.category === 'management_fees' ||
-                                      e.category === 'electricity_common' ||
-                                      e.category === 'water_common' ||
-                                      e.category === 'garbage_collection' ||
-                                      e.category === 'cleaning' ||
-                                      e.category === 'security' ||
-                                      categoryLower === 'reserve_fund' ||
-                                      categoryLower === 'management_fees';
-        
-        // Ελέγχουμε αν είναι κατηγορία θέρμανσης (όλες οι heating_* κατηγορίες)
-        const isHeatingCategory = e.category && (
-                                  e.category === 'heating' ||
-                                  e.category.startsWith('heating_') ||
-                                  categoryLower === 'heating' ||
-                                  categoryLower.startsWith('heating_')
-                                );
-        
-        return !isNotHeatingCategory && (
-               isHeatingCategory ||
-               titleLower.includes('πετρέλαιο') || 
-               titleLower.includes('θέρμανσ') || 
-               titleLower.includes('αέριο') ||
-               (e.distribution_type === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('θέρμανσ') || titleLower.includes('αέριο'))) ||
-               (e.distribution_type === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('θέρμανσ') || titleLower.includes('αέριο')))
-        );
-      });
+      // Log all expenses that are interpreted as heating
+      const heatingRelated = expenses
+        .map(expense => ({ expense, analysis: getHeatingAnalysis(expense) }))
+        .filter(({ analysis }) => analysis.matches);
       
-      console.log('[HeatingChart] Heating-related expenses found:', heatingRelated.length, heatingRelated.map(e => ({
-        id: e.id,
-        title: e.title,
-        category: e.category,
-        distribution_type: e.distribution_type,
-        date: e.date || e.expense_date,
+      console.log('[HeatingChart] Heating-related expenses found:', heatingRelated.length, heatingRelated.map(({ expense, analysis }) => ({
+        id: expense.id,
+        title: expense.title,
+        category: expense.category,
+        distribution_type: expense.distribution_type,
+        date: expense.date || expense.expense_date,
+        analysis,
       })));
     }
     
@@ -172,72 +252,27 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
     return months.map(month => {
       // Find heating expenses for this month
       const heatingExpenses = expenses.filter(e => {
-        const titleLower = e.title?.toLowerCase() || '';
-        const descLower = e.description?.toLowerCase() || '';
-        const categoryLower = e.category?.toLowerCase() || '';
-        const distributionType = e.distribution_type || '';
+        const analysis = getHeatingAnalysis(e);
+        if (!analysis.matches) {
+          return false;
+        }
 
-        // Αποκλείουμε ρητά κατηγορίες που ΔΕΝ είναι θέρμανση
-        const isNotHeatingCategory = e.category === 'reserve_fund' ||
-                                      e.category === 'management_fees' ||
-                                      e.category === 'electricity_common' ||
-                                      e.category === 'water_common' ||
-                                      e.category === 'garbage_collection' ||
-                                      e.category === 'cleaning' ||
-                                      e.category === 'security' ||
-                                      categoryLower === 'reserve_fund' ||
-                                      categoryLower === 'management_fees';
-
-        // Ελέγχουμε αν είναι κατηγορία θέρμανσης (όλες οι heating_* κατηγορίες)
-        // Συμπεριλαμβάνει: heating_fuel, heating_gas, heating_maintenance, heating_repair, 
-        // heating_inspection, heating_modernization, κτλ
-        const isHeatingCategory = e.category && (
-                                  e.category === 'heating' ||
-                                  e.category.startsWith('heating_') ||
-                                  categoryLower === 'heating' ||
-                                  categoryLower.startsWith('heating_')
-                                );
-
-        // Μόνο δαπάνες θέρμανσης (όλες οι heating_* κατηγορίες + keyword matching)
-        const isHeating = !isNotHeatingCategory && (
-                          isHeatingCategory ||
-                          // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
-                          (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
-                          // Αν είναι Χιλιοστά (by_participation_mills) και έχει πετρέλαιο/αέριο στο title
-                          (distributionType === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
-                          titleLower.includes('πετρέλαιο') ||
-                          titleLower.includes('πετρελαιο') ||
-                          titleLower.includes('φυσικό αέριο') ||
-                          titleLower.includes('φυσικο αεριο') ||
-                          (titleLower.includes('αέριο') && !titleLower.includes('επισκευή') && !titleLower.includes('συντήρηση')) ||
-                          (titleLower.includes('gas') && !titleLower.includes('repair') && !titleLower.includes('maintenance')) ||
-                          descLower.includes('πετρέλαιο') ||
-                          descLower.includes('φυσικό αέριο')
-                        );
-
-        // Check if expense is in this month
-        // Support both e.date and e.expense_date fields
         const expenseDate = e.date || e.expense_date || '';
         const expenseInMonth = expenseDate && expenseDate.startsWith(month.date);
 
-        const result = isHeating && expenseInMonth;
-        
-        // Debug: Log expenses that match heating criteria
-        if (isHeating) {
+        if (expenseInMonth) {
           console.log('[HeatingChart] Heating expense found:', {
             id: e.id,
             title: e.title,
             category: e.category,
-            distribution_type: distributionType,
+            distribution_type: e.distribution_type,
             date: expenseDate,
             month: month.date,
-            expenseInMonth,
-            isHeating,
-            result,
+            analysis,
           });
         }
 
-        return result;
+        return !!expenseInMonth;
       });
 
       const totalExpense = heatingExpenses.reduce((sum, expense) =>
@@ -251,54 +286,13 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         const compareMonth = compareMonths.find(cm => cm.label === month.label);
         if (compareMonth) {
           const compareHeatingExpenses = compareExpenses.filter(e => {
-            const titleLower = e.title?.toLowerCase() || '';
-            const descLower = e.description?.toLowerCase() || '';
-            const categoryLower = e.category?.toLowerCase() || '';
-            const distributionType = e.distribution_type || '';
-
-            // Αποκλείουμε ρητά κατηγορίες που ΔΕΝ είναι θέρμανση
-            const isNotHeatingCategory = e.category === 'reserve_fund' ||
-                                          e.category === 'management_fees' ||
-                                          e.category === 'electricity_common' ||
-                                          e.category === 'water_common' ||
-                                          e.category === 'garbage_collection' ||
-                                          e.category === 'cleaning' ||
-                                          e.category === 'security' ||
-                                          categoryLower === 'reserve_fund' ||
-                                          categoryLower === 'management_fees';
-
-            // Ελέγχουμε αν είναι κατηγορία θέρμανσης (όλες οι heating_* κατηγορίες)
-            // Συμπεριλαμβάνει: heating_fuel, heating_gas, heating_maintenance, heating_repair, 
-            // heating_inspection, heating_modernization, κτλ
-            const isHeatingCategory = e.category && (
-                                      e.category === 'heating' ||
-                                      e.category.startsWith('heating_') ||
-                                      categoryLower === 'heating' ||
-                                      categoryLower.startsWith('heating_')
-                                    );
-
-            // Μόνο δαπάνες θέρμανσης (όλες οι heating_* κατηγορίες + keyword matching)
-            const isHeating = !isNotHeatingCategory && (
-                              isHeatingCategory ||
-                              // Αν είναι Μετρητές (by_meters) και έχει πετρέλαιο/αέριο στο title
-                              (distributionType === 'by_meters' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
-                              // Αν είναι Χιλιοστά (by_participation_mills) και έχει πετρέλαιο/αέριο στο title
-                              (distributionType === 'by_participation_mills' && (titleLower.includes('πετρέλαιο') || titleLower.includes('φυσικό αέριο') || titleLower.includes('αέριο') || titleLower.includes('θέρμανσ'))) ||
-                              titleLower.includes('πετρέλαιο') ||
-                              titleLower.includes('πετρελαιο') ||
-                              titleLower.includes('φυσικό αέριο') ||
-                              titleLower.includes('φυσικο αεριο') ||
-                              (titleLower.includes('αέριο') && !titleLower.includes('επισκευή') && !titleLower.includes('συντήρηση')) ||
-                              (titleLower.includes('gas') && !titleLower.includes('repair') && !titleLower.includes('maintenance')) ||
-                              descLower.includes('πετρέλαιο') ||
-                              descLower.includes('φυσικό αέριο')
-                            );
+            const analysis = getHeatingAnalysis(e);
+            if (!analysis.matches) {
+              return false;
+            }
             
-            // Support both e.date and e.expense_date fields
             const expenseDate = e.date || e.expense_date || '';
-            return isHeating &&
-                   expenseDate &&
-                   expenseDate.startsWith(compareMonth.date);
+            return expenseDate && expenseDate.startsWith(compareMonth.date);
           });
 
           compareExpense = compareHeatingExpenses.reduce((sum, expense) =>
@@ -315,7 +309,16 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         compareExpense,
       };
     });
-  }, [expenses, months, compareExpenses, compareMonths, showComparison]);
+  }, [compareExpenses, compareMonths, endDate, expenses, heatingYear, months, showComparison, startDate]);
+
+  if (!buildingId || buildingId <= 0) {
+    console.error('[HeatingChart] Invalid buildingId:', buildingId);
+    return (
+      <div className="flex items-center justify-center h-64 text-red-500">
+        <span>Σφάλμα: Μη έγκυρο ID κτιρίου</span>
+      </div>
+    );
+  }
   
   // Summary debug log
   if (expenses && expenses.length > 0) {
