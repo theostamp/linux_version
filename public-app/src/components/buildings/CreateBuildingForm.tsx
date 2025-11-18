@@ -204,18 +204,6 @@ export default function CreateBuildingForm({
     }
   };
 
-  // Map old heating_system values to new ones
-  const normalizeHeatingSystem = (value: string | undefined | null): string => {
-    if (!value) return 'none';
-    // Map old values to new backend choices
-    const mapping: Record<string, string> = {
-      'central': 'conventional',
-      'autonomous': 'hour_meters',
-      'mixed': 'conventional', // Default mixed to conventional
-    };
-    return mapping[value] || value;
-  };
-
   useEffect(() => {
     if (initialData) {
       const normalizedHeatingSystem = normalizeHeatingSystem(initialData.heating_system);
