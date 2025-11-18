@@ -1,14 +1,21 @@
 """
 API ViewSets for notifications app.
 """
+import logging
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import connection
 from django.db.models import Q, Count, Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+
+from buildings.models import Building, BuildingMembership
+from apartments.models import Apartment
 
 from .models import (
     NotificationTemplate,
@@ -40,6 +47,10 @@ from .services import (
     DigestService,
     MonthlyTaskService
 )
+from .tasks import send_notification_task
+
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationTemplateViewSet(viewsets.ModelViewSet):
@@ -101,6 +112,43 @@ class NotificationViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status', 'notification_type', 'priority', 'building']
 
+    def _get_schema_name(self):
+        tenant = getattr(self.request, 'tenant', None)
+        if tenant:
+            return tenant.schema_name
+        return connection.schema_name
+
+    def _resolve_building(self, building_id):
+        """Return building ensuring the current user has access."""
+        if building_id is None:
+            raise ValidationError("building_id is required")
+
+        try:
+            building_id = int(building_id)
+        except (TypeError, ValueError):
+            raise ValidationError("Μη έγκυρο building_id")
+
+        building = get_object_or_404(Building, id=building_id)
+        user = self.request.user
+
+        if user.is_superuser:
+            return building
+
+        if user.is_staff and building.manager_id == user.id:
+            return building
+
+        if BuildingMembership.objects.filter(building=building, resident=user).exists():
+            return building
+
+        if Apartment.objects.filter(
+            building=building
+        ).filter(
+            Q(owner_user=user) | Q(tenant_user=user)
+        ).exists():
+            return building
+
+        raise PermissionDenied("Δεν έχετε πρόσβαση στο συγκεκριμένο κτίριο")
+
     def get_queryset(self):
         """Filter notifications by building access."""
         user = self.request.user
@@ -132,13 +180,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
             "scheduled_at": "2025-10-01T10:00:00Z"  // optional
         }
         """
-        print(f"[NOTIFICATIONS] Create request data: {request.data}")
+        logger.info("[NOTIFICATIONS] Create request data: %s", request.data)
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            print(f"[NOTIFICATIONS] Validation errors: {serializer.errors}")
+            logger.warning("[NOTIFICATIONS] Validation errors: %s", serializer.errors)
         serializer.is_valid(raise_exception=True)
         
         data = serializer.validated_data
+        building = self._resolve_building(data.pop('building_id'))
         
         # Get or render content
         if data.get('template_id'):
@@ -157,10 +206,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
             subject = data['subject']
             body = data['body']
             sms_body = data.get('sms_body', '')
-
-        # Get building from request (TODO: proper building selection)
-        from buildings.models import Building
-        building = Building.objects.first()  # TEMP
 
         # Create notification
         notification = NotificationService.create_notification(
@@ -182,16 +227,18 @@ class NotificationViewSet(viewsets.ModelViewSet):
             send_to_all=data.get('send_to_all', False),
         )
 
-        # Send immediately if not scheduled
+        # Send immediately if not scheduled via background task
         if not data.get('scheduled_at'):
-            result = NotificationService.send_notification(notification)
+            async_result = send_notification_task.delay(
+                notification.id,
+                self._get_schema_name(),
+            )
             
             return Response({
                 'id': notification.id,
-                'status': 'sent',
+                'status': 'queued',
+                'task_id': async_result.id,
                 'total_recipients': notification.total_recipients,
-                'successful_sends': result['success'],
-                'failed_sends': result['failed'],
             }, status=status.HTTP_201_CREATED)
 
         # Scheduled notification
@@ -223,12 +270,16 @@ class NotificationViewSet(viewsets.ModelViewSet):
         )
         failed_recipients.update(status='pending')
 
-        # Resend
-        result = NotificationService.send_notification(notification)
+        # Resend asynchronously
+        async_result = send_notification_task.delay(
+            notification.id,
+            self._get_schema_name(),
+        )
 
         return Response({
-            'resent': result['success'],
-            'failed': result['failed'],
+            'status': 'queued',
+            'task_id': async_result.id,
+            'total_recipients': notification.total_recipients,
         })
 
     @action(detail=False, methods=['get'])
@@ -294,7 +345,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
             - building_id: Building ID
             - send_to_all: Boolean (default: true)
         """
-        from buildings.models import Building
         from django.core.files.base import ContentFile
 
         # Get form data
@@ -310,8 +360,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Get building
-        building = get_object_or_404(Building, id=building_id)
+        if not building_id:
+            raise ValidationError("building_id is required")
+
+        building = self._resolve_building(building_id)
 
         # Create notification
         notification = NotificationService.create_notification(
@@ -336,15 +388,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
             send_to_all=send_to_all,
         )
 
-        # Send immediately
-        result = NotificationService.send_notification(notification)
+        # Send via background task
+        async_result = send_notification_task.delay(
+            notification.id,
+            self._get_schema_name(),
+        )
 
         return Response({
             'id': notification.id,
-            'status': 'sent',
+            'status': 'queued',
+            'task_id': async_result.id,
             'total_recipients': notification.total_recipients,
-            'successful_sends': result['success'],
-            'failed_sends': result['failed'],
             'attachment_url': notification.attachment.url if notification.attachment else None,
         }, status=status.HTTP_201_CREATED)
 

@@ -178,6 +178,9 @@ class NotificationSerializer(serializers.ModelSerializer):
 class NotificationCreateSerializer(serializers.Serializer):
     """Serializer for creating and sending notifications."""
 
+    building_id = serializers.IntegerField(
+        help_text="ID του κτιρίου στο οποίο θα σταλεί η ειδοποίηση"
+    )
     # Template or manual content
     template_id = serializers.IntegerField(required=False, allow_null=True)
     subject = serializers.CharField(max_length=200, required=False)
@@ -240,6 +243,9 @@ class NotificationCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "Either provide apartment_ids or set send_to_all=true"
             )
+
+        if not data.get('building_id'):
+            raise serializers.ValidationError("building_id is required")
 
         # SMS requires sms_body (or uses body as fallback)
         if data.get('notification_type') in ['sms', 'both']:

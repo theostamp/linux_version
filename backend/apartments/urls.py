@@ -8,7 +8,7 @@ from .views_personal import (
 )
 
 router = DefaultRouter()
-router.register(r'apartments', ApartmentViewSet)
+router.register(r'', ApartmentViewSet, basename='apartment')
 
 urlpatterns = [
     path('', include(router.urls)),

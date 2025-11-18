@@ -1,5 +1,10 @@
+import logging
+
 from django_tenants.middleware.main import TenantMainMiddleware
 from django_tenants.utils import get_tenant_model
+
+
+logger = logging.getLogger(__name__)
 
 
 class CustomTenantMiddleware(TenantMainMiddleware):
@@ -38,20 +43,34 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         if tenant_host:
             hostname = tenant_host.split(':')[0]  # Strip port
             final_hostname = remove_www(hostname)
-            print(f"🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host '{tenant_host}' -> '{final_hostname}' (internal: '{internal_host}')")
+            logger.debug(
+                "🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host '%s' -> '%s' (internal: '%s')",
+                tenant_host,
+                final_hostname,
+                internal_host,
+            )
             return final_hostname
         
         if forwarded_host:
             hostname = forwarded_host.split(':')[0]  # Strip port
             final_hostname = remove_www(hostname)
-            print(f"🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Forwarded-Host '{forwarded_host}' -> '{final_hostname}' (internal: '{internal_host}')")
+            logger.debug(
+                "🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Forwarded-Host '%s' -> '%s' (internal: '%s')",
+                forwarded_host,
+                final_hostname,
+                internal_host,
+            )
             return final_hostname
         
         # Fall back to HTTP_HOST for direct requests
         host = internal_host
         hostname = host.split(':')[0]  # Strip port
         final_hostname = remove_www(hostname)
-        print(f"🔍 [TENANT MIDDLEWARE] hostname_from_request: Using HTTP_HOST '{host}' -> '{final_hostname}'")
+        logger.debug(
+            "🔍 [TENANT MIDDLEWARE] hostname_from_request: Using HTTP_HOST '%s' -> '%s'",
+            host,
+            final_hostname,
+        )
         return final_hostname
 
     def get_tenant(self, domain_model, hostname):
@@ -65,27 +84,34 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         Returns:
             Client: The tenant object
         """
-        print(f"🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: '{hostname}'")
+        logger.debug("🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: '%s'", hostname)
         
         # If the hostname is demo.localhost, use demo tenant
         if hostname in ['demo.localhost']:
             try:
                 tenant_model = get_tenant_model()
                 demo_tenant = tenant_model.objects.get(schema_name='demo')
-                print(f"🔍 [TENANT MIDDLEWARE] Resolved demo.localhost -> demo tenant")
+                logger.info("🔍 [TENANT MIDDLEWARE] Resolved demo.localhost -> demo tenant")
                 return demo_tenant
             except tenant_model.DoesNotExist:
                 # Fall back to public schema if demo tenant doesn't exist
-                print(f"⚠️ [TENANT MIDDLEWARE] Demo tenant not found, falling back to default")
+                logger.warning("⚠️ [TENANT MIDDLEWARE] Demo tenant not found, falling back to default")
                 return super().get_tenant(domain_model, hostname)
 
         # For all other cases, use the default behavior first
         try:
             tenant = super().get_tenant(domain_model, hostname)
-            print(f"🔍 [TENANT MIDDLEWARE] Resolved '{hostname}' -> tenant '{tenant.schema_name}' via domain lookup")
+            logger.info(
+                "🔍 [TENANT MIDDLEWARE] Resolved '%s' -> tenant '%s' via domain lookup",
+                hostname,
+                tenant.schema_name,
+            )
             return tenant
         except domain_model.DoesNotExist:
-            print(f"⚠️ [TENANT MIDDLEWARE] Domain '{hostname}' not found, trying subdomain fallback")
+            logger.warning(
+                "⚠️ [TENANT MIDDLEWARE] Domain '%s' not found, trying subdomain fallback",
+                hostname,
+            )
             # Fallback: attempt to resolve tenant by subdomain if domain entry is missing
             parts = hostname.split(".")
             if len(parts) > 1:
@@ -95,7 +121,12 @@ class CustomTenantMiddleware(TenantMainMiddleware):
                     tenant_model = get_tenant_model()
                     try:
                         tenant = tenant_model.objects.get(schema_name=subdomain)
-                        print(f"🔍 [TENANT MIDDLEWARE] Resolved '{hostname}' -> tenant '{tenant.schema_name}' via subdomain '{subdomain}'")
+                        logger.info(
+                            "🔍 [TENANT MIDDLEWARE] Resolved '%s' -> tenant '%s' via subdomain '%s'",
+                            hostname,
+                            tenant.schema_name,
+                            subdomain,
+                        )
                         # Ensure domain record exists for future requests
                         domain_model.objects.get_or_create(
                             domain=hostname,
@@ -106,11 +137,14 @@ class CustomTenantMiddleware(TenantMainMiddleware):
                         )
                         return tenant
                     except tenant_model.DoesNotExist:
-                        print(f"❌ [TENANT MIDDLEWARE] Tenant with schema_name '{subdomain}' not found")
+                        logger.warning(
+                            "❌ [TENANT MIDDLEWARE] Tenant with schema_name '%s' not found",
+                            subdomain,
+                        )
                         pass
 
             # If fallback also fails, re-raise the original exception
-            print(f"❌ [TENANT MIDDLEWARE] Failed to resolve tenant for hostname '{hostname}'")
+            logger.error("❌ [TENANT MIDDLEWARE] Failed to resolve tenant for hostname '%s'", hostname)
             raise
 
     def process_request(self, request):

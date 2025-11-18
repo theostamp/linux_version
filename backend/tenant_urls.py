@@ -4,6 +4,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
+from api import views as legacy_api_views
+from api import kiosk_views as kiosk_bill_views
+
 # Tenant URL configuration
 urlpatterns = [
     # Admin panel removed from tenants - only accessible from public tenant
@@ -18,7 +21,7 @@ urlpatterns = [
     path('api/buildings/', include('buildings.urls')),
     
     # Apartments management
-    path('api/', include('apartments.urls')),
+    path('api/apartments/', include('apartments.urls')),
     
     # Announcements
     path('api/announcements/', include('announcements.urls')),
@@ -36,6 +39,7 @@ urlpatterns = [
     path('api/financial/', include('financial.urls')),
     
     # Public info
+    path('api/public-info/', legacy_api_views.public_info, name='public-info'),
     path('api/public-info/', include('public_info.urls')),
     
     # Residents
@@ -65,8 +69,10 @@ urlpatterns = [
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),
     
-    # API endpoints (including kiosk)
-    path('api/', include('api.urls')),
+    # Legacy kiosk utilities (base64 uploads for kiosk displays)
+    path('api/kiosk/upload-bill/', kiosk_bill_views.upload_common_expense_bill, name='kiosk-upload-bill'),
+    path('api/kiosk/latest-bill/', kiosk_bill_views.get_latest_common_expense_bill, name='kiosk-latest-bill'),
+    path('api/kiosk/list-bills/', kiosk_bill_views.list_common_expense_bills, name='kiosk-list-bills'),
     
     # Kiosk management
     path('api/kiosk/', include('kiosk.urls')),

@@ -1,10 +1,50 @@
 """
 Celery tasks for notifications system.
 """
+import logging
+
 from celery import shared_task
 from django.utils import timezone
 from django_tenants.utils import schema_context
-from datetime import datetime
+from typing import Optional
+
+
+logger = logging.getLogger(__name__)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=30)
+def send_notification_task(self, notification_id: int, schema_name: Optional[str] = None):
+    """
+    Execute notification sending in the background to avoid blocking API responses.
+
+    Args:
+        notification_id: Primary key of the Notification instance
+        schema_name: Tenant schema to use (defaults to public)
+    """
+    from notifications.models import Notification
+    from notifications.services import NotificationService
+
+    active_schema = schema_name or 'public'
+
+    try:
+        with schema_context(active_schema):
+            notification = Notification.objects.get(id=notification_id)
+            logger.info("Sending notification %s in schema %s", notification_id, active_schema)
+            return NotificationService.send_notification(notification)
+    except Notification.DoesNotExist:
+        logger.warning(
+            "Notification %s no longer exists in schema %s – skipping send task",
+            notification_id,
+            active_schema,
+        )
+        return {'successful': 0, 'failed': 0, 'total': 0}
+    except Exception as exc:
+        logger.exception(
+            "Notification send failed for %s in schema %s. Retrying...",
+            notification_id,
+            active_schema,
+        )
+        raise self.retry(exc=exc, countdown=60)
 
 
 @shared_task

@@ -8,6 +8,9 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
 from health_check import HealthCheckView, ReadinessCheckView, LivenessCheckView
 
+from api import views as legacy_api_views
+from api import kiosk_views as kiosk_bill_views
+
 # Tenant-specific URL configuration (automatically routed by django-tenants middleware)
 urlpatterns = [
     # Django Admin
@@ -28,7 +31,7 @@ urlpatterns = [
     path('api/buildings/public/', include('buildings.public_urls')),
     
     # Apartments management
-    path('api/', include('apartments.urls')),
+    path('api/apartments/', include('apartments.urls')),
     
     # Announcements
     path('api/announcements/', include('announcements.urls')),
@@ -46,6 +49,7 @@ urlpatterns = [
     path('api/financial/', include('financial.urls')),
     
     # Public info
+    path('api/public-info/', legacy_api_views.public_info, name='public-info'),
     path('api/public-info/', include('public_info.urls')),
     
     # Tenants
@@ -78,8 +82,10 @@ urlpatterns = [
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),
     
-    # API endpoints (including kiosk)
-    path('api/', include('api.urls')),
+    # Legacy kiosk utilities (base64 uploads for kiosk displays)
+    path('api/kiosk/upload-bill/', kiosk_bill_views.upload_common_expense_bill, name='kiosk-upload-bill'),
+    path('api/kiosk/latest-bill/', kiosk_bill_views.get_latest_common_expense_bill, name='kiosk-latest-bill'),
+    path('api/kiosk/list-bills/', kiosk_bill_views.list_common_expense_bills, name='kiosk-list-bills'),
 
     # Document parser
     path('api/parser/', include('document_parser.urls')),
