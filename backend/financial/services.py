@@ -2525,12 +2525,15 @@ class AdvancedCommonExpenseCalculator:
             text = text or ''
             return any(keyword in text for keyword in keywords)
         def _is_heating_expense(expense: Expense) -> bool:
-            category_lower = (expense.category or '').lower()
+            category_lower = (getattr(expense, 'category', '') or '').lower()
             if category_lower in heating_categories:
                 return True
-            title_lower = (expense.title or '').lower()
-            description_lower = (expense.description or '').lower()
-            distribution_type = (expense.distribution_type or '').lower()
+            title_lower = (getattr(expense, 'title', '') or '').lower()
+            description_text = getattr(expense, 'description', None)
+            if not description_text:
+                description_text = getattr(expense, 'notes', '')
+            description_lower = (description_text or '').lower()
+            distribution_type = (getattr(expense, 'distribution_type', '') or '').lower()
             has_fuel_keyword = _contains_keyword(title_lower, heating_fuel_keywords) or _contains_keyword(description_lower, heating_fuel_keywords)
             has_general_keyword = _contains_keyword(title_lower, heating_general_keywords) or _contains_keyword(description_lower, heating_general_keywords)
             has_distribution_hint = (
