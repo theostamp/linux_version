@@ -69,7 +69,11 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
                         (e.title && e.title.toLowerCase().includes('πετρέλαιο')) ||
                         e.category === 'heating' ||
                         e.category === 'heating_fuel' ||
-                        e.category === 'heating_gas';
+                        e.category === 'heating_gas' ||
+                        e.category === 'heating_maintenance' ||
+                        e.category === 'heating_repair' ||
+                        e.category === 'heating_inspection' ||
+                        e.category === 'heating_modernization';
 
       return isElectricity && !isHeating;
     });
