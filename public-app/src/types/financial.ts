@@ -27,10 +27,13 @@ export interface Expense {
   title: string;
   amount: number;
   date: string;
+  expense_date?: string; // Alternative date field from backend
   category: string;
   category_display?: string;
   distribution_type: string;
   distribution_type_display?: string;
+  expense_type?: string; // Type of expense (e.g., "Μετρητές", "Χιλιοστά", "electricity", etc.)
+  description?: string; // Description field
   payer_responsibility?: 'owner' | 'resident' | 'shared';
   payer_responsibility_display?: string;
   suggested_payer?: 'owner' | 'resident' | 'shared';

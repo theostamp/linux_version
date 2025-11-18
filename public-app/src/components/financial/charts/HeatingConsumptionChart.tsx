@@ -75,13 +75,25 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
   const chartData = useMemo(() => {
     if (!expenses) return [];
 
+    // Debug: Log first few expenses to see their structure
+    if (expenses.length > 0) {
+      console.log('[HeatingChart] Sample expenses:', expenses.slice(0, 3).map(e => ({
+        id: e.id,
+        title: e.title,
+        category: e.category,
+        expense_type: e.expense_type,
+        expense_date: e.expense_date,
+        date: e.date,
+      })));
+    }
+
     return months.map(month => {
       // Find heating expenses for this month
       const heatingExpenses = expenses.filter(e => {
         const titleLower = e.title?.toLowerCase() || '';
-        const descLower = (e as any).description?.toLowerCase() || '';
+        const descLower = e.description?.toLowerCase() || '';
         const categoryLower = e.category?.toLowerCase() || '';
-        const expenseType = (e as any).expense_type || '';
+        const expenseType = e.expense_type || '';
 
         // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
         // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
@@ -102,10 +114,24 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
 
         // Check if expense is in this month
         // Support both e.date and e.expense_date fields
-        const expenseDate = e.date || (e as any).expense_date || '';
+        const expenseDate = e.date || e.expense_date || '';
         const expenseInMonth = expenseDate && expenseDate.startsWith(month.date);
 
-        return isHeating && expenseInMonth;
+        const result = isHeating && expenseInMonth;
+        
+        // Debug: Log expenses that match heating criteria
+        if (result && expenseType === 'Μετρητές') {
+          console.log('[HeatingChart] Matched Μετρητές expense:', {
+            id: e.id,
+            title: e.title,
+            expense_type: expenseType,
+            category: e.category,
+            date: expenseDate,
+            month: month.date,
+          });
+        }
+
+        return result;
       });
 
       const totalExpense = heatingExpenses.reduce((sum, expense) =>
@@ -120,9 +146,9 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         if (compareMonth) {
           const compareHeatingExpenses = compareExpenses.filter(e => {
             const titleLower = e.title?.toLowerCase() || '';
-            const descLower = (e as any).description?.toLowerCase() || '';
+            const descLower = e.description?.toLowerCase() || '';
             const categoryLower = e.category?.toLowerCase() || '';
-            const expenseType = (e as any).expense_type || '';
+            const expenseType = e.expense_type || '';
 
             // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
             // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
@@ -142,7 +168,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
                               descLower.includes('φυσικό αέριο');
             
             // Support both e.date and e.expense_date fields
-            const expenseDate = e.date || (e as any).expense_date || '';
+            const expenseDate = e.date || e.expense_date || '';
             return isHeating &&
                    expenseDate &&
                    expenseDate.startsWith(compareMonth.date);
