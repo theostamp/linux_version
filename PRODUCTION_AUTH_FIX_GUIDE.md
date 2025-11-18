@@ -44,8 +44,8 @@
 
 ```env
 # Google OAuth Configuration
-GOOGLE_CLIENT_ID=590666847148-a2e037ah9q9f1vogsl6b34mk944bug5g.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_ID=[SET_FROM_GOOGLE_CLOUD_CONSOLE]
+GOOGLE_CLIENT_SECRET=[SET_FROM_GOOGLE_CLOUD_CONSOLE]
 GOOGLE_REDIRECT_URI=https://linux-version-eyqhu8qtl-theo-stams-projects.vercel.app/auth/google/callback
 GOOGLE_CALENDAR_ENABLED=True
 GOOGLE_ADMIN_EMAIL=your-email@gmail.com
@@ -96,7 +96,7 @@ NEXT_PUBLIC_API_URL=https://linuxversion-production.up.railway.app/api
 NEXT_PUBLIC_DEFAULT_API_URL=https://linuxversion-production.up.railway.app/api
 
 # Google OAuth (if needed for frontend)
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=590666847148-a2e037ah9q9f1vogsl6b34mk944bug5g.apps.googleusercontent.com
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=[SET_FROM_GOOGLE_CLOUD_CONSOLE]
 ```
 
 ### **Βήμα 5: Update Production Environment File**

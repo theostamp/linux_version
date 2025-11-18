@@ -190,7 +190,7 @@ def test_stripe_webhooks():
 
 1. 🔗 Το Stripe CLI είναι έτοιμο και ακούει webhooks
 2. 📡 Webhook endpoint: http://localhost:18000/api/billing/webhooks/stripe/
-3. 🔑 Webhook secret: whsec_2b8988099271afc1aa07a56fbae06a2c6c7a05d6acbe51ca4152cb145c556502
+3. 🔑 Webhook secret: [SET_FROM_ENVIRONMENT_VARIABLE]
 
 🧪 Test Scenarios:
 - Create a test subscription in Stripe Dashboard
