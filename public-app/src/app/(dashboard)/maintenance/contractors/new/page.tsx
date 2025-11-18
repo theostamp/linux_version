@@ -70,11 +70,26 @@ export default function NewContractorPage() {
       const finalServiceType = form.service_type === 'custom' ? 'other' : form.service_type;
       if (!form.name || !finalServiceType) {
         toast({ title: 'Σφάλμα', description: 'Συμπληρώστε Όνομα και Τύπο Υπηρεσίας.', variant: 'destructive' });
+        setSaving(false);
         return;
       }
+      
+      // Validate required fields for backend
+      if (!form.contact_person || !form.phone) {
+        toast({ 
+          title: 'Σφάλμα', 
+          description: 'Συμπληρώστε Υπεύθυνο και Τηλέφωνο (υποχρεωτικά πεδία).', 
+          variant: 'destructive' 
+        });
+        setSaving(false);
+        return;
+      }
+      
       const payload: Partial<Contractor> & { specializations?: string[]; emergency_phone?: string } = {
         ...form,
         service_type: finalServiceType,
+        contact_person: form.contact_person.trim(),
+        phone: form.phone.trim(),
       };
       if (form.service_type === 'custom' && customService.trim().length > 0) {
         payload.service_type = 'other';
@@ -83,8 +98,17 @@ export default function NewContractorPage() {
       await createContractor(payload);
       toast({ title: 'Αποθηκεύτηκε', description: 'Το συνεργείο δημιουργήθηκε.' });
       router.push('/maintenance/contractors');
-    } catch {
-      toast({ title: 'Σφάλμα', description: 'Αποτυχία δημιουργίας συνεργείου.', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Error creating contractor:', error);
+      const errorMessage = error?.response?.data?.detail || 
+                          error?.response?.data?.message || 
+                          error?.message || 
+                          'Αποτυχία δημιουργίας συνεργείου.';
+      toast({ 
+        title: 'Σφάλμα', 
+        description: errorMessage, 
+        variant: 'destructive' 
+      });
     } finally {
       setSaving(false);
     }
@@ -130,13 +154,26 @@ export default function NewContractorPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="person">Υπεύθυνος</Label>
-              <Input id="person" value={form.contact_person || ''} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
+              <Label htmlFor="person">Υπεύθυνος *</Label>
+              <Input 
+                id="person" 
+                value={form.contact_person || ''} 
+                onChange={(e) => setForm({ ...form, contact_person: e.target.value })} 
+                required
+                placeholder="Όνομα υπευθύνου"
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone">Τηλέφωνο</Label>
-                <Input id="phone" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <Label htmlFor="phone">Τηλέφωνο *</Label>
+                <Input 
+                  id="phone" 
+                  type="tel"
+                  value={form.phone || ''} 
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })} 
+                  required
+                  placeholder="π.χ. 2101234567"
+                />
               </div>
               <div>
                 <Label htmlFor="phone2">Τηλέφωνο (2)</Label>
