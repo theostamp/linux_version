@@ -82,42 +82,20 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         const descLower = (e as any).description?.toLowerCase() || '';
         const categoryLower = e.category?.toLowerCase() || '';
 
-        const isHeating = (e as any).expense_type === 'heating' ||
-                          (e as any).expense_type === 'Μετρητές' ||
-                          e.category === 'heating_fuel' ||
+        // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
+        // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
+        const isHeating = e.category === 'heating_fuel' ||
                           e.category === 'heating_gas' ||
-                          e.category === 'heating_maintenance' ||
-                          e.category === 'heating_repair' ||
-                          e.category === 'heating_inspection' ||
-                          e.category === 'heating_modernization' ||
-                          categoryLower === 'heating' ||
                           categoryLower === 'heating_fuel' ||
                           categoryLower === 'heating_gas' ||
-                          categoryLower === 'heating_maintenance' ||
-                          categoryLower === 'heating_repair' ||
-                          categoryLower === 'heating_inspection' ||
-                          categoryLower === 'heating_modernization' ||
-                          categoryLower === 'utilities' ||
-                          categoryLower === 'meters' ||
-                          categoryLower === 'μετρητές' ||
-                          titleLower.includes('θέρμανσ') ||
-                          titleLower.includes('θερμανσ') ||
                           titleLower.includes('πετρέλαιο') ||
                           titleLower.includes('πετρελαιο') ||
                           titleLower.includes('φυσικό αέριο') ||
                           titleLower.includes('φυσικο αεριο') ||
-                          titleLower.includes('αέριο') ||
-                          titleLower.includes('gas') ||
-                          titleLower.includes('natural gas') ||
-                          titleLower.includes('καυστήρας') ||
-                          titleLower.includes('καυστηρας') ||
-                          titleLower.includes('θερμαντικό') ||
-                          titleLower.includes('θερμαντικο') ||
-                          descLower.includes('θέρμανσ') ||
+                          (titleLower.includes('αέριο') && !titleLower.includes('επισκευή') && !titleLower.includes('συντήρηση')) ||
+                          (titleLower.includes('gas') && !titleLower.includes('repair') && !titleLower.includes('maintenance')) ||
                           descLower.includes('πετρέλαιο') ||
-                          descLower.includes('φυσικό αέριο') ||
-                          descLower.includes('καυστήρας') ||
-                          descLower.includes('θερμαντικό');
+                          descLower.includes('φυσικό αέριο');
 
         // Check if expense is in this month (month.date is like "2024-09")
         const expenseInMonth = e.date && e.date.startsWith(month.date);
@@ -140,42 +118,20 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
             const descLower = (e as any).description?.toLowerCase() || '';
             const categoryLower = e.category?.toLowerCase() || '';
 
-            const isHeating = (e as any).expense_type === 'heating' ||
-                              (e as any).expense_type === 'Μετρητές' ||
-                              e.category === 'heating_fuel' ||
+            // Μόνο δαπάνες κατανάλωσης καυσίμου (πετρέλαιο, φυσικό αέριο)
+            // ΌΧΙ γενικές δαπάνες (συντήρηση, επισκευές, κτλ)
+            const isHeating = e.category === 'heating_fuel' ||
                               e.category === 'heating_gas' ||
-                              e.category === 'heating_maintenance' ||
-                              e.category === 'heating_repair' ||
-                              e.category === 'heating_inspection' ||
-                              e.category === 'heating_modernization' ||
-                              categoryLower === 'heating' ||
                               categoryLower === 'heating_fuel' ||
                               categoryLower === 'heating_gas' ||
-                              categoryLower === 'heating_maintenance' ||
-                              categoryLower === 'heating_repair' ||
-                              categoryLower === 'heating_inspection' ||
-                              categoryLower === 'heating_modernization' ||
-                              categoryLower === 'utilities' ||
-                              categoryLower === 'meters' ||
-                              categoryLower === 'μετρητές' ||
-                              titleLower.includes('θέρμανσ') ||
-                              titleLower.includes('θερμανσ') ||
                               titleLower.includes('πετρέλαιο') ||
                               titleLower.includes('πετρελαιο') ||
                               titleLower.includes('φυσικό αέριο') ||
                               titleLower.includes('φυσικο αεριο') ||
-                              titleLower.includes('αέριο') ||
-                              titleLower.includes('gas') ||
-                              titleLower.includes('natural gas') ||
-                              titleLower.includes('καυστήρας') ||
-                              titleLower.includes('καυστηρας') ||
-                              titleLower.includes('θερμαντικό') ||
-                              titleLower.includes('θερμαντικο') ||
-                              descLower.includes('θέρμανσ') ||
+                              (titleLower.includes('αέριο') && !titleLower.includes('επισκευή') && !titleLower.includes('συντήρηση')) ||
+                              (titleLower.includes('gas') && !titleLower.includes('repair') && !titleLower.includes('maintenance')) ||
                               descLower.includes('πετρέλαιο') ||
-                              descLower.includes('φυσικό αέριο') ||
-                              descLower.includes('καυστήρας') ||
-                              descLower.includes('θερμαντικό');
+                              descLower.includes('φυσικό αέριο');
             return isHeating &&
                    e.date &&
                    e.date.startsWith(compareMonth.date);
