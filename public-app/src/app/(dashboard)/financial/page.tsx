@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -48,6 +48,31 @@ function FinancialContent() {
     finalBuildingId: buildingId,
   });
 
+  // Update URL when selectedBuilding changes (but only if URL doesn't already have a valid building)
+  useEffect(() => {
+    if (!buildingLoading && buildings.length > 0 && selectedBuilding?.id) {
+      const currentUrlBuilding = searchParams.get('building');
+      const currentUrlBuildingNum = currentUrlBuilding ? parseInt(currentUrlBuilding, 10) : null;
+      const urlBuildingIsValid = currentUrlBuildingNum && !isNaN(currentUrlBuildingNum) && 
+                                  buildings.some(b => b.id === currentUrlBuildingNum);
+      
+      // Only update URL if:
+      // 1. URL doesn't have a building parameter, OR
+      // 2. URL has an invalid building parameter, OR
+      // 3. selectedBuilding is different from URL building
+      if (!urlBuildingIsValid || currentUrlBuildingNum !== selectedBuilding.id) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('building', selectedBuilding.id.toString());
+        
+        // Preserve other URL parameters (like 'tab')
+        const newUrl = `/financial?${params.toString()}`;
+        console.log(`[FinancialPage] Updating URL to match selectedBuilding: ${newUrl}`);
+        router.replace(newUrl, { scroll: false });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBuilding?.id, buildingLoading]);
+
   if (!buildingId) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -65,7 +90,9 @@ function FinancialContent() {
       const targetBuilding = selectedBuilding || buildings[0];
       if (targetBuilding && targetBuilding.id !== buildingId) {
         console.log(`[FinancialPage] Building ${buildingId} not found. Redirecting to building ${targetBuilding.id}`);
-        router.replace('/financial');
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('building', targetBuilding.id.toString());
+        router.replace(`/financial?${params.toString()}`);
         return (
           <div className="flex items-center justify-center min-h-screen">
             <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
