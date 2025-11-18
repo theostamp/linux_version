@@ -45,15 +45,6 @@ def create_sample_data(tenant_schema):
                 'apartments_count': 16,
                 'internal_manager_name': 'Μαρία Κωνσταντίνου',
                 'internal_manager_phone': '2102345678'
-            },
-            {
-                'name': 'Σόλωνος 8',
-                'address': 'Σόλωνος 8',
-                'city': 'Αθήνα',
-                'postal_code': '10433',
-                'apartments_count': 12,
-                'internal_manager_name': 'Νίκος Δημητρίου',
-                'internal_manager_phone': '2103456789'
             }
         ]
         
@@ -132,14 +123,14 @@ def create_sample_data(tenant_schema):
             if created:
                 print(f"✅ Δημιουργήθηκε membership: {created_users[1].email} → {created_buildings[1].name}")
             
-            # Manager στο τρίτο κτίριο
+            # Manager στο πρώτο κτίριο (αντί για τρίτο)
             membership3, created = BuildingMembership.objects.get_or_create(
-                building=created_buildings[2],
+                building=created_buildings[0],
                 resident=created_users[2],
                 defaults={'apartment': 'Γ3', 'role': 'representative'}
             )
             if created:
-                print(f"✅ Δημιουργήθηκε membership: {created_users[2].email} → {created_buildings[2].name}")
+                print(f"✅ Δημιουργήθηκε membership: {created_users[2].email} → {created_buildings[0].name}")
         
         print(f"🎉 Ολοκληρώθηκε η δημιουργία sample data για tenant: {tenant_schema}")
 

@@ -107,28 +107,8 @@ def public_buildings_list(request):
         
     except Exception as e:
         print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
-        # Fallback to static data if database error
-        fallback_data = [
-            {
-                'id': 3,
-                'name': "Σόλωνος 8, Αθήνα 106 73",
-                'address': "Σόλωνος 8, Αθήνα 106 73, Ελλάδα",
-                'city': "Αθήνα",
-                'postal_code': "10673",
-                'apartments_count': 12,
-                'internal_manager_name': "Νίκος Δημητρίου",
-                'internal_manager_phone': "2103456789",
-                'management_office_name': "Compuyterme",
-                'management_office_phone': "21055566368",
-                'management_office_address': "Αθήνα, Ελλάδα",
-                'street_view_image': None,
-                'latitude': "37.9838",
-                'longitude': "23.7275",
-                'created_at': "2024-01-01T00:00:00Z",
-                'updated_at': "2024-01-01T00:00:00Z"
-            }
-        ]
-        return JsonResponse(fallback_data, safe=False)
+        # Fallback to empty list if database error
+        return JsonResponse([], safe=False)
 
 
 class ServicePackageViewSet(viewsets.ModelViewSet):
