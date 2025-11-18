@@ -17,38 +17,6 @@ function FinancialContent() {
   const searchParams = useSearchParams();
   const lastUpdatedBuildingId = useRef<number | null>(null);
 
-  if (authLoading || buildingLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <ErrorMessage message={`Σφάλμα φόρτωσης δεδομένων κτιρίου: ${error}`} />;
-  }
-
-  // Read buildingId from URL parameter first, then fallback to selectedBuilding or currentBuilding
-  const urlBuildingId = searchParams.get('building');
-  const urlBuildingIdNum = urlBuildingId ? parseInt(urlBuildingId, 10) : null;
-  
-  // Validate URL buildingId exists in available buildings
-  const validUrlBuildingId = urlBuildingIdNum && !isNaN(urlBuildingIdNum) && buildings.some(b => b.id === urlBuildingIdNum)
-    ? urlBuildingIdNum
-    : null;
-  
-  const buildingId = validUrlBuildingId || selectedBuilding?.id || currentBuilding?.id;
-  
-  console.log('[FinancialPage] BuildingId resolution:', {
-    urlBuildingId,
-    urlBuildingIdNum,
-    validUrlBuildingId,
-    selectedBuildingId: selectedBuilding?.id,
-    currentBuildingId: currentBuilding?.id,
-    finalBuildingId: buildingId,
-  });
-
   // Update URL when selectedBuilding changes (but only if URL doesn't already have a valid building)
   useEffect(() => {
     if (!buildingLoading && buildings.length > 0 && selectedBuilding?.id) {
@@ -93,6 +61,38 @@ function FinancialContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBuilding?.id, buildingLoading]);
 
+  if (authLoading || buildingLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <ErrorMessage message={`Σφάλμα φόρτωσης δεδομένων κτιρίου: ${error}`} />;
+  }
+
+  // Read buildingId from URL parameter first, then fallback to selectedBuilding or currentBuilding
+  const urlBuildingId = searchParams.get('building');
+  const urlBuildingIdNum = urlBuildingId ? parseInt(urlBuildingId, 10) : null;
+  
+  // Validate URL buildingId exists in available buildings
+  const validUrlBuildingId = urlBuildingIdNum && !isNaN(urlBuildingIdNum) && buildings.some(b => b.id === urlBuildingIdNum)
+    ? urlBuildingIdNum
+    : null;
+  
+  const buildingId = validUrlBuildingId || selectedBuilding?.id || currentBuilding?.id;
+  
+  console.log('[FinancialPage] BuildingId resolution:', {
+    urlBuildingId,
+    urlBuildingIdNum,
+    validUrlBuildingId,
+    selectedBuildingId: selectedBuilding?.id,
+    currentBuildingId: currentBuilding?.id,
+    finalBuildingId: buildingId,
+  });
+
   if (!buildingId) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -134,4 +134,3 @@ export default function Financial() {
     </AuthGate>
   );
 }
-
