@@ -4,10 +4,14 @@ import { Expense } from '@/types/financial';
 import { parseAmount } from '@/lib/utils';
 
 interface ExpenseParams {
+  building?: number;
   building_id?: number;
+  date__gte?: string;
+  date__lte?: string;
   expense_date_after?: string;
   expense_date_before?: string;
   expense_type?: string;
+  category?: string;
   month?: string;
 }
 
@@ -24,10 +28,25 @@ export const useExpenses = (
 
       const queryParams = new URLSearchParams();
 
-      if (params.building_id) queryParams.append('building_id', params.building_id.toString());
-      if (params.expense_date_after) queryParams.append('expense_date_after', params.expense_date_after);
-      if (params.expense_date_before) queryParams.append('expense_date_before', params.expense_date_before);
+      const buildingParam = params.building ?? params.building_id;
+      if (buildingParam) {
+        queryParams.append('building', buildingParam.toString());
+      } else {
+        console.warn('[useExpensesQuery] Missing building parameter. Results may not be filtered correctly.');
+      }
+
+      const dateGte = params.date__gte ?? params.expense_date_after;
+      if (dateGte) {
+        queryParams.append('date__gte', dateGte);
+      }
+
+      const dateLte = params.date__lte ?? params.expense_date_before;
+      if (dateLte) {
+        queryParams.append('date__lte', dateLte);
+      }
+
       if (params.expense_type) queryParams.append('expense_type', params.expense_type);
+      if (params.category) queryParams.append('category', params.category);
       if (params.month) queryParams.append('month', params.month);
 
       // The api.get returns data directly, not response.data
