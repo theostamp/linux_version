@@ -26,6 +26,11 @@ def delete_solonos_building():
     deleted_count = 0
     
     for tenant in Client.objects.all():
+        # Παράλειψη του public schema (δεν είναι tenant schema)
+        if tenant.schema_name == 'public':
+            print(f"\n⏭️  Παράλειψη tenant 'public' (δεν είναι tenant schema)")
+            continue
+            
         with schema_context(tenant.schema_name):
             try:
                 # Αναζήτηση με διαφορετικές παραλλαγές του ονόματος
@@ -45,7 +50,11 @@ def delete_solonos_building():
                     print(f"\n✓ Tenant: {tenant.schema_name} - Δεν βρέθηκε κτίριο Σόλωνος")
                     
             except Exception as e:
-                print(f"\n❌ Σφάλμα στο tenant {tenant.schema_name}: {e}")
+                # Παράλειψη σφαλμάτων που σχετίζονται με missing tables (public schema)
+                if 'does not exist' in str(e) or 'relation' in str(e).lower():
+                    print(f"\n⏭️  Tenant: {tenant.schema_name} - Παράλειψη (δεν έχει buildings table)")
+                else:
+                    print(f"\n❌ Σφάλμα στο tenant {tenant.schema_name}: {e}")
     
     print("\n" + "=" * 50)
     if deleted_count > 0:
