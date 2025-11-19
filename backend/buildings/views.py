@@ -45,16 +45,44 @@ def public_buildings_list(request):
         resolved_from = 'default'
         
         # Prefer tenant derived from request host (matches Django tenant routing)
-        host = (
-            request.headers.get('x-forwarded-host')
-            or request.headers.get('host')
-            or request.get_host()
-            or ''
-        ).split(':')[0].lower()
+        # Priority: X-Tenant-Host > x-forwarded-host > host (same as tenant middleware)
+        # Note: Use request.META instead of request.headers to match middleware behavior
+        # Railway Edge proxy sets X-Tenant-Host header with the actual custom domain
+        tenant_host = request.META.get('HTTP_X_TENANT_HOST', '')
+        forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
+        http_host = request.META.get('HTTP_HOST', '')
+        
+        # Priority: X-Tenant-Host > X-Forwarded-Host > HTTP_HOST
+        if tenant_host:
+            host = tenant_host.split(':')[0].lower()
+            print(f"🔍 [PUBLIC BUILDINGS] Using X-Tenant-Host: '{host}'")
+        elif forwarded_host:
+            host = forwarded_host.split(':')[0].lower()
+            print(f"🔍 [PUBLIC BUILDINGS] Using X-Forwarded-Host: '{host}'")
+        elif http_host:
+            host = http_host.split(':')[0].lower()
+            print(f"🔍 [PUBLIC BUILDINGS] Using HTTP_HOST: '{host}'")
+        else:
+            host = request.get_host().split(':')[0].lower()
+            print(f"🔍 [PUBLIC BUILDINGS] Using get_host(): '{host}'")
+        
+        # Filter out internal Railway hostnames - they don't have tenant domains
+        if host and ('railway.app' in host or 'up.railway.app' in host):
+            # If we got an internal Railway hostname, try to get the actual domain from X-Tenant-Host
+            # which should have been set by the middleware or Railway Edge proxy
+            if tenant_host:
+                host = tenant_host.split(':')[0].lower()
+                print(f"🔍 [PUBLIC BUILDINGS] Overriding internal hostname with X-Tenant-Host: '{host}'")
+            else:
+                # If no X-Tenant-Host, we can't determine tenant, use default
+                print(f"⚠️ [PUBLIC BUILDINGS] Got internal Railway hostname '{host}' but no X-Tenant-Host header, using default schema")
+                host = None
         
         if host:
+            # Query must be done in public schema context for Domain model
             domain_entry = (
-                TenantDomain.objects.filter(domain__iexact=host)
+                TenantDomain.objects.using('default')
+                .filter(domain__iexact=host)
                 .select_related('tenant')
                 .first()
             )
@@ -62,6 +90,8 @@ def public_buildings_list(request):
                 schema_name = domain_entry.tenant.schema_name
                 resolved_from = f'domain:{host}'
                 print(f"🔍 [PUBLIC BUILDINGS] Resolved schema '{schema_name}' from domain '{host}'")
+            else:
+                print(f"⚠️ [PUBLIC BUILDINGS] No domain entry found for host '{host}', will use default schema")
         
         # If host lookup failed, try to use authenticated user's tenant
         if resolved_from == 'default' and hasattr(request, 'user') and request.user.is_authenticated:
