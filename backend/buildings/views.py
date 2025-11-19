@@ -2,7 +2,7 @@
 
 from rest_framework import viewsets, status  
 from rest_framework.response import Response  
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt  
@@ -28,6 +28,47 @@ from notifications.services import NotificationEventService
 def get_csrf_token(request):
     """Δίνει CSRF cookie χωρίς να απαιτείται login"""
     return JsonResponse({"message": "CSRF cookie set"})
+
+
+def _get_current_context_logic(request):
+    """
+    Helper function για το get_current_context logic.
+    Χρησιμοποιείται και από το BuildingViewSet action και από το standalone view.
+    """
+    from .services import BuildingService
+    from .serializers import BuildingContextSerializer
+    
+    try:
+        # Resolve building από request (not required)
+        building_dto = BuildingService.resolve_building_from_request(
+            request,
+            required=False
+        )
+        
+        if not building_dto:
+            return Response(
+                {
+                    'error': 'Δεν βρέθηκε κτίριο. Παρακαλώ επιλέξτε κτίριο.',
+                    'code': 'NO_BUILDING_FOUND'
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Serialize το DTO
+        serializer = BuildingContextSerializer(building_dto.to_dict())
+        
+        return Response(serializer.data)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in get_current_context: {e}", exc_info=True)
+        return Response(
+            {
+                'error': str(e),
+                'code': 'BUILDING_CONTEXT_ERROR'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @csrf_exempt
 def public_buildings_list(request):
@@ -576,40 +617,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
                 ...
             }
         """
-        from .services import BuildingService
-        from .serializers import BuildingContextSerializer
-        
-        try:
-            # Resolve building από request (not required)
-            building_dto = BuildingService.resolve_building_from_request(
-                request,
-                required=False
-            )
-            
-            if not building_dto:
-                return Response(
-                    {
-                        'error': 'Δεν βρέθηκε κτίριο. Παρακαλώ επιλέξτε κτίριο.',
-                        'code': 'NO_BUILDING_FOUND'
-                    },
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Serialize το DTO
-            serializer = BuildingContextSerializer(building_dto.to_dict())
-            
-            return Response(serializer.data)
-            
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error in get_current_context: {e}", exc_info=True)
-            return Response(
-                {
-                    'error': str(e),
-                    'code': 'BUILDING_CONTEXT_ERROR'
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return _get_current_context_logic(request)
     
     @action(detail=False, methods=['get'], url_path='my-buildings')
     def get_my_buildings(self, request):
@@ -731,3 +739,16 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# Standalone view function for current-context endpoint at /api/buildings/current-context/
+# This allows the endpoint to be accessed without the /list/ prefix
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_current_context_view(request):
+    """
+    Standalone view function for /api/buildings/current-context/ endpoint.
+    This wraps the BuildingViewSet.get_current_context action to allow
+    accessing it at the root level instead of /api/buildings/list/current-context/
+    """
+    return _get_current_context_logic(request)
