@@ -198,8 +198,13 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   };
 
   const handlePayment = (apartment: ApartmentBalanceWithDetails) => {
+    // 🔧 FIX: Calculate total obligation properly
+    const currentExpenseWithManagement = apartment.expense_share;
+    const totalObligationWithManagement = apartment.previous_balance + (apartment.reserve_fund_share || 0) + currentExpenseWithManagement;
+    const netObligationCalculated = totalObligationWithManagement - apartment.total_payments;
+    
     // Calculate payment amounts to zero out debt
-    const totalDebt = Math.max(0, apartment.net_obligation);
+    const totalDebt = Math.max(0, netObligationCalculated);
     
     // If there's a previous balance debt, allocate it to previous obligations
     const previousDebt = Math.max(0, apartment.previous_balance);
@@ -366,12 +371,17 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   };
 
   const getDebtApartmentsCount = () => {
-    return apartmentBalances.filter(apt => 
-      apt.status.toLowerCase() === 'overdue' ||
-      apt.status.toLowerCase() === 'οφειλή' ||
-      apt.status.toLowerCase() === 'κρίσιμο' ||
-      apt.net_obligation > 0
-    ).length;
+    return apartmentBalances.filter(apt => {
+      // 🔧 FIX: Υπολογισμός καθαρής οφειλής για κάθε διαμέρισμα
+      const currentExpenseWithManagement = apt.expense_share;
+      const totalObligationWithManagement = apt.previous_balance + (apt.reserve_fund_share || 0) + currentExpenseWithManagement;
+      const netObligationCalculated = totalObligationWithManagement - apt.total_payments;
+      
+      return apt.status.toLowerCase() === 'overdue' ||
+        apt.status.toLowerCase() === 'οφειλή' ||
+        apt.status.toLowerCase() === 'κρίσιμο' ||
+        netObligationCalculated > 0;
+    }).length;
   };
 
   if (isLoading) {
@@ -497,7 +507,16 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   // Το expense_share από το backend ήδη περιλαμβάνει τις δαπάνες διαχείρισης
                   // Δεν χρειάζεται να προσθέσουμε ξανά το management_fee_per_apartment
                   const currentExpenseWithManagement = apartment.expense_share;
+                  
+                  // 🔧 FIX: Υπολογισμός συνολικής οφειλής (previous_balance + reserve_fund + current_expenses)
+                  // Αυτή είναι η σωστή συνολική οφειλή που περιλαμβάνει:
+                  // - Παλαιότερες οφειλές (previous_balance)
+                  // - Αποθεματικό (reserve_fund_share)
+                  // - Τρέχουσες δαπάνες (expense_share)
                   const totalObligationWithManagement = apartment.previous_balance + (apartment.reserve_fund_share || 0) + currentExpenseWithManagement;
+                  
+                  // Αφαιρούμε τις πληρωμές για να βρούμε την καθαρή οφειλή
+                  const netObligationCalculated = totalObligationWithManagement - apartment.total_payments;
 
                   return (
                   <tr key={apartment.apartment_id} className="border-b hover:bg-gray-50">
@@ -508,11 +527,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-xs text-right">
                       <div className="flex items-center justify-end gap-1">
                         <span className={`font-medium ${
-                          Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                          Math.abs(netObligationCalculated) <= 0.30 ? 'text-gray-500' :
                           Math.abs(apartment.resident_expenses || 0) <= 0.30 ? 'text-gray-500' :
                           (apartment.resident_expenses || 0) > 0.30 ? 'text-green-600' : 'text-gray-500'
                         }`}>
-                          {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.resident_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.resident_expenses || 0)}
+                          {Math.abs(netObligationCalculated) <= 0.30 || Math.abs(apartment.resident_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.resident_expenses || 0)}
                         </span>
                         {(apartment.resident_expenses || 0) > 0.30 && (
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-1 py-0">
@@ -525,11 +544,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-xs text-right">
                       <div className="flex items-center justify-end gap-1">
                         <span className={`font-medium ${
-                          Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                          Math.abs(netObligationCalculated) <= 0.30 ? 'text-gray-500' :
                           Math.abs(apartment.owner_expenses || 0) <= 0.30 ? 'text-gray-500' :
                           (apartment.owner_expenses || 0) > 0.30 ? 'text-red-600' : 'text-gray-500'
                         }`}>
-                          {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.owner_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.owner_expenses || 0)}
+                          {Math.abs(netObligationCalculated) <= 0.30 || Math.abs(apartment.owner_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.owner_expenses || 0)}
                         </span>
                         {(apartment.owner_expenses || 0) > 0.30 && (
                           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-1 py-0">
@@ -538,19 +557,21 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         )}
                       </div>
                     </td>
+                    {/* 🔧 FIX: Χρήση υπολογισμένης συνολικής οφειλής αντί για net_obligation από backend */}
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
-                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        apartment.net_obligation > 0.30 ? 'text-red-600' :
-                        apartment.net_obligation < -0.30 ? 'text-green-600' : 'text-gray-900'
+                        Math.abs(netObligationCalculated) <= 0.30 ? 'text-gray-500' :
+                        netObligationCalculated > 0.30 ? 'text-red-600' :
+                        netObligationCalculated < -0.30 ? 'text-green-600' : 'text-gray-900'
                       }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.net_obligation)}
+                        {Math.abs(netObligationCalculated) <= 0.30 ? '-' : formatCurrency(netObligationCalculated)}
                       </span>
                     </td>
+                    {/* 🔧 FIX: Χρήση υπολογισμένης οφειλής για την κατάσταση */}
                     <td className="py-2 px-2 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {(() => {
-                          const netObligation = apartment.net_obligation;
+                          const netObligation = netObligationCalculated;
                           if (Math.abs(netObligation) <= 0.30) {
                             return <CheckCircle className="h-3 w-3 text-blue-500" />;
                           } else if (netObligation > 100) {
@@ -562,7 +583,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           }
                         })()}
                         <Badge variant={(() => {
-                          const netObligation = apartment.net_obligation;
+                          const netObligation = netObligationCalculated;
                           if (Math.abs(netObligation) <= 0.30) {
                             return 'default' as const;
                           } else if (netObligation > 100) {
@@ -574,7 +595,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           }
                         })()} className="text-xs">
                           {(() => {
-                            const netObligation = apartment.net_obligation;
+                            const netObligation = netObligationCalculated;
                             if (Math.abs(netObligation) <= 0.30) {
                               return 'Ενήμερο';
                             } else if (netObligation > 100) {
@@ -618,7 +639,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         >
                           <TrendingUp className="h-4 w-4" />
                         </Button>
-                        {apartment.net_obligation > 0 && (
+                        {/* 🔧 FIX: Χρήση υπολογισμένης οφειλής για το κουμπί πληρωμής */}
+                        {netObligationCalculated > 0 && (
                           <Button
                             variant="default"
                             size="sm"
