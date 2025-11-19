@@ -268,3 +268,4 @@ toast.success('Η ψηφοφορία διαγράφηκε επιτυχώς');
 **Status**: ✅ COMPLETED  
 **Reviewer**: AI Assistant (Claude Sonnet 4.5)
 
+

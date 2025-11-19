@@ -104,3 +104,4 @@ class Command(BaseCommand):
         self.stdout.write(f'  - With payer=shared: {shared_expenses}')
 
 
+

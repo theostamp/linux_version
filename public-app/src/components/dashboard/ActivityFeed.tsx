@@ -142,3 +142,4 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
 
 export default ActivityFeed;
 
+

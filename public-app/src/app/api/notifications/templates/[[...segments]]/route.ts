@@ -25,3 +25,4 @@ const exported = exportHandlers(handlers, methods, "notifications-templates");
 
 export const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exported;
 
+

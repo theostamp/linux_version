@@ -83,3 +83,4 @@ export function HeroSection({ data, loading = false }: HeroSectionProps) {
 
 export default HeroSection;
 
+

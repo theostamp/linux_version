@@ -324,3 +324,4 @@ transform: hover ? translateY(-1px) : none
 **Version**: 2.0.0  
 **Breaking Changes**: None (old Sidebar.tsx still exists as fallback)
 
+

@@ -158,3 +158,4 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
 
 export default BuildingHealthCards;
 
+

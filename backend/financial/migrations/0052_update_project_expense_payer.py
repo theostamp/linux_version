@@ -25,3 +25,4 @@ class Migration(migrations.Migration):
         migrations.RunPython(set_project_expenses_to_owner, migrations.RunPython.noop),
     ]
 
+
