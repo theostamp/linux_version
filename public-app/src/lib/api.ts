@@ -78,17 +78,33 @@ export function invalidateApiCache(pathPattern?: string | RegExp): void {
     return;
   }
 
-  const pattern = typeof pathPattern === 'string' 
-    ? new RegExp(pathPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) 
-    : pathPattern;
+  let pattern: RegExp;
+  if (typeof pathPattern === 'string') {
+    // Escape special regex characters but keep the pattern flexible
+    const escapedPattern = pathPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Match the pattern anywhere in the URL (not just at the start)
+    pattern = new RegExp(escapedPattern);
+  } else {
+    pattern = pathPattern;
+  }
 
   let cleared = 0;
+  const keysToDelete: string[] = [];
+  
   for (const [key] of API_CALL_CACHE.entries()) {
-    if (pattern.test(key)) {
-      API_CALL_CACHE.delete(key);
+    // Cache key format: "url_options" where url is the full URL
+    // Extract the URL part (before the first underscore followed by {)
+    const urlMatch = key.match(/^([^_]+(?:_[^{])*)/);
+    const url = urlMatch ? urlMatch[1] : key;
+    
+    if (pattern.test(url) || pattern.test(key)) {
+      keysToDelete.push(key);
       cleared++;
     }
   }
+  
+  // Delete outside the iteration to avoid iterator issues
+  keysToDelete.forEach(key => API_CALL_CACHE.delete(key));
   
   if (cleared > 0) {
     console.log(`[API CACHE] Cleared ${cleared} cache entries matching pattern: ${pathPattern}`);
