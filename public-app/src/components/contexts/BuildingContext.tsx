@@ -249,8 +249,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       console.log(`[BuildingContext] Fetching context for building ${buildingId}...`);
       
       const response = await api.get<BuildingContextData>(
-        `/buildings/current-context/?building_id=${buildingId}`,
-        { signal: abortControllerRef.current.signal }
+        `/buildings/current-context/?building_id=${buildingId}`
       );
       const data = response.data;
       
