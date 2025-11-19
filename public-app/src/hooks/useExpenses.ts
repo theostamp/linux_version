@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Expense, ExpenseFormData, ExpenseFilters, ApiResponse } from '@/types/financial';
 import { parseAmount } from '@/lib/utils';
-import { api, invalidateApiCache } from '@/lib/api';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
 export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
@@ -89,10 +89,8 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
 
       const response = await api.post('/financial/expenses/', formData);
 
-      // ✅ Clear API-level cache for financial endpoints (already done by api.post, but ensuring it)
-      invalidateApiCache('/api/financial/');
-      
       // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
+      // Note: API-level cache is already cleared by api.post automatically
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
@@ -210,10 +208,8 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
         },
       });
 
-      // ✅ Clear API-level cache for financial endpoints (already done by api.patch, but ensuring it)
-      invalidateApiCache('/api/financial/');
-      
       // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
+      // Note: API-level cache is already cleared by api.patch automatically
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
@@ -246,10 +242,8 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     try {
       await api.delete(`/financial/expenses/${id}/`);
       
-      // ✅ Clear API-level cache for financial endpoints (already done by api.delete, but ensuring it)
-      invalidateApiCache('/api/financial/');
-      
       // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
+      // Note: API-level cache is already cleared by api.delete automatically
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });

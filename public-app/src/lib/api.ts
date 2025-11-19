@@ -423,9 +423,9 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
       
       const data = attachApiResponseData(await res.json() as T);
       
-      // Invalidate cache for this path pattern after successful mutation
-      const urlPath = new URL(url).pathname;
-      invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+      // Invalidate ALL cache after successful mutation to ensure fresh data
+      // Selective invalidation had issues with pattern matching
+      invalidateApiCache(); // Clear entire cache
       
       return data;
     } catch (error) {
@@ -489,9 +489,8 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   
   const data = attachApiResponseData(await res.json() as T);
   
-  // Invalidate cache for this path pattern after successful mutation
-  const urlPath = new URL(url).pathname;
-  invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+  // Invalidate ALL cache after successful mutation to ensure fresh data
+  invalidateApiCache(); // Clear entire cache
   
   return data;
 }
@@ -529,9 +528,8 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   const data = attachApiResponseData(await res.json() as T);
   console.log(`[API CALL] ✓ PATCH ${url} successful`, data);
   
-  // Invalidate cache for this path pattern after successful mutation
-  const urlPath = new URL(url).pathname;
-  invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+  // Invalidate ALL cache after successful mutation to ensure fresh data
+  invalidateApiCache(); // Clear entire cache
   
   return data;
 }
@@ -553,9 +551,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
     throw createApiError("DELETE", url, res.status, text);
   }
   
-  // Invalidate cache for this path pattern after successful deletion
-  const urlPath = new URL(url).pathname;
-  invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+  // Invalidate ALL cache after successful deletion to ensure fresh data
+  invalidateApiCache(); // Clear entire cache
   
   // DELETE might not return a body
   if (res.headers.get("content-type")?.includes("application/json")) {

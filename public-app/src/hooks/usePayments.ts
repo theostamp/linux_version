@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
-import { api, invalidateApiCache } from '@/lib/api';
+import { api } from '@/lib/api';
 import { parseAmount } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -389,10 +389,8 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     try {
       await api.delete(`/financial/payments/${id}/`);
       
-      // ✅ Clear API-level cache for financial endpoints (already done by api.delete, but ensuring it)
-      invalidateApiCache('/api/financial/');
-      
       // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
+      // Note: API-level cache is already cleared by api.delete automatically
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
