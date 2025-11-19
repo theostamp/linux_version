@@ -3,7 +3,6 @@
 import { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { Toaster } from 'react-hot-toast';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 export default function LayoutWrapper({ children }: { readonly children: ReactNode }) {
@@ -26,7 +25,6 @@ export default function LayoutWrapper({ children }: { readonly children: ReactNo
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 overflow-y-auto">
           {children}
         </main>
-        <Toaster position="top-right" />
       </div>
       <GlobalLoadingOverlay />
     </div>

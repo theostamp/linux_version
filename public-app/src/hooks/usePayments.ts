@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
 import { api } from '@/lib/api';
 import { parseAmount } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export const usePayments = (buildingId?: number, selectedMonth?: string) => {
+  const queryClient = useQueryClient();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +116,14 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       // Refresh payments list after creating new payment
       await loadPayments();
       
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['payments'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
+      
       toast.success('Η πληρωμή δημιουργήθηκε επιτυχώς');
       return response;
     } catch (err: any) {
@@ -184,6 +194,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
 
       // Refresh payments list after processing payment
       await loadPayments();
+
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['payments'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['transactions'] });
 
       toast.success('Η πληρωμή επεξεργάστηκε επιτυχώς');
       return {
@@ -341,6 +361,14 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       // Refresh payments list after updating
       await loadPayments();
 
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['payments'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
+
       toast.success('Η πληρωμή ενημερώθηκε επιτυχώς');
       return response;
     } catch (err: any) {
@@ -363,6 +391,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       
       // Refresh payments list after deleting
       await loadPayments();
+      
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['payments'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['transactions'] });
       
       toast.success('Η πληρωμή διαγράφηκε επιτυχώς');
       return true;
@@ -391,6 +429,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
 
         // Refresh list after bulk delete
         await loadPayments();
+
+        // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+        await queryClient.invalidateQueries({ queryKey: ['financial'] });
+        await queryClient.invalidateQueries({ queryKey: ['payments'] });
+        await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        await queryClient.refetchQueries({ queryKey: ['financial'] });
+        await queryClient.refetchQueries({ queryKey: ['payments'] });
+        await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
+        await queryClient.refetchQueries({ queryKey: ['transactions'] });
 
         const deletedCount = response.deleted_count || 0;
         toast.success(`Διαγράφηκαν ${deletedCount} πληρωμές επιτυχώς`);

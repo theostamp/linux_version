@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Expense, ExpenseFormData, ExpenseFilters, ApiResponse } from '@/types/financial';
 import { parseAmount } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
 export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
+  const queryClient = useQueryClient();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,14 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
 
       // Refresh expenses list after creating new expense
       await loadExpenses();
+      
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['expenses'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
       
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς');
       return response.data;
@@ -198,6 +208,14 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       // Refresh expenses list after updating
       await loadExpenses();
 
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['expenses'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
+
       toast.success('Η δαπάνη ενημερώθηκε επιτυχώς');
       return response.data;
     } catch (err: any) {
@@ -220,6 +238,14 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       
       // Refresh expenses list after deleting
       await loadExpenses();
+      
+      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['expenses'] });
+      await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
       
       toast.success('Η δαπάνη διαγράφηκε επιτυχώς');
       return true;

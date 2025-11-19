@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { Toaster } from 'sonner';
 import { AuthProvider } from '@/components/contexts/AuthContext';
 import { BuildingProvider } from '@/components/contexts/BuildingContext';
 import { ReactQueryProvider } from '@/components/contexts/ReactQueryProvider';
@@ -56,6 +57,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
       <ReactQueryProvider>
         <LoadingProvider>
           {children}
+          <Toaster position="top-right" richColors closeButton />
         </LoadingProvider>
       </ReactQueryProvider>
     );
@@ -67,6 +69,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
       <ReactQueryProvider>
         <LoadingProvider>
           <LayoutWrapper>{children}</LayoutWrapper>
+          <Toaster position="top-right" richColors closeButton />
         </LoadingProvider>
       </ReactQueryProvider>
     );
@@ -85,6 +88,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
         <AuthProvider>
           <BuildingProvider>
             {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
+            {/* ✅ Sonner Toaster - Available globally for all routes */}
+            <Toaster position="top-right" richColors closeButton />
           </BuildingProvider>
         </AuthProvider>
       </LoadingProvider>

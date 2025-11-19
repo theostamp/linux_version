@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Building } from '@/lib/api';
 import { fetchBuilding, deleteBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import CreateBuildingForm from '@/components/buildings/CreateBuildingForm';
 export default function EditBuildingPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const id = Number(params.id);
   const { buildings, selectedBuilding, isLoading: buildingsLoading, refreshBuildings } = useBuilding();
   const [initialData, setInitialData] = useState<Building | undefined>();
@@ -192,9 +194,14 @@ export default function EditBuildingPage() {
               initialData={initialData}
               buildingId={id}
               submitText="Ενημέρωση Κτιρίου"
-              onSuccess={(updatedBuilding) => {
+              onSuccess={async (updatedBuilding) => {
                 toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
-                refreshBuildings();
+                await refreshBuildings();
+                // ✅ Invalidate AND explicitly refetch for immediate UI update
+                await queryClient.invalidateQueries({ queryKey: ['buildings'] });
+                await queryClient.invalidateQueries({ queryKey: ['financial'] });
+                await queryClient.refetchQueries({ queryKey: ['buildings'] });
+                await queryClient.refetchQueries({ queryKey: ['financial'] });
                 router.push(`/buildings/${updatedBuilding.id}`);
               }}
               onCancel={() => {
