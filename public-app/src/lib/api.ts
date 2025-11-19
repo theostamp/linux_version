@@ -732,8 +732,88 @@ export async function fetchAllBuildings(): Promise<Building[]> {
   throw lastError instanceof Error ? lastError : new Error('Failed to fetch buildings');
 }
 
+// Public API call without authentication headers (for kiosk display)
+async function apiGetPublic<T>(
+  path: string,
+  params?: Record<string, unknown> | { params?: Record<string, unknown> },
+): Promise<T> {
+  const apiUrl = getApiUrl(path);
+  const url = new URL(apiUrl);
+  const normalizedParams = normalizeQueryParams(params);
+  
+  // Preserve trailing slash
+  const hadTrailingSlash = apiUrl.endsWith('/') && !apiUrl.includes('?');
+  if (hadTrailingSlash && !url.pathname.endsWith('/')) {
+    url.pathname = `${url.pathname}/`;
+  }
+  
+  if (normalizedParams) {
+    Object.entries(normalizedParams).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        url.searchParams.set(k, String(v));
+      }
+    });
+  }
+  
+  const urlString = url.toString();
+  
+  const res = await fetch(urlString, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  
+  if (!res.ok) {
+    throw createApiError("GET", urlString, res.status);
+  }
+  
+  return await res.json() as T;
+}
+
 export async function fetchAllBuildingsPublic(): Promise<Building[]> {
-  return fetchAllBuildings();
+  const params = { page_size: 1000, page: 1 };
+  
+  // Try public endpoint first
+  try {
+    console.log('[API CALL] Fetching buildings from /buildings/public/');
+    const data = await apiGetPublic<Paginated<Building>>('/buildings/public/', params);
+    
+    let buildings: Building[] = extractResults(data);
+    const paginated = data as BuildingsResponse;
+    
+    // Handle pagination if needed
+    if (paginated.next && paginated.count && buildings.length < paginated.count) {
+      console.log('[API CALL] Pagination detected, fetching all pages...');
+      let allBuildings = [...buildings];
+      let nextUrl = paginated.next;
+      
+      while (nextUrl && allBuildings.length < paginated.count) {
+        const nextPath = nextUrl.startsWith('http')
+          ? new URL(nextUrl).pathname.replace('/api', '')
+          : nextUrl.replace('/api', '');
+        
+        const nextData = await apiGetPublic<Paginated<Building>>(nextPath);
+        const nextBuildings = extractResults(nextData);
+        allBuildings = [...allBuildings, ...nextBuildings];
+        
+        const nextPaginated = nextData as BuildingsResponse;
+        nextUrl = nextPaginated.next || '';
+        
+        if (allBuildings.length >= paginated.count) break;
+      }
+      
+      buildings = allBuildings;
+    }
+    
+    return buildings;
+  } catch (error) {
+    console.error('[API CALL] Error fetching buildings from /buildings/public/:', error);
+    // Fallback to regular fetchAllBuildings if public endpoint fails
+    console.log('[API CALL] Falling back to authenticated endpoint');
+    return fetchAllBuildings();
+  }
 }
 
 export async function fetchBuildings(page: number = 1, pageSize: number = 50): Promise<BuildingsResponse> {
