@@ -54,6 +54,9 @@ const SIDEBAR_WIDGETS = [
   },
 ] as const;
 
+// Force dynamic rendering to avoid SSR issues with useSearchParams
+export const dynamic = 'force-dynamic';
+
 export default function KioskDisplayPage() {
   const pathname = usePathname();
   const router = useRouter();
