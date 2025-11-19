@@ -35,7 +35,7 @@ import {
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { fetchApartments, ApartmentList, api } from '@/lib/api';
+import { fetchApartments, ApartmentList, api, invalidateApiCache } from '@/lib/api';
 import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
@@ -397,7 +397,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </div>
           <Button
             onClick={async () => {
-              // ✅ Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
+              // ✅ Clear API cache FIRST, then React Query cache
+              invalidateApiCache(/\/financial\//);
+              
+              // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
               await queryClient.invalidateQueries({ 
                 queryKey: ['financial'] 
               });
@@ -423,7 +426,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 queryKey: ['transactions'] 
               });
               
-              console.log(`🧹 FinancialPage: Cache invalidated and refetched for financial data`);
+              console.log(`🧹 FinancialPage: API cache and React Query cache cleared, data refetched`);
               
               // Refresh components
               if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();

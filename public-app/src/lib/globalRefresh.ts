@@ -6,6 +6,7 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
+import { invalidateApiCache } from './api';
 
 // Singleton QueryClient instance (will be set by ReactQueryProvider)
 let globalQueryClient: QueryClient | null = null;
@@ -29,6 +30,9 @@ export async function refreshFinancialData() {
   }
 
   console.log('[Global Refresh] Refreshing financial data...');
+  
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/financial\//);
   
   await Promise.all([
     globalQueryClient.invalidateQueries({ queryKey: ['financial'] }),
@@ -60,6 +64,9 @@ export async function refreshBuildingData() {
 
   console.log('[Global Refresh] Refreshing building data...');
   
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/(buildings|apartments)\//);
+  
   await globalQueryClient.invalidateQueries({ queryKey: ['buildings'] });
   await globalQueryClient.invalidateQueries({ queryKey: ['apartments'] });
   await globalQueryClient.refetchQueries({ queryKey: ['buildings'] });
@@ -78,6 +85,9 @@ export async function refreshProjectsData() {
   }
 
   console.log('[Global Refresh] Refreshing projects data...');
+  
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/(projects|offers)\//);
   
   await globalQueryClient.invalidateQueries({ queryKey: ['projects'] });
   await globalQueryClient.invalidateQueries({ queryKey: ['offers'] });
@@ -98,6 +108,9 @@ export async function refreshAnnouncementsData() {
 
   console.log('[Global Refresh] Refreshing announcements data...');
   
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/announcements\//);
+  
   await globalQueryClient.invalidateQueries({ queryKey: ['announcements'] });
   await globalQueryClient.refetchQueries({ queryKey: ['announcements'] });
 
@@ -114,6 +127,9 @@ export async function refreshRequestsData() {
   }
 
   console.log('[Global Refresh] Refreshing requests data...');
+  
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/user-requests\//);
   
   await globalQueryClient.invalidateQueries({ queryKey: ['requests'] });
   await globalQueryClient.refetchQueries({ queryKey: ['requests'] });
@@ -132,6 +148,9 @@ export async function refreshVotesData() {
 
   console.log('[Global Refresh] Refreshing votes data...');
   
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/votes\//);
+  
   await globalQueryClient.invalidateQueries({ queryKey: ['votes'] });
   await globalQueryClient.refetchQueries({ queryKey: ['votes'] });
 
@@ -148,6 +167,9 @@ export async function refreshCommunityData() {
   }
 
   console.log('[Global Refresh] Refreshing community data...');
+  
+  // ✅ Clear API cache BEFORE invalidating React Query cache
+  invalidateApiCache(/\/(announcements|user-requests|votes)\//);
   
   await Promise.all([
     globalQueryClient.invalidateQueries({ queryKey: ['announcements'] }),
@@ -174,6 +196,9 @@ export async function refreshAllData() {
   }
 
   console.log('[Global Refresh] Refreshing ALL data...');
+  
+  // ✅ Clear ALL API cache BEFORE invalidating React Query cache
+  invalidateApiCache(); // No pattern = clear everything
   
   // Invalidate everything
   await globalQueryClient.invalidateQueries();

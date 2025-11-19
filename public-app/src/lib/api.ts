@@ -18,9 +18,18 @@ type ApiError = Error & {
 
 const MAX_ERROR_BODY_CHARS = 300;
 
-// Global API call throttling & caching
-const API_CALL_CACHE = new Map<string, { data: unknown, timestamp: number, promise?: Promise<unknown> }>();
-const MIN_REQUEST_INTERVAL = 1000; // 1 second minimum between identical requests
+// Global API call in-flight deduplication (NO data caching, only promise dedup)
+// Each cache entry has a generation number to prevent race conditions
+type CacheEntry = {
+  promise: Promise<unknown>;
+  generation: number;
+};
+
+const API_CALL_CACHE = new Map<string, CacheEntry>();
+const MIN_REQUEST_INTERVAL = 1000; // 1 second minimum between identical requests (throttle only)
+
+// Generation counter incremented on each invalidation to detect stale responses
+let CACHE_GENERATION = 0;
 
 // 429 error handling with exponential backoff
 const RETRY_DELAYS = new Map<string, number>(); // Track retry delays per endpoint
@@ -41,39 +50,30 @@ function getCacheKey(url: string, options: Record<string, unknown> = {}): string
   return `${url}_${JSON.stringify(options)}`;
 }
 
-function shouldThrottleRequest(cacheKey: string): boolean {
-  const cached = API_CALL_CACHE.get(cacheKey);
-  if (!cached) return false;
-  
-  const timeSinceLastCall = Date.now() - cached.timestamp;
-  return timeSinceLastCall < MIN_REQUEST_INTERVAL;
-}
-
-function getCachedOrInFlight<T>(cacheKey: string): Promise<T> | null {
+/**
+ * Check if there's an in-flight request and return its promise
+ * Does NOT return cached data - only deduplicates concurrent requests
+ */
+function getInFlightRequest<T>(cacheKey: string): Promise<T> | null {
   const cached = API_CALL_CACHE.get(cacheKey);
   if (!cached) return null;
   
-  // If there's an in-flight request, return that promise
-  if (cached.promise) return cached.promise as Promise<T>;
-  
-  // If data is less than 5 minutes old, return cached data
-  const age = Date.now() - cached.timestamp;
-  if (age < 5 * 60 * 1000) { // 5 minutes cache
-    console.log(`[API THROTTLE] Returning cached data for ${cacheKey}`);
-    return Promise.resolve(cached.data as T);
-  }
-  
-  return null;
+  // Only return in-flight promises, never cached data
+  return cached.promise as Promise<T>;
 }
 
 /**
  * Invalidate API cache for paths matching a pattern
  * Used after mutations to ensure fresh data on next GET
+ * Increments generation counter to prevent race conditions
  */
 export function invalidateApiCache(pathPattern?: string | RegExp): void {
+  // Increment generation to invalidate all in-flight requests
+  CACHE_GENERATION++;
+  
   if (!pathPattern) {
     // Clear all cache
-    console.log('[API CACHE] Clearing all cache');
+    console.log(`[API CACHE] Clearing all cache (generation: ${CACHE_GENERATION})`);
     API_CALL_CACHE.clear();
     return;
   }
@@ -107,7 +107,7 @@ export function invalidateApiCache(pathPattern?: string | RegExp): void {
   keysToDelete.forEach(key => API_CALL_CACHE.delete(key));
   
   if (cleared > 0) {
-    console.log(`[API CACHE] Cleared ${cleared} cache entries matching pattern: ${pathPattern}`);
+    console.log(`[API CACHE] Cleared ${cleared} cache entries matching pattern: ${pathPattern} (generation: ${CACHE_GENERATION})`);
   }
 }
 
@@ -314,18 +314,15 @@ export async function apiGet<T>(
   const urlString = url.toString();
   const cacheKey = getCacheKey(urlString, normalizedParams);
   
-  // Check cache first
-  const cached = getCachedOrInFlight<T>(cacheKey);
-  if (cached) {
-    return cached;
+  // Check for in-flight request (deduplication only)
+  const inFlight = getInFlightRequest<T>(cacheKey);
+  if (inFlight) {
+    console.log(`[API DEDUP] Returning in-flight request for ${cacheKey}`);
+    return inFlight;
   }
   
-  // Check if we should throttle this request
-  if (shouldThrottleRequest(cacheKey)) {
-    console.log('[API THROTTLE] Request throttled, returning cached data');
-    const cachedData = API_CALL_CACHE.get(cacheKey);
-    if (cachedData && cachedData.data) return cachedData.data as T;
-  }
+  // Capture current generation at request start
+  const requestGeneration = CACHE_GENERATION;
   
   // Create fetch promise
   const fetchPromise = (async () => {
@@ -337,38 +334,35 @@ export async function apiGet<T>(
       });
       
       if (!res.ok) {
-        // Reset retry delay on error
         resetRetryDelay(urlString);
         throw createApiError("GET", urlString, res.status);
       }
       
       const data = attachApiResponseData(await res.json() as T);
       
-      // Cache the result
-      API_CALL_CACHE.set(cacheKey, {
-        data,
-        timestamp: Date.now(),
-      });
-      
       // Reset retry delay on success
       resetRetryDelay(urlString);
+      
+      // ✅ RACE CONDITION PROTECTION: Don't cache if generation changed (invalidation happened)
+      if (requestGeneration === CACHE_GENERATION) {
+        // Remove from cache after successful completion (no data caching)
+        API_CALL_CACHE.delete(cacheKey);
+      } else {
+        console.log(`[API CACHE] Ignoring stale response for ${cacheKey} (gen ${requestGeneration} vs ${CACHE_GENERATION})`);
+      }
       
       return data;
     } catch (error) {
       // Remove promise from cache on error
-      const cached = API_CALL_CACHE.get(cacheKey);
-      if (cached?.promise) {
-        API_CALL_CACHE.delete(cacheKey);
-      }
+      API_CALL_CACHE.delete(cacheKey);
       throw error;
     }
   })();
   
-  // Store promise in cache for in-flight requests
+  // Store promise in cache for in-flight deduplication only
   API_CALL_CACHE.set(cacheKey, {
-    data: null,
-    timestamp: Date.now(),
     promise: fetchPromise,
+    generation: requestGeneration,
   });
   
   return fetchPromise;
@@ -713,40 +707,17 @@ export type BuildingsResponse = {
   results: Building[];
 };
 
-// Local buildings cache (backward compatibility)
-let buildingsCache: { data: Building[]; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
+// ✅ Removed local buildingsCache - using global cache only (React Query handles caching)
 export async function fetchAllBuildings(): Promise<Building[]> {
   const params = { page_size: 1000, page: 1 };
-  const attemptOrder: Array<{ path: string; cacheKey: string }> = [
-    { path: '/buildings/', cacheKey: getCacheKey('/api/buildings/', params) },
-    { path: '/buildings/public/', cacheKey: getCacheKey('/api/buildings/public/', params) },
+  const attemptOrder: Array<{ path: string }> = [
+    { path: '/buildings/' },
+    { path: '/buildings/public/' },
   ];
-
-  // Check local cache first (backward compatibility)
-  if (buildingsCache && (Date.now() - buildingsCache.timestamp) < CACHE_DURATION) {
-    console.log('[API CALL] Returning cached buildings');
-    return buildingsCache.data;
-  }
 
   let lastError: unknown = null;
 
   for (const attempt of attemptOrder) {
-    // Global throttling cache
-    const cached = getCachedOrInFlight<Building[]>(attempt.cacheKey);
-    if (cached) {
-      return await cached;
-    }
-
-    if (shouldThrottleRequest(attempt.cacheKey)) {
-      console.log('[API THROTTLE] Request throttled, returning cached data');
-      const throttled = API_CALL_CACHE.get(attempt.cacheKey);
-      if (throttled && throttled.data) {
-        return throttled.data as Building[];
-      }
-    }
-
     console.log(`[API CALL] Fetching buildings from ${attempt.path}`);
 
     try {
@@ -777,10 +748,6 @@ export async function fetchAllBuildings(): Promise<Building[]> {
 
         buildings = allBuildings;
       }
-
-      // Cache the result for both per-path cache and legacy cache
-      buildingsCache = { data: buildings, timestamp: Date.now() };
-      API_CALL_CACHE.set(attempt.cacheKey, { data: buildings, timestamp: Date.now() });
 
       return buildings;
     } catch (error) {
