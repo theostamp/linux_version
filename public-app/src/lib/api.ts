@@ -66,6 +66,35 @@ function getCachedOrInFlight<T>(cacheKey: string): Promise<T> | null {
   return null;
 }
 
+/**
+ * Invalidate API cache for paths matching a pattern
+ * Used after mutations to ensure fresh data on next GET
+ */
+export function invalidateApiCache(pathPattern?: string | RegExp): void {
+  if (!pathPattern) {
+    // Clear all cache
+    console.log('[API CACHE] Clearing all cache');
+    API_CALL_CACHE.clear();
+    return;
+  }
+
+  const pattern = typeof pathPattern === 'string' 
+    ? new RegExp(pathPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) 
+    : pathPattern;
+
+  let cleared = 0;
+  for (const [key] of API_CALL_CACHE.entries()) {
+    if (pattern.test(key)) {
+      API_CALL_CACHE.delete(key);
+      cleared++;
+    }
+  }
+  
+  if (cleared > 0) {
+    console.log(`[API CACHE] Cleared ${cleared} cache entries matching pattern: ${pathPattern}`);
+  }
+}
+
 const trimErrorBody = (body?: string) => {
   if (!body) return undefined;
   return body.length > MAX_ERROR_BODY_CHARS
@@ -377,6 +406,11 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
       resetRetryDelay(url);
       
       const data = attachApiResponseData(await res.json() as T);
+      
+      // Invalidate cache for this path pattern after successful mutation
+      const urlPath = new URL(url).pathname;
+      invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+      
       return data;
     } catch (error) {
       lastError = error as Error;
@@ -438,6 +472,11 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   }
   
   const data = attachApiResponseData(await res.json() as T);
+  
+  // Invalidate cache for this path pattern after successful mutation
+  const urlPath = new URL(url).pathname;
+  invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+  
   return data;
 }
 
@@ -473,6 +512,11 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   
   const data = attachApiResponseData(await res.json() as T);
   console.log(`[API CALL] ✓ PATCH ${url} successful`, data);
+  
+  // Invalidate cache for this path pattern after successful mutation
+  const urlPath = new URL(url).pathname;
+  invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
+  
   return data;
 }
 
@@ -492,6 +536,10 @@ export async function apiDelete<T>(path: string): Promise<T> {
     const text = await res.text();
     throw createApiError("DELETE", url, res.status, text);
   }
+  
+  // Invalidate cache for this path pattern after successful deletion
+  const urlPath = new URL(url).pathname;
+  invalidateApiCache(urlPath.replace(/\/\d+\/?$/, '')); // Clear cache for base path
   
   // DELETE might not return a body
   if (res.headers.get("content-type")?.includes("application/json")) {

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Expense, ExpenseFormData, ExpenseFilters, ApiResponse } from '@/types/financial';
 import { parseAmount } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api, invalidateApiCache } from '@/lib/api';
 import { toast } from 'sonner';
 
 export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
@@ -89,6 +89,9 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
 
       const response = await api.post('/financial/expenses/', formData);
 
+      // ✅ Clear API-level cache for financial endpoints
+      invalidateApiCache('/api/financial/');
+      
       // Refresh expenses list after creating new expense
       await loadExpenses();
       
@@ -205,6 +208,9 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
         },
       });
 
+      // ✅ Clear API-level cache for financial endpoints
+      invalidateApiCache('/api/financial/');
+      
       // Refresh expenses list after updating
       await loadExpenses();
 
@@ -235,6 +241,9 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       await api.delete(`/financial/expenses/${id}/`);
+      
+      // ✅ Clear API-level cache for financial endpoints
+      invalidateApiCache('/api/financial/');
       
       // Refresh expenses list after deleting
       await loadExpenses();

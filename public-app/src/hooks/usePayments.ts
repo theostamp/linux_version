@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
-import { api } from '@/lib/api';
+import { api, invalidateApiCache } from '@/lib/api';
 import { parseAmount } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -388,6 +388,9 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       await api.delete(`/financial/payments/${id}/`);
+      
+      // ✅ Clear API-level cache for financial endpoints
+      invalidateApiCache('/api/financial/');
       
       // Refresh payments list after deleting
       await loadPayments();
