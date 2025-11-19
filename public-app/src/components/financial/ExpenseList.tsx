@@ -15,27 +15,30 @@ import { toast } from 'sonner';
 import { api, fetchScheduledMaintenances, updateScheduledMaintenance, deleteServiceReceipt } from '@/lib/api';
 import { ExpenseViewModal } from './ExpenseViewModal';
 import { Plus } from 'lucide-react';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { showErrorFromException } from '@/lib/errorMessages';
 
 interface ExpenseListProps {
-  buildingId: number;
-  buildingName?: string; // Add building name prop
   onExpenseSelect?: (expense: Expense) => void;
   showActions?: boolean;
-  selectedMonth?: string; // Add selectedMonth prop
-  onMonthChange?: (month: string) => void; // Add month change handler
-  onAddExpense?: () => void; // Add expense handler
+  selectedMonth?: string;
+  onMonthChange?: (month: string) => void;
+  onAddExpense?: () => void;
   ref?: React.Ref<{ refresh: () => void }>;
 }
 
 export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseListProps>(({ 
-  buildingId,
-  buildingName,
   onExpenseSelect,
   showActions = true,
   selectedMonth,
   onMonthChange,
   onAddExpense,
 }, ref) => {
+  // NEW: Use BuildingContext instead of props
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  const buildingName = selectedBuilding?.name;
+  
   const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');

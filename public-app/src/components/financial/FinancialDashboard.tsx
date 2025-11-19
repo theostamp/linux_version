@@ -26,9 +26,10 @@ import { useRouter } from 'next/navigation';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
 import { useQueryClient } from '@tanstack/react-query';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { showErrorFromException } from '@/lib/errorMessages';
 
 interface FinancialDashboardProps {
-  buildingId: number;
   selectedMonth?: string;
   ref?: React.RefObject<{ loadSummary: () => void }>;
 }
@@ -42,14 +43,24 @@ interface ApartmentBalance {
 }
 
 const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, FinancialDashboardProps>(
-  ({ buildingId, selectedMonth }, ref) => {
+  ({ selectedMonth }, ref) => {
   const [summary, setSummary] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+  
+  // NEW: Use BuildingContext instead of props
+  const { selectedBuilding, buildingContext } = useBuilding();
+  const buildingId = selectedBuilding?.id;
 
   const loadSummary = useCallback(async () => {
+    if (!buildingId) {
+      setError('Δεν έχει επιλεγεί κτίριο');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -94,9 +105,11 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
         has_monthly_activity: response.has_monthly_activity,
         selectedMonth: selectedMonth || 'current'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading financial summary:', error);
-      setError('Σφάλμα κατά τη φόρτωση των οικονομικών στοιχείων');
+      const errorMessage = 'Σφάλμα κατά τη φόρτωση των οικονομικών στοιχείων';
+      setError(errorMessage);
+      showErrorFromException(error, errorMessage);
     } finally {
       setIsLoading(false);
     }

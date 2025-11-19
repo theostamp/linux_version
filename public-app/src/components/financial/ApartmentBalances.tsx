@@ -10,18 +10,20 @@ import { Eye } from 'lucide-react';
 import { useFinancialDashboard } from '@/hooks/useFinancialDashboard';
 import { ApartmentBalance } from '@/types/financial';
 import { formatCurrency } from '@/lib/utils';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface ApartmentBalancesProps {
-  buildingId: number;
   onApartmentSelect?: (apartmentId: number) => void;
   showActions?: boolean;
 }
 
 export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
-  buildingId,
   onApartmentSelect,
   showActions = true,
 }) => {
+  // Use BuildingContext for building data
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
   const { getApartmentBalances, isLoading, error } = useFinancialDashboard();
   const [apartmentBalances, setApartmentBalances] = useState<ApartmentBalance[]>([]);
   const [searchTerm, setSearchTerm] = useState('');

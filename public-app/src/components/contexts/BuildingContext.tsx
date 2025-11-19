@@ -7,26 +7,88 @@ import React, {
   useState,
   useCallback,
   ReactNode,
+  useRef,
+  useMemo,
 } from 'react';
 import type { Building } from '@/lib/api';
 import { fetchAllBuildings } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
+
+// ========================================================================
+// NEW: Enhanced types for Building Context with Permissions
+// ========================================================================
+
+/**
+ * Permissions για ένα συγκεκριμένο building.
+ * Αντιστοιχεί στο BuildingPermissions από το backend.
+ */
+export interface BuildingPermissions {
+  can_edit: boolean;
+  can_delete: boolean;
+  can_manage_financials: boolean;
+  can_view: boolean;
+}
+
+/**
+ * Enhanced Building Context με financial settings και permissions.
+ * Αντιστοιχεί στο BuildingDTO από το backend.
+ */
+export interface BuildingContextData {
+  id: number;
+  name: string;
+  apartments_count: number;
+  address: string;
+  city: string;
+  postal_code: string;
+  
+  // Management
+  manager_id: number | null;
+  internal_manager_name: string;
+  internal_manager_phone: string;
+  management_office_name: string;
+  management_office_phone: string;
+  
+  // Financial settings
+  current_reserve: number;
+  management_fee_per_apartment: number;
+  reserve_contribution_per_apartment: number;
+  heating_system: string;
+  heating_fixed_percentage: number;
+  reserve_fund_goal: number | null;
+  reserve_fund_duration_months: number | null;
+  grace_day_of_month: number;
+  
+  // Permissions
+  permissions: BuildingPermissions;
+}
 
 interface BuildingContextType {
+  // Existing
   buildings: Building[];
   currentBuilding: Building | null;
-  selectedBuilding: Building | null; // Για φιλτράρισμα - μπορεί να είναι null για "όλα"
+  selectedBuilding: Building | null;
   setCurrentBuilding: (building: Building | null) => void;
-  setSelectedBuilding: (building: Building | null) => void; // Για φιλτράρισμα
+  setSelectedBuilding: (building: Building | null) => void;
   setBuildings: React.Dispatch<React.SetStateAction<Building[]>>;
-  refreshBuildings: () => Promise<void>; // Νέα συνάρτηση για refresh
+  refreshBuildings: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  
+  // NEW: Enhanced context data
+  buildingContext: BuildingContextData | null;
+  permissions: BuildingPermissions | null;
+  refreshBuildingContext: () => Promise<void>;
+  
+  // NEW: Loading states για context
+  isLoadingContext: boolean;
+  contextError: string | null;
 }
 
 const BuildingContext = createContext<BuildingContextType>({
+  // Existing
   buildings: [],
   currentBuilding: null,
   selectedBuilding: null,
@@ -36,6 +98,15 @@ const BuildingContext = createContext<BuildingContextType>({
   refreshBuildings: async () => {},
   isLoading: false,
   error: null,
+  
+  // NEW: Enhanced context
+  buildingContext: null,
+  permissions: null,
+  refreshBuildingContext: async () => {},
+  
+  // NEW: Loading states
+  isLoadingContext: false,
+  contextError: null,
 });
 
 // Helper functions for localStorage
@@ -55,13 +126,25 @@ const setStoredSelectedBuildingId = (buildingId: number | null): void => {
 };
 
 export const BuildingProvider = ({ children }: { children: ReactNode }) => {
+  // Existing state
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [currentBuilding, setCurrentBuilding] = useState<Building | null>(null);
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null); // Για φιλτράρισμα
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState<boolean>(false);
   const [hasInitialized, setHasInitialized] = useState<boolean>(false);
+  
+  // NEW: Enhanced context state
+  const [buildingContext, setBuildingContext] = useState<BuildingContextData | null>(null);
+  const [permissions, setPermissions] = useState<BuildingPermissions | null>(null);
+  
+  // NEW: Loading states για context
+  const [isLoadingContext, setIsLoadingContext] = useState<boolean>(false);
+  const [contextError, setContextError] = useState<string | null>(null);
+  
+  // NEW: AbortController για request cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const { isLoading: authLoading, user } = useAuth();
   const router = useRouter();
@@ -147,6 +230,121 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     console.log('[BuildingContext] Refreshing buildings...');
     await loadBuildings();
   }, [loadBuildings]);
+  
+  // NEW: Debounced fetch building context with permissions from new API endpoint
+  // Uses a ref to track the debounce timer
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const fetchBuildingContext = useCallback(async (buildingId: number) => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    abortControllerRef.current = new AbortController();
+    
+    try {
+      setIsLoadingContext(true);
+      setContextError(null);
+      
+      console.log(`[BuildingContext] Fetching context for building ${buildingId}...`);
+      
+      const response = await api.get<BuildingContextData>(
+        `/buildings/current-context/?building_id=${buildingId}`,
+        { signal: abortControllerRef.current.signal }
+      );
+      const data = response.data;
+      
+      setBuildingContext(data);
+      setPermissions(data.permissions);
+      
+      console.log('[BuildingContext] Building context loaded:', {
+        id: data.id,
+        name: data.name,
+        permissions: data.permissions,
+      });
+      
+    } catch (err: any) {
+      // Ignore abort errors
+      if (err.name === 'AbortError' || err.name === 'CanceledError') {
+        console.log('[BuildingContext] Request cancelled');
+        return;
+      }
+      
+      console.error('[BuildingContext] Failed to load building context:', err);
+      
+      setBuildingContext(null);
+      setPermissions(null);
+      
+      const errorMessage = err.response?.data?.detail || 
+                          err.message || 
+                          'Αποτυχία φόρτωσης δεδομένων κτιρίου';
+      setContextError(errorMessage);
+      
+      // Show toast for non-abort errors
+      toast.error(errorMessage);
+      
+    } finally {
+      setIsLoadingContext(false);
+      abortControllerRef.current = null;
+    }
+  }, []);
+  
+  // NEW: Refresh building context
+  const refreshBuildingContext = useCallback(async () => {
+    if (selectedBuilding?.id) {
+      console.log('[BuildingContext] Refreshing building context...');
+      await fetchBuildingContext(selectedBuilding.id);
+    }
+  }, [selectedBuilding?.id, fetchBuildingContext]);
+  
+  // NEW: Debounced fetch function
+  // Delays fetching by 300ms to avoid rapid API calls during quick building switches
+  const debouncedFetchBuildingContext = useMemo(
+    () => {
+      return (buildingId: number) => {
+        // Clear previous debounce timer
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        
+        // Set new debounce timer
+        debounceTimerRef.current = setTimeout(() => {
+          fetchBuildingContext(buildingId);
+        }, 300); // 300ms delay
+      };
+    },
+    [fetchBuildingContext]
+  );
+  
+  // NEW: Auto-fetch context when selectedBuilding changes (with debouncing)
+  useEffect(() => {
+    if (selectedBuilding?.id) {
+      // Use debounced fetch to avoid rapid API calls
+      debouncedFetchBuildingContext(selectedBuilding.id);
+    } else {
+      // Clear context when no building selected
+      setBuildingContext(null);
+      setPermissions(null);
+      setContextError(null);
+      setIsLoadingContext(false);
+      
+      // Clear debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    }
+    
+    // Cleanup function - cancel ongoing requests and timers when component unmounts
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [selectedBuilding?.id, debouncedFetchBuildingContext]);
 
   // Custom setSelectedBuilding that also updates localStorage
   const setSelectedBuildingWithStorage = useCallback((building: Building | null) => {
@@ -236,17 +434,42 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
   const contextValue = React.useMemo(
     () => ({
+      // Existing
       buildings,
       currentBuilding,
       selectedBuilding,
-      setCurrentBuilding: setCurrentBuildingWithStorage, // Use the custom function
-      setSelectedBuilding: setSelectedBuildingWithStorage, // Use the custom function
+      setCurrentBuilding: setCurrentBuildingWithStorage,
+      setSelectedBuilding: setSelectedBuildingWithStorage,
       setBuildings,
       refreshBuildings,
       isLoading,
       error,
+      
+      // NEW: Enhanced context
+      buildingContext,
+      permissions,
+      refreshBuildingContext,
+      
+      // NEW: Loading states
+      isLoadingContext,
+      contextError,
     }),
-    [buildings, currentBuilding, selectedBuilding, setCurrentBuildingWithStorage, setSelectedBuildingWithStorage, setBuildings, refreshBuildings, isLoading, error]
+    [
+      buildings, 
+      currentBuilding, 
+      selectedBuilding, 
+      setCurrentBuildingWithStorage, 
+      setSelectedBuildingWithStorage, 
+      setBuildings, 
+      refreshBuildings, 
+      isLoading, 
+      error,
+      buildingContext,
+      permissions,
+      refreshBuildingContext,
+      isLoadingContext,
+      contextError,
+    ]
   );
 
   return (

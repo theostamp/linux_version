@@ -14,9 +14,10 @@ import { api, getApiUrl } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { ensureArray } from '@/lib/arrayHelpers';
 import { ApartmentFilter } from './ApartmentFilter';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { showErrorFromException } from '@/lib/errorMessages';
 
 interface TransactionHistoryProps {
-  buildingId: number;
   limit?: number;
   selectedMonth?: string;
 }
@@ -29,7 +30,11 @@ interface FilterOptions {
   searchTerm: string;
 }
 
-export function TransactionHistory({ buildingId, limit, selectedMonth }: TransactionHistoryProps) {
+export function TransactionHistory({ limit, selectedMonth }: TransactionHistoryProps) {
+  // Use BuildingContext for building data
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -58,8 +63,9 @@ export function TransactionHistory({ buildingId, limit, selectedMonth }: Transac
       );
       const data = ensureArray<Transaction>(response);
       setTransactions(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Σφάλμα φόρτωσης κινήσεων:', error);
+      showErrorFromException(error, 'Σφάλμα φόρτωσης κινήσεων');
     } finally {
       setLoading(false);
     }

@@ -4,9 +4,9 @@ import { useExpenses } from '@/hooks/useExpensesQuery';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { Expense } from '@/types/financial';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface HeatingConsumptionChartProps {
-  buildingId: number;
   heatingYear?: string; // Format: "2025" for 2025-2026 heating season
   compareYear?: string; // Year to compare with
   showComparison?: boolean;
@@ -134,15 +134,18 @@ const analyzeHeatingExpense = (expense: Expense): HeatingExpenseAnalysis => {
 };
 
 export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = ({
-  buildingId,
   heatingYear = new Date().getFullYear().toString(),
   compareYear,
   showComparison = false,
   chartType = 'bar',
   height = 400,
 }) => {
+  // Use BuildingContext instead of props
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   // Debug: Log buildingId to verify it's correct
-  console.log('[HeatingChart] BuildingId received:', buildingId, typeof buildingId);
+  console.log('[HeatingChart] BuildingId from context:', buildingId, typeof buildingId);
 
   const months = useMemo(() => getHeatingSeasonMonths(heatingYear), [heatingYear]);
   const startDate = useMemo(

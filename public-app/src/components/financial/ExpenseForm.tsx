@@ -16,9 +16,11 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info, AlertCircle, CheckCircle } from 'lucide-react';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { checkBuildingAccess } from '@/lib/buildingValidation';
+import { showErrorFromException } from '@/lib/errorMessages';
 
 interface ExpenseFormProps {
-  buildingId: number;
   selectedMonth?: string; // Format: YYYY-MM
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -149,7 +151,11 @@ const DISTRIBUTION_TYPES: { value: DistributionType; label: string }[] = [
   { value: 'by_meters', label: 'Μετρητές' },
 ];
 
-export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMonth, onSuccess, onCancel }) => {
+export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSuccess, onCancel }) => {
+  // NEW: Use BuildingContext instead of props
+  const { selectedBuilding, permissions } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   const { createExpense, isLoading, error } = useExpenses();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
@@ -159,6 +165,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMo
     maxFiles: 1
   });
 
+  // Check permissions
+  const canManageFinancials = checkBuildingAccess(selectedBuilding, 'manage_financials', permissions);
+  
   // Hooks for auto-complete functionality
   const { getSuggestedDate, getSuggestedDistribution, isMonthlyExpense, getTitleSuggestions } = useExpenseTemplates();
   const { suppliers } = useSuppliers({ buildingId, isActive: true });
@@ -301,8 +310,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMo
       reset();
       setSelectedFiles([]);
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating expense:', error);
+      showErrorFromException(error, 'Σφάλμα κατά τη δημιουργία της δαπάνης');
     }
   };
 

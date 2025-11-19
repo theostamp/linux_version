@@ -4,12 +4,12 @@ import { ConsumptionChart } from './ConsumptionChart';
 import { TrendAnalysis } from './TrendAnalysis';
 import { HeatingConsumptionChart } from './HeatingConsumptionChart';
 import { ElectricityExpensesChart } from './ElectricityExpensesChart';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface ChartsContainerProps {
   apartmentId?: number;
   height?: number;
-  buildingId?: number; // Add buildingId prop
-  selectedMonth?: string; // Add selectedMonth prop
+  selectedMonth?: string;
 }
 
 type ChartType = 'readings' | 'consumption' | 'trends' | 'heating' | 'electricity';
@@ -17,11 +17,14 @@ type ChartType = 'readings' | 'consumption' | 'trends' | 'heating' | 'electricit
 export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   apartmentId,
   height = 400,
-  buildingId,
   selectedMonth,
 }) => {
+  // Use BuildingContext instead of props
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   // Debug: Log buildingId to verify it's correct
-  console.log('[ChartsContainer] BuildingId received:', buildingId, typeof buildingId);
+  console.log('[ChartsContainer] BuildingId from context:', buildingId, typeof buildingId);
   
   const [activeChart, setActiveChart] = useState<ChartType>('heating');
   const [chartSubType, setChartSubType] = useState<string>('bar');
@@ -114,7 +117,6 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
         }
         return (
           <HeatingConsumptionChart
-            buildingId={buildingId}
             heatingYear={heatingYear}
             compareYear={compareYear}
             showComparison={showComparison}
@@ -133,7 +135,6 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
         }
         return (
           <ElectricityExpensesChart
-            buildingId={buildingId}
             year={electricityYear}
             compareYear={compareYear}
             showComparison={showComparison}

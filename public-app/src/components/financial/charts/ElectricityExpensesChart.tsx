@@ -3,9 +3,9 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { useExpenses } from '@/hooks/useExpensesQuery';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface ElectricityExpensesChartProps {
-  buildingId: number;
   year?: string;
   compareYear?: string;
   showComparison?: boolean;
@@ -20,13 +20,16 @@ const monthsInGreek = [
 ];
 
 export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> = ({
-  buildingId,
   year = new Date().getFullYear().toString(),
   compareYear,
   showComparison = false,
   chartType = 'bar',
   height = 400,
 }) => {
+  // Use BuildingContext instead of props
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   const startDate = `${year}-01-01`;
   const endDate = `${year}-12-31`;
 

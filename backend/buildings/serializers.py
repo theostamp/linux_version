@@ -178,3 +178,182 @@ class BuildingSerializer(serializers.ModelSerializer):
         
         print("✅ BuildingSerializer.validate() completed successfully")
         return data
+
+
+# ========================================================================
+# BuildingContext Serializers - For New Unified Building Context System
+# ========================================================================
+
+class BuildingPermissionsSerializer(serializers.Serializer):
+    """
+    Serializer για το BuildingPermissions DTO.
+    Επιστρέφει τα permissions του user για το συγκεκριμένο building.
+    """
+    can_edit = serializers.BooleanField(
+        help_text="Δικαίωμα επεξεργασίας του κτιρίου"
+    )
+    can_delete = serializers.BooleanField(
+        help_text="Δικαίωμα διαγραφής του κτιρίου"
+    )
+    can_manage_financials = serializers.BooleanField(
+        help_text="Δικαίωμα διαχείρισης οικονομικών"
+    )
+    can_view = serializers.BooleanField(
+        default=True,
+        help_text="Δικαίωμα προβολής"
+    )
+
+
+class BuildingContextSerializer(serializers.Serializer):
+    """
+    Serializer για το BuildingDTO που επιστρέφεται στο frontend.
+    
+    Αυτός ο serializer:
+    - Επιστρέφει το canonical building context με permissions
+    - Χρησιμοποιείται από τα API endpoints current-context, my-buildings
+    - Περιέχει όλα τα απαραίτητα πεδία για business logic στο frontend
+    
+    Usage:
+        from buildings.dto import BuildingDTO
+        from buildings.serializers import BuildingContextSerializer
+        
+        building_dto = BuildingDTO.from_model(building, user=request.user)
+        serializer = BuildingContextSerializer(building_dto.to_dict())
+        return Response(serializer.data)
+    """
+    
+    # Core identification
+    id = serializers.IntegerField(
+        help_text="Building ID"
+    )
+    name = serializers.CharField(
+        max_length=255,
+        help_text="Όνομα κτιρίου"
+    )
+    
+    # Building details
+    apartments_count = serializers.IntegerField(
+        help_text="Αριθμός διαμερισμάτων"
+    )
+    address = serializers.CharField(
+        max_length=255,
+        allow_blank=True,
+        help_text="Διεύθυνση"
+    )
+    city = serializers.CharField(
+        max_length=100,
+        allow_blank=True,
+        help_text="Πόλη"
+    )
+    postal_code = serializers.CharField(
+        max_length=10,
+        allow_blank=True,
+        help_text="Ταχυδρομικός κώδικας"
+    )
+    
+    # Management
+    manager_id = serializers.IntegerField(
+        allow_null=True,
+        required=False,
+        help_text="User ID του διαχειριστή"
+    )
+    internal_manager_name = serializers.CharField(
+        max_length=255,
+        allow_blank=True,
+        help_text="Όνομα εσωτερικού διαχειριστή"
+    )
+    internal_manager_phone = serializers.CharField(
+        max_length=20,
+        allow_blank=True,
+        help_text="Τηλέφωνο εσωτερικού διαχειριστή"
+    )
+    management_office_name = serializers.CharField(
+        max_length=255,
+        allow_blank=True,
+        help_text="Όνομα γραφείου διαχείρισης"
+    )
+    management_office_phone = serializers.CharField(
+        max_length=20,
+        allow_blank=True,
+        help_text="Τηλέφωνο γραφείου διαχείρισης"
+    )
+    
+    # Financial settings
+    current_reserve = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Τρέχον αποθεματικό σε €"
+    )
+    management_fee_per_apartment = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        help_text="Αμοιβή διαχείρισης ανά διαμέρισμα"
+    )
+    reserve_contribution_per_apartment = serializers.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        help_text="Εισφορά αποθεματικού ανά διαμέρισμα"
+    )
+    
+    # Heating system configuration
+    heating_system = serializers.CharField(
+        max_length=20,
+        help_text="Σύστημα θέρμανσης (none/conventional/hour_meters/heat_meters)"
+    )
+    heating_fixed_percentage = serializers.IntegerField(
+        help_text="Ποσοστό παγίου θέρμανσης (%)"
+    )
+    
+    # Reserve fund goal settings
+    reserve_fund_goal = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        allow_null=True,
+        required=False,
+        help_text="Στόχος αποθεματικού σε €"
+    )
+    reserve_fund_duration_months = serializers.IntegerField(
+        allow_null=True,
+        required=False,
+        help_text="Διάρκεια συλλογής αποθεματικού σε μήνες"
+    )
+    
+    # Grace period for payments
+    grace_day_of_month = serializers.IntegerField(
+        help_text="Ημέρα έναρξης οφειλής (1-31)"
+    )
+    
+    # Permissions (nested serializer)
+    permissions = BuildingPermissionsSerializer(
+        help_text="Δικαιώματα του τρέχοντος χρήστη για αυτό το κτίριο"
+    )
+    
+    class Meta:
+        # This is a read-only serializer (no create/update)
+        read_only = True
+
+
+class BuildingContextListSerializer(serializers.Serializer):
+    """
+    Lightweight serializer για λίστες κτιρίων.
+    Περιέχει μόνο τα βασικά πεδία για dropdown selections κλπ.
+    
+    Usage:
+        buildings = BuildingService.get_user_buildings(request.user)
+        serializer = BuildingContextListSerializer(
+            [b.to_dict() for b in buildings],
+            many=True
+        )
+        return Response(serializer.data)
+    """
+    
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    apartments_count = serializers.IntegerField()
+    address = serializers.CharField()
+    city = serializers.CharField()
+    
+    # Simplified permissions (just the key ones)
+    permissions = serializers.DictField(
+        child=serializers.BooleanField()
+    )

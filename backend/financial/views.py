@@ -25,6 +25,7 @@ from .serializers import (
 )
 from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
 from buildings.models import Building
+from buildings.mixins import BuildingContextMixin, OptionalBuildingContextMixin  # NEW: Import mixin
 from apartments.models import Apartment
 from .services import ReportService
 from .permissions import (
@@ -63,8 +64,13 @@ class ExpenseFilter(filters.FilterSet):
         fields = ['building', 'category', 'date', 'distribution_type', 'supplier', 'date__gte', 'date__lte', 'category__not_in']
 
 
-class SupplierViewSet(viewsets.ModelViewSet):
-    """ViewSet για τη διαχείριση προμηθευτών"""
+class SupplierViewSet(OptionalBuildingContextMixin, viewsets.ModelViewSet):
+    """
+    ViewSet για τη διαχείριση προμηθευτών.
+    
+    REFACTORED: Χρησιμοποιεί OptionalBuildingContextMixin για automatic building filtering.
+    Building είναι optional γιατί superusers μπορούν να δουν όλους τους προμηθευτές.
+    """
     
     queryset = Supplier.objects.select_related('building').all()
     serializer_class = SupplierSerializer
@@ -72,8 +78,17 @@ class SupplierViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.DjangoFilterBackend]
     filterset_fields = ['building', 'category', 'is_active']
     
+    # BuildingContextMixin configuration
+    building_required = False  # Optional για superusers
+    building_field_name = 'building'
+    auto_filter_by_building = True
+    
     def perform_create(self, serializer):
-        """Καταγραφή δημιουργίας προμηθευτή"""
+        """
+        Καταγραφή δημιουργίας προμηθευτή.
+        Building auto-set από BuildingContextMixin.perform_create().
+        """
+        # Note: Building is auto-set by mixin
         supplier = serializer.save()
         FinancialAuditLog.log_supplier_action(
             user=self.request.user,
@@ -102,12 +117,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         )
         instance.delete()
     
-    def get_queryset(self):
-        """Φιλτράρισμα ανά building"""
-        building_id = self.request.query_params.get('building_id')
-        if building_id:
-            return self.queryset.filter(building_id=building_id)
-        return self.queryset
+    # get_queryset() inherited from BuildingContextMixin - auto-filters by building
     
     @action(detail=False, methods=['get'])
     def categories(self, request):
@@ -117,16 +127,15 @@ class SupplierViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_category(self, request):
-        """Λήψη προμηθευτών ανά κατηγορία"""
-        building_id = request.query_params.get('building_id')
+        """
+        Λήψη προμηθευτών ανά κατηγορία.
+        
+        REFACTORED: Χρησιμοποιεί get_building_context() αντί για ad-hoc building_id.
+        """
+        building = self.get_building_context()  # NEW: Use mixin
         category = request.query_params.get('category')
         
-        if not building_id:
-            return Response(
-                {'error': 'Building ID is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        # Building validation handled by mixin
         queryset = self.get_queryset().filter(is_active=True)
         if category:
             queryset = queryset.filter(category=category)
@@ -135,14 +144,26 @@ class SupplierViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ExpenseViewSet(viewsets.ModelViewSet):
-    """ViewSet για τη διαχείριση δαπανών με RBAC permissions"""
+class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
+    """
+    ViewSet για τη διαχείριση δαπανών με RBAC permissions.
+    
+    REFACTORED: Χρησιμοποιεί BuildingContextMixin για automatic building context management.
+    - Auto-filtering by building
+    - Auto-set building on create
+    - Building context available via get_building_context()
+    """
     
     queryset = Expense.objects.select_related('building', 'supplier').all()
     serializer_class = ExpenseSerializer
     permission_classes = [IsAuthenticated, ExpensePermission]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = ExpenseFilter
+    
+    # BuildingContextMixin configuration
+    building_required = True  # Expenses ALWAYS need a building
+    building_field_name = 'building'
+    auto_filter_by_building = True
     
     def get_permissions(self):
         """

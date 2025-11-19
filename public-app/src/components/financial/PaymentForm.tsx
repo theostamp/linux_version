@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ReceiptPrintModal } from './ReceiptPrintModal';
 import { formatCurrency, roundToCents } from '@/lib/utils';
 import { typography } from '@/lib/typography';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { showErrorFromException } from '@/lib/errorMessages';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
@@ -67,7 +69,6 @@ const paymentFormSchema = z.object({
 type LocalPaymentFormData = z.infer<typeof paymentFormSchema>;
 
 interface PaymentFormProps {
-  buildingId: number;
   apartments: Array<{ 
     id: number; 
     number: string; 
@@ -83,17 +84,22 @@ interface PaymentFormProps {
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
-  buildingId,
   apartments,
   onSuccess,
   onCancel,
   initialData,
 }) => {
+  // NEW: Use BuildingContext instead of props
+  const { selectedBuilding, buildingContext } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   const { toast } = useToast();
   const { createPayment, isLoading } = usePayments();
   
-  // State for building data
-  const [buildingData, setBuildingData] = useState<{ reserve_contribution_per_apartment?: number } | null>(null);
+  // Use building data from context
+  const buildingData = buildingContext ? {
+    reserve_contribution_per_apartment: buildingContext.reserve_contribution_per_apartment
+  } : null;
   
   const {
     register,
@@ -143,20 +149,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   }, [createdPayment]);
   
-  // Fetch building data for reserve fund calculation
-  React.useEffect(() => {
-    const fetchBuildingData = async () => {
-      try {
-        const { api } = await import('@/lib/api');
-        const response = await api.get(`/buildings/list/${buildingId}/`);
-        setBuildingData(response.data);
-      } catch (error) {
-        console.error('Error fetching building data:', error);
-      }
-    };
-    
-    fetchBuildingData();
-  }, [buildingId]);
+  // NOTE: Building data now comes from buildingContext, no need to fetch separately
   
   // Auto-fill payer name based on selected apartment and payer type
   React.useEffect(() => {
@@ -259,7 +252,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error creating payment:', error);
+      showErrorFromException(error, 'Προέκυψε σφάλμα κατά την καταχώρηση της εισπράξεως');
       toast({
         title: 'Σφάλμα',
         description: error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά την καταχώρηση της εισπράξεως.',

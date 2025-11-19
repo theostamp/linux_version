@@ -509,3 +509,195 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
             "latitude_type": str(type(request.data.get('latitude'))),
             "longitude_type": str(type(request.data.get('longitude')))
         })
+    
+    # ========================================================================
+    # NEW: Building Context API Endpoints
+    # ========================================================================
+    
+    @action(detail=False, methods=['get'], url_path='current-context')
+    def get_current_context(self, request):
+        """
+        Επιστρέφει το τρέχον building context με permissions.
+        
+        Χρήση από frontend για να πάρει το canonical building context.
+        
+        Query params:
+        - building_id (optional): Συγκεκριμένο building ID
+        - Χωρίς param: Πρώτο available building του user
+        
+        Returns:
+            BuildingDTO serialized με BuildingContextSerializer
+        
+        Examples:
+            GET /api/buildings/current-context/
+            GET /api/buildings/current-context/?building_id=1
+        
+        Response:
+            {
+                "id": 1,
+                "name": "Building Name",
+                "apartments_count": 10,
+                "permissions": {
+                    "can_edit": true,
+                    "can_delete": false,
+                    "can_manage_financials": true,
+                    "can_view": true
+                },
+                ...
+            }
+        """
+        from .services import BuildingService
+        from .serializers import BuildingContextSerializer
+        
+        try:
+            # Resolve building από request (not required)
+            building_dto = BuildingService.resolve_building_from_request(
+                request,
+                required=False
+            )
+            
+            if not building_dto:
+                return Response(
+                    {
+                        'error': 'Δεν βρέθηκε κτίριο. Παρακαλώ επιλέξτε κτίριο.',
+                        'code': 'NO_BUILDING_FOUND'
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Serialize το DTO
+            serializer = BuildingContextSerializer(building_dto.to_dict())
+            
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in get_current_context: {e}", exc_info=True)
+            return Response(
+                {
+                    'error': str(e),
+                    'code': 'BUILDING_CONTEXT_ERROR'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], url_path='my-buildings')
+    def get_my_buildings(self, request):
+        """
+        Επιστρέφει όλα τα κτίρια του χρήστη με permissions.
+        
+        Χρήση από frontend για dropdown selections, building switcher κλπ.
+        
+        Query params:
+        - lightweight (optional): Αν true, επιστρέφει BuildingContextListSerializer
+        
+        Returns:
+            List of BuildingDTO serialized
+        
+        Examples:
+            GET /api/buildings/my-buildings/
+            GET /api/buildings/my-buildings/?lightweight=true
+        
+        Response:
+            [
+                {
+                    "id": 1,
+                    "name": "Building 1",
+                    "apartments_count": 10,
+                    "permissions": {...},
+                    ...
+                },
+                {
+                    "id": 2,
+                    "name": "Building 2",
+                    "apartments_count": 5,
+                    "permissions": {...},
+                    ...
+                }
+            ]
+        """
+        from .services import BuildingService
+        from .serializers import BuildingContextSerializer, BuildingContextListSerializer
+        
+        try:
+            # Get all user buildings
+            buildings = BuildingService.get_user_buildings(request.user, as_dto=True)
+            
+            # Choose serializer based on query param
+            lightweight = request.query_params.get('lightweight', 'false').lower() == 'true'
+            
+            if lightweight:
+                # Lightweight serializer (για dropdowns)
+                serializer = BuildingContextListSerializer(
+                    [b.to_dict() for b in buildings],
+                    many=True
+                )
+            else:
+                # Full context serializer
+                serializer = BuildingContextSerializer(
+                    [b.to_dict() for b in buildings],
+                    many=True
+                )
+            
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in get_my_buildings: {e}", exc_info=True)
+            return Response(
+                {
+                    'error': str(e),
+                    'code': 'MY_BUILDINGS_ERROR'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'], url_path='context')
+    def get_building_context(self, request, pk=None):
+        """
+        Επιστρέφει το context για συγκεκριμένο building (με ID).
+        
+        Χρήση από frontend όταν θέλει να πάρει το context για specific building.
+        
+        URL:
+            GET /api/buildings/{id}/context/
+        
+        Returns:
+            BuildingDTO serialized με BuildingContextSerializer
+        
+        Examples:
+            GET /api/buildings/1/context/
+        
+        Response:
+            {
+                "id": 1,
+                "name": "Building Name",
+                "permissions": {...},
+                ...
+            }
+        """
+        from .services import BuildingService
+        from .serializers import BuildingContextSerializer
+        
+        try:
+            # Get building με το ID και validate access
+            building_dto = BuildingService.validate_building_access_or_fail(
+                request,
+                building_id=int(pk)
+            )
+            
+            # Serialize το DTO
+            serializer = BuildingContextSerializer(building_dto.to_dict())
+            
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in get_building_context for building {pk}: {e}", exc_info=True)
+            return Response(
+                {
+                    'error': str(e),
+                    'code': 'BUILDING_CONTEXT_ERROR'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

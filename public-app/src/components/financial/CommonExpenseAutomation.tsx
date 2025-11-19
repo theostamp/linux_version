@@ -31,10 +31,10 @@ import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { showErrorFromException } from '@/lib/errorMessages';
 
-interface CommonExpenseAutomationProps {
-  buildingId: number;
-}
+interface CommonExpenseAutomationProps {}
 
 interface PeriodTemplate {
   value: string;
@@ -51,9 +51,11 @@ interface AutomationStep {
   data?: any;
 }
 
-export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = ({ 
-  buildingId 
-}) => {
+export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = () => {
+  // Use BuildingContext for building data
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  
   const { toast } = useToast();
   const {
     createPeriodAutomatically,
@@ -157,6 +159,8 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
       }
     } catch (error: any) {
       updateStepStatus('create-period', 'error');
+      console.error('Error creating period:', error);
+      showErrorFromException(error, 'Σφάλμα κατά τη δημιουργία περιόδου');
       toast({
         title: "Σφάλμα",
         description: error.message || "Σφάλμα κατά τη δημιουργία περιόδου",

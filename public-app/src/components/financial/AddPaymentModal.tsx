@@ -16,7 +16,6 @@ import { useSmartDateDefault } from '@/hooks/useSmartDateDefault';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface AddPaymentModalProps {
-  buildingId: number;
   isOpen: boolean;
   onClose: () => void;
   onPaymentAdded: () => void;
@@ -24,12 +23,14 @@ interface AddPaymentModalProps {
 }
 
 export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
-  buildingId,
   isOpen,
   onClose,
   onPaymentAdded,
   selectedMonth,
 }) => {
+  // Use BuildingContext for building data
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
   const [formData, setFormData] = useState<PaymentFormData>({
     apartment_id: 0,
     amount: 0,

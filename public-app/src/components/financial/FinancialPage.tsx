@@ -779,8 +779,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           <ProtectedFinancialRoute requiredPermission="expense_manage">
             <ExpenseList 
               ref={expenseListRef}
-              buildingId={activeBuildingId}
-              buildingName={currentBuildingName}
               selectedMonth={selectedMonth}
               onMonthChange={handleMonthChange}
               onExpenseSelect={(expense) => {
@@ -806,21 +804,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         <TabsContent value="charts" className="space-y-4" data-tab="charts">
           <ProtectedFinancialRoute requiredPermission="financial_read">
-            {(() => {
-              console.log('[FinancialPage] Passing buildingId to ChartsContainer:', {
-                activeBuildingId,
-                selectedBuildingId: selectedBuilding?.id,
-                buildingIdProp: buildingId,
-                urlBuilding: searchParams.get('building'),
-              });
-              return <ChartsContainer buildingId={activeBuildingId} selectedMonth={selectedMonth} />;
-            })()}
+            <ChartsContainer selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
         <TabsContent value="history" className="space-y-4" data-tab="history">
           <ProtectedFinancialRoute requiredPermission="financial_read">
-            <TransactionHistory buildingId={activeBuildingId} limit={20} selectedMonth={selectedMonth} />
+            <TransactionHistory limit={20} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
@@ -874,7 +864,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </Button>
               </div>
               <ExpenseForm 
-                buildingId={activeBuildingId}
                 selectedMonth={selectedMonth}
                 onSuccess={handleExpenseSuccess}
                 onCancel={handleExpenseCancel}

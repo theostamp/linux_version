@@ -23,10 +23,11 @@ import { ensureArray } from '@/lib/arrayHelpers';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale/el';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { showErrorFromException } from '@/lib/errorMessages';
 
 interface FinancialOverviewProps {
-  buildingId: number;
-  selectedMonth?: string; // Add selectedMonth prop
+  selectedMonth?: string;
 }
 
 interface FinancialStats {
@@ -55,9 +56,13 @@ interface FinancialStats {
 }
 
 const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, FinancialOverviewProps>(
-  ({ buildingId, selectedMonth }, ref) => {
+  ({ selectedMonth }, ref) => {
   const [stats, setStats] = useState<FinancialStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // NEW: Use BuildingContext instead of props
+  const { selectedBuilding, buildingContext } = useBuilding();
+  const buildingId = selectedBuilding?.id;
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
@@ -71,6 +76,12 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
   }));
 
   const loadFinancialStats = async () => {
+    if (!buildingId) {
+      setError('Δεν έχει επιλεγεί κτίριο');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -93,9 +104,11 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
         return;
       }
       setStats(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading financial stats:', error);
-      setError('Σφάλμα κατά τη φόρτωση των οικονομικών στοιχείων');
+      const errorMessage = 'Σφάλμα κατά τη φόρτωση των οικονομικών στοιχείων';
+      setError(errorMessage);
+      showErrorFromException(error, errorMessage);
     } finally {
       setIsLoading(false);
     }
