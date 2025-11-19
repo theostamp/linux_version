@@ -123,6 +123,8 @@ class Expense(models.Model):
         ('elevator_inspection', 'Επιθεώρηση Ανελκυστήρα'),
         ('elevator_modernization', 'Αναβάθμιση Ανελκυστήρα'),
         ('elevator_emergency', 'Εγκλωβισμός Ανελκυστήρα'),
+        ('elevator_replacement', 'Αντικατάσταση Ανελκυστήρα'),
+        ('elevator_shaft_repair', 'Επισκευή Φρεατίου Ανελκυστήρα'),
         
         # Δαπάνες Θέρμανσης
         ('heating_fuel', 'Πετρέλαιο Θέρμανσης'),
@@ -131,6 +133,9 @@ class Expense(models.Model):
         ('heating_repair', 'Επισκευή Θερμαντικών'),
         ('heating_inspection', 'Επιθεώρηση Θερμαντικών'),
         ('heating_modernization', 'Αναβάθμιση Θερμαντικών'),
+        ('boiler_replacement', 'Αντικατάσταση Λέβητα'),
+        ('heating_system_overhaul', 'Πλήρης Ανακατασκευή Θέρμανσης'),
+        ('burner_replacement', 'Αντικατάσταση Καυστήρα'),
         
         # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
         ('electrical_maintenance', 'Συντήρηση Ηλεκτρικών'),
@@ -140,6 +145,9 @@ class Expense(models.Model):
         ('intercom_system', 'Σύστημα Εσωτερικής Επικοινωνίας'),
         ('generator_maintenance', 'Συντήρηση Γεννήτριας'),
         ('generator_repair', 'Επισκευή Γεννήτριας'),
+        ('electrical_rewiring', 'Πλήρης Ανακατασκευή Ηλεκτρικών'),
+        ('power_upgrade', 'Αύξηση Ισχύος'),
+        ('electrical_panel_upgrade', 'Αναβάθμιση Ηλεκτρικού Πίνακα'),
         
         # Δαπάνες Υδραυλικών Εγκαταστάσεων
         ('plumbing_maintenance', 'Συντήρηση Υδραυλικών'),
@@ -147,6 +155,10 @@ class Expense(models.Model):
         ('water_tank_cleaning', 'Καθαρισμός Δεξαμενής Νερού'),
         ('water_tank_maintenance', 'Συντήρηση Δεξαμενής Νερού'),
         ('sewage_system', 'Σύστημα Αποχέτευσης'),
+        ('pipe_replacement', 'Αντικατάσταση Σωληνώσεων'),
+        ('water_tank_replacement', 'Αντικατάσταση Δεξαμενής Νερού'),
+        ('plumbing_system_overhaul', 'Πλήρης Ανακατασκευή Υδραυλικών'),
+        ('sewage_repair', 'Επισκευή Αποχέτευσης'),
         
         # Δαπάνες Κτιρίου & Εξωτερικών Χώρων
         ('building_insurance', 'Ασφάλεια Κτιρίου'),
@@ -219,6 +231,14 @@ class Expense(models.Model):
         ('project', 'Έργα Πολυκατοικίας'),
         ('maintenance_project', 'Έργα Συντήρησης & Βελτίωσης'),
         
+        # Έργα Υποδομής
+        ('infrastructure_project', 'Έργο Υποδομής (Γενικό)'),
+        ('structural_upgrade', 'Δομική Αναβάθμιση'),
+        ('foundation_repair', 'Επισκευή Θεμελίων'),
+        ('waterproofing', 'Υδρομόνωση'),
+        ('drainage_system', 'Σύστημα Αποστράγγισης'),
+        ('retaining_wall', 'Αντιστήριξη Τοιχίων'),
+        
         # Άλλες Δαπάνες
         ('miscellaneous', 'Διάφορες Δαπάνες'),
         ('consulting_fees', 'Εργασίες Συμβούλου'),
@@ -249,6 +269,8 @@ class Expense(models.Model):
         'elevator_inspection': 'resident',       # Υποχρεωτική επιθεώρηση
         'elevator_modernization': 'owner',       # Αναβάθμιση/αντικατάσταση
         'elevator_emergency': 'resident',        # Εγκλωβισμός ανελκυστήρα (έκτακτη επέμβαση)
+        'elevator_replacement': 'owner',         # Αντικατάσταση ανελκυστήρα
+        'elevator_shaft_repair': 'owner',        # Επισκευή φρεατίου
         
         # Δαπάνες Θέρμανσης
         'heating_fuel': 'resident',              # Κατανάλωση πετρελαίου
@@ -257,6 +279,9 @@ class Expense(models.Model):
         'heating_repair': 'shared',              # Μικρή → ένοικος, αντικατάσταση → ιδιοκτήτης
         'heating_inspection': 'resident',        # Επιθεώρηση
         'heating_modernization': 'owner',        # Αντικατάσταση/αναβάθμιση
+        'boiler_replacement': 'owner',           # Αντικατάσταση λέβητα
+        'heating_system_overhaul': 'owner',      # Πλήρης ανακατασκευή
+        'burner_replacement': 'owner',           # Αντικατάσταση καυστήρα
         
         # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
         'electrical_maintenance': 'resident',    # Τακτική συντήρηση
@@ -266,6 +291,9 @@ class Expense(models.Model):
         'intercom_system': 'resident',           # Συντήρηση συστήματος
         'generator_maintenance': 'resident',     # Συντήρηση γεννήτριας
         'generator_repair': 'owner',             # Επισκευή/αντικατάσταση γεννήτριας
+        'electrical_rewiring': 'owner',          # Πλήρης ανακατασκευή ηλεκτρικών
+        'power_upgrade': 'owner',                # Αύξηση ισχύος
+        'electrical_panel_upgrade': 'owner',     # Αναβάθμιση πίνακα
         
         # Δαπάνες Υδραυλικών Εγκαταστάσεων
         'plumbing_maintenance': 'resident',      # Τακτική συντήρηση
@@ -273,6 +301,10 @@ class Expense(models.Model):
         'water_tank_cleaning': 'resident',       # Καθαρισμός δεξαμενής
         'water_tank_maintenance': 'resident',    # Συντήρηση δεξαμενής
         'sewage_system': 'owner',                # Σύστημα αποχέτευσης
+        'pipe_replacement': 'owner',             # Αντικατάσταση σωληνώσεων
+        'water_tank_replacement': 'owner',       # Αντικατάσταση δεξαμενής
+        'plumbing_system_overhaul': 'owner',     # Πλήρης ανακατασκευή υδραυλικών
+        'sewage_repair': 'owner',                # Επισκευή αποχέτευσης
         
         # Δαπάνες Κτιρίου & Εξωτερικών Χώρων - ΙΔΙΟΚΤΗΤΗΣ (δομή κτιρίου)
         'building_insurance': 'owner',           # Ασφάλιση κτιρίου
@@ -345,6 +377,14 @@ class Expense(models.Model):
         'project': 'owner',                      # Έργα πολυκατοικίας (από Projects module)
         'maintenance_project': 'owner',          # Έργα συντήρησης & βελτίωσης (από Maintenance module)
         
+        # Έργα Υποδομής - ΙΔΙΟΚΤΗΤΗΣ (υποδομή κτιρίου)
+        'infrastructure_project': 'owner',       # Έργο υποδομής (γενικό)
+        'structural_upgrade': 'owner',           # Δομική αναβάθμιση
+        'foundation_repair': 'owner',            # Επισκευή θεμελίων
+        'waterproofing': 'owner',                # Υδρομόνωση
+        'drainage_system': 'owner',              # Σύστημα αποστράγγισης
+        'retaining_wall': 'owner',               # Αντιστήριξη τοιχίων
+        
         # Άλλες Δαπάνες - Εξαρτώμενες
         'miscellaneous': 'shared',
         'consulting_fees': 'owner',
@@ -352,6 +392,220 @@ class Expense(models.Model):
         'taxes_fees': 'owner',
         'utilities_other': 'resident',
         'other': 'shared',
+    }
+    
+    # 🗂️ Ιεραρχική Δομή Κατηγοριών για Ομαδοποίηση στο UI
+    # Πρώτο επίπεδο: Ευθύνη Πληρωμής (resident/owner/shared)
+    # Δεύτερο επίπεδο: Λειτουργική κατηγορία (π.χ. Ανελκυστήρας, Θέρμανση)
+    # Τρίτο επίπεδο: Συγκεκριμένες δαπάνες
+    CATEGORY_HIERARCHY = {
+        'resident': {
+            'label': 'Δαπάνες Ενοίκων',
+            'icon': '🟢',
+            'badge': 'Ε',
+            'description': 'Τακτικές δαπάνες λειτουργίας και συντήρησης',
+            'groups': {
+                'regular_common': {
+                    'label': 'Πάγιες Δαπάνες Κοινοχρήστων',
+                    'icon': '📋',
+                    'categories': [
+                        'cleaning', 'electricity_common', 'water_common', 
+                        'garbage_collection', 'security', 'concierge',
+                        'deh_maintenance_fee', 'water_sewage_fee'
+                    ]
+                },
+                'elevator': {
+                    'label': 'Ανελκυστήρας',
+                    'icon': '🔼',
+                    'categories': [
+                        'elevator_maintenance', 'elevator_inspection', 'elevator_emergency'
+                    ]
+                },
+                'heating': {
+                    'label': 'Θέρμανση',
+                    'icon': '🔥',
+                    'categories': [
+                        'heating_fuel', 'heating_gas', 'heating_maintenance', 'heating_inspection'
+                    ]
+                },
+                'electrical': {
+                    'label': 'Ηλεκτρικά',
+                    'icon': '⚡',
+                    'categories': [
+                        'electrical_maintenance', 'lighting_common', 
+                        'intercom_system', 'generator_maintenance'
+                    ]
+                },
+                'plumbing': {
+                    'label': 'Υδραυλικά',
+                    'icon': '💧',
+                    'categories': [
+                        'plumbing_maintenance', 'water_tank_cleaning', 'water_tank_maintenance'
+                    ]
+                },
+                'outdoor': {
+                    'label': 'Εξωτερικοί Χώροι',
+                    'icon': '🌳',
+                    'categories': [
+                        'garden_maintenance', 'tree_trimming', 'parking_maintenance',
+                        'entrance_maintenance', 'snow_removal'
+                    ]
+                },
+                'security_maintenance': {
+                    'label': 'Ασφάλεια & Συντήρηση',
+                    'icon': '🔒',
+                    'categories': [
+                        'fire_extinguishers', 'pest_control'
+                    ]
+                },
+                'management': {
+                    'label': 'Διαχείριση',
+                    'icon': '📝',
+                    'categories': [
+                        'management_fees'
+                    ]
+                },
+                'other_regular': {
+                    'label': 'Λοιπές Τακτικές Δαπάνες',
+                    'icon': '🔧',
+                    'categories': [
+                        'utilities_other'
+                    ]
+                }
+            }
+        },
+        'owner': {
+            'label': 'Δαπάνες Ιδιοκτητών',
+            'icon': '🔴',
+            'badge': 'Δ',
+            'description': 'Κεφαλαιουχικές δαπάνες, επισκευές, αναβαθμίσεις, αποθεματικό',
+            'groups': {
+                'building_structure': {
+                    'label': 'Κτίριο & Δομή',
+                    'icon': '🏢',
+                    'categories': [
+                        'building_insurance', 'building_maintenance', 'common_areas_renovation',
+                        'roof_maintenance', 'roof_repair', 'facade_maintenance', 'facade_repair',
+                        'painting_exterior', 'staircase_repair'
+                    ]
+                },
+                'infrastructure_projects': {
+                    'label': 'Έργα Υποδομής',
+                    'icon': '🏗️',
+                    'categories': [
+                        'infrastructure_project', 'structural_upgrade', 'foundation_repair',
+                        'waterproofing', 'drainage_system', 'retaining_wall',
+                        'project', 'maintenance_project'
+                    ]
+                },
+                'elevator_major': {
+                    'label': 'Ανελκυστήρας - Μεγάλες Επισκευές',
+                    'icon': '🔼',
+                    'categories': [
+                        'elevator_modernization', 'elevator_replacement', 'elevator_shaft_repair'
+                    ]
+                },
+                'heating_major': {
+                    'label': 'Θέρμανση - Μεγάλες Επισκευές',
+                    'icon': '🔥',
+                    'categories': [
+                        'heating_modernization', 'boiler_replacement', 
+                        'heating_system_overhaul', 'burner_replacement'
+                    ]
+                },
+                'electrical_major': {
+                    'label': 'Ηλεκτρικά - Επισκευές & Αναβαθμίσεις',
+                    'icon': '⚡',
+                    'categories': [
+                        'electrical_repair', 'electrical_upgrade', 'generator_repair',
+                        'electrical_rewiring', 'power_upgrade', 'electrical_panel_upgrade'
+                    ]
+                },
+                'plumbing_major': {
+                    'label': 'Υδραυλικά - Επισκευές & Αντικαταστάσεις',
+                    'icon': '💧',
+                    'categories': [
+                        'plumbing_repair', 'sewage_system', 'pipe_replacement',
+                        'water_tank_replacement', 'plumbing_system_overhaul', 'sewage_repair'
+                    ]
+                },
+                'emergency_damages': {
+                    'label': 'Έκτακτα & Ζημιές',
+                    'icon': '🚨',
+                    'categories': [
+                        'emergency_repair', 'storm_damage', 'flood_damage',
+                        'fire_damage', 'earthquake_damage', 'vandalism_repair'
+                    ]
+                },
+                'specialized_repairs': {
+                    'label': 'Ειδικές Επισκευές',
+                    'icon': '🔧',
+                    'categories': [
+                        'glass_repair', 'door_repair', 'window_repair', 'balcony_repair'
+                    ]
+                },
+                'security_installations': {
+                    'label': 'Συστήματα Ασφάλειας (Εγκατάσταση)',
+                    'icon': '🔒',
+                    'categories': [
+                        'security_system', 'cctv_installation', 'access_control', 'fire_alarm'
+                    ]
+                },
+                'energy_upgrades': {
+                    'label': 'Ενεργειακές Αναβαθμίσεις',
+                    'icon': '⚡',
+                    'categories': [
+                        'energy_upgrade', 'insulation_work', 'solar_panel_installation',
+                        'led_lighting', 'smart_systems'
+                    ]
+                },
+                'specialized_work': {
+                    'label': 'Ειδικές Εργασίες',
+                    'icon': '🧪',
+                    'categories': [
+                        'asbestos_removal', 'lead_paint_removal', 'mold_removal'
+                    ]
+                },
+                'administrative_legal': {
+                    'label': 'Διοικητικά & Νομικά',
+                    'icon': '📝',
+                    'categories': [
+                        'legal_fees', 'notary_fees', 'surveyor_fees', 'architect_fees',
+                        'engineer_fees', 'accounting_fees', 'consulting_fees',
+                        'permits_licenses', 'taxes_fees'
+                    ]
+                },
+                'financial_reserves': {
+                    'label': 'Οικονομικά (Αποθεματικό & Ταμεία)',
+                    'icon': '💰',
+                    'categories': [
+                        'reserve_fund', 'emergency_fund', 'renovation_fund', 'special_contribution'
+                    ]
+                }
+            }
+        },
+        'shared': {
+            'label': 'Κοινές Δαπάνες',
+            'icon': '🔵',
+            'badge': 'Κ',
+            'description': 'Δαπάνες που εξαρτώνται από το μέγεθος/φύση της εργασίας',
+            'groups': {
+                'shared_repairs': {
+                    'label': 'Επισκευές (Μικρές vs Μεγάλες)',
+                    'icon': '🔧',
+                    'categories': [
+                        'elevator_repair', 'heating_repair', 'painting_interior', 'locksmith'
+                    ]
+                },
+                'miscellaneous_shared': {
+                    'label': 'Διάφορες Δαπάνες',
+                    'icon': '🔧',
+                    'categories': [
+                        'miscellaneous', 'other'
+                    ]
+                }
+            }
+        }
     }
     
     DISTRIBUTION_TYPES = [
@@ -489,6 +743,114 @@ class Expense(models.Model):
             'owner'
         """
         return cls.EXPENSE_CATEGORY_DEFAULTS.get(category_key, 'resident')
+    
+    @classmethod
+    def get_category_group(cls, category_key):
+        """
+        Επιστρέφει το group και payer_type στο οποίο ανήκει μια κατηγορία.
+        
+        Args:
+            category_key (str): Το key της κατηγορίας
+        
+        Returns:
+            dict: {'payer_type': str, 'group_key': str, 'group_info': dict} ή None αν δεν βρεθεί
+        
+        Example:
+            >>> Expense.get_category_group('cleaning')
+            {'payer_type': 'resident', 'group_key': 'regular_common', 'group_info': {...}}
+        """
+        for payer_type, payer_data in cls.CATEGORY_HIERARCHY.items():
+            for group_key, group_info in payer_data['groups'].items():
+                if category_key in group_info['categories']:
+                    return {
+                        'payer_type': payer_type,
+                        'group_key': group_key,
+                        'group_info': group_info,
+                        'payer_label': payer_data['label'],
+                        'payer_icon': payer_data['icon'],
+                        'payer_badge': payer_data['badge']
+                    }
+        return None
+    
+    @classmethod
+    def group_categories_by_hierarchy(cls, expenses_data):
+        """
+        Ομαδοποιεί δαπάνες σύμφωνα με την ιεραρχία CATEGORY_HIERARCHY.
+        
+        Args:
+            expenses_data (list): Λίστα με dictionaries που περιέχουν category και amount
+        
+        Returns:
+            dict: Ιεραρχική δομή με ομαδοποιημένες δαπάνες
+        
+        Example:
+            >>> expenses = [
+            ...     {'category': 'cleaning', 'amount': 100, 'category_display': 'Καθαρισμός'},
+            ...     {'category': 'heating_fuel', 'amount': 500, 'category_display': 'Πετρέλαιο'}
+            ... ]
+            >>> Expense.group_categories_by_hierarchy(expenses)
+            {
+                'resident': {
+                    'label': 'Δαπάνες Ενοίκων',
+                    'total': 600,
+                    'groups': {
+                        'regular_common': {'total': 100, 'expenses': [...]},
+                        'heating': {'total': 500, 'expenses': [...]}
+                    }
+                }
+            }
+        """
+        from decimal import Decimal
+        
+        # Αρχικοποίηση δομής
+        result = {}
+        for payer_type, payer_data in cls.CATEGORY_HIERARCHY.items():
+            result[payer_type] = {
+                'label': payer_data['label'],
+                'icon': payer_data['icon'],
+                'badge': payer_data['badge'],
+                'description': payer_data['description'],
+                'total': Decimal('0.00'),
+                'groups': {}
+            }
+            for group_key, group_info in payer_data['groups'].items():
+                result[payer_type]['groups'][group_key] = {
+                    'label': group_info['label'],
+                    'icon': group_info['icon'],
+                    'total': Decimal('0.00'),
+                    'expenses': []
+                }
+        
+        # Κατανομή δαπανών στα groups
+        for expense in expenses_data:
+            category = expense.get('category')
+            amount = Decimal(str(expense.get('amount', 0)))
+            
+            # Βρες το group της κατηγορίας
+            category_info = cls.get_category_group(category)
+            if category_info:
+                payer_type = category_info['payer_type']
+                group_key = category_info['group_key']
+                
+                # Πρόσθεσε τη δαπάνη στο αντίστοιχο group
+                result[payer_type]['groups'][group_key]['expenses'].append(expense)
+                result[payer_type]['groups'][group_key]['total'] += amount
+                result[payer_type]['total'] += amount
+        
+        # Καθαρισμός: Αφαίρεση κενών groups
+        for payer_type in result:
+            result[payer_type]['groups'] = {
+                key: value for key, value in result[payer_type]['groups'].items()
+                if value['expenses']  # Κράτα μόνο groups με δαπάνες
+            }
+        
+        # Μετατροπή Decimal σε float για JSON serialization
+        for payer_type in result:
+            result[payer_type]['total'] = float(result[payer_type]['total'])
+            for group_key in result[payer_type]['groups']:
+                result[payer_type]['groups'][group_key]['total'] = float(result[payer_type]['groups'][group_key]['total'])
+        
+        return result
     
     def save(self, *args, **kwargs):
         """

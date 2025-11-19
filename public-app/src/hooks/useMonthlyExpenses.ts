@@ -8,6 +8,29 @@ export interface ExpenseBreakdownItem {
   payer_responsibility?: 'owner' | 'resident' | 'shared';  // ✅ ΝΕΟ ΠΕΔΙΟ
 }
 
+// ✅ ΝΕΑ: Ιεραρχική δομή ομαδοποιημένων δαπανών
+export interface GroupedExpenseGroup {
+  label: string;
+  icon: string;
+  total: number;
+  expenses: ExpenseBreakdownItem[];
+}
+
+export interface GroupedExpensesByPayer {
+  label: string;
+  icon: string;
+  badge: string;
+  description: string;
+  total: number;
+  groups: Record<string, GroupedExpenseGroup>;
+}
+
+export interface ExpenseBreakdownGrouped {
+  resident?: GroupedExpensesByPayer;
+  owner?: GroupedExpensesByPayer;
+  shared?: GroupedExpensesByPayer;
+}
+
 export interface MonthlyExpenses {
   total_expenses_month: number;
   management_fee_per_apartment: number;  // Changed from management_fees
@@ -32,7 +55,8 @@ export interface MonthlyExpenses {
   reserve_progress_percentage: number;
   apartment_count: number;
   has_monthly_activity: boolean;
-  expense_breakdown?: ExpenseBreakdownItem[];  // ← ΝΕΟ FIELD
+  expense_breakdown?: ExpenseBreakdownItem[];  // ← Flat list για backward compatibility
+  expense_breakdown_grouped?: ExpenseBreakdownGrouped;  // ← ΝΕΟ: Ιεραρχικά ομαδοποιημένα
 }
 
 export const useMonthlyExpenses = (buildingId?: number, month?: string) => {

@@ -877,7 +877,8 @@ class FinancialDashboardService:
         print(f"🔧 CURRENT MONTH EXPENSES: {current_month_expenses} = {current_obligations} - {safe_previous_obligations}")
 
         # Παίρνουμε την αναλυτική κατανομή δαπανών
-        expense_breakdown = self.get_expense_breakdown(month)
+        expense_breakdown = self.get_expense_breakdown(month, grouped=False)
+        expense_breakdown_grouped = self.get_expense_breakdown(month, grouped=True)
 
         return {
             'total_balance': float(total_balance.quantize(Decimal('0.01'))),
@@ -912,7 +913,8 @@ class FinancialDashboardService:
             'total_management_cost': float(management_fees_snapshot.quantize(Decimal('0.01'))),
             'uses_monthly_balance_snapshot': monthly_balance_snapshot is not None,
             # Αναλυτική κατανομή δαπανών ανά κατηγορία
-            'expense_breakdown': expense_breakdown  # ← ΝΕΟ FIELD
+            'expense_breakdown': expense_breakdown,  # ← Flat list για backward compatibility
+            'expense_breakdown_grouped': expense_breakdown_grouped  # ← ΝΕΟ: Ιεραρχικά ομαδοποιημένα
         }
     
 
@@ -1408,14 +1410,16 @@ class FinancialDashboardService:
             'payment_methods': payment_methods_data
         }
 
-    def get_expense_breakdown(self, month: str | None = None) -> List[Dict[str, Any]]:
+    def get_expense_breakdown(self, month: str | None = None, grouped: bool = False) -> List[Dict[str, Any]] | Dict[str, Any]:
         """Επιστρέφει αναλυτική κατανομή δαπανών ανά κατηγορία για τον συγκεκριμένο μήνα
 
         Args:
             month: Μήνας σε μορφή YYYY-MM
+            grouped: Αν True, επιστρέφει ιεραρχικά ομαδοποιημένα δεδομένα
 
         Returns:
-            List με dictionaries που περιέχουν category, category_display, amount
+            Αν grouped=False: List με dictionaries που περιέχουν category, category_display, amount
+            Αν grouped=True: Dict με ιεραρχική δομή (payer_type -> groups -> expenses)
         """
         from datetime import date
 
@@ -1473,6 +1477,10 @@ class FinancialDashboardService:
                 'payer_responsibility': payer  # 'resident', 'owner', ή 'shared'
             })
 
+        # Αν ζητείται ομαδοποίηση, χρησιμοποίησε την ιεραρχική δομή
+        if grouped:
+            return Expense.group_categories_by_hierarchy(breakdown)
+        
         return breakdown
 
     def _get_reserve_fund_monthly_target(self, apartment_count: int) -> Decimal:
