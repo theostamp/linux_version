@@ -1185,9 +1185,11 @@ class FinancialDashboardService:
                     else:  # resident
                         current_resident_expenses += apartment_share
                 
-                # ✅ ΚΡΙΣΙΜΟ: Προσθήκη previous στα totals για UI display!
-                resident_expenses = previous_resident_expenses + current_resident_expenses
-                owner_expenses = previous_owner_expenses + current_owner_expenses
+                # ✅ ΔΙΟΡΘΩΣΗ 2025-11-19: ΔΕΝ προσθέτουμε previous στα totals!
+                # Το previous_balance είναι ξεχωριστό πεδίο
+                # Τα resident_expenses και owner_expenses είναι ΜΟΝΟ για τον τρέχοντα μήνα
+                resident_expenses = current_resident_expenses
+                owner_expenses = current_owner_expenses
                 
                 # ✅ ΔΙΟΡΘΩΣΗ: Υπολογισμός reserve_fund_share ξεχωριστά
                 # Ψάχνουμε για Expense records με category='reserve_fund' για τον μήνα
@@ -1242,6 +1244,8 @@ class FinancialDashboardService:
                 print(f"📊 Apartment {apartment.number} - {month}:")
                 print(f"   Previous Balance: €{previous_balance:.2f}")
                 print(f"   Current Month Expenses: €{expense_share:.2f}")
+                print(f"     - Resident: €{current_resident_expenses:.2f}")
+                print(f"     - Owner: €{current_owner_expenses:.2f}")
                 print(f"   Reserve Fund Share: €{reserve_fund_share:.2f}")
                 print(f"   Payments This Month: €{month_payments:.2f}")
                 print(f"   Net Obligation: €{net_obligation:.2f}")
