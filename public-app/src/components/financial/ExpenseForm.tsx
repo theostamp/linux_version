@@ -296,6 +296,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
 
   const onSubmit = async (data: ExpenseFormData) => {
     try {
+      // Validate building ID exists
+      if (!buildingId) {
+        showErrorFromException(new Error('Δεν έχει επιλεγεί κτίριο'), 'Σφάλμα');
+        return;
+      }
+
       // If no title is provided, use the category name as title
       if (!data.title || data.title.trim() === '') {
         const selectedCategoryDetails = EXPENSE_CATEGORIES.find(cat => cat.value === data.category);
@@ -305,6 +311,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
       if (selectedFiles.length > 0) {
         data.attachment = selectedFiles[0]; // Προς το παρόν υποστηρίζουμε μόνο ένα αρχείο
       }
+      
+      // Ensure building ID is set
+      data.building = buildingId;
       
       await createExpense(data);
       reset();
