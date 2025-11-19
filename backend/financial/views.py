@@ -1925,14 +1925,21 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             # Group transactions by month
             monthly_data = {}
             
+            from django.utils import timezone
+            
             for transaction in unique_transactions:
+                # Get local date for grouping
+                # Convert to local time to handle timezone shifts correctly
+                # e.g. 2025-11-30 22:00 UTC -> 2025-12-01 00:00 Athens
+                local_date = timezone.localtime(transaction.date)
+                
                 # Get month key (YYYY-MM format)
-                month_key = transaction.date.strftime('%Y-%m')
+                month_key = local_date.strftime('%Y-%m')
                 
                 if month_key not in monthly_data:
                     monthly_data[month_key] = {
                         'month': month_key,
-                        'month_display': transaction.date.strftime('%B %Y'),
+                        'month_display': local_date.strftime('%B %Y'),
                         'charges': [],
                         'payments': [],
                         'total_charges': 0.0,
