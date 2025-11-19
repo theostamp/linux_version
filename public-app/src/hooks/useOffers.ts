@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, extractResults, getActiveBuildingId, type Offer } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface UseOffersOptions {
   buildingId?: number | null;
@@ -74,6 +75,11 @@ export function useOfferMutations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Η προσφορά δημιουργήθηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά τη δημιουργία της προσφοράς';
+      toast.error(errorMessage);
     },
   });
 
@@ -86,6 +92,11 @@ export function useOfferMutations() {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['financial'] });
+      toast.success('Η προσφορά εγκρίθηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά την έγκριση της προσφοράς';
+      toast.error(errorMessage);
     },
   });
 
@@ -97,6 +108,11 @@ export function useOfferMutations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Η προσφορά απορρίφθηκε');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά την απόρριψη της προσφοράς';
+      toast.error(errorMessage);
     },
   });
 
@@ -108,6 +124,11 @@ export function useOfferMutations() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
       queryClient.invalidateQueries({ queryKey: ['offer', variables.id] });
+      toast.success('Η προσφορά ενημερώθηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά την ενημέρωση της προσφοράς';
+      toast.error(errorMessage);
     },
   });
 
@@ -118,6 +139,11 @@ export function useOfferMutations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Η προσφορά διαγράφηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά τη διαγραφή της προσφοράς';
+      toast.error(errorMessage);
     },
   });
 

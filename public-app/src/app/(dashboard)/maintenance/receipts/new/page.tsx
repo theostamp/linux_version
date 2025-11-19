@@ -13,10 +13,12 @@ import { BackButton } from '@/components/ui/BackButton';
 import { getActiveBuildingId } from '@/lib/api';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function NewReceiptPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const buildingId = getActiveBuildingId();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -49,6 +51,10 @@ export default function NewReceiptPage() {
         invoice_number: form.invoice_number || undefined,
         payment_status: form.payment_status,
       });
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['service-receipts'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      queryClient.invalidateQueries({ queryKey: ['financial'] });
       toast({ title: 'Αποθηκεύτηκε', description: 'Η απόδειξη δημιουργήθηκε.' });
       router.push('/maintenance/receipts');
     } catch (error) {

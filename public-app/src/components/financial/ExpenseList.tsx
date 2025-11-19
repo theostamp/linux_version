@@ -238,8 +238,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     try {
       const success = await deleteExpense(expense.id);
       if (success) {
-        toast.success(`Η δαπάνη "${expense.title}" διαγράφηκε επιτυχώς!`);
-
+        // Hook already shows success toast, but show additional info if needed
         // Optional follow-ups: check for linked service receipts and scheduled works
         try {
           const building = expense.building;
@@ -295,11 +294,11 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
             }
           } catch {}
         } catch {}
-      } else {
-        toast.error('Σφάλμα κατά τη διαγραφή της δαπάνης');
       }
+      // Hook already handles error toast, so we don't need to show it again here
     } catch (error) {
-      toast.error('Σφάλμα κατά τη διαγραφή της δαπάνης');
+      // Hook already handles error toast
+      console.error('Error in handleDeleteExpense:', error);
     }
   };
 

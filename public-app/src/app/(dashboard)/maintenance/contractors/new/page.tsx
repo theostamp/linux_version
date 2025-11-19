@@ -10,12 +10,14 @@ import { Label } from '@/components/ui/label';
 import { createContractor, type Contractor } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/ui/BackButton';
+import { useQueryClient } from '@tanstack/react-query';
 
 type NewContractor = Partial<Omit<Contractor, 'id' | 'created_at'>>;
 
 export default function NewContractorPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const SERVICE_TYPES: Array<{ value: string; label: string }> = [
     { value: 'repair', label: 'Επισκευές' },
@@ -96,6 +98,9 @@ export default function NewContractorPage() {
         payload.specializations = [customService.trim()];
       }
       await createContractor(payload);
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['contractors'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       toast({ title: 'Αποθηκεύτηκε', description: 'Το συνεργείο δημιουργήθηκε.' });
       router.push('/maintenance/contractors');
     } catch (error: any) {

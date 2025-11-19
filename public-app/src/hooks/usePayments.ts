@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
 import { api } from '@/lib/api';
 import { parseAmount } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -110,15 +111,20 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       // The api.post returns data directly
       const response = await api.post<Payment>('/financial/payments/', requestData);
 
+      // Refresh payments list after creating new payment
+      await loadPayments();
+      
+      toast.success('Η πληρωμή δημιουργήθηκε επιτυχώς');
       return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία της πληρωμής';
       setError(errorMessage);
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadPayments]);
 
   // Επεξεργασία πληρωμής (με ενημέρωση υπολοίπων)
   const processPayment = useCallback(async (data: PaymentFormData): Promise<{success: boolean, transaction_id?: number}> => {
@@ -179,6 +185,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       // Refresh payments list after processing payment
       await loadPayments();
 
+      toast.success('Η πληρωμή επεξεργάστηκε επιτυχώς');
       return {
         success: true,
         transaction_id: response.transaction_id
@@ -186,6 +193,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την επεξεργασία της πληρωμής';
       setError(errorMessage);
+      toast.error(errorMessage);
       return { success: false };
     } finally {
       setIsLoading(false);
@@ -333,10 +341,12 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       // Refresh payments list after updating
       await loadPayments();
 
+      toast.success('Η πληρωμή ενημερώθηκε επιτυχώς');
       return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την ενημέρωση της πληρωμής';
       setError(errorMessage);
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsLoading(false);
@@ -354,10 +364,12 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       // Refresh payments list after deleting
       await loadPayments();
       
+      toast.success('Η πληρωμή διαγράφηκε επιτυχώς');
       return true;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη διαγραφή της πληρωμής';
       setError(errorMessage);
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
@@ -380,10 +392,13 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         // Refresh list after bulk delete
         await loadPayments();
 
+        const deletedCount = response.deleted_count || 0;
+        toast.success(`Διαγράφηκαν ${deletedCount} πληρωμές επιτυχώς`);
         return { success: true, ...response };
       } catch (err: any) {
         const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη μαζική διαγραφή πληρωμών';
         setError(errorMessage);
+        toast.error(errorMessage);
         return { success: false };
       } finally {
         setIsLoading(false);

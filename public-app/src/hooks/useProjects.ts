@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, extractResults, getActiveBuildingId, type Project } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface UseProjectsOptions {
   buildingId?: number | null;
@@ -67,6 +68,11 @@ export function useProjectMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Το έργο δημιουργήθηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά τη δημιουργία του έργου';
+      toast.error(errorMessage);
     },
   });
 
@@ -78,6 +84,11 @@ export function useProjectMutations() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
+      toast.success('Το έργο ενημερώθηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά την ενημέρωση του έργου';
+      toast.error(errorMessage);
     },
   });
 
@@ -87,6 +98,11 @@ export function useProjectMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Το έργο διαγράφηκε επιτυχώς');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Σφάλμα κατά τη διαγραφή του έργου';
+      toast.error(errorMessage);
     },
   });
 

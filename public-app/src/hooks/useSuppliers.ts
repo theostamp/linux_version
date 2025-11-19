@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Supplier } from '@/types/financial';
 import { apiClient } from '@/lib/apiClient';
+import { toast } from 'sonner';
 
 interface UseSuppliersOptions {
   buildingId?: number;
@@ -55,9 +56,12 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
       // The apiClient.post returns data directly
       const response = await apiClient.post<Supplier>('/financial/suppliers/', data);
       await fetchSuppliers(); // Refresh the list
+      toast.success('Ο προμηθευτής δημιουργήθηκε επιτυχώς');
       return response;
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Σφάλμα κατά τη δημιουργία προμηθευτή');
+      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη δημιουργία προμηθευτή';
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -66,9 +70,12 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
       // The apiClient.put returns data directly
       const response = await apiClient.put<Supplier>(`/financial/suppliers/${id}/`, data);
       await fetchSuppliers(); // Refresh the list
+      toast.success('Ο προμηθευτής ενημερώθηκε επιτυχώς');
       return response;
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Σφάλμα κατά την ενημέρωση προμηθευτή');
+      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά την ενημέρωση προμηθευτή';
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -76,8 +83,11 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
     try {
       await apiClient.delete(`/financial/suppliers/${id}/`);
       await fetchSuppliers(); // Refresh the list
+      toast.success('Ο προμηθευτής διαγράφηκε επιτυχώς');
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Σφάλμα κατά τη διαγραφή προμηθευτή');
+      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη διαγραφή προμηθευτή';
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 

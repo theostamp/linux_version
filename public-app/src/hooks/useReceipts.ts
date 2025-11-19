@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 export interface FinancialReceipt {
   id: number;
@@ -106,10 +107,12 @@ export const useReceipts = () => {
       // The api.post returns data directly
       const response = await api.post<FinancialReceipt>('/financial/receipts/', formData);
 
+      toast.success('Η απόδειξη δημιουργήθηκε επιτυχώς');
       return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Σφάλμα κατά τη δημιουργία της απόδειξης';
       setError(errorMessage);
+      toast.error(errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -143,10 +146,12 @@ export const useReceipts = () => {
       });
 
       // The api.patch returns data directly
+      toast.success('Η απόδειξη ενημερώθηκε επιτυχώς');
       return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Σφάλμα κατά την ενημέρωση της απόδειξης';
       setError(errorMessage);
+      toast.error(errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -159,9 +164,11 @@ export const useReceipts = () => {
 
     try {
       await api.delete(`/financial/receipts/${receiptId}/`);
+      toast.success('Η απόδειξη διαγράφηκε επιτυχώς');
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Σφάλμα κατά τη διαγραφή της απόδειξης';
       setError(errorMessage);
+      toast.error(errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface BuildingCardProps {
   building: Building;
@@ -21,6 +22,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
   const { user } = useAuth();
   const { setCurrentBuilding, refreshBuildings } = useBuilding();
   const { navigateWithLoading } = useNavigationWithLoading();
+  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const canManage = user?.is_superuser || user?.is_staff;
@@ -33,6 +35,12 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
         toast.success('Το κτίριο διαγράφηκε επιτυχώς');
         // Refresh buildings from server to ensure consistency
         await refreshBuildings();
+        // Cascade refresh: Invalidate related queries when building is deleted
+        queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        queryClient.invalidateQueries({ queryKey: ['financial'] });
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        queryClient.invalidateQueries({ queryKey: ['offers'] });
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
         if (onRefresh) {
           onRefresh();
         }

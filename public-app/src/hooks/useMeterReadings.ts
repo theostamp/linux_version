@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { MeterReading, MeterReadingFormData, ApiResponse, PaginatedResponse } from '../types/financial';
 
 import { api } from '@/lib/api';
@@ -51,6 +51,8 @@ export const useMeterReadings = (buildingId?: number) => {
 
     try {
       const response = await api.post('/financial/meter-readings/', data);
+      await fetchReadings(); // Refresh readings list
+      toast.success('Η μέτρηση δημιουργήθηκε επιτυχώς');
       return response.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία της μέτρησης';
@@ -60,7 +62,7 @@ export const useMeterReadings = (buildingId?: number) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchReadings]);
 
   // Ενημέρωση μέτρησης
   const updateReading = useCallback(async (id: number, data: Partial<MeterReadingFormData>): Promise<MeterReading | null> => {
@@ -69,6 +71,8 @@ export const useMeterReadings = (buildingId?: number) => {
 
     try {
       const response = await api.patch(`/financial/meter-readings/${id}/`, data);
+      await fetchReadings(); // Refresh readings list
+      toast.success('Η μέτρηση ενημερώθηκε επιτυχώς');
       return response.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την ενημέρωση της μέτρησης';
@@ -78,7 +82,7 @@ export const useMeterReadings = (buildingId?: number) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchReadings]);
 
   // Διαγραφή μέτρησης
   const deleteReading = useCallback(async (id: number): Promise<boolean> => {
@@ -87,6 +91,8 @@ export const useMeterReadings = (buildingId?: number) => {
 
     try {
       await api.delete(`/financial/meter-readings/${id}/`);
+      await fetchReadings(); // Refresh readings list
+      toast.success('Η μέτρηση διαγράφηκε επιτυχώς');
       return true;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη διαγραφή της μέτρησης';
@@ -96,7 +102,7 @@ export const useMeterReadings = (buildingId?: number) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchReadings]);
 
   // Λήψη στατιστικών
   const fetchStatistics = useCallback(async () => {

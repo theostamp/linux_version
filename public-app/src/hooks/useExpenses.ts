@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Expense, ExpenseFormData, ExpenseFilters, ApiResponse } from '@/types/financial';
 import { parseAmount } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -89,10 +90,12 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       // Refresh expenses list after creating new expense
       await loadExpenses();
       
+      toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς');
       return response.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία της δαπάνης';
       setError(errorMessage);
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsLoading(false);
@@ -195,10 +198,12 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       // Refresh expenses list after updating
       await loadExpenses();
 
+      toast.success('Η δαπάνη ενημερώθηκε επιτυχώς');
       return response.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την ενημέρωση της δαπάνης';
       setError(errorMessage);
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsLoading(false);
@@ -216,10 +221,12 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       // Refresh expenses list after deleting
       await loadExpenses();
       
+      toast.success('Η δαπάνη διαγράφηκε επιτυχώς');
       return true;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη διαγραφή της δαπάνης';
       setError(errorMessage);
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);

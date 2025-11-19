@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface BuildingTableProps {
   buildings: Building[];
@@ -31,6 +32,7 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
   const { user } = useAuth();
   const { setCurrentBuilding, refreshBuildings } = useBuilding();
   const { navigateWithLoading } = useNavigationWithLoading();
+  const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const canManage = user?.is_superuser || user?.is_staff;
@@ -42,6 +44,12 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
         await deleteBuilding(building.id);
         toast.success('Το κτίριο διαγράφηκε επιτυχώς');
         await refreshBuildings();
+        // Cascade refresh: Invalidate related queries when building is deleted
+        queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        queryClient.invalidateQueries({ queryKey: ['financial'] });
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        queryClient.invalidateQueries({ queryKey: ['offers'] });
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
         if (onRefresh) {
           onRefresh();
         }

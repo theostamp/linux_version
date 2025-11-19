@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Building as BuildingIcon, Users, Info, ChevronDown, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CreateBuildingFormProps {
   initialData?: Building;
@@ -62,6 +63,7 @@ export default function CreateBuildingForm({
 }: CreateBuildingFormProps) {
   const { user } = useAuth();
   const { refreshBuildings } = useBuilding();
+  const queryClient = useQueryClient();
   const isEditMode = !!initialData;
 
   // Map old heating_system values to new ones
@@ -364,10 +366,22 @@ export default function CreateBuildingForm({
         result = await updateBuilding(initialData.id, payload);
         toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
         await refreshBuildings();
+        // Cascade refresh: Invalidate related queries when building changes
+        queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        queryClient.invalidateQueries({ queryKey: ['financial'] });
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        queryClient.invalidateQueries({ queryKey: ['offers'] });
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       } else {
         result = await createBuilding(payload);
         toast.success('Το κτίριο δημιουργήθηκε επιτυχώς');
         await refreshBuildings();
+        // Cascade refresh: Invalidate related queries when building is created
+        queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        queryClient.invalidateQueries({ queryKey: ['financial'] });
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        queryClient.invalidateQueries({ queryKey: ['offers'] });
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       }
 
       if (onSuccess) {
