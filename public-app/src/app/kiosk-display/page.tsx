@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, CloudSun, PhoneCall, QrCode, ShieldAlert, TrendingUp, Building as BuildingIcon } from 'lucide-react';
 import { useKioskData } from '@/hooks/useKioskData';
@@ -57,7 +57,7 @@ const SIDEBAR_WIDGETS = [
 // Force dynamic rendering to avoid SSR issues with useSearchParams
 export const dynamic = 'force-dynamic';
 
-export default function KioskDisplayPage() {
+function KioskDisplayPageContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -516,5 +516,26 @@ export default function KioskDisplayPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Loading fallback component
+function KioskDisplayLoading() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 text-white">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+        <p>Φόρτωση δεδομένων...</p>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper component with Suspense boundary for useSearchParams
+export default function KioskDisplayPage() {
+  return (
+    <Suspense fallback={<KioskDisplayLoading />}>
+      <KioskDisplayPageContent />
+    </Suspense>
   );
 }
