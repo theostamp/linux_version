@@ -89,16 +89,18 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
 
       const response = await api.post('/financial/expenses/', formData);
 
-      // ✅ Clear API-level cache for financial endpoints
+      // ✅ Clear API-level cache for financial endpoints (already done by api.post, but ensuring it)
       invalidateApiCache('/api/financial/');
+      
+      // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
       
       // Refresh expenses list after creating new expense
       await loadExpenses();
       
-      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
-      await queryClient.invalidateQueries({ queryKey: ['financial'] });
-      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['expenses'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
@@ -208,16 +210,18 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
         },
       });
 
-      // ✅ Clear API-level cache for financial endpoints
+      // ✅ Clear API-level cache for financial endpoints (already done by api.patch, but ensuring it)
       invalidateApiCache('/api/financial/');
+      
+      // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
       
       // Refresh expenses list after updating
       await loadExpenses();
 
-      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
-      await queryClient.invalidateQueries({ queryKey: ['financial'] });
-      await queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['expenses'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
@@ -242,16 +246,18 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     try {
       await api.delete(`/financial/expenses/${id}/`);
       
-      // ✅ Clear API-level cache for financial endpoints
+      // ✅ Clear API-level cache for financial endpoints (already done by api.delete, but ensuring it)
       invalidateApiCache('/api/financial/');
       
-      // Refresh expenses list after deleting
-      await loadExpenses();
-      
-      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
+      
+      // Refresh expenses list after deleting - this will fetch fresh data since cache is cleared
+      await loadExpenses();
+      
+      // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['expenses'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
@@ -266,7 +272,7 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [loadExpenses]);
+  }, [loadExpenses, queryClient]);
 
   // Λήψη κατηγοριών δαπανών
   const getExpenseCategories = useCallback(async (): Promise<Array<{value: string, label: string}>> => {

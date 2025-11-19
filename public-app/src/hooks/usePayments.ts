@@ -389,17 +389,19 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     try {
       await api.delete(`/financial/payments/${id}/`);
       
-      // ✅ Clear API-level cache for financial endpoints
+      // ✅ Clear API-level cache for financial endpoints (already done by api.delete, but ensuring it)
       invalidateApiCache('/api/financial/');
       
-      // Refresh payments list after deleting
-      await loadPayments();
-      
-      // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
+      // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      
+      // Refresh payments list after deleting
+      await loadPayments();
+      
+      // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['payments'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
@@ -415,7 +417,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [loadPayments]);
+  }, [loadPayments, queryClient]);
 
   // Μαζική διαγραφή πληρωμών διαμερίσματος (προαιρετικά για συγκεκριμένο μήνα)
   const deletePaymentsForApartment = useCallback(
