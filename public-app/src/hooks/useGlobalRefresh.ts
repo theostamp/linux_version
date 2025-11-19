@@ -15,6 +15,10 @@ import {
   refreshFinancialData,
   refreshBuildingData,
   refreshProjectsData,
+  refreshAnnouncementsData,
+  refreshRequestsData,
+  refreshVotesData,
+  refreshCommunityData,
   refreshAllData,
   triggerRefresh,
 } from '@/lib/globalRefresh';
@@ -32,11 +36,29 @@ export function useGlobalRefresh() {
     await refreshProjectsData();
   }, []);
 
+  const refreshAnnouncements = useCallback(async () => {
+    await refreshAnnouncementsData();
+  }, []);
+
+  const refreshRequests = useCallback(async () => {
+    await refreshRequestsData();
+  }, []);
+
+  const refreshVotes = useCallback(async () => {
+    await refreshVotesData();
+  }, []);
+
+  const refreshCommunity = useCallback(async () => {
+    await refreshCommunityData();
+  }, []);
+
   const refreshAll = useCallback(async () => {
     await refreshAllData();
   }, []);
 
-  const triggerCustomRefresh = useCallback((scope: 'all' | 'financial' | 'buildings' | 'projects' = 'all') => {
+  const triggerCustomRefresh = useCallback((
+    scope: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community' = 'all'
+  ) => {
     triggerRefresh(scope);
   }, []);
 
@@ -44,6 +66,10 @@ export function useGlobalRefresh() {
     refreshFinancial,
     refreshBuildings,
     refreshProjects,
+    refreshAnnouncements,
+    refreshRequests,
+    refreshVotes,
+    refreshCommunity,
     refreshAll,
     triggerCustomRefresh,
   };

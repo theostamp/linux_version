@@ -45,6 +45,7 @@ import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { useRole } from '@/lib/auth';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 
 interface ProjectStats {
   total_projects: number;
@@ -355,22 +356,32 @@ function ProjectsDashboardContent() {
             Διαχείριση έργων, προσφορών και συμβολαίων
           </p>
         </div>
-        {(isAdmin || isManager) && (
-          <div className="flex gap-2">
-            <Button asChild>
-              <Link href="/projects/new">
-                <FileText className="w-4 h-4 mr-2" />
-                Νέο Έργο
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/projects/offers/new">
-                <Award className="w-4 h-4 mr-2" />
-                Νέα Προσφορά
-              </Link>
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          {/* Refresh Button */}
+          <RefreshButton 
+            scope="projects" 
+            label="Ανανέωση" 
+            variant="outline"
+            size="sm"
+          />
+          
+          {(isAdmin || isManager) && (
+            <>
+              <Button asChild>
+                <Link href="/projects/new">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Νέο Έργο
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/projects/offers/new">
+                  <Award className="w-4 h-4 mr-2" />
+                  Νέα Προσφορά
+                </Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Stats Grid */}

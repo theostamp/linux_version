@@ -14,7 +14,7 @@ import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 import { toast } from 'sonner';
 
 interface RefreshButtonProps {
-  scope?: 'all' | 'financial' | 'buildings' | 'projects';
+  scope?: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community';
   label?: string;
   variant?: 'default' | 'outline' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
@@ -30,7 +30,16 @@ export function RefreshButton({
   className,
   showToast = true,
 }: RefreshButtonProps) {
-  const { refreshFinancial, refreshBuildings, refreshProjects, refreshAll } = useGlobalRefresh();
+  const { 
+    refreshFinancial, 
+    refreshBuildings, 
+    refreshProjects, 
+    refreshAnnouncements,
+    refreshRequests,
+    refreshVotes,
+    refreshCommunity,
+    refreshAll 
+  } = useGlobalRefresh();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -49,6 +58,22 @@ export function RefreshButton({
         case 'projects':
           await refreshProjects();
           if (showToast) toast.success('Τα έργα και οι προσφορές ανανεώθηκαν');
+          break;
+        case 'announcements':
+          await refreshAnnouncements();
+          if (showToast) toast.success('Οι ανακοινώσεις ανανεώθηκαν');
+          break;
+        case 'requests':
+          await refreshRequests();
+          if (showToast) toast.success('Τα αιτήματα ανανεώθηκαν');
+          break;
+        case 'votes':
+          await refreshVotes();
+          if (showToast) toast.success('Οι ψηφοφορίες ανανεώθηκαν');
+          break;
+        case 'community':
+          await refreshCommunity();
+          if (showToast) toast.success('Τα δεδομένα κοινότητας ανανεώθηκαν');
           break;
         case 'all':
         default:

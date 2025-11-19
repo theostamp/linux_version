@@ -2,6 +2,16 @@
 
 Ένα κεντρικό σύστημα αυτόματης ανανέωσης δεδομένων για όλη την εφαρμογή.
 
+## 📊 Υποστηριζόμενα Modules
+
+- ✅ **Financial** - Οικονομικά (Δαπάνες, Πληρωμές, Υπόλοιπα)
+- ✅ **Buildings** - Κτίρια & Διαμερίσματα
+- ✅ **Projects** - Έργα & Προσφορές
+- ✅ **Announcements** - Ανακοινώσεις
+- ✅ **Requests** - Αιτήματα
+- ✅ **Votes** - Ψηφοφορίες
+- ✅ **Community** - Ομαδική ανανέωση (Announcements + Requests + Votes)
+
 ## 🎯 Χαρακτηριστικά
 
 ### 1. **Αυτόματη Ανανέωση (Auto-Refresh)**
@@ -54,7 +64,16 @@ invalidateApiCache()  // ← Clears ALL API cache
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 
 function MyComponent() {
-  const { refreshFinancial, refreshBuildings, refreshAll } = useGlobalRefresh();
+  const { 
+    refreshFinancial,      // Οικονομικά
+    refreshBuildings,      // Κτίρια
+    refreshProjects,       // Έργα & Προσφορές
+    refreshAnnouncements,  // Ανακοινώσεις
+    refreshRequests,       // Αιτήματα
+    refreshVotes,          // Ψηφοφορίες
+    refreshCommunity,      // Όλα τα community data
+    refreshAll             // ΟΛΑ
+  } = useGlobalRefresh();
   
   const handleSave = async () => {
     await saveData();
@@ -77,13 +96,25 @@ import { RefreshButton } from '@/components/ui/RefreshButton';
 function MyPage() {
   return (
     <div>
-      <h1>Financial Dashboard</h1>
+      <h1>Dashboard</h1>
       
       {/* Refresh button for financial data */}
       <RefreshButton 
         scope="financial" 
         label="Ανανέωση" 
         showToast={true}
+      />
+      
+      {/* Refresh button for projects */}
+      <RefreshButton 
+        scope="projects" 
+        label="Ανανέωση Έργων" 
+      />
+      
+      {/* Refresh button for community data */}
+      <RefreshButton 
+        scope="community" 
+        label="Ανανέωση Κοινότητας" 
       />
       
       {/* Icon-only refresh button */}
@@ -102,7 +133,12 @@ function MyPage() {
 ```tsx
 import { 
   refreshFinancialData, 
-  refreshBuildingData, 
+  refreshBuildingData,
+  refreshProjectsData,
+  refreshAnnouncementsData,
+  refreshRequestsData,
+  refreshVotesData,
+  refreshCommunityData,
   refreshAllData,
   triggerRefresh 
 } from '@/lib/globalRefresh';
@@ -110,11 +146,21 @@ import {
 // Direct function calls:
 await refreshFinancialData();
 await refreshBuildingData();
+await refreshProjectsData();
+await refreshAnnouncementsData();
+await refreshRequestsData();
+await refreshVotesData();
+await refreshCommunityData();
 await refreshAllData();
 
 // Or trigger via event (useful from non-React code):
 triggerRefresh('financial');
 triggerRefresh('buildings');
+triggerRefresh('projects');
+triggerRefresh('announcements');
+triggerRefresh('requests');
+triggerRefresh('votes');
+triggerRefresh('community');
 triggerRefresh('all');
 ```
 

@@ -88,6 +88,83 @@ export async function refreshProjectsData() {
 }
 
 /**
+ * Refresh announcements data
+ */
+export async function refreshAnnouncementsData() {
+  if (!globalQueryClient) {
+    console.warn('[Global Refresh] QueryClient not initialized');
+    return;
+  }
+
+  console.log('[Global Refresh] Refreshing announcements data...');
+  
+  await globalQueryClient.invalidateQueries({ queryKey: ['announcements'] });
+  await globalQueryClient.refetchQueries({ queryKey: ['announcements'] });
+
+  console.log('[Global Refresh] Announcements data refreshed');
+}
+
+/**
+ * Refresh requests data
+ */
+export async function refreshRequestsData() {
+  if (!globalQueryClient) {
+    console.warn('[Global Refresh] QueryClient not initialized');
+    return;
+  }
+
+  console.log('[Global Refresh] Refreshing requests data...');
+  
+  await globalQueryClient.invalidateQueries({ queryKey: ['requests'] });
+  await globalQueryClient.refetchQueries({ queryKey: ['requests'] });
+
+  console.log('[Global Refresh] Requests data refreshed');
+}
+
+/**
+ * Refresh votes data
+ */
+export async function refreshVotesData() {
+  if (!globalQueryClient) {
+    console.warn('[Global Refresh] QueryClient not initialized');
+    return;
+  }
+
+  console.log('[Global Refresh] Refreshing votes data...');
+  
+  await globalQueryClient.invalidateQueries({ queryKey: ['votes'] });
+  await globalQueryClient.refetchQueries({ queryKey: ['votes'] });
+
+  console.log('[Global Refresh] Votes data refreshed');
+}
+
+/**
+ * Refresh all community data (announcements, requests, votes)
+ */
+export async function refreshCommunityData() {
+  if (!globalQueryClient) {
+    console.warn('[Global Refresh] QueryClient not initialized');
+    return;
+  }
+
+  console.log('[Global Refresh] Refreshing community data...');
+  
+  await Promise.all([
+    globalQueryClient.invalidateQueries({ queryKey: ['announcements'] }),
+    globalQueryClient.invalidateQueries({ queryKey: ['requests'] }),
+    globalQueryClient.invalidateQueries({ queryKey: ['votes'] }),
+  ]);
+
+  await Promise.all([
+    globalQueryClient.refetchQueries({ queryKey: ['announcements'] }),
+    globalQueryClient.refetchQueries({ queryKey: ['requests'] }),
+    globalQueryClient.refetchQueries({ queryKey: ['votes'] }),
+  ]);
+
+  console.log('[Global Refresh] Community data refreshed');
+}
+
+/**
  * Refresh ALL data in the application
  */
 export async function refreshAllData() {
@@ -173,7 +250,9 @@ export function setupCustomRefreshEvent() {
   if (typeof window === 'undefined') return;
 
   const handleCustomRefresh = async (event: Event) => {
-    const customEvent = event as CustomEvent<{ scope?: 'all' | 'financial' | 'buildings' | 'projects' }>;
+    const customEvent = event as CustomEvent<{ 
+      scope?: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community' 
+    }>;
     const scope = customEvent.detail?.scope || 'all';
     
     console.log(`[Global Refresh] Custom refresh triggered (scope: ${scope})`);
@@ -187,6 +266,18 @@ export function setupCustomRefreshEvent() {
         break;
       case 'projects':
         await refreshProjectsData();
+        break;
+      case 'announcements':
+        await refreshAnnouncementsData();
+        break;
+      case 'requests':
+        await refreshRequestsData();
+        break;
+      case 'votes':
+        await refreshVotesData();
+        break;
+      case 'community':
+        await refreshCommunityData();
         break;
       case 'all':
       default:
@@ -226,7 +317,9 @@ export function initializeGlobalRefresh() {
  * Trigger a custom refresh event
  * Use this from anywhere in your app to trigger a refresh
  */
-export function triggerRefresh(scope: 'all' | 'financial' | 'buildings' | 'projects' = 'all') {
+export function triggerRefresh(
+  scope: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community' = 'all'
+) {
   if (typeof window === 'undefined') return;
   
   window.dispatchEvent(new CustomEvent('app:refresh', { detail: { scope } }));

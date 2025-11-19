@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-yellow-100 text-yellow-700',
@@ -240,12 +241,21 @@ function OffersPageContent() {
             Διαχείριση προσφορών εργολάβων για τα έργα
           </p>
         </div>
-        <Button asChild>
-          <a href="/projects/offers/new">
-            <Award className="w-4 h-4 mr-2" />
-            Νέα Προσφορά
-          </a>
-        </Button>
+        <div className="flex gap-2">
+          {/* Refresh Button */}
+          <RefreshButton 
+            scope="projects" 
+            label="Ανανέωση" 
+            variant="outline"
+            size="sm"
+          />
+          <Button asChild>
+            <a href="/projects/offers/new">
+              <Award className="w-4 h-4 mr-2" />
+              Νέα Προσφορά
+            </a>
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
