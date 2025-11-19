@@ -897,7 +897,7 @@ export async function createAnnouncement(payload: CreateAnnouncementPayload): Pr
 
 export async function deleteAnnouncement(announcementId: number): Promise<string> {
   await apiDelete(`/announcements/${announcementId}/`);
-  return 'Announcement deleted successfully';
+  return 'Η ανακοίνωση διαγράφηκε επιτυχώς';
 }
 
 // ============================================================================
@@ -976,7 +976,7 @@ export async function createVote(payload: CreateVotePayload): Promise<Vote> {
 
 export async function deleteVote(voteId: number): Promise<string> {
   await apiDelete(`/votes/${voteId}/`);
-  return 'Vote deleted successfully';
+  return 'Η ψηφοφορία διαγράφηκε επιτυχώς';
 }
 
 // ============================================================================

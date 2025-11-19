@@ -366,22 +366,32 @@ export default function CreateBuildingForm({
         result = await updateBuilding(initialData.id, payload);
         toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
         await refreshBuildings();
-        // Cascade refresh: Invalidate related queries when building changes
-        queryClient.invalidateQueries({ queryKey: ['buildings'] });
-        queryClient.invalidateQueries({ queryKey: ['financial'] });
-        queryClient.invalidateQueries({ queryKey: ['projects'] });
-        queryClient.invalidateQueries({ queryKey: ['offers'] });
-        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+        // ✅ Cascade refresh: Invalidate AND explicitly refetch for immediate UI update
+        await queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        await queryClient.invalidateQueries({ queryKey: ['financial'] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+        await queryClient.invalidateQueries({ queryKey: ['offers'] });
+        await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+        await queryClient.refetchQueries({ queryKey: ['buildings'] });
+        await queryClient.refetchQueries({ queryKey: ['financial'] });
+        await queryClient.refetchQueries({ queryKey: ['projects'] });
+        await queryClient.refetchQueries({ queryKey: ['offers'] });
+        await queryClient.refetchQueries({ queryKey: ['maintenance'] });
       } else {
         result = await createBuilding(payload);
         toast.success('Το κτίριο δημιουργήθηκε επιτυχώς');
         await refreshBuildings();
-        // Cascade refresh: Invalidate related queries when building is created
-        queryClient.invalidateQueries({ queryKey: ['buildings'] });
-        queryClient.invalidateQueries({ queryKey: ['financial'] });
-        queryClient.invalidateQueries({ queryKey: ['projects'] });
-        queryClient.invalidateQueries({ queryKey: ['offers'] });
-        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+        // ✅ Cascade refresh: Invalidate AND explicitly refetch for immediate UI update
+        await queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        await queryClient.invalidateQueries({ queryKey: ['financial'] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+        await queryClient.invalidateQueries({ queryKey: ['offers'] });
+        await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+        await queryClient.refetchQueries({ queryKey: ['buildings'] });
+        await queryClient.refetchQueries({ queryKey: ['financial'] });
+        await queryClient.refetchQueries({ queryKey: ['projects'] });
+        await queryClient.refetchQueries({ queryKey: ['offers'] });
+        await queryClient.refetchQueries({ queryKey: ['maintenance'] });
       }
 
       if (onSuccess) {

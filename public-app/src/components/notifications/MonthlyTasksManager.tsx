@@ -86,10 +86,12 @@ export default function MonthlyTasksManager() {
       template: parseInt(data.template),
       auto_send_enabled: data.auto_send_enabled,
     }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Η μηνιαία ειδοποίηση ρυθμίστηκε επιτυχώς');
       setIsConfigDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['monthlyTasks'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['monthlyTasks'] });
+      await queryClient.refetchQueries({ queryKey: ['monthlyTasks'] });
       // Reset form
       setFormData({
         task_type: 'common_expense',
@@ -133,8 +135,10 @@ export default function MonthlyTasksManager() {
       enabled
         ? monthlyTasksApi.enableAutoSend(taskId)
         : monthlyTasksApi.disableAutoSend(taskId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monthlyTasks'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['monthlyTasks'] });
+      await queryClient.refetchQueries({ queryKey: ['monthlyTasks'] });
       toast.success('Η αυτόματη αποστολή ενημερώθηκε');
     },
   });

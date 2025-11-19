@@ -50,7 +50,9 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
       };
 
       await createAnnouncement(payload);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      await queryClient.refetchQueries({ queryKey: ['announcements'] });
 
       toast.success('Η ανακοίνωση δημιουργήθηκε με επιτυχία');
       router.push('/announcements');

@@ -72,9 +72,12 @@ export function useOfferMutations() {
       const response = await api.post('/projects/offers/', data);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['offers'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['offers'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
       toast.success('Η προσφορά δημιουργήθηκε επιτυχώς');
     },
     onError: (error: any) => {
@@ -88,10 +91,13 @@ export function useOfferMutations() {
       const response = await api.post(`/projects/offers/${offerId}/approve/`);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['financial'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['offers'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['offers'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
       toast.success('Η προσφορά εγκρίθηκε επιτυχώς');
     },
     onError: (error: any) => {
@@ -105,9 +111,12 @@ export function useOfferMutations() {
       const response = await api.post(`/projects/offers/${offerId}/reject/`, { notes });
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['offers'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['offers'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
       toast.success('Η προσφορά απορρίφθηκε');
     },
     onError: (error: any) => {
@@ -121,9 +130,12 @@ export function useOfferMutations() {
       const response = await api.patch(`/projects/offers/${id}/`, data);
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
-      queryClient.invalidateQueries({ queryKey: ['offer', variables.id] });
+    onSuccess: async (_, variables) => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['offers'] });
+      await queryClient.invalidateQueries({ queryKey: ['offer', variables.id] });
+      await queryClient.refetchQueries({ queryKey: ['offers'] });
+      await queryClient.refetchQueries({ queryKey: ['offer', variables.id] });
       toast.success('Η προσφορά ενημερώθηκε επιτυχώς');
     },
     onError: (error: any) => {
@@ -136,9 +148,12 @@ export function useOfferMutations() {
     mutationFn: async (id: string | number) => {
       await api.delete(`/projects/offers/${id}/`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['offers'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['offers'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
       toast.success('Η προσφορά διαγράφηκε επιτυχώς');
     },
     onError: (error: any) => {

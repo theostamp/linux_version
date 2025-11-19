@@ -9,11 +9,16 @@ export function useSubmitVote() {
   return useMutation({
     mutationFn: ({ voteId, option }: { voteId: number; option: string }) =>
       submitVote(voteId, option),
-    onSuccess: (_, { voteId }) => {
-      queryClient.invalidateQueries({ queryKey: ['votes'] });
-      queryClient.invalidateQueries({ queryKey: ['vote', voteId] });
-      queryClient.invalidateQueries({ queryKey: ['myVote', voteId] });
-      queryClient.invalidateQueries({ queryKey: ['vote-results', voteId] });
+    onSuccess: async (_, { voteId }) => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['votes'] });
+      await queryClient.invalidateQueries({ queryKey: ['vote', voteId] });
+      await queryClient.invalidateQueries({ queryKey: ['myVote', voteId] });
+      await queryClient.invalidateQueries({ queryKey: ['vote-results', voteId] });
+      await queryClient.refetchQueries({ queryKey: ['votes'] });
+      await queryClient.refetchQueries({ queryKey: ['vote', voteId] });
+      await queryClient.refetchQueries({ queryKey: ['myVote', voteId] });
+      await queryClient.refetchQueries({ queryKey: ['vote-results', voteId] });
     },
   });
 }

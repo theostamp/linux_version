@@ -31,9 +31,12 @@ export default function AutoSendScheduler() {
       enabled
         ? monthlyTasksApi.enableAutoSend(taskId)
         : monthlyTasksApi.disableAutoSend(taskId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monthlyTasks'] });
-      queryClient.invalidateQueries({ queryKey: ['monthlyTasksSchedule'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['monthlyTasks'] });
+      await queryClient.invalidateQueries({ queryKey: ['monthlyTasksSchedule'] });
+      await queryClient.refetchQueries({ queryKey: ['monthlyTasks'] });
+      await queryClient.refetchQueries({ queryKey: ['monthlyTasksSchedule'] });
       toast.success('Η αυτόματη αποστολή ενημερώθηκε');
     },
     onError: () => {

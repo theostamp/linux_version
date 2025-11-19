@@ -67,7 +67,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       
       console.log(`🔄 FinancialDashboard: Loading summary for building ${buildingId}, month: ${selectedMonth || 'current'}`);
       
-      // 🧹 Cache invalidation - Clear all financial-related queries
+      // ✅ Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
       await queryClient.invalidateQueries({ 
         queryKey: ['financial'] 
       });
@@ -80,8 +80,20 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       await queryClient.invalidateQueries({ 
         queryKey: ['transactions'] 
       });
+      await queryClient.refetchQueries({ 
+        queryKey: ['financial'] 
+      });
+      await queryClient.refetchQueries({ 
+        queryKey: ['apartment-balances'] 
+      });
+      await queryClient.refetchQueries({ 
+        queryKey: ['expenses'] 
+      });
+      await queryClient.refetchQueries({ 
+        queryKey: ['transactions'] 
+      });
       
-      console.log(`🧹 FinancialDashboard: Cache invalidated for financial data`);
+      console.log(`🧹 FinancialDashboard: Cache invalidated and refetched for financial data`);
       
       const params = new URLSearchParams({
         building_id: buildingId.toString(),

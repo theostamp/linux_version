@@ -131,7 +131,9 @@ export default function AssemblyForm({ buildingId }: Props) {
       };
 
       await createAnnouncement(payload);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      await queryClient.refetchQueries({ queryKey: ['announcements'] });
 
       toast.success('Η ανακοίνωση συνέλευσης δημιουργήθηκε με επιτυχία');
       router.push('/announcements');

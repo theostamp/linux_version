@@ -8,8 +8,8 @@ export function ReactQueryProvider({ children }: { readonly children: React.Reac
   const [client] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        // Reduce stale time to prevent hanging
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        // ✅ UPDATED: More aggressive refetching for immediate UI updates
+        staleTime: 30 * 1000, // 30 seconds (was 5 minutes)
         gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
         retry: (failureCount: number, error: unknown) => {
           // Don't retry on 4xx errors (client errors)
@@ -23,8 +23,10 @@ export function ReactQueryProvider({ children }: { readonly children: React.Reac
         retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
         // Add timeout to prevent hanging
         networkMode: 'online',
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
+        // ✅ UPDATED: Enable auto-refresh on window focus and mount
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: true,
+        refetchOnMount: 'always',
       },
       mutations: {
         retry: false,

@@ -83,26 +83,35 @@ export function useBuildingEvents(buildingIdParam?: number) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingIdParam]);
 
-  const handleEvent = (name?: string, _payload?: Record<string, unknown>) => {
+  const handleEvent = async (name?: string, _payload?: Record<string, unknown>) => {
     switch (name) {
       case 'ticket.updated':
-        queryClient.invalidateQueries({ queryKey: ['tickets'] });
-        queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+        // ✅ Invalidate AND explicitly refetch for immediate UI update
+        await queryClient.invalidateQueries({ queryKey: ['tickets'] });
+        await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+        await queryClient.refetchQueries({ queryKey: ['tickets'] });
+        await queryClient.refetchQueries({ queryKey: ['scheduled-maintenance'] });
         break;
       case 'workorder.updated':
-        queryClient.invalidateQueries({ queryKey: ['workOrders'] });
+        await queryClient.invalidateQueries({ queryKey: ['workOrders'] });
+        await queryClient.refetchQueries({ queryKey: ['workOrders'] });
         break;
       case 'project.updated':
-        queryClient.invalidateQueries({ queryKey: ['projects'] });
-        queryClient.invalidateQueries({ queryKey: ['contracts'] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+        await queryClient.invalidateQueries({ queryKey: ['contracts'] });
+        await queryClient.refetchQueries({ queryKey: ['projects'] });
+        await queryClient.refetchQueries({ queryKey: ['contracts'] });
         break;
       case 'milestone.updated':
-        queryClient.invalidateQueries({ queryKey: ['milestones'] });
+        await queryClient.invalidateQueries({ queryKey: ['milestones'] });
+        await queryClient.refetchQueries({ queryKey: ['milestones'] });
         break;
       case 'maintenance.expense_deleted': {
-        // Invalidate maintenance related lists
-        queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
-        queryClient.invalidateQueries({ queryKey: ['maintenance-payment-history'] });
+        // Invalidate and refetch maintenance related lists
+        await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+        await queryClient.invalidateQueries({ queryKey: ['maintenance-payment-history'] });
+        await queryClient.refetchQueries({ queryKey: ['scheduled-maintenance'] });
+        await queryClient.refetchQueries({ queryKey: ['maintenance-payment-history'] });
         // Try to show a toast if hook exists in window (light coupling)
         try {
           const payload = _payload || {};
@@ -112,9 +121,11 @@ export function useBuildingEvents(buildingIdParam?: number) {
         break;
       }
       default:
-        // Generic invalidate for safety
-        queryClient.invalidateQueries({ queryKey: ['tickets'] });
-        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        // Generic invalidate and refetch for safety
+        await queryClient.invalidateQueries({ queryKey: ['tickets'] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+        await queryClient.refetchQueries({ queryKey: ['tickets'] });
+        await queryClient.refetchQueries({ queryKey: ['projects'] });
         break;
     }
   };

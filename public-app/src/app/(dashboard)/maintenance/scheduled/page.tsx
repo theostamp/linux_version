@@ -185,13 +185,16 @@ function ScheduledMaintenanceDashboard() {
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: Status }) =>
       api.patch(`/maintenance/scheduled/${id}/`, { status }),
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       toast({
         title: 'Ενημέρωση κατάστασης',
         description: `Το έργο ενημερώθηκε σε "${STATUS_BADGES[variables.status].label}".`,
       });
-      queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance-list'] });
-      queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance-list'] });
+      await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+      await queryClient.refetchQueries({ queryKey: ['scheduled-maintenance-list'] });
+      await queryClient.refetchQueries({ queryKey: ['scheduled-maintenance'] });
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Αποτυχία ενημέρωσης κατάστασης';
@@ -219,8 +222,11 @@ function ScheduledMaintenanceDashboard() {
         description: `Το έργο "${taskToDelete.title}" διαγράφηκε επιτυχώς μαζί με όλα τα σχετικά πεδία.`,
       });
       
-      queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance-list'] });
-      queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance-list'] });
+      await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+      await queryClient.refetchQueries({ queryKey: ['scheduled-maintenance-list'] });
+      await queryClient.refetchQueries({ queryKey: ['scheduled-maintenance'] });
       setTaskToDelete(null);
     } catch (error) {
       console.error('Error deleting task:', error);

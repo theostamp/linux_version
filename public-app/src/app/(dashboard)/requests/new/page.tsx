@@ -76,7 +76,9 @@ export default function NewRequestPage() {
       
       await createUserRequest(payload);
       
-      queryClient.invalidateQueries({ queryKey: ['requests'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['requests'] });
+      await queryClient.refetchQueries({ queryKey: ['requests'] });
       toast.success('Το αίτημα δημιουργήθηκε επιτυχώς!');
       router.push('/requests');
     } catch (err: unknown) {

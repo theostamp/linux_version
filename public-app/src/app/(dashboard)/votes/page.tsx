@@ -73,7 +73,9 @@ function VotesPageContent() {
     try {
       const message = await deleteVote(vote.id);
       toast.success(message);
-      queryClient.invalidateQueries({ queryKey: ['votes'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['votes'] });
+      await queryClient.refetchQueries({ queryKey: ['votes'] });
     } catch (error) {
       console.error('Error deleting vote:', error);
       toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');

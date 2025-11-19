@@ -397,7 +397,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </div>
           <Button
             onClick={async () => {
-              // 🧹 Cache invalidation - Clear all financial-related queries
+              // ✅ Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
               await queryClient.invalidateQueries({ 
                 queryKey: ['financial'] 
               });
@@ -410,8 +410,20 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               await queryClient.invalidateQueries({ 
                 queryKey: ['transactions'] 
               });
+              await queryClient.refetchQueries({ 
+                queryKey: ['financial'] 
+              });
+              await queryClient.refetchQueries({ 
+                queryKey: ['apartment-balances'] 
+              });
+              await queryClient.refetchQueries({ 
+                queryKey: ['expenses'] 
+              });
+              await queryClient.refetchQueries({ 
+                queryKey: ['transactions'] 
+              });
               
-              console.log(`🧹 FinancialPage: Cache invalidated for financial data`);
+              console.log(`🧹 FinancialPage: Cache invalidated and refetched for financial data`);
               
               // Refresh components
               if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();

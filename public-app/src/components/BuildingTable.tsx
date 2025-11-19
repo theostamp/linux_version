@@ -44,12 +44,17 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
         await deleteBuilding(building.id);
         toast.success('Το κτίριο διαγράφηκε επιτυχώς');
         await refreshBuildings();
-        // Cascade refresh: Invalidate related queries when building is deleted
-        queryClient.invalidateQueries({ queryKey: ['buildings'] });
-        queryClient.invalidateQueries({ queryKey: ['financial'] });
-        queryClient.invalidateQueries({ queryKey: ['projects'] });
-        queryClient.invalidateQueries({ queryKey: ['offers'] });
-        queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+        // ✅ Cascade refresh: Invalidate AND explicitly refetch for immediate UI update
+        await queryClient.invalidateQueries({ queryKey: ['buildings'] });
+        await queryClient.invalidateQueries({ queryKey: ['financial'] });
+        await queryClient.invalidateQueries({ queryKey: ['projects'] });
+        await queryClient.invalidateQueries({ queryKey: ['offers'] });
+        await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+        await queryClient.refetchQueries({ queryKey: ['buildings'] });
+        await queryClient.refetchQueries({ queryKey: ['financial'] });
+        await queryClient.refetchQueries({ queryKey: ['projects'] });
+        await queryClient.refetchQueries({ queryKey: ['offers'] });
+        await queryClient.refetchQueries({ queryKey: ['maintenance'] });
         if (onRefresh) {
           onRefresh();
         }

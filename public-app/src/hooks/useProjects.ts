@@ -66,8 +66,10 @@ export function useProjectMutations() {
       const response = await api.post('/projects/', data);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
       toast.success('Το έργο δημιουργήθηκε επιτυχώς');
     },
     onError: (error: any) => {
@@ -81,9 +83,12 @@ export function useProjectMutations() {
       const response = await api.patch(`/projects/${id}/`, data);
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
+    onSuccess: async (_, variables) => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['project', variables.id] });
       toast.success('Το έργο ενημερώθηκε επιτυχώς');
     },
     onError: (error: any) => {
@@ -96,8 +101,10 @@ export function useProjectMutations() {
     mutationFn: async (id: string | number) => {
       await api.delete(`/projects/${id}/`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: async () => {
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
       toast.success('Το έργο διαγράφηκε επιτυχώς');
     },
     onError: (error: any) => {

@@ -51,10 +51,13 @@ export default function NewReceiptPage() {
         invoice_number: form.invoice_number || undefined,
         payment_status: form.payment_status,
       });
-      // Invalidate related queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['service-receipts'] });
-      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
-      queryClient.invalidateQueries({ queryKey: ['financial'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['service-receipts'] });
+      await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['service-receipts'] });
+      await queryClient.refetchQueries({ queryKey: ['maintenance'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
       toast({ title: 'Αποθηκεύτηκε', description: 'Η απόδειξη δημιουργήθηκε.' });
       router.push('/maintenance/receipts');
     } catch (error) {

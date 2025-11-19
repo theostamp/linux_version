@@ -85,7 +85,9 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
     try {
       const message = await deleteAnnouncement(announcement.id);
       toast.success(message);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      await queryClient.refetchQueries({ queryKey: ['announcements'] });
     } catch (error) {
       console.error('Error deleting announcement:', error);
       toast.error('Σφάλμα κατά τη διαγραφή της ανακοίνωσης');

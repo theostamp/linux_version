@@ -31,7 +31,9 @@ export default function NewVotePage() {
   async function handleSubmit(data: CreateVotePayload) {
     try {
       await createVote(data);
-      queryClient.invalidateQueries({ queryKey: ['votes'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['votes'] });
+      await queryClient.refetchQueries({ queryKey: ['votes'] });
       toast.success('Η ψηφοφορία δημιουργήθηκε με επιτυχία');
       router.push('/votes');
     } catch (err: unknown) {

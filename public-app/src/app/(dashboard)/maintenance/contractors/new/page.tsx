@@ -98,9 +98,11 @@ export default function NewContractorPage() {
         payload.specializations = [customService.trim()];
       }
       await createContractor(payload);
-      // Invalidate related queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['contractors'] });
-      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['contractors'] });
+      await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      await queryClient.refetchQueries({ queryKey: ['contractors'] });
+      await queryClient.refetchQueries({ queryKey: ['maintenance'] });
       toast({ title: 'Αποθηκεύτηκε', description: 'Το συνεργείο δημιουργήθηκε.' });
       router.push('/maintenance/contractors');
     } catch (error: any) {
