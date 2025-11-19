@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, extractResults, getActiveBuildingId, type Project } from '@/lib/api';
+import { api, extractResults, getActiveBuildingId, invalidateApiCache, type Project } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface UseProjectsOptions {
@@ -67,6 +67,9 @@ export function useProjectMutations() {
       return response.data;
     },
     onSuccess: async () => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.refetchQueries({ queryKey: ['projects'] });
@@ -84,6 +87,9 @@ export function useProjectMutations() {
       return response.data;
     },
     onSuccess: async (_, variables) => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
@@ -102,6 +108,9 @@ export function useProjectMutations() {
       await api.delete(`/projects/${id}/`);
     },
     onSuccess: async () => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.refetchQueries({ queryKey: ['projects'] });

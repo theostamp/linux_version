@@ -69,6 +69,25 @@ export async function refreshBuildingData() {
 }
 
 /**
+ * Refresh all projects and offers data
+ */
+export async function refreshProjectsData() {
+  if (!globalQueryClient) {
+    console.warn('[Global Refresh] QueryClient not initialized');
+    return;
+  }
+
+  console.log('[Global Refresh] Refreshing projects data...');
+  
+  await globalQueryClient.invalidateQueries({ queryKey: ['projects'] });
+  await globalQueryClient.invalidateQueries({ queryKey: ['offers'] });
+  await globalQueryClient.refetchQueries({ queryKey: ['projects'] });
+  await globalQueryClient.refetchQueries({ queryKey: ['offers'] });
+
+  console.log('[Global Refresh] Projects data refreshed');
+}
+
+/**
  * Refresh ALL data in the application
  */
 export async function refreshAllData() {
@@ -154,7 +173,7 @@ export function setupCustomRefreshEvent() {
   if (typeof window === 'undefined') return;
 
   const handleCustomRefresh = async (event: Event) => {
-    const customEvent = event as CustomEvent<{ scope?: 'all' | 'financial' | 'buildings' }>;
+    const customEvent = event as CustomEvent<{ scope?: 'all' | 'financial' | 'buildings' | 'projects' }>;
     const scope = customEvent.detail?.scope || 'all';
     
     console.log(`[Global Refresh] Custom refresh triggered (scope: ${scope})`);
@@ -165,6 +184,9 @@ export function setupCustomRefreshEvent() {
         break;
       case 'buildings':
         await refreshBuildingData();
+        break;
+      case 'projects':
+        await refreshProjectsData();
         break;
       case 'all':
       default:
@@ -204,7 +226,7 @@ export function initializeGlobalRefresh() {
  * Trigger a custom refresh event
  * Use this from anywhere in your app to trigger a refresh
  */
-export function triggerRefresh(scope: 'all' | 'financial' | 'buildings' = 'all') {
+export function triggerRefresh(scope: 'all' | 'financial' | 'buildings' | 'projects' = 'all') {
   if (typeof window === 'undefined') return;
   
   window.dispatchEvent(new CustomEvent('app:refresh', { detail: { scope } }));

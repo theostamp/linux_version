@@ -14,7 +14,7 @@ import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 import { toast } from 'sonner';
 
 interface RefreshButtonProps {
-  scope?: 'all' | 'financial' | 'buildings';
+  scope?: 'all' | 'financial' | 'buildings' | 'projects';
   label?: string;
   variant?: 'default' | 'outline' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
@@ -30,7 +30,7 @@ export function RefreshButton({
   className,
   showToast = true,
 }: RefreshButtonProps) {
-  const { refreshFinancial, refreshBuildings, refreshAll } = useGlobalRefresh();
+  const { refreshFinancial, refreshBuildings, refreshProjects, refreshAll } = useGlobalRefresh();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -45,6 +45,10 @@ export function RefreshButton({
         case 'buildings':
           await refreshBuildings();
           if (showToast) toast.success('Τα δεδομένα κτιρίων ανανεώθηκαν');
+          break;
+        case 'projects':
+          await refreshProjects();
+          if (showToast) toast.success('Τα έργα και οι προσφορές ανανεώθηκαν');
           break;
         case 'all':
         default:

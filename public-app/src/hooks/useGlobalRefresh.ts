@@ -14,6 +14,7 @@ import { useCallback } from 'react';
 import {
   refreshFinancialData,
   refreshBuildingData,
+  refreshProjectsData,
   refreshAllData,
   triggerRefresh,
 } from '@/lib/globalRefresh';
@@ -27,17 +28,22 @@ export function useGlobalRefresh() {
     await refreshBuildingData();
   }, []);
 
+  const refreshProjects = useCallback(async () => {
+    await refreshProjectsData();
+  }, []);
+
   const refreshAll = useCallback(async () => {
     await refreshAllData();
   }, []);
 
-  const triggerCustomRefresh = useCallback((scope: 'all' | 'financial' | 'buildings' = 'all') => {
+  const triggerCustomRefresh = useCallback((scope: 'all' | 'financial' | 'buildings' | 'projects' = 'all') => {
     triggerRefresh(scope);
   }, []);
 
   return {
     refreshFinancial,
     refreshBuildings,
+    refreshProjects,
     refreshAll,
     triggerCustomRefresh,
   };

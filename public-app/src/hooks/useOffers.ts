@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, extractResults, getActiveBuildingId, type Offer } from '@/lib/api';
+import { api, extractResults, getActiveBuildingId, invalidateApiCache, type Offer } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface UseOffersOptions {
@@ -73,6 +73,9 @@ export function useOfferMutations() {
       return response.data;
     },
     onSuccess: async () => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -92,6 +95,10 @@ export function useOfferMutations() {
       return response.data;
     },
     onSuccess: async () => {
+      // ✅ Clear API-level cache for projects AND financial endpoints
+      invalidateApiCache('/api/projects/');
+      invalidateApiCache('/api/financial/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -112,6 +119,9 @@ export function useOfferMutations() {
       return response.data;
     },
     onSuccess: async () => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -131,6 +141,9 @@ export function useOfferMutations() {
       return response.data;
     },
     onSuccess: async (_, variables) => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['offer', variables.id] });
@@ -149,6 +162,9 @@ export function useOfferMutations() {
       await api.delete(`/projects/offers/${id}/`);
     },
     onSuccess: async () => {
+      // ✅ Clear API-level cache for projects endpoints
+      invalidateApiCache('/api/projects/');
+      
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
