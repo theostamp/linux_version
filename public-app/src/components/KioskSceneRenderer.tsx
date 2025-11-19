@@ -6,17 +6,15 @@ import { useKioskData } from '@/hooks/useKioskData';
 import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
 import FinancialSceneCustom from '@/components/kiosk/scenes/FinancialSceneCustom';
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
-interface KioskSceneRendererProps {
-  selectedBuildingId?: number | null;
-}
-
-export default function KioskSceneRenderer({ 
-  selectedBuildingId 
-}: KioskSceneRendererProps) {
+export default function KioskSceneRenderer() {
+  // ✅ Get building from BuildingContext
+  const { selectedBuilding } = useBuilding();
+  const selectedBuildingId = selectedBuilding?.id ?? null;
   
-  const { scenes, isLoading, error } = useKioskScenes(selectedBuildingId ?? null);
-  const { data: kioskData } = useKioskData(selectedBuildingId ?? null);
+  const { scenes, isLoading, error } = useKioskScenes(selectedBuildingId);
+  const { data: kioskData } = useKioskData(selectedBuildingId);
   
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);

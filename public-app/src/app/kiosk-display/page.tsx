@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { CalendarDays, CloudSun, PhoneCall, QrCode, ShieldAlert, TrendingUp, Building as BuildingIcon } from 'lucide-react';
+import { CalendarDays, CloudSun, PhoneCall, QrCode, ShieldAlert, TrendingUp } from 'lucide-react';
 import { useKioskData } from '@/hooks/useKioskData';
 import type { KioskBuildingInfo } from '@/hooks/useKioskData';
 import { useKioskWeather } from '@/hooks/useKioskWeather';
@@ -11,6 +11,7 @@ import QRCodeGenerator from '@/components/QRCodeGenerator';
 import BuildingSelector from '@/components/BuildingSelector';
 import type { Building } from '@/lib/api';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 const KIOSK_BUILDING_STORAGE_KEY = 'kioskSelectedBuildingId';
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
@@ -58,14 +59,13 @@ const SIDEBAR_WIDGETS = [
 export const dynamic = 'force-dynamic';
 
 function KioskDisplayPageContent() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchParamsString = searchParams?.toString() ?? '';
-  const buildingParam = searchParams?.get('building') ?? null;
+  // ✅ Use BuildingContext instead of manual state
+  const { 
+    selectedBuilding, 
+    setSelectedBuilding: selectBuilding,
+  } = useBuilding();
+  const selectedBuildingId = selectedBuilding?.id || 1;
 
-  const [selectedBuildingId, setSelectedBuildingId] = useState<number>(1);
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
   const [sidebarIndex, setSidebarIndex] = useState(0);
   const [dashboardUrl, setDashboardUrl] = useState(
@@ -78,62 +78,16 @@ function KioskDisplayPageContent() {
   const { weather, isLoading: weatherLoading } = useKioskWeather(300000);
   const { news, loading: newsLoading } = useNews(300000);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const queryId = parseBuildingId(buildingParam);
-    const storedRaw =
-      window.localStorage.getItem(KIOSK_BUILDING_STORAGE_KEY) ??
-      window.localStorage.getItem('selectedBuildingId');
-    const storedId = parseBuildingId(storedRaw);
-    const nextId = queryId ?? storedId ?? 1;
-
-    setSelectedBuildingId(nextId);
-  }, [buildingParam]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(KIOSK_BUILDING_STORAGE_KEY, selectedBuildingId.toString());
-  }, [selectedBuildingId]);
-
-  useEffect(() => {
-    // When "all buildings" is selected (buildingId = 0), set selectedBuilding to null
-    if (selectedBuildingId === 0) {
-      setSelectedBuilding(null);
-      return;
-    }
-    
-    if (!kioskData?.building_info) return;
-    if (selectedBuilding && selectedBuilding.id === kioskData.building_info.id) {
-      return;
-    }
-    setSelectedBuilding(mapBuildingInfoToBuilding(kioskData.building_info));
-  }, [kioskData?.building_info, selectedBuilding, selectedBuildingId]);
-
   const openBuildingSelector = useCallback(() => setIsBuildingSelectorOpen(true), []);
   const closeBuildingSelector = useCallback(() => setIsBuildingSelectorOpen(false), []);
 
+  // ✅ Simplified: Use BuildingContext method
   const handleBuildingSelect = useCallback(
     (building: Building | null) => {
-      const nextId = building ? building.id : 0;
-      setSelectedBuildingId(nextId);
-      setSelectedBuilding(building);
-
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(searchParamsString);
-        if (nextId > 0) {
-          params.set('building', String(nextId));
-        } else {
-          params.delete('building');
-        }
-        const nextQuery = params.toString();
-        const target = nextQuery ? `${pathname}?${nextQuery}` : pathname;
-        router.replace(target, { scroll: false });
-      }
-
+      selectBuilding(building);
       setIsBuildingSelectorOpen(false);
     },
-    [pathname, router, searchParamsString]
+    [selectBuilding]
   );
 
   useKeyboardShortcuts({
@@ -276,31 +230,6 @@ function KioskDisplayPageContent() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 text-white overflow-hidden pb-14">
-      {/* Scene badge */}
-      <div className="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur px-4 py-2 rounded-lg text-sm font-semibold">
-        Πρωινή Επισκόπηση
-      </div>
-
-      {/* Building selector badge */}
-      <div className="absolute top-4 right-4 z-20">
-        <button
-          onClick={openBuildingSelector}
-          className="flex items-center gap-3 bg-black/50 backdrop-blur px-4 py-2 rounded-xl border border-white/10 hover:border-white/30 transition-colors"
-        >
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10">
-            <BuildingIcon className="w-5 h-5 text-white" />
-          </div>
-          <div className="text-left">
-            <p className="text-xs text-white/70">Κτίριο</p>
-            <p className="text-sm font-semibold">{buildingLabel}</p>
-            <p className="text-[11px] text-white/60 leading-tight">{buildingSubLabel}</p>
-          </div>
-          <div className="text-[10px] uppercase tracking-wide text-white/60 hidden lg:block">
-            Ctrl+Alt+B
-          </div>
-        </button>
-      </div>
-
       <div className="flex h-screen">
         {/* Left column - 23% */}
         <div className="w-[23%] flex flex-col space-y-4 p-4">

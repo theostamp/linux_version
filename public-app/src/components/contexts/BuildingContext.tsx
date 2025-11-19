@@ -11,11 +11,10 @@ import React, {
   useMemo,
 } from 'react';
 import type { Building } from '@/lib/api';
-import { fetchAllBuildings } from '@/lib/api';
+import { fetchAllBuildings, api } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
 
 // ========================================================================
 // NEW: Enhanced types for Building Context with Permissions

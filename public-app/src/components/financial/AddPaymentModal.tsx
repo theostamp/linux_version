@@ -29,7 +29,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   selectedMonth,
 }) => {
   // Use BuildingContext for building data
-  const { selectedBuilding } = useBuilding();
+  const { buildings, selectedBuilding, currentBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
   const [formData, setFormData] = useState<PaymentFormData>({
     apartment_id: 0,
@@ -89,7 +89,6 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   }, [apartments]);
 
   // Building name for header
-  const { buildings, selectedBuilding, currentBuilding } = useBuilding();
   const buildingName = React.useMemo(() => {
     const fromList = buildings.find(b => b.id === buildingId)?.name;
     return fromList || selectedBuilding?.name || currentBuilding?.name || '';

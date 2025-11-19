@@ -248,24 +248,17 @@ export const showBuildingError = (
   }
   
   // Create toast message με structured content
-  toast.error(
-    <div className="space-y-2">
-      <div className="font-semibold">{error.title}</div>
-      <div className="text-sm">{error.message}</div>
-      {additionalInfo && (
-        <div className="text-xs text-muted-foreground italic">
-          {additionalInfo}
-        </div>
-      )}
-      <div className="text-xs font-medium text-primary pt-1 border-t border-gray-200">
-        💡 {error.action}
-      </div>
-    </div>,
-    {
-      duration,
-      closeButton: true,
-    }
-  );
+  const description = [
+    error.message,
+    additionalInfo ? `(${additionalInfo})` : '',
+    error.action ? `💡 ${error.action}` : '',
+  ].filter(Boolean).join(' ');
+
+  toast.error(error.title, {
+    description,
+    duration,
+    closeButton: true,
+  });
 };
 
 /**
