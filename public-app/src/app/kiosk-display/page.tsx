@@ -26,6 +26,7 @@ function KioskDisplayPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
+  const [effectiveBuildingId, setEffectiveBuildingId] = useState<number>(1);
 
   const buildingParam = useMemo(() => {
     const primary = parseBuildingId(searchParams?.get('building'));
@@ -37,6 +38,11 @@ function KioskDisplayPageContent() {
 
   // If building is passed via query string, set it in context (minimal stub for kiosk scenes)
   useEffect(() => {
+    // keep internal state in sync with URL param
+    if (buildingParam) {
+      setEffectiveBuildingId(buildingParam);
+    }
+
     if (!buildingParam) return;
     if (selectedBuilding?.id === buildingParam) return;
 
@@ -52,6 +58,13 @@ function KioskDisplayPageContent() {
     setSelectedBuilding(stubBuilding);
   }, [buildingParam, selectedBuilding?.id, setSelectedBuilding]);
 
+  // Fallback to selectedBuilding when no query param provided
+  useEffect(() => {
+    if (!buildingParam && selectedBuilding?.id) {
+      setEffectiveBuildingId(selectedBuilding.id);
+    }
+  }, [buildingParam, selectedBuilding?.id]);
+
   // Keyboard shortcut Ctrl+Alt+B opens selector (kiosk flow)
   useKeyboardShortcuts({
     onBuildingSelector: () => setIsBuildingSelectorOpen(true),
@@ -61,6 +74,9 @@ function KioskDisplayPageContent() {
     (building: Building | null) => {
       setSelectedBuilding(building);
       setIsBuildingSelectorOpen(false);
+      if (building?.id) {
+        setEffectiveBuildingId(building.id);
+      }
 
       const params = new URLSearchParams(searchParams?.toString() || '');
       if (building?.id) {
@@ -90,8 +106,6 @@ function KioskDisplayPageContent() {
     },
     [handleBuildingSelect]
   );
-
-  const effectiveBuildingId = buildingParam ?? selectedBuilding?.id ?? 1;
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
