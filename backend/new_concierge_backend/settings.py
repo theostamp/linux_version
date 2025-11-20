@@ -151,6 +151,9 @@ TENANT_APPS = [
     # 💰 Οικονομικό σύστημα
     'financial',
     
+    # 🖥️ Kiosk Management
+    'kiosk',
+    
     # 👥 Διαχείριση Ομάδων, Προμηθευτών & Συνεργατών
     'teams',
     'collaborators',
