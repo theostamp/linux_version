@@ -42,6 +42,26 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
       borderColor: 'border-purple-500/30'
     }))
   ];
+  const renderCard = (item: any) => (
+    <div className={`flex-1 bg-gradient-to-br ${item.bgColor} backdrop-blur-sm rounded-lg border ${item.borderColor} p-3 overflow-hidden`}>
+      <div className="h-full flex flex-col gap-2 min-h-0">
+        <div className="flex items-center justify-between text-[11px] text-blue-200/80">
+          <span className={`px-2 py-1 rounded-full border ${item.type === 'announcement' ? 'border-blue-500/40 bg-blue-700/20' : 'border-purple-500/40 bg-purple-700/20'}`}>
+            {item.type === 'announcement' ? 'Ανακοίνωση' : 'Ψηφοφορία'}
+          </span>
+          <span className="text-[11px] text-blue-100">
+            {format(new Date(item.date), 'dd/MM', { locale: el })}
+          </span>
+        </div>
+        <h4 className="text-sm font-bold text-white line-clamp-2 leading-snug">
+          {item.title}
+        </h4>
+        <p className="text-xs text-blue-100 leading-snug line-clamp-3 flex-1">
+          {item.content}
+        </p>
+      </div>
+    </div>
+  );
 
   // Auto-advance carousel every 8 seconds
   useEffect(() => {
@@ -98,7 +118,7 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
       onMouseLeave={handleMouseLeave}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-blue-500/20">
         <div className="flex items-center space-x-2">
           <IconComponent className="w-5 h-5 text-blue-300" />
           <h3 className="text-lg font-semibold text-white">
@@ -145,62 +165,18 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
 
       {/* Content - Two items side by side */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full flex gap-3">
+        <div className="h-full grid grid-cols-2 gap-3">
           {/* First Item */}
-          <div className={`flex-1 bg-gradient-to-br ${currentItem.bgColor} backdrop-blur-sm rounded-lg border ${currentItem.borderColor} p-3 overflow-hidden`}>
-            <div className="h-full flex flex-col">
-              {/* Title */}
-              <h4 className="text-sm font-bold text-white mb-2 line-clamp-2">
-                {currentItem.title}
-              </h4>
-              
-              {/* Content */}
-              <div className="flex-1 overflow-hidden">
-                <p className="text-xs text-blue-100 leading-relaxed line-clamp-3">
-                  {currentItem.content}
-                </p>
-              </div>
-              
-              {/* Date */}
-              <div className="mt-2 pt-2 border-t border-white/10">
-                <p className="text-[10px] text-blue-300">
-                  {format(new Date(currentItem.date), 'dd/MM', { locale: el })}
-                </p>
-              </div>
-            </div>
-          </div>
+          {renderCard(currentItem)}
 
           {/* Second Item */}
-          <div className="flex-1 overflow-hidden">
-            {carouselItems.length > 1 ? (
-              <div className={`h-full bg-gradient-to-br ${carouselItems[(currentIndex + 1) % carouselItems.length].bgColor} backdrop-blur-sm rounded-lg border ${carouselItems[(currentIndex + 1) % carouselItems.length].borderColor} p-3 overflow-hidden`}>
-                <div className="h-full flex flex-col">
-                  {/* Title */}
-                  <h4 className="text-sm font-bold text-white mb-2 line-clamp-2">
-                    {carouselItems[(currentIndex + 1) % carouselItems.length].title}
-                  </h4>
-                  
-                  {/* Content */}
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-xs text-blue-100 leading-relaxed line-clamp-3">
-                      {carouselItems[(currentIndex + 1) % carouselItems.length].content}
-                    </p>
-                  </div>
-                  
-                  {/* Date */}
-                  <div className="mt-2 pt-2 border-t border-white/10">
-                    <p className="text-[10px] text-blue-300">
-                      {format(new Date(carouselItems[(currentIndex + 1) % carouselItems.length].date), 'dd/MM', { locale: el })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full bg-gradient-to-br from-gray-800/20 to-gray-900/20 backdrop-blur-sm rounded-lg border border-gray-600/30 p-3 flex items-center justify-center">
-                <p className="text-xs text-gray-400 text-center">Δεν υπάρχει δεύτερη ανακοίνωση</p>
-              </div>
-            )}
-          </div>
+          {carouselItems.length > 1 ? (
+            renderCard(carouselItems[(currentIndex + 1) % carouselItems.length])
+          ) : (
+            <div className="h-full bg-gradient-to-br from-gray-800/20 to-gray-900/20 backdrop-blur-sm rounded-lg border border-gray-600/30 p-3 flex items-center justify-center">
+              <p className="text-xs text-gray-400 text-center">Δεν υπάρχει δεύτερη ανακοίνωση</p>
+            </div>
+          )}
         </div>
       </div>
 

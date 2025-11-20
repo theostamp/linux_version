@@ -138,6 +138,7 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
     visibility: 10,
     location: 'Αθήνα, Ελλάδα'
   };
+  const forecastDays = weatherData?.forecast || [];
 
   const getWeatherIcon = (weathercode: number) => {
     if (weathercode === 0) return '☀️';
@@ -152,102 +153,103 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
   };
 
   return (
-    <div className="h-full overflow-y-auto flex flex-col">
-      {/* Current Weather */}
-      <div className="text-center mb-4 flex-shrink-0">
-        <div className="text-4xl mb-2">
-          {getWeatherIcon(weather.weathercode)}
+    <div className="h-full flex flex-col gap-4">
+      {/* Current Weather - compact row */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="text-3xl">
+            {getWeatherIcon(weather.weathercode)}
+          </div>
+          <div className="min-w-0">
+            <div className="text-3xl font-bold text-white leading-none">
+              {weather.temperature}°C
+            </div>
+            <div className="text-xs text-blue-200 leading-tight">
+              {weather.description}
+            </div>
+            <div className="text-[11px] text-blue-300 truncate">
+              {weather.location}
+            </div>
+          </div>
         </div>
-        <div className="text-3xl font-bold text-white mb-1">
-          {weather.temperature}°C
-        </div>
-        <div className="text-sm text-blue-200">
-          {weather.description}
-        </div>
-        <div className="text-xs text-blue-300 mt-1">
-          {weather.location}
+
+        <div className="flex items-center gap-3 text-[11px] text-blue-100 bg-blue-900/40 border border-blue-700/40 rounded-xl px-3 py-2">
+          <div className="flex items-center gap-1">
+            <Thermometer className="w-3.5 h-3.5 text-blue-300" />
+            <span>Αίσθηση {weather.temperature + 2}°C</span>
+          </div>
+          <div className="w-px h-4 bg-blue-700/40" />
+          <div className="flex items-center gap-1">
+            <Wind className="w-3.5 h-3.5 text-blue-300" />
+            <span>{weather.wind_speed || 12} km/h</span>
+          </div>
         </div>
       </div>
 
-      {/* Main Content - Two Columns with better spacing and more height */}
-      <div className="flex gap-4 flex-1 min-h-0">
-        {/* Left Column - Weather Details (More space) */}
-        <div className="w-1/2 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-blue-900/30 p-3 rounded-lg text-center">
-              <Droplets className="w-5 h-5 mx-auto mb-2 text-blue-300" />
-              <div className="text-sm text-blue-200">Υγρασία</div>
-              <div className="text-lg font-semibold text-white">
-                {weather.humidity || 65}%
-              </div>
-            </div>
-            
-            <div className="bg-blue-900/30 p-3 rounded-lg text-center">
-              <Wind className="w-5 h-5 mx-auto mb-2 text-blue-300" />
-              <div className="text-sm text-blue-200">Ανεμος</div>
-              <div className="text-lg font-semibold text-white">
-                {weather.wind_speed || 12} km/h
-              </div>
-            </div>
-            
-            <div className="bg-blue-900/30 p-3 rounded-lg text-center">
-              <Eye className="w-5 h-5 mx-auto mb-2 text-blue-300" />
-              <div className="text-sm text-blue-200">Ορατότητα</div>
-              <div className="text-lg font-semibold text-white">
-                {weather.visibility || 10} km
-              </div>
-            </div>
-            
-            <div className="bg-blue-900/30 p-3 rounded-lg text-center">
-              <Thermometer className="w-5 h-5 mx-auto mb-2 text-blue-300" />
-              <div className="text-sm text-blue-200">Αίσθηση</div>
-              <div className="text-lg font-semibold text-white">
-                {weather.temperature + 2}°C
-              </div>
-            </div>
+      {/* Quick stats */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
+          <Droplets className="w-5 h-5 mx-auto mb-1 text-blue-300" />
+          <div className="text-xs text-blue-200">Υγρασία</div>
+          <div className="text-lg font-semibold text-white">
+            {weather.humidity || 65}%
           </div>
-
         </div>
+        
+        <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
+          <Eye className="w-5 h-5 mx-auto mb-1 text-blue-300" />
+          <div className="text-xs text-blue-200">Ορατότητα</div>
+          <div className="text-lg font-semibold text-white">
+            {weather.visibility || 10} km
+          </div>
+        </div>
+        
+        <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
+          <Wind className="w-5 h-5 mx-auto mb-1 text-blue-300" />
+          <div className="text-xs text-blue-200">Ανεμος</div>
+          <div className="text-lg font-semibold text-white">
+            {weather.wind_speed || 12} km/h
+          </div>
+        </div>
+        
+        <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
+          <Thermometer className="w-5 h-5 mx-auto mb-1 text-blue-300" />
+          <div className="text-xs text-blue-200">Αίσθηση</div>
+          <div className="text-lg font-semibold text-white">
+            {weather.temperature + 2}°C
+          </div>
+        </div>
+      </div>
 
-        {/* Right Column - Real Forecast */}
-        <div className="w-1/2">
-          <div className="space-y-3 h-full">
-            {/* Real forecast data - No scroll for kiosk */}
-            <div className="space-y-2 h-full">
-              {weatherData?.forecast && weatherData.forecast.length > 0 ? (
-                weatherData.forecast.slice(0, 3).map((day: any, index: number) => (
-                  <div key={index} className="bg-blue-800/20 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-xl">
-                          {getWeatherIcon(day.weathercode)}
-                        </span>
-                        <div>
-                          <div className="text-sm text-blue-200 font-medium">
-                            {day.day}
-                          </div>
-                          {day.precipitation > 0 && (
-                            <div className="text-xs text-blue-300">
-                              {day.precipitation}% βροχή
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-sm text-white text-right">
-                        <div className="font-semibold">{day.temp_max}°</div>
-                        <div className="text-gray-400 text-xs">{day.temp_min}°</div>
-                      </div>
-                    </div>
+      {/* Forecast */}
+      <div className="flex-1 min-h-0">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-blue-200/80">ΠΡΟΓΝΩΣΗ 4 ΗΜΕΡΩΝ</p>
+          <p className="text-[11px] text-blue-300/80">Ανανέωση κάθε 15’</p>
+        </div>
+        {forecastDays.length > 0 ? (
+          <div className="grid grid-cols-4 gap-2 h-full">
+            {forecastDays.slice(0, 4).map((day: any, index: number) => (
+              <div key={index} className="bg-blue-800/25 border border-blue-600/30 rounded-lg p-3 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">{getWeatherIcon(day.weathercode)}</span>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-white">{day.temp_max}°</div>
+                    <div className="text-[11px] text-blue-200">{day.temp_min}°</div>
                   </div>
-                ))
-              ) : (
-                <div className="flex items-center justify-center h-full text-blue-200/50 text-xs">
-                  Δεν υπάρχει διαθέσιμη πρόγνωση
                 </div>
-              )}
-            </div>
+                <div className="text-xs text-blue-100 line-clamp-1">{day.day}</div>
+                {day.precipitation > 0 && (
+                  <div className="text-[11px] text-blue-300">{day.precipitation}% βροχή</div>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-blue-200/50 text-xs">
+            Δεν υπάρχει διαθέσιμη πρόγνωση
+          </div>
+        )}
       </div>
     </div>
   );

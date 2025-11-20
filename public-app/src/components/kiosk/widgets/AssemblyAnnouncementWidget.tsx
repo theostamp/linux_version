@@ -134,7 +134,7 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
           return (
             <div 
               key={announcement.id}
-              className="bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm p-3 rounded-lg border border-purple-500/30"
+              className="bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm p-3 rounded-lg border border-purple-500/30 space-y-2"
             >
               {isAssembly ? (
                 // Assembly format with countdown: "Σε X ημέρες και Y ώρες έχουμε γενική συνέλευση..."
@@ -184,30 +184,28 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
                       
                       {/* Θέμα */}
                       {topic && (
-                        <div className="text-xs">
-                          <span className="text-purple-300 font-medium">Θέμα: </span>
-                          <span className="text-white line-clamp-2">{topic}</span>
+                        <div className="text-xs space-y-1">
+                          <span className="text-purple-300 font-medium block">Θέμα</span>
+                          <span className="text-white line-clamp-2 leading-snug">{topic}</span>
                         </div>
                       )}
                       
-                      {/* Τοποθεσία */}
-                      {location && (
-                        <div className="flex items-center text-xs">
-                          <MapPin className="w-3.5 h-3.5 mr-1.5 text-purple-300 flex-shrink-0" />
-                          <span className="text-purple-200 line-clamp-1">{location}</span>
-                        </div>
-                      )}
-                      
-                      {/* Date and Time Details */}
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-purple-500/20">
-                        <div className="flex items-center text-purple-300">
-                          <Calendar className="w-3 h-3 mr-1" />
+                      {/* Details pills */}
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-800/40 border border-purple-500/30 text-[11px] text-purple-100">
+                          <Calendar className="w-3 h-3" />
                           <span>{format(assemblyDate, 'dd/MM/yyyy', { locale: el })}</span>
                         </div>
                         {time && (
-                          <div className="flex items-center text-purple-300">
-                            <Clock className="w-3 h-3 mr-1" />
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-800/40 border border-purple-500/30 text-[11px] text-purple-100">
+                            <Clock className="w-3 h-3" />
                             <span>{time}</span>
+                          </div>
+                        )}
+                        {location && (
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-800/40 border border-purple-500/30 text-[11px] text-purple-100 max-w-full">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate">{location}</span>
                           </div>
                         )}
                       </div>
@@ -256,14 +254,14 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
                 </div>
               ) : (
                 // Regular announcement format
-                <div>
-                  <div className="font-semibold text-white text-sm mb-2 line-clamp-2">
+                <div className="space-y-2">
+                  <div className="font-semibold text-white text-sm line-clamp-2 leading-snug">
                     {announcement.title}
                   </div>
-                  <div className="text-xs text-purple-200/80 line-clamp-3">
+                  <div className="text-xs text-purple-200/80 leading-snug line-clamp-3 whitespace-pre-line">
                     {announcement.description}
                   </div>
-                  <div className="text-xs text-purple-300 mt-2 flex items-center">
+                  <div className="inline-flex items-center gap-1 text-[11px] text-purple-200 bg-purple-800/30 border border-purple-500/30 rounded-full px-2 py-1">
                     <Calendar className="w-3 h-3 mr-1" />
                     {format(assemblyDate, 'dd/MM/yyyy', { locale: el })}
                   </div>
@@ -345,4 +343,3 @@ function extractTopic(description: string): string | null {
   
   return null;
 }
-

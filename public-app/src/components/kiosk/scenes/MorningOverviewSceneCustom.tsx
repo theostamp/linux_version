@@ -10,6 +10,7 @@ import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidge
 import AnnouncementsVotesCarousel from '@/components/kiosk/widgets/AnnouncementsVotesCarousel';
 import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
+import { Building2 } from 'lucide-react';
 
 interface MorningOverviewSceneCustomProps {
   data?: any;
@@ -54,17 +55,10 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
   const CurrentSidebarComponent = sidebarWidgets[currentSidebarWidget].Component;
 
-  // Filter announcements for General Assembly or Votes
-  const importantAnnouncements = (data?.announcements || []).filter((ann: any) => 
-    ann.title?.toLowerCase().includes('συνέλευση') || 
-    ann.title?.toLowerCase().includes('σύγκληση') ||
-    ann.title?.toLowerCase().includes('ψηφοφορ')
-  );
-
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden pb-16">
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex overflow-hidden pb-20 gap-2">
       {/* Left Sidebar - 23% */}
-      <div className="w-[23%] flex flex-col space-y-3 p-3">
+      <div className="w-[23%] flex flex-col space-y-3.5 p-3">
         {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
         <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full overflow-y-auto p-3">
@@ -113,7 +107,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
       </div>
 
       {/* Center Area - 54% with stacked widgets */}
-      <div className="w-[54%] flex flex-col space-y-3 p-3">
+      <div className="w-[54%] flex flex-col space-y-3.5 p-3">
         {/* Management Office Widget - Top */}
         <div className="h-[15%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full">
@@ -121,15 +115,15 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
         </div>
 
-        {/* Weather Widget - Middle (Increased height to show all content) */}
-        <div className="h-[50%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+        {/* Weather Widget - Middle (compact, with forecast) */}
+        <div className="h-[43%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
             <WeatherWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
-        {/* Announcements & Votes Carousel - Bottom (Reduced height to accommodate weather) */}
-        <div className="h-[20%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+        {/* Announcements & Votes Carousel - Bottom */}
+        <div className="h-[24%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
             <AnnouncementsVotesCarousel data={data} isLoading={false} error={undefined} />
           </div>
@@ -138,21 +132,30 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
       </div>
 
       {/* Right Area - 23% - Common Expenses Summary Widget (Compact) */}
-      <div className="w-[23%] p-3">
-        <div className="h-full w-full backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-indigo-500/30" style={{ backgroundColor: '#222D59' }}>
+      <div className="w-[23%] p-3 flex flex-col space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Οφειλές</p>
+            <p className="text-sm font-semibold text-white">Υπόλοιπα ανά διαμέρισμα</p>
+          </div>
+          <div className="flex items-center text-[11px] text-indigo-200/70">
+            <Building2 className="w-3.5 h-3.5 mr-1" />
+            {data?.building_info?.name || 'Κτίριο'}
+          </div>
+        </div>
+        <div className="flex-1 w-full backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-indigo-500/30" style={{ backgroundColor: '#222D59' }}>
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
       </div>
 
-      {/* News Widget - Fixed to bottom of screen with spacing */}
-      <div className="fixed bottom-0 left-0 right-0 h-12 bg-slate-800/95 backdrop-blur-md border-t border-green-500/20 z-50 mb-2">
-        <div className="h-full px-4">
+      {/* News Widget - Fixed to bottom with breathing room */}
+      <div className="fixed bottom-4 left-5 right-5 h-14 bg-slate-900/90 backdrop-blur-xl border border-emerald-500/20 shadow-2xl shadow-emerald-900/40 rounded-xl z-50">
+        <div className="h-full px-5">
           <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
       </div>
     </div>
   );
 }
-

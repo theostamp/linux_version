@@ -80,16 +80,23 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
     >
       {/* News ticker - Horizontal layout without dots */}
       <div className="flex items-center space-x-3 w-full">
-        {/* News icon */}
-        <Globe className="w-3 h-3 text-green-300 flex-shrink-0" />
+        {/* News label */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] uppercase tracking-[0.14em] text-emerald-100 flex-shrink-0">
+          <Globe className="w-3.5 h-3.5" />
+          <span>Νέα</span>
+        </div>
         
         {/* News text with fade animation - Continuous ticker */}
-        <div 
-          className="flex-1 text-xs text-green-100 whitespace-nowrap overflow-hidden"
-          style={{ opacity: newsOpacity, transition: 'opacity 0.3s ease-in-out' }}
-        >
-          <div className="animate-scroll-left">
-            {currentNews}
+        <div className="relative flex-1 overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
+          <div 
+            className="text-sm text-emerald-50 whitespace-nowrap"
+            style={{ opacity: newsOpacity, transition: 'opacity 0.3s ease-in-out' }}
+          >
+            <div className="animate-scroll-left">
+              {currentNews}
+            </div>
           </div>
         </div>
       </div>

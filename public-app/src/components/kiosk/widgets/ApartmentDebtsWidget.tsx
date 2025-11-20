@@ -1,7 +1,7 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Euro, Home, TrendingUp, QrCode, Check } from 'lucide-react';
+import { Euro, Check, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
@@ -177,6 +177,17 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const paymentCoveragePercentage = totalObligations > 0 ? (totalPayments / totalObligations) * 100 : 0;
   const showWarning = paymentCoveragePercentage < 75;
   const currentDay = new Date().getDate();
+  const formattedMonth = (() => {
+    if (!monthParam) return null;
+    const parts = monthParam.split('-');
+    if (parts.length === 2) {
+      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('el-GR', { month: 'short', year: 'numeric' });
+      }
+    }
+    return monthParam;
+  })();
 
   // GDPR: Mask occupant name (first name + first letter of surname + ***)
   const maskOccupant = (name: string | null | undefined): string => {
@@ -191,16 +202,23 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   return (
     <div className="h-full overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="mb-2 pb-2 border-b border-indigo-400/30">
+      <div className="mb-3 pb-2 border-b border-indigo-400/30">
         <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center gap-2">
             <Euro className="w-5 h-5 text-indigo-300" />
-            <h2 className="text-base font-bold text-white">Τα Κοινόχρηστα Συνοπτικά</h2>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-indigo-300">
-              €{totalExpenses.toFixed(0)}
+            <div>
+              <h2 className="text-base font-bold text-white">Οφειλές & Υπόλοιπα</h2>
+              <p className="text-[11px] text-indigo-200/80">Σύνοψη ανά διαμέρισμα</p>
             </div>
+          </div>
+          <div className="text-right space-y-1">
+            {formattedMonth && (
+              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-900/50 border border-indigo-500/30 text-[11px] text-indigo-200">
+                <Calendar className="w-3 h-3" />
+                {formattedMonth}
+              </div>
+            )}
+            <div className="text-xs text-indigo-200">Σύνολο €{totalExpenses.toFixed(0)}</div>
           </div>
         </div>
       </div>
@@ -221,6 +239,12 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             const hasZeroBalance = (apt.net_obligation || 0) === 0;
             // Use tenant_name with fallback to owner_name
             const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
+            const statusLabel = hasZeroBalance ? 'Ενήμερο' : hasDebt ? 'Οφειλή' : 'Υπόλοιπο';
+            const statusClass = hasZeroBalance
+              ? 'bg-green-500/15 text-green-300 border-green-500/30'
+              : hasDebt
+                ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30';
             
             
 
@@ -236,15 +260,20 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
                       {occupant}
                     </span>
                   </div>
-                  <div className="flex-shrink-0 flex items-center gap-1">
-                    {hasZeroBalance && (
-                      <Check className="w-4 h-4 text-green-400" />
-                    )}
-                    <span className={`text-sm font-semibold whitespace-nowrap ${
-                      hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
-                    }`}>
-                      €{amount.toFixed(0)}
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusClass}`}>
+                      {statusLabel}
                     </span>
+                    <div className="flex items-center gap-1">
+                      {hasZeroBalance && (
+                        <Check className="w-4 h-4 text-green-400" />
+                      )}
+                      <span className={`text-sm font-semibold whitespace-nowrap ${
+                        hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
+                      }`}>
+                        €{amount.toFixed(0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -288,4 +317,3 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     </div>
   );
 }
-
