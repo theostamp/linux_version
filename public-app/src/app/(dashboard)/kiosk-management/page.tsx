@@ -49,7 +49,7 @@ function KioskManagementContent() {
 
       // Fetch widgets and scenes in parallel
       const [widgetsRes, scenesRes] = await Promise.all([
-        api.get(`/api/kiosk/widgets/?building_id=${building.id}`),
+        api.get(`/api/kiosk/configs/?building_id=${building.id}`),
         api.get(`/api/kiosk/scenes/?building_id=${building.id}`)
       ]);
 
