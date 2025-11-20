@@ -1,10 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import type { Building } from '@/lib/api';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import BuildingSelector from '@/components/BuildingSelector';
 
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -21,12 +23,16 @@ export const dynamic = 'force-dynamic';
 
 function KioskDisplayPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
+
   const buildingParam = useMemo(
     () => parseBuildingId(searchParams?.get('building')),
     [searchParams]
   );
 
-  const { selectedBuilding, setSelectedBuilding } = useBuilding();
+  const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();
 
   // If building is passed via query string, set it in context (minimal stub for kiosk scenes)
   useEffect(() => {
@@ -45,11 +51,40 @@ function KioskDisplayPageContent() {
     setSelectedBuilding(stubBuilding);
   }, [buildingParam, selectedBuilding?.id, setSelectedBuilding]);
 
+  // Keyboard shortcut Ctrl+Alt+B opens selector (kiosk flow)
+  useKeyboardShortcuts({
+    onBuildingSelector: () => setIsBuildingSelectorOpen(true),
+  });
+
+  const handleBuildingSelect = useCallback(
+    (building: Building | null) => {
+      setSelectedBuilding(building);
+      setIsBuildingSelectorOpen(false);
+
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      if (building?.id) {
+        params.set('building', String(building.id));
+      } else {
+        params.delete('building');
+      }
+      const queryString = params.toString();
+      router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+    },
+    [pathname, router, searchParams, setSelectedBuilding]
+  );
+
   const effectiveBuildingId = buildingParam ?? selectedBuilding?.id ?? 1;
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
-      <KioskSceneRenderer buildingIdOverride={effectiveBuildingId} />
+      <KioskSceneRenderer buildingIdOverride={effectiveBuildingId} allowSceneCreation={false} />
+      <BuildingSelector
+        isOpen={isBuildingSelectorOpen}
+        onClose={() => setIsBuildingSelectorOpen(false)}
+        onBuildingSelect={handleBuildingSelect}
+        selectedBuilding={selectedBuilding || currentBuilding}
+        currentBuilding={selectedBuilding || currentBuilding}
+      />
     </div>
   );
 }

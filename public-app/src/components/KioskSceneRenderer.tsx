@@ -10,9 +10,10 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface KioskSceneRendererProps {
   buildingIdOverride?: number | null;
+  allowSceneCreation?: boolean;
 }
 
-export default function KioskSceneRenderer({ buildingIdOverride }: KioskSceneRendererProps = {}) {
+export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreation = true }: KioskSceneRendererProps = {}) {
   // ✅ Get building from BuildingContext
   const { selectedBuilding } = useBuilding();
   const effectiveBuildingId = buildingIdOverride ?? selectedBuilding?.id ?? null;
@@ -65,7 +66,7 @@ export default function KioskSceneRenderer({ buildingIdOverride }: KioskSceneRen
 
   // Handle creating default scene
   const handleCreateDefaultScene = async () => {
-    if (!effectiveBuildingId || isCreatingScene) return;
+    if (!effectiveBuildingId || isCreatingScene || !allowSceneCreation) return;
     
     setIsCreatingScene(true);
     try {
@@ -128,7 +129,7 @@ export default function KioskSceneRenderer({ buildingIdOverride }: KioskSceneRen
         <WidgetComponent 
           data={kioskData} 
           settings={widget.settings || {}}
-          buildingId={selectedBuildingId}
+          buildingId={effectiveBuildingId}
         />
       </div>
     );
@@ -164,24 +165,32 @@ export default function KioskSceneRenderer({ buildingIdOverride }: KioskSceneRen
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
         <div className="text-center p-8 bg-gray-800/50 rounded-lg border border-blue-500">
           <p className="text-blue-400 text-xl mb-2">Δεν υπάρχουν σκηνές</p>
-          <p className="text-gray-400 mb-4">Δημιουργήστε σκηνές για να εμφανίσετε περιεχόμενο</p>
-          <button
-            onClick={handleCreateDefaultScene}
-            disabled={isCreatingScene}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 mb-4"
-          >
-            {isCreatingScene ? (
-              <>
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Δημιουργία...
-              </>
-            ) : (
-              'Δημιουργία Βασικής Σκηνής'
-            )}
-          </button>
-          <p className="text-gray-500 text-sm">
-            Ή χρησιμοποιήστε την εντολή: <code className="bg-gray-700 px-2 py-1 rounded">python manage.py migrate_to_scenes</code>
+          <p className="text-gray-400 mb-4">
+            {allowSceneCreation
+              ? 'Δημιουργήστε σκηνές για να εμφανίσετε περιεχόμενο'
+              : 'Δεν υπάρχουν ενεργές σκηνές για αυτό το κτίριο. Ρυθμίστε τις μέσω του dashboard.'}
           </p>
+          {allowSceneCreation && (
+            <>
+              <button
+                onClick={handleCreateDefaultScene}
+                disabled={isCreatingScene}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 mb-4"
+              >
+                {isCreatingScene ? (
+                  <>
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Δημιουργία...
+                  </>
+                ) : (
+                  'Δημιουργία Βασικής Σκηνής'
+                )}
+              </button>
+              <p className="text-gray-500 text-sm">
+                Ή χρησιμοποιήστε την εντολή: <code className="bg-gray-700 px-2 py-1 rounded">python manage.py migrate_to_scenes</code>
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
