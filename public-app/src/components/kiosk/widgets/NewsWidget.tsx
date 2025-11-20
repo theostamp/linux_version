@@ -13,7 +13,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   // Use the existing news hook
   const { news, loading: newsLoading, error: newsError } = useNews(180000); // 3 minutes refresh
 
-  // Auto-advance news every 8 seconds (faster for ticker effect)
+  // Auto-advance news every 12 seconds (slower ticker)
   useEffect(() => {
     if (!isAutoPlaying || news.length <= 1) return;
 
@@ -27,11 +27,11 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         // Change text after fade out
         setTimeout(() => {
           setNewsOpacity(1);
-        }, 300); // Faster transition for ticker effect
+        }, 300);
         
         return nextIndex;
       });
-    }, 8000); // 8 seconds per news item for ticker effect
+    }, 12000);
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, news.length]);
@@ -71,6 +71,8 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   }
 
   const currentNews = news[currentIndex];
+  const nextNews = news.length > 1 ? news[(currentIndex + 1) % news.length] : '';
+  const marqueeText = [currentNews, nextNews].filter(Boolean).join(' • ');
 
   return (
     <div 
@@ -95,7 +97,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
             style={{ opacity: newsOpacity, transition: 'opacity 0.3s ease-in-out' }}
           >
             <div className="animate-scroll-left">
-              {currentNews}
+              {marqueeText}
             </div>
           </div>
         </div>
@@ -108,7 +110,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         }
         
         .animate-scroll-left {
-          animation: scroll-left 20s linear infinite;
+          animation: scroll-left 30s linear infinite;
         }
       `}</style>
     </div>

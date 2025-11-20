@@ -245,7 +245,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
       </div>
       
       {/* Expenses List */}
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-indigo-700/60 scrollbar-track-indigo-900/30">
         {debts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-purple-300">
             <Euro className="w-12 h-12 mb-3 opacity-60" />

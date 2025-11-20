@@ -126,6 +126,14 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
           const hoursRemaining = differenceInHours(assemblyDate, currentTime) % 24;
           const isPastEvent = isPast(assemblyDate);
           const isToday = daysRemaining === 0 && hoursRemaining >= 0 && !isPastEvent;
+          const isUpcoming = !isPastEvent && (daysRemaining > 0 || hoursRemaining >= 0);
+          const remainingLabel = isUpcoming
+            ? daysRemaining > 0
+              ? `Σε ${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}`
+              : hoursRemaining > 0
+                ? `Σε ${hoursRemaining} ${hoursRemaining === 1 ? 'ώρα' : 'ώρες'}`
+                : 'Σήμερα'
+            : null;
           
           // Check if it's an assembly announcement
           const isAssembly = announcement.title?.toLowerCase().includes('συνέλευση') || 
@@ -139,6 +147,13 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
               {isAssembly ? (
                 // Assembly format with countdown: "Σε X ημέρες και Y ώρες έχουμε γενική συνέλευση..."
                 <div className="space-y-2">
+                  {remainingLabel && (
+                    <div className="flex justify-end">
+                      <span className="text-[11px] px-2 py-1 rounded-full bg-orange-500/15 border border-orange-400/40 text-orange-100 font-semibold">
+                        {remainingLabel}{location ? ` · ${location}` : ''}
+                      </span>
+                    </div>
+                  )}
                   {!isPastEvent && daysRemaining >= 0 ? (
                     <>
                       {/* Countdown Header - Special styling for TODAY */}
