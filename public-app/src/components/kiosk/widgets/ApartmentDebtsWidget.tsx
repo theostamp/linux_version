@@ -221,7 +221,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   };
 
   return (
-    <div className="h-full overflow-hidden flex flex-col">
+    <>
+      <div className="h-full overflow-hidden flex flex-col">
       {/* Header */}
       <div className="mb-3 pb-2 border-b border-indigo-400/30">
         <div className="flex items-center justify-between mb-1">
@@ -244,62 +245,117 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         </div>
       </div>
       
-      {/* Expenses List */}
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-indigo-700/60 scrollbar-track-indigo-900/30">
-        {debts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-purple-300">
-            <Euro className="w-12 h-12 mb-3 opacity-60" />
-            <p className="text-sm font-medium">Δεν υπάρχουν δεδομένα</p>
-            <p className="text-xs text-purple-400 mt-1">Κανένα κοινόχρηστο για τον τρέχοντα μήνα</p>
-          </div>
-        ) : (
-          debts.map((apt: ApartmentDebt) => {
-            const amount = apt.net_obligation || apt.displayAmount || apt.current_balance || 0;
-            // Green if zero balance, orange if has debt - check the net_obligation from dashboard API
-            const hasDebt = (apt.net_obligation || 0) > 0;
-            const hasZeroBalance = (apt.net_obligation || 0) === 0;
-            // Use tenant_name with fallback to owner_name
-            const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
-            const statusLabel = hasZeroBalance ? 'Ενήμερο' : hasDebt ? 'Οφειλή' : 'Υπόλοιπο';
-            const statusClass = hasZeroBalance
-              ? 'bg-green-500/15 text-green-300 border-green-500/30'
-              : hasDebt
-                ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
-                : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30';
-            
-            
+      {/* Expenses List - auto marquee when many items */}
+      <div className="flex-1 relative overflow-hidden">
+        {debts.length > 12 ? (
+          <div
+            className="absolute inset-0 space-y-2"
+            style={{
+              animation: `scroll-vertical ${Math.max(20, debts.length * 2.2)}s linear infinite`,
+            }}
+          >
+            {[...debts, ...debts].map((apt: ApartmentDebt, idx: number) => {
+              const amount = apt.net_obligation || apt.displayAmount || apt.current_balance || 0;
+              const hasDebt = (apt.net_obligation || 0) > 0;
+              const hasZeroBalance = (apt.net_obligation || 0) === 0;
+              const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
+              const statusLabel = hasZeroBalance ? 'Ενήμερο' : hasDebt ? 'Οφειλή' : 'Υπόλοιπο';
+              const statusClass = hasZeroBalance
+                ? 'bg-green-500/15 text-green-300 border-green-500/30'
+                : hasDebt
+                  ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                  : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30';
 
-            return (
-              <div
-                key={apt.apartment_id}
-                className="bg-indigo-900/20 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
-                    <span className="text-xs text-white truncate font-medium leading-tight">
-                      {occupant}
-                    </span>
-                  </div>
-                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusClass}`}>
-                      {statusLabel}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {hasZeroBalance && (
-                        <Check className="w-4 h-4 text-green-400" />
-                      )}
-                      <span className={`text-sm font-semibold whitespace-nowrap ${
-                        hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
-                      }`}>
-                        €{amount.toFixed(0)}
+              return (
+                <div
+                  key={`${apt.apartment_id}-${idx}`}
+                  className="bg-indigo-900/20 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
+                      <span className="text-xs text-white truncate font-medium leading-tight">
+                        {occupant}
                       </span>
+                    </div>
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusClass}`}>
+                        {statusLabel}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {hasZeroBalance && (
+                          <Check className="w-4 h-4 text-green-400" />
+                        )}
+                        <span className={`text-sm font-semibold whitespace-nowrap ${
+                          hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
+                        }`}>
+                          €{amount.toFixed(0)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-2 pr-1">
+            {debts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-purple-300">
+                <Euro className="w-12 h-12 mb-3 opacity-60" />
+                <p className="text-sm font-medium">Δεν υπάρχουν δεδομένα</p>
+                <p className="text-xs text-purple-400 mt-1">Κανένα κοινόχρηστο για τον τρέχοντα μήνα</p>
               </div>
-            );
-          })
+            ) : (
+              debts.map((apt: ApartmentDebt) => {
+                const amount = apt.net_obligation || apt.displayAmount || apt.current_balance || 0;
+                // Green if zero balance, orange if has debt - check the net_obligation from dashboard API
+                const hasDebt = (apt.net_obligation || 0) > 0;
+                const hasZeroBalance = (apt.net_obligation || 0) === 0;
+                // Use tenant_name with fallback to owner_name
+                const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
+                const statusLabel = hasZeroBalance ? 'Ενήμερο' : hasDebt ? 'Οφειλή' : 'Υπόλοιπο';
+                const statusClass = hasZeroBalance
+                  ? 'bg-green-500/15 text-green-300 border-green-500/30'
+                  : hasDebt
+                    ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                    : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30';
+                
+                
+
+                return (
+                  <div
+                    key={apt.apartment_id}
+                    className="bg-indigo-900/20 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
+                        <span className="text-xs text-white truncate font-medium leading-tight">
+                          {occupant}
+                        </span>
+                      </div>
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusClass}`}>
+                          {statusLabel}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {hasZeroBalance && (
+                            <Check className="w-4 h-4 text-green-400" />
+                          )}
+                          <span className={`text-sm font-semibold whitespace-nowrap ${
+                            hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
+                          }`}>
+                            €{amount.toFixed(0)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         )}
       </div>
 
@@ -336,5 +392,12 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         </div>
       )}
     </div>
+    <style jsx>{`
+      @keyframes scroll-vertical {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-50%); }
+      }
+    `}</style>
+    </>
   );
 }
