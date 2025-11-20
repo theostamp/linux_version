@@ -1,11 +1,30 @@
 # 🚀 Kiosk Management Deployment Guide
 
+## 📺 **Existing Public Kiosk Display**
+
+Το project έχει ήδη ένα **public kiosk display** που λειτουργεί:
+- 🌐 **URL:** `https://newconcierge.app/kiosk-display?building=2`
+- 🔓 **Public Access:** Χωρίς authentication
+- 📱 **Features:** Ανακοινώσεις, QR codes, Emergency phones, Weather
+
+### 🆕 **Νέο Kiosk Management System**
+
+Το νέο σύστημα που δημιουργήθηκε προσφέρει:
+- 🎨 **Dynamic Widget Management:** Δημιουργία custom widgets
+- 🎬 **Scene Management:** Προκαθορισμένες διατάξεις (π.χ. "Πρωινή Επισκόπηση")
+- ⚙️ **Settings:** Slide duration, auto-slide, navigation
+- 👁️ **Live Preview:** Real-time προεπισκόπηση
+- 🔧 **Admin Control Panel:** `/kiosk-management`
+
+---
+
 ## Βήματα για Production Deployment
 
 ### 📋 **Prerequisites**
 - ✅ Git push completed
 - ✅ Frontend deployed (Next.js)
 - ⚠️ Backend needs migration + restart
+- ✅ Existing kiosk-display remains functional
 
 ---
 
@@ -133,20 +152,68 @@ journalctl -u gunicorn -f
 
 ---
 
+## 🎯 **Kiosk System Architecture**
+
+### **2 Kiosk Endpoints:**
+
+#### 1️⃣ **Legacy Kiosk Display** (Existing - Public)
+- **URL:** `/kiosk-display?building=X`
+- **Type:** Hardcoded, static widgets
+- **Access:** Public (no auth required)
+- **Features:** Basic display με ανακοινώσεις, QR, emergency contacts
+- **Status:** ✅ Ήδη σε production και λειτουργεί
+
+#### 2️⃣ **New Managed Kiosk** (Coming Soon - Dynamic)
+- **URL:** `/kiosk?building_id=X`
+- **Type:** Dynamic, widget-based με scenes
+- **Access:** Public (no auth required)
+- **Management:** `/kiosk-management` (requires admin auth)
+- **Features:** 
+  - Custom widgets
+  - Scene templates ("Πρωινή Επισκόπηση")
+  - Live preview
+  - Configurable settings
+
+### **Migration Path:**
+
+Δεν χρειάζεται να αντικαταστήσετε το existing kiosk-display! Τα 2 systems μπορούν να συνυπάρχουν:
+
+```
+┌─────────────────────────────────────┐
+│  /kiosk-display (Legacy)            │
+│  ✅ Hardcoded widgets               │
+│  ✅ Stable & proven                 │
+│  ✅ Already in production           │
+└─────────────────────────────────────┘
+                 ↓
+         Μελλοντική μετάβαση
+                 ↓
+┌─────────────────────────────────────┐
+│  /kiosk (New Managed)               │
+│  ✨ Dynamic widgets                 │
+│  ✨ Scene management                │
+│  ✨ Full customization              │
+└─────────────────────────────────────┘
+```
+
+---
+
 ## 🎯 **Quick Start για Users**
 
-Μετά το deployment, οι users μπορούν να:
+Μετά το deployment, οι admins μπορούν να:
 
 1. **Γρήγορη Ρύθμιση:**
    - `/kiosk-management` → "Γρήγορη Ρύθμιση με Scenes"
    - Πατάνε "Διαχείριση Scenes"
    - Πατάνε "Δημιουργία Default Scene"
-   - Done! Το kiosk είναι έτοιμο
+   - Done! Το νέο managed kiosk είναι έτοιμο
 
 2. **Προχωρημένη:**
    - Δημιουργούν custom widgets
    - Φτιάχνουν δικά τους scenes
    - Προσαρμόζουν πλήρως το layout
+
+**Note:** Το `/kiosk-display` θα συνεχίσει να λειτουργεί κανονικά!
 
 ---
 
