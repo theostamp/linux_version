@@ -11,6 +11,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Sparkles,
   Tag,
   Trash2,
 } from 'lucide-react';
@@ -83,6 +84,69 @@ const formatDate = (value?: string) => {
     return value;
   }
 };
+
+const buildPresetTemplates = (buildingId: number | null): TemplateFormState[] => [
+  {
+    name: 'Ανακοίνωση Γενικής Συνέλευσης',
+    category: 'meeting',
+    description: 'Πρόσκληση με ημερομηνία, ώρα και θέματα ημερήσιας διάταξης',
+    subject: 'Πρόσκληση σε γενική συνέλευση {{ meeting_date }}',
+    body_template:
+      'Αγαπητοί συνιδιοκτήτες,\n\nΣας προσκαλούμε στη γενική συνέλευση της πολυκατοικίας {{ building_name }} την {{ meeting_date }} στις {{ meeting_time }} στο {{ meeting_location }}.\n\nΘέματα:\n{{ agenda_items }}\n\nΠαρακαλούμε επιβεβαιώστε παρουσία και τυχόν θέματα προς προσθήκη.\n\nΜε εκτίμηση,\n{{ contact_name }}',
+    sms_template:
+      'Γενική συνέλευση {{ building_name }} στις {{ meeting_date }} {{ meeting_time }} στο {{ meeting_location }}. Θέματα: {{ agenda_short }}',
+    is_active: true,
+    building: buildingId,
+  },
+  {
+    name: 'Υπενθύμιση Οφειλής Κοινοχρήστων',
+    category: 'payment',
+    description: 'Ήπια υπενθύμιση για καθυστερημένες οφειλές',
+    subject: 'Υπενθύμιση οφειλής κοινοχρήστων {{ month_name }}',
+    body_template:
+      'Καλησπέρα {{ recipient_name }},\n\nΣτον έλεγχο κοινοχρήστων για το {{ month_name }} προκύπτει υπόλοιπο {{ total_due }}.\nΠαρακαλούμε τακτοποιήστε έως {{ due_date }} στους παρακάτω λογαριασμούς:\n{{ payment_instructions }}\n\nΓια απορίες επικοινωνήστε μαζί μας.\n\nΕυχαριστούμε,\nΔιαχείριση {{ building_name }}',
+    sms_template:
+      '{{ recipient_name }}, υπόλοιπο κοινοχρήστων {{ month_name }}: {{ total_due }}. Προθεσμία {{ due_date }}. {{ payment_short_instructions }}',
+    is_active: true,
+    building: buildingId,
+  },
+  {
+    name: 'Ενημέρωση Κοινοχρήστων Μήνα',
+    category: 'reminder',
+    description: 'Σύντομη ενημέρωση για νέα κοινοχρήστων και σύνδεσμο σε PDF',
+    subject: 'Κοινοχρήστα {{ month_name }} - σύνοψη για {{ building_name }}',
+    body_template:
+      'Γεια σας,\n\nΑναρτήθηκαν τα κοινοχρήστα {{ month_name }} για {{ building_name }}.\n\nΣύνοψη:\n- Συνολικό ποσό: {{ total_amount }}\n- Προθεσμία: {{ due_date }}\n- Λήψη αναλυτικού PDF: {{ pdf_url }}\n\nΑν έχετε απορίες επικοινωνήστε με τη διαχείριση.\n\nΕυχαριστούμε,\nΔιαχείριση {{ building_name }}',
+    sms_template:
+      'Κοινοχρήστα {{ month_name }} διαθέσιμα. Σύνολο {{ total_amount }}, προθεσμία {{ due_date }}. PDF: {{ pdf_url }}',
+    is_active: true,
+    building: buildingId,
+  },
+  {
+    name: 'Προγραμματισμένη Συντήρηση/Εργασία',
+    category: 'maintenance',
+    description: 'Ειδοποίηση για εργασίες (ασανσέρ, καθαρισμός, θέρμανση)',
+    subject: 'Προγραμματισμένη συντήρηση {{ maintenance_date }}',
+    body_template:
+      'Καλησπέρα σε όλους,\n\nΤην {{ maintenance_date }} και ώρα {{ maintenance_time }} θα πραγματοποιηθεί {{ maintenance_scope }} στο {{ building_name }}.\n\nΕνδεικτικά:\n- Εργασία: {{ maintenance_title }}\n- Υπεύθυνος: {{ vendor_name }} ({{ vendor_phone }})\n- Εκτιμώμενη διάρκεια: {{ maintenance_duration }}\n\nΠαρακαλούμε φροντίστε για πρόσβαση όπου χρειάζεται.\n\nΕυχαριστούμε,\nΔιαχείριση',
+    sms_template:
+      '{{ building_name }}: {{ maintenance_title }} στις {{ maintenance_date }} {{ maintenance_time }}. Διάρκεια {{ maintenance_duration }}. Επικοινωνία: {{ vendor_phone }}',
+    is_active: true,
+    building: buildingId,
+  },
+  {
+    name: 'Έκτακτη Ενημέρωση / Βλάβη',
+    category: 'emergency',
+    description: 'Γρήγορη ενημέρωση για βλάβες ή επείγοντα θέματα',
+    subject: 'Επείγουσα ενημέρωση: {{ issue_title }}',
+    body_template:
+      'Προέκυψε επείγον θέμα στο {{ building_name }}: {{ issue_title }}.\n\nΣύνοψη:\n{{ issue_description }}\n\nΕπόμενα βήματα:\n{{ next_actions }}\n\nΓια άμεση επικοινωνία: {{ contact_phone }}.\n\nΕυχαριστούμε για τη συνεργασία.',
+    sms_template:
+      'Επείγον {{ building_name }}: {{ issue_title }}. {{ next_actions_short }} Επικοινωνία: {{ contact_phone }}',
+    is_active: true,
+    building: buildingId,
+  },
+];
 
 export default function NotificationTemplateEditor() {
   const { buildings, selectedBuilding, currentBuilding } = useBuilding();
@@ -209,6 +273,41 @@ export default function NotificationTemplateEditor() {
     },
   });
 
+  const quickCreatePresetsMutation = useMutation({
+    mutationFn: async () => {
+      const presets = buildPresetTemplates(buildingId);
+      const existingNames = new Set(templates.map((t) => t.name));
+      const toCreate = presets.filter((preset) => !existingNames.has(preset.name));
+
+      if (toCreate.length === 0) {
+        return { created: 0, skipped: presets.length };
+      }
+
+      for (const preset of toCreate) {
+        await notificationTemplatesApi.create({
+          ...preset,
+          building: preset.building ?? undefined,
+        });
+      }
+
+      return { created: toCreate.length, skipped: presets.length - toCreate.length };
+    },
+    onSuccess: async ({ created, skipped }) => {
+      if (created === 0) {
+        toast.info('Όλα τα έτοιμα πρότυπα υπάρχουν ήδη για αυτή την προβολή');
+      } else {
+        toast.success(
+          `Προστέθηκαν ${created} έτοιμα πρότυπα${skipped ? ` (${skipped} παραλείφθηκαν)` : ''}`
+        );
+      }
+      await queryClient.invalidateQueries({ queryKey: ['notificationTemplates'] });
+      await queryClient.refetchQueries({ queryKey: ['notificationTemplates'] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Αποτυχία προσθήκης έτοιμων προτύπων');
+    },
+  });
+
   const filteredTemplates = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return templates
@@ -312,6 +411,23 @@ export default function NotificationTemplateEditor() {
               <>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Ανανέωση
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => quickCreatePresetsMutation.mutate()}
+            disabled={quickCreatePresetsMutation.isLoading}
+          >
+            {quickCreatePresetsMutation.isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Φόρτωση...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Προσθήκη έτοιμων προτύπων
               </>
             )}
           </Button>
