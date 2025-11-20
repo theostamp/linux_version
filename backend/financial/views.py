@@ -1972,11 +1972,13 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 if is_charge:
                     monthly_data[month_key]['charges'].append(transaction_data)
                     monthly_data[month_key]['total_charges'] += float(transaction.amount)
-                    monthly_data[month_key]['net_amount'] -= float(transaction.amount)
+                    # 🔧 FIX 2025-11-20: net_amount είναι χρέος - χρεώσεις το αυξάνουν
+                    monthly_data[month_key]['net_amount'] += float(transaction.amount)
                 else:
                     monthly_data[month_key]['payments'].append(transaction_data)
                     monthly_data[month_key]['total_payments'] += float(transaction.amount)
-                    monthly_data[month_key]['net_amount'] += float(transaction.amount)
+                    # 🔧 FIX 2025-11-20: net_amount είναι χρέος - πληρωμές το μειώνουν
+                    monthly_data[month_key]['net_amount'] -= float(transaction.amount)
             
             # Convert to list and sort by month (newest first)
             monthly_list = list(monthly_data.values())
