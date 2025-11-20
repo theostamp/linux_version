@@ -11,6 +11,7 @@ interface BuildingSelectorProps {
   onBuildingSelect: (building: Building | null) => void;
   selectedBuilding: Building | null;
   currentBuilding?: Building | null;
+  onManualBuildingSelect?: (id: number) => void;
 }
 
 export default function BuildingSelector({
@@ -19,11 +20,13 @@ export default function BuildingSelector({
   onBuildingSelect,
   selectedBuilding,
   currentBuilding,
+  onManualBuildingSelect,
 }: BuildingSelectorProps) {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredBuildings, setFilteredBuildings] = useState<Building[]>([]);
+  const [manualId, setManualId] = useState<string>('');
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Load buildings when modal opens
@@ -99,6 +102,7 @@ export default function BuildingSelector({
     onBuildingSelect(building);
     onClose();
     setSearchTerm('');
+    setManualId('');
   };
 
   if (!isOpen) return null;
@@ -139,6 +143,33 @@ export default function BuildingSelector({
               autoFocus
             />
           </div>
+          {onManualBuildingSelect && (
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                value={manualId}
+                onChange={(e) => setManualId(e.target.value)}
+                placeholder="ID κτιρίου (χειροκίνητα)"
+                className="w-full px-3 py-2 border-0 rounded-none shadow-sm bg-gray-50 focus:ring-2 focus:ring-[#1abcbd] focus:outline-none text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const idNum = Number(manualId);
+                  if (Number.isFinite(idNum) && idNum > 0) {
+                    onManualBuildingSelect(idNum);
+                    onClose();
+                    setManualId('');
+                  }
+                }}
+                className="px-3 py-2 bg-[#1abcbd] text-white text-sm rounded-none shadow-sm disabled:opacity-50"
+                disabled={!manualId}
+              >
+                ΟΚ
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -263,4 +294,3 @@ export default function BuildingSelector({
     </div>
   );
 }
-

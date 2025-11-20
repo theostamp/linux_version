@@ -27,10 +27,11 @@ function KioskDisplayPageContent() {
   const pathname = usePathname();
   const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
 
-  const buildingParam = useMemo(
-    () => parseBuildingId(searchParams?.get('building')),
-    [searchParams]
-  );
+  const buildingParam = useMemo(() => {
+    const primary = parseBuildingId(searchParams?.get('building'));
+    if (primary !== null) return primary;
+    return parseBuildingId(searchParams?.get('building_id'));
+  }, [searchParams]);
 
   const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();
 
@@ -64,13 +65,30 @@ function KioskDisplayPageContent() {
       const params = new URLSearchParams(searchParams?.toString() || '');
       if (building?.id) {
         params.set('building', String(building.id));
+        params.set('building_id', String(building.id));
       } else {
         params.delete('building');
+        params.delete('building_id');
       }
       const queryString = params.toString();
       router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
     },
     [pathname, router, searchParams, setSelectedBuilding]
+  );
+
+  const handleManualBuildingId = useCallback(
+    (id: number) => {
+      const stubBuilding: Building = {
+        id,
+        name: `Κτίριο #${id}`,
+        address: '',
+        city: '',
+        created_at: FALLBACK_TIMESTAMP,
+        updated_at: FALLBACK_TIMESTAMP,
+      };
+      handleBuildingSelect(stubBuilding);
+    },
+    [handleBuildingSelect]
   );
 
   const effectiveBuildingId = buildingParam ?? selectedBuilding?.id ?? 1;
@@ -84,6 +102,7 @@ function KioskDisplayPageContent() {
         onBuildingSelect={handleBuildingSelect}
         selectedBuilding={selectedBuilding || currentBuilding}
         currentBuilding={selectedBuilding || currentBuilding}
+        onManualBuildingSelect={handleManualBuildingId}
       />
     </div>
   );

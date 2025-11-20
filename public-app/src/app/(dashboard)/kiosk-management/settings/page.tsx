@@ -83,7 +83,7 @@ function SettingsContent() {
       setIsSaving(true);
 
       await api.post('/api/kiosk/display-configs/', {
-        building: building.id,
+        buildingId: building.id,
         ...settings,
       });
 
