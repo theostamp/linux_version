@@ -87,16 +87,29 @@ call_command("migrate_schemas", schema_name=tenant.schema_name, interactive=Fals
 
 # --- Demo δεδομένα ---
 with schema_context(tenant.schema_name):
-    manager = CustomUser.objects.create_user(
-        email=manager_email,
-        password=manager_password,
-        first_name="Demo",
-        last_name="Manager",
-        is_active=True,
-        is_staff=True,
-        is_superuser=False,
-        role="manager",
-    )
+    # Check if manager already exists in public schema
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id FROM public.users_customuser WHERE email = %s", [manager_email])
+        row = cursor.fetchone()
+        if row:
+            manager_id = row[0]
+            # Update password if needed
+            from django.contrib.auth.hashers import make_password
+            cursor.execute("UPDATE public.users_customuser SET password = %s WHERE id = %s", 
+                         [make_password(manager_password), manager_id])
+            manager = CustomUser(id=manager_id, email=manager_email, first_name="Demo", last_name="Manager")
+        else:
+            manager = CustomUser.objects.create_user(
+                email=manager_email,
+                password=manager_password,
+                first_name="Demo",
+                last_name="Manager",
+                is_active=True,
+                is_staff=True,
+                is_superuser=False,
+                role="manager",
+            )
 
     building = Building.objects.create(
         name="Demo Κτίριο",
@@ -105,7 +118,7 @@ with schema_context(tenant.schema_name):
         postal_code="11111",
         apartments_count=10,
         internal_manager_name="Γραμματεία",
-        manager=manager,
+        manager_id=manager.id,
     )
 
     resident = CustomUser.objects.create_user(

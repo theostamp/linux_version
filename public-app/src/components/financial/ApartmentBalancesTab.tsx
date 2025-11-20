@@ -198,9 +198,9 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   };
 
   const handlePayment = (apartment: ApartmentBalanceWithDetails) => {
-    // 🔧 FIX: Calculate total obligation properly
+    // 🔧 FIX 2025-11-20: Το reserve_fund_share ήδη περιλαμβάνεται στο expense_share - ΔΕΝ προσθέτουμε ξανά
     const currentExpenseWithManagement = apartment.expense_share;
-    const totalObligationWithManagement = apartment.previous_balance + (apartment.reserve_fund_share || 0) + currentExpenseWithManagement;
+    const totalObligationWithManagement = apartment.previous_balance + currentExpenseWithManagement;
     const netObligationCalculated = totalObligationWithManagement - apartment.total_payments;
     
     // Calculate payment amounts to zero out debt
@@ -372,9 +372,9 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 
   const getDebtApartmentsCount = () => {
     return apartmentBalances.filter(apt => {
-      // 🔧 FIX: Υπολογισμός καθαρής οφειλής για κάθε διαμέρισμα
+      // 🔧 FIX 2025-11-20: Το reserve_fund_share ήδη περιλαμβάνεται στο expense_share - ΔΕΝ προσθέτουμε ξανά
       const currentExpenseWithManagement = apt.expense_share;
-      const totalObligationWithManagement = apt.previous_balance + (apt.reserve_fund_share || 0) + currentExpenseWithManagement;
+      const totalObligationWithManagement = apt.previous_balance + currentExpenseWithManagement;
       const netObligationCalculated = totalObligationWithManagement - apt.total_payments;
       
       return apt.status.toLowerCase() === 'overdue' ||
@@ -508,12 +508,10 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   // Δεν χρειάζεται να προσθέσουμε ξανά το management_fee_per_apartment
                   const currentExpenseWithManagement = apartment.expense_share;
                   
-                  // 🔧 FIX: Υπολογισμός συνολικής οφειλής (previous_balance + reserve_fund + current_expenses)
-                  // Αυτή είναι η σωστή συνολική οφειλή που περιλαμβάνει:
-                  // - Παλαιότερες οφειλές (previous_balance)
-                  // - Αποθεματικό (reserve_fund_share)
-                  // - Τρέχουσες δαπάνες (expense_share)
-                  const totalObligationWithManagement = apartment.previous_balance + (apartment.reserve_fund_share || 0) + currentExpenseWithManagement;
+                  // 🔧 FIX 2025-11-20: Το reserve_fund_share ΗΔΗ ΠΕΡΙΛΑΜΒΑΝΕΤΑΙ στο expense_share (backend services.py:1225)
+                  // ΔΕΝ πρέπει να το προσθέτουμε ξεχωριστά γιατί προκαλεί διπλή χρέωση!
+                  // Σωστή συνολική οφειλή = previous_balance + current_expenses (που ήδη έχουν το reserve fund)
+                  const totalObligationWithManagement = apartment.previous_balance + currentExpenseWithManagement;
                   
                   // Αφαιρούμε τις πληρωμές για να βρούμε την καθαρή οφειλή
                   const netObligationCalculated = totalObligationWithManagement - apartment.total_payments;
