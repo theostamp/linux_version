@@ -198,49 +198,107 @@ function KioskManagementContent() {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link href="/kiosk-management/widgets" className="group">
-          <Card className="p-6 hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] border-2 border-transparent hover:border-purple-200 cursor-pointer">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-600 transition-all duration-300">
-                <Settings className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors duration-300" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">Διαχείριση Widgets</h3>
-              <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors">Προσθήκη, επεξεργασία και διαγραφή widgets</p>
+      {/* Setup Modes - 2 Primary Choices */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Quick Setup with Scenes */}
+        <Card className="p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white hover:shadow-xl transition-all duration-300">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Monitor className="w-7 h-7 text-white" />
             </div>
-          </Card>
-        </Link>
-        <Link href="/kiosk-management/widgets/create" className="group">
-          <Card className="p-6 hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] border-2 border-transparent hover:border-blue-200 cursor-pointer">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600 transition-all duration-300">
-                <Plus className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Δημιουργία Widget</h3>
-              <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors">Δημιουργία νέου custom widget</p>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Γρήγορη Ρύθμιση με Scenes</h3>
+              <p className="text-sm text-gray-600">
+                Χρησιμοποιήστε έτοιμα templates όπως η <strong>"Πρωινή Επισκόπηση"</strong> για άμεση εμφάνιση
+              </p>
             </div>
-          </Card>
-        </Link>
+          </div>
+          <div className="flex gap-3">
+            <Button asChild className="flex-1">
+              <Link href="/kiosk-management/scenes">
+                <Eye className="w-4 h-4 mr-2" />
+                Διαχείριση Scenes
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/kiosk-management/preview">
+                <Monitor className="w-4 h-4 mr-2" />
+                Preview
+              </Link>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Advanced Custom Widgets */}
+        <Card className="p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all duration-300">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Settings className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Προχωρημένη Προσαρμογή</h3>
+              <p className="text-sm text-gray-600">
+                Δημιουργήστε custom εμφάνιση με ξεχωριστά widgets και πλήρη έλεγχο
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button asChild className="flex-1" variant="outline">
+              <Link href="/kiosk-management/widgets">
+                <Settings className="w-4 h-4 mr-2" />
+                Widgets
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/kiosk-management/widgets/create">
+                <Plus className="w-4 h-4 mr-2" />
+                Νέο Widget
+              </Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* Quick Actions Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/kiosk-management/preview" className="group">
-          <Card className="p-6 hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] border-2 border-transparent hover:border-green-200 cursor-pointer">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600 transition-all duration-300">
-                <Eye className="w-6 h-6 text-green-600 group-hover:text-white transition-colors duration-300" />
+          <Card className="p-5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-green-200 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                <Eye className="w-5 h-5 text-green-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">Live Preview</h3>
-              <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors">Προεπισκόπηση του kiosk display</p>
+              <div>
+                <h4 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">Live Preview</h4>
+                <p className="text-xs text-gray-500">Προεπισκόπηση display</p>
+              </div>
             </div>
           </Card>
         </Link>
+        
         <Link href="/kiosk-management/settings" className="group">
-          <Card className="p-6 hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] border-2 border-transparent hover:border-orange-200 cursor-pointer">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-600 transition-all duration-300">
-                <Settings className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors duration-300" />
+          <Card className="p-5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-orange-200 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-600 transition-colors">
+                <Settings className="w-5 h-5 text-orange-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">Ρυθμίσεις</h3>
-              <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors">Γενικές ρυθμίσεις kiosk</p>
+              <div>
+                <h4 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">Ρυθμίσεις</h4>
+                <p className="text-xs text-gray-500">Γενικές ρυθμίσεις</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        <Link href="/kiosk" target="_blank" className="group">
+          <Card className="p-5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-purple-200 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-600 transition-colors">
+                <Monitor className="w-5 h-5 text-purple-600 group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">Public Kiosk</h4>
+                <p className="text-xs text-gray-500">Άνοιγμα σε νέο tab</p>
+              </div>
             </div>
           </Card>
         </Link>
@@ -302,29 +360,6 @@ function KioskManagementContent() {
         </div>
       </Card>
 
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <Monitor className="w-6 h-6 mr-2 text-blue-600" />
-          Πρόσβαση στο Public Kiosk
-        </h2>
-        <p className="text-gray-600 mb-4">
-          Το public kiosk είναι διαθέσιμο σε όλους τους κατοίκους χωρίς ανάγκη σύνδεσης.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild>
-            <Link href="/kiosk" target="_blank">
-              <Eye className="w-4 h-4 mr-2" />
-              Άνοιγμα Public Kiosk
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/kiosk-management/preview">
-              <Monitor className="w-4 h-4 mr-2" />
-              Management Preview
-            </Link>
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 }
