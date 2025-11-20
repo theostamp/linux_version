@@ -45,6 +45,24 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const monthParam = resolveMonthParam();
 
   useEffect(() => {
+    // If kioskData already contains financial balances (public kiosk), use them directly
+    if (data?.financial?.apartment_balances && data.financial.apartment_balances.length > 0) {
+      const apartmentExpenses = data.financial.apartment_balances
+        .map((apt: ApartmentDebt) => ({
+          ...apt,
+          displayAmount: apt.net_obligation || apt.current_balance || 0
+        }))
+        .sort((a: ApartmentDebt, b: ApartmentDebt) => 
+          parseInt(a.apartment_number) - parseInt(b.apartment_number)
+        );
+
+      setDebts(apartmentExpenses);
+      setSummary(data.financial.summary ?? null);
+      setApiError(null);
+      setLoading(false);
+      return;
+    }
+
     const fetchDebts = async () => {
       if (!effectiveBuildingId) {
         setLoading(false);
@@ -63,6 +81,9 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Unauthorized');
+          }
           throw new Error('Failed to fetch apartment debts');
         }
 
@@ -86,8 +107,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setApiError(errorMessage);
         
-        // Auto-retry mechanism
-        if (retryCount < 3) {
+        // Auto-retry mechanism (skip for auth errors)
+        if (retryCount < 3 && errorMessage !== 'Unauthorized') {
           console.log(`Retrying fetch... (${retryCount + 1}/3)`);
           setTimeout(() => {
             setRetryCount(prev => prev + 1);
@@ -104,7 +125,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     // Refresh every 5 minutes
     const interval = setInterval(fetchDebts, 300000);
     return () => clearInterval(interval);
-  }, [effectiveBuildingId, retryCount, monthParam]);
+  }, [effectiveBuildingId, retryCount, monthParam, data?.financial]);
 
   // Fetch summary data separately (includes payment coverage)
   useEffect(() => {
