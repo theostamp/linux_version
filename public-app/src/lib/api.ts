@@ -901,6 +901,8 @@ export type CreateAnnouncementPayload = {
 export async function fetchAnnouncements(buildingId?: number | null): Promise<Announcement[]> {
   const params: Record<string, string | number> = {};
   if (buildingId) {
+    // Some backends expect building_id, keep both for compatibility
+    params.building_id = buildingId;
     params.building = buildingId;
   }
   try {
