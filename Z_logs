@@ -1,196 +1,802 @@
-   Current Month Expenses: €106.00
-   Payments This Month: €0.00
-   Net Obligation: €-268.00
-📊 Apartment Γ1 - 2026-01:
-   Previous Balance: €-356.00
-   Current Month Expenses: €100.00
-   Payments This Month: €0.00
-   Net Obligation: €-256.00
-📊 Apartment Γ2 - 2026-01:
-   Previous Balance: €-425.00
-   Current Month Expenses: €123.00
-   Payments This Month: €0.00
-   Net Obligation: €-302.00
-📊 Apartment Γ3 - 2026-01:
-   Previous Balance: €-404.00
-   Current Month Expenses: €116.00
-   Payments This Month: €0.00
-   Net Obligation: €-288.00
-📊 Apartment Δ1 - 2026-01:
-   Previous Balance: €-341.00
-   Current Month Expenses: €95.00
-   Payments This Month: €0.00
-   Net Obligation: €-246.00
-/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2026-01-01 00:00:00) while time zone support is active.
-  warnings.warn(
-/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2026-02-01 00:00:00) while time zone support is active.
-  warnings.warn(
-🔍 Monthly Activity Check for 2026-01:
-   📤 Has expenses: True
-   📥 Has payments: False
-   📋 Has issued expenses: False
-   ✅ Overall activity: True
-🔍 FinancialDashboard (snapshot_2026-01): current_reserve=-4472.00, total_obligations=336.00
-🔍 FinancialDashboard (snapshot_2026-01): total_balance=-2160.00
-✅ Previous obligations for 2026-01: €2232.00
-   (από MonthlyBalance 12/2025 carry_forward)
-🔧 TOTAL BALANCE: current_reserve=-4472.00 - current_obligations=3312.00 = -7784.00
-🔧 CURRENT MONTH EXPENSES: 1080.00 = 3312.00 - 2232.00
-100.64.0.2 - - [16/Nov/2025:15:33:48 +0200] "GET /api/financial/dashboard/summary/?building_id=1&month=2026-01 HTTP/1.1" 200 9734 "https://theo.newconcierge.app/financial?tab=history&building=1" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-100.64.0.6 - - [16/Nov/2025:15:33:58 +0200] "GET /api/financial/expenses/?building_id=1&expense_date_after=2025-09-01&expense_date_before=2026-05-31 HTTP/1.1" 200 10366 "https://theo.newconcierge.app/financial?tab=history&building=1&month=2026-01" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-📊 Apartment Α1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €128.00
-   Payments This Month: €128.00
-   Net Obligation: €0.00
-📊 Apartment Α2 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €124.40
-   Payments This Month: €0.00
-   Net Obligation: €124.40
-📊 Apartment Α3 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €113.60
-   Payments This Month: €0.00
-   Net Obligation: €113.60
-📊 Apartment Β1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €140.00
-   Payments This Month: €0.00
-   Net Obligation: €140.00
-📊 Apartment Β2 - 2025-11:
-   Payments This Month: €0.00
-📊 Apartment Δ1 - 2025-11:
-   Payments This Month: €0.00
-   Net Obligation: €146.00
-   Previous Balance: €0.00
-📊 Apartment Γ3 - 2025-11:
-   Net Obligation: €125.60
-   Current Month Expenses: €112.40
-   Net Obligation: €118.40
-📊 Apartment Γ1 - 2025-11:
-   Payments This Month: €0.00
-📊 Apartment Γ2 - 2025-11:
-   Previous Balance: €0.00
-   Previous Balance: €0.00
-   Current Month Expenses: €118.40
-   Current Month Expenses: €146.00
-   Payments This Month: €0.00
-   Previous Balance: €0.00
-   Current Month Expenses: €137.60
-   Payments This Month: €0.00
-   Net Obligation: €137.60
-   Previous Balance: €0.00
-   Current Month Expenses: €134.00
-   Payments This Month: €0.00
-   Net Obligation: €134.00
-📊 Apartment Β3 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €125.60
-   Net Obligation: €112.40
-100.64.0.3 - - [16/Nov/2025:15:34:34 +0200] "GET /api/public-info/1/ HTTP/1.1" 200 5470 "-" "node"
-🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-100.64.0.9 - - [16/Nov/2025:15:34:34 +0200] "GET /api/announcements/?page_size=5&ordering=-created_at&building=1 HTTP/1.1" 200 52 "https://theo.newconcierge.app/kiosk-display" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-100.64.0.2 - - [16/Nov/2025:15:34:46 +0200] "GET /api/projects/projects/?building=1&page_size=1000 HTTP/1.1" 200 52 "https://theo.newconcierge.app/projects" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-
-
- value: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 Reserve Fund Form Initialization: 
-{storedStartDate: '2025-11-01', parsedStartDate: '2025-11-01T00:00:00.000Z', calculatedMonth: '11', calculatedYear: '2025', monthName: 'Νοεμβρίου'}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 ✅ FinancialPage: Automatic refresh completed successfully
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 ReserveFundAnalytics: Using date for calculations: 2025-11 (selected) 1/11/2025
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_month_expenses: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_obligations: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG previous_obligations: 0
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG final value: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 Date validation result: 
-{selectedMonth: '2025-11', validation: {…}, responseDataKeys: Array(2)}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 ✅ Apartment balances loaded: 
-{apartments: Array(10), summary: {…}, data: {…}}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 ✅ Management fee per apartment: 8
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 ReserveFundAnalytics: Using date for calculations: 2025-11 (selected) 1/11/2025
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_month_expenses: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_obligations: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG previous_obligations: 0
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG final value: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 FinancialPage: Dependencies changed, triggering refresh
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 FinancialPage: Executing automatic refresh...
-ade50c22f517dede.js?…ZqJUEvXmPUuZsSUyY:1 [API THROTTLE] Returning cached data for https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=1&month=2025-11_{}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 FinancialPage URL params: 
-{tabParam: 'balances', monthParam: '2025-11', currentSelectedMonth: '2025-11', willOverride: true}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 FinancialPage: URL overriding selectedMonth from 2025-11 to 2025-11
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 ReserveFundAnalytics: Using date for calculations: 2025-11 (selected) 1/11/2025
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_month_expenses: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_obligations: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG previous_obligations: 0
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG final value: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 BuildingOverviewSection: Reserve fund data: 
-{apiGoal: 5000, apiDurationMonths: 5, apiMonthlyTarget: 1000, savedGoal: 5000, savedStartDate: '2025-11-01', …}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: Transformed financial data: 
-{total_balance: -3592, current_obligations: 1280, previous_obligations: 0, current_month_expenses: 1280, reserve_fund_debt: -2312, …}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: buildingData: 
-{id: 1, name: 'Αλκμάνος 22', address: 'Αλκμάνος 22, Αθήνα 115 28, Ελλάδα', city: 'Αθήνα', postal_code: '11528', …}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: has_monthly_activity from API: true
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: has_monthly_activity in financialData: true
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: management_fee_per_apartment: 8.00
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: API average_monthly_expenses: 200
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 BuildingOverviewSection: Final average_monthly_expenses: 200
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 BuildingOverviewSection: Setting financial data: 
-{total_balance: -3592, current_obligations: 1280, previous_obligations: 0, current_month_expenses: 1280, reserve_fund_debt: -2312, …}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 📅 BuildingOverviewSection: Month display name: Νοέμβριος 2025
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 💾 BuildingOverviewSection: Setting final financial data: 
-{total_balance: -3592, current_obligations: 1280, previous_obligations: 0, current_month_expenses: 1280, reserve_fund_debt: -2312, …}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 💾 BuildingOverviewSection: Final current_obligations: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 💾 BuildingOverviewSection: Final average_monthly_expenses: 200
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 ✅ FinancialPage: Automatic refresh completed successfully
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 ReserveFundAnalytics: Using date for calculations: 2025-11 (selected) 1/11/2025
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_month_expenses: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_obligations: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG previous_obligations: 0
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG final value: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 Reserve Fund Form Initialization: 
-{storedStartDate: '2025-11-01', parsedStartDate: '2025-11-01T00:00:00.000Z', calculatedMonth: '11', calculatedYear: '2025', monthName: 'Νοεμβρίου'}
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔄 ReserveFundAnalytics: Using date for calculations: 2025-11 (selected) 1/11/2025
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_month_expenses: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG current_obligations: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG previous_obligations: 0
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🔍 DEBUG final value: 1280
-9687376599902569.js?…ZqJUEvXmPUuZsSUyY:1 🧹 FinancialPage cleaning up open-maintenance-overview event listener
-VM1971 dec20acfd71b85e4.js:1 [useBuildingEvents] WebSocket connection temporarily disabled to debug hanging issue
-ade50c22f517dede.js?…ZqJUEvXmPUuZsSUyY:1 [API THROTTLE] Returning cached data for https://theo.newconcierge.app/api/users/me/_{}
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Current pathname: /projects
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Dashboard: true
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Kiosk Mode: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Info Screen: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is No Sidebar Route: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Current pathname: /projects/new
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Dashboard: true
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Kiosk Mode: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Info Screen: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is No Sidebar Route: false
-ade50c22f517dede.js?…ZqJUEvXmPUuZsSUyY:1 
- POST https://theo.newconcierge.app/api/votes 405 (Method Not Allowed)
-VM1976 654d858ff647d071.js:1 Failed to create vote: Error: POST https://theo.newconcierge.app/api/votes/ failed: 405
-    at c (ade50c22f517dede.js?…vXmPUuZsSUyY:1:2424)
-    at y (ade50c22f517dede.js?…vXmPUuZsSUyY:1:5495)
-    at async I (654d858ff647d071.js?…XmPUuZsSUyY:1:35942)
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Current pathname: /projects/dc61d82a-f80a-41e7-9f79-67d6dd71b28f
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Dashboard: true
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Kiosk Mode: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is Info Screen: false
-12cbbf48c96c043a.js?…ZqJUEvXmPUuZsSUyY:1 [AppProviders] Is No Sidebar Route: false
-ade50c22f517dede.js?…ZqJUEvXmPUuZsSUyY:1 
- GET https://theo.newconcierge.app/api/projects/projects/dc61d82a-f80a-41e7-9f79-67d6dd71b28f 500 (Internal Server Error)
-ade50c22f517dede.js?…ZqJUEvXmPUuZsSUyY:1 
- GET https://theo.newconcierge.app/api/projects/projects/dc61d82a-f80a-41e7-9f79-67d6dd71b28f 500 (Internal Server Error)
-﻿
+2025-11-20T09:55:03.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1f292071-72e9-4931-a5c7-426893007033/vol_zybfcqlvz8kkv1o6
+2025-11-20T09:55:04.000000000Z [inf]  Starting Container
+2025-11-20T09:55:04.923631103Z [inf]  ✅ Postgres is up!
+2025-11-20T09:55:04.923637928Z [inf]  ⏳ Waiting 5 seconds for Postgres to fully initialize...
+2025-11-20T09:55:04.923643855Z [inf]  🚀 DIGITAL CONCIERGE - CONTAINER STARTUP
+2025-11-20T09:55:04.923651288Z [inf]  📅 Deployment: 2025-11-20 09:55:04
+2025-11-20T09:55:04.923655459Z [inf]  ========================================
+2025-11-20T09:55:04.923659980Z [inf]  📁 Logs directory ready
+2025-11-20T09:55:04.923665176Z [inf]  ⏳ Waiting for Postgres (postgres.railway.internal:5432)...
+2025-11-20T09:55:09.249697272Z [inf]  ✅ Postgres ready!
+2025-11-20T09:55:09.249702171Z [inf]  
+2025-11-20T09:55:09.249707025Z [inf]  🎯 Running auto-initialization...
+2025-11-20T09:55:11.206421942Z [inf]  🎯 ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ NEW CONCIERGE PLATFORM
+2025-11-20T09:55:11.206427406Z [inf]  ============================================================
+2025-11-20T09:55:11.206432419Z [inf]  🚀 Complete System with Authentication, Authorization, Billing & Analytics
+2025-11-20T09:55:11.206439556Z [inf]  ============================================================
+2025-11-20T09:55:11.341362961Z [inf]  ✅ Σύνδεση βάσης δεδομένων: OK
+2025-11-20T09:55:11.341369891Z [inf]  
+2025-11-20T09:55:11.341375937Z [inf]  🔄 Εκτέλεση migrations...
+2025-11-20T09:55:11.341381543Z [inf]  🔍 Έλεγχος για unmigrated changes...
+2025-11-20T09:55:12.078027141Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
+2025-11-20T09:55:12.078037072Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+2025-11-20T09:55:12.078098377Z [inf]  === Starting migration
+2025-11-20T09:55:12.078103545Z [inf]  Operations to perform:
+2025-11-20T09:55:12.078108302Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
+2025-11-20T09:55:12.078113495Z [inf]  Running migrations:
+2025-11-20T09:55:12.078145219Z [inf]  Migrations for 'financial':
+2025-11-20T09:55:12.078153465Z [inf]    No migrations to apply.
+2025-11-20T09:55:12.078157627Z [inf]    financial/migrations/0054_delete_financialauditlog.py
+2025-11-20T09:55:12.078166441Z [inf]      - Delete model FinancialAuditLog
+2025-11-20T09:55:12.078171967Z [inf]  📦 Shared migrations...
+2025-11-20T09:55:12.326425842Z [inf]  🏢 Tenant migrations...
+2025-11-20T09:55:12.361768548Z [inf]  === Starting migration
+2025-11-20T09:55:12.399960073Z [inf]  Operations to perform:
+2025-11-20T09:55:12.400026569Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
+2025-11-20T09:55:13.151230633Z [inf]  Running migrations:
+2025-11-20T09:55:13.151237734Z [inf]    No migrations to apply.
+2025-11-20T09:55:13.151244089Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
+2025-11-20T09:55:13.151250679Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+2025-11-20T09:55:13.151261478Z [inf]  === Starting migration
+2025-11-20T09:55:13.222607930Z [inf]  Operations to perform:
+2025-11-20T09:55:13.222614766Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
+2025-11-20T09:55:13.348362308Z [inf]  Running migrations:
+2025-11-20T09:55:13.348366861Z [inf]    No migrations to apply.
+2025-11-20T09:55:13.959852476Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
+2025-11-20T09:55:13.959859174Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+2025-11-20T09:55:13.959865147Z [inf]  ✅ Tenant migrations ολοκληρώθηκαν για 1 tenant(s)
+2025-11-20T09:55:13.959871758Z [inf]  ✅ Migrations ολοκληρώθηκαν
+2025-11-20T09:55:13.959878542Z [inf]  
+2025-11-20T09:55:13.959884582Z [inf]  🔐 Ρύθμιση RBAC System...
+2025-11-20T09:55:13.959890305Z [inf]  ✅ RBAC System ρυθμίστηκε
+2025-11-20T09:55:13.959896023Z [inf]  
+2025-11-20T09:55:13.959901641Z [inf]  💳 Ρύθμιση Billing System...
+2025-11-20T09:55:13.959906870Z [inf]  ℹ️ Subscription plans υπάρχουν ήδη
+2025-11-20T09:55:13.959912109Z [inf]  
+2025-11-20T09:55:13.959922063Z [inf]  🏠 Δημιουργία public tenant...
+2025-11-20T09:55:13.959928938Z [inf]  ℹ️ Υπάρχει ήδη public tenant
+2025-11-20T09:55:13.959936491Z [inf]  ℹ️ Υπάρχει ήδη domain: localhost
+2025-11-20T09:55:13.959942586Z [inf]  ℹ️ Υπάρχει ήδη Railway domain: linuxversion-production.up.railway.app
+2025-11-20T09:55:13.959948274Z [inf]  
+2025-11-20T09:55:13.959954633Z [inf]  👑 Δημιουργία Ultra-Superuser...
+2025-11-20T09:55:14.051375724Z [inf]  ✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com
+2025-11-20T09:55:14.301160467Z [inf]  ============================================================
+2025-11-20T09:55:14.301163560Z [inf]     Frontend: http://demo.localhost:8080
+2025-11-20T09:55:14.301171231Z [inf]  
+2025-11-20T09:55:14.301178531Z [inf]     Backend API: http://demo.localhost:8000/api/
+2025-11-20T09:55:14.301180044Z [inf]  👑 Ultra-Superuser (System Administrator):
+2025-11-20T09:55:14.301183073Z [inf]     Password: theo123!@#
+2025-11-20T09:55:14.301187768Z [inf]     URL: http://localhost:8000/admin/
+2025-11-20T09:55:14.301192926Z [inf]     Permissions: Complete system management
+2025-11-20T09:55:14.301195643Z [inf]     Email: theostam1966@gmail.com
+2025-11-20T09:55:14.301200222Z [inf]  
+2025-11-20T09:55:14.301205775Z [inf]  🌐 Demo Tenant Access:
+2025-11-20T09:55:14.301221319Z [inf]     ✅ Authentication verified - login will work!
+2025-11-20T09:55:14.301226948Z [inf]  📄 Credentials αποθηκεύτηκαν: backend/logs/demo_credentials.log
+2025-11-20T09:55:14.301228463Z [inf]  ============================================================
+2025-11-20T09:55:14.301232588Z [inf]  
+2025-11-20T09:55:14.301241295Z [inf]  🔥 Starting frontend warm-up in background...
+2025-11-20T09:55:14.301241637Z [inf]  ✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ!
+2025-11-20T09:55:14.301247872Z [inf]  
+2025-11-20T09:55:14.301251665Z [inf]  ============================================================
+2025-11-20T09:55:14.301256433Z [inf]  🔥 Frontend Warm-up...
+2025-11-20T09:55:14.301260210Z [inf]  ==================================================
+2025-11-20T09:55:14.301267370Z [inf]  
+2025-11-20T09:55:14.301274217Z [inf]  🎯 NEW CONCIERGE PLATFORM - PRODUCTION READY!
+2025-11-20T09:55:14.304434640Z [inf]     ✅ Subscription Plans: Starter, Professional, Enterprise
+2025-11-20T09:55:14.304438589Z [inf]     ✅ Usage Tracking: Real-time usage monitoring
+2025-11-20T09:55:14.304444395Z [inf]     ✅ Demo Subscription: Manager has Starter plan
+2025-11-20T09:55:14.304450183Z [inf]     ✅ Stripe Integration: Ready for payment processing
+2025-11-20T09:55:14.304458842Z [inf]     ✅ Advanced Analytics: Business intelligence
+2025-11-20T09:55:14.304463219Z [inf]     Admin Panel: http://demo.localhost:8000/admin/
+2025-11-20T09:55:14.304465642Z [inf]     🔧 Admin: admin@demo.localhost / admin123456
+2025-11-20T09:55:14.304467815Z [inf]  
+2025-11-20T09:55:14.304469630Z [inf]     API Documentation: http://demo.localhost:8000/api/docs/
+2025-11-20T09:55:14.304475679Z [inf]  
+2025-11-20T09:55:14.304477546Z [inf]  🔐 Security Features:
+2025-11-20T09:55:14.304481706Z [inf]     👨‍💼 Manager: manager@demo.localhost / manager123456
+2025-11-20T09:55:14.304482674Z [inf]  👥 Demo Users (RBAC Enabled):
+2025-11-20T09:55:14.304490059Z [inf]     👤 Resident 1: resident1@demo.localhost / resident123456
+2025-11-20T09:55:14.304498787Z [inf]     👤 Resident 2: resident2@demo.localhost / resident123456
+2025-11-20T09:55:14.304507469Z [inf]  
+2025-11-20T09:55:14.304514586Z [inf]  🏢 Demo Building: Αλκμάνος 22
+2025-11-20T09:55:14.304520456Z [inf]     Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα
+2025-11-20T09:55:14.304525859Z [inf]     Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
+2025-11-20T09:55:14.304531925Z [inf]     Mills: 1000/1000/1000 (Participation/Heating/Elevator)
+2025-11-20T09:55:14.304539504Z [inf]     Financial Data: Zero demo amounts
+2025-11-20T09:55:14.304546993Z [inf]  
+2025-11-20T09:55:14.304554541Z [inf]  💳 Billing System Features:
+2025-11-20T09:55:14.307838849Z [inf]     📄 Credentials: backend/logs/demo_credentials.log
+2025-11-20T09:55:14.307840940Z [inf]     ✅ RBAC System: Manager & Resident roles
+2025-11-20T09:55:14.307850079Z [inf]     ✅ Email Verification: All users verified
+2025-11-20T09:55:14.307852286Z [inf]  
+2025-11-20T09:55:14.307858338Z [inf]     ✅ JWT Authentication: Secure token-based auth
+2025-11-20T09:55:14.307861071Z [inf]  🚀 READY FOR PRODUCTION!
+2025-11-20T09:55:14.307865148Z [inf]     ✅ Rate Limiting: API protection
+2025-11-20T09:55:14.307871210Z [inf]     The New Concierge platform is fully operational
+2025-11-20T09:55:14.307873040Z [inf]     ✅ Audit Logging: Security monitoring
+2025-11-20T09:55:14.307879437Z [inf]     with complete Authentication, Authorization, Billing,
+2025-11-20T09:55:14.307881586Z [inf]  
+2025-11-20T09:55:14.307887181Z [inf]  📊 System Capabilities:
+2025-11-20T09:55:14.307892853Z [inf]     ✅ Complete API: 70+ endpoints
+2025-11-20T09:55:14.307898840Z [inf]     ✅ Admin Portal: System management
+2025-11-20T09:55:14.307904589Z [inf]     ✅ User Management: Full lifecycle
+2025-11-20T09:55:14.307909875Z [inf]     ✅ Analytics: Revenue, customer, usage analytics
+2025-11-20T09:55:14.307915538Z [inf]     ✅ Documentation: Complete user guides
+2025-11-20T09:55:14.307921300Z [inf]  
+2025-11-20T09:55:14.307926818Z [inf]  📄 Documentation:
+2025-11-20T09:55:14.307932265Z [inf]     📚 User Guides: USER_GUIDES.md
+2025-11-20T09:55:14.307937760Z [inf]     ⚙️ System Admin: SYSTEM_ADMINISTRATION_GUIDE.md
+2025-11-20T09:55:14.307944167Z [inf]     🧪 API Testing: API_TESTING_GUIDE.md
+2025-11-20T09:55:14.307951310Z [inf]     🚀 Deployment: DEPLOYMENT_GUIDE.md
+2025-11-20T09:55:14.307956852Z [inf]     ⚡ Quick Start: QUICK_START.md
+2025-11-20T09:55:14.307964842Z [inf]     📋 Project Summary: PROJECT_SUMMARY.md
+2025-11-20T09:55:14.311675948Z [inf]     and Analytics systems ready for immediate use!
+2025-11-20T09:55:15.380615666Z [inf]  
+2025-11-20T09:55:15.380622595Z [inf]  💳 Creating Stripe Prices...
+2025-11-20T09:55:16.485578184Z [inf]  ======================================================================
+2025-11-20T09:55:16.485583204Z [inf]    💳 CREATING STRIPE PRICES
+2025-11-20T09:55:16.485588810Z [inf]  ======================================================================
+2025-11-20T09:55:16.485594324Z [inf]  
+2025-11-20T09:55:17.138858167Z [inf]        Product ID: prod_TOFuyDd8xL00Qj
+2025-11-20T09:55:17.138864021Z [inf]        Monthly Price ID: price_1SRTOWRpRJxSaTlvGW7HG6nV
+2025-11-20T09:55:17.138870263Z [inf]        Yearly Price ID: price_1SRTOWRpRJxSaTlvjenESiFp
+2025-11-20T09:55:17.138880491Z [inf]  
+2025-11-20T09:55:17.138899181Z [inf]     Professional:
+2025-11-20T09:55:17.138906464Z [inf]        Product ID: prod_TOFu4XWM2Nkhmz
+2025-11-20T09:55:17.138912688Z [inf]        Monthly Price ID: price_1SRTOXRpRJxSaTlvGxr0dG80
+2025-11-20T09:55:17.138918551Z [inf]        Yearly Price ID: price_1SRTOXRpRJxSaTlvpDkyhk4c
+2025-11-20T09:55:17.138924659Z [inf]  
+2025-11-20T09:55:17.138942649Z [inf]     Enterprise:
+2025-11-20T09:55:17.138949658Z [inf]        Product ID: prod_TOFuZdgY8iNsC7
+2025-11-20T09:55:17.138955641Z [inf]        Monthly Price ID: price_1SRTOXRpRJxSaTlvlN1NVzHu
+2025-11-20T09:55:17.138962758Z [inf]        Yearly Price ID: price_1SRTOYRpRJxSaTlvIsi8rcDG
+2025-11-20T09:55:17.138969477Z [inf]  
+2025-11-20T09:55:17.138977790Z [inf]  
+2025-11-20T09:55:17.138983817Z [inf]  🔄 Running additional migrations...
+2025-11-20T09:55:17.138990654Z [inf]     AUTO_MAKEMIGRATIONS=unset
+2025-11-20T09:55:17.138996833Z [inf]  
+2025-11-20T09:55:17.139003519Z [inf]  📦 Collecting static files...
+2025-11-20T09:55:17.139039557Z [inf]  📦 Processing plan: Starter
+2025-11-20T09:55:17.139043547Z [inf]     ℹ️  Product already exists: prod_TOFuyDd8xL00Qj
+2025-11-20T09:55:17.139048544Z [inf]     ℹ️  Monthly price already exists: price_1SRTOWRpRJxSaTlvGW7HG6nV
+2025-11-20T09:55:17.139052396Z [inf]     ℹ️  Yearly price already exists: price_1SRTOWRpRJxSaTlvjenESiFp
+2025-11-20T09:55:17.139056122Z [inf]     💾 Plan saved with Stripe IDs
+2025-11-20T09:55:17.139061607Z [inf]  
+2025-11-20T09:55:17.139066165Z [inf]  📦 Processing plan: Professional
+2025-11-20T09:55:17.139070242Z [inf]     ℹ️  Product already exists: prod_TOFu4XWM2Nkhmz
+2025-11-20T09:55:17.139074236Z [inf]     ℹ️  Monthly price already exists: price_1SRTOXRpRJxSaTlvGxr0dG80
+2025-11-20T09:55:17.139078659Z [inf]     ℹ️  Yearly price already exists: price_1SRTOXRpRJxSaTlvpDkyhk4c
+2025-11-20T09:55:17.139083192Z [inf]     💾 Plan saved with Stripe IDs
+2025-11-20T09:55:17.139087685Z [inf]  
+2025-11-20T09:55:17.139092751Z [inf]  📦 Processing plan: Enterprise
+2025-11-20T09:55:17.139096922Z [inf]     ℹ️  Product already exists: prod_TOFuZdgY8iNsC7
+2025-11-20T09:55:17.139101062Z [inf]     ℹ️  Monthly price already exists: price_1SRTOXRpRJxSaTlvlN1NVzHu
+2025-11-20T09:55:17.139105332Z [inf]     ℹ️  Yearly price already exists: price_1SRTOYRpRJxSaTlvIsi8rcDG
+2025-11-20T09:55:17.139110255Z [inf]     💾 Plan saved with Stripe IDs
+2025-11-20T09:55:17.139115265Z [inf]  
+2025-11-20T09:55:17.139119896Z [inf]  ======================================================================
+2025-11-20T09:55:17.139123822Z [inf]    ✅ STRIPE PRICES CREATED SUCCESSFULLY!
+2025-11-20T09:55:17.139127712Z [inf]  ======================================================================
+2025-11-20T09:55:17.139131650Z [inf]  
+2025-11-20T09:55:17.139135462Z [inf]  📊 Summary:
+2025-11-20T09:55:17.139139378Z [inf]     Starter:
+2025-11-20T09:55:19.026585765Z [inf]  
+2025-11-20T09:55:19.026594078Z [inf]  163 static files copied to '/app/staticfiles'.
+2025-11-20T09:55:19.026594359Z [inf]  🚂 Railway deployment detected - skipping frontend warm-up
+2025-11-20T09:55:19.026600760Z [inf]  
+2025-11-20T09:55:19.026607123Z [inf]     Frontend is deployed separately on Vercel
+2025-11-20T09:55:19.026608203Z [inf]  🔥 Initiating frontend warm-up process...
+2025-11-20T09:55:19.026616674Z [inf]  
+2025-11-20T09:55:19.026623943Z [inf]  🚀 Launching Django server...
+2025-11-20T09:55:19.026631124Z [inf]     🌐 Production mode detected
+2025-11-20T09:55:19.026639319Z [inf]     Starting gunicorn on port 8080
+2025-11-20T09:55:20.191789274Z [err]  [2025-11-20 09:55:19 +0000] [1] [INFO] Starting gunicorn 21.2.0
+2025-11-20T09:55:20.191795170Z [err]  [2025-11-20 09:55:19 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+2025-11-20T09:55:20.191800951Z [err]  [2025-11-20 09:55:19 +0000] [1] [INFO] Using worker: sync
+2025-11-20T09:55:20.191806384Z [err]  [2025-11-20 09:55:19 +0000] [16] [INFO] Booting worker with pid: 16
+2025-11-20T09:55:20.191811869Z [err]  [2025-11-20 09:55:19 +0000] [17] [INFO] Booting worker with pid: 17
+2025-11-20T10:00:11.318520227Z [err]  DEBUG 2025-11-20 12:00:08,246 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:11.318529239Z [err]  DEBUG 2025-11-20 12:00:08,246 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:11.318537554Z [err]  INFO 2025-11-20 12:00:08,429 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:11.318545226Z [inf]  100.64.0.2 - - [20/Nov/2025:12:00:09 +0200] "GET /api/users/me/ HTTP/1.1" 200 424 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:11.318551712Z [err]  DEBUG 2025-11-20 12:00:10,046 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:11.318556365Z [err]  DEBUG 2025-11-20 12:00:10,046 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:11.318570368Z [err]  INFO 2025-11-20 12:00:10,062 views 17 139653508156288 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 819) in tenant: theo
+2025-11-20T10:00:11.318571274Z [err]  INFO 2025-11-20 12:00:10,053 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:11.318585753Z [inf]  🔍 BuildingViewSet.list() called
+2025-11-20T10:00:11.318594971Z [err]  INFO 2025-11-20 12:00:10,062 views 17 139653508156288 User is superuser/staff. Returning all buildings.
+2025-11-20T10:00:11.318606727Z [inf]  🔍 BuildingViewSet.list() response count: 2
+2025-11-20T10:00:11.322555995Z [err]  INFO 2025-11-20 12:00:10,759 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:11.322565144Z [err]  ERROR 2025-11-20 12:00:10,780 log 17 139653508156288 Internal Server Error: /api/kiosk/configs/
+2025-11-20T10:00:11.322565953Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.322570223Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:11.322576103Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:11.322577052Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:11.322582055Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:11.322584152Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:11.322593044Z [err]                                                               ^
+2025-11-20T10:00:11.322597722Z [err]  
+2025-11-20T10:00:11.322602241Z [err]  
+2025-11-20T10:00:11.322963846Z [inf]  🔍 First building street view image: None
+2025-11-20T10:00:11.322967854Z [inf]  100.64.0.2 - - [20/Nov/2025:12:00:10 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 3587 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:11.322972440Z [err]  DEBUG 2025-11-20 12:00:10,756 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:11.322977000Z [err]  DEBUG 2025-11-20 12:00:10,756 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:11.323101169Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:11.325905055Z [err]  
+2025-11-20T10:00:11.325909518Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:11.325914150Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:11.325918301Z [err]      response = get_response(request)
+2025-11-20T10:00:11.325922741Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.325926541Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:11.325931685Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:11.325935875Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.326114701Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:11.326119780Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:11.326124218Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.326128019Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:11.326131870Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:11.326135900Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.326146898Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:11.326151060Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:11.326154953Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.326159532Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:11.326163457Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:11.326168570Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:11.328436547Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:11.328441736Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:11.328445036Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:11.328448065Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:11.328453062Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.328454727Z [err]      self._fetch_all()
+2025-11-20T10:00:11.328455215Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.328457127Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.328463479Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:11.328465492Z [err]    File "/app/kiosk/views.py", line 48, in list
+2025-11-20T10:00:11.328467160Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:11.328473373Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:11.328474434Z [err]      num = len(clone)
+2025-11-20T10:00:11.328481784Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:11.328484019Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:11.328491499Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.328500588Z [err]      raise exc
+2025-11-20T10:00:11.328502604Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:11.328510289Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.328518305Z [err]    File "/app/kiosk/views.py", line 38, in get_queryset
+2025-11-20T10:00:11.328525226Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:11.331341096Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:11.331353889Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:11.331361111Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:11.331373876Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.331380831Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:11.331388265Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:11.331394679Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.331401625Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:11.331408446Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:11.331414991Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:11.331422149Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:11.331428880Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.331435598Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:11.331442492Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:11.331448814Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.331459178Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:11.331464801Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:11.331471725Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.331478187Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:11.334140184Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:11.334150130Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:11.334157900Z [err]                                                               ^
+2025-11-20T10:00:11.334164678Z [err]  
+2025-11-20T10:00:11.334172076Z [inf]  100.64.0.2 - - [20/Nov/2025:12:00:10 +0200] "GET /api/kiosk/configs/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:11.334188454Z [err]  DEBUG 2025-11-20 12:00:11,098 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:11.334194734Z [err]  DEBUG 2025-11-20 12:00:11,098 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:11.334202043Z [err]  INFO 2025-11-20 12:00:11,103 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:11.334208093Z [inf]  100.64.0.2 - - [20/Nov/2025:12:00:11 +0200] "GET /api/buildings/current-context/?building_id=1 HTTP/1.1" 200 693 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:11.594018144Z [err]  DEBUG 2025-11-20 12:00:11,589 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:11.594023854Z [err]  DEBUG 2025-11-20 12:00:11,589 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:11.599964622Z [err]  INFO 2025-11-20 12:00:11,596 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:11.612398631Z [err]  ERROR 2025-11-20 12:00:11,607 log 17 139653508156288 Internal Server Error: /api/kiosk/configs/
+2025-11-20T10:00:11.612406901Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:11.612413802Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:11.612419648Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:11.612425757Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.612431884Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:11.612438990Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:11.612444639Z [err]                                                               ^
+2025-11-20T10:00:11.612453243Z [err]  
+2025-11-20T10:00:11.612459440Z [err]  
+2025-11-20T10:00:11.612466627Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:11.612473252Z [err]  
+2025-11-20T10:00:11.612478453Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:11.612484576Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:11.612492075Z [err]      response = get_response(request)
+2025-11-20T10:00:11.612497345Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.612502428Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:11.612508154Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:11.612514037Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.612519690Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:11.616700249Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:11.616707960Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.616713885Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:11.616719453Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:11.616725124Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.616730770Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:11.616736296Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:11.616741742Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.616749505Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:11.616754955Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:11.616761474Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:11.616766833Z [err]      raise exc
+2025-11-20T10:00:11.616772119Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:11.616777213Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:11.616783371Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.616789465Z [err]    File "/app/kiosk/views.py", line 48, in list
+2025-11-20T10:00:11.616796217Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:11.616802689Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.616809067Z [err]    File "/app/kiosk/views.py", line 38, in get_queryset
+2025-11-20T10:00:11.616813672Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:11.616818708Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.621476304Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:11.621484142Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:11.621490962Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.621497614Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:11.621505033Z [err]      num = len(clone)
+2025-11-20T10:00:11.621512535Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:11.621519771Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:11.621526208Z [err]      self._fetch_all()
+2025-11-20T10:00:11.621532819Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:11.621538098Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:11.621543432Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.621548502Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:11.621554083Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:11.621558927Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.621566695Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:11.621572141Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:11.621577394Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:11.621582401Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:11.621586806Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.621591142Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:11.626101421Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:11.626113142Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:11.626121212Z [err]                                                               ^
+2025-11-20T10:00:11.626128627Z [err]  
+2025-11-20T10:00:11.626136058Z [inf]  100.64.0.2 - - [20/Nov/2025:12:00:11 +0200] "GET /api/kiosk/configs/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:11.626159618Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:11.626173414Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.626182682Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:11.626189026Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:11.626194962Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:11.626203215Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:11.626209773Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:11.626217306Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:11.626223299Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:11.626229046Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.594939687Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.594958948Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:12.594963779Z [err]  DEBUG 2025-11-20 12:00:11,714 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:12.594970984Z [err]  DEBUG 2025-11-20 12:00:11,714 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:12.594973637Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:12.594979437Z [err]  INFO 2025-11-20 12:00:11,719 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:12.594983397Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:12.594987420Z [err]  ERROR 2025-11-20 12:00:11,729 log 17 139653508156288 Internal Server Error: /api/kiosk/scenes/
+2025-11-20T10:00:12.594993808Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:12.594997878Z [err]      raise exc
+2025-11-20T10:00:12.595001924Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:12.595009120Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:12.595010234Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:12.595011603Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:12.595019414Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:12.595019461Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:12.595021572Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595029894Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:12.595029994Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595036346Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:12.595039159Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:12.595046558Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:12.595046772Z [err]                                                               ^
+2025-11-20T10:00:12.595056137Z [err]  
+2025-11-20T10:00:12.595057064Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595063397Z [err]  
+2025-11-20T10:00:12.595069466Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:12.595075967Z [err]  
+2025-11-20T10:00:12.595081470Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:12.595087006Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:12.595092971Z [err]      response = get_response(request)
+2025-11-20T10:00:12.595121702Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:12.595129964Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595133580Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595142693Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:12.595146106Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595155143Z [err]    File "/app/kiosk/views.py", line 300, in get_queryset
+2025-11-20T10:00:12.595160332Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:12.595166488Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595168752Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595178177Z [err]    File "/app/kiosk/views.py", line 316, in list
+2025-11-20T10:00:12.595178468Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:12.595184277Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:12.595205172Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.595217188Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:12.595225164Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:12.595252834Z [err]      num = len(clone)
+2025-11-20T10:00:12.595260192Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:12.595266477Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:12.595273364Z [err]      self._fetch_all()
+2025-11-20T10:00:12.595279543Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:12.595286203Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:12.596153506Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.596159827Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:12.596170244Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:12.596176379Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.596182054Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:12.596187737Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:12.599056301Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:12.599062264Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:12.599069281Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:12.599075033Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:12.599080670Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.599085281Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:12.599093189Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:12.599097374Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.599101641Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:12.599105898Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:12.599110521Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.599116740Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:12.599120802Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:12.599124888Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:12.599128982Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:12.599137425Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:12.599142280Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:12.599146632Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:12.599150818Z [err]                                                               ^
+2025-11-20T10:00:12.601710236Z [inf]  100.64.0.3 - - [20/Nov/2025:12:00:11 +0200] "GET /api/kiosk/scenes/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:12.601742307Z [err]  
+2025-11-20T10:00:32.599078833Z [inf]  100.64.0.4 - - [20/Nov/2025:12:00:25 +0200] "OPTIONS /api/users/login/ HTTP/1.1" 200 0 "https://theo.newconcierge.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.599083268Z [err]  DEBUG 2025-11-20 12:00:26,232 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Forwarded-Host 'linuxversion-production.up.railway.app' -> 'linuxversion-production.up.railway.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.599087528Z [err]  DEBUG 2025-11-20 12:00:26,232 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'linuxversion-production.up.railway.app'
+2025-11-20T10:00:32.599092344Z [err]  INFO 2025-11-20 12:00:26,236 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'linuxversion-production.up.railway.app' -> tenant 'public' via domain lookup
+2025-11-20T10:00:32.599096204Z [inf]  >>> LOGIN_VIEW CALLED - Method: POST
+2025-11-20T10:00:32.599100285Z [inf]  >>> LOGIN_VIEW - Request data: {'email': 'etherm2021@gmail.com', 'password': 'theo123@@@'}
+2025-11-20T10:00:32.603238131Z [inf]  >>> DEBUG: user.role = 'manager'
+2025-11-20T10:00:32.603249807Z [inf]  >>> DEBUG: user_data keys = ['id', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'role', 'office_name', 'office_phone', 'office_address', 'office_logo', 'office_bank_name', 'office_bank_account', 'office_bank_iban', 'office_bank_beneficiary', 'tenant']
+2025-11-20T10:00:32.603258389Z [inf]  >>> DEBUG: user_data['role'] = 'manager'
+2025-11-20T10:00:32.603264349Z [inf]  >>> DEBUG: User has tenant: theo, redirecting to /dashboard
+2025-11-20T10:00:32.603270549Z [inf]  100.64.0.5 - - [20/Nov/2025:12:00:26 +0200] "POST /api/users/login/ HTTP/1.1" 200 992 "https://theo.newconcierge.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.603277325Z [err]  DEBUG 2025-11-20 12:00:27,537 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.603283953Z [err]  DEBUG 2025-11-20 12:00:27,538 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.603290356Z [err]  INFO 2025-11-20 12:00:27,541 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.603356191Z [inf]  >>> LOGIN_VIEW - Request headers: {'Host': 'linuxversion-production.up.railway.app', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', 'Content-Length': '56', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'el-GR,el;q=0.9', 'Content-Type': 'application/json', 'Origin': 'https://theo.newconcierge.app', 'Priority': 'u=1, i', 'Referer': 'https://theo.newconcierge.app/', 'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Storage-Access': 'active', 'X-Forwarded-For': '62.74.47.24', 'X-Forwarded-Host': 'linuxversion-production.up.railway.app', 'X-Forwarded-Proto': 'https', 'X-Railway-Edge': 'railway/europe-west4-drams3a', 'X-Railway-Request-Id': '8SaGRJJmQ3iRmBsP5nX1uw', 'X-Real-Ip': '62.74.47.24', 'X-Request-Start': '1763632826083'}
+2025-11-20T10:00:32.603362062Z [inf]  >>> LOGIN_VIEW - Current schema: public
+2025-11-20T10:00:32.603367388Z [inf]  >>> Ελήφθησαν στοιχεία login: email=etherm2021@gmail.com, password=****
+2025-11-20T10:00:32.603372289Z [inf]  >>> LOGIN_VIEW - Authenticating in schema: public
+2025-11-20T10:00:32.603377115Z [inf]  >>> Όλοι οι χρήστες: [{'id': 819, 'email': 'etherm2021@gmail.com'}, {'id': 792, 'email': 'theostam1966@gmail.com'}]
+2025-11-20T10:00:32.603382706Z [inf]  >>> Χρήστης από authenticate(): etherm2021@gmail.com
+2025-11-20T10:00:32.605138989Z [inf]  100.64.0.6 - - [20/Nov/2025:12:00:27 +0200] "GET /api/users/me/ HTTP/1.1" 200 424 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.605145144Z [err]  DEBUG 2025-11-20 12:00:28,057 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.605150810Z [err]  DEBUG 2025-11-20 12:00:28,057 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.605155266Z [err]  INFO 2025-11-20 12:00:28,061 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.605159697Z [inf]  🔍 BuildingViewSet.list() called
+2025-11-20T10:00:32.605165071Z [err]  INFO 2025-11-20 12:00:28,067 views 17 139653508156288 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 819) in tenant: theo
+2025-11-20T10:00:32.605169256Z [err]  INFO 2025-11-20 12:00:28,067 views 17 139653508156288 User is superuser/staff. Returning all buildings.
+2025-11-20T10:00:32.605174984Z [inf]  🔍 BuildingViewSet.list() response count: 2
+2025-11-20T10:00:32.605179552Z [inf]  🔍 First building street view image: None
+2025-11-20T10:00:32.605183577Z [inf]  100.64.0.6 - - [20/Nov/2025:12:00:28 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 3587 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.605187641Z [err]  DEBUG 2025-11-20 12:00:28,608 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.607836293Z [err]  DEBUG 2025-11-20 12:00:28,608 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.607842544Z [err]  INFO 2025-11-20 12:00:28,613 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.607848633Z [err]  ERROR 2025-11-20 12:00:28,621 log 17 139653508156288 Internal Server Error: /api/kiosk/configs/
+2025-11-20T10:00:32.607855989Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.607862535Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.607868578Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.607874206Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.607879528Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:32.607885518Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.607890938Z [err]                                                               ^
+2025-11-20T10:00:32.607897176Z [err]  
+2025-11-20T10:00:32.607903272Z [err]  
+2025-11-20T10:00:32.607909813Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:32.607915864Z [err]  
+2025-11-20T10:00:32.607921463Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.607927456Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:32.607976762Z [err]      response = get_response(request)
+2025-11-20T10:00:32.607983620Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.607989152Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:32.610487643Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:32.610496245Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.610502215Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:32.610508180Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:32.610513995Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:32.610524552Z [err]      raise exc
+2025-11-20T10:00:32.610530883Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:32.610536576Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:32.610542712Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.610550605Z [err]    File "/app/kiosk/views.py", line 48, in list
+2025-11-20T10:00:32.610562841Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:32.610568774Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.610574073Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:32.610581055Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:32.610586738Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.610592455Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:32.610598091Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:32.610604371Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.610609684Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:32.612923957Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:32.612931225Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.612936544Z [err]    File "/app/kiosk/views.py", line 38, in get_queryset
+2025-11-20T10:00:32.612942295Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:32.612947682Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.612953378Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:32.612959743Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:32.612966110Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.612971671Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:32.612977431Z [err]      num = len(clone)
+2025-11-20T10:00:32.612982992Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:32.612987969Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:32.612993604Z [err]      self._fetch_all()
+2025-11-20T10:00:32.612998550Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:32.613003738Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:32.613009948Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.613015280Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:32.613020777Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:32.613025935Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.613031580Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:32.616241174Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:32.616246787Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:32.616252518Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:32.616259189Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.616264456Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:32.616269387Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:32.616275559Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.616281504Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:32.616287431Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:32.616292669Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.616297825Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:32.616303756Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:32.616309644Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.616314948Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.616320046Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.616325155Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:32.616330928Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.616337878Z [err]                                                               ^
+2025-11-20T10:00:32.616342009Z [err]  
+2025-11-20T10:00:32.616346129Z [inf]  100.64.0.6 - - [20/Nov/2025:12:00:28 +0200] "GET /api/kiosk/configs/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.619115475Z [err]  DEBUG 2025-11-20 12:00:28,925 middleware 16 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.619123487Z [err]  DEBUG 2025-11-20 12:00:28,926 middleware 16 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.619130133Z [err]  INFO 2025-11-20 12:00:29,116 middleware 16 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.619136254Z [err]  DEBUG 2025-11-20 12:00:29,237 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.619142232Z [err]  DEBUG 2025-11-20 12:00:29,237 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.619148730Z [err]  INFO 2025-11-20 12:00:29,243 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.619155175Z [err]  ERROR 2025-11-20 12:00:29,254 log 17 139653508156288 Internal Server Error: /api/kiosk/scenes/
+2025-11-20T10:00:32.619163807Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.619171234Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.619177307Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.619183318Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.619189127Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:32.619195757Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.621758982Z [err]                                                               ^
+2025-11-20T10:00:32.621767198Z [err]  
+2025-11-20T10:00:32.621773476Z [err]  
+2025-11-20T10:00:32.621779196Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:32.621784813Z [err]  
+2025-11-20T10:00:32.621790010Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.621795338Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:32.621800933Z [err]      response = get_response(request)
+2025-11-20T10:00:32.621809087Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.621814584Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:32.621820293Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:32.621826133Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.621831133Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:32.621836631Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:32.621842371Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.621847708Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:32.621853368Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:32.621859105Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.621864808Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:32.621870097Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:32.621905702Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.624442900Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:32.624454351Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:32.624459826Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:32.624464627Z [err]      raise exc
+2025-11-20T10:00:32.624469148Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:32.624473815Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:32.624477853Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.624482301Z [err]    File "/app/kiosk/views.py", line 316, in list
+2025-11-20T10:00:32.624487247Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:32.624491633Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.624497892Z [err]    File "/app/kiosk/views.py", line 300, in get_queryset
+2025-11-20T10:00:32.624502758Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:32.624507199Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.624511682Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:32.624516202Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:32.624520779Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.624525621Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:32.624530026Z [err]      num = len(clone)
+2025-11-20T10:00:32.624534250Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:32.624538777Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:32.627220468Z [err]      self._fetch_all()
+2025-11-20T10:00:32.627226761Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:32.627232919Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:32.627238668Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.627244402Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:32.627249923Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:32.627258209Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.627264261Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:32.627270191Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:32.627276151Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:32.627281413Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:32.627286974Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.627292605Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:32.627297887Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:32.627305317Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.627392872Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:32.627400220Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:32.627448454Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.627455076Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:32.627460129Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:32.629948570Z [err]  INFO 2025-11-20 12:00:30,724 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.629948726Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.629957862Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.629959402Z [err]  ERROR 2025-11-20 12:00:30,735 log 17 139653508156288 Internal Server Error: /api/kiosk/configs/
+2025-11-20T10:00:32.629964648Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.629969609Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:32.629974253Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.629979488Z [err]                                                               ^
+2025-11-20T10:00:32.629984660Z [err]  
+2025-11-20T10:00:32.629990405Z [inf]  100.64.0.7 - - [20/Nov/2025:12:00:29 +0200] "GET /api/kiosk/scenes/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.629996391Z [inf]  100.64.0.6 - - [20/Nov/2025:12:00:30 +0200] "GET /api/buildings/current-context/?building_id=1 HTTP/1.1" 200 693 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.630002630Z [err]  DEBUG 2025-11-20 12:00:30,719 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.630010880Z [err]  DEBUG 2025-11-20 12:00:30,719 middleware 17 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.634165206Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.634176153Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:32.634183863Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:32.634190545Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.634196883Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:32.634203591Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:32.634209632Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.634227983Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.634236994Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.634246978Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.634252935Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.634259158Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:32.634265421Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.634271188Z [err]                                                               ^
+2025-11-20T10:00:32.634277265Z [err]  
+2025-11-20T10:00:32.634283246Z [err]  
+2025-11-20T10:00:32.634289521Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:32.634295550Z [err]  
+2025-11-20T10:00:32.634301121Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.634306930Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:32.634313045Z [err]      response = get_response(request)
+2025-11-20T10:00:32.637810521Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:32.637818031Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:32.637823797Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.637831057Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:32.637838055Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:32.637843865Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.637850795Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:32.637857636Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:32.637864797Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:32.637870844Z [err]      raise exc
+2025-11-20T10:00:32.637877192Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:32.637883272Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:32.637889494Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.637895250Z [err]    File "/app/kiosk/views.py", line 48, in list
+2025-11-20T10:00:32.637902026Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:32.637907802Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.637914214Z [err]    File "/app/kiosk/views.py", line 38, in get_queryset
+2025-11-20T10:00:32.637920058Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:32.637925736Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.637931571Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:32.642192639Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:32.642207906Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.642224491Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:32.642230826Z [err]      num = len(clone)
+2025-11-20T10:00:32.642237080Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:32.642242481Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:32.642255049Z [err]      self._fetch_all()
+2025-11-20T10:00:32.642269240Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:32.642283712Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:32.642298231Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.642305691Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:32.642312948Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:32.642318950Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.642330312Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:32.642345438Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:32.642358278Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:32.642372062Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:32.642385145Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.642398962Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:32.642417222Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:32.644658498Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.644664641Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:32.644670220Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:32.644674904Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.644679754Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:32.644685792Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:32.644692796Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.644699204Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.644705956Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.644710797Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:32.644715542Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.644720388Z [err]                                                               ^
+2025-11-20T10:00:32.644725584Z [err]  
+2025-11-20T10:00:32.644731466Z [inf]  100.64.0.6 - - [20/Nov/2025:12:00:30 +0200] "GET /api/kiosk/configs/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.644736456Z [err]  DEBUG 2025-11-20 12:00:30,773 middleware 16 139653508156288 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-20T10:00:32.644743055Z [err]  DEBUG 2025-11-20 12:00:30,773 middleware 16 139653508156288 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-20T10:00:32.647544711Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-11-20T10:00:32.647555006Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-11-20T10:00:32.647561886Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.647568904Z [err]  INFO 2025-11-20 12:00:30,778 middleware 16 139653508156288 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-20T10:00:32.647575152Z [err]  ERROR 2025-11-20 12:00:30,800 log 16 139653508156288 Internal Server Error: /api/kiosk/scenes/
+2025-11-20T10:00:32.647581215Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.647587207Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.647593301Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.647599413Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.647605422Z [err]  psycopg2.errors.UndefinedTable: relation "buildings_building" does not exist
+2025-11-20T10:00:32.647611469Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.647617462Z [err]                                                               ^
+2025-11-20T10:00:32.647623610Z [err]  
+2025-11-20T10:00:32.647628840Z [err]  
+2025-11-20T10:00:32.647633578Z [err]  The above exception was the direct cause of the following exception:
+2025-11-20T10:00:32.647638994Z [err]  
+2025-11-20T10:00:32.647644739Z [err]  Traceback (most recent call last):
+2025-11-20T10:00:32.647650769Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-11-20T10:00:32.647658849Z [err]      response = get_response(request)
+2025-11-20T10:00:32.647664768Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.650960936Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-11-20T10:00:32.650964972Z [err]      return view_func(request, *args, **kwargs)
+2025-11-20T10:00:32.650968740Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.650972445Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-11-20T10:00:32.650977154Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-11-20T10:00:32.650981356Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.650985067Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-11-20T10:00:32.650989340Z [err]      response = self.handle_exception(exc)
+2025-11-20T10:00:32.650993038Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.650997346Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-11-20T10:00:32.651001586Z [err]      self.raise_uncaught_exception(exc)
+2025-11-20T10:00:32.651005862Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-11-20T10:00:32.651010734Z [err]      raise exc
+2025-11-20T10:00:32.651020947Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-11-20T10:00:32.651024835Z [err]      response = handler(request, *args, **kwargs)
+2025-11-20T10:00:32.651029070Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.651032950Z [err]    File "/app/kiosk/views.py", line 316, in list
+2025-11-20T10:00:32.651037031Z [err]      queryset = self.get_queryset()
+2025-11-20T10:00:32.651040865Z [err]                 ^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.651044516Z [err]    File "/app/kiosk/views.py", line 300, in get_queryset
+2025-11-20T10:00:32.654301233Z [err]      num = len(clone)
+2025-11-20T10:00:32.654313048Z [err]            ^^^^^^^^^^
+2025-11-20T10:00:32.654320780Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 368, in __len__
+2025-11-20T10:00:32.654323260Z [err]      building = Building.objects.get(id=building_id)
+2025-11-20T10:00:32.654328139Z [err]      self._fetch_all()
+2025-11-20T10:00:32.654331410Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.654338198Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+2025-11-20T10:00:32.654338684Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+2025-11-20T10:00:32.654346526Z [err]      return getattr(self.get_queryset(), name)(*args, **kwargs)
+2025-11-20T10:00:32.654349027Z [err]      self._result_cache = list(self._iterable_class(self))
+2025-11-20T10:00:32.654354971Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.654356464Z [err]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.654361092Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 631, in get
+2025-11-20T10:00:32.654362981Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+2025-11-20T10:00:32.654368776Z [err]      results = compiler.execute_sql(
+2025-11-20T10:00:32.654374429Z [err]                ^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.654379747Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+2025-11-20T10:00:32.654385455Z [err]      cursor.execute(sql, params)
+2025-11-20T10:00:32.654391024Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+2025-11-20T10:00:32.659001912Z [err]  django.db.utils.ProgrammingError: relation "buildings_building" does not exist
+2025-11-20T10:00:32.659002713Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+2025-11-20T10:00:32.659013575Z [err]      return executor(sql, params, many, context)
+2025-11-20T10:00:32.659015043Z [err]  LINE 1: ...ngs_building"."google_calendar_sync_enabled" FROM "buildings...
+2025-11-20T10:00:32.659023599Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.659024779Z [err]                                                               ^
+2025-11-20T10:00:32.659032367Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+2025-11-20T10:00:32.659035549Z [err]  
+2025-11-20T10:00:32.659041133Z [err]      with self.db.wrap_database_errors:
+2025-11-20T10:00:32.659045476Z [inf]  100.64.0.3 - - [20/Nov/2025:12:00:30 +0200] "GET /api/kiosk/scenes/?building_id=1 HTTP/1.1" 500 145 "https://theo.newconcierge.app/kiosk-management" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-20T10:00:32.659049503Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.659056216Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+2025-11-20T10:00:32.659062930Z [err]      raise dj_exc_value.with_traceback(traceback) from exc_value
+2025-11-20T10:00:32.659068711Z [err]    File "/usr/local/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+2025-11-20T10:00:32.659075307Z [err]      return self.cursor.execute(sql, params)
+2025-11-20T10:00:32.659081882Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-20T10:00:32.659200810Z [err]      return self._execute_with_wrappers(
+2025-11-20T10:00:32.659213072Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
