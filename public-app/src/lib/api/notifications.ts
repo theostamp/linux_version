@@ -35,7 +35,8 @@ export const notificationTemplatesApi = {
   }) => {
     // The apiClient.get returns data directly
     const response = await apiClient.get<{ results?: NotificationTemplate[] } | NotificationTemplate[]>(
-      `${BASE_URL}/templates/`
+      `${BASE_URL}/templates/`,
+      { params }
     );
     // Handle both paginated and non-paginated responses
     return Array.isArray(response) ? response : (response as { results?: NotificationTemplate[] }).results || [];
