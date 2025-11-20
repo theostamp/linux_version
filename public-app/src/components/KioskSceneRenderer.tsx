@@ -8,13 +8,17 @@ import FinancialSceneCustom from '@/components/kiosk/scenes/FinancialSceneCustom
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
-export default function KioskSceneRenderer() {
+interface KioskSceneRendererProps {
+  buildingIdOverride?: number | null;
+}
+
+export default function KioskSceneRenderer({ buildingIdOverride }: KioskSceneRendererProps = {}) {
   // ✅ Get building from BuildingContext
   const { selectedBuilding } = useBuilding();
-  const selectedBuildingId = selectedBuilding?.id ?? null;
+  const effectiveBuildingId = buildingIdOverride ?? selectedBuilding?.id ?? null;
   
-  const { scenes, isLoading, error } = useKioskScenes(selectedBuildingId);
-  const { data: kioskData } = useKioskData(selectedBuildingId);
+  const { scenes, isLoading, error } = useKioskScenes(effectiveBuildingId);
+  const { data: kioskData } = useKioskData(effectiveBuildingId ?? 1);
   
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -61,7 +65,7 @@ export default function KioskSceneRenderer() {
 
   // Handle creating default scene
   const handleCreateDefaultScene = async () => {
-    if (!selectedBuildingId || isCreatingScene) return;
+    if (!effectiveBuildingId || isCreatingScene) return;
     
     setIsCreatingScene(true);
     try {
@@ -71,7 +75,7 @@ export default function KioskSceneRenderer() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          buildingId: selectedBuildingId,
+          buildingId: effectiveBuildingId,
         }),
       });
       
@@ -128,7 +132,7 @@ export default function KioskSceneRenderer() {
         />
       </div>
     );
-  }, [kioskData, selectedBuildingId]);
+  }, [kioskData, effectiveBuildingId]);
 
   // Loading state
   if (isLoading) {
@@ -196,7 +200,7 @@ export default function KioskSceneRenderer() {
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <MorningOverviewSceneCustom data={kioskData} buildingId={selectedBuildingId} />
+        <MorningOverviewSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
         
         {/* Scene indicator */}
         {scenes.length > 1 && (
@@ -230,7 +234,7 @@ export default function KioskSceneRenderer() {
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <FinancialSceneCustom data={kioskData} buildingId={selectedBuildingId} />
+        <FinancialSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
         
         {/* Scene indicator */}
         {scenes.length > 1 && (
@@ -314,4 +318,3 @@ export default function KioskSceneRenderer() {
     </div>
   );
 }
-

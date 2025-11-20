@@ -1,19 +1,11 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { CalendarDays, CloudSun, PhoneCall, QrCode, ShieldAlert, TrendingUp } from 'lucide-react';
-import { useKioskData } from '@/hooks/useKioskData';
-import type { KioskBuildingInfo } from '@/hooks/useKioskData';
-import { useKioskWeather } from '@/hooks/useKioskWeather';
-import { useNews } from '@/hooks/useNews';
-import QRCodeGenerator from '@/components/QRCodeGenerator';
-import BuildingSelector from '@/components/BuildingSelector';
-import type { Building } from '@/lib/api';
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { Suspense, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import type { Building } from '@/lib/api';
 
-const KIOSK_BUILDING_STORAGE_KEY = 'kioskSelectedBuildingId';
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 const parseBuildingId = (value?: string | null): number | null => {
@@ -24,426 +16,40 @@ const parseBuildingId = (value?: string | null): number | null => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 };
 
-const mapBuildingInfoToBuilding = (info: KioskBuildingInfo): Building => ({
-  id: info.id,
-  name: info.name || `Κτίριο #${info.id}`,
-  address: info.address || '—',
-  city: info.city,
-  total_apartments: info.total_apartments,
-  apartments_count: info.total_apartments,
-  internal_manager_name: info.internal_manager_name ?? undefined,
-  internal_manager_phone: info.internal_manager_phone ?? undefined,
-  management_office_name: info.management_office_name ?? undefined,
-  management_office_phone: info.management_office_phone ?? undefined,
-  management_office_address: info.management_office_address ?? undefined,
-  created_at: FALLBACK_TIMESTAMP,
-  updated_at: FALLBACK_TIMESTAMP,
-});
-
-const SIDEBAR_WIDGETS = [
-  {
-    id: 'qr',
-    icon: QrCode,
-    title: 'Κοινόχρηστα Online',
-    description: 'Σαρώστε το QR για να δείτε την ανάλυση κοινοχρήστων και να εξοφλήσετε ηλεκτρονικά.',
-  },
-  {
-    id: 'emergency',
-    icon: PhoneCall,
-    title: 'Τηλέφωνα Έκτακτης Ανάγκης',
-    description: 'Πυροσβεστική: 199 · Άμεση Βοήθεια: 166 · Αστυνομία: 100',
-  },
-] as const;
-
 // Force dynamic rendering to avoid SSR issues with useSearchParams
 export const dynamic = 'force-dynamic';
 
 function KioskDisplayPageContent() {
-  // ✅ Use BuildingContext instead of manual state
-  const { 
-    selectedBuilding, 
-    setSelectedBuilding: selectBuilding,
-  } = useBuilding();
-  const selectedBuildingId = selectedBuilding?.id || 1;
-
-  const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
-  const [sidebarIndex, setSidebarIndex] = useState(0);
-  const [dashboardUrl, setDashboardUrl] = useState(
-    () => (typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '')
-  );
-  const [lastRefreshTime, setLastRefreshTime] = useState<string>('');
-
-  // Fetch real data
-  const { data: kioskData, isLoading: kioskLoading, error: kioskError } = useKioskData(selectedBuildingId);
-  const { weather, isLoading: weatherLoading } = useKioskWeather(300000);
-  const { news, loading: newsLoading } = useNews(300000);
-
-  const openBuildingSelector = useCallback(() => setIsBuildingSelectorOpen(true), []);
-  const closeBuildingSelector = useCallback(() => setIsBuildingSelectorOpen(false), []);
-
-  // ✅ Simplified: Use BuildingContext method
-  const handleBuildingSelect = useCallback(
-    (building: Building | null) => {
-      selectBuilding(building);
-      setIsBuildingSelectorOpen(false);
-    },
-    [selectBuilding]
+  const searchParams = useSearchParams();
+  const buildingParam = useMemo(
+    () => parseBuildingId(searchParams?.get('building')),
+    [searchParams]
   );
 
-  useKeyboardShortcuts({
-    onBuildingSelector: openBuildingSelector,
-  });
+  const { selectedBuilding, setSelectedBuilding } = useBuilding();
 
+  // If building is passed via query string, set it in context (minimal stub for kiosk scenes)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDashboardUrl(`${window.location.origin}/dashboard`);
-    }
-  }, []);
+    if (!buildingParam) return;
+    if (selectedBuilding?.id === buildingParam) return;
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSidebarIndex((prev) => (prev + 1) % SIDEBAR_WIDGETS.length);
-    }, 9000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    setLastRefreshTime(new Date().toLocaleTimeString('el-GR'));
-  }, [kioskLoading, weatherLoading, kioskData, weather]);
-
-  const currentSidebarWidget = useMemo(() => SIDEBAR_WIDGETS[sidebarIndex], [sidebarIndex]);
-
-  // Extract announcements
-  const announcements = kioskData?.announcements || [];
-
-  // Extract apartment debts from financial data
-  const apartmentDebts = useMemo(() => {
-    const maskName = (name?: string | null) => {
-      if (!name) {
-        return '';
-      }
-      const parts = name.trim().split(' ');
-      if (parts.length === 1) {
-        return `${parts[0]} ***`;
-      }
-      return `${parts[0]} ${parts[1][0]}***`;
+    const stubBuilding: Building = {
+      id: buildingParam,
+      name: `Κτίριο #${buildingParam}`,
+      address: '',
+      city: '',
+      created_at: FALLBACK_TIMESTAMP,
+      updated_at: FALLBACK_TIMESTAMP,
     };
 
-    if (!kioskData?.financial) {
-      return {
-        totalDebt: '€0',
-        topDebtors: [],
-      };
-    }
+    setSelectedBuilding(stubBuilding);
+  }, [buildingParam, selectedBuilding?.id, setSelectedBuilding]);
 
-    const financial = kioskData.financial;
-    const totalDebtValue =
-      typeof financial.total_obligations === 'number'
-        ? financial.total_obligations
-        : (financial.apartment_balances || []).reduce(
-            (sum: number, apt: { net_obligation?: number }) => sum + Math.max(0, apt.net_obligation || 0),
-            0
-          );
-
-    const rawDebtors =
-      financial.top_debtors && financial.top_debtors.length > 0
-        ? financial.top_debtors
-        : (financial.apartment_balances || []).filter(
-            (apt: { net_obligation?: number }) => (apt.net_obligation || 0) > 0
-          );
-
-    const topDebtors = rawDebtors
-      .sort((a: any, b: any) => {
-        const aApartment = (a.apartment_number || '').toString();
-        const bApartment = (b.apartment_number || '').toString();
-        return aApartment.localeCompare(bApartment, 'el-GR', { numeric: true });
-      })
-      .map((debtor: any) => {
-        const rawAmount = debtor.amount ?? debtor.net_obligation ?? 0;
-        const amountValue = Number(rawAmount) || 0;
-        const occupantName = maskName(debtor.occupant_name || debtor.tenant_name || debtor.owner_name);
-        return {
-          apartment: debtor.apartment_number || '—',
-          occupant: occupantName,
-          amount: `€${amountValue.toFixed(0)}`,
-          numericAmount: amountValue,
-          hasDebt: amountValue > 0,
-        };
-      });
-
-    return {
-      totalDebt: `€${totalDebtValue.toFixed(0)}`,
-      topDebtors,
-    };
-  }, [kioskData?.financial]);
-
-  const showPaymentNotice = useMemo(() => {
-    if (!apartmentDebts.topDebtors.length) return false;
-    const today = new Date();
-    const hasDebts = apartmentDebts.topDebtors.some((debtor) => debtor.hasDebt);
-    return hasDebts && today.getDate() > 15;
-  }, [apartmentDebts.topDebtors]);
-
-  // Management office info
-  const managementOffice = {
-    name: kioskData?.building_info?.management_office_name || 'Γραφείο Διαχείρισης',
-    phone: kioskData?.building_info?.management_office_phone || '',
-    email: kioskData?.building_info?.management_office_email || '',
-  };
-
-  const buildingLabel = useMemo(() => {
-    if (selectedBuildingId === 0) {
-      return 'Όλα τα Κτίρια';
-    }
-    return kioskData?.building_info?.name || selectedBuilding?.name || 'Επιλογή Κτιρίου';
-  }, [kioskData?.building_info?.name, selectedBuilding?.name, selectedBuildingId]);
-
-  const buildingSubLabel = useMemo(() => {
-    if (selectedBuildingId === 0) {
-      return 'Συνδυαστικά δεδομένα';
-    }
-    return kioskData?.building_info?.address || selectedBuilding?.address || 'Πατήστε Ctrl+Alt+B';
-  }, [kioskData?.building_info?.address, selectedBuilding?.address, selectedBuildingId]);
-
-  if (kioskLoading || weatherLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 text-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Φόρτωση δεδομένων...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (kioskError) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 text-white">
-        <div className="text-center text-red-300">
-          <p className="text-lg font-semibold">Σφάλμα φόρτωσης δεδομένων</p>
-          <p className="text-sm mt-2">{kioskError}</p>
-        </div>
-      </div>
-    );
-  }
+  const effectiveBuildingId = buildingParam ?? selectedBuilding?.id ?? 1;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 text-white overflow-hidden pb-14">
-      <div className="flex h-screen">
-        {/* Left column - 23% */}
-        <div className="w-[23%] flex flex-col space-y-4 p-4">
-          <section className="flex-1 rounded-2xl bg-white/5 border border-white/10 shadow-2xl p-4 overflow-hidden">
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-purple-300" />
-              Σημαντικές Ανακοινώσεις
-            </h2>
-            <div className="space-y-3 overflow-y-auto pr-1 h-full">
-              {announcements.length > 0 ? (
-                announcements.slice(0, 5).map((announcement) => (
-                  <article key={announcement.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
-                    <p className="text-xs text-purple-200 mb-1">
-                      {announcement.date || announcement.created_at 
-                        ? new Date(announcement.date || announcement.created_at).toLocaleDateString('el-GR', {
-                            day: 'numeric',
-                            month: 'long',
-                          })
-                        : ''}
-                    </p>
-                    <h3 className="font-semibold">{announcement.title}</h3>
-                    {announcement.description && (
-                      <p className="text-sm text-slate-200 line-clamp-2">{announcement.description}</p>
-                    )}
-                  </article>
-                ))
-              ) : (
-                <div className="text-center text-slate-400 py-8">
-                  <p>Δεν υπάρχουν ανακοινώσεις</p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="flex-1 rounded-2xl bg-white/5 border border-white/10 shadow-2xl p-4 relative overflow-hidden">
-            <div className="absolute inset-0">
-              <div
-                className="absolute inset-0 transition-transform duration-[1500ms]"
-                style={{ transform: `translateY(-${sidebarIndex * 100}%)` }}
-              >
-                {SIDEBAR_WIDGETS.map((widget) => (
-                  <div key={widget.id} className="h-full flex flex-col justify-between py-4">
-                    <div>
-                      <p className="text-sm text-purple-200 mb-1">Quick Access</p>
-                      <h3 className="text-xl font-semibold flex items-center gap-2">
-                        <widget.icon className="w-5 h-5 text-purple-300" />
-                        {widget.title}
-                      </h3>
-                    </div>
-                    {widget.id === 'qr' ? (
-                      <div className="flex flex-col items-center space-y-3">
-                        <div className="bg-white p-2 rounded-lg">
-                          <QRCodeGenerator
-                            url={dashboardUrl}
-                            size={120}
-                            className="rounded"
-                          />
-                        </div>
-                        <p className="text-base leading-relaxed text-slate-100 text-center">{widget.description}</p>
-                      </div>
-                    ) : (
-                      <p className="text-base leading-relaxed text-slate-100">
-                        {widget.description}
-                        {managementOffice.phone && (
-                          <span className="block mt-2">Διαχείριση: {managementOffice.phone}</span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="absolute top-4 right-4 flex gap-1">
-              {SIDEBAR_WIDGETS.map((_, index) => (
-                <span
-                  key={index}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === sidebarIndex ? 'w-8 bg-purple-300' : 'w-2 bg-white/20'
-                  }`}
-                />
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Center column - 54% */}
-        <div className="w-[54%] flex flex-col space-y-4 p-4">
-          <section className="h-[15%] rounded-2xl bg-white/5 border border-blue-200/30 shadow-2xl p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-200">Γραφείο Διαχείρισης</p>
-              <h2 className="text-2xl font-bold">{managementOffice.name}</h2>
-            </div>
-            <div className="text-right space-y-1 text-sm">
-              {managementOffice.phone && <p>{managementOffice.phone}</p>}
-              {managementOffice.email && <p>{managementOffice.email}</p>}
-            </div>
-          </section>
-
-          <section className="h-[50%] rounded-2xl bg-white/5 border border-purple-200/30 shadow-2xl p-6 flex items-center justify-between">
-            {weather ? (
-              <>
-                <div>
-                  <p className="text-sm text-purple-200 mb-2">Καιρός</p>
-                  <h2 className="text-5xl font-semibold">{weather.current.temperature}°C</h2>
-                  <p className="text-lg text-purple-100">{weather.current.condition}</p>
-                  <p className="text-sm text-purple-100/80">
-                    Υγρασία {weather.current.humidity}% · Άνεμος {weather.current.wind_speed} km/h
-                  </p>
-                </div>
-                <div className="text-8xl">
-                  {weather.current.condition.includes('Ηλιόλουστο') || weather.current.condition.includes('Καθαρός') ? '☀️' :
-                   weather.current.condition.includes('Συννεφιά') ? '☁️' :
-                   weather.current.condition.includes('Βροχή') ? '🌧️' : '🌤️'}
-                </div>
-              </>
-            ) : (
-              <div className="w-full text-center text-purple-200">
-                <CloudSun className="w-32 h-32 mx-auto mb-4 opacity-50" />
-                <p>Δεδομένα καιρού δεν είναι διαθέσιμα</p>
-              </div>
-            )}
-          </section>
-
-          <section className="h-[20%] rounded-2xl bg-white/5 border border-blue-200/30 shadow-2xl p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-200">Άμεσες Ενημερώσεις</p>
-              <h2 className="text-2xl font-semibold">Συνεδρίες & Ψηφοφορίες</h2>
-            </div>
-            <div className="text-right">
-              <p className="text-sm">Τελευταία ενημέρωση: {lastRefreshTime || '—'}</p>
-            </div>
-          </section>
-        </div>
-
-        {/* Right column - 23% */}
-        <div className="w-[23%] p-4 flex flex-col">
-          <section className="flex-1 rounded-2xl bg-[#222D59] border border-indigo-200/30 shadow-2xl p-4 flex flex-col">
-            <div className="space-y-3 overflow-y-auto pr-1">
-              {apartmentDebts.topDebtors.length > 0 ? (
-                apartmentDebts.topDebtors.map((debtor, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
-                    <div className="flex items-center gap-2">
-                      {debtor.hasDebt ? (
-                        <ShieldAlert className="w-4 h-4 text-orange-300" />
-                      ) : (
-                        <span className="text-green-300 text-base leading-none" aria-hidden>
-                          ✓
-                        </span>
-                      )}
-                      <span className="text-white font-medium">
-                        {`${debtor.apartment} · ${debtor.occupant || '—'}`}
-                      </span>
-                    </div>
-                    <span className={debtor.hasDebt ? 'text-orange-300 font-semibold' : 'text-white font-semibold'}>
-                      {debtor.hasDebt ? debtor.amount : '€0'}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-indigo-300/70 py-4">
-                  <p className="text-sm">Δεν υπάρχουν οφειλές</p>
-                </div>
-              )}
-            </div>
-            {showPaymentNotice && (
-              <div className="mt-4 rounded-xl bg-yellow-400/10 border border-yellow-300/30 px-3 py-2 text-sm text-yellow-200 flex items-center gap-2">
-                <span className="text-lg">⚠️</span>
-                <p>Υπάρχουν καθυστερήσεις στις πληρωμές για τον τρέχοντα μήνα.</p>
-              </div>
-            )}
-          </section>
-        </div>
-      </div>
-
-      {/* News ticker */}
-      <div className="fixed bottom-0 left-0 right-0 h-12 bg-slate-900/90 border-t border-white/10 flex items-center text-sm text-white px-6 gap-4">
-        <TrendingUp className="w-4 h-4 text-green-300" />
-        <div className="overflow-hidden flex-1">
-          <div className="animate-scroll-left whitespace-nowrap">
-            {news && news.length > 0 ? (
-              news.map((title, index) => (
-                <span key={index}>
-                  {title}
-                  {index < news.length - 1 && ' • '}
-                </span>
-              ))
-            ) : (
-              <span>Δεν υπάρχουν ειδήσεις</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <BuildingSelector
-        isOpen={isBuildingSelectorOpen}
-        onClose={closeBuildingSelector}
-        onBuildingSelect={handleBuildingSelect}
-        selectedBuilding={selectedBuilding}
-        currentBuilding={selectedBuilding}
-      />
-
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% {
-            transform: translateX(100%);
-          }
-          100% {
-            transform: translateX(-100%);
-          }
-        }
-        .animate-scroll-left {
-          animation: scroll-left 30s linear infinite;
-        }
-      `}</style>
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
+      <KioskSceneRenderer buildingIdOverride={effectiveBuildingId} />
     </div>
   );
 }
