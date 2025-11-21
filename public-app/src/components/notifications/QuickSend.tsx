@@ -49,7 +49,7 @@ export default function QuickSend() {
   const { buildings, selectedBuilding, currentBuilding, setSelectedBuilding } = useBuilding();
   const defaultBuildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
   const [buildingId, setBuildingId] = useState<number | null>(defaultBuildingId);
-  const [templateId, setTemplateId] = useState<string>('');
+  const [templateId, setTemplateId] = useState<string>('none');
   const [channel, setChannel] = useState<NotificationType>('email');
   const [priority, setPriority] = useState<NotificationPriority>('normal');
   const [recipientMode, setRecipientMode] = useState<RecipientMode>('all');
@@ -99,7 +99,7 @@ export default function QuickSend() {
       const payload = {
         notification_type: channel,
         priority,
-        template_id: templateId ? Number(templateId) : undefined,
+        template_id: templateId !== 'none' ? Number(templateId) : undefined,
         subject: subject.trim() || undefined,
         body: body.trim() || undefined,
         sms_body: smsBody.trim() || undefined,
@@ -128,7 +128,7 @@ export default function QuickSend() {
       toast.success(
         `Η αποστολή προετοιμάστηκε (${response.status === 'scheduled' ? 'προγραμματισμένη' : 'άμεση'})`
       );
-      setTemplateId('');
+      setTemplateId('none');
       setSubject('');
       setBody('');
       setSmsBody('');
@@ -143,7 +143,12 @@ export default function QuickSend() {
 
   const handleTemplateSelect = (value: string) => {
     setTemplateId(value);
-    if (!value) return;
+    if (value === 'none') {
+      setSubject('');
+      setBody('');
+      setSmsBody('');
+      return;
+    }
     const picked = templates.find((t) => t.id === Number(value));
     if (picked) {
       setSubject(picked.subject || '');
@@ -252,7 +257,7 @@ export default function QuickSend() {
                     <SelectValue placeholder={templatesLoading ? 'Φόρτωση...' : 'Επιλέξτε πρότυπο'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Χωρίς πρότυπο</SelectItem>
+                    <SelectItem value="none">Χωρίς πρότυπο</SelectItem>
                     {templates.map((template) => (
                       <SelectItem key={template.id} value={template.id.toString()}>
                         {template.name}
