@@ -100,16 +100,36 @@ class NotificationTemplate(models.Model):
         Returns:
             Dict with 'subject', 'body', 'sms' keys
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         subject = self.subject
         body = self.body_template
         sms = self.sms_template
 
+        logger.info(f"🎨 [TEMPLATE RENDER] Template ID: {self.id}, Name: {self.name}")
+        logger.info(f"🎨 [TEMPLATE RENDER] Context keys: {list(context.keys())}")
+        
         for key, value in context.items():
-            placeholder = f"{{{{{key}}}}}"
-            subject = subject.replace(placeholder, str(value))
-            body = body.replace(placeholder, str(value))
+            # Try both with and without spaces
+            placeholder_with_spaces = f"{{{{ {key} }}}}"
+            placeholder_without_spaces = f"{{{{{key}}}}}"
+            
+            logger.info(f"🎨 [TEMPLATE RENDER] Replacing '{key}' = '{value}'")
+            
+            # Replace both formats to handle templates with or without spaces
+            subject = subject.replace(placeholder_with_spaces, str(value))
+            subject = subject.replace(placeholder_without_spaces, str(value))
+            
+            body = body.replace(placeholder_with_spaces, str(value))
+            body = body.replace(placeholder_without_spaces, str(value))
+            
             if sms:
-                sms = sms.replace(placeholder, str(value))
+                sms = sms.replace(placeholder_with_spaces, str(value))
+                sms = sms.replace(placeholder_without_spaces, str(value))
+
+        logger.info(f"🎨 [TEMPLATE RENDER] Rendered subject: {subject[:100]}")
+        logger.info(f"🎨 [TEMPLATE RENDER] Rendered body length: {len(body)} chars")
 
         return {
             'subject': subject,
