@@ -145,6 +145,14 @@ export default function QuickSend() {
       // Add template_id and context only if using a template
       if (hasTemplateId) {
         payload.template_id = Number(templateId);
+        // Validate that all template variables are filled (not empty)
+        const emptyFields = Object.entries(templateContext)
+          .filter(([_, value]) => !value || value.trim() === '')
+          .map(([key]) => getPlaceholderLabel(key));
+        
+        if (emptyFields.length > 0) {
+          throw new Error(`Συμπληρώστε τα ακόλουθα πεδία: ${emptyFields.join(', ')}`);
+        }
         // Send template context with user-filled values
         payload.context = templateContext;
       } else {
@@ -320,14 +328,21 @@ export default function QuickSend() {
         setSmsBody(picked.sms_template);
       }
 
-      // Extract placeholders and initialize context with prefilled defaults (non-empty)
+      // Extract placeholders and initialize context with EMPTY strings
+      // The defaultContextValue() is used ONLY for placeholder text in <Input> components
       const allText = `${picked.subject || ''} ${picked.body_template || ''} ${picked.sms_template || ''}`;
       const placeholders = extractPlaceholders(allText);
       const initialContext: Record<string, string> = {};
       const currentBuildingName =
         buildings.find((b) => b.id === buildingId)?.name || buildings.find((b) => b.id === buildingId)?.street;
       placeholders.forEach((placeholder) => {
-        initialContext[placeholder] = defaultContextValue(placeholder, currentBuildingName);
+        // Special case: building_name gets the actual building name as default
+        if (placeholder === 'building_name' && currentBuildingName) {
+          initialContext[placeholder] = currentBuildingName;
+        } else {
+          // All other fields start empty - user MUST fill them manually
+          initialContext[placeholder] = '';
+        }
       });
       setTemplateContext(initialContext);
     }
@@ -583,8 +598,8 @@ export default function QuickSend() {
                           </Select>
                         ) : (
                           <Input
-                            placeholder={`π.χ. ${placeholder === 'month_name' ? 'Ιανουάριος 2025' : placeholder === 'amount' ? '150.00€' : placeholder === 'meeting_date' ? '25/12/2025' : '...'}`}
-                            value={templateContext[placeholder]}
+                            placeholder={defaultContextValue(placeholder, selectedBuilding?.name || selectedBuilding?.street)}
+                            value={templateContext[placeholder] || ''}
                             onChange={(e) =>
                               setTemplateContext((prev) => ({
                                 ...prev,
