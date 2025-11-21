@@ -599,9 +599,13 @@ GOOGLE_DOCUMENT_AI_PROCESSOR_ID = os.getenv('GOOGLE_DOCUMENT_AI_PROCESSOR_ID', '
 # 🔄 Celery Settings
 # ----------------------------------------
 # Use REDIS_URL (Railway/production) or fallback to local Redis
-REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f'{REDIS_URL}/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f'{REDIS_URL}/0')
+# Railway REDIS_URL may already include database number, so handle both cases
+REDIS_URL_BASE = os.getenv('REDIS_URL', 'redis://redis:6379')
+# Remove trailing database number if present (e.g., /0, /1, etc.)
+if REDIS_URL_BASE.rstrip('/').split('/')[-1].isdigit():
+    REDIS_URL_BASE = '/'.join(REDIS_URL_BASE.rstrip('/').split('/')[:-1])
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f'{REDIS_URL_BASE}/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f'{REDIS_URL_BASE}/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
