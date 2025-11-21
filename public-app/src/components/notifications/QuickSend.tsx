@@ -96,7 +96,7 @@ export default function QuickSend() {
     mutationFn: async () => {
       if (!buildingId) throw new Error('Επιλέξτε πολυκατοικία');
 
-      const payload = {
+      const payload: any = {
         notification_type: channel,
         priority,
         template_id: templateId !== 'none' ? Number(templateId) : undefined,
@@ -104,6 +104,8 @@ export default function QuickSend() {
         body: body.trim() || undefined,
         sms_body: smsBody.trim() || undefined,
         building_ids: [buildingId],
+        // Legacy compatibility (some endpoints expect single building)
+        building: buildingId,
         apartment_ids: recipientMode === 'manual' ? selectedApartmentIds : undefined,
         send_to_all: recipientMode === 'all',
         scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
@@ -121,6 +123,9 @@ export default function QuickSend() {
       if (recipientMode === 'manual' && selectedApartmentIds.length === 0) {
         throw new Error('Επιλέξτε παραλήπτες ή στείλτε σε όλους');
       }
+      if (recipientMode !== 'all') {
+        payload.send_to_all = false;
+      }
 
       return notificationsApi.create(payload);
     },
@@ -137,7 +142,8 @@ export default function QuickSend() {
       setScheduledAt('');
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Δεν ήταν δυνατή η αποστολή');
+      const apiMessage = error?.response?.data?.detail || error?.message;
+      toast.error(apiMessage || 'Δεν ήταν δυνατή η αποστολή');
     },
   });
 
