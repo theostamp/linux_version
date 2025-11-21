@@ -598,33 +598,11 @@ GOOGLE_DOCUMENT_AI_PROCESSOR_ID = os.getenv('GOOGLE_DOCUMENT_AI_PROCESSOR_ID', '
 # ----------------------------------------
 # 🔄 Celery Settings
 # ----------------------------------------
-# Use REDIS_URL (Railway/production) or fallback to local Redis
-# Railway provides Redis URL with format: redis://default:password@host:port/dbnum
-from urllib.parse import urlparse, urlunparse
-
-def get_redis_url_with_db(base_url, db_number=0):
-    """
-    Parse Redis URL and replace database number while preserving authentication.
-    Handles formats: redis://host:port, redis://user:pass@host:port, redis://host:port/db
-    """
-    if not base_url:
-        return f'redis://redis:6379/{db_number}'
-    
-    parsed = urlparse(base_url)
-    # Replace path (database number) with our desired db_number
-    new_path = f'/{db_number}'
-    return urlunparse((
-        parsed.scheme,
-        parsed.netloc,  # Preserves user:password@host:port
-        new_path,
-        parsed.params,
-        parsed.query,
-        parsed.fragment
-    ))
-
-REDIS_URL_BASE = os.getenv('REDIS_URL', 'redis://redis:6379')
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', get_redis_url_with_db(REDIS_URL_BASE, 0))
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', get_redis_url_with_db(REDIS_URL_BASE, 0))
+# Use REDIS_URL from environment (Railway provides ready-to-use URL)
+# Don't modify it - Railway's Redis URL is already configured correctly
+REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', REDIS_URL)
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', REDIS_URL)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
