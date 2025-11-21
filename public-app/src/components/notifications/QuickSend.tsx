@@ -111,6 +111,7 @@ export default function QuickSend() {
         building_ids: [buildingId],
         // Legacy compatibility (some endpoints expect single building)
         building: buildingId,
+        building_id: buildingId,
         apartment_ids: recipientMode === 'manual' ? selectedApartmentIds : undefined,
         send_to_all: recipientMode === 'all',
         scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
@@ -150,8 +151,12 @@ export default function QuickSend() {
       setScheduledAt('');
     },
     onError: (error: any) => {
-      const apiMessage = error?.response?.data?.detail || error?.message;
-      toast.error(apiMessage || 'Δεν ήταν δυνατή η αποστολή');
+      const apiData = error?.response?.data || error?.response;
+      const detail =
+        apiData?.detail ||
+        (typeof apiData === 'object' ? JSON.stringify(apiData) : null) ||
+        error?.message;
+      toast.error(detail || 'Δεν ήταν δυνατή η αποστολή');
     },
   });
 
