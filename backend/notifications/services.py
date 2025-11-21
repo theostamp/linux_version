@@ -386,9 +386,9 @@ class NotificationService:
             recipient = NotificationRecipient.objects.create(
                 notification=notification,
                 apartment=apartment,
-                recipient_name=apartment.primary_contact_name or '',
-                email=apartment.primary_contact_email or '',
-                phone=apartment.primary_contact_phone or ''
+                recipient_name=apartment.occupant_name or '',
+                email=apartment.occupant_email or '',
+                phone=apartment.occupant_phone or ''
             )
             recipients.append(recipient)
         
