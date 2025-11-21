@@ -471,8 +471,17 @@ export default function QuickSend() {
                         {/* Smart Selector: Dropdown with existing data or manual input */}
                         {hasData && dataSource.type === 'select' ? (
                           <Select
-                            value={templateContext[placeholder] || ''}
+                            value={templateContext[placeholder] || '__none__'}
                             onValueChange={(value) => {
+                              // Skip if "none" option selected
+                              if (value === '__none__') {
+                                setTemplateContext((prev) => ({
+                                  ...prev,
+                                  [placeholder]: '',
+                                }));
+                                return;
+                              }
+                              
                               // Find selected item and auto-fill related fields
                               const selectedItem = dataSource.data!.find((item: any) => {
                                 if (placeholder === 'announcement_title' || placeholder === 'announcement_body') {
@@ -505,7 +514,7 @@ export default function QuickSend() {
                               <SelectValue placeholder="Επιλέξτε από υπάρχοντα..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">— Επιλέξτε —</SelectItem>
+                              <SelectItem value="__none__">— Επιλέξτε —</SelectItem>
                               {dataSource.data!.map((item: any) => {
                                 let displayText = '';
                                 let valueKey = '';
