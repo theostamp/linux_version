@@ -58,6 +58,7 @@ export default function QuickSend() {
   const [smsBody, setSmsBody] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [selectedApartmentIds, setSelectedApartmentIds] = useState<number[]>([]);
+  const [templateContext, setTemplateContext] = useState<Record<string, string>>({});
 
   const {
     data: templates = [],
@@ -118,7 +119,8 @@ export default function QuickSend() {
       // Add template_id and context only if using a template
       if (hasTemplateId) {
         payload.template_id = Number(templateId);
-        payload.context = {}; // Backend requires context when using template
+        // Send template context with user-filled values
+        payload.context = templateContext;
       } else {
         // When not using template, backend always requires subject+body
         // For SMS/Viber, use sms_body as body if body is empty
@@ -175,12 +177,48 @@ export default function QuickSend() {
     },
   });
 
+  // Extract placeholders from template text (e.g., {{ variable_name }})
+  const extractPlaceholders = (text: string): string[] => {
+    const regex = /\{\{\s*(\w+)\s*\}\}/g;
+    const matches = new Set<string>();
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      matches.add(match[1]);
+    }
+    return Array.from(matches);
+  };
+
+  // Convert placeholder name to user-friendly label
+  const getPlaceholderLabel = (placeholder: string): string => {
+    const labelMap: Record<string, string> = {
+      building_name: 'Όνομα Πολυκατοικίας',
+      owner_name: 'Όνομα Ιδιοκτήτη',
+      recipient_name: 'Όνομα Παραλήπτη',
+      apartment_number: 'Αριθμός Διαμερίσματος',
+      month_name: 'Μήνας',
+      month: 'Μήνας',
+      year: 'Έτος',
+      total_due: 'Συνολικό Οφειλόμενο Ποσό',
+      amount: 'Ποσό',
+      due_date: 'Ημερομηνία Λήξης',
+      meeting_date: 'Ημερομηνία Συνάντησης',
+      meeting_time: 'Ώρα Συνάντησης',
+      meeting_location: 'Τοποθεσία Συνάντησης',
+      agenda_short: 'Θέματα (Σύντομα)',
+      payment_short_instructions: 'Οδηγίες Πληρωμής',
+      announcement_title: 'Τίτλος Ανακοίνωσης',
+      announcement_body: 'Κείμενο Ανακοίνωσης',
+    };
+    return labelMap[placeholder] || placeholder.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
   const handleTemplateSelect = (value: string) => {
     setTemplateId(value);
     if (value === 'none') {
       setSubject('');
       setBody('');
       setSmsBody('');
+      setTemplateContext({});
       return;
     }
     const picked = templates.find((t) => t.id === Number(value));
@@ -190,6 +228,15 @@ export default function QuickSend() {
       if (picked.sms_template) {
         setSmsBody(picked.sms_template);
       }
+      
+      // Extract placeholders and initialize context with empty values
+      const allText = `${picked.subject || ''} ${picked.body_template || ''} ${picked.sms_template || ''}`;
+      const placeholders = extractPlaceholders(allText);
+      const initialContext: Record<string, string> = {};
+      placeholders.forEach((placeholder) => {
+        initialContext[placeholder] = '';
+      });
+      setTemplateContext(initialContext);
     }
   };
 
@@ -300,7 +347,7 @@ export default function QuickSend() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500">
-                  Τα templates γεμίζουν αυτόματα το κείμενο — χωρίς μεταβλητές προς συμπλήρωση.
+                  Τα templates περιέχουν έτοιμο κείμενο. Συμπληρώστε τις μεταβλητές που θα εμφανιστούν παρακάτω.
                 </p>
               </div>
               <div className="space-y-2">
@@ -323,6 +370,46 @@ export default function QuickSend() {
                 </Select>
               </div>
             </div>
+
+            {/* Template Variables Input Fields */}
+            {templateId !== 'none' && Object.keys(templateContext).length > 0 && (
+              <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
+                    i
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900">Συμπληρώστε τις μεταβλητές του προτύπου</p>
+                    <p className="text-xs text-blue-700">
+                      Τα πεδία παρακάτω θα αντικαταστήσουν τις μεταβλητές στο μήνυμα
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {Object.keys(templateContext).map((placeholder) => (
+                    <div key={placeholder} className="space-y-1">
+                      <Label className="text-xs text-blue-900">
+                        {getPlaceholderLabel(placeholder)}
+                        <span className="ml-1 text-blue-500 font-mono text-[10px]">
+                          {'{{ ' + placeholder + ' }}'}
+                        </span>
+                      </Label>
+                      <Input
+                        placeholder={`π.χ. ${placeholder === 'month_name' ? 'Ιανουάριος 2025' : placeholder === 'amount' ? '150.00€' : placeholder === 'meeting_date' ? '25/12/2025' : '...'}`}
+                        value={templateContext[placeholder]}
+                        onChange={(e) =>
+                          setTemplateContext((prev) => ({
+                            ...prev,
+                            [placeholder]: e.target.value,
+                          }))
+                        }
+                        className="bg-white"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Θέμα</Label>
