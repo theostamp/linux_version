@@ -7,8 +7,12 @@ import { notificationTemplatesApi, notificationsApi } from '@/lib/api/notificati
 import {
   fetchApartments,
   fetchBuildingResidents,
+  fetchAnnouncements,
+  fetchVotes,
   type ApartmentList,
   type BuildingResident,
+  type Announcement,
+  type Vote,
 } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -89,6 +93,28 @@ export default function QuickSend() {
       const response = await fetchBuildingResidents(buildingId);
       return response.residents || [];
     },
+    enabled: !!buildingId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch announcements for smart selector
+  const {
+    data: announcements = [],
+    isLoading: announcementsLoading,
+  } = useQuery<Announcement[]>({
+    queryKey: ['quickSendAnnouncements', buildingId],
+    queryFn: () => (buildingId ? fetchAnnouncements(buildingId) : Promise.resolve([])),
+    enabled: !!buildingId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch votes for smart selector
+  const {
+    data: votes = [],
+    isLoading: votesLoading,
+  } = useQuery<Vote[]>({
+    queryKey: ['quickSendVotes', buildingId],
+    queryFn: () => (buildingId ? fetchVotes(buildingId) : Promise.resolve([])),
     enabled: !!buildingId,
     staleTime: 5 * 60 * 1000,
   });
@@ -210,6 +236,44 @@ export default function QuickSend() {
       announcement_body: 'Κείμενο Ανακοίνωσης',
     };
     return labelMap[placeholder] || placeholder.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  // Get smart selector data source for a placeholder
+  const getPlaceholderDataSource = (placeholder: string) => {
+    const sourceMap: Record<string, { type: 'select' | 'input'; data?: any[]; autoFill?: (item: any) => Partial<Record<string, string>> }> = {
+      announcement_title: {
+        type: 'select',
+        data: announcements,
+        autoFill: (announcement: Announcement) => ({
+          announcement_title: announcement.title,
+          announcement_body: announcement.description,
+        }),
+      },
+      announcement_body: {
+        type: 'select',
+        data: announcements,
+        autoFill: (announcement: Announcement) => ({
+          announcement_title: announcement.title,
+          announcement_body: announcement.description,
+        }),
+      },
+      agenda_short: {
+        type: 'select',
+        data: votes,
+        autoFill: (vote: Vote) => ({
+          agenda_short: vote.title,
+        }),
+      },
+      building_name: {
+        type: 'select',
+        data: buildings,
+        autoFill: (building: any) => ({
+          building_name: building.name || building.street,
+        }),
+      },
+    };
+    
+    return sourceMap[placeholder] || { type: 'input' };
   };
 
   const handleTemplateSelect = (value: string) => {
@@ -386,27 +450,101 @@ export default function QuickSend() {
                   </div>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {Object.keys(templateContext).map((placeholder) => (
-                    <div key={placeholder} className="space-y-1">
-                      <Label className="text-xs text-blue-900">
-                        {getPlaceholderLabel(placeholder)}
-                        <span className="ml-1 text-blue-500 font-mono text-[10px]">
-                          {'{{ ' + placeholder + ' }}'}
-                        </span>
-                      </Label>
-                      <Input
-                        placeholder={`π.χ. ${placeholder === 'month_name' ? 'Ιανουάριος 2025' : placeholder === 'amount' ? '150.00€' : placeholder === 'meeting_date' ? '25/12/2025' : '...'}`}
-                        value={templateContext[placeholder]}
-                        onChange={(e) =>
-                          setTemplateContext((prev) => ({
-                            ...prev,
-                            [placeholder]: e.target.value,
-                          }))
-                        }
-                        className="bg-white"
-                      />
-                    </div>
-                  ))}
+                  {Object.keys(templateContext).map((placeholder) => {
+                    const dataSource = getPlaceholderDataSource(placeholder);
+                    const hasData = dataSource.data && dataSource.data.length > 0;
+                    
+                    return (
+                      <div key={placeholder} className="space-y-1">
+                        <Label className="text-xs text-blue-900">
+                          {getPlaceholderLabel(placeholder)}
+                          <span className="ml-1 text-blue-500 font-mono text-[10px]">
+                            {'{{ ' + placeholder + ' }}'}
+                          </span>
+                          {hasData && (
+                            <span className="ml-1 text-green-600 text-[10px]">
+                              ✓ {dataSource.data!.length} διαθέσιμα
+                            </span>
+                          )}
+                        </Label>
+                        
+                        {/* Smart Selector: Dropdown with existing data or manual input */}
+                        {hasData && dataSource.type === 'select' ? (
+                          <Select
+                            value={templateContext[placeholder] || ''}
+                            onValueChange={(value) => {
+                              // Find selected item and auto-fill related fields
+                              const selectedItem = dataSource.data!.find((item: any) => {
+                                if (placeholder === 'announcement_title' || placeholder === 'announcement_body') {
+                                  return item.title === value || item.id.toString() === value;
+                                }
+                                if (placeholder === 'agenda_short') {
+                                  return item.title === value || item.id.toString() === value;
+                                }
+                                if (placeholder === 'building_name') {
+                                  return (item.name || item.street) === value || item.id.toString() === value;
+                                }
+                                return false;
+                              });
+                              
+                              if (selectedItem && dataSource.autoFill) {
+                                const autoFilledData = dataSource.autoFill(selectedItem);
+                                setTemplateContext((prev) => ({
+                                  ...prev,
+                                  ...autoFilledData,
+                                }));
+                              } else {
+                                setTemplateContext((prev) => ({
+                                  ...prev,
+                                  [placeholder]: value,
+                                }));
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Επιλέξτε από υπάρχοντα..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">— Επιλέξτε —</SelectItem>
+                              {dataSource.data!.map((item: any) => {
+                                let displayText = '';
+                                let valueKey = '';
+                                
+                                if (placeholder === 'announcement_title' || placeholder === 'announcement_body') {
+                                  displayText = item.title;
+                                  valueKey = item.title;
+                                } else if (placeholder === 'agenda_short') {
+                                  displayText = item.title;
+                                  valueKey = item.title;
+                                } else if (placeholder === 'building_name') {
+                                  displayText = item.name || item.street;
+                                  valueKey = item.name || item.street;
+                                }
+                                
+                                return (
+                                  <SelectItem key={item.id} value={valueKey}>
+                                    {displayText}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            placeholder={`π.χ. ${placeholder === 'month_name' ? 'Ιανουάριος 2025' : placeholder === 'amount' ? '150.00€' : placeholder === 'meeting_date' ? '25/12/2025' : '...'}`}
+                            value={templateContext[placeholder]}
+                            onChange={(e) =>
+                              setTemplateContext((prev) => ({
+                                ...prev,
+                                [placeholder]: e.target.value,
+                              }))
+                            }
+                            className="bg-white"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
