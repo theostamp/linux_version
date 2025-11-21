@@ -101,21 +101,33 @@ export default function QuickSend() {
         (channel === 'sms' || channel === 'viber' ? 'Ειδοποίηση' : 'Ενημέρωση πολυκατοικίας');
       const apiChannel: NotificationType = channel === 'viber' ? 'sms' : channel;
 
+      const hasTemplateId = templateId !== 'none' && templateId;
       const payload: any = {
         notification_type: apiChannel,
         priority,
-        template_id: templateId !== 'none' ? Number(templateId) : undefined,
         subject: subjectToSend,
-        body: body.trim() || undefined,
         sms_body: smsBody.trim() || undefined,
         // Backend expects building_id; keep building for legacy
         building_id: buildingId,
         building: buildingId,
-        context: {},
         apartment_ids: recipientMode === 'manual' ? selectedApartmentIds : undefined,
         send_to_all: recipientMode === 'all',
         scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       };
+
+      // Add template_id and context only if using a template
+      if (hasTemplateId) {
+        payload.template_id = Number(templateId);
+        payload.context = {}; // Backend requires context when using template
+      } else {
+        // When not using template, backend always requires subject+body
+        // For SMS/Viber, use sms_body as body if body is empty
+        if (channel === 'sms' || channel === 'viber') {
+          payload.body = smsBody.trim() || 'Ειδοποίηση';
+        } else {
+          payload.body = body.trim() || undefined;
+        }
+      }
 
       if (channel === 'email' && !payload.subject) {
         throw new Error('Συμπληρώστε θέμα email');

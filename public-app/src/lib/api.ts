@@ -1206,7 +1206,7 @@ export type BuildingResidentsResponse = {
 
 export async function fetchBuildingResidents(buildingId: number): Promise<BuildingResidentsResponse> {
   try {
-    const data = await apiGet<BuildingResidentsResponse>(`/buildings/list/${buildingId}/residents/`);
+    const data = await apiGet<BuildingResidentsResponse>(`/apartments/building-residents/${buildingId}/`);
     return data;
   } catch (error) {
     if (isNotFoundError(error)) {
