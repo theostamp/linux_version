@@ -96,11 +96,16 @@ export default function QuickSend() {
     mutationFn: async () => {
       if (!buildingId) throw new Error('Επιλέξτε πολυκατοικία');
 
+      const subjectToSend =
+        subject.trim() ||
+        (channel === 'sms' || channel === 'viber' ? 'Ειδοποίηση' : 'Ενημέρωση πολυκατοικίας');
+      const apiChannel: NotificationType = channel === 'viber' ? 'sms' : channel;
+
       const payload: any = {
-        notification_type: channel,
+        notification_type: apiChannel,
         priority,
         template_id: templateId !== 'none' ? Number(templateId) : undefined,
-        subject: subject.trim() || undefined,
+        subject: subjectToSend,
         body: body.trim() || undefined,
         sms_body: smsBody.trim() || undefined,
         building_ids: [buildingId],
@@ -133,6 +138,9 @@ export default function QuickSend() {
       toast.success(
         `Η αποστολή προετοιμάστηκε (${response.status === 'scheduled' ? 'προγραμματισμένη' : 'άμεση'})`
       );
+      if (channel === 'viber') {
+        toast.info('Το Viber δεν υποστηρίζεται backend · στάλθηκε ως SMS');
+      }
       setTemplateId('none');
       setSubject('');
       setBody('');
@@ -326,7 +334,7 @@ export default function QuickSend() {
                   disabled={channel === 'email'}
                 />
                 <p className="text-xs text-gray-500">
-                  Προτείνετε ευανάγνωστο μήνυμα (160-300 χαρακτήρες για SMS/Viber).
+                  Προτείνετε ευανάγνωστο μήνυμα (160-300 χαρακτήρες για SMS/Viber). Το Viber θα σταλεί ως SMS αν δεν υποστηρίζεται.
                 </p>
               </div>
             </div>
