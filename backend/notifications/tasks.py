@@ -6,6 +6,7 @@ import logging
 from celery import shared_task
 from django.utils import timezone
 from django_tenants.utils import schema_context
+from datetime import timedelta
 from typing import Optional
 
 
@@ -96,6 +97,109 @@ def check_and_execute_monthly_tasks():
                     continue
 
     return f"Executed {executed_count} monthly tasks"
+
+
+@shared_task
+def send_general_assembly_reminders():
+    """
+    Στέλνει αυτόματα email ειδοποιήσεις μία ημέρα πριν από προγραμματισμένη γενική συνέλευση.
+
+    Κριτήρια:
+    - Projects με general_assembly_date = αύριο
+    - Στέλνεται ένα notification ανά building/ημερομηνία (αποφυγή διπλότυπων)
+    - Χρήση προτύπου "Πρόσκληση σε γενική συνέλευση" αν υπάρχει, αλλιώς fallback κείμενο
+    """
+    from django.contrib.auth import get_user_model
+    from projects.models import Project
+    from notifications.models import Notification, NotificationTemplate
+    from notifications.services import NotificationService
+
+    target_date = timezone.localdate() + timedelta(days=1)
+    User = get_user_model()
+    system_user = (
+        User.objects.filter(is_superuser=True).first()
+        or User.objects.filter(is_staff=True).first()
+        or User.objects.first()
+    )
+
+    if not system_user:
+        logger.warning("🚫 Δεν βρέθηκε διαθέσιμος χρήστης για αποστολή ειδοποιήσεων συνέλευσης")
+        return "No system user available"
+
+    reminders_sent = 0
+    projects = Project.objects.filter(general_assembly_date=target_date)
+
+    for project in projects:
+        building = project.building
+
+        # Αποφυγή διπλότυπων: εάν υπάρχει notification με ίδιο subject/template για την ίδια ημέρα, skip
+        existing = Notification.objects.filter(
+            building=building,
+            subject__icontains="γενική συνέλευση",
+            created_at__date=timezone.localdate(),
+        ).exists()
+        if existing:
+            continue
+
+        # Επιλογή προτύπου (building scoped) ή fallback
+        template = NotificationTemplate.objects.filter(
+            building=building,
+            name__icontains="γενική συνέλευση",
+            is_active=True,
+        ).first()
+
+        assembly_time = (
+            project.assembly_time.strftime("%H:%M") if project.assembly_time else "20:00"
+        )
+        meeting_date_str = target_date.strftime("%d/%m/%Y")
+
+        context = {
+            "meeting_date": meeting_date_str,
+            "meeting_time": assembly_time,
+            "meeting_location": project.assembly_location or "Θα ανακοινωθεί",
+            "agenda_items": project.description or "Θέματα ημερήσιας διάταξης",
+            "contact_name": project.created_by.get_full_name() if project.created_by else "Διαχείριση",
+            "agenda_short": project.title,
+            "building_name": building.name or building.street,
+        }
+
+        if template:
+            rendered = template.render(context)
+            subject = rendered["subject"]
+            body = rendered["body"]
+            sms_body = rendered.get("sms", "")
+        else:
+            subject = f"Υπενθύμιση Γενικής Συνέλευσης - {meeting_date_str}"
+            body = (
+                f"Αγαπητοί συνιδιοκτήτες,\n\n"
+                f"Υπενθυμίζουμε ότι αύριο {meeting_date_str} στις {assembly_time} "
+                f"θα πραγματοποιηθεί γενική συνέλευση για το έργο \"{project.title}\".\n\n"
+                f"Τοποθεσία: {context['meeting_location']}\n"
+                f"Θέματα: {context['agenda_items']}\n\n"
+                f"Με εκτίμηση,\n{context['contact_name']}"
+            )
+            sms_body = (
+                f"Υπενθύμιση συνέλευσης αύριο {meeting_date_str} {assembly_time} "
+                f"({context['meeting_location']}). Θέματα: {project.title}"
+            )
+
+        notification = NotificationService.create_notification(
+            building=building,
+            created_by=system_user,
+            subject=subject,
+            body=body,
+            sms_body=sms_body,
+            notification_type="email",
+            priority="high",
+            template=template,
+        )
+
+        NotificationService.add_recipients(notification, send_to_all=True)
+        NotificationService.send_notification(notification)
+        reminders_sent += 1
+
+    logger.info("✅ Απεστάλησαν %s υπενθυμίσεις γενικής συνέλευσης", reminders_sent)
+    return f"Sent {reminders_sent} assembly reminders"
 
 
 @shared_task
