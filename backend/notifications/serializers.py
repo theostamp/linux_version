@@ -229,11 +229,10 @@ class NotificationCreateSerializer(serializers.Serializer):
                 "Either provide template_id with context, or subject and body"
             )
 
-        # If using template, context is required
-        if has_template and not data.get('context'):
-            raise serializers.ValidationError(
-                "Context is required when using template"
-            )
+        # Context is optional when using template (will use empty dict if not provided)
+        # The template rendering system will handle missing placeholders gracefully
+        if has_template and 'context' not in data:
+            data['context'] = {}
 
         # At least one recipient selection method
         has_specific = data.get('apartment_ids')
