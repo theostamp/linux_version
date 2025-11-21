@@ -108,10 +108,10 @@ export default function QuickSend() {
         subject: subjectToSend,
         body: body.trim() || undefined,
         sms_body: smsBody.trim() || undefined,
-        building_ids: [buildingId],
-        // Legacy compatibility (some endpoints expect single building)
-        building: buildingId,
+        // Backend expects building_id; keep building for legacy
         building_id: buildingId,
+        building: buildingId,
+        context: {},
         apartment_ids: recipientMode === 'manual' ? selectedApartmentIds : undefined,
         send_to_all: recipientMode === 'all',
         scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
@@ -154,9 +154,12 @@ export default function QuickSend() {
       const apiData = error?.response?.data || error?.response;
       const detail =
         apiData?.detail ||
-        (typeof apiData === 'object' ? JSON.stringify(apiData) : null) ||
+        (apiData && typeof apiData === 'object' ? JSON.stringify(apiData) : null) ||
         error?.message;
       toast.error(detail || 'Δεν ήταν δυνατή η αποστολή');
+      // Helpful console log for debugging backend validation
+      // eslint-disable-next-line no-console
+      console.error('[QuickSend] send failed', { apiData, error });
     },
   });
 
