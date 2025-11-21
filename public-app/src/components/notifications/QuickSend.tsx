@@ -276,6 +276,33 @@ export default function QuickSend() {
     return sourceMap[placeholder] || { type: 'input' };
   };
 
+  const defaultContextValue = (placeholder: string, currentBuildingName?: string) => {
+    const fallback = 'Συμπληρώστε πληροφορία';
+    const map: Record<string, string> = {
+      building_name: currentBuildingName || 'Πολυκατοικία',
+      meeting_date: 'Ημερομηνία συνέλευσης',
+      meeting_time: 'Ώρα συνέλευσης',
+      meeting_location: 'Χώρος συνάντησης',
+      agenda_items: 'Θέματα ημερήσιας διάταξης',
+      agenda_short: 'Σύνοψη θεμάτων',
+      contact_name: 'Διαχείριση',
+      recipient_name: 'Κάτοικος',
+      month_name: 'Τρέχων μήνας',
+      due_date: 'Ημερομηνία λήξης',
+      total_due: 'Ποσό',
+      payment_short_instructions: 'Τρόπος πληρωμής',
+      maintenance_date: 'Ημερομηνία εργασίας',
+      maintenance_time: 'Ώρα εργασίας',
+      maintenance_location: 'Χώρος εργασίας',
+      maintenance_scope: 'Περιγραφή εργασίας',
+      issue_title: 'Τίτλος θέματος',
+      issue_description: 'Περιγραφή θέματος',
+      next_actions: 'Επόμενα βήματα',
+      contact_phone: 'Τηλέφωνο επικοινωνίας',
+    };
+    return map[placeholder] || fallback;
+  };
+
   const handleTemplateSelect = (value: string) => {
     setTemplateId(value);
     if (value === 'none') {
@@ -292,13 +319,15 @@ export default function QuickSend() {
       if (picked.sms_template) {
         setSmsBody(picked.sms_template);
       }
-      
-      // Extract placeholders and initialize context with empty values
+
+      // Extract placeholders and initialize context with prefilled defaults (non-empty)
       const allText = `${picked.subject || ''} ${picked.body_template || ''} ${picked.sms_template || ''}`;
       const placeholders = extractPlaceholders(allText);
       const initialContext: Record<string, string> = {};
+      const currentBuildingName =
+        buildings.find((b) => b.id === buildingId)?.name || buildings.find((b) => b.id === buildingId)?.street;
       placeholders.forEach((placeholder) => {
-        initialContext[placeholder] = '';
+        initialContext[placeholder] = defaultContextValue(placeholder, currentBuildingName);
       });
       setTemplateContext(initialContext);
     }
@@ -327,6 +356,11 @@ export default function QuickSend() {
     const matched = buildings.find((b) => b.id === id);
     if (matched) {
       setSelectedBuilding(matched);
+      // Update building_name placeholder if present
+      setTemplateContext((prev) => {
+        if (!prev.building_name) return prev;
+        return { ...prev, building_name: matched.name || matched.street || prev.building_name };
+      });
     }
   };
 
