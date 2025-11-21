@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Mail, MessageSquare, Bell, Send, AlertTriangle, CalendarDays, User } from 'lucide-react';
+import { Mail, MessageSquare, Bell, Send, AlertTriangle, CalendarDays, User, Phone } from 'lucide-react';
 import { notificationsApi } from '@/lib/api/notifications';
 import type { Notification, NotificationRecipient } from '@/types/notifications';
 import {
@@ -43,6 +43,7 @@ const typeIcons: Record<string, JSX.Element> = {
   email: <Mail className="w-4 h-4 text-blue-500" />,
   sms: <MessageSquare className="w-4 h-4 text-green-500" />,
   both: <Bell className="w-4 h-4 text-purple-500" />,
+  viber: <Phone className="w-4 h-4 text-indigo-500" />,
 };
 
 const formatDateTime = (value?: string | null) => {
@@ -287,4 +288,3 @@ export default function NotificationDetailModal({
     </Dialog>
   );
 }
-

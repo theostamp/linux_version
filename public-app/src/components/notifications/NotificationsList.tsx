@@ -10,6 +10,7 @@ import {
   Mail,
   MessageSquare,
   Bell,
+  Phone,
 } from 'lucide-react';
 import { notificationsApi, notificationEventsApi } from '@/lib/api/notifications';
 import type { Notification, NotificationEvent, NotificationStatus } from '@/types/notifications';
@@ -17,6 +18,13 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import NotificationDetailModal from './NotificationDetailModal';
 
@@ -39,6 +47,7 @@ const typeIcons: Record<string, JSX.Element> = {
   email: <Mail className="w-4 h-4 text-blue-500" />,
   sms: <MessageSquare className="w-4 h-4 text-green-500" />,
   both: <Bell className="w-4 h-4 text-purple-500" />,
+  viber: <Phone className="w-4 h-4 text-indigo-500" />,
 };
 
 const formatDateTime = (value?: string | null) => {
@@ -54,8 +63,12 @@ const formatDateTime = (value?: string | null) => {
 };
 
 export default function NotificationsList() {
-  const { currentBuilding, selectedBuilding } = useBuilding();
-  const buildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
+  const { currentBuilding, selectedBuilding, buildings } = useBuilding();
+  const defaultBuildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
+  const [buildingFilterId, setBuildingFilterId] = useState<number | 'all'>(
+    defaultBuildingId ?? 'all'
+  );
+  const buildingId = buildingFilterId === 'all' ? defaultBuildingId : buildingFilterId;
   const buildingFilterKey = buildingId ?? 'all';
   const [selectedNotificationId, setSelectedNotificationId] = useState<number | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -157,6 +170,30 @@ export default function NotificationsList() {
           <p className="text-sm text-gray-500">
             Παρακολούθηση όλων των email / SMS που αποστέλλονται στους κατοίκους
           </p>
+          <div className="mt-2">
+            <Select
+              value={buildingFilterId === 'all' ? 'all' : buildingFilterId?.toString() || 'all'}
+              onValueChange={(value) => {
+                if (value === 'all') {
+                  setBuildingFilterId('all');
+                  return;
+                }
+                setBuildingFilterId(parseInt(value, 10));
+              }}
+            >
+              <SelectTrigger className="w-[240px]">
+                <SelectValue placeholder="Φίλτρο πολυκατοικίας" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Όλες οι πολυκατοικίες</SelectItem>
+                {buildings.map((building) => (
+                  <SelectItem key={building.id} value={building.id.toString()}>
+                    {building.name || building.street}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
           {refreshing ? 'Ανανέωση...' : 'Ανανέωση'}
@@ -378,4 +415,3 @@ export default function NotificationsList() {
     </div>
   );
 }
-

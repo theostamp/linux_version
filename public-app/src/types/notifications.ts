@@ -10,7 +10,7 @@ export type NotificationCategory =
   | 'emergency'
   | 'reminder';
 
-export type NotificationType = 'email' | 'sms' | 'both';
+export type NotificationType = 'email' | 'sms' | 'both' | 'viber';
 
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
 
