@@ -598,11 +598,27 @@ GOOGLE_DOCUMENT_AI_PROCESSOR_ID = os.getenv('GOOGLE_DOCUMENT_AI_PROCESSOR_ID', '
 # ----------------------------------------
 # 🔄 Celery Settings
 # ----------------------------------------
-# Use REDIS_URL from environment (Railway provides ready-to-use URL)
-# Don't modify it - Railway's Redis URL is already configured correctly
+# TEMPORARY: Execute tasks synchronously until Redis is configured
+# This allows the app to work without Redis/Celery infrastructure
+CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'True').lower() == 'true'
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# Redis configuration (for when it's properly set up)
 REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', REDIS_URL)
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', REDIS_URL)
+
+# Debug logging to diagnose Redis connection issues
+import logging
+logger = logging.getLogger(__name__)
+if CELERY_TASK_ALWAYS_EAGER:
+    logger.warning("⚠️  [CELERY CONFIG] Running in EAGER mode - tasks execute synchronously (no Redis needed)")
+else:
+    redis_url_safe = REDIS_URL.split('@')[0].split(':')[:2] if '@' in REDIS_URL else REDIS_URL.split(':')[:2]
+    logger.info(f"🔧 [REDIS CONFIG] Using Redis URL scheme: {':'.join(redis_url_safe)}")
+    logger.info(f"🔧 [REDIS CONFIG] REDIS_URL env var present: {'REDIS_URL' in os.environ}")
+    logger.info(f"🔧 [REDIS CONFIG] CELERY_BROKER_URL env var present: {'CELERY_BROKER_URL' in os.environ}")
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
