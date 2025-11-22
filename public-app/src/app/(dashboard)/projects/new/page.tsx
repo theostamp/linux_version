@@ -68,6 +68,7 @@ export default function NewProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'new' | 'suggested'>('new');
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
+  const [createGeneralAssembly, setCreateGeneralAssembly] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -141,22 +142,22 @@ export default function NewProjectPage() {
         building: formData.building,
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,
         priority: formData.priority,
-        deadline: formData.deadline || null,
-        tender_deadline: formData.tender_deadline || null,
-        general_assembly_date: formData.general_assembly_date || null,
-        assembly_time: formData.assembly_time || null,
-        assembly_is_online: formData.assembly_is_online,
-        assembly_is_physical: formData.assembly_is_physical,
-        assembly_location: formData.assembly_location || null,
-        assembly_zoom_link: formData.assembly_zoom_link || null,
-        assembly_zoom_meeting_id: formData.assembly_zoom_settings.meetingId || null,
-        assembly_zoom_password: formData.assembly_zoom_settings.password || null,
-        assembly_zoom_waiting_room: formData.assembly_zoom_settings.waitingRoom,
-        assembly_zoom_participant_video: formData.assembly_zoom_settings.participantVideo,
-        assembly_zoom_host_video: formData.assembly_zoom_settings.hostVideo,
-        assembly_zoom_mute_on_entry: formData.assembly_zoom_settings.muteOnEntry,
-        assembly_zoom_auto_record: formData.assembly_zoom_settings.autoRecord,
-        assembly_zoom_notes: formData.assembly_zoom_settings.notes || null,
+        deadline: null,
+        tender_deadline: null,
+        general_assembly_date: createGeneralAssembly ? formData.general_assembly_date || null : null,
+        assembly_time: createGeneralAssembly ? formData.assembly_time || null : null,
+        assembly_is_online: createGeneralAssembly ? formData.assembly_is_online : false,
+        assembly_is_physical: createGeneralAssembly ? formData.assembly_is_physical : false,
+        assembly_location: createGeneralAssembly ? formData.assembly_location || null : null,
+        assembly_zoom_link: createGeneralAssembly ? formData.assembly_zoom_link || null : null,
+        assembly_zoom_meeting_id: createGeneralAssembly ? formData.assembly_zoom_settings.meetingId || null : null,
+        assembly_zoom_password: createGeneralAssembly ? formData.assembly_zoom_settings.password || null : null,
+        assembly_zoom_waiting_room: createGeneralAssembly ? formData.assembly_zoom_settings.waitingRoom : false,
+        assembly_zoom_participant_video: createGeneralAssembly ? formData.assembly_zoom_settings.participantVideo : false,
+        assembly_zoom_host_video: createGeneralAssembly ? formData.assembly_zoom_settings.hostVideo : false,
+        assembly_zoom_mute_on_entry: createGeneralAssembly ? formData.assembly_zoom_settings.muteOnEntry : false,
+        assembly_zoom_auto_record: createGeneralAssembly ? formData.assembly_zoom_settings.autoRecord : false,
+        assembly_zoom_notes: createGeneralAssembly ? formData.assembly_zoom_settings.notes || null : null,
         payment_terms: formData.payment_terms || null,
       };
 
@@ -221,9 +222,19 @@ export default function NewProjectPage() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="new">Νέα Δημιουργία</TabsTrigger>
-          <TabsTrigger value="suggested">Προτεινόμενα Έργα</TabsTrigger>
+        <TabsList className="mb-6 grid w-full grid-cols-2 lg:w-[420px] rounded-lg bg-muted p-1">
+          <TabsTrigger
+            value="new"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+          >
+            Νέα Δημιουργία
+          </TabsTrigger>
+          <TabsTrigger
+            value="suggested"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
+          >
+            Προτεινόμενα Έργα
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="new">
@@ -296,75 +307,82 @@ export default function NewProjectPage() {
               />
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="tender_deadline">Προθεσμία Προσφορών</Label>
-                <Input
-                  id="tender_deadline"
-                  type="date"
-                  value={formData.tender_deadline}
-                  onChange={(e) => handleInputChange('tender_deadline', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="general_assembly_date">Ημερομηνία Γ.Σ.</Label>
-                <Input
-                  id="general_assembly_date"
-                  type="date"
-                  value={formData.general_assembly_date}
-                  onChange={(e) => handleInputChange('general_assembly_date', e.target.value)}
-                />
-              </div>
-            </div>
+            <Card className="border-2 border-primary/30 bg-primary/5 shadow-sm">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-lg font-bold text-blue-900">Γενική Συνέλευση (προαιρετική)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Ενεργοποιήστε μόνο αν θέλετε να δημιουργηθεί συνέλευση μαζί με το έργο
+                    </p>
+                  </div>
+                  <Switch checked={createGeneralAssembly} onCheckedChange={setCreateGeneralAssembly} />
+                </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="assembly_time">Ώρα Γ.Σ.</Label>
-                <Input
-                  id="assembly_time"
-                  type="time"
-                  value={formData.assembly_time}
-                  onChange={(e) => handleInputChange('assembly_time', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assembly_location">Τοποθεσία Γ.Σ.</Label>
-                <Input
-                  id="assembly_location"
-                  placeholder="π.χ. Γραφείο διαχείρισης"
-                  value={formData.assembly_location}
-                  onChange={(e) => handleInputChange('assembly_location', e.target.value)}
-                />
-              </div>
-            </div>
+                {createGeneralAssembly && (
+                  <div className="space-y-6 pt-4 border-t border-blue-200">
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="general_assembly_date">Ημερομηνία</Label>
+                        <Input
+                          id="general_assembly_date"
+                          type="date"
+                          value={formData.general_assembly_date}
+                          onChange={(e) => handleInputChange('general_assembly_date', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="assembly_time">Ώρα</Label>
+                        <Input
+                          id="assembly_time"
+                          type="time"
+                          value={formData.assembly_time}
+                          onChange={(e) => handleInputChange('assembly_time', e.target.value)}
+                        />
+                      </div>
+                    </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex items-center space-x-2">
-                <input
-                  id="assembly_is_online"
-                  type="checkbox"
-                  className="h-4 w-4"
-                  checked={formData.assembly_is_online}
-                  onChange={(e) => handleInputChange('assembly_is_online', e.target.checked)}
-                />
-                <Label htmlFor="assembly_is_online" className="cursor-pointer">
-                  Η συνέλευση θα γίνει online (Zoom)
-                </Label>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="assembly_location">Τοποθεσία</Label>
+                      <Input
+                        id="assembly_location"
+                        placeholder="π.χ. Γραφείο διαχείρισης"
+                        value={formData.assembly_location}
+                        onChange={(e) => handleInputChange('assembly_location', e.target.value)}
+                      />
+                    </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  id="assembly_is_physical"
-                  type="checkbox"
-                  className="h-4 w-4"
-                  checked={formData.assembly_is_physical}
-                  onChange={(e) => handleInputChange('assembly_is_physical', e.target.checked)}
-                />
-                <Label htmlFor="assembly_is_physical" className="cursor-pointer">
-                  Η συνέλευση θα γίνει δια ζώσης
-                </Label>
-              </div>
-            </div>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          id="assembly_is_online"
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={formData.assembly_is_online}
+                          onChange={(e) => handleInputChange('assembly_is_online', e.target.checked)}
+                        />
+                        <Label htmlFor="assembly_is_online" className="cursor-pointer">
+                          Διαδικτυακά (Zoom)
+                        </Label>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <input
+                          id="assembly_is_physical"
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={formData.assembly_is_physical}
+                          onChange={(e) => handleInputChange('assembly_is_physical', e.target.checked)}
+                        />
+                        <Label htmlFor="assembly_is_physical" className="cursor-pointer">
+                          Δια ζώσης
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             <div className="space-y-2">
               <Label htmlFor="payment_terms">Όροι Πληρωμής</Label>
