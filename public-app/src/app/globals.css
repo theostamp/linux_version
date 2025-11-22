@@ -23,8 +23,16 @@
   
   /* Primary color - fancy turquoise */
   --primary: #1abcbd;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #171717;
   --primary-hover: #026878;
+
+  /* Secondary color */
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
+
+  /* Destructive color */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   
   /* Card colors */
   --card: #ffffff;
@@ -37,6 +45,23 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-condensed: var(--font-ubuntu-condensed);
@@ -69,6 +94,19 @@ h1, h2, h3, h4 {
     --input: #27272a;
     --ring: #1abcbd;
     
+    /* Primary - dark mode */
+    --primary: #1abcbd;
+    --primary-foreground: #171717;
+    --primary-hover: #026878;
+
+    /* Secondary - dark mode */
+    --secondary: #27272a;
+    --secondary-foreground: #ededed;
+
+    /* Destructive - dark mode */
+    --destructive: #7f1d1d;
+    --destructive-foreground: #ededed;
+
     /* Card colors - dark mode */
     --card: #18181b;
     --card-foreground: #ededed;
