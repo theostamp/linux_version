@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Ubuntu_Condensed } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import AppProviders from "@/components/AppProviders";
+import GoogleMapsScript from "@/components/GoogleMapsScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,25 +53,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${ubuntuCondensed.variable} antialiased`}
       >
-        {googleMapsApiKey ? (
-          <Script
-            id="google-maps-script"
-            src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
-            strategy="afterInteractive"
-            onLoad={() => {
-              // Script loaded successfully
-              if (typeof window !== 'undefined' && window.google?.maps) {
-                console.log('[Google Maps] API loaded successfully');
-              }
-            }}
-          />
-        ) : (
-          <Script id="google-maps-warning" strategy="afterInteractive">
-            {`
-              console.warn('[Google Maps] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set. Address autocomplete will not work.');
-            `}
-          </Script>
-        )}
+        <GoogleMapsScript apiKey={googleMapsApiKey} />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
