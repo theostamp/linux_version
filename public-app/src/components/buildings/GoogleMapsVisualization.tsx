@@ -82,24 +82,52 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     // Check for modern importLibrary (loading=async)
     if (window.google?.maps?.importLibrary) {
       try {
-        setDebugStatus('Importing maps library...');
-        // Only import 'maps'. We use legacy Marker which is typically available via maps library or global namespace.
-        const mapsLib = await withTimeout(
-          window.google.maps.importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-          'maps library'
-        );
+        setDebugStatus('Importing maps and core libraries...');
         
-        setDebugStatus('Maps library loaded.');
+        // Load maps and core libraries in parallel
+        // Note: 'core' library contains basic geometry like LatLng, LatLngBounds
+        const [mapsLib, coreLib] = await Promise.all([
+             withTimeout(window.google.maps.importLibrary('maps'), 'maps library') as Promise<google.maps.MapsLibrary>,
+             withTimeout(window.google.maps.importLibrary('core'), 'core library').catch(() => null) as Promise<any>
+        ]);
+        
+        setDebugStatus('Libraries loaded. Extracting components...');
+
+        // Robustly resolve components from libraries or global namespace
+        const Map = mapsLib.Map;
+        const InfoWindow = mapsLib.InfoWindow;
+        const MapTypeId = mapsLib.MapTypeId;
+        
+        // Geometry might be in core or maps or global
+        const LatLng = (coreLib?.LatLng) || (mapsLib as any).LatLng || window.google?.maps?.LatLng;
+        const LatLngBounds = (coreLib?.LatLngBounds) || (mapsLib as any).LatLngBounds || window.google?.maps?.LatLngBounds;
+        const Size = (coreLib?.Size) || (mapsLib as any).Size || window.google?.maps?.Size;
+        
+        // Marker: Legacy Marker is often in global namespace, but check mapsLib just in case
+        // Note: importLibrary('marker') gives AdvancedMarkerElement, not legacy Marker
+        const Marker = (mapsLib as any).Marker || window.google?.maps?.Marker;
+        
+        const event = window.google?.maps?.event;
+
+        if (!Map) throw new Error('Map class missing');
+        if (!LatLngBounds) throw new Error('LatLngBounds class missing');
+        if (!LatLng) throw new Error('LatLng class missing');
+        
+        if (!Marker) {
+             console.warn('Legacy Marker class missing. Map markers may not appear.');
+        }
+
+        setDebugStatus('Google Maps API components ready.');
 
         return {
-          Map: mapsLib.Map,
-          Marker: mapsLib.Marker || window.google.maps.Marker,
-          InfoWindow: mapsLib.InfoWindow,
-          LatLng: mapsLib.LatLng,
-          LatLngBounds: mapsLib.LatLngBounds,
-          MapTypeId: mapsLib.MapTypeId,
-          Size: mapsLib.Size,
-          event: window.google.maps.event,
+          Map,
+          Marker: Marker as typeof google.maps.Marker,
+          InfoWindow,
+          LatLng,
+          LatLngBounds,
+          MapTypeId,
+          Size,
+          event,
         };
       } catch (err) {
         console.warn('[GoogleMapsVisualization] importLibrary failed or timed out', err);
