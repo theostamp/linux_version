@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Building } from '@/lib/api';
 import { MapPin, Building2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ declare global {
           HYBRID: google.maps.MapTypeId;
           TERRAIN: google.maps.MapTypeId;
         };
+        importLibrary?: (library: string) => Promise<any>;
       };
     };
   }
@@ -34,8 +35,9 @@ interface GoogleMapsVisualizationProps {
 }
 
 export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisualizationProps) {
-  const mapRef = useRef<HTMLDivElement | null>(null);
-  const [isMapContainerReady, setIsMapContainerReady] = useState(false);
+  // Using useState for the ref ensures re-render when the element is mounted
+  const [mapContainer, setMapContainer] = useState<HTMLDivElement | null>(null);
+  
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
@@ -43,11 +45,6 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
   const [error, setError] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [debugStatus, setDebugStatus] = useState<string>('');
-
-  // Filter buildings that have coordinates
-  const buildingsWithCoordinates = buildings.filter(
-    (building) => building.latitude != null && building.longitude != null
-  );
 
   type MapsApi = {
     Map: typeof google.maps.Map;
@@ -60,111 +57,133 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     event?: typeof google.maps.event;
   };
 
-      const waitForGoogleMaps = async (timeoutMs = 15000): Promise<MapsApi> => {
-        const start = Date.now();
+  const [mapsApi, setMapsApi] = useState<MapsApi | null>(null);
+
+  // Filter buildings that have coordinates
+  const buildingsWithCoordinates = buildings.filter(
+    (building) => building.latitude != null && building.longitude != null
+  );
+
+  const waitForGoogleMaps = async (timeoutMs = 15000): Promise<MapsApi> => {
+    const start = Date.now();
+    
+    // Helper for timeout to prevent hanging indefinitely
+    const withTimeout = <T,>(promise: Promise<T>, taskName: string, ms: number = 5000): Promise<T> => {
+         return Promise.race([
+             promise,
+             new Promise<T>((_, reject) => 
+                 setTimeout(() => reject(new Error(`Timeout waiting for ${taskName}`)), ms)
+             )
+         ]);
+    };
+
+    setDebugStatus('Checking Google Maps API...');
+
+    // Check for modern importLibrary (loading=async)
+    if (window.google?.maps?.importLibrary) {
+      try {
+        setDebugStatus('Importing maps library...');
+        // Only import 'maps'. We use legacy Marker which is typically available via maps library or global namespace.
+        const mapsLib = await withTimeout(
+          window.google.maps.importLibrary('maps') as Promise<google.maps.MapsLibrary>,
+          'maps library'
+        );
         
-        // Helper for timeout to prevent hanging indefinitely
-        const withTimeout = <T,>(promise: Promise<T>, taskName: string, ms: number = 5000): Promise<T> => {
-             return Promise.race([
-                 promise,
-                 new Promise<T>((_, reject) => 
-                     setTimeout(() => reject(new Error(`Timeout waiting for ${taskName}`)), ms)
-                 )
-             ]);
+        setDebugStatus('Maps library loaded.');
+
+        return {
+          Map: mapsLib.Map,
+          Marker: mapsLib.Marker || window.google.maps.Marker,
+          InfoWindow: mapsLib.InfoWindow,
+          LatLng: mapsLib.LatLng,
+          LatLngBounds: mapsLib.LatLngBounds,
+          MapTypeId: mapsLib.MapTypeId,
+          Size: mapsLib.Size,
+          event: window.google.maps.event,
         };
+      } catch (err) {
+        console.warn('[GoogleMapsVisualization] importLibrary failed or timed out', err);
+        setDebugStatus(`Import failed: ${err instanceof Error ? err.message : String(err)}. Trying legacy fallback...`);
+        // Fall through to legacy check
+      }
+    }
+    
+    // Check for legacy global objects
+    // Poll until available
+    return new Promise((resolve, reject) => {
+      const checkLegacy = () => {
+         const elapsed = Date.now() - start;
+         setDebugStatus(`Waiting for legacy Maps API... (${(elapsed/1000).toFixed(1)}s)`);
 
-        setDebugStatus('Checking Google Maps API...');
-
-        // Check for modern importLibrary (loading=async)
-        if (window.google?.maps?.importLibrary) {
-          try {
-            setDebugStatus('Importing maps library...');
-            // Only import 'maps'. We use legacy Marker which is typically available via maps library or global namespace.
-            // Importing 'marker' library often returns AdvancedMarkerElement which is not what we use here.
-            const mapsLib = await withTimeout(
-              window.google.maps.importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-              'maps library'
-            );
-            
-            setDebugStatus('Maps library loaded.');
-
-            return {
-              Map: mapsLib.Map,
-              // Use legacy Marker. In recent versions with importLibrary, legacy Marker might be on mapsLib 
-              // or we fall back to the global object which should be populated by the maps library import.
-              Marker: mapsLib.Marker || window.google.maps.Marker,
-              InfoWindow: mapsLib.InfoWindow,
-              LatLng: mapsLib.LatLng,
-              LatLngBounds: mapsLib.LatLngBounds,
-              MapTypeId: mapsLib.MapTypeId,
-              Size: mapsLib.Size,
+         if (window.google?.maps?.Map) {
+            resolve({
+              Map: window.google.maps.Map,
+              Marker: window.google.maps.Marker,
+              InfoWindow: window.google.maps.InfoWindow,
+              LatLng: window.google.maps.LatLng,
+              LatLngBounds: window.google.maps.LatLngBounds,
+              MapTypeId: window.google.maps.MapTypeId,
+              Size: window.google.maps.Size,
               event: window.google.maps.event,
-            };
-          } catch (err) {
-            console.warn('[GoogleMapsVisualization] importLibrary failed or timed out', err);
-            setDebugStatus(`Import failed: ${err instanceof Error ? err.message : String(err)}. Trying legacy fallback...`);
-            // Fall through to legacy check
-          }
-        }
-        
-        // Check for legacy global objects
-        if (window.google?.maps?.Map) {
-          resolve({
-            Map: window.google.maps.Map,
-            Marker: window.google.maps.Marker,
-            InfoWindow: window.google.maps.InfoWindow,
-            LatLng: window.google.maps.LatLng,
-            LatLngBounds: window.google.maps.LatLngBounds,
-            MapTypeId: window.google.maps.MapTypeId,
-            Size: window.google.maps.Size,
-            event: window.google.maps.event,
-          });
-          return;
-        }
-
-        // Timeout check
-        if (elapsed > timeoutMs) {
-          reject(new Error('Timeout φόρτωσης Google Maps API. Παρακαλώ ανανεώστε τη σελίδα.'));
-          return;
-        }
-
-        // Continue polling
-        requestAnimationFrame(() => setTimeout(checkReady, 100));
+            });
+         } else if (elapsed > timeoutMs) {
+            reject(new Error('Timeout waiting for Google Maps API'));
+         } else {
+            setTimeout(checkLegacy, 100);
+         }
       };
-
-      checkReady();
+      checkLegacy();
     });
   };
 
-  const handleMapRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
-      mapRef.current = node;
-      setIsMapContainerReady(true);
-    }
-  }, []);
-
+  // Effect 1: Load API
   useEffect(() => {
-    if (typeof window === 'undefined' || !isMapContainerReady || !mapRef.current) return;
-
-    const initializeMap = async () => {
+    let mounted = true;
+    
+    const loadApi = async () => {
       try {
         setIsLoading(true);
-        setError(null);
+        const api = await waitForGoogleMaps();
+        if (mounted) {
+          setMapsApi(api);
+          // Important: Set isLoading to false so the div renders and ref callback fires
+          setIsLoading(false); 
+          setDebugStatus('Maps API loaded. Initializing map...');
+        }
+      } catch (err) {
+        if (mounted) {
+          console.error('Error initializing Google Maps:', err);
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Σφάλμα κατά την προετοιμασία του χάρτη'
+          );
+          setIsLoading(false);
+        }
+      }
+    };
 
-        const maps = await waitForGoogleMaps();
+    loadApi();
 
+    return () => { mounted = false; };
+  }, []);
+
+  // Effect 2: Initialize Map using loaded API and Container
+  useEffect(() => {
+    if (!mapsApi || !mapContainer) return;
+
+    try {
+        setDebugStatus('Creating map instance...');
+        
         // Default center (Athens, Greece)
         const defaultCenter = { lat: 37.9838, lng: 23.7275 };
         
         // Calculate bounds if we have buildings with coordinates
-        let center = defaultCenter;
-        let zoom = 10;
-
         if (buildingsWithCoordinates.length > 0) {
-          const bounds = new maps.LatLngBounds();
+          const bounds = new mapsApi.LatLngBounds();
           buildingsWithCoordinates.forEach((building) => {
             if (building.latitude != null && building.longitude != null) {
-              bounds.extend(new maps.LatLng(building.latitude, building.longitude));
+              bounds.extend(new mapsApi.LatLng(building.latitude, building.longitude));
             }
           });
 
@@ -172,7 +191,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           const mapOptions: google.maps.MapOptions = {
             center: bounds.getCenter().toJSON(),
             zoom: 12,
-            mapTypeId: maps.MapTypeId.ROADMAP,
+            mapTypeId: mapsApi.MapTypeId.ROADMAP,
             styles: [
               {
                 featureType: 'poi',
@@ -182,32 +201,35 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             ],
           };
 
-          mapInstanceRef.current = new maps.Map(mapRef.current, mapOptions);
+          mapInstanceRef.current = new mapsApi.Map(mapContainer, mapOptions);
           mapInstanceRef.current.fitBounds(bounds);
         } else {
           // No buildings with coordinates, use default center
           const mapOptions: google.maps.MapOptions = {
             center: defaultCenter,
-            zoom: zoom,
-            mapTypeId: maps.MapTypeId.ROADMAP,
+            zoom: 10,
+            mapTypeId: mapsApi.MapTypeId.ROADMAP,
           };
 
-          mapInstanceRef.current = new maps.Map(mapRef.current, mapOptions);
+          mapInstanceRef.current = new mapsApi.Map(mapContainer, mapOptions);
         }
 
         // Create markers for each building
+        // Clear existing markers first (if any)
+        markersRef.current.forEach((m) => m.setMap(null));
+        infoWindowsRef.current.forEach((iw) => iw.close());
         markersRef.current = [];
         infoWindowsRef.current = [];
 
         buildingsWithCoordinates.forEach((building) => {
           if (building.latitude == null || building.longitude == null) return;
 
-          const position = new window.google.maps.LatLng(
+          const position = new mapsApi.LatLng(
             building.latitude,
             building.longitude
           );
 
-          const marker = new maps.Marker({
+          const marker = new mapsApi.Marker({
             position,
             map: mapInstanceRef.current!,
             title: building.name,
@@ -218,12 +240,12 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
               `),
-              scaledSize: maps.Size ? new maps.Size(32, 32) : undefined,
+              scaledSize: mapsApi.Size ? new mapsApi.Size(32, 32) : undefined,
             },
           });
 
           // Create info window
-          const infoWindow = new maps.InfoWindow({
+          const infoWindow = new mapsApi.InfoWindow({
             content: `
               <div style="padding: 8px; min-width: 200px;">
                 <h3 style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px;">${building.name}</h3>
@@ -251,33 +273,21 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         });
 
         setMapLoaded(true);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error initializing Google Maps:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Σφάλμα κατά την προετοιμασία του χάρτη'
-        );
-        setIsLoading(false);
-      }
-    };
+        setDebugStatus('Map initialized.');
 
-    initializeMap();
+    } catch (err) {
+        console.error('Error creating map instance:', err);
+        setError(err instanceof Error ? err.message : 'Σφάλμα κατά τη δημιουργία του χάρτη');
+    }
 
-    // Cleanup
+    // Cleanup function
     return () => {
-      // Clear markers and info windows
-      markersRef.current.forEach((marker) => {
-        if (marker && marker.setMap) {
-          marker.setMap(null);
-        }
-      });
-      infoWindowsRef.current.forEach((iw) => iw.close());
-      markersRef.current = [];
-      infoWindowsRef.current = [];
+        markersRef.current.forEach((marker) => marker.setMap(null));
+        infoWindowsRef.current.forEach((iw) => iw.close());
+        markersRef.current = [];
+        infoWindowsRef.current = [];
     };
-  }, [buildingsWithCoordinates, isMapContainerReady]);
+  }, [mapsApi, mapContainer, buildingsWithCoordinates]); // Re-run if buildings change
 
   if (error) {
     return (
@@ -338,7 +348,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         ) : (
           <div className="relative">
             <div
-              ref={handleMapRef}
+              ref={setMapContainer}
               className="w-full h-[600px] rounded-lg border"
               style={{ minHeight: '600px' }}
             />
