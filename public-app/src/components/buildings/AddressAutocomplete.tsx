@@ -54,6 +54,10 @@ export default function AddressAutocomplete({
       if (existingScript) {
         // Wait for script to load
         existingScript.addEventListener('load', initializeAutocomplete);
+        // Also try to initialize immediately in case it's already loaded but we missed the event
+        if (window.google?.maps?.places) {
+          initializeAutocomplete();
+        }
         return;
       }
 
@@ -68,7 +72,8 @@ export default function AddressAutocomplete({
       }
 
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      // Use loading=async to match global script and avoid warnings
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
       script.onload = initializeAutocomplete;

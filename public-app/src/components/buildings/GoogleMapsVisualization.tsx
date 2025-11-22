@@ -42,6 +42,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [debugStatus, setDebugStatus] = useState<string>('');
 
   // Filter buildings that have coordinates
   const buildingsWithCoordinates = buildings.filter(
@@ -65,6 +66,9 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     
     return new Promise((resolve, reject) => {
       const checkReady = async () => {
+        const elapsed = Date.now() - start;
+        setDebugStatus(`Αναμονή για Google Maps API... (${(elapsed/1000).toFixed(1)}s)`);
+
         // Check for modern importLibrary (loading=async)
         if (window.google?.maps?.importLibrary) {
           try {
@@ -103,7 +107,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         }
 
         // Timeout check
-        if (Date.now() - start > timeoutMs) {
+        if (elapsed > timeoutMs) {
           reject(new Error('Timeout φόρτωσης Google Maps API. Παρακαλώ ανανεώστε τη σελίδα.'));
           return;
         }
@@ -302,6 +306,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
               <p className="text-sm text-muted-foreground">Φόρτωση χάρτη...</p>
+              <p className="text-xs text-muted-foreground mt-2 font-mono">{debugStatus}</p>
             </div>
           </div>
         ) : buildingsWithCoordinates.length === 0 ? (
