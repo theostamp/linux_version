@@ -47,9 +47,31 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     (building) => building.latitude != null && building.longitude != null
   );
 
-  const waitForGoogleMaps = async (timeoutMs = 12000) => {
-    // If maps are already available, no need to wait
-    if (window.google?.maps?.Map) return window.google.maps;
+  type MapsApi = {
+    Map: typeof google.maps.Map;
+    Marker: typeof google.maps.Marker;
+    InfoWindow: typeof google.maps.InfoWindow;
+    LatLng: typeof google.maps.LatLng;
+    LatLngBounds: typeof google.maps.LatLngBounds;
+    MapTypeId: typeof google.maps.MapTypeId;
+    Size: typeof google.maps.Size;
+    event?: typeof google.maps.event;
+  };
+
+  const waitForGoogleMaps = async (timeoutMs = 12000): Promise<MapsApi> => {
+    // If constructors are ready, return immediately
+    if (window.google?.maps?.Map) {
+      return {
+        Map: window.google.maps.Map,
+        Marker: window.google.maps.Marker,
+        InfoWindow: window.google.maps.InfoWindow,
+        LatLng: window.google.maps.LatLng,
+        LatLngBounds: window.google.maps.LatLngBounds,
+        MapTypeId: window.google.maps.MapTypeId,
+        Size: window.google.maps.Size,
+        event: window.google.maps.event,
+      };
+    }
 
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (!existingScript) {
@@ -83,26 +105,44 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     // New loader with loading=async exposes importLibrary instead of constructors
     if (window.google?.maps?.importLibrary) {
       try {
-        await Promise.all([
-          window.google.maps.importLibrary('maps'),
-          window.google.maps.importLibrary('marker'),
-          window.google.maps.importLibrary('places'),
-        ]);
+        const mapsLib = (await window.google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
+        const markerLib = (await window.google.maps.importLibrary('marker')) as google.maps.MarkerLibrary;
+
+        return {
+          Map: mapsLib.Map,
+          Marker: markerLib.Marker || mapsLib.Marker,
+          InfoWindow: mapsLib.InfoWindow,
+          LatLng: mapsLib.LatLng,
+          LatLngBounds: mapsLib.LatLngBounds,
+          MapTypeId: mapsLib.MapTypeId,
+          Size: mapsLib.Size,
+          event: window.google.maps.event,
+        };
       } catch (err) {
         console.warn('[GoogleMapsVisualization] importLibrary failed', err);
-      }
-    } else {
-      // Legacy loader: ensure Map class is present
-      const start = Date.now();
-      while (!window.google?.maps?.Map) {
-        if (Date.now() - start > timeoutMs) {
-          throw new Error('Timeout φόρτωσης Google Maps');
-        }
-        await new Promise((r) => setTimeout(r, 150));
+        // Fall through to legacy constructors if available
       }
     }
 
-    return window.google!.maps;
+    // Legacy loader fallback: wait until constructors become available
+    const start = Date.now();
+    while (!window.google?.maps?.Map) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error('Timeout φόρτωσης Google Maps');
+      }
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    return {
+      Map: window.google.maps.Map,
+      Marker: window.google.maps.Marker,
+      InfoWindow: window.google.maps.InfoWindow,
+      LatLng: window.google.maps.LatLng,
+      LatLngBounds: window.google.maps.LatLngBounds,
+      MapTypeId: window.google.maps.MapTypeId,
+      Size: window.google.maps.Size,
+      event: window.google.maps.event,
+    };
   };
 
   useEffect(() => {
@@ -123,12 +163,10 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         let zoom = 10;
 
         if (buildingsWithCoordinates.length > 0) {
-          const bounds = new window.google.maps.LatLngBounds();
+          const bounds = new maps.LatLngBounds();
           buildingsWithCoordinates.forEach((building) => {
             if (building.latitude != null && building.longitude != null) {
-              bounds.extend(
-                new window.google.maps.LatLng(building.latitude, building.longitude)
-              );
+              bounds.extend(new maps.LatLng(building.latitude, building.longitude));
             }
           });
 
@@ -146,7 +184,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             ],
           };
 
-          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, mapOptions);
+          mapInstanceRef.current = new maps.Map(mapRef.current, mapOptions);
           mapInstanceRef.current.fitBounds(bounds);
         } else {
           // No buildings with coordinates, use default center
@@ -156,7 +194,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             mapTypeId: maps.MapTypeId.ROADMAP,
           };
 
-          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, mapOptions);
+          mapInstanceRef.current = new maps.Map(mapRef.current, mapOptions);
         }
 
         // Create markers for each building
@@ -171,7 +209,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             building.longitude
           );
 
-          const marker = new window.google.maps.Marker({
+          const marker = new maps.Marker({
             position,
             map: mapInstanceRef.current!,
             title: building.name,
@@ -182,12 +220,12 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
               `),
-              scaledSize: new window.google.maps.Size(32, 32),
+              scaledSize: maps.Size ? new maps.Size(32, 32) : undefined,
             },
           });
 
           // Create info window
-          const infoWindow = new window.google.maps.InfoWindow({
+          const infoWindow = new maps.InfoWindow({
             content: `
               <div style="padding: 8px; min-width: 200px;">
                 <h3 style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px;">${building.name}</h3>
@@ -233,10 +271,9 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     return () => {
       // Clear markers and info windows
       markersRef.current.forEach((marker) => {
-        if (window.google?.maps?.event) {
-          window.google.maps.event.clearInstanceListeners(marker);
+        if (marker && marker.setMap) {
+          marker.setMap(null);
         }
-        marker.setMap(null);
       });
       infoWindowsRef.current.forEach((iw) => iw.close());
       markersRef.current = [];
