@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
   // Use Docker service name for backend
   const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
   
-  const targetUrl = `${backendUrl}/api/kiosk/public/scenes/active/?building_id=${buildingId}`;
+  // Use list endpoint instead of custom action 'active' which seems to be causing 404s
+  const targetUrl = `${backendUrl}/api/kiosk/public/scenes/?building_id=${buildingId}`;
 
   console.log('[KIOSK SCENES API] Fetching from:', targetUrl);
 
@@ -57,6 +58,17 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
+    
+    // If data is an array (from list endpoint), wrap it in expected format
+    if (Array.isArray(data)) {
+      return NextResponse.json({
+        scenes: data,
+        count: data.length,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // If data is already in expected format (from custom action if it worked)
     return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

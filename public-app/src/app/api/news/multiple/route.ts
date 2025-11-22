@@ -39,7 +39,12 @@ const NEWS_SOURCES = [
   },
   {
     name: 'CNN Greece',
-    url: 'https://www.cnn.gr/feed',
+    url: 'https://www.cnn.gr/rss',
+    type: 'rss'
+  },
+  {
+    name: 'Naftemporiki',
+    url: 'https://www.naftemporiki.gr/rss',
     type: 'rss'
   }
 ];

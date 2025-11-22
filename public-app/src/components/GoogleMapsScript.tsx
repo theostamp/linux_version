@@ -20,13 +20,8 @@ export default function GoogleMapsScript({ apiKey }: GoogleMapsScriptProps) {
   return (
     <Script
       id="google-maps-script"
-      src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`}
+      src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
       strategy="afterInteractive"
-      onLoad={() => {
-        if (typeof window !== "undefined" && window.google?.maps) {
-          console.log("[Google Maps] API loaded successfully");
-        }
-      }}
     />
   );
 }
