@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Use Docker service name for backend
-  const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
+  const backendUrl = (process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000').replace(/\/$/, '');
   
   // Use list endpoint instead of custom action 'active' which seems to be causing 404s
   const targetUrl = `${backendUrl}/api/kiosk/public/scenes/?building_id=${buildingId}`;
