@@ -60,34 +60,50 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     event?: typeof google.maps.event;
   };
 
-  const waitForGoogleMaps = async (timeoutMs = 15000): Promise<MapsApi> => {
-    // Start polling for Google Maps API
-    const start = Date.now();
-    
-    return new Promise((resolve, reject) => {
-      const checkReady = async () => {
-        const elapsed = Date.now() - start;
-        setDebugStatus(`Αναμονή για Google Maps API... (${(elapsed/1000).toFixed(1)}s)`);
+      const waitForGoogleMaps = async (timeoutMs = 15000): Promise<MapsApi> => {
+        const start = Date.now();
+        
+        // Helper for timeout to prevent hanging indefinitely
+        const withTimeout = <T,>(promise: Promise<T>, taskName: string, ms: number = 5000): Promise<T> => {
+             return Promise.race([
+                 promise,
+                 new Promise<T>((_, reject) => 
+                     setTimeout(() => reject(new Error(`Timeout waiting for ${taskName}`)), ms)
+                 )
+             ]);
+        };
+
+        setDebugStatus('Checking Google Maps API...');
 
         // Check for modern importLibrary (loading=async)
         if (window.google?.maps?.importLibrary) {
           try {
-            const mapsLib = (await window.google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
-            const markerLib = (await window.google.maps.importLibrary('marker')) as google.maps.MarkerLibrary;
+            setDebugStatus('Importing maps library...');
+            // Only import 'maps'. We use legacy Marker which is typically available via maps library or global namespace.
+            // Importing 'marker' library often returns AdvancedMarkerElement which is not what we use here.
+            const mapsLib = await withTimeout(
+              window.google.maps.importLibrary('maps') as Promise<google.maps.MapsLibrary>,
+              'maps library'
+            );
             
-            resolve({
+            setDebugStatus('Maps library loaded.');
+
+            return {
               Map: mapsLib.Map,
-              Marker: markerLib.Marker || mapsLib.Marker,
+              // Use legacy Marker. In recent versions with importLibrary, legacy Marker might be on mapsLib 
+              // or we fall back to the global object which should be populated by the maps library import.
+              Marker: mapsLib.Marker || window.google.maps.Marker,
               InfoWindow: mapsLib.InfoWindow,
               LatLng: mapsLib.LatLng,
               LatLngBounds: mapsLib.LatLngBounds,
               MapTypeId: mapsLib.MapTypeId,
               Size: mapsLib.Size,
               event: window.google.maps.event,
-            });
-            return;
+            };
           } catch (err) {
-            console.warn('[GoogleMapsVisualization] importLibrary failed, falling back', err);
+            console.warn('[GoogleMapsVisualization] importLibrary failed or timed out', err);
+            setDebugStatus(`Import failed: ${err instanceof Error ? err.message : String(err)}. Trying legacy fallback...`);
+            // Fall through to legacy check
           }
         }
         

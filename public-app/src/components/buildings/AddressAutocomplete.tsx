@@ -83,22 +83,43 @@ export default function AddressAutocomplete({
       document.head.appendChild(script);
     };
 
-    const initializeAutocomplete = () => {
+    const initializeAutocomplete = async () => {
       // Initialize Google Places Autocomplete if available
       if (
         typeof window !== 'undefined' &&
-        window.google?.maps?.places &&
         inputRef.current &&
         !autocompleteRef.current
       ) {
         try {
-        const autocomplete = new window.google.maps.places.Autocomplete(
-          inputRef.current,
-          {
-            types: ['address'],
-            componentRestrictions: { country: 'gr' }, // Restrict to Greece
+          let AutocompleteConstructor: typeof google.maps.places.Autocomplete | undefined;
+
+          // Try using importLibrary (preferred for loading=async)
+          if (window.google?.maps?.importLibrary) {
+            try {
+              const placesLib = (await window.google.maps.importLibrary('places')) as google.maps.PlacesLibrary;
+              AutocompleteConstructor = placesLib.Autocomplete;
+            } catch (err) {
+              console.warn('[AddressAutocomplete] importLibrary("places") failed:', err);
+            }
           }
-        );
+
+          // Fallback to global namespace
+          if (!AutocompleteConstructor && window.google?.maps?.places?.Autocomplete) {
+            AutocompleteConstructor = window.google.maps.places.Autocomplete;
+          }
+
+          if (!AutocompleteConstructor) {
+             // Not ready yet, will be retried by retry logic or onload
+             return;
+          }
+
+          const autocomplete = new AutocompleteConstructor(
+            inputRef.current,
+            {
+              types: ['address'],
+              componentRestrictions: { country: 'gr' }, // Restrict to Greece
+            }
+          );
 
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
