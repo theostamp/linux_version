@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useBuilding } from '@/components/contexts/BuildingContext';
 import type { Building } from '@/lib/api';
 import { MapPin, Building2, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 declare global {
@@ -49,6 +47,56 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     (building) => building.latitude != null && building.longitude != null
   );
 
+  const waitForGoogleMaps = async (timeoutMs = 12000) => {
+    // If maps are already available, no need to wait
+    if (window.google?.maps?.Map) return window.google.maps;
+
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (!existingScript) {
+      throw new Error('Google Maps script δεν βρέθηκε. Ελέγξτε το API key.');
+    }
+
+    // Wait for the script to finish loading or time out
+    await new Promise<void>((resolve, reject) => {
+      const start = Date.now();
+
+      const checkReady = () => {
+        if (window.google?.maps?.Map) {
+          resolve();
+        } else if (Date.now() - start > timeoutMs) {
+          reject(new Error('Timeout φόρτωσης Google Maps'));
+        } else {
+          setTimeout(checkReady, 150);
+        }
+      };
+
+      existingScript.addEventListener('load', checkReady, { once: true });
+      existingScript.addEventListener(
+        'error',
+        () => reject(new Error('Αποτυχία φόρτωσης Google Maps script')),
+        { once: true }
+      );
+
+      checkReady();
+    });
+
+    // New loader exposes importLibrary; use it when available to ensure maps is ready
+    if (window.google?.maps?.importLibrary) {
+      try {
+        await Promise.all([
+          window.google.maps.importLibrary('maps'),
+          window.google.maps.importLibrary('marker'),
+          window.google.maps.importLibrary('places'),
+        ]);
+      } catch (err) {
+        // ImportLibrary failure should not block basic map rendering
+        console.warn('[GoogleMapsVisualization] importLibrary failed', err);
+      }
+    }
+
+    return window.google!.maps;
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return;
 
@@ -57,48 +105,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         setIsLoading(true);
         setError(null);
 
-        // Wait for Google Maps API to be available
-        if (!window.google?.maps) {
-          // Check if script is already being loaded
-          const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-          if (existingScript) {
-            // Wait for script to load
-            await new Promise<void>((resolve, reject) => {
-              const checkInterval = setInterval(() => {
-                if (window.google?.maps) {
-                  clearInterval(checkInterval);
-                  resolve();
-                }
-              }, 100);
-
-              existingScript.addEventListener('load', () => {
-                clearInterval(checkInterval);
-                resolve();
-              });
-
-              existingScript.addEventListener('error', () => {
-                clearInterval(checkInterval);
-                reject(new Error('Failed to load Google Maps script'));
-              });
-
-              // Timeout after 10 seconds
-              setTimeout(() => {
-                clearInterval(checkInterval);
-                reject(new Error('Timeout waiting for Google Maps script'));
-              }, 10000);
-            });
-          } else {
-            setError('Google Maps API δεν είναι διαθέσιμη. Παρακαλώ ελέγξτε το API key.');
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        if (!window.google?.maps) {
-          setError('Google Maps API δεν είναι διαθέσιμη.');
-          setIsLoading(false);
-          return;
-        }
+        const maps = await waitForGoogleMaps();
 
         // Default center (Athens, Greece)
         const defaultCenter = { lat: 37.9838, lng: 23.7275 };
@@ -121,7 +128,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           const mapOptions: google.maps.MapOptions = {
             center: bounds.getCenter().toJSON(),
             zoom: 12,
-            mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+            mapTypeId: maps.MapTypeId.ROADMAP,
             styles: [
               {
                 featureType: 'poi',
@@ -138,7 +145,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           const mapOptions: google.maps.MapOptions = {
             center: defaultCenter,
             zoom: zoom,
-            mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+            mapTypeId: maps.MapTypeId.ROADMAP,
           };
 
           mapInstanceRef.current = new window.google.maps.Map(mapRef.current, mapOptions);
@@ -303,4 +310,3 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     </Card>
   );
 }
-
