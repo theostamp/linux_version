@@ -61,7 +61,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
       const start = Date.now();
 
       const checkReady = () => {
-        if (window.google?.maps?.Map) {
+        if (window.google?.maps) {
           resolve();
         } else if (Date.now() - start > timeoutMs) {
           reject(new Error('Timeout φόρτωσης Google Maps'));
@@ -80,7 +80,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
       checkReady();
     });
 
-    // New loader exposes importLibrary; use it when available to ensure maps is ready
+    // New loader with loading=async exposes importLibrary instead of constructors
     if (window.google?.maps?.importLibrary) {
       try {
         await Promise.all([
@@ -89,8 +89,16 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           window.google.maps.importLibrary('places'),
         ]);
       } catch (err) {
-        // ImportLibrary failure should not block basic map rendering
         console.warn('[GoogleMapsVisualization] importLibrary failed', err);
+      }
+    } else {
+      // Legacy loader: ensure Map class is present
+      const start = Date.now();
+      while (!window.google?.maps?.Map) {
+        if (Date.now() - start > timeoutMs) {
+          throw new Error('Timeout φόρτωσης Google Maps');
+        }
+        await new Promise((r) => setTimeout(r, 150));
       }
     }
 
@@ -295,15 +303,15 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           <div className="relative">
             <div
               ref={mapRef}
-              className="w-full h-[600px] rounded-lg border"
-              style={{ minHeight: '600px' }}
-            />
-            {mapLoaded && (
-              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span>Κάντε κλικ σε ένα marker για να δείτε τις λεπτομέρειες του κτιρίου</span>
-              </div>
-            )}
+          className="w-full h-[600px] rounded-lg border"
+          style={{ minHeight: '600px' }}
+        />
+        {mapLoaded && (
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4" />
+            <span>Κάντε κλικ σε ένα marker για να δείτε τις λεπτομέρειες του κτιρίου</span>
+          </div>
+        )}
           </div>
         )}
       </CardContent>
