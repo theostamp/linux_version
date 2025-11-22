@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// Fallback data when backend is unavailable
-const FALLBACK_RESPONSE = {
+// Build a fallback response that keeps the requested building id
+const buildFallbackResponse = (buildingId: string) => ({
   building_info: {
-    id: 1,
-    name: 'Demo Building',
-    address: 'Demo Address',
-    city: 'Athens',
+    id: Number.parseInt(buildingId, 10) || 0,
+    name: `Building #${buildingId}`,
+    address: 'Unavailable',
+    city: 'N/A',
     total_apartments: 0,
     occupied: 0,
   },
@@ -22,7 +22,7 @@ const FALLBACK_RESPONSE = {
     pending_requests: 0,
     completed_this_month: 0,
   },
-};
+});
 
 export async function GET(
   request: NextRequest,
@@ -117,7 +117,7 @@ export async function GET(
       
       // Return fallback data instead of error
       console.warn('[API PROXY] Returning fallback public info due to backend error');
-      return NextResponse.json(FALLBACK_RESPONSE);
+      return NextResponse.json(buildFallbackResponse(buildingId));
     }
 
     const data = await response.json();
@@ -131,12 +131,12 @@ export async function GET(
       console.warn('[API PROXY] Returning fallback public info. Start Django backend to see actual data.');
       
       // Return fallback data instead of error
-      return NextResponse.json(FALLBACK_RESPONSE);
+      return NextResponse.json(buildFallbackResponse(buildingId));
     }
     
     console.error('[API PROXY] Unexpected error fetching public info:', error);
     
     // Even for unexpected errors, return fallback to prevent app crash
-    return NextResponse.json(FALLBACK_RESPONSE);
+    return NextResponse.json(buildFallbackResponse(buildingId));
   }
 }
