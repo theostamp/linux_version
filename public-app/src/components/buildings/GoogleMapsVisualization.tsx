@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Building } from '@/lib/api';
 import { MapPin, Building2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +34,8 @@ interface GoogleMapsVisualizationProps {
 }
 
 export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisualizationProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const [isMapContainerReady, setIsMapContainerReady] = useState(false);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
@@ -145,8 +146,15 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     };
   };
 
+  const handleMapRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      mapRef.current = node;
+      setIsMapContainerReady(true);
+    }
+  }, []);
+
   useEffect(() => {
-    if (typeof window === 'undefined' || !mapRef.current) return;
+    if (typeof window === 'undefined' || !isMapContainerReady || !mapRef.current) return;
 
     const initializeMap = async () => {
       try {
@@ -279,7 +287,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
       markersRef.current = [];
       infoWindowsRef.current = [];
     };
-  }, [buildingsWithCoordinates]);
+  }, [buildingsWithCoordinates, isMapContainerReady]);
 
   if (error) {
     return (
@@ -339,10 +347,10 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         ) : (
           <div className="relative">
             <div
-              ref={mapRef}
-          className="w-full h-[600px] rounded-lg border"
-          style={{ minHeight: '600px' }}
-        />
+              ref={handleMapRef}
+              className="w-full h-[600px] rounded-lg border"
+              style={{ minHeight: '600px' }}
+            />
         {mapLoaded && (
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="w-4 h-4" />
