@@ -140,6 +140,7 @@ export default function QuickSend() {
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!buildingId) throw new Error('Επιλέξτε πολυκατοικία');
+      const effectiveScheduledAt = scheduledSend ? scheduledAt || getDefaultScheduledTime() : null;
 
       const subjectToSend =
         subject.trim() ||
@@ -189,14 +190,18 @@ export default function QuickSend() {
         payload.send_to_all = false;
       }
 
-      if (!instantSend && !(scheduledSend && scheduledAt)) {
+      if (!instantSend && !(scheduledSend && effectiveScheduledAt)) {
         throw new Error('Ενεργοποιήστε άμεση ή προγραμματισμένη αποστολή');
       }
       if (scheduledSend) {
+        const finalScheduledAt = effectiveScheduledAt || getDefaultScheduledTime();
         if (!scheduledAt) {
+          setScheduledAt(finalScheduledAt);
+        }
+        if (Number.isNaN(Date.parse(finalScheduledAt))) {
           throw new Error('Ορίστε ώρα για την προγραμματισμένη αποστολή');
         }
-        payload.scheduled_at = new Date(scheduledAt).toISOString();
+        payload.scheduled_at = new Date(finalScheduledAt).toISOString();
       } else {
         payload.scheduled_at = undefined;
       }
@@ -215,7 +220,7 @@ export default function QuickSend() {
       setSmsBody('');
       setSelectedApartmentIds([]);
       setRecipientMode('all');
-      setScheduledAt('');
+      setScheduledAt(scheduledSend ? getDefaultScheduledTime() : '');
     },
     onError: (error: any) => {
       const apiData = error?.response?.data || error?.response;
