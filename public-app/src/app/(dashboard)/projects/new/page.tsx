@@ -282,15 +282,6 @@ export default function NewProjectPage() {
                   onChange={(e) => handleInputChange('estimated_cost', e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="deadline">Προθεσμία</Label>
-                <Input
-                  id="deadline"
-                  type="date"
-                  value={formData.deadline}
-                  onChange={(e) => handleInputChange('deadline', e.target.value)}
-                />
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -385,17 +376,21 @@ export default function NewProjectPage() {
               />
             </div>
 
-            <div className="flex items-center space-x-2">
-              <input
+            {/* Vote Creation Section with Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+              <div className="space-y-0.5">
+                <Label htmlFor="should_create_vote" className="text-base font-semibold">
+                  Δημιουργία Ψηφοφορίας
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Δημιουργία ψηφοφορίας για έγκριση του έργου
+                </p>
+              </div>
+              <Switch
                 id="should_create_vote"
-                type="checkbox"
-                className="h-4 w-4"
                 checked={formData.should_create_vote}
-                onChange={(e) => handleInputChange('should_create_vote', e.target.checked)}
+                onCheckedChange={(checked) => handleInputChange('should_create_vote', checked)}
               />
-              <Label htmlFor="should_create_vote" className="cursor-pointer">
-                Δημιουργία ψηφοφορίας για έγκριση του έργου
-              </Label>
             </div>
 
             <div className="flex items-center justify-end gap-3">
