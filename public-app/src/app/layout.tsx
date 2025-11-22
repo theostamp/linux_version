@@ -57,7 +57,13 @@ export default function RootLayout({
           <Script
             id="google-maps-script"
             src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
-            strategy="lazyOnload"
+            strategy="afterInteractive"
+            onLoad={() => {
+              // Script loaded successfully
+              if (typeof window !== 'undefined' && window.google?.maps) {
+                console.log('[Google Maps] API loaded successfully');
+              }
+            }}
           />
         ) : (
           <Script id="google-maps-warning" strategy="afterInteractive">
