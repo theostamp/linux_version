@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -27,6 +27,11 @@ function KioskDisplayPageContent() {
   const pathname = usePathname();
   const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
   const [effectiveBuildingId, setEffectiveBuildingId] = useState<number>(1);
+  
+  // Track if we have a URL parameter - this takes absolute priority
+  const hasUrlParam = useRef<boolean>(false);
+  // Track the last building ID we set to avoid infinite loops
+  const lastSetBuildingId = useRef<number | null>(null);
 
   const buildingParam = useMemo(() => {
     const primary = parseBuildingId(searchParams?.get('building'));
@@ -36,34 +41,39 @@ function KioskDisplayPageContent() {
 
   const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();
 
-  // If building is passed via query string, set it in context (minimal stub for kiosk scenes)
+  // Effect 1: Handle URL parameter changes (highest priority)
+  // URL parameter ALWAYS overrides context - this prevents BuildingContext from resetting the building
   useEffect(() => {
-    // keep internal state in sync with URL param
-    if (buildingParam) {
+    if (buildingParam !== null) {
+      hasUrlParam.current = true;
       setEffectiveBuildingId(buildingParam);
+      
+      // Only update context if it's different from what we last set
+      // This prevents infinite loops
+      if (lastSetBuildingId.current !== buildingParam) {
+        lastSetBuildingId.current = buildingParam;
+        const stubBuilding: Building = {
+          id: buildingParam,
+          name: `Κτίριο #${buildingParam}`,
+          address: '',
+          city: '',
+          created_at: FALLBACK_TIMESTAMP,
+          updated_at: FALLBACK_TIMESTAMP,
+        };
+        setSelectedBuilding(stubBuilding);
+      }
+    } else {
+      hasUrlParam.current = false;
+      lastSetBuildingId.current = null;
     }
+  }, [buildingParam, setSelectedBuilding]);
 
-    if (!buildingParam) return;
-    if (selectedBuilding?.id === buildingParam) return;
-
-    const stubBuilding: Building = {
-      id: buildingParam,
-      name: `Κτίριο #${buildingParam}`,
-      address: '',
-      city: '',
-      created_at: FALLBACK_TIMESTAMP,
-      updated_at: FALLBACK_TIMESTAMP,
-    };
-
-    setSelectedBuilding(stubBuilding);
-  }, [buildingParam, selectedBuilding?.id, setSelectedBuilding]);
-
-  // Fallback to selectedBuilding when no query param provided
+  // Effect 2: Fallback to context building ONLY if no URL param exists
   useEffect(() => {
-    if (!buildingParam && selectedBuilding?.id) {
+    if (!hasUrlParam.current && selectedBuilding?.id) {
       setEffectiveBuildingId(selectedBuilding.id);
     }
-  }, [buildingParam, selectedBuilding?.id]);
+  }, [selectedBuilding?.id]);
 
   // Keyboard shortcut Ctrl+Alt+B opens selector (kiosk flow)
   useKeyboardShortcuts({
