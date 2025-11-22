@@ -8,6 +8,23 @@ const FALLBACK_RESPONSE = {
   timestamp: new Date().toISOString(),
 };
 
+async function fetchScenes(url: string, headers: any, timeoutMs: number = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const url = request.nextUrl || new URL(request.url);
   const buildingId = url.searchParams.get('building_id');
@@ -22,29 +39,25 @@ export async function GET(request: NextRequest) {
   // Use Docker service name for backend
   const backendUrl = (process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000').replace(/\/$/, '');
   
-  // Use list endpoint instead of custom action 'active' which seems to be causing 404s
-  const targetUrl = `${backendUrl}/api/kiosk/public/scenes/?building_id=${buildingId}`;
-
-  console.log('[KIOSK SCENES API] Fetching from:', targetUrl);
+  // Headers for the request
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Forwarded-Host': 'demo.localhost',
+  };
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    // 1. Try the 'active' action endpoint first (preferred)
+    let targetUrl = `${backendUrl}/api/kiosk/public/scenes/active/?building_id=${buildingId}`;
+    console.log('[KIOSK SCENES API] Attempting active endpoint:', targetUrl);
 
-    const headers = {
-      'Content-Type': 'application/json',
-      // Add X-Forwarded-Host header for Django multi-tenant (works better than Host)
-      'X-Forwarded-Host': 'demo.localhost',
-    };
+    let response = await fetchScenes(targetUrl, headers);
 
-    console.log('[KIOSK SCENES API] Request headers:', headers);
-
-    const response = await fetch(targetUrl, {
-      headers,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+    // 2. If 404, try the standard list endpoint
+    if (response.status === 404) {
+      console.warn('[KIOSK SCENES API] Active endpoint 404, trying list endpoint...');
+      targetUrl = `${backendUrl}/api/kiosk/public/scenes/?building_id=${buildingId}`;
+      response = await fetchScenes(targetUrl, headers);
+    }
 
     console.log('[API PROXY] Backend response status:', response.status);
 
@@ -52,7 +65,7 @@ export async function GET(request: NextRequest) {
       const errorText = await response.text();
       console.error('[API PROXY] Backend error response:', errorText);
       
-      // Return fallback data instead of error
+      // Return fallback data instead of error to keep UI alive
       console.warn('[API PROXY] Returning fallback empty scenes due to backend error');
       return NextResponse.json(FALLBACK_RESPONSE);
     }
@@ -68,25 +81,18 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // If data is already in expected format (from custom action if it worked)
+    // If data is already in expected format (from active action)
     return NextResponse.json(data);
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
-    // Check if it's a connection error
-    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed') || error instanceof Error && error.name === 'AbortError') {
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed') || (error instanceof Error && error.name === 'AbortError')) {
       console.warn('[API PROXY] Backend unavailable (connection refused or timeout):', errorMessage);
-      console.warn('[API PROXY] Returning fallback empty scenes. Start Django backend to see actual data.');
-      console.warn('[API PROXY] Run: cd backend && python manage.py runserver 0.0.0.0:18000');
-      
-      // Return fallback data instead of error
       return NextResponse.json(FALLBACK_RESPONSE);
     }
     
     console.error('[API PROXY] Unexpected error fetching kiosk scenes:', error);
-    
-    // Even for unexpected errors, return fallback to prevent app crash
     return NextResponse.json(FALLBACK_RESPONSE);
   }
 }
-

@@ -59,91 +59,61 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     event?: typeof google.maps.event;
   };
 
-  const waitForGoogleMaps = async (timeoutMs = 12000): Promise<MapsApi> => {
-    // If constructors are ready, return immediately
-    if (window.google?.maps?.Map) {
-      return {
-        Map: window.google.maps.Map,
-        Marker: window.google.maps.Marker,
-        InfoWindow: window.google.maps.InfoWindow,
-        LatLng: window.google.maps.LatLng,
-        LatLngBounds: window.google.maps.LatLngBounds,
-        MapTypeId: window.google.maps.MapTypeId,
-        Size: window.google.maps.Size,
-        event: window.google.maps.event,
-      };
-    }
-
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (!existingScript) {
-      throw new Error('Google Maps script δεν βρέθηκε. Ελέγξτε το API key.');
-    }
-
-    // Wait for the script to finish loading or time out
-    await new Promise<void>((resolve, reject) => {
-      const start = Date.now();
-
-      const checkReady = () => {
-        if (window.google?.maps) {
-          resolve();
-        } else if (Date.now() - start > timeoutMs) {
-          reject(new Error('Timeout φόρτωσης Google Maps'));
-        } else {
-          setTimeout(checkReady, 150);
+  const waitForGoogleMaps = async (timeoutMs = 15000): Promise<MapsApi> => {
+    // Start polling for Google Maps API
+    const start = Date.now();
+    
+    return new Promise((resolve, reject) => {
+      const checkReady = async () => {
+        // Check for modern importLibrary (loading=async)
+        if (window.google?.maps?.importLibrary) {
+          try {
+            const mapsLib = (await window.google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
+            const markerLib = (await window.google.maps.importLibrary('marker')) as google.maps.MarkerLibrary;
+            
+            resolve({
+              Map: mapsLib.Map,
+              Marker: markerLib.Marker || mapsLib.Marker,
+              InfoWindow: mapsLib.InfoWindow,
+              LatLng: mapsLib.LatLng,
+              LatLngBounds: mapsLib.LatLngBounds,
+              MapTypeId: mapsLib.MapTypeId,
+              Size: mapsLib.Size,
+              event: window.google.maps.event,
+            });
+            return;
+          } catch (err) {
+            console.warn('[GoogleMapsVisualization] importLibrary failed, falling back', err);
+          }
         }
-      };
+        
+        // Check for legacy global objects
+        if (window.google?.maps?.Map) {
+          resolve({
+            Map: window.google.maps.Map,
+            Marker: window.google.maps.Marker,
+            InfoWindow: window.google.maps.InfoWindow,
+            LatLng: window.google.maps.LatLng,
+            LatLngBounds: window.google.maps.LatLngBounds,
+            MapTypeId: window.google.maps.MapTypeId,
+            Size: window.google.maps.Size,
+            event: window.google.maps.event,
+          });
+          return;
+        }
 
-      existingScript.addEventListener('load', checkReady, { once: true });
-      existingScript.addEventListener(
-        'error',
-        () => reject(new Error('Αποτυχία φόρτωσης Google Maps script')),
-        { once: true }
-      );
+        // Timeout check
+        if (Date.now() - start > timeoutMs) {
+          reject(new Error('Timeout φόρτωσης Google Maps API. Παρακαλώ ανανεώστε τη σελίδα.'));
+          return;
+        }
+
+        // Continue polling
+        requestAnimationFrame(() => setTimeout(checkReady, 100));
+      };
 
       checkReady();
     });
-
-    // New loader with loading=async exposes importLibrary instead of constructors
-    if (window.google?.maps?.importLibrary) {
-      try {
-        const mapsLib = (await window.google.maps.importLibrary('maps')) as google.maps.MapsLibrary;
-        const markerLib = (await window.google.maps.importLibrary('marker')) as google.maps.MarkerLibrary;
-
-        return {
-          Map: mapsLib.Map,
-          Marker: markerLib.Marker || mapsLib.Marker,
-          InfoWindow: mapsLib.InfoWindow,
-          LatLng: mapsLib.LatLng,
-          LatLngBounds: mapsLib.LatLngBounds,
-          MapTypeId: mapsLib.MapTypeId,
-          Size: mapsLib.Size,
-          event: window.google.maps.event,
-        };
-      } catch (err) {
-        console.warn('[GoogleMapsVisualization] importLibrary failed', err);
-        // Fall through to legacy constructors if available
-      }
-    }
-
-    // Legacy loader fallback: wait until constructors become available
-    const start = Date.now();
-    while (!window.google?.maps?.Map) {
-      if (Date.now() - start > timeoutMs) {
-        throw new Error('Timeout φόρτωσης Google Maps');
-      }
-      await new Promise((r) => setTimeout(r, 150));
-    }
-
-    return {
-      Map: window.google.maps.Map,
-      Marker: window.google.maps.Marker,
-      InfoWindow: window.google.maps.InfoWindow,
-      LatLng: window.google.maps.LatLng,
-      LatLngBounds: window.google.maps.LatLngBounds,
-      MapTypeId: window.google.maps.MapTypeId,
-      Size: window.google.maps.Size,
-      event: window.google.maps.event,
-    };
   };
 
   const handleMapRef = useCallback((node: HTMLDivElement | null) => {
