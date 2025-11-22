@@ -25,6 +25,7 @@ declare global {
           TERRAIN: google.maps.MapTypeId;
         };
         importLibrary?: (library: string) => Promise<any>;
+        Animation?: any;
       };
     };
   }
@@ -54,6 +55,8 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     LatLngBounds: typeof google.maps.LatLngBounds;
     MapTypeId: typeof google.maps.MapTypeId;
     Size: typeof google.maps.Size;
+    Animation: typeof google.maps.Animation;
+    Point: typeof google.maps.Point;
     event?: typeof google.maps.event;
   };
 
@@ -102,6 +105,8 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         const LatLng = (coreLib?.LatLng) || (mapsLib as any).LatLng || window.google?.maps?.LatLng;
         const LatLngBounds = (coreLib?.LatLngBounds) || (mapsLib as any).LatLngBounds || window.google?.maps?.LatLngBounds;
         const Size = (coreLib?.Size) || (mapsLib as any).Size || window.google?.maps?.Size;
+        const Animation = (mapsLib as any).Animation || window.google?.maps?.Animation;
+        const Point = (coreLib?.Point) || (mapsLib as any).Point || window.google?.maps?.Point;
         
         // Marker: Legacy Marker is often in global namespace, but check mapsLib just in case
         // Note: importLibrary('marker') gives AdvancedMarkerElement, not legacy Marker
@@ -127,6 +132,8 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           LatLngBounds,
           MapTypeId,
           Size,
+          Animation: Animation as typeof google.maps.Animation,
+          Point,
           event,
         };
       } catch (err) {
@@ -152,6 +159,8 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
               LatLngBounds: window.google.maps.LatLngBounds,
               MapTypeId: window.google.maps.MapTypeId,
               Size: window.google.maps.Size,
+              Animation: window.google.maps.Animation as any,
+              Point: window.google.maps.Point as any,
               event: window.google.maps.event,
             });
          } else if (elapsed > timeoutMs) {
@@ -206,6 +215,55 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         // Default center (Athens, Greece)
         const defaultCenter = { lat: 37.9838, lng: 23.7275 };
         
+        // Custom Map Styles (Clean Light Theme)
+        const mapStyles: google.maps.MapTypeStyle[] = [
+          {
+            featureType: "administrative",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#444444" }]
+          },
+          {
+            featureType: "landscape",
+            elementType: "all",
+            stylers: [{ color: "#f2f2f2" }]
+          },
+          {
+            featureType: "poi",
+            elementType: "all",
+            stylers: [{ visibility: "off" }]
+          },
+          {
+            featureType: "road",
+            elementType: "all",
+            stylers: [{ saturation: -100 }, { lightness: 45 }]
+          },
+          {
+            featureType: "road.highway",
+            elementType: "all",
+            stylers: [{ visibility: "simplified" }]
+          },
+          {
+            featureType: "road.arterial",
+            elementType: "labels.icon",
+            stylers: [{ visibility: "off" }]
+          },
+          {
+            featureType: "transit",
+            elementType: "all",
+            stylers: [{ visibility: "off" }]
+          },
+          {
+            featureType: "water",
+            elementType: "all",
+            stylers: [{ color: "#4f595d" }, { visibility: "on" }]
+          },
+          {
+            featureType: "water",
+            elementType: "geometry.fill",
+            stylers: [{ color: "#b3d1ff" }]
+          }
+        ];
+
         // Calculate bounds if we have buildings with coordinates
         if (buildingsWithCoordinates.length > 0) {
           const bounds = new mapsApi.LatLngBounds();
@@ -215,18 +273,14 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             }
           });
 
-          // Create map centered on bounds
           const mapOptions: google.maps.MapOptions = {
             center: bounds.getCenter().toJSON(),
             zoom: 12,
             mapTypeId: mapsApi.MapTypeId.ROADMAP,
-            styles: [
-              {
-                featureType: 'poi',
-                elementType: 'labels',
-                stylers: [{ visibility: 'off' }],
-              },
-            ],
+            styles: mapStyles,
+            disableDefaultUI: false,
+            streetViewControl: true,
+            mapTypeControl: false,
           };
 
           mapInstanceRef.current = new mapsApi.Map(mapContainer, mapOptions);
@@ -237,6 +291,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             center: defaultCenter,
             zoom: 10,
             mapTypeId: mapsApi.MapTypeId.ROADMAP,
+            styles: mapStyles,
           };
 
           mapInstanceRef.current = new mapsApi.Map(mapContainer, mapOptions);
@@ -249,7 +304,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         markersRef.current = [];
         infoWindowsRef.current = [];
 
-        buildingsWithCoordinates.forEach((building) => {
+        buildingsWithCoordinates.forEach((building, index) => {
           if (building.latitude == null || building.longitude == null) return;
 
           const position = new mapsApi.LatLng(
@@ -257,47 +312,78 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             building.longitude
           );
 
-          const marker = new mapsApi.Marker({
-            position,
-            map: mapInstanceRef.current!,
-            title: building.name,
-            icon: {
-              url: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#ef4444" stroke="#ffffff" stroke-width="2">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-              `),
-              scaledSize: mapsApi.Size ? new mapsApi.Size(32, 32) : undefined,
-            },
-          });
+          // Stagger animation drops slightly
+          const timeout = index * 200;
 
-          // Create info window
-          const infoWindow = new mapsApi.InfoWindow({
-            content: `
-              <div style="padding: 8px; min-width: 200px;">
-                <h3 style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px;">${building.name}</h3>
-                <p style="margin: 4px 0; color: #666; font-size: 14px;">
-                  <strong>Διεύθυνση:</strong> ${building.address || 'N/A'}<br/>
-                  ${building.city ? `<strong>Πόλη:</strong> ${building.city}<br/>` : ''}
-                  ${building.postal_code ? `<strong>ΤΚ:</strong> ${building.postal_code}<br/>` : ''}
-                  ${building.apartments_count || building.total_apartments
-                    ? `<strong>Διαμερίσματα:</strong> ${building.apartments_count || building.total_apartments}<br/>`
-                    : ''}
-                </p>
-              </div>
-            `,
-          });
+          setTimeout(() => {
+            if (!mapInstanceRef.current) return;
 
-          // Add click listener to marker
-          marker.addListener('click', () => {
-            // Close all other info windows
-            infoWindowsRef.current.forEach((iw) => iw.close());
-            infoWindow.open(mapInstanceRef.current!, marker);
-          });
+            const marker = new mapsApi.Marker({
+              position,
+              map: mapInstanceRef.current!,
+              title: building.name,
+              animation: mapsApi.Animation?.DROP, // Add drop animation
+              icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24">
+                    <defs>
+                      <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+                      </filter>
+                    </defs>
+                    <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 13 8 13s8-7.75 8-13c0-4.42-3.58-8-8-8z" fill="#E11D48" filter="url(#shadow)"/>
+                    <circle cx="12" cy="10" r="3.5" fill="white"/>
+                  </svg>
+                `),
+                scaledSize: mapsApi.Size ? new mapsApi.Size(40, 40) : undefined,
+                anchor: mapsApi.Point ? new mapsApi.Point(20, 40) : undefined,
+              },
+            });
 
-          markersRef.current.push(marker);
-          infoWindowsRef.current.push(infoWindow);
+            // Create info window
+            const infoWindow = new mapsApi.InfoWindow({
+              content: `
+                <div style="padding: 12px; min-width: 240px; font-family: 'Inter', sans-serif;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <div style="background: #E11D48; width: 8px; height: 8px; border-radius: 50%;"></div>
+                    <h3 style="margin: 0; font-weight: 600; font-size: 16px; color: #1f2937;">${building.name}</h3>
+                  </div>
+                  <p style="margin: 4px 0; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                    <strong>📍 Διεύθυνση:</strong> ${building.address || 'N/A'}<br/>
+                    ${building.city ? `<strong>🏙️ Πόλη:</strong> ${building.city}<br/>` : ''}
+                    ${building.postal_code ? `<strong>📮 ΤΚ:</strong> ${building.postal_code}<br/>` : ''}
+                    ${building.apartments_count || building.total_apartments
+                      ? `<strong>🏢 Διαμερίσματα:</strong> ${building.apartments_count || building.total_apartments}<br/>`
+                      : ''}
+                  </p>
+                </div>
+              `,
+            });
+
+            // Add click listener to marker
+            marker.addListener('click', () => {
+              // Stop animation on all markers
+              markersRef.current.forEach(m => m.setAnimation(null));
+              
+              // Bounce this marker
+              if (mapsApi.Animation) {
+                marker.setAnimation(mapsApi.Animation.BOUNCE);
+                // Stop bouncing after 2.1 seconds (approx 3 bounces)
+                setTimeout(() => {
+                    if (marker.getAnimation() !== null) {
+                        marker.setAnimation(null);
+                    }
+                }, 2100);
+              }
+
+              // Close all other info windows
+              infoWindowsRef.current.forEach((iw) => iw.close());
+              infoWindow.open(mapInstanceRef.current!, marker);
+            });
+
+            markersRef.current.push(marker);
+            infoWindowsRef.current.push(infoWindow);
+          }, timeout);
         });
 
         setMapLoaded(true);
@@ -315,7 +401,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         markersRef.current = [];
         infoWindowsRef.current = [];
     };
-  }, [mapsApi, mapContainer, buildingsWithCoordinates]); // Re-run if buildings change
+  }, [mapsApi, mapContainer, buildingsWithCoordinates]);
 
   if (error) {
     return (
@@ -380,12 +466,12 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
               className="w-full h-[600px] rounded-lg border"
               style={{ minHeight: '600px' }}
             />
-        {mapLoaded && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>Κάντε κλικ σε ένα marker για να δείτε τις λεπτομέρειες του κτιρίου</span>
-          </div>
-        )}
+            {mapLoaded && (
+              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4" />
+                <span>Κάντε κλικ σε ένα marker για να δείτε τις λεπτομέρειες του κτιρίου</span>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
