@@ -1,18 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Bell, Clock, Mail, MessageSquare, Phone, Send } from 'lucide-react';
 import { notificationTemplatesApi, notificationsApi } from '@/lib/api/notifications';
 import {
   fetchApartments,
   fetchBuildingResidents,
-  fetchAnnouncements,
-  fetchVotes,
   type ApartmentList,
   type BuildingResident,
-  type Announcement,
-  type Vote,
 } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -28,9 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Textarea } from '@/components/ui/textarea';
-import type { NotificationPriority, NotificationTemplate, NotificationType } from '@/types/notifications';
-import { cn } from '@/lib/utils';
+import type {
+  NotificationCategory,
+  NotificationPriority,
+  NotificationTemplate,
+  NotificationType,
+} from '@/types/notifications';
+import { useNotificationPreferences, getPreferenceForCategory } from '@/hooks/useNotificationPreferences';
 import { toast } from 'sonner';
 
 type RecipientMode = 'all' | 'manual';
@@ -42,6 +45,15 @@ const channelOptions: { value: NotificationType; label: string; icon: JSX.Elemen
   { value: 'both', label: 'Email + SMS', icon: <Bell className="h-4 w-4" /> },
 ];
 
+const categoryOptions: { value: NotificationCategory; label: string }[] = [
+  { value: 'announcement', label: 'Ανακοινώσεις' },
+  { value: 'payment', label: 'Πληρωμές' },
+  { value: 'maintenance', label: 'Συντηρήσεις' },
+  { value: 'meeting', label: 'Συνελεύσεις' },
+  { value: 'reminder', label: 'Υπενθυμίσεις' },
+  { value: 'emergency', label: 'Έκτακτα' },
+];
+
 const priorityOptions: { value: NotificationPriority; label: string }[] = [
   { value: 'low', label: 'Χαμηλή' },
   { value: 'normal', label: 'Κανονική' },
@@ -49,13 +61,29 @@ const priorityOptions: { value: NotificationPriority; label: string }[] = [
   { value: 'urgent', label: 'Επείγον' },
 ];
 
+const formatDateTimeLocal = (date: Date) => {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const getDefaultScheduledTime = () => {
+  const date = new Date();
+  date.setMinutes(0, 0, 0);
+  date.setHours(date.getHours() + 2);
+  return formatDateTimeLocal(date);
+};
+
 export default function QuickSend() {
   const { buildings, selectedBuilding, currentBuilding, setSelectedBuilding } = useBuilding();
+  const { preferences } = useNotificationPreferences();
   const defaultBuildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
   const [buildingId, setBuildingId] = useState<number | null>(defaultBuildingId);
+  const [category, setCategory] = useState<NotificationCategory>('announcement');
   const [templateId, setTemplateId] = useState<string>('none');
   const [channel, setChannel] = useState<NotificationType>('email');
   const [priority, setPriority] = useState<NotificationPriority>('normal');
+  const [instantSend, setInstantSend] = useState(true);
+  const [scheduledSend, setScheduledSend] = useState(false);
   const [recipientMode, setRecipientMode] = useState<RecipientMode>('all');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -63,6 +91,18 @@ export default function QuickSend() {
   const [scheduledAt, setScheduledAt] = useState('');
   const [selectedApartmentIds, setSelectedApartmentIds] = useState<number[]>([]);
   const [templateContext, setTemplateContext] = useState<Record<string, string>>({});
+  const [showPersonalization, setShowPersonalization] = useState(false);
+
+  useEffect(() => {
+    const pref = getPreferenceForCategory(preferences, category);
+    setInstantSend(pref.instant);
+    setScheduledSend(pref.scheduled);
+    if (pref.scheduled) {
+      setScheduledAt((prev) => prev || getDefaultScheduledTime());
+    } else {
+      setScheduledAt('');
+    }
+  }, [preferences, category]);
 
   const {
     data: templates = [],
@@ -97,28 +137,6 @@ export default function QuickSend() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch announcements for smart selector
-  const {
-    data: announcements = [],
-    isLoading: announcementsLoading,
-  } = useQuery<Announcement[]>({
-    queryKey: ['quickSendAnnouncements', buildingId],
-    queryFn: () => (buildingId ? fetchAnnouncements(buildingId) : Promise.resolve([])),
-    enabled: !!buildingId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Fetch votes for smart selector
-  const {
-    data: votes = [],
-    isLoading: votesLoading,
-  } = useQuery<Vote[]>({
-    queryKey: ['quickSendVotes', buildingId],
-    queryFn: () => (buildingId ? fetchVotes(buildingId) : Promise.resolve([])),
-    enabled: !!buildingId,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!buildingId) throw new Error('Επιλέξτε πολυκατοικία');
@@ -139,22 +157,12 @@ export default function QuickSend() {
         building: buildingId,
         apartment_ids: recipientMode === 'manual' ? selectedApartmentIds : undefined,
         send_to_all: recipientMode === 'all',
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       };
 
       // Add template_id and context only if using a template
       if (hasTemplateId) {
         payload.template_id = Number(templateId);
-        // Validate that all template variables are filled (not empty)
-        const emptyFields = Object.entries(templateContext)
-          .filter(([_, value]) => !value || value.trim() === '')
-          .map(([key]) => getPlaceholderLabel(key));
-        
-        if (emptyFields.length > 0) {
-          throw new Error(`Συμπληρώστε τα ακόλουθα πεδία: ${emptyFields.join(', ')}`);
-        }
-        // Send template context with user-filled values
-        payload.context = templateContext;
+        payload.context = buildContextForSubmit();
       } else {
         // When not using template, backend always requires subject+body
         // For SMS/Viber, use sms_body as body if body is empty
@@ -181,12 +189,23 @@ export default function QuickSend() {
         payload.send_to_all = false;
       }
 
+      if (!instantSend && !(scheduledSend && scheduledAt)) {
+        throw new Error('Ενεργοποιήστε άμεση ή προγραμματισμένη αποστολή');
+      }
+      if (scheduledSend) {
+        if (!scheduledAt) {
+          throw new Error('Ορίστε ώρα για την προγραμματισμένη αποστολή');
+        }
+        payload.scheduled_at = new Date(scheduledAt).toISOString();
+      } else {
+        payload.scheduled_at = undefined;
+      }
+
       return notificationsApi.create(payload);
     },
     onSuccess: (response) => {
-      toast.success(
-        `Η αποστολή προετοιμάστηκε (${response.status === 'scheduled' ? 'προγραμματισμένη' : 'άμεση'})`
-      );
+      const isScheduled = response.status === 'scheduled' || (scheduledSend && !!scheduledAt);
+      toast.success(isScheduled ? 'Η αποστολή μπήκε στο πρόγραμμα' : 'Η αποστολή θα φύγει άμεσα');
       if (channel === 'viber') {
         toast.info('Το Viber δεν υποστηρίζεται backend · στάλθηκε ως SMS');
       }
@@ -246,44 +265,6 @@ export default function QuickSend() {
     return labelMap[placeholder] || placeholder.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  // Get smart selector data source for a placeholder
-  const getPlaceholderDataSource = (placeholder: string) => {
-    const sourceMap: Record<string, { type: 'select' | 'input'; data?: any[]; autoFill?: (item: any) => Partial<Record<string, string>> }> = {
-      announcement_title: {
-        type: 'select',
-        data: announcements,
-        autoFill: (announcement: Announcement) => ({
-          announcement_title: announcement.title,
-          announcement_body: announcement.description,
-        }),
-      },
-      announcement_body: {
-        type: 'select',
-        data: announcements,
-        autoFill: (announcement: Announcement) => ({
-          announcement_title: announcement.title,
-          announcement_body: announcement.description,
-        }),
-      },
-      agenda_short: {
-        type: 'select',
-        data: votes,
-        autoFill: (vote: Vote) => ({
-          agenda_short: vote.title,
-        }),
-      },
-      building_name: {
-        type: 'select',
-        data: buildings,
-        autoFill: (building: any) => ({
-          building_name: building.name || building.street,
-        }),
-      },
-    };
-    
-    return sourceMap[placeholder] || { type: 'input' };
-  };
-
   const defaultContextValue = (placeholder: string, currentBuildingName?: string) => {
     const fallback = 'Συμπληρώστε πληροφορία';
     const map: Record<string, string> = {
@@ -311,6 +292,17 @@ export default function QuickSend() {
     return map[placeholder] || fallback;
   };
 
+  const buildContextForSubmit = () => {
+    const buildingLabel =
+      buildings.find((b) => b.id === buildingId)?.name ||
+      buildings.find((b) => b.id === buildingId)?.street;
+
+    return Object.entries(templateContext).reduce<Record<string, string>>((acc, [key, value]) => {
+      acc[key] = value?.trim() || defaultContextValue(key, buildingLabel);
+      return acc;
+    }, {});
+  };
+
   const handleTemplateSelect = (value: string) => {
     setTemplateId(value);
     if (value === 'none') {
@@ -322,29 +314,24 @@ export default function QuickSend() {
     }
     const picked = templates.find((t) => t.id === Number(value));
     if (picked) {
+      setCategory(picked.category as NotificationCategory);
       setSubject(picked.subject || '');
       setBody(picked.body_template || '');
       if (picked.sms_template) {
         setSmsBody(picked.sms_template);
       }
 
-      // Extract placeholders and initialize context with EMPTY strings
-      // The defaultContextValue() is used ONLY for placeholder text in <Input> components
+      // Extract placeholders and initialize context with friendly defaults (no dev-style variables)
       const allText = `${picked.subject || ''} ${picked.body_template || ''} ${picked.sms_template || ''}`;
       const placeholders = extractPlaceholders(allText);
       const initialContext: Record<string, string> = {};
       const currentBuildingName =
         buildings.find((b) => b.id === buildingId)?.name || buildings.find((b) => b.id === buildingId)?.street;
       placeholders.forEach((placeholder) => {
-        // Special case: building_name gets the actual building name as default
-        if (placeholder === 'building_name' && currentBuildingName) {
-          initialContext[placeholder] = currentBuildingName;
-        } else {
-          // All other fields start empty - user MUST fill them manually
-          initialContext[placeholder] = '';
-        }
+        initialContext[placeholder] = defaultContextValue(placeholder, currentBuildingName);
       });
       setTemplateContext(initialContext);
+      setShowPersonalization(false);
     }
   };
 
@@ -386,7 +373,7 @@ export default function QuickSend() {
           <div>
             <CardTitle className="text-lg">Γρήγορη Αποστολή</CardTitle>
             <p className="text-sm text-gray-500">
-              Στείλτε άμεσα ή προγραμματισμένα email / SMS / Viber χωρίς τεχνικές μεταβλητές
+              Διαλέξτε με διακόπτες αν θα φύγουν άμεσα ή προγραμματισμένα, χωρίς περίπλοκες μεταβλητές
             </p>
           </div>
           <Badge variant="outline" className="text-xs">
@@ -397,23 +384,21 @@ export default function QuickSend() {
       <CardContent className="space-y-4">
         <div className="grid gap-4 lg:grid-cols-[1.2fr,1fr]">
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>Κανάλι</Label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {channelOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      variant={channel === option.value ? 'default' : 'outline'}
-                      size="sm"
-                      className="justify-start"
-                      onClick={() => setChannel(option.value)}
-                    >
-                      {option.icon}
-                      <span className="ml-2">{option.label}</span>
-                    </Button>
-                  ))}
-                </div>
+                <Label>Κατηγορία</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as NotificationCategory)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Προτεραιότητα</Label>
@@ -431,15 +416,60 @@ export default function QuickSend() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Προγραμματισμός (προαιρετικό)</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="datetime-local"
-                    value={scheduledAt}
-                    onChange={(e) => setScheduledAt(e.target.value)}
-                  />
-                  <Clock className="h-4 w-4 text-slate-400" />
+                <Label>Χρόνος αποστολής</Label>
+                <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-900">Άμεση αποστολή</span>
+                    <Switch checked={instantSend} onCheckedChange={setInstantSend} />
+                  </div>
+                  <div className="space-y-2 rounded-md border border-slate-200 bg-white p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-900">Προγραμματισμένη</span>
+                      <Switch
+                        checked={scheduledSend}
+                        onCheckedChange={(checked) => {
+                          setScheduledSend(checked);
+                          if (checked && !scheduledAt) {
+                            setScheduledAt(getDefaultScheduledTime());
+                          } else if (!checked) {
+                            setScheduledAt('');
+                          }
+                        }}
+                      />
+                    </div>
+                    {scheduledSend && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="datetime-local"
+                          value={scheduledAt}
+                          onChange={(e) => setScheduledAt(e.target.value)}
+                        />
+                        <Clock className="h-4 w-4 text-slate-400" />
+                      </div>
+                    )}
+                    <p className="text-[11px] text-gray-500">
+                      Ενεργοποιήστε τουλάχιστον έναν διακόπτη. Αν είναι ενεργό το προγραμματισμένο, θα χρησιμοποιηθεί η ώρα που ορίζετε.
+                    </p>
+                  </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Κανάλι</Label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {channelOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={channel === option.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="justify-start"
+                    onClick={() => setChannel(option.value)}
+                  >
+                    {option.icon}
+                    <span className="ml-2">{option.label}</span>
+                  </Button>
+                ))}
               </div>
             </div>
 
@@ -460,7 +490,7 @@ export default function QuickSend() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500">
-                  Τα templates περιέχουν έτοιμο κείμενο. Συμπληρώστε τις μεταβλητές που θα εμφανιστούν παρακάτω.
+                  Τα templates έχουν έτοιμο κείμενο. Οι βασικές τιμές συμπληρώνονται αυτόματα για εσάς.
                 </p>
               </div>
               <div className="space-y-2">
@@ -484,136 +514,44 @@ export default function QuickSend() {
               </div>
             </div>
 
-            {/* Template Variables Input Fields */}
             {templateId !== 'none' && Object.keys(templateContext).length > 0 && (
-              <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">
-                      i
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-blue-900">Συμπληρώστε τις μεταβλητές του προτύπου</p>
-                      <p className="text-xs text-blue-700">
-                        Τα πεδία παρακάτω θα αντικαταστήσουν τις μεταβλητές στο μήνυμα
-                      </p>
-                    </div>
+              <Collapsible key={templateId}>
+                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Προσωποποίηση (προαιρετικό)</p>
+                    <p className="text-xs text-gray-600">
+                      Έχουμε ήδη συμπληρώσει τις βασικές τιμές. Άνοιξε μόνο αν θέλεις αλλαγές.
+                    </p>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2.5 py-1.5">
-                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <span className="font-medium">Συμβουλή:</span>
-                    <span>Πεδία με πράσινο ✓ έχουν δεδομένα από υπάρχουσες ανακοινώσεις - επιλέξτε για αυτόματη συμπλήρωση!</span>
-                  </div>
+                  <CollapsibleTrigger
+                    asChild
+                    onClick={() => setShowPersonalization((prev) => !prev)}
+                  >
+                    <Button variant="ghost" size="sm">
+                      {showPersonalization ? 'Κλείσιμο' : 'Εμφάνιση'}
+                    </Button>
+                  </CollapsibleTrigger>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {Object.keys(templateContext).map((placeholder) => {
-                    const dataSource = getPlaceholderDataSource(placeholder);
-                    const hasData = dataSource.data && dataSource.data.length > 0;
-                    
-                    return (
+                <CollapsibleContent>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {Object.keys(templateContext).map((placeholder) => (
                       <div key={placeholder} className="space-y-1">
-                        <Label className="text-xs text-blue-900">
-                          {getPlaceholderLabel(placeholder)}
-                          <span className="ml-1 text-blue-500 font-mono text-[10px]">
-                            {'{{ ' + placeholder + ' }}'}
-                          </span>
-                          {hasData && (
-                            <span className="ml-1 text-green-600 text-[10px]">
-                              ✓ {dataSource.data!.length} διαθέσιμα
-                            </span>
-                          )}
-                        </Label>
-                        
-                        {/* Smart Selector: Dropdown with existing data or manual input */}
-                        {hasData && dataSource.type === 'select' ? (
-                          <Select
-                            value={templateContext[placeholder] || '__none__'}
-                            onValueChange={(value) => {
-                              // Skip if "none" option selected
-                              if (value === '__none__') {
-                                setTemplateContext((prev) => ({
-                                  ...prev,
-                                  [placeholder]: '',
-                                }));
-                                return;
-                              }
-                              
-                              // Find selected item and auto-fill related fields
-                              const selectedItem = dataSource.data!.find((item: any) => {
-                                if (placeholder === 'announcement_title' || placeholder === 'announcement_body') {
-                                  return item.title === value || item.id.toString() === value;
-                                }
-                                if (placeholder === 'agenda_short') {
-                                  return item.title === value || item.id.toString() === value;
-                                }
-                                if (placeholder === 'building_name') {
-                                  return (item.name || item.street) === value || item.id.toString() === value;
-                                }
-                                return false;
-                              });
-                              
-                              if (selectedItem && dataSource.autoFill) {
-                                const autoFilledData = dataSource.autoFill(selectedItem);
-                                setTemplateContext((prev) => ({
-                                  ...prev,
-                                  ...autoFilledData,
-                                }));
-                              } else {
-                                setTemplateContext((prev) => ({
-                                  ...prev,
-                                  [placeholder]: value,
-                                }));
-                              }
-                            }}
-                          >
-                            <SelectTrigger className="bg-white">
-                              <SelectValue placeholder="Επιλέξτε από υπάρχοντα..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">— Επιλέξτε —</SelectItem>
-                              {dataSource.data!.map((item: any) => {
-                                let displayText = '';
-                                let valueKey = '';
-                                
-                                if (placeholder === 'announcement_title' || placeholder === 'announcement_body') {
-                                  displayText = item.title;
-                                  valueKey = item.title;
-                                } else if (placeholder === 'agenda_short') {
-                                  displayText = item.title;
-                                  valueKey = item.title;
-                                } else if (placeholder === 'building_name') {
-                                  displayText = item.name || item.street;
-                                  valueKey = item.name || item.street;
-                                }
-                                
-                                return (
-                                  <SelectItem key={item.id} value={valueKey}>
-                                    {displayText}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            placeholder={defaultContextValue(placeholder, selectedBuilding?.name || selectedBuilding?.street)}
-                            value={templateContext[placeholder] || ''}
-                            onChange={(e) =>
-                              setTemplateContext((prev) => ({
-                                ...prev,
-                                [placeholder]: e.target.value,
-                              }))
-                            }
-                            className="bg-white"
-                          />
-                        )}
+                        <Label className="text-xs text-gray-800">{getPlaceholderLabel(placeholder)}</Label>
+                        <Input
+                          value={templateContext[placeholder] || ''}
+                          onChange={(e) =>
+                            setTemplateContext((prev) => ({
+                              ...prev,
+                              [placeholder]: e.target.value,
+                            }))
+                          }
+                          className="bg-white"
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
 
             <div className="space-y-2">

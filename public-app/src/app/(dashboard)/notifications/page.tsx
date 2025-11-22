@@ -11,6 +11,7 @@ import MonthlyTasksManager from '@/components/notifications/MonthlyTasksManager'
 import NotificationTemplateEditor from '@/components/notifications/NotificationTemplateEditor';
 import NotificationAnalytics from '@/components/notifications/NotificationAnalytics';
 import QuickSend from '@/components/notifications/QuickSend';
+import NotificationModeBoard from '@/components/notifications/NotificationModeBoard';
 
 function NotificationsPageContent() {
   const [activeTab, setActiveTab] = useState('quick');
@@ -58,7 +59,8 @@ function NotificationsPageContent() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="quick" className="mt-6">
+        <TabsContent value="quick" className="mt-6 space-y-6">
+          <NotificationModeBoard />
           <QuickSend />
         </TabsContent>
 
