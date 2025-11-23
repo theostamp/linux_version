@@ -12,7 +12,8 @@ import { Trash2 } from 'lucide-react';
 import { deleteVote } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
@@ -23,21 +24,81 @@ function isActive(start: string, end: string) {
 }
 
 function VotesPageContent() {
-  const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
+  const { currentBuilding, selectedBuilding, setSelectedBuilding, buildings, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isUpdatingFromUrl = useRef(false);
+  const isUpdatingUrl = useRef(false);
+
+  // Συγχρονισμός URL parameter με BuildingContext (URL -> Context)
+  useEffect(() => {
+    if (isUpdatingUrl.current) return; // Skip αν ενημερώνουμε το URL
+    
+    const buildingParam = searchParams.get('building');
+    if (buildingParam) {
+      const buildingIdFromUrl = parseInt(buildingParam, 10);
+      if (!isNaN(buildingIdFromUrl) && buildings.length > 0) {
+        const buildingFromUrl = buildings.find(b => b.id === buildingIdFromUrl);
+        if (buildingFromUrl && (!selectedBuilding || selectedBuilding.id !== buildingIdFromUrl)) {
+          isUpdatingFromUrl.current = true;
+          setSelectedBuilding(buildingFromUrl);
+          setTimeout(() => { isUpdatingFromUrl.current = false; }, 100);
+        }
+      }
+    } else if (selectedBuilding && selectedBuilding.id !== currentBuilding?.id) {
+      // Αν δεν υπάρχει URL parameter αλλά υπάρχει selectedBuilding διαφορετικό από currentBuilding
+      // Δεν το καθαρίζουμε αυτόματα - αφήνουμε το user να το κάνει μέσω του selector
+    }
+  }, [searchParams, buildings, selectedBuilding, currentBuilding, setSelectedBuilding]);
+
+  // Ενημέρωση URL όταν αλλάζει το selectedBuilding (Context -> URL)
+  useEffect(() => {
+    if (isUpdatingFromUrl.current) return; // Skip αν ενημερώνουμε από το URL
+    
+    const buildingParam = searchParams.get('building');
+    const expectedBuildingId = selectedBuilding?.id?.toString() || null;
+    
+    // Ενημερώνουμε το URL μόνο αν το selectedBuilding είναι διαφορετικό από το currentBuilding
+    if (selectedBuilding && selectedBuilding.id !== currentBuilding?.id) {
+      if (buildingParam !== expectedBuildingId) {
+        isUpdatingUrl.current = true;
+        const newSearchParams = new URLSearchParams(searchParams.toString());
+        newSearchParams.set('building', selectedBuilding.id.toString());
+        const newUrl = `/votes?${newSearchParams.toString()}`;
+        router.replace(newUrl, { scroll: false });
+        setTimeout(() => { isUpdatingUrl.current = false; }, 100);
+      }
+    } else if (buildingParam) {
+      // Αν το selectedBuilding είναι null ή ίδιο με currentBuilding, καθαρίζουμε το URL parameter
+      isUpdatingUrl.current = true;
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('building');
+      const newUrl = newSearchParams.toString() 
+        ? `/votes?${newSearchParams.toString()}`
+        : '/votes';
+      router.replace(newUrl, { scroll: false });
+      setTimeout(() => { isUpdatingUrl.current = false; }, 100);
+    }
+  }, [selectedBuilding, currentBuilding, searchParams, router]);
 
   const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
   const canDelete = user?.is_superuser || user?.is_staff;
   const canCreateVote = user?.is_superuser || user?.is_staff;
 
   const {
-    data: votes = [],
+    data: votesData = [],
     isLoading,
     isError,
     isSuccess,
   } = useVotes(buildingId);
+
+  // Αποφυγή διπλότυπων εμφανίσεων - deduplication με βάση το vote.id
+  const votes = votesData.filter((vote, index, self) => 
+    index === self.findIndex((v) => v.id === vote.id)
+  );
 
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
