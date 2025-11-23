@@ -108,14 +108,18 @@ export default function BuildingSelector({
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed top-20 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4"
-      onClick={handleBackdropClick}
-    >
+    <>
       <div 
-        ref={modalRef}
-        className="bg-white rounded-none shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border-0"
+        className="fixed top-20 left-0 right-0 bottom-0 bg-black bg-opacity-50 z-30"
+        onClick={handleBackdropClick}
+      />
+      <div 
+        className="fixed top-20 left-0 right-0 bottom-0 flex items-start justify-center z-50 p-4 pointer-events-none"
       >
+        <div 
+          ref={modalRef}
+          className="bg-white rounded-none shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border-0 pointer-events-auto"
+        >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -290,7 +294,8 @@ export default function BuildingSelector({
             Επιλέξτε ένα κτίριο για φιλτράρισμα ή "Όλα τα Κτίρια" για προβολή όλων
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
