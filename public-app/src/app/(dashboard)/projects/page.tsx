@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getActiveBuildingId } from '@/lib/api';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useProjects, useProjectMutations } from '@/hooks/useProjects';
 import { useOffers } from '@/hooks/useOffers';
 import { getRelativeTimeEl } from '@/lib/date';
@@ -63,7 +63,10 @@ function ProjectsDashboardContent() {
   const searchParams = useSearchParams();
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
-  const buildingId = getActiveBuildingId();
+  const { currentBuilding, selectedBuilding } = useBuilding();
+  
+  // Use same logic as announcements and votes pages for consistency
+  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
   
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
