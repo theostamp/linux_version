@@ -1,0 +1,130 @@
+DEBUG 2025-11-16 08:29:46,552 monthly_balance_service 17 139773160139648    📊 Παλαιότερες οφειλές: €0.00
+DEBUG 2025-11-16 08:29:46,557 monthly_balance_service 17 139773160139648    🏢 Διαχειριστικά έξοδα: €0.00
+DEBUG 2025-11-16 08:29:46,562 monthly_balance_service 17 139773160139648    🏦 Αποθεματικό: €1000.00
+DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    🔧 Προγραμματισμένα έργα: €0.00
+DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    ⚖️ Καθαρό αποτέλεσμα: €-1000.00
+DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    🔄 Carry Forward: €1000.00
+INFO 2025-11-16 08:29:46,570 monthly_balance_service 17 139773160139648    ✅ Ενημερώθηκε υπάρχον record για 11/2025
+📊 Apartment Α1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €100.00
+   Payments This Month: €0.00
+   Net Obligation: €100.00
+📊 Apartment Α2 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €97.00
+   Payments This Month: €0.00
+   Net Obligation: €97.00
+📊 Apartment Α3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €88.00
+   Payments This Month: €0.00
+   Net Obligation: €88.00
+📊 Apartment Β1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €110.00
+   Payments This Month: €0.00
+   Net Obligation: €110.00
+📊 Apartment Β2 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €105.00
+   Payments This Month: €0.00
+   Net Obligation: €105.00
+📊 Apartment Β3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €98.00
+   Payments This Month: €0.00
+   Net Obligation: €98.00
+📊 Apartment Γ1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €92.00
+   Payments This Month: €0.00
+   Net Obligation: €92.00
+📊 Apartment Γ2 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €115.00
+   Payments This Month: €0.00
+   Net Obligation: €115.00
+📊 Apartment Γ3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €108.00
+   Payments This Month: €0.00
+   Net Obligation: €108.00
+📊 Apartment Δ1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €87.00
+   Payments This Month: €0.00
+   Net Obligation: €87.00
+/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2025-11-01 00:00:00) while time zone support is active.
+  warnings.warn(
+/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2025-12-01 00:00:00) while time zone support is active.
+⚠️ MonthlyBalance not found for 10/2025, using raw calculation
+   ✅ Overall activity: True
+   📤 Has expenses: True
+🔍 FinancialDashboard (snapshot_2025-11): current_reserve=-1000.00, total_obligations=0.00
+   📥 Has payments: False
+🔍 FinancialDashboard (snapshot_2025-11): total_balance=-2000.00
+   📋 Has issued expenses: True
+   Previous obligations for 2025-11: €0.00
+   System start date: 2025-11-01
+   Expenses before month (from 2025-11-01): €0.00
+   Payments before month (from 2025-11-01): €0.00
+🔧 TOTAL BALANCE: current_reserve=-1000.00 - current_obligations=1000.00 = -2000.00
+🔧 CURRENT MONTH EXPENSES: 1000.00 = 1000.00 - 0.00
+100.64.0.3 - - [16/Nov/2025:08:29:46 +0200] "GET /api/financial/dashboard/summary/?building_id=1&month=2025-11 HTTP/1.1" 200 9681 "https://theo.newconcierge.app/financial?month=2025-12&building=1&tab=balances" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+  warnings.warn(
+🔍 Monthly Activity Check for 2025-11:
+📊 Apartment Α1 - 2025-11:
+   Current Month Expenses: €110.00
+   Previous Balance: €0.00
+   Current Month Expenses: €100.00
+   Payments This Month: €0.00
+   Payments This Month: €0.00
+   Net Obligation: €100.00
+   Net Obligation: €110.00
+📊 Apartment Α2 - 2025-11:
+   Previous Balance: €0.00
+📊 Apartment Β2 - 2025-11:
+   Current Month Expenses: €97.00
+   Payments This Month: €0.00
+   Net Obligation: €97.00
+📊 Apartment Α3 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €88.00
+   Payments This Month: €0.00
+   Net Obligation: €88.00
+📊 Apartment Β1 - 2025-11:
+   Previous Balance: €0.00
+🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+   Previous Balance: €0.00
+   Current Month Expenses: €105.00
+   Payments This Month: €0.00
+   Net Obligation: €105.00
+📊 Apartment Β3 - 2025-11:
+   Previous Balance: €0.00
+   Previous Balance: €0.00
+   Current Month Expenses: €115.00
+   Current Month Expenses: €98.00
+   Payments This Month: €0.00
+   Payments This Month: €0.00
+   Net Obligation: €98.00
+📊 Apartment Γ1 - 2025-11:
+   Previous Balance: €0.00
+   Net Obligation: €115.00
+   Current Month Expenses: €92.00
+📊 Apartment Γ3 - 2025-11:
+   Payments This Month: €0.00
+   Previous Balance: €0.00
+   Net Obligation: €92.00
+   Current Month Expenses: €108.00
+📊 Apartment Γ2 - 2025-11:
+   Payments This Month: €0.00
+   Net Obligation: €108.00
+📊 Apartment Δ1 - 2025-11:
+   Previous Balance: €0.00
+   Current Month Expenses: €87.00
+   Payments This Month: €0.00
+   Net Obligation: €87.00
+100.64.0.3 - - [16/Nov/2025:08:29:47 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=1&month=2025-11 HTTP/1.1" 200 4603 "https://theo.newconcierge.app/financial?month=2025-12&building=1&tab=balances" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
