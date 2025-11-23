@@ -119,7 +119,11 @@ function KioskDisplayPageContent() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
-      <KioskSceneRenderer buildingIdOverride={effectiveBuildingId} allowSceneCreation={false} />
+      <KioskSceneRenderer
+        key={effectiveBuildingId ?? 'kiosk-default'}
+        buildingIdOverride={effectiveBuildingId}
+        allowSceneCreation={false}
+      />
       <BuildingSelector
         isOpen={isBuildingSelectorOpen}
         onClose={() => setIsBuildingSelectorOpen(false)}

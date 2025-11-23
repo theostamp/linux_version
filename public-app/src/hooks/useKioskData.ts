@@ -416,13 +416,30 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
   // Auto-refresh data every 5 minutes
   useEffect(() => {
-    fetchKioskData();
+    let cancelled = false;
+
+    // Clear stale data when switching κτίριο
+    setData(null);
+    setError(null);
+
+    const run = async () => {
+      try {
+        await fetchKioskData();
+      } catch {
+        if (cancelled) return;
+      }
+    };
+
+    run();
 
     const interval = setInterval(() => {
       fetchKioskData();
     }, 5 * 60 * 1000); // 5 minutes
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [fetchKioskData]);
 
   const refetch = useCallback(() => {
