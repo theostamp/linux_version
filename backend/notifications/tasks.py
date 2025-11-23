@@ -233,3 +233,93 @@ def send_monthly_reminder_sms(task_id: int):
                 sms_count += 1
 
         return f"Sent {sms_count} SMS reminders for task {task_id}"
+
+
+@shared_task
+def send_automated_debt_reminders(
+    building_id: Optional[int] = None,
+    min_debt_amount: float = 0.01,
+    schema_name: str = 'demo'
+):
+    """
+    Αυτόματη αποστολή υπενθυμίσεων οφειλών (Celery task).
+    
+    Μπορεί να κληθεί από Celery Beat για προγραμματισμένη αποστολή.
+    
+    Args:
+        building_id: ID κτιρίου (None = όλα τα κτίρια)
+        min_debt_amount: Ελάχιστο ποσό οφειλής
+        schema_name: Tenant schema
+        
+    Returns:
+        str: Περίληψη αποτελεσμάτων
+    """
+    from decimal import Decimal
+    from buildings.models import Building
+    from notifications.models import NotificationTemplate
+    from notifications.debt_reminder_service import DebtReminderService
+    from django.contrib.auth import get_user_model
+    
+    with schema_context(schema_name):
+        User = get_user_model()
+        system_user = (
+            User.objects.filter(is_superuser=True).first()
+            or User.objects.filter(is_staff=True).first()
+            or User.objects.first()
+        )
+        
+        if not system_user:
+            logger.error("❌ No system user found for debt reminders")
+            return "Error: No system user available"
+        
+        # Get buildings
+        if building_id:
+            buildings = Building.objects.filter(id=building_id)
+        else:
+            buildings = Building.objects.all()
+        
+        total_sent = 0
+        total_failed = 0
+        buildings_processed = 0
+        
+        for building in buildings:
+            # Find or create debt reminder template
+            template = NotificationTemplate.objects.filter(
+                building=building,
+                category='reminder',
+                is_active=True,
+                name__icontains='οφειλ'
+            ).first()
+            
+            if not template:
+                logger.warning(f"⚠️ No debt reminder template for {building.name}, creating default...")
+                template = DebtReminderService.create_default_debt_reminder_template(building)
+            
+            # Send reminders
+            results = DebtReminderService.send_personalized_reminders(
+                building=building,
+                template=template,
+                created_by=system_user,
+                min_debt_amount=Decimal(str(min_debt_amount)),
+                target_month=None,  # Current month
+                send_to_all=False,
+                test_mode=False,
+                test_email=None
+            )
+            
+            total_sent += results['emails_sent']
+            total_failed += results['emails_failed']
+            buildings_processed += 1
+            
+            logger.info(
+                f"✅ Building {building.name}: {results['emails_sent']} sent, "
+                f"{results['emails_failed']} failed, "
+                f"Debt: {results['total_debt_notified']:.2f}€"
+            )
+        
+        summary = (
+            f"Debt reminders completed: {buildings_processed} buildings, "
+            f"{total_sent} sent, {total_failed} failed"
+        )
+        logger.info(f"🎉 {summary}")
+        return summary
