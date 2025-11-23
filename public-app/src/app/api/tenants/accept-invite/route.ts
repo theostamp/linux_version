@@ -12,7 +12,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const host = request.headers.get('host') || 'demo.localhost';
+    const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
+    const forwardedHostHeader = request.headers.get('x-tenant-host') || request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const referer = request.headers.get('referer');
+    const origin = request.headers.get('origin');
+    const urlHost = request.nextUrl.host;
+
+    let publicHostname = forwardedHostHeader || urlHost;
+    const isPlatformHost = (h?: string | null) =>
+      !!h && (h.includes('railway.app') || h.includes('vercel.app') || h === 'localhost:3000');
+
+    if (isPlatformHost(publicHostname)) {
+      const candidate = origin || referer;
+      if (candidate) {
+        try {
+          publicHostname = new URL(candidate).host;
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+
+    const host = publicHostname || 'demo.localhost';
 
     // Resolve backend URL
     const backendBase = 
@@ -34,7 +55,9 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Forwarded-Host': host,
-        'Host': host,
+        Host: host,
+        'X-Tenant-Host': host,
+        'X-Forwarded-Proto': forwardedProto,
       },
       body: JSON.stringify({ token }),
     });
@@ -86,4 +109,3 @@ export async function OPTIONS(request: NextRequest) {
     },
   });
 }
-

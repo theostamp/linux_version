@@ -9,7 +9,7 @@ const FALLBACK_RESPONSE = {
 
 export async function GET(request: NextRequest) {
   // Use Docker service name for backend
-  const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
+  const backendUrl = (process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000').replace(/\/$/, '');
   
   const targetUrl = `${backendUrl}/api/kiosk/latest-bill/`;
 
@@ -19,10 +19,34 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout (large image)
 
+    const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
+    const forwardedHostHeader = request.headers.get('x-tenant-host') || request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const referer = request.headers.get('referer');
+    const origin = request.headers.get('origin');
+
+    let publicHostname = forwardedHostHeader || request.nextUrl.host;
+    const isPlatformHost = (host?: string | null) =>
+      !!host && (host.includes('railway.app') || host.includes('vercel.app') || host === 'localhost:3000');
+
+    if (isPlatformHost(publicHostname)) {
+      const candidate = origin || referer;
+      if (candidate) {
+        try {
+          publicHostname = new URL(candidate).host;
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+
+    const finalHost = publicHostname || 'demo.localhost';
+
     const headers = {
       'Content-Type': 'application/json',
-      // Add X-Forwarded-Host header for Django multi-tenant
-      'X-Forwarded-Host': 'demo.localhost',
+      Host: finalHost,
+      'X-Forwarded-Host': finalHost,
+      'X-Tenant-Host': finalHost,
+      'X-Forwarded-Proto': forwardedProto,
     };
 
     console.log('[KIOSK BILL API] Request headers:', headers);
