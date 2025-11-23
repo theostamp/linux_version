@@ -105,15 +105,15 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         title = instance.title
         is_global = instance.building is None
-        
+        building_name = instance.building.name if instance.building else "Άγνωστο κτίριο"
+
         self.perform_destroy(instance)
-        
+
         if is_global:
             message = f"Η καθολική ανακοίνωση '{title}' διαγράφηκε επιτυχώς από όλα τα κτίρια."
         else:
-            building_name = instance.building.name if instance.building else "Άγνωστο κτίριο"
             message = f"Η ανακοίνωση '{title}' διαγράφηκε επιτυχώς από το κτίριο '{building_name}'."
-        
+
         return Response({"message": message}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='urgent')
