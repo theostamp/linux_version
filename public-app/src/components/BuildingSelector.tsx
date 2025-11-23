@@ -53,9 +53,9 @@ export default function BuildingSelector({
 
   // Φιλτράρισμα κτιρίων βάσει του search term
   useEffect(() => {
-    // Αποκλείουμε το currentBuilding από τη λίστα για να μην εμφανίζεται δύο φορές
-    const buildingsToFilter = currentBuilding 
-      ? buildings.filter(b => b.id !== currentBuilding.id)
+    // Αποκλείουμε το selectedBuilding από τη λίστα για να μην εμφανίζεται δύο φορές
+    const buildingsToFilter = selectedBuilding 
+      ? buildings.filter(b => b.id !== selectedBuilding.id)
       : buildings;
     
     if (!searchTerm.trim()) {

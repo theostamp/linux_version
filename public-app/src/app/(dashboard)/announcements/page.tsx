@@ -17,8 +17,8 @@ import SubscriptionGate from '@/components/SubscriptionGate';
 function AnnouncementsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
 
-  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα
-  const buildingId = selectedBuilding?.id ?? null;
+  // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
+  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
 
   const {
     data: announcements = [],

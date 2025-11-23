@@ -28,7 +28,7 @@ function VotesPageContent() {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const buildingId = selectedBuilding?.id ?? null;
+  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
   const canDelete = user?.is_superuser || user?.is_staff;
   const canCreateVote = user?.is_superuser || user?.is_staff;
 

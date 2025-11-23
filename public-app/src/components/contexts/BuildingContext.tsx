@@ -370,11 +370,11 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   // Keep currentBuilding in sync with selectedBuilding
   // Only update if selectedBuilding changes, don't override if it's null (user might want to see "all buildings")
   useEffect(() => {
-    if (selectedBuilding) {
+    if (selectedBuilding && selectedBuilding.id !== currentBuilding?.id) {
       setCurrentBuilding(selectedBuilding);
     }
     // Don't auto-select first building if selectedBuilding is null - let user choose
-  }, [selectedBuilding]);
+  }, [selectedBuilding, currentBuilding]);
 
   useEffect(() => {
     // If auth is ready and no user, stop loading
