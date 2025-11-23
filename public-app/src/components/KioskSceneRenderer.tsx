@@ -18,6 +18,14 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   const { selectedBuilding } = useBuilding();
   const effectiveBuildingId = buildingIdOverride ?? selectedBuilding?.id ?? null;
   
+  console.log('[KioskSceneRenderer] 🏗️ Building IDs:', {
+    buildingIdOverride,
+    selectedBuildingId: selectedBuilding?.id,
+    selectedBuildingName: selectedBuilding?.name,
+    effectiveBuildingId,
+    finalBuildingIdForKioskData: effectiveBuildingId ?? 1
+  });
+  
   const { scenes, isLoading, error } = useKioskScenes(effectiveBuildingId);
   const { data: kioskData } = useKioskData(effectiveBuildingId ?? 1);
   

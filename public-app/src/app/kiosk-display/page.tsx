@@ -44,9 +44,13 @@ function KioskDisplayPageContent() {
   // Effect 1: Handle URL parameter changes (highest priority)
   // URL parameter ALWAYS overrides context - this prevents BuildingContext from resetting the building
   useEffect(() => {
+    console.log('[KioskDisplay] 🔍 URL buildingParam:', buildingParam);
+    
     if (buildingParam !== null) {
       hasUrlParam.current = true;
       setEffectiveBuildingId(buildingParam);
+      
+      console.log(`[KioskDisplay] ✅ Setting effectiveBuildingId from URL: ${buildingParam}`);
       
       // Only update context if it's different from what we last set
       // This prevents infinite loops
@@ -65,12 +69,14 @@ function KioskDisplayPageContent() {
     } else {
       hasUrlParam.current = false;
       lastSetBuildingId.current = null;
+      console.log('[KioskDisplay] ⚠️ No URL buildingParam, will use context');
     }
   }, [buildingParam, setSelectedBuilding]);
 
   // Effect 2: Fallback to context building ONLY if no URL param exists
   useEffect(() => {
     if (!hasUrlParam.current && selectedBuilding?.id) {
+      console.log(`[KioskDisplay] 📍 Setting effectiveBuildingId from context: ${selectedBuilding.id} (${selectedBuilding.name})`);
       setEffectiveBuildingId(selectedBuilding.id);
     }
   }, [selectedBuilding?.id]);

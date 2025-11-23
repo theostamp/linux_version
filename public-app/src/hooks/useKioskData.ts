@@ -214,12 +214,22 @@ export const useKioskData = (buildingId: number | null = 1) => {
       const today = new Date();
       const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
+      console.log(`[useKioskData] 🏢 Fetching data for building ID: ${buildingId}`);
+      
       // Use unified public-info endpoint that returns all kiosk data
-      const publicData = await apiGet<PublicInfoResponse>(`/api/public-info/${buildingId}/?month=${currentMonth}`);
+      const apiUrl = `/api/public-info/${buildingId}/?month=${currentMonth}`;
+      console.log(`[useKioskData] 📡 API URL: ${apiUrl}`);
+      
+      const publicData = await apiGet<PublicInfoResponse>(apiUrl);
 
-      console.log('[useKioskData] API response:', {
+      console.log('[useKioskData] 📦 API response:', {
+        buildingId: buildingId,
+        requestedBuildingId: buildingId,
         announcementsCount: publicData.announcements?.length || 0,
-        announcements: publicData.announcements
+        announcements: publicData.announcements?.map(a => ({ 
+          id: a.id, 
+          title: a.title?.substring(0, 30) 
+        }))
       });
 
       const buildingInfo: PublicBuildingInfo = publicData.building_info ?? {
