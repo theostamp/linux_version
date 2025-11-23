@@ -28,7 +28,11 @@ function DashboardContent() {
   const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements(selectedBuilding?.id);
   
   // Use the new centralized dashboard data hook
+  // Fetch data for all buildings (overall summary)
   const { data: dashboardData, isLoading: dashboardLoading, isError, error: dashboardError } = useDashboardData();
+  
+  // Fetch data for selected building only
+  const { data: buildingDashboardData, isLoading: buildingDashboardLoading } = useDashboardData(selectedBuilding?.id);
 
   const isLoading = authLoading || buildingsLoading || announcementsLoading || dashboardLoading;
 
@@ -52,11 +56,35 @@ function DashboardContent() {
 
   return (
     <main className="p-6 max-w-[1600px] mx-auto">
-      {/* Hero Section with Key Metrics */}
-      <HeroSection data={dashboardData} loading={dashboardLoading} />
+      {/* Section 1: Όλα τα Κτίρια - Overall Summary */}
+      <div className="mb-12">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Όλα τα Κτίρια</h2>
+          <p className="text-gray-600">Συγκεντρωτικά στοιχεία από όλα τα κτίρια</p>
+        </div>
 
-      {/* Financial Overview */}
-      <FinancialOverview data={dashboardData} loading={dashboardLoading} />
+        {/* Hero Section with Key Metrics - All Buildings */}
+        <HeroSection data={dashboardData} loading={dashboardLoading} />
+
+        {/* Financial Overview - All Buildings */}
+        <FinancialOverview data={dashboardData} loading={dashboardLoading} />
+      </div>
+
+      {/* Section 2: Επιλεγμένο Κτίριο - Selected Building Only */}
+      {selectedBuilding && (
+        <div className="mb-12 border-t-4 border-blue-500 pt-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedBuilding.name}</h2>
+            <p className="text-gray-600">{selectedBuilding.address}</p>
+          </div>
+
+          {/* Hero Section with Key Metrics - Selected Building */}
+          <HeroSection data={buildingDashboardData} loading={buildingDashboardLoading} />
+
+          {/* Financial Overview - Selected Building */}
+          <FinancialOverview data={buildingDashboardData} loading={buildingDashboardLoading} />
+        </div>
+      )}
 
       {/* Quick Actions Grid */}
       <QuickActionsGrid data={dashboardData} loading={dashboardLoading} />

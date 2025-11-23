@@ -57,16 +57,31 @@ async function fetchDashboardOverview(): Promise<DashboardOverview> {
 }
 
 /**
- * Hook to get dashboard overview data
+ * Fetch dashboard overview data with optional building filter
  */
-export function useDashboardData() {
+async function fetchDashboardOverviewByBuilding(buildingId: number): Promise<DashboardOverview> {
+  try {
+    const response = await api.get(`/financial/dashboard/overview/?building_id=${buildingId}`);
+    return response;
+  } catch (error) {
+    console.error('Error fetching dashboard overview for building:', error);
+    throw error;
+  }
+}
+
+/**
+ * Hook to get dashboard overview data
+ * @param buildingId - Optional building ID to filter data for a specific building
+ */
+export function useDashboardData(buildingId?: number) {
   const query = useQuery({
-    queryKey: ['dashboard', 'overview'],
-    queryFn: fetchDashboardOverview,
+    queryKey: buildingId ? ['dashboard', 'overview', buildingId] : ['dashboard', 'overview'],
+    queryFn: buildingId ? () => fetchDashboardOverviewByBuilding(buildingId) : fetchDashboardOverview,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     retry: 2,
     refetchOnWindowFocus: true,
+    enabled: true, // Always enabled, even with building filter
   });
 
   return {
