@@ -103,31 +103,59 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         logger.info(f"Announcement deleted: {title} by {self.request.user}")
         
         # Invalidate cache
-        if building:
-            cache_key = f"announcements_building_{building.id}"
-            cache.delete(cache_key)
-        else:
-            # For global announcements, invalidate all building caches
-            from buildings.models import Building
-            for building_obj in Building.objects.all():
-                cache_key = f"announcements_building_{building_obj.id}"
+        try:
+            if building:
+                cache_key = f"announcements_building_{building.id}"
                 cache.delete(cache_key)
+            else:
+                # For global announcements, invalidate all building caches
+                from buildings.models import Building
+                try:
+                    for building_obj in Building.objects.all():
+                        cache_key = f"announcements_building_{building_obj.id}"
+                        cache.delete(cache_key)
+                except Exception as e:
+                    logger.warning(f"Error invalidating cache for global announcement: {e}")
+        except Exception as e:
+            logger.warning(f"Error invalidating cache during announcement deletion: {e}")
     
     def destroy(self, request, *args, **kwargs):
         """Override destroy to return custom confirmation message"""
-        instance = self.get_object()
-        title = instance.title
-        is_global = instance.building is None
-        building_name = instance.building.name if instance.building else "Άγνωστο κτίριο"
+        try:
+            instance = self.get_object()
+            title = instance.title
+            is_global = instance.building is None
+            
+            # Αποθήκευση building_name πριν τη διαγραφή
+            try:
+                building_name = instance.building.name if instance.building else "Όλα τα κτίρια"
+            except Exception as e:
+                logger.warning(f"Error getting building name: {e}")
+                building_name = "Άγνωστο κτίριο"
 
-        self.perform_destroy(instance)
+            logger.info(f"Attempting to delete announcement ID={instance.id}, title='{title}', is_global={is_global}")
+            
+            self.perform_destroy(instance)
 
-        if is_global:
-            message = f"Η καθολική ανακοίνωση '{title}' διαγράφηκε επιτυχώς από όλα τα κτίρια."
-        else:
-            message = f"Η ανακοίνωση '{title}' διαγράφηκε επιτυχώς από το κτίριο '{building_name}'."
+            if is_global:
+                message = f"Η καθολική ανακοίνωση '{title}' διαγράφηκε επιτυχώς από όλα τα κτίρια."
+            else:
+                message = f"Η ανακοίνωση '{title}' διαγράφηκε επιτυχώς από το κτίριο '{building_name}'."
 
-        return Response({"message": message}, status=status.HTTP_200_OK)
+            logger.info(f"Successfully deleted announcement ID={instance.id}")
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        except Announcement.DoesNotExist:
+            logger.error(f"Announcement not found: {kwargs.get('pk')}")
+            return Response(
+                {"error": "Η ανακοίνωση δεν βρέθηκε."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error deleting announcement: {e}", exc_info=True)
+            return Response(
+                {"error": f"Σφάλμα κατά τη διαγραφή της ανακοίνωσης: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['get'], url_path='urgent')
     def urgent(self, request):
