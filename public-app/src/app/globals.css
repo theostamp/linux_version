@@ -22,9 +22,9 @@
   --ring: #1abcbd;
   
   /* Primary color - fancy turquoise */
-  --primary: #1abcbd;
-  --primary-foreground: #171717;
-  --primary-hover: #005866;
+  --primary: #0081a5;
+  --primary-foreground: #ffffff;
+  --primary-hover: #006f8f;
 
   /* Secondary color */
   --secondary: #f4f4f5;
@@ -95,9 +95,9 @@ h1, h2, h3, h4 {
     --ring: #1abcbd;
     
     /* Primary - dark mode */
-    --primary: #1abcbd;
-    --primary-foreground: #171717;
-    --primary-hover: #005866;
+    --primary: #0081a5;
+    --primary-foreground: #ffffff;
+    --primary-hover: #006f8f;
 
     /* Secondary - dark mode */
     --secondary: #27272a;
