@@ -126,7 +126,8 @@ export default function MyProfilePage() {
   }
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
+    <div className="p-6 max-w-7xl mx-auto">
+      <form className="space-y-8" onSubmit={handleSubmit}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Το προφίλ μου</h1>
@@ -303,7 +304,8 @@ export default function MyProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </form>
+      </form>
+    </div>
   );
 }
 
