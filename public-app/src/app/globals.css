@@ -24,7 +24,7 @@
   /* Primary color - fancy turquoise */
   --primary: #1abcbd;
   --primary-foreground: #171717;
-  --primary-hover: #026878;
+  --primary-hover: #005866;
 
   /* Secondary color */
   --secondary: #f4f4f5;
@@ -97,7 +97,7 @@ h1, h2, h3, h4 {
     /* Primary - dark mode */
     --primary: #1abcbd;
     --primary-foreground: #171717;
-    --primary-hover: #026878;
+    --primary-hover: #005866;
 
     /* Secondary - dark mode */
     --secondary: #27272a;

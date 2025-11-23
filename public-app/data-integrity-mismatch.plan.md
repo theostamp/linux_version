@@ -8,6 +8,7 @@
 - Public API proxy δεν περνά σωστά Host / X-Tenant-Host προς backend (επιστρέφει tenant `public` αντί `theo`).
 - Κλήσεις σε endpoints χωρίς απαιτούμενο `building` query.
 - Stale data σε React Query / hooks (παλιό building cache).
+- Στον backend λείπουν domain entries για hostnames (π.χ. `theo.newconcierge.app`, `newconcierge.app`), με αποτέλεσμα το tenant middleware να μην βρίσκει schema (`Tenant with schema_name 'theo' not found`) → 404 σε `/announcements/`, `/buildings/public/`, `/financial/dashboard/overview/`.
 
 ## Βήματα (ενημερώνονται καθώς προχωράμε)
 1. **Χαρτογράφηση client κλήσεων** (kiosk, votes, announcements): έλεγχος endpoints, query params και headers. ☐
@@ -22,3 +23,4 @@
 - 🚧 Εντοπίστηκε ότι κι άλλα public routes έχουν hardcoded `demo.localhost` (kiosk-latest-bill, financial/common-expenses/issue, tenants/accept-invite, public-info). Θα τα περάσουμε σε κοινή λογική tenant forwarding.
 - 🚧 Announcements/votes χρησιμοποιούν ήδη tenantProxy. Απαιτείται έλεγχος αν το client στέλνει σωστά `building_id` και αν το tenantProxy forwardάρει σωστά σε όλα τα περιβάλλοντα (βλέπουμε ακόμα 308 και πιθανό cross-tenant).
 - 🚧 Προστέθηκε προσωρινό logging στους proxies `announcements` και `votes` (routes και [...path]) για να δούμε host/search params στο production.
+- 🚨 Από logs backend: επαναλαμβανόμενα `Tenant with schema_name 'theo' not found` / `Domain 'theo.newconcierge.app' not found` → τα `/api/announcements/`, `/api/buildings/public/`, `/api/financial/dashboard/overview/` γυρίζουν 404 λόγω λάθος tenant. Χρειάζεται μόνιμη καταχώριση domain→tenant στο DB/tenant mapping (π.χ. Domain entry για `theo.newconcierge.app` & `newconcierge.app` που δείχνουν στο schema `theo`).

@@ -1,40 +1,55 @@
-# Logs
+c09999ccfa8ade70.js?…jiM3hbpmGosdPPMAJ:1 
+ DELETE https://theo.newconcierge.app/api/announcements/4 500 (Internal Server Error)
+VM1480 482e08808646ab8a.js:1 Error deleting announcement: Error: DELETE https://theo.newconcierge.app/api/announcements/4/ failed: 500 {"error":"Upstream request failed: 500 Internal Server Error","details":"\n<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>Server Error (500)</title>\n</head>\n<body>\n  <h1>Server Error (500)</h1><p></p>\n</body>\n</html>\n","url":"https://linuxversion-production.up.railway.app/api/announceme…
+    at c (c09999ccfa8ade70.js?…bpmGosdPPMAJ:1:2550)
+    at A (c09999ccfa8ade70.js?…bpmGosdPPMAJ:1:7549)
+    at async U (c09999ccfa8ade70.js?…pmGosdPPMAJ:1:12231)
+    at async R (482e08808646ab8a.js?…pmGosdPPMAJ:1:23269)
 
-## 2025-11-22: Διόρθωση Kiosk Display - Building Reset Issue
+[Violation] 'click' handler took 1033ms
+c09999ccfa8ade70.js?…jiM3hbpmGosdPPMAJ:1 
+ DELETE https://theo.newconcierge.app/api/announcements/3 500 (Internal Server Error)
+VM1480 482e08808646ab8a.js:1 Error deleting announcement: Error: DELETE https://theo.newconcierge.app/api/announcements/3/ failed: 500 {"error":"Upstream request failed: 500 Internal Server Error","details":"\n<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>Server Error (500)</title>\n</head>\n<body>\n  <h1>Server Error (500)</h1><p></p>\n</body>\n</html>\n","url":"https://linuxversion-production.up.railway.app/api/announceme…
+    at c (c09999ccfa8ade70.js?…bpmGosdPPMAJ:1:2550)
+    at A (c09999ccfa8ade70.js?…bpmGosdPPMAJ:1:7549)
+    at async U (c09999ccfa8ade70.js?…pmGosdPPMAJ:1:12231)
+    at async R (482e08808646ab8a.js?…pmGosdPPMAJ:1:23269)
 
-### Πρόβλημα
-Στο `/kiosk-display` με URL parameter `?building=2&building_id=2`, η εμφάνιση "έπεφτε" στο κτίριο 1 μετά από 1-2 δευτερόλεπτα, ενώ το URL παρέμενε αμετάβλητο.
 
-### Αιτία
-Το `BuildingContext` εκτελούσε `loadBuildings()` και:
-1. Διάβαζε το `selectedBuildingId` από localStorage
-2. Αν δεν το έβρισκε στη λίστα, επέλεγε το **πρώτο κτίριο** (default behavior)
-3. Ενημέρωνε το `selectedBuilding` → triggering useEffect στο kiosk-display
-4. Το `effectiveBuildingId` αλλάζει σε 1
 
-### Λύση
-**Αρχείο**: `/home/theo/project/public-app/src/app/kiosk-display/page.tsx`
-
-#### Αλλαγές:
-1. **Προσθήκη refs για state tracking**:
-   - `hasUrlParam`: Παρακολουθεί αν υπάρχει URL parameter
-   - `lastSetBuildingId`: Αποτρέπει infinite loops
-
-2. **Διαχωρισμός λογικής σε 2 effects**:
-   - **Effect 1** (γραμμές 44-69): Χειρίζεται URL parameter - **υψηλότερη προτεραιότητα**
-     - Τρέχει μόνο όταν αλλάζει το `buildingParam`
-     - Ενημερώνει το context ΜΟΝΟ αν το building ID είναι διαφορετικό από το τελευταίο που έθεσε
-   - **Effect 2** (γραμμές 71-76): Fallback στο context
-     - Τρέχει ΜΟΝΟ όταν ΔΕΝ υπάρχει URL parameter
-
-3. **Αποτέλεσμα**:
-   - Το URL parameter έχει πλέον **απόλυτη προτεραιότητα**
-   - Το `BuildingContext` δεν μπορεί πλέον να override το building selection
-   - Αποτρέπεται το reset στο building 1
-
-### Τεχνική Λεπτομέρεια
-Η χρήση του `lastSetBuildingId.current` ref αποτρέπει το effect από το να τρέχει ξανά όταν το `BuildingContext` προσπαθεί να αλλάξει το `selectedBuilding`, εφόσον το `buildingParam` (από το URL) παραμένει σταθερό.
-
-### Status
-✅ **Διορθώθηκε** - Το kiosk-display διατηρεί πλέον το building από το URL parameter χωρίς reset.
-
+    Nov 23 12:09:06.23
+DELETE
+500
+theo.newconcierge.app
+/api/announcements/3
+7
+{"timestamp":"2025-11-23T10:09:06.490Z","level":"error","message":"[tenantProxy:announcements] Upstream error response","error":"undefined","method":"DELETE","path":"/api/announcements/3","targetUrl":"https://linuxversion-production.up.railway.app/api/announcements/3/","status":500,"statusText":"Internal Server Error","durationMs":184,"errorBody":"\n<!doctype html>\n<html lang=\"en\">\n<head>\n <title>Server Error (500)</title>\n</head>\n<body>\n <h1>Server Error (500)</h1><p></p>\n</body>\n</html>\n","errorBodyLength":145}
+Nov 23 12:09:02.71
+GET
+200
+newconcierge.app
+/api/news/multiple
+12
+RSS feed https://www.news247.gr/feed/ returned status 403
+Nov 23 12:09:02.03
+DELETE
+500
+theo.newconcierge.app
+/api/announcements/4
+7
+{"timestamp":"2025-11-23T10:09:02.513Z","level":"error","message":"[tenantProxy:announcements] Upstream error response","error":"undefined","method":"DELETE","path":"/api/announcements/4","targetUrl":"https://linuxversion-production.up.railway.app/api/announcements/4/","status":500,"statusText":"Internal Server Error","durationMs":207,"errorBody":"\n<!doctype html>\n<html lang=\"en\">\n<head>\n <title>Server Error (500)</title>\n</head>\n<body>\n <h1>Server Error (500)</h1><p></p>\n</body>\n</html>\n","errorBodyLength":145}
+Nov 23 12:06:01.74
+GET
+200
+newconcierge.app
+/api/news/multiple
+12
+RSS feed https://www.news247.gr/feed/ returned status 403
+Nov 23 12:04:00.70
+GET
+200
+newconcierge.app
+/api/news/multiple
+12
+RSS feed https://www.news247.gr/feed/ returned status 403
+No more logs to show within selecte

@@ -9,12 +9,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-[#026878] hover:text-white hover:shadow-md hover:scale-[1.01]',
+        default: 'bg-primary text-primary-foreground hover:bg-[#005866] hover:text-white hover:shadow-md hover:scale-[1.01]',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md hover:scale-[1.01]',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md hover:scale-[1.01]',
-        outline: 'border-2 border-primary text-[#026878] bg-background hover:bg-primary hover:text-primary-foreground hover:shadow-md',
-        link: 'text-[#026878] underline-offset-4 hover:underline hover:text-[#026878] shadow-none',
-        ghost: 'text-[#026878] hover:bg-accent hover:text-accent-foreground',
+        outline: 'border-2 border-primary text-[#005866] dark:text-primary bg-background hover:bg-primary hover:text-primary-foreground hover:shadow-md',
+        link: 'text-[#005866] dark:text-primary underline-offset-4 hover:underline hover:text-[#005866] dark:hover:text-primary shadow-none',
+        ghost: 'text-[#005866] dark:text-primary hover:bg-accent hover:text-accent-foreground',
         success: 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-md hover:scale-[1.01]',
         warning: 'bg-amber-500 text-white hover:bg-amber-600 hover:shadow-md hover:scale-[1.01]',
       },
