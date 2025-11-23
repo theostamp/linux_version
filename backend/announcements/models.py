@@ -18,19 +18,11 @@ class Announcement(models.Model):
         on_delete=models.CASCADE,
         related_name='created_announcements'
     )
-    project = models.ForeignKey(
-        'projects.Project',
-        on_delete=models.CASCADE,
-        related_name='announcements',
-        null=True,
-        blank=True,
-        help_text="Σύνδεση με έργο - διαγράφεται αυτόματα όταν διαγραφεί το έργο"
-    )
     projects = models.ManyToManyField(
         'projects.Project',
-        related_name='assembly_announcements',
+        related_name='announcements',
         blank=True,
-        help_text="Πολλαπλά έργα για ανακοινώσεις συνελεύσεων"
+        help_text="Έργα που σχετίζονται με την ανακοίνωση (διαγράφονται CASCADE όταν διαγραφεί έργο)"
     )
     title = models.CharField(max_length=255)
     description = models.TextField()

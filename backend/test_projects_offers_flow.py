@@ -73,7 +73,7 @@ def test_project_creation_signals():
         announcement = announcements.first()
         print(f"✅ Announcement created: {announcement.id}")
         print(f"   Title: {announcement.title}")
-        print(f"   Linked to project: {announcement.project_id == project.id}")
+        print(f"   Linked to project: {project in announcement.projects.all()}")
     else:
         print("❌ Announcement NOT created!")
         return False
