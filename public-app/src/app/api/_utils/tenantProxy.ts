@@ -121,7 +121,7 @@ const createForwardHeaders = (request: NextRequest) => {
   const referer = request.headers.get("referer");
   const requestHost = request.headers.get("host") ?? "demo.localhost";
   const origin = request.headers.get("origin");
-  
+
   // Priority: Origin > Referer > Host header > x-forwarded-host
   // Origin header is the most reliable source for the public domain
   let publicHostname = requestHost;
@@ -374,4 +374,3 @@ export function createTenantProxyHandlers(
   
   return handlers;
 }
-
