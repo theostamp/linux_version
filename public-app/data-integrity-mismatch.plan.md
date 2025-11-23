@@ -21,3 +21,4 @@
 - ✅ (23/11) Διορθώθηκε host forwarding σε kiosk scenes/widgets proxies (`kiosk-scenes-active`, `kiosk-widgets-public`) ώστε να στέλνουν το πραγματικό host.
 - 🚧 Εντοπίστηκε ότι κι άλλα public routes έχουν hardcoded `demo.localhost` (kiosk-latest-bill, financial/common-expenses/issue, tenants/accept-invite, public-info). Θα τα περάσουμε σε κοινή λογική tenant forwarding.
 - 🚧 Announcements/votes χρησιμοποιούν ήδη tenantProxy. Απαιτείται έλεγχος αν το client στέλνει σωστά `building_id` και αν το tenantProxy forwardάρει σωστά σε όλα τα περιβάλλοντα (βλέπουμε ακόμα 308 και πιθανό cross-tenant).
+- 🚧 Προστέθηκε προσωρινό logging στους proxies `announcements` και `votes` (routes και [...path]) για να δούμε host/search params στο production.
