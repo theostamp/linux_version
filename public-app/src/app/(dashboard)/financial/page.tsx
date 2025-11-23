@@ -51,8 +51,8 @@ function FinancialContent() {
         // Mark that we've updated for this buildingId BEFORE calling router.replace
         lastUpdatedBuildingId.current = selectedBuilding.id;
         
-        // Use window.history.replaceState instead of router.replace to avoid re-render
-        window.history.replaceState({}, '', newUrl);
+        // Use router.replace to ensure useSearchParams is updated and components re-render with new data
+        router.replace(newUrl);
       } else {
         // URL already matches, update ref
         lastUpdatedBuildingId.current = selectedBuilding.id;
