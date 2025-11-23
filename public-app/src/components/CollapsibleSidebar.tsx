@@ -152,31 +152,32 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  {
-    id: 'collaboration',
-    title: 'Συνεργασίες',
-    colorKey: 'info',
-    links: [
-      {
-        href: '/teams',
-        label: 'Ομάδες',
-        icon: <Users className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/collaborators',
-        label: 'Συνεργάτες',
-        icon: <UserCheck className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/suppliers',
-        label: 'Προμηθευτές',
-        icon: <Truck className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-    ]
-  },
+  // Προσωρινά απενεργοποιημένο - Συνεργασίες & Ομάδες
+  // {
+  //   id: 'collaboration',
+  //   title: 'Συνεργασίες',
+  //   colorKey: 'info',
+  //   links: [
+  //     {
+  //       href: '/teams',
+  //       label: 'Ομάδες',
+  //       icon: <Users className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //     {
+  //       href: '/collaborators',
+  //       label: 'Συνεργάτες',
+  //       icon: <UserCheck className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //     {
+  //       href: '/suppliers',
+  //       label: 'Προμηθευτές',
+  //       icon: <Truck className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //   ]
+  // },
   {
     id: 'communication',
     title: 'Επικοινωνία',
@@ -234,19 +235,20 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  {
-    id: 'system',
-    title: 'Σύστημα',
-    colorKey: 'danger',
-    links: [
-      {
-        href: '/financial-tests',
-        label: 'Tests',
-        icon: <TestTube2 className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-    ]
-  },
+  // Προσωρινά απενεργοποιημένο - Σύστημα & Ελέγχοι (Automated Tests Οικονομικού Πυρήνα)
+  // {
+  //   id: 'system',
+  //   title: 'Σύστημα',
+  //   colorKey: 'danger',
+  //   links: [
+  //     {
+  //       href: '/financial-tests',
+  //       label: 'Tests',
+  //       icon: <TestTube2 className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //   ]
+  // },
 ];
 
 export default function CollapsibleSidebar() {
