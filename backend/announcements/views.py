@@ -42,10 +42,23 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        For list in tests, unauthenticated users should see all announcements.
-        For authenticated users, keep full list as well. Business filtering can be reintroduced later.
+        Filter announcements by building parameter if provided.
+        Returns all announcements if no building parameter is provided.
         """
-        return Announcement.objects.select_related('author', 'building').order_by('-priority', '-created_at')
+        queryset = Announcement.objects.select_related('author', 'building').order_by('-priority', '-created_at')
+        
+        # Filter by building if provided in query params
+        building_id = self.request.query_params.get('building')
+        if building_id:
+            try:
+                building_id = int(building_id)
+                # Include announcements for this building OR global announcements (building=null)
+                queryset = queryset.filter(Q(building_id=building_id) | Q(building__isnull=True))
+            except (ValueError, TypeError):
+                # Invalid building_id, return empty queryset
+                queryset = queryset.none()
+        
+        return queryset
 
     def perform_create(self, serializer):
         """Δημιουργία ανακοίνωσης με καλύτερο logging"""
