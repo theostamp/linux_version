@@ -34,9 +34,9 @@ function KioskDisplayPageContent() {
   const lastSetBuildingId = useRef<number | null>(null);
 
   const buildingParam = useMemo(() => {
-    const primary = parseBuildingId(searchParams?.get('building'));
-    if (primary !== null) return primary;
-    return parseBuildingId(searchParams?.get('building_id'));
+    const fromBuildingId = parseBuildingId(searchParams?.get('building_id'));
+    if (fromBuildingId !== null) return fromBuildingId;
+    return parseBuildingId(searchParams?.get('building'));
   }, [searchParams]);
 
   const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();

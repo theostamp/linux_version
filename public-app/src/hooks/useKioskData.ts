@@ -2,7 +2,7 @@
 
 // hooks/useKioskData.ts - Specialized hook for public kiosk data (no auth required)
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Simple API get function for kiosk (no complex auth).
 // It calls a relative Next.js API route, which then proxies the request to the backend.
@@ -200,12 +200,15 @@ export const useKioskData = (buildingId: number | null = 1) => {
   const [data, setData] = useState<KioskData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const fetchKioskData = useCallback(async () => {
     if (buildingId == null) return;
 
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
+    setData(null);
 
     try {
       const today = new Date();
@@ -403,14 +406,20 @@ export const useKioskData = (buildingId: number | null = 1) => {
         }
       };
 
+      if (requestId !== requestIdRef.current) return;
+
       setData(kioskData);
 
     } catch (err: unknown) {
       console.error('[useKioskData] Error fetching kiosk data:', err);
       const message = err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση δεδομένων';
-      setError(message);
+      if (requestId === requestIdRef.current) {
+        setError(message);
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [buildingId]);
 
