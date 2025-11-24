@@ -54,7 +54,7 @@ export default function DashboardLayout({
         <GlobalHeader />
 
         {/* Page Content */}
-        <div className="pt-[96px]">
+        <div className="pt-[96px] px-4 sm:px-6 lg:px-8">
           {children}
         </div>
       </div>
