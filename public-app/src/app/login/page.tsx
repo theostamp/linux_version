@@ -194,13 +194,13 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <Link href="/" className="flex items-center">
-              <Building className="h-8 w-8 text-blue-600" />
+              <Building className="h-8 w-8 text-primary" />
               <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
             </Link>
             <Link href="/signup" className="text-gray-600 hover:text-gray-900">
@@ -296,7 +296,7 @@ function LoginForm() {
                     value={formData.email}
                     onChange={handleInputChange}
                     autoComplete="email"
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
                       errors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="john@example.com"
@@ -320,7 +320,7 @@ function LoginForm() {
                     value={formData.password}
                     onChange={handleInputChange}
                     autoComplete="current-password"
-                    className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
                       errors.password ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="••••••••"
@@ -349,13 +349,13 @@ function LoginForm() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                     Να με θυμάσαι
                   </label>
                 </div>
-                <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+                <Link href="/forgot-password" className="text-sm text-primary hover:text-primary-hover">
                   Ξέχασες τον κωδικό;
                 </Link>
               </div>
@@ -363,7 +363,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isLoading ? (
                   <>
@@ -382,7 +382,7 @@ function LoginForm() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Δεν έχετε λογαριασμό;{' '}
-                <Link href="/signup" className="text-blue-600 hover:text-blue-500 font-semibold">
+                <Link href="/signup" className="text-primary hover:text-primary-hover font-semibold">
                   Δημιουργήστε έναν
                 </Link>
               </p>
