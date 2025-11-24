@@ -38,8 +38,8 @@ COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Create media and static directories with proper permissions
-RUN mkdir -p /vol/media/office_logos /vol/static && \
-    chmod -R 755 /vol && \
-    chown -R nobody:nogroup /vol
+RUN mkdir -p /data/media/office_logos /data/static && \
+    chmod -R 755 /data && \
+    chown -R nobody:nogroup /data
 
 CMD ["/app/entrypoint.sh"]

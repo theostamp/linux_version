@@ -10,8 +10,8 @@ mkdir -p /app/logs
 echo "📁 Logs directory ready"
 
 # 0.5. Create media directories with proper permissions
-mkdir -p /vol/media/office_logos /vol/static
-chmod -R 755 /vol 2>/dev/null || true
+mkdir -p /data/media/office_logos /data/static
+chmod -R 755 /data 2>/dev/null || true
 echo "📁 Media directories ready"
 
 # 1. Wait for Postgres

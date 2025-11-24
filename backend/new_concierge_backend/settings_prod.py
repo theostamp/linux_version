@@ -294,8 +294,8 @@ SIMPLE_JWT = {
 # 📁 Static & Media Files
 # ----------------------------------------
 STATIC_URL = '/static/'
-STATIC_ROOT = '/vol/static'
-MEDIA_ROOT = '/vol/media'
+STATIC_ROOT = '/data/static'
+MEDIA_ROOT = '/data/media'
 MEDIA_URL = '/media/'
 
 # Static files optimization
