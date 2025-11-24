@@ -64,44 +64,44 @@ export default function GlobalHeader() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm shadow-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 lg:pl-64">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-8 h-20 py-4">
-            {/* Left Section - Logo */}
-            <div className="flex-shrink-0">
-              {(() => {
-                const logoUrl = getOfficeLogoUrl(user?.office_logo);
-                return logoUrl && !logoError ? (
-                  <div className="w-14 h-14 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50">
-                    <img
-                      src={logoUrl}
-                      alt="Office Logo"
-                      className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
-                      onLoad={() => {
-                        setLogoLoading(false);
-                        setLogoError(false);
-                      }}
-                      onLoadStart={() => setLogoLoading(true)}
-                      onError={() => {
-                        setLogoError(true);
-                        setLogoLoading(false);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                    <BuildingIcon className="w-7 h-7 text-white" />
-                  </div>
-                );
-              })()}
-            </div>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 lg:pl-64">
+          <div className="flex items-center justify-between gap-4 h-20 py-3">
+            {/* Left Section - Logo & Office Details */}
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              {/* Logo */}
+              <div className="flex-shrink-0">
+                {(() => {
+                  const logoUrl = getOfficeLogoUrl(user?.office_logo);
+                  return logoUrl && !logoError ? (
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50">
+                      <img
+                        src={logoUrl}
+                        alt="Office Logo"
+                        className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
+                        onLoad={() => {
+                          setLogoLoading(false);
+                          setLogoError(false);
+                        }}
+                        onLoadStart={() => setLogoLoading(true)}
+                        onError={() => {
+                          setLogoError(true);
+                          setLogoLoading(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                      <BuildingIcon className="w-6 h-6 text-white" />
+                    </div>
+                  );
+                })()}
+              </div>
 
-            {/* Center Section - Office Details and Building Selector */}
-            <div className="flex items-center justify-between gap-8 min-w-0">
-              {/* Office Details - Grid Layout for better spacing */}
-              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 min-w-0 flex-1">
+              {/* Office Details - Horizontal Layout */}
+              <div className="hidden sm:flex items-center gap-4 lg:gap-6 min-w-0 flex-1">
                 {/* Office Name and Address */}
                 <div className="flex flex-col justify-center min-w-0">
-                  <h1 className="text-lg font-bold text-gray-900 leading-tight mb-1.5 truncate">
+                  <h1 className="text-base font-bold text-gray-900 leading-tight mb-1 truncate">
                     {user?.office_name || 'Γραφείο Διαχείρισης'}
                   </h1>
                   {user?.office_address && (
@@ -112,9 +112,9 @@ export default function GlobalHeader() {
                 </div>
 
                 {/* Contact Details */}
-                <div className="flex flex-col justify-center min-w-0">
+                <div className="hidden md:flex flex-col justify-center min-w-0">
                   {user?.office_phone && (
-                    <p className="text-xs text-gray-500 leading-tight mb-1.5 truncate">
+                    <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
                       📞 {user.office_phone}
                     </p>
                   )}
@@ -125,27 +125,27 @@ export default function GlobalHeader() {
                   )}
                 </div>
 
-                {/* Building Selector - Now in grid for better alignment */}
-                <div className="hidden lg:flex items-center gap-3 min-w-0">
-                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Κτίριο:</span>
+                {/* Building Selector */}
+                <div className="hidden lg:flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-medium text-gray-600 whitespace-nowrap">Κτίριο:</span>
                   <BuildingSelectorButton
                     onBuildingSelect={setSelectedBuilding}
                     selectedBuilding={selectedBuilding}
-                    className="min-w-[180px]"
+                    className="min-w-[160px]"
                   />
                 </div>
               </div>
 
               {/* Mobile version - Office Name Only */}
               <div className="sm:hidden">
-                <h1 className="text-sm font-bold text-gray-900 leading-tight">
-                  {user?.office_name?.substring(0, 20) || 'ΓΔ'}...
+                <h1 className="text-sm font-bold text-gray-900 leading-tight truncate">
+                  {user?.office_name?.substring(0, 15) || 'ΓΔ'}
                 </h1>
               </div>
             </div>
 
             {/* Right Section - Actions and User Info */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {/* Calendar Button */}
               <button
                 onClick={() => {
