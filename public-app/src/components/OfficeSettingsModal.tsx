@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Building, Phone, Mail, MapPin, Info, Upload, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getOfficeLogoUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import type { User } from '@/types/user';
 
 interface OfficeSettingsModalProps {
   isOpen: boolean;
@@ -122,25 +123,12 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
         formData.append('office_logo', logoFile);
       }
 
-      // Make PATCH request with FormData
-      const response = await fetch('/api/users/me/', {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('access') || ''}`,
-          'X-CSRFToken': document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '',
-        },
-        body: formData,
-        credentials: 'include',
-      });
+      // Use api.patch which handles FormData automatically
+      // Note: /users/me/ only supports GET, use /users/office-details/ for updates
+      // The endpoint returns { message, office_details } but we refresh the full user data anyway
+      await api.patch<{ message: string; office_details: any }>('/users/office-details/', formData);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || errorData.message || 'Σφάλμα κατά την αποθήκευση');
-      }
-
-      const updatedUser = await response.json();
-
-      // Refresh user data in AuthContext
+      // Refresh user data in AuthContext to get updated values
       await refreshUser();
 
       toast.success('Οι ρυθμίσεις αποθηκεύτηκαν με επιτυχία', {
@@ -186,6 +174,9 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
             <Building className="w-5 h-5" />
             Ρυθμίσεις Γραφείου
           </DialogTitle>
+          <DialogDescription>
+            Επεξεργαστείτε τα στοιχεία του γραφείου διαχείρισης
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
