@@ -57,9 +57,17 @@ export async function GET(
     if (!response.ok) {
       console.error(`[Media Proxy] Backend returned ${response.status} for ${mediaUrl}`);
       const errorText = await response.text().catch(() => 'Unknown error');
-      console.error(`[Media Proxy] Error response: ${errorText}`);
+      console.error(`[Media Proxy] Error response: ${errorText.substring(0, 500)}`);
+      console.error(`[Media Proxy] Backend base: ${backendBase}`);
+      console.error(`[Media Proxy] Full URL tried: ${mediaUrl}`);
       return NextResponse.json(
-        { error: 'Media file not found', details: errorText },
+        {
+          error: 'Media file not found',
+          details: errorText.substring(0, 200),
+          backend_url: mediaUrl,
+          backend_base: backendBase,
+          media_path: mediaPath
+        },
         { status: response.status }
       );
     }
