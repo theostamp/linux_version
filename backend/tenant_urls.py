@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -6,6 +6,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from api import views as legacy_api_views
 from api import kiosk_views as kiosk_bill_views
+from core.media_views import serve_media
 
 # Tenant URL configuration
 urlpatterns = [
@@ -92,5 +93,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
     urlpatterns += staticfiles_urlpatterns()
-    # Serve media files even in production for development/testing
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+    # Serve media files in production using custom view (Django's static() returns [] when DEBUG=False)
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve_media, name='serve_media_tenant'),
+    ]
