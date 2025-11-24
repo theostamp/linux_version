@@ -348,6 +348,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 railway_volume = os.getenv('RAILWAY_VOLUME_MOUNT_PATH', '/data')
 if os.path.exists(railway_volume):
     MEDIA_ROOT = Path(railway_volume) / 'media'
+    # Ensure media directory exists
+    MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 else:
     MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
