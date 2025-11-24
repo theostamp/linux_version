@@ -205,6 +205,7 @@ export default function GlobalHeader() {
 
               {/* Logout Button */}
               <LogoutButton className="text-sm" />
+              </div>
             </div>
           </div>
         </div>
