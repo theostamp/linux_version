@@ -66,13 +66,13 @@ export default function GlobalHeader() {
       <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm shadow-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 lg:pl-64">
           <div className="flex items-center justify-between h-20">
-            {/* Left side - Logo */}
-            <div className="flex items-center gap-3 lg:gap-4">
+            {/* Left side - Logo and Office Details */}
+            <div className="flex items-center gap-6 lg:gap-8">
               {/* Office Logo or Default Icon */}
               {(() => {
                 const logoUrl = getOfficeLogoUrl(user?.office_logo);
                 return logoUrl && !logoError ? (
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50 flex-shrink-0">
+                  <div className="w-14 h-14 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50 flex-shrink-0">
                     <img 
                       src={logoUrl}
                       alt="Office Logo" 
@@ -89,18 +89,18 @@ export default function GlobalHeader() {
                     />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
-                    <BuildingIcon className="w-6 h-6 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
+                    <BuildingIcon className="w-7 h-7 text-white" />
                   </div>
                 );
               })()}
               
               {/* Office Details - Two Column Layout */}
               <div className="hidden sm:block">
-                <div className="flex items-start gap-6">
+                <div className="flex items-center gap-10 lg:gap-12">
                   {/* Left Column: Office Name and Address */}
-                  <div className="flex flex-col">
-                    <h1 className="text-lg font-bold text-gray-900 leading-tight mb-1">
+                  <div className="flex flex-col justify-center">
+                    <h1 className="text-lg font-bold text-gray-900 leading-tight mb-1.5">
                       {user?.office_name || 'Γραφείο Διαχείρισης'}
                     </h1>
                     {user?.office_address && (
@@ -111,9 +111,9 @@ export default function GlobalHeader() {
                   </div>
                   
                   {/* Right Column: Phone and Email */}
-                  <div className="flex flex-col">
+                  <div className="flex flex-col justify-center">
                     {user?.office_phone && (
-                      <p className="text-xs text-gray-500 leading-tight mb-1">
+                      <p className="text-xs text-gray-500 leading-tight mb-1.5">
                         {user.office_phone}
                       </p>
                     )}
@@ -134,7 +134,7 @@ export default function GlobalHeader() {
               </div>
               
               {/* Building Selector - Hidden on mobile to save space */}
-              <div className="hidden md:flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3 ml-4">
                 <span className="text-sm font-medium text-gray-600">Κτίριο:</span>
                 <BuildingSelectorButton
                   onBuildingSelect={setSelectedBuilding}
