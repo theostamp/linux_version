@@ -1,92 +1,132 @@
 # Railway Volume Setup για Media Files
 
-## Πρόβλημα
+## Επισκόπηση
 
-Τα office logos και άλλα media files που ανεβαίνουν στο Django backend δεν αποθηκεύονται μόνιμα γιατί το Railway χρησιμοποιεί ephemeral storage. Κάθε redeploy ή restart του container διαγράφει τα αρχεία.
+Για να αποθηκεύονται τα media files (logos, receipts, κλπ) μόνιμα στο Railway, χρειάζεται να δημιουργήσουμε ένα **Volume** που θα mount-άρει στο Django service.
 
-## Λύση: Railway Volume
+## Βήματα Ρύθμισης
 
-Το Railway παρέχει persistent volumes που μπορούν να mount σε συγκεκριμένα directories.
+### 1. Δημιουργία Volume στο Railway Dashboard
 
-### Βήματα Ρύθμισης
+1. Πηγαίνετε στο [Railway Dashboard](https://railway.app)
+2. Επιλέξτε το project σας
+3. Κάντε κλικ στο **"New"** → **"Volume"**
+4. Ονομάστε το volume: `media-storage` (ή οποιοδήποτε όνομα θέλετε)
+5. Επιλέξτε το size (π.χ. 10GB για αρχή)
+6. Κάντε κλικ **"Create"**
 
-#### 1. Δημιουργία Volume στο Railway
+### 2. Mount του Volume στο Django Service
 
-1. Πήγαινε στο Railway Dashboard
-2. Επέλεξε το **linuxversion-production** service
-3. Πήγαινε στην καρτέλα **Settings**
-4. Scroll down στο **Volumes** section
-5. Κάνε κλικ στο **+ New Volume**
-6. Ρύθμισε το volume:
-   - **Mount Path**: `/vol/media`
-   - **Size**: 1 GB (ή όσο χρειάζεσαι)
-7. Κάνε κλικ στο **Add**
+1. Στο Railway Dashboard, επιλέξτε το **Django service** (backend)
+2. Πηγαίνετε στο tab **"Settings"**
+3. Κάντε scroll στο **"Volumes"** section
+4. Κάντε κλικ **"Add Volume"**
+5. Επιλέξτε το volume που δημιουργήσατε (`media-storage`)
+6. Ορίστε το **Mount Path**: `/vol`
+7. Κάντε κλικ **"Add"**
 
-#### 2. Επαναφορά του Service
+### 3. Ρύθμιση Environment Variables
 
-Μετά τη δημιουργία του volume, το Railway θα κάνει redeploy του service αυτόματα.
+Το Django ήδη έχει ρυθμισμένο το `MEDIA_ROOT = '/vol/media'` στο `settings_prod.py`, οπότε δεν χρειάζεται επιπλέον environment variable.
 
-#### 3. Επιβεβαίωση
+**Επιβεβαιώστε ότι:**
+- Το `MEDIA_ROOT` environment variable ΔΕΝ είναι set (για να χρησιμοποιηθεί το default από `settings_prod.py`)
+- Ή set το `MEDIA_ROOT=/vol/media` αν θέλετε να το ορίσετε ρητά
 
-Μετά το redeploy, δοκίμασε να ανεβάσεις ένα logo από το frontend:
+### 4. Δημιουργία του Media Directory
 
-1. Πήγαινε στο **Office Settings**
-2. Ανέβασε ένα logo
-3. Refresh τη σελίδα
-4. Το logo θα πρέπει να εμφανίζεται σωστά
+Μετά το mount, το volume θα είναι άδειο. Πρέπει να δημιουργήσετε το directory structure:
 
-### Εναλλακτική Λύση: Cloud Storage (S3 / CloudFlare R2)
+**Επιλογή Α: Μέσω Railway CLI**
+```bash
+railway run bash
+mkdir -p /vol/media/office_logos
+mkdir -p /vol/media/receipts
+# κλπ για άλλα directories
+```
 
-Αν προτιμάς cloud storage αντί για Railway volume, μπορείς να χρησιμοποιήσεις:
+**Επιλογή Β: Αυτόματα μέσω Django**
+Το Django θα δημιουργήσει τα directories αυτόματα όταν αποθηκεύονται αρχεία, αλλά μπορείτε να το κάνετε και manual:
 
-- **AWS S3**
-- **CloudFlare R2** (συμβατό με S3 API, χωρίς egress fees)
-- **DigitalOcean Spaces**
+```python
+# Στο Django shell ή startup script
+import os
+from django.conf import settings
 
-#### Απαιτούμενες Αλλαγές για S3
+os.makedirs(os.path.join(settings.MEDIA_ROOT, 'office_logos'), exist_ok=True)
+os.makedirs(os.path.join(settings.MEDIA_ROOT, 'receipts'), exist_ok=True)
+```
 
-1. Εγκατάσταση του `django-storages` και `boto3`:
+### 5. Επαναπροώθηση (Redeploy)
+
+Μετά το mount του volume:
+1. Κάντε **Redeploy** του Django service
+2. Ελέγξτε τα logs ότι το service ξεκίνησε σωστά
+3. Ελέγξτε ότι το `/vol/media` directory υπάρχει
+
+## Επαλήθευση
+
+### Ελέγξτε ότι το Volume είναι Mounted
+
+```bash
+# Μέσω Railway CLI
+railway run bash
+ls -la /vol/
+# Θα πρέπει να βλέπετε: media/
+```
+
+### Ελέγξτε τα Logs
+
+Μετά το upload ενός logo, ελέγξτε τα logs:
+```
+[OfficeDetailsSerializer] Logo saved successfully. New logo URL: /media/office_logos/logo_xxx.jpg
+```
+
+### Test Upload
+
+1. Ανεβάστε ένα logo μέσω του OfficeSettingsModal
+2. Ελέγξτε ότι αποθηκεύεται:
    ```bash
-   pip install django-storages boto3
+   railway run bash
+   ls -la /vol/media/office_logos/
    ```
 
-2. Ενημέρωση του `settings_prod.py`:
-   ```python
-   # AWS S3 Settings
-   USE_S3 = os.getenv('USE_S3', 'False') == 'True'
+## Troubleshooting
 
-   if USE_S3:
-       AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-       AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-       AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-       AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'eu-central-1')
-       AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-       AWS_S3_OBJECT_PARAMETERS = {
-           'CacheControl': 'max-age=86400',
-       }
+### Το Volume δεν φαίνεται
 
-       # Media files (uploads)
-       DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-       MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-   ```
+- Ελέγξτε ότι το volume είναι mount-αρισμένο στο service
+- Ελέγξτε ότι το mount path είναι `/vol`
+- Κάντε redeploy του service
 
-3. Ρύθμιση Environment Variables στο Railway:
-   - `USE_S3=True`
-   - `AWS_ACCESS_KEY_ID=your-key`
-   - `AWS_SECRET_ACCESS_KEY=your-secret`
-   - `AWS_STORAGE_BUCKET_NAME=your-bucket-name`
-   - `AWS_S3_REGION_NAME=eu-central-1`
+### Permission Errors
 
-## Τρέχουσα Κατάσταση
+Αν βλέπετε permission errors:
+```bash
+railway run bash
+chmod -R 755 /vol/media
+chown -R $(whoami) /vol/media
+```
 
-✅ Το Dockerfile δημιουργεί το `/vol/media` directory
-✅ Το entrypoint.sh διασφαλίζει ότι τα directories υπάρχουν
-✅ Το media proxy route λειτουργεί σωστά στο Next.js
-⏳ **Απαιτείται**: Ρύθμιση Railway Volume για persistent storage
+### Files Δεν Αποθηκεύονται
 
-## Επόμενα Βήματα
+- Ελέγξτε ότι το `MEDIA_ROOT` είναι `/vol/media` στο production
+- Ελέγξτε τα Django logs για errors
+- Ελέγξτε ότι το volume έχει αρκετό space
 
-1. ✅ Commit τις αλλαγές στο Dockerfile και entrypoint.sh
-2. 📋 Δημιούργησε Railway Volume όπως περιγράφεται παραπάνω
-3. 🚀 Deploy το backend στο Railway
-4. ✅ Δοκίμασε το office logo upload
+## Σημαντικές Σημειώσεις
+
+1. **Backup**: Τα volumes στο Railway είναι persistent, αλλά συνιστάται να έχετε backup strategy
+2. **Size**: Μπορείτε να αυξήσετε το size του volume ανά πάσα στιγμή από το Railway dashboard
+3. **Multiple Services**: Αν έχετε multiple Django services, μπορείτε να mount-άρετε το ίδιο volume σε όλα
+4. **Cost**: Τα volumes στο Railway χρεώνονται ανά GB storage
+
+## Alternative: Cloud Storage (S3, Cloudinary, κλπ)
+
+Αν θέλετε να χρησιμοποιήσετε cloud storage αντί για Railway volumes:
+
+1. **AWS S3**: Χρησιμοποιήστε `django-storages` με S3 backend
+2. **Cloudinary**: Χρησιμοποιήστε `django-cloudinary-storage`
+3. **Railway Blob Storage**: (αν διαθέσιμο)
+
+Αυτό είναι καλύτερο για scalability αλλά απαιτεί επιπλέον configuration.
