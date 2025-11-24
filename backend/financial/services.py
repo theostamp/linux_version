@@ -1379,9 +1379,12 @@ class FinancialDashboardService:
                 'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
                 'reserve_fund_share': reserve_fund_share,  # ← ΝΕΟ FIELD - Αποθεματικό
                 'expense_share': expense_share,        # ← ΝΕΟ FIELD
-                # ΝΕΑ FIELDS: Διαχωρισμός δαπανών ιδιοκτήτη/ενοίκου
-                'resident_expenses': resident_expenses,  # Δαπάνες Ενοίκου
-                'owner_expenses': owner_expenses,        # Δαπάνες Ιδιοκτήτη
+                # ΝΕΑ FIELDS: Διαχωρισμός δαπανών ιδιοκτήτη/ενοίκου (τρέχων μήνας)
+                'resident_expenses': resident_expenses,  # Δαπάνες Ενοίκου (τρέχων μήνας)
+                'owner_expenses': owner_expenses,        # Δαπάνες Ιδιοκτήτη (τρέχων μήνας)
+                # 🔧 ΝΕΑ FIELDS 2025-11-24: Διαχωρισμός προηγούμενων οφειλών
+                'previous_resident_expenses': previous_resident_expenses if month else Decimal('0.00'),  # Δαπάνες Ενοίκου (προηγούμενοι)
+                'previous_owner_expenses': previous_owner_expenses if month else Decimal('0.00'),        # Δαπάνες Ιδιοκτήτη (προηγούμενοι)
                 'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
                 'total_payments': total_payments_apartment,  # ← ΝΕΟ FIELD - Διόρθωση!
                 'participation_mills': apartment.participation_mills or 0,

@@ -58,9 +58,12 @@ interface ApartmentBalanceWithDetails {
   previous_balance: number;
   reserve_fund_share: number;  // ← ΝΕΟ FIELD - Αποθεματικό
   expense_share: number;
-  // ΝΕΑ FIELDS: Διαχωρισμός δαπανών
-  resident_expenses: number;  // Δαπάνες Ενοίκου
-  owner_expenses: number;     // Δαπάνες Ιδιοκτήτη
+  // ΝΕΑ FIELDS: Διαχωρισμός δαπανών τρέχοντος μήνα
+  resident_expenses: number;  // Δαπάνες Ενοίκου (τρέχων μήνας)
+  owner_expenses: number;     // Δαπάνες Ιδιοκτήτη (τρέχων μήνας)
+  // 🔧 ΝΕΑ FIELDS 2025-11-24: Διαχωρισμός προηγούμενων οφειλών
+  previous_resident_expenses?: number;  // Δαπάνες Ενοίκου (προηγούμενοι)
+  previous_owner_expenses?: number;     // Δαπάνες Ιδιοκτήτη (προηγούμενοι)
   total_obligations: number;
   total_payments: number;
   net_obligation: number;

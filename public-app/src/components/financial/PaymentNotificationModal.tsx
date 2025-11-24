@@ -360,15 +360,46 @@ export default function PaymentNotificationModal({
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900">Ανάλυση Οφειλών</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white border border-gray-200 rounded-lg p-3">
-                  <span className="text-sm text-gray-600">Παλαιότερες Οφειλές:</span>
-                  <div className="font-medium text-lg">
+              {/* Παλαιότερες Οφειλές με διαχωρισμό */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-purple-900">Παλαιότερες Οφειλές:</span>
+                  <div className="font-bold text-lg text-purple-900">
                     {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                   </div>
                 </div>
+                
+                {/* Διαχωρισμός Παλαιότερων Οφειλών */}
+                {apartment.previous_balance > 0 && (
+                  <div className="ml-4 space-y-1 text-sm border-l-2 border-purple-300 pl-3">
+                    {(apartment as any).previous_owner_expenses > 0 && (
+                      <div className="flex items-center justify-between text-red-700">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">├─</span>
+                          <span>Δαπάνες Ιδιοκτήτη</span>
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-1 py-0">Δ</Badge>
+                        </div>
+                        <span className="font-medium">{formatCurrency((apartment as any).previous_owner_expenses)}</span>
+                      </div>
+                    )}
+                    {(apartment as any).previous_resident_expenses > 0 && (
+                      <div className="flex items-center justify-between text-green-700">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">{(apartment as any).previous_owner_expenses > 0 ? '└─' : '├─'}</span>
+                          <span>Δαπάνες Ενοίκου</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-1 py-0">Ε</Badge>
+                        </div>
+                        <span className="font-medium">{formatCurrency((apartment as any).previous_resident_expenses)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* Τρέχων Μήνας και Πληρωμές */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
-                  <span className="text-sm text-gray-600">Ποσό Κοινοχρήστων:</span>
+                  <span className="text-sm text-gray-600">Ποσό Κοινοχρήστων (Τρέχων):</span>
                   <div className="font-medium text-lg">
                     {formatCurrency(apartment.expense_share)}
                   </div>
