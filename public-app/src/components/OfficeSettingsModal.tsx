@@ -85,43 +85,37 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
           </div>
 
           {/* Διεύθυνση */}
-          {user?.office_address && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Διεύθυνση
-              </label>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-900">{user.office_address}</p>
-              </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Διεύθυνση
+            </label>
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-900">{user?.office_address || 'Δεν έχει οριστεί'}</p>
             </div>
-          )}
+          </div>
 
           {/* Κύριο Τηλέφωνο */}
-          {user?.office_phone && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                Τηλέφωνο (Κύριο)
-              </label>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-900">{user.office_phone}</p>
-              </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              Τηλέφωνο (Κύριο)
+            </label>
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-900">{user?.office_phone || 'Δεν έχει οριστεί'}</p>
             </div>
-          )}
+          </div>
 
           {/* Τηλέφωνο Ανάγκης */}
-          {user?.office_phone_emergency && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                Τηλέφωνο (Ανάγκης)
-              </label>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-900">{user.office_phone_emergency}</p>
-              </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              Τηλέφωνο (Ανάγκης)
+            </label>
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-900">{user?.office_phone_emergency || 'Δεν έχει οριστεί'}</p>
             </div>
-          )}
+          </div>
 
           <div className="pt-4 border-t border-gray-200">
             <p className="text-xs text-gray-500">
