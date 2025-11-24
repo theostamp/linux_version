@@ -181,18 +181,25 @@ export function getOfficeLogoUrl(logoPath: string | null | undefined): string | 
     return logoPath;
   }
   
-  // Construct the full URL using API_BASE_URL
-  // API_BASE_URL is '/api' in browser, so we need to get the base URL
-  // For relative paths, we construct the URL relative to the current origin
+  // Normalize the path - remove leading /media/ if present and add /api/media/
+  let normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+  
+  // If path starts with /media/, replace with /api/media/ to use our proxy
+  if (normalizedPath.startsWith('/media/')) {
+    normalizedPath = normalizedPath.replace('/media/', '/api/media/');
+  } else if (!normalizedPath.startsWith('/api/media/')) {
+    // If it doesn't start with /media/ or /api/media/, assume it's a relative path from media root
+    normalizedPath = `/api/media/${normalizedPath.replace(/^\//, '')}`;
+  }
+  
+  // Construct the full URL
   if (typeof window !== 'undefined') {
-    // In browser: use current origin and construct path
+    // In browser: use current origin
     const baseUrl = window.location.origin;
-    const normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
     return `${baseUrl}${normalizedPath}`;
   } else {
     // Server-side: use API_BASE_URL logic
     const baseUrl = API_BASE_URL.replace('/api', '') || '';
-    const normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
     return baseUrl ? `${baseUrl}${normalizedPath}` : normalizedPath;
   }
 }
