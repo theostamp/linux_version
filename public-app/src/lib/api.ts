@@ -118,6 +118,43 @@ const trimErrorBody = (body?: string) => {
     : body;
 };
 
+// Global flag to prevent multiple 401 error toasts from showing simultaneously
+let hasShown401Error = false;
+let last401ErrorTime = 0;
+const ERROR_TOAST_COOLDOWN = 5000; // 5 seconds cooldown between 401 error toasts
+
+/**
+ * Handle 401 Unauthorized errors with user-friendly message
+ * Uses deduplication to prevent multiple toasts for concurrent requests
+ */
+function handle401Error(): void {
+  // Only show toast in browser environment
+  if (typeof window === 'undefined') return;
+  
+  const now = Date.now();
+  
+  // Check if we've shown a 401 error recently (within cooldown period)
+  if (hasShown401Error && (now - last401ErrorTime) < ERROR_TOAST_COOLDOWN) {
+    return;
+  }
+  
+  // Dynamically import errorMessages to avoid circular dependencies
+  // and to ensure it's only loaded in browser environment
+  import('@/lib/errorMessages').then(({ showBuildingError }) => {
+    showBuildingError('SESSION_EXPIRED');
+    hasShown401Error = true;
+    last401ErrorTime = now;
+    
+    // Reset flag after cooldown period
+    setTimeout(() => {
+      hasShown401Error = false;
+    }, ERROR_TOAST_COOLDOWN);
+  }).catch((err) => {
+    // Fallback if errorMessages fails to load
+    console.error('Failed to load errorMessages:', err);
+  });
+}
+
 const createApiError = (
   method: string,
   url: string,
@@ -131,6 +168,12 @@ const createApiError = (
   ) as ApiError;
   error.status = status;
   error.response = { status, body: trimmedBody };
+  
+  // Handle 401 errors with user-friendly message
+  if (status === 401) {
+    handle401Error();
+  }
+  
   return error;
 };
 
