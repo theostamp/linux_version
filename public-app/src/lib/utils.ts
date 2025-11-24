@@ -181,12 +181,15 @@ export function getOfficeLogoUrl(logoPath: string | null | undefined): string | 
     return logoPath;
   }
 
-  // Normalize the path - ensure it starts with /media/
+  // Normalize the path - ensure it uses /api/media/ proxy
   let normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
 
-  // If path doesn't start with /media/, assume it's a relative path from media root
-  if (!normalizedPath.startsWith('/media/')) {
-    normalizedPath = `/media/${normalizedPath.replace(/^\//, '')}`;
+  // Convert /media/ to /api/media/ to use Next.js proxy
+  if (normalizedPath.startsWith('/media/')) {
+    normalizedPath = normalizedPath.replace('/media/', '/api/media/');
+  } else if (!normalizedPath.startsWith('/api/media/')) {
+    // If it doesn't start with /media/ or /api/media/, assume it's a relative path from media root
+    normalizedPath = `/api/media/${normalizedPath.replace(/^\//, '')}`;
   }
 
   // Construct the full URL
