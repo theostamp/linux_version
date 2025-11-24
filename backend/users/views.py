@@ -260,16 +260,45 @@ def update_office_details(request):
     PUT/PATCH /api/users/office-details/
     Ενημέρωση των στοιχείων γραφείου διαχείρισης του authenticated χρήστη.
     """
+    import logging
+    logger = logging.getLogger('django')
+    
     user = request.user
+    content_type = request.content_type or 'unknown'
+    has_files = bool(request.FILES)
+    data_keys = list(request.data.keys()) if hasattr(request, 'data') else []
+    files_keys = list(request.FILES.keys()) if hasattr(request, 'FILES') else []
+    
+    logger.info(f"[update_office_details] Request received for user {user.id}", extra={
+        'content_type': content_type,
+        'has_files': has_files,
+        'data_keys': data_keys,
+        'files_keys': files_keys,
+        'method': request.method,
+    })
+    
+    # Log file info if present
+    if has_files:
+        for key, file_obj in request.FILES.items():
+            logger.info(f"[update_office_details] File received: {key}", extra={
+                'file_name': file_obj.name,
+                'file_size': file_obj.size,
+                'file_content_type': getattr(file_obj, 'content_type', 'unknown'),
+            })
+    
     serializer = OfficeDetailsSerializer(user, data=request.data, partial=True)
     
     if serializer.is_valid():
         serializer.save()
+        logger.info(f"[update_office_details] Office details updated successfully for user {user.id}")
         return Response({
             'message': 'Τα στοιχεία γραφείου διαχείρισης ενημερώθηκαν επιτυχώς.',
             'office_details': serializer.data
         }, status=status.HTTP_200_OK)
     
+    logger.warning(f"[update_office_details] Validation failed for user {user.id}", extra={
+        'errors': serializer.errors,
+    })
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

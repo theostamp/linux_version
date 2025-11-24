@@ -139,20 +139,79 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
       // Use api.patch which handles FormData automatically
       // Note: /users/me/ only supports GET, use /users/office-details/ for updates
       // The endpoint returns { message, office_details } but we refresh the full user data anyway
-      await api.patch<{ message: string; office_details: any }>('/users/office-details/', formData);
+      console.log('[OfficeSettings] Sending PATCH request to /users/office-details/');
+      console.log('[OfficeSettings] FormData has logo:', !!logoFile);
+      
+      // Retry logic for network errors
+      let lastError: unknown = null;
+      const maxRetries = 2;
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 0) {
+            console.log(`[OfficeSettings] Retry attempt ${attempt}/${maxRetries}`);
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+          
+          const response = await api.patch<{ message: string; office_details: any }>('/users/office-details/', formData);
+          console.log('[OfficeSettings] PATCH request successful:', response);
 
-      // Refresh user data in AuthContext to get updated values
-      await refreshUser();
+        // Refresh user data in AuthContext to get updated values
+        await refreshUser();
 
-      toast.success('Οι ρυθμίσεις αποθηκεύτηκαν με επιτυχία', {
-        description: 'Τα στοιχεία του γραφείου ενημερώθηκαν.',
-      });
+        toast.success('Οι ρυθμίσεις αποθηκεύτηκαν με επιτυχία', {
+          description: 'Τα στοιχεία του γραφείου ενημερώθηκαν.',
+        });
 
-      onClose();
+          onClose();
+          return; // Success, exit retry loop
+        } catch (patchError) {
+          lastError = patchError;
+          console.error(`[OfficeSettings] PATCH request failed (attempt ${attempt + 1}/${maxRetries + 1}):`, patchError);
+          
+          // Check if it's a network error that we should retry
+          const isNetworkError = patchError instanceof Error && (
+            patchError.message.includes('Failed to fetch') || 
+            patchError.message.includes('ERR_NAME_NOT_RESOLVED') ||
+            patchError.message.includes('NetworkError') ||
+            patchError.message.includes('network')
+          );
+          
+          // Only retry network errors, not validation errors
+          if (!isNetworkError || attempt === maxRetries) {
+            throw patchError; // Re-throw to be caught by outer catch
+          }
+          
+          // Continue to next retry attempt
+        }
+      }
+      
+      // If we get here, all retries failed
+      throw lastError;
     } catch (error) {
       console.error('Error updating office settings:', error);
+      
+      let errorMessage = 'Παρακαλώ δοκιμάστε ξανά.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Provide more specific error messages
+        if (error.message.includes('Failed to fetch') || 
+            error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+            error.message.includes('NetworkError')) {
+          errorMessage = 'Σφάλμα σύνδεσης με τον server. Παρακαλώ ελέγξτε τη σύνδεσή σας.';
+        } else if (error.message.includes('400')) {
+          errorMessage = 'Μη έγκυρα δεδομένα. Παρακαλώ ελέγξτε τα πεδία.';
+        } else if (error.message.includes('401') || error.message.includes('403')) {
+          errorMessage = 'Δεν έχετε δικαίωμα να εκτελέσετε αυτή την ενέργεια.';
+        } else if (error.message.includes('413') || error.message.includes('too large')) {
+          errorMessage = 'Το αρχείο logo είναι πολύ μεγάλο. Μέγιστο μέγεθος: 2MB.';
+        }
+      }
+      
       toast.error('Σφάλμα κατά την αποθήκευση', {
-        description: error instanceof Error ? error.message : 'Παρακαλώ δοκιμάστε ξανά.',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

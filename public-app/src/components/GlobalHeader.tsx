@@ -66,55 +66,55 @@ export default function GlobalHeader() {
       <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm shadow-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 lg:pl-64">
           <div className="flex items-center justify-between h-20">
-            {/* Left side - Logo and Building Selector */}
+            {/* Left side - Logo */}
             <div className="flex items-center gap-3 lg:gap-4">
-              <div className="flex items-center gap-2 lg:gap-3">
-                {/* Office Logo or Default Icon */}
-                {(() => {
-                  const logoUrl = getOfficeLogoUrl(user?.office_logo);
-                  return logoUrl && !logoError ? (
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50 flex-shrink-0">
-                      <img 
-                        src={logoUrl}
-                        alt="Office Logo" 
-                        className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
-                        onLoad={() => {
-                          setLogoLoading(false);
-                          setLogoError(false);
-                        }}
-                        onLoadStart={() => setLogoLoading(true)}
-                        onError={() => {
-                          setLogoError(true);
-                          setLogoLoading(false);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
-                      <BuildingIcon className="w-5 h-5 text-white" />
-                    </div>
-                  );
-                })()}
-                
-                {/* Office Details - Two Column Layout */}
-                <div className="hidden sm:block">
-                  <h1 className="text-lg font-bold text-gray-900 leading-tight mb-1">
-                    {user?.office_name || 'Γραφείο Διαχείρισης'}
-                  </h1>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+              {/* Office Logo or Default Icon */}
+              {(() => {
+                const logoUrl = getOfficeLogoUrl(user?.office_logo);
+                return logoUrl && !logoError ? (
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50 flex-shrink-0">
+                    <img 
+                      src={logoUrl}
+                      alt="Office Logo" 
+                      className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
+                      onLoad={() => {
+                        setLogoLoading(false);
+                        setLogoError(false);
+                      }}
+                      onLoadStart={() => setLogoLoading(true)}
+                      onError={() => {
+                        setLogoError(true);
+                        setLogoLoading(false);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
+                    <BuildingIcon className="w-6 h-6 text-white" />
+                  </div>
+                );
+              })()}
+              
+              {/* Office Details - Two Column Layout */}
+              <div className="hidden sm:block">
+                <div className="flex items-start gap-6">
+                  {/* Left Column: Office Name and Address */}
+                  <div className="flex flex-col">
+                    <h1 className="text-lg font-bold text-gray-900 leading-tight mb-1">
+                      {user?.office_name || 'Γραφείο Διαχείρισης'}
+                    </h1>
                     {user?.office_address && (
                       <p className="text-xs text-gray-500 leading-tight">
                         {user.office_address}
                       </p>
                     )}
+                  </div>
+                  
+                  {/* Right Column: Phone and Email */}
+                  <div className="flex flex-col">
                     {user?.office_phone && (
-                      <p className="text-xs text-gray-500 leading-tight">
-                        Τηλ: {user.office_phone}
-                      </p>
-                    )}
-                    {user?.office_phone_emergency && (
-                      <p className="text-xs text-gray-500 leading-tight">
-                        Ανάγκης: {user.office_phone_emergency}
+                      <p className="text-xs text-gray-500 leading-tight mb-1">
+                        {user.office_phone}
                       </p>
                     )}
                     {user?.email && (
@@ -124,13 +124,13 @@ export default function GlobalHeader() {
                     )}
                   </div>
                 </div>
-                
-                {/* Mobile version */}
-                <div className="sm:hidden">
-                  <h1 className="text-sm font-bold text-gray-900 leading-tight">
-                    {user?.office_name?.substring(0, 2) || 'ΓΔ'}
-                  </h1>
-                </div>
+              </div>
+              
+              {/* Mobile version */}
+              <div className="sm:hidden">
+                <h1 className="text-sm font-bold text-gray-900 leading-tight">
+                  {user?.office_name?.substring(0, 2) || 'ΓΔ'}
+                </h1>
               </div>
               
               {/* Building Selector - Hidden on mobile to save space */}
