@@ -120,6 +120,12 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
+    # Production: Use custom media serving view for Railway volumes
+    from django.urls import re_path
+    from core.media_views import serve_media
+
     urlpatterns += staticfiles_urlpatterns()
-    # Serve media files in production (needed for Railway deployment)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Custom media serving for production (works better with Railway volumes)
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve_media, name='media'),
+    ]
