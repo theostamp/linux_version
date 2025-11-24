@@ -175,23 +175,23 @@ export function parseAmount(value: number | string | null | undefined): number {
  */
 export function getOfficeLogoUrl(logoPath: string | null | undefined): string | null {
   if (!logoPath) return null;
-
+  
   // If it's already a full URL (http/https), return as is
   if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
     return logoPath;
   }
-
-  // Normalize the path - ensure it uses /api/media/ proxy
+  
+  // Normalize the path - remove leading /media/ if present and add /api/media/
   let normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
-
-  // Convert /media/ to /api/media/ to use Next.js proxy
+  
+  // If path starts with /media/, replace with /api/media/ to use our proxy
   if (normalizedPath.startsWith('/media/')) {
     normalizedPath = normalizedPath.replace('/media/', '/api/media/');
   } else if (!normalizedPath.startsWith('/api/media/')) {
     // If it doesn't start with /media/ or /api/media/, assume it's a relative path from media root
     normalizedPath = `/api/media/${normalizedPath.replace(/^\//, '')}`;
   }
-
+  
   // Construct the full URL
   if (typeof window !== 'undefined') {
     // In browser: use current origin

@@ -1,69 +1,94 @@
-/**
- * Media Proxy Route
- * Proxies /api/media/* requests to the Django backend
- * This allows the frontend (Vercel) to fetch media files from the backend (Railway)
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 
-// Get the backend API URL from environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://theo.newconcierge.app';
+/**
+ * Resolve backend base URL
+ */
+const resolveBackendBase = () => {
+  const base =
+    process.env.API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    process.env.API_URL ??
+    process.env.BACKEND_URL ??
+    "https://linuxversion-production.up.railway.app";
+  
+  // Remove trailing slash
+  return base.replace(/\/$/, '');
+};
 
+/**
+ * Proxy route for media files (office logos, receipts, etc.)
+ * Proxies requests to Django backend's MEDIA_URL
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
   try {
-    // Construct the media file path
-    const mediaPath = params.path.join('/');
-    const backendUrl = `${API_BASE_URL}/media/${mediaPath}`;
+    const pathSegments = params.path || [];
+    const mediaPath = pathSegments.join('/');
+    
+    if (!mediaPath) {
+      return NextResponse.json(
+        { error: 'Media path is required' },
+        { status: 400 }
+      );
+    }
 
-    console.log(`[Media Proxy] Fetching: ${backendUrl}`);
-
-    // Fetch from backend
-    const response = await fetch(backendUrl, {
+    // Get backend base URL
+    const backendBase = resolveBackendBase();
+    
+    // Construct the full media URL
+    const mediaUrl = `${backendBase}/media/${mediaPath}`;
+    
+    console.log(`[Media Proxy] Proxying media request: ${mediaUrl}`);
+    
+    // Fetch the media file from Django backend
+    const response = await fetch(mediaUrl, {
       method: 'GET',
       headers: {
-        // Forward relevant headers
-        'User-Agent': request.headers.get('user-agent') || 'Next.js Media Proxy',
+        // Forward any relevant headers
+        'Accept': request.headers.get('Accept') || '*/*',
+        'User-Agent': request.headers.get('User-Agent') || 'Next.js Media Proxy',
       },
-      // Don't follow redirects automatically
-      redirect: 'manual',
+      // Don't follow redirects automatically - handle them explicitly
+      redirect: 'follow',
     });
 
-    // If not found, return 404
-    if (response.status === 404) {
-      console.log(`[Media Proxy] File not found: ${mediaPath}`);
-      return new NextResponse('Media file not found', { status: 404 });
-    }
-
-    // If error, return error
     if (!response.ok) {
-      console.error(`[Media Proxy] Error fetching media: ${response.status} ${response.statusText}`);
-      return new NextResponse('Error fetching media file', { status: response.status });
+      console.error(`[Media Proxy] Backend returned ${response.status} for ${mediaUrl}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`[Media Proxy] Error response: ${errorText}`);
+      return NextResponse.json(
+        { error: 'Media file not found', details: errorText },
+        { status: response.status }
+      );
     }
 
-    // Get the file data
+    // Get the content type from the response
+    const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
+    
+    // Get the file content as a blob
     const blob = await response.blob();
-    const buffer = Buffer.from(await blob.arrayBuffer());
-
-    // Get content type from response or guess from extension
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
-
-    console.log(`[Media Proxy] Successfully fetched: ${mediaPath} (${contentType}, ${buffer.length} bytes)`);
-
+    
+    console.log(`[Media Proxy] Successfully fetched media file: ${mediaPath}, size: ${blob.size} bytes, type: ${contentType}`);
+    
     // Return the file with appropriate headers
-    return new NextResponse(buffer, {
+    return new NextResponse(blob, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Length': buffer.length.toString(),
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-        'Content-Disposition': `inline; filename="${params.path[params.path.length - 1]}"`,
+        'Cache-Control': 'public, max-age=31536000, immutable', // Cache media files for 1 year
+        'Content-Length': blob.size.toString(),
+        'Access-Control-Allow-Origin': '*', // Allow CORS for media files
       },
     });
   } catch (error) {
-    console.error('[Media Proxy] Error:', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    console.error('[Media Proxy] Error proxying media file:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json(
+      { error: 'Failed to fetch media file', details: errorMessage },
+      { status: 500 }
+    );
   }
 }
+
