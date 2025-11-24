@@ -10,9 +10,16 @@ mkdir -p /app/logs
 echo "📁 Logs directory ready"
 
 # 0.5. Create media directories with proper permissions
-mkdir -p /data/media/office_logos /data/static
-chmod -R 755 /data 2>/dev/null || true
-echo "📁 Media directories ready"
+# Try /data first (Railway volume), fallback to /app if volume not mounted
+if [ -d "/data" ]; then
+    mkdir -p /data/media/office_logos /data/static
+    chmod -R 755 /data 2>/dev/null || true
+    echo "📁 Media directories ready at /data/media"
+else
+    mkdir -p /app/media/office_logos /app/static
+    chmod -R 755 /app/media /app/static 2>/dev/null || true
+    echo "📁 Media directories ready at /app/media (fallback - volume not mounted)"
+fi
 
 # 1. Wait for Postgres
 # Parse DATABASE_URL to get host and port
