@@ -344,7 +344,12 @@ STATIC_ROOT = Path(os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles'))
 # WhiteNoise configuration for serving static files in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
+# Media files configuration - use Railway volume if available
+railway_volume = os.getenv('RAILWAY_VOLUME_MOUNT_PATH', '/data')
+if os.path.exists(railway_volume):
+    MEDIA_ROOT = Path(railway_volume) / 'media'
+else:
+    MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
