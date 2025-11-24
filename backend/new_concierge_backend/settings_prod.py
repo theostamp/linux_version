@@ -295,10 +295,12 @@ SIMPLE_JWT = {
 # ----------------------------------------
 STATIC_URL = '/static/'
 STATIC_ROOT = '/data/static'
-# Try /data/media first (Railway volume), fallback to /app/media if volume not mounted
+# Try Railway volume mount path first, fallback to /app/media if volume not mounted
 import os
-if os.path.exists('/data'):
-    MEDIA_ROOT = '/data/media'
+# Use RAILWAY_VOLUME_MOUNT_PATH if available, otherwise default to /data
+volume_mount_path = os.getenv('RAILWAY_VOLUME_MOUNT_PATH', '/data')
+if os.path.exists(volume_mount_path):
+    MEDIA_ROOT = os.path.join(volume_mount_path, 'media')
 else:
     MEDIA_ROOT = '/app/media'
 MEDIA_URL = '/media/'
