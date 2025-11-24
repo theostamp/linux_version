@@ -81,16 +81,35 @@ class VoteSerializer(serializers.ModelSerializer):
         raise serializers.ValidationError("Δεν έχετε δικαίωμα διαχείρισης για αυτό το κτήριο.")
 
     def validate(self, data):
-        """Validation για τις ημερομηνίες και την ελάχιστη συμμετοχή"""
+        """Validation για τις ημερομηνίες, την ελάχιστη συμμετοχή και duplicate votes"""
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         min_participation = data.get('min_participation', 0)
+        building = data.get('building')
+        title = data.get('title')
+        
+        # Αν είναι update, παίρνουμε το instance
+        instance = self.instance
 
         if start_date and end_date and start_date > end_date:
             raise serializers.ValidationError("Η ημερομηνία έναρξης δεν μπορεί να είναι μετά την ημερομηνία λήξης")
         
         if min_participation < 0 or min_participation > 100:
             raise serializers.ValidationError("Το ελάχιστο ποσοστό συμμετοχής πρέπει να είναι μεταξύ 0-100%")
+
+        # Έλεγχος για duplicate votes (ίδιος τίτλος, ίδιο κτίριο, ίδια ημερομηνία έναρξης)
+        # Μόνο για create operations (όχι για updates)
+        if not instance and title and building and start_date:
+            existing_vote = Vote.objects.filter(
+                title__iexact=title.strip(),
+                building=building,
+                start_date=start_date
+            ).first()
+            
+            if existing_vote:
+                raise serializers.ValidationError({
+                    'title': f'Υπάρχει ήδη ψηφοφορία με τον ίδιο τίτλο "{title}" για το ίδιο κτίριο και την ίδια ημερομηνία έναρξης.'
+                })
 
         return data
 
