@@ -113,7 +113,7 @@ const pricingPlans = [
       "Προτεραιότητα υποστήριξης",
     ],
     href: "/signup?plan=professional",
-    accent: "border-blue-500 shadow-xl shadow-blue-100",
+    accent: "border-teal-500 shadow-xl shadow-teal-100",
     popular: true,
   },
   {
@@ -135,12 +135,12 @@ const pricingPlans = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-teal-100 pointer-events-none" />
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-sm">
+              <div className="h-10 w-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-sm">
                 <Building className="h-6 w-6" />
               </div>
               <div>
@@ -148,7 +148,7 @@ export default function Home() {
                 <p className="font-bold text-lg text-slate-900">New Concierge</p>
               </div>
             </div>
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
               <Link href="#features" className="text-slate-700 hover:text-slate-900">
                 Λειτουργίες
               </Link>
@@ -166,7 +166,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/signup"
-                className="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 shadow-sm"
+                className="bg-teal-950 text-white px-4 py-2 rounded-lg hover:bg-teal-900 shadow-sm"
               >
                 Ξεκινήστε
               </Link>
@@ -176,10 +176,10 @@ export default function Home() {
       </header>
 
       <main className="relative">
-        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-semibold">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950 text-white text-xs font-semibold">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 Πλατφόρμα concierge νέας γενιάς
               </div>
@@ -195,7 +195,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href="#info-point"
-                  className="inline-flex items-center justify-center gap-2 bg-sky-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-sky-700 shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 shadow-sm"
                 >
                   Δείτε το info-point
                   <ArrowRight className="h-5 w-5" />
@@ -223,14 +223,14 @@ export default function Home() {
               </div>
             </div>
             <div className="relative">
-              <div className="absolute -inset-6 bg-gradient-to-br from-sky-100 via-white to-indigo-100 rounded-3xl blur-3xl opacity-70" />
+              <div className="absolute -inset-6 bg-gradient-to-br from-teal-100 via-white to-teal-200 rounded-3xl blur-3xl opacity-70" />
               <div className="relative bg-white rounded-3xl border border-slate-100 shadow-xl p-8 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-500">Κατάσταση κτιρίου</p>
                     <p className="text-2xl font-bold text-slate-900">On track</p>
                   </div>
-                  <Shield className="h-10 w-10 text-sky-600" />
+                  <Shield className="h-10 w-10 text-teal-600" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl bg-slate-50 p-4">
@@ -245,8 +245,8 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="rounded-2xl border border-slate-100 p-4 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-sky-100 flex items-center justify-center">
-                    <Bell className="h-5 w-5 text-sky-700" />
+                  <div className="h-10 w-10 rounded-xl bg-teal-100 flex items-center justify-center">
+                    <Bell className="h-5 w-5 text-teal-700" />
                   </div>
                   <div className="space-y-2">
                     <p className="font-semibold text-slate-900">Info-point σε λειτουργία</p>
@@ -264,7 +264,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="features" className="py-16 px-4 sm:px-6 lg:px-8">
+        <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto space-y-10">
             <div className="space-y-3">
               <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Λειτουργίες</p>
@@ -274,7 +274,7 @@ export default function Home() {
                 </h2>
                 <Link
                   href="/signup"
-                  className="hidden md:inline-flex items-center gap-2 text-sky-700 font-semibold hover:text-sky-800"
+                  className="hidden md:inline-flex items-center gap-2 text-teal-700 font-semibold hover:text-teal-800"
                 >
                   Ζητήστε demo
                   <ArrowRight className="h-4 w-4" />
@@ -285,14 +285,14 @@ export default function Home() {
                 χρειάζονται πολλαπλά εργαλεία ή αυτοσχέδιες λύσεις.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-8">
               {featureGroups.map((group) => (
                 <div
                   key={group.title}
                   className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:-translate-y-1 transition-transform duration-150"
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="h-11 w-11 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                    <div className="h-11 w-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
                       <group.icon className="h-5 w-5" />
                     </div>
                     <div>
@@ -315,7 +315,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="info-point" className="py-16 px-4 sm:px-6 lg:px-8">
+        <section id="info-point" className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto space-y-8">
             <div className="space-y-3">
               <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Info-point & Kiosk</p>
@@ -327,8 +327,8 @@ export default function Home() {
                 συσκευές αφής. Ειδικά σχεδιασμένο για κοινόχρηστους χώρους.
               </p>
             </div>
-            <div className="grid lg:grid-cols-2 gap-6">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-900 via-slate-900 to-slate-800 text-white p-8 shadow-2xl">
+            <div className="grid lg:grid-cols-2 gap-8">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-900 via-slate-900 to-slate-800 text-white p-8 shadow-2xl">
                 <div className="absolute inset-0 opacity-40" />
                 <div className="relative space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold">
@@ -369,11 +369,11 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="grid gap-6">
+              <div className="grid gap-8">
                 <div className="rounded-3xl bg-white border border-slate-100 shadow-lg p-6">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                      <div className="h-11 w-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
                         <Smartphone className="h-5 w-5" />
                       </div>
                       <div>
@@ -414,7 +414,7 @@ export default function Home() {
                 </div>
                 <div className="rounded-3xl border border-dashed border-slate-200 p-6 bg-white/70 flex flex-col gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-xl bg-teal-950 text-white flex items-center justify-center">
                       <Zap className="h-5 w-5" />
                     </div>
                     <div>
@@ -445,7 +445,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto space-y-8">
             <div className="space-y-3">
               <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Ρόλοι & Ροές</p>
@@ -456,11 +456,11 @@ export default function Home() {
                 Καθένας βλέπει μόνο ό,τι χρειάζεται, με workflows που μειώνουν χρόνο και λάθη.
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-8">
               {roleFlows.map((flow) => (
                 <div key={flow.title} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                    <div className="h-11 w-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
                       <flow.icon className="h-5 w-5" />
                     </div>
                     <h3 className="text-lg font-bold text-slate-900">{flow.title}</h3>
@@ -479,7 +479,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="pricing" className="py-16 px-4 sm:px-6 lg:px-8">
+        <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto space-y-8">
             <div className="space-y-3 text-center">
               <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Τιμολόγηση</p>
@@ -489,14 +489,14 @@ export default function Home() {
                 επαγγελματικό πλάνο και πάνω.
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-8">
               {pricingPlans.map((plan) => (
                 <div
                   key={plan.name}
                   className={`bg-white rounded-2xl border ${plan.accent} p-6 shadow-sm relative overflow-hidden`}
                 >
                   {plan.popular ? (
-                    <div className="absolute right-4 top-4 px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
+                    <div className="absolute right-4 top-4 px-3 py-1 rounded-full bg-teal-100 text-sky-800 text-xs font-semibold">
                       Πιο δημοφιλές
                     </div>
                   ) : null}
@@ -520,7 +520,7 @@ export default function Home() {
                     href={plan.href}
                     className={`mt-6 block w-full text-center font-semibold px-4 py-3 rounded-lg ${
                       plan.popular
-                        ? "bg-sky-600 text-white hover:bg-sky-700"
+                        ? "bg-teal-600 text-white hover:bg-teal-700"
                         : "border border-slate-200 text-slate-900 hover:bg-white"
                     }`}
                   >
@@ -532,12 +532,12 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto rounded-3xl bg-slate-900 text-white p-10 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-sky-700/30 via-slate-900 to-slate-900" />
+        <section className="py-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto rounded-3xl bg-teal-950 text-white p-10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-teal-700/30 via-teal-950 to-teal-950" />
             <div className="relative grid lg:grid-cols-2 gap-8 items-center">
               <div className="space-y-4">
-                <p className="text-sm font-semibold uppercase tracking-widest text-sky-200">Επόμενα βήματα</p>
+                <p className="text-sm font-semibold uppercase tracking-widest text-teal-200">Επόμενα βήματα</p>
                 <h2 className="text-3xl md:text-4xl font-extrabold">Έτοιμοι να περάσουμε σε παραγωγή;</h2>
                 <p className="text-lg text-slate-200">
                   Στήνουμε info-point, kiosk και οικονομικές ροές σε μία εβδομάδα. Από εκεί και πέρα, η ομάδα σας
@@ -589,7 +589,7 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className="h-9 w-9 rounded-lg bg-sky-600 text-white flex items-center justify-center">
+                <div className="h-9 w-9 rounded-lg bg-teal-600 text-white flex items-center justify-center">
                   <Building className="h-5 w-5" />
                 </div>
                 <span className="text-lg font-bold text-slate-900">New Concierge</span>
