@@ -1119,8 +1119,45 @@ class FinancialDashboardService:
                 month_start = date(year, mon, 1)
 
                 # 1. Previous Balance = οφειλές από προηγούμενους μήνες (πριν τον επιλεγμένο μήνα)
-                # ΔΙΟΡΘΩΣΗ: Χρησιμοποίησε το calculated_balance που ήδη υπολογίστηκε παραπάνω
-                previous_balance = calculated_balance
+                # 🔧 ΔΙΟΡΘΩΣΗ 2025-11-24: Χρήση MonthlyBalance.carry_forward για συνέπεια
+                # Αν η financial_system_start_date είναι η ίδια με τον τρέχοντα μήνα,
+                # το calculated_balance θα είναι 0 (δεν υπάρχουν expenses πριν την start_date)
+                # Αλλά μπορεί να υπάρχει carry_forward από προηγούμενο μήνα στο MonthlyBalance
+                
+                # Βρες το MonthlyBalance του προηγούμενου μήνα
+                prev_month = mon - 1
+                prev_year = year
+                if prev_month == 0:
+                    prev_month = 12
+                    prev_year -= 1
+                
+                prev_monthly_balance = MonthlyBalance.objects.filter(
+                    building_id=apartment.building_id,
+                    year=prev_year,
+                    month=prev_month
+                ).first()
+                
+                if prev_monthly_balance:
+                    # Χρήση του carry_forward από το MonthlyBalance
+                    # Πρέπει να το κατανείμουμε στο διαμέρισμα βάση χιλιοστών
+                    total_carry_forward = prev_monthly_balance.carry_forward
+                    
+                    # Υπολογισμός μεριδίου διαμερίσματος
+                    if total_participation_mills > 0:
+                        apartment_ratio = Decimal(apartment.participation_mills) / Decimal(total_participation_mills)
+                        previous_balance = total_carry_forward * apartment_ratio
+                    else:
+                        # Fallback: ισόποση κατανομή
+                        previous_balance = total_carry_forward / Decimal(safe_apartment_count)
+                    
+                    print(f"📊 Apartment {apartment.number} - Previous balance from MonthlyBalance:")
+                    print(f"   Total carry_forward ({prev_month:02d}/{prev_year}): €{total_carry_forward:.2f}")
+                    print(f"   Apartment ratio: {apartment.participation_mills}/{total_participation_mills}")
+                    print(f"   Apartment previous_balance: €{previous_balance:.2f}")
+                else:
+                    # Fallback: Χρήση calculated_balance (υπολογισμός από Expense records)
+                    previous_balance = calculated_balance
+                    print(f"⚠️ No MonthlyBalance found for {prev_month:02d}/{prev_year}, using calculated_balance: €{previous_balance:.2f}")
                 
                 # 1.1. Υπολογισμός previous balance διαχωρισμένο σε resident/owner
                 previous_resident_expenses = Decimal('0.00')
