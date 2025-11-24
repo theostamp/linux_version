@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
+ * Resolve backend base URL
+ */
+const resolveBackendBase = () => {
+  const base =
+    process.env.API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    process.env.API_URL ??
+    process.env.BACKEND_URL ??
+    "https://linuxversion-production.up.railway.app";
+  
+  // Remove trailing slash
+  return base.replace(/\/$/, '');
+};
+
+/**
  * Proxy route for media files (office logos, receipts, etc.)
  * Proxies requests to Django backend's MEDIA_URL
  */
@@ -19,16 +34,11 @@ export async function GET(
       );
     }
 
-    // Get backend URL from environment
-    const backendUrl = process.env.API_BASE_URL || 
-                      process.env.NEXT_PUBLIC_API_URL || 
-                      'http://localhost:18000';
-    
-    // Remove trailing slash and /api if present
-    const cleanBackendUrl = backendUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    // Get backend base URL
+    const backendBase = resolveBackendBase();
     
     // Construct the full media URL
-    const mediaUrl = `${cleanBackendUrl}/media/${mediaPath}`;
+    const mediaUrl = `${backendBase}/media/${mediaPath}`;
     
     console.log(`[Media Proxy] Proxying media request: ${mediaUrl}`);
     
@@ -38,13 +48,18 @@ export async function GET(
       headers: {
         // Forward any relevant headers
         'Accept': request.headers.get('Accept') || '*/*',
+        'User-Agent': request.headers.get('User-Agent') || 'Next.js Media Proxy',
       },
+      // Don't follow redirects automatically - handle them explicitly
+      redirect: 'follow',
     });
 
     if (!response.ok) {
       console.error(`[Media Proxy] Backend returned ${response.status} for ${mediaUrl}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`[Media Proxy] Error response: ${errorText}`);
       return NextResponse.json(
-        { error: 'Media file not found' },
+        { error: 'Media file not found', details: errorText },
         { status: response.status }
       );
     }
@@ -55,6 +70,8 @@ export async function GET(
     // Get the file content as a blob
     const blob = await response.blob();
     
+    console.log(`[Media Proxy] Successfully fetched media file: ${mediaPath}, size: ${blob.size} bytes, type: ${contentType}`);
+    
     // Return the file with appropriate headers
     return new NextResponse(blob, {
       status: 200,
@@ -62,12 +79,14 @@ export async function GET(
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=31536000, immutable', // Cache media files for 1 year
         'Content-Length': blob.size.toString(),
+        'Access-Control-Allow-Origin': '*', // Allow CORS for media files
       },
     });
   } catch (error) {
     console.error('[Media Proxy] Error proxying media file:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to fetch media file' },
+      { error: 'Failed to fetch media file', details: errorMessage },
       { status: 500 }
     );
   }
