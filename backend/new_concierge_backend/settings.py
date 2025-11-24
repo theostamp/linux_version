@@ -446,7 +446,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:3000$",
     r"^http://[\w\-]+\.localhost:3001$",
     r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
-]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app
+    r"^https://[\w\.-]+\.newconcierge\.app$",  # Production domains (*.newconcierge.app)
+]  # ✅ Επιτρέπει *.localhost:*, *.vercel.app και *.newconcierge.app
 
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGIN_REGEXES count: {len(CORS_ALLOWED_ORIGIN_REGEXES)}")
