@@ -22,16 +22,18 @@
 3. Κάντε scroll στο **"Volumes"** section
 4. Κάντε κλικ **"Add Volume"**
 5. Επιλέξτε το volume που δημιουργήσατε (`media-storage`)
-6. Ορίστε το **Mount Path**: `/vol`
+6. Ορίστε το **Mount Path**: `/data` (ή `/vol` αν δημιουργείτε νέο volume)
 7. Κάντε κλικ **"Add"**
+
+**Σημείωση:** Στο project σας, το `redis-volume` είναι ήδη mount-αρισμένο στο `/data`, οπότε χρησιμοποιούμε αυτό το path.
 
 ### 3. Ρύθμιση Environment Variables
 
-Το Django ήδη έχει ρυθμισμένο το `MEDIA_ROOT = '/vol/media'` στο `settings_prod.py`, οπότε δεν χρειάζεται επιπλέον environment variable.
+Το Django έχει ρυθμισμένο το `MEDIA_ROOT = '/data/media'` στο `settings_prod.py` (ή `/vol/media` αν χρησιμοποιείτε `/vol` volume).
 
 **Επιβεβαιώστε ότι:**
 - Το `MEDIA_ROOT` environment variable ΔΕΝ είναι set (για να χρησιμοποιηθεί το default από `settings_prod.py`)
-- Ή set το `MEDIA_ROOT=/vol/media` αν θέλετε να το ορίσετε ρητά
+- Ή set το `MEDIA_ROOT=/data/media` αν θέλετε να το ορίσετε ρητά
 
 ### 4. Δημιουργία του Media Directory
 
@@ -39,9 +41,9 @@
 
 **Επιλογή Α: Μέσω Railway CLI**
 ```bash
-railway run bash
-mkdir -p /vol/media/office_logos
-mkdir -p /vol/media/receipts
+railway run --service linux_version bash
+mkdir -p /data/media/office_logos
+mkdir -p /data/media/receipts
 # κλπ για άλλα directories
 ```
 
@@ -70,8 +72,8 @@ os.makedirs(os.path.join(settings.MEDIA_ROOT, 'receipts'), exist_ok=True)
 
 ```bash
 # Μέσω Railway CLI
-railway run bash
-ls -la /vol/
+railway run --service linux_version bash
+ls -la /data/
 # Θα πρέπει να βλέπετε: media/
 ```
 
@@ -87,8 +89,8 @@ ls -la /vol/
 1. Ανεβάστε ένα logo μέσω του OfficeSettingsModal
 2. Ελέγξτε ότι αποθηκεύεται:
    ```bash
-   railway run bash
-   ls -la /vol/media/office_logos/
+   railway run --service linux_version bash
+   ls -la /data/media/office_logos/
    ```
 
 ## Troubleshooting
@@ -103,14 +105,14 @@ ls -la /vol/
 
 Αν βλέπετε permission errors:
 ```bash
-railway run bash
-chmod -R 755 /vol/media
-chown -R $(whoami) /vol/media
+railway run --service linux_version bash
+chmod -R 755 /data/media
+chown -R $(whoami) /data/media
 ```
 
 ### Files Δεν Αποθηκεύονται
 
-- Ελέγξτε ότι το `MEDIA_ROOT` είναι `/vol/media` στο production
+- Ελέγξτε ότι το `MEDIA_ROOT` είναι `/data/media` στο production (ή `/vol/media` αν χρησιμοποιείτε `/vol` volume)
 - Ελέγξτε τα Django logs για errors
 - Ελέγξτε ότι το volume έχει αρκετό space
 
