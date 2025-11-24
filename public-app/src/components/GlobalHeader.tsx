@@ -7,7 +7,7 @@ import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { User, Building as BuildingIcon, Settings, Calendar } from 'lucide-react';
-import { API_BASE_URL } from '@/lib/api';
+import { getOfficeLogoUrl } from '@/lib/utils';
 
 // Helper function to get user role label
 const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string } | null): string => {
@@ -70,25 +70,31 @@ export default function GlobalHeader() {
             <div className="flex items-center gap-4 lg:gap-6">
               <div className="flex items-center gap-3">
                 {/* Office Logo or Default Icon */}
-                {user?.office_logo && !logoError ? (
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
-                    <img 
-                      src={user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`}
-                      alt="Office Logo" 
-                      className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
-                      onLoad={() => setLogoLoading(false)}
-                      onLoadStart={() => setLogoLoading(true)}
-                      onError={() => {
-                        setLogoError(true);
-                        setLogoLoading(false);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                    <BuildingIcon className="w-5 h-5 text-white" />
-                  </div>
-                )}
+                {(() => {
+                  const logoUrl = getOfficeLogoUrl(user?.office_logo);
+                  return logoUrl && !logoError ? (
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50">
+                      <img 
+                        src={logoUrl}
+                        alt="Office Logo" 
+                        className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
+                        onLoad={() => {
+                          setLogoLoading(false);
+                          setLogoError(false);
+                        }}
+                        onLoadStart={() => setLogoLoading(true)}
+                        onError={() => {
+                          setLogoError(true);
+                          setLogoLoading(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                      <BuildingIcon className="w-5 h-5 text-white" />
+                    </div>
+                  );
+                })()}
                 
                 {/* Office Details */}
                 <div className="hidden sm:block">
@@ -98,6 +104,17 @@ export default function GlobalHeader() {
                   {user?.office_address && (
                     <p className="text-xs text-gray-500 leading-tight">
                       {user.office_address}
+                    </p>
+                  )}
+                  {user?.office_phone && (
+                    <p className="text-xs text-gray-500 leading-tight">
+                      Τηλ: {user.office_phone}
+                      {user?.office_phone_emergency && ` / ${user.office_phone_emergency}`}
+                    </p>
+                  )}
+                  {user?.email && (
+                    <p className="text-xs text-gray-500 leading-tight">
+                      {user.email}
                     </p>
                   )}
                 </div>

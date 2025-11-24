@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format } from 'date-fns';
+import { API_BASE_URL } from './api';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -164,5 +165,35 @@ export function parseAmount(value: number | string | null | undefined): number {
 
   const num = parseFloat(str);
   return isNaN(num) ? 0 : num;
+}
+
+/**
+ * Constructs the full URL for an office logo image
+ * Handles both absolute URLs (http/https) and relative paths
+ * @param logoPath - The logo path from the API (can be relative or absolute URL)
+ * @returns The full URL to the logo image, or null if logoPath is empty
+ */
+export function getOfficeLogoUrl(logoPath: string | null | undefined): string | null {
+  if (!logoPath) return null;
+  
+  // If it's already a full URL (http/https), return as is
+  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+    return logoPath;
+  }
+  
+  // Construct the full URL using API_BASE_URL
+  // API_BASE_URL is '/api' in browser, so we need to get the base URL
+  // For relative paths, we construct the URL relative to the current origin
+  if (typeof window !== 'undefined') {
+    // In browser: use current origin and construct path
+    const baseUrl = window.location.origin;
+    const normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+    return `${baseUrl}${normalizedPath}`;
+  } else {
+    // Server-side: use API_BASE_URL logic
+    const baseUrl = API_BASE_URL.replace('/api', '') || '';
+    const normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+    return baseUrl ? `${baseUrl}${normalizedPath}` : normalizedPath;
+  }
 }
 

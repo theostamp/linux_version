@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { API_BASE_URL } from '@/lib/api';
+import { getOfficeLogoUrl } from '@/lib/utils';
 import { 
   X, 
   Printer, 
@@ -90,6 +90,7 @@ export default function PaymentNotificationModal({
 }: PaymentNotificationModalProps) {
   const { user } = useAuth();
   const [paymentDeadline, setPaymentDeadline] = useState<string>('');
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (apartment) {
@@ -231,13 +232,18 @@ export default function PaymentNotificationModal({
               <div className="flex items-center justify-between">
                 {/* Αριστερά: Στοιχεία Γραφείου */}
                 <div className="flex items-center gap-3">
-                  {user?.office_logo && (
-                    <img
-                      src={user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`}
-                      alt="Office Logo"
-                      className="w-14 h-14 object-contain"
-                    />
-                  )}
+                  {(() => {
+                    const logoUrl = getOfficeLogoUrl(user?.office_logo);
+                    return logoUrl && !logoError ? (
+                      <img
+                        src={logoUrl}
+                        alt="Office Logo"
+                        className="w-14 h-14 object-contain"
+                        onLoad={() => setLogoError(false)}
+                        onError={() => setLogoError(true)}
+                      />
+                    ) : null;
+                  })()}
                   <div>
                     <h1 className="text-lg font-bold text-gray-900">
                       {user?.office_name || 'Γραφείο Διαχείρισης'}

@@ -1,14 +1,15 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Phone, Building2, MapPin, Clock } from 'lucide-react';
+import { Phone, Building2, MapPin, Clock, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@/lib/api';
+import { getOfficeLogoUrl } from '@/lib/utils';
 
 export default function ManagementOfficeWidget({ data, isLoading, error }: BaseWidgetProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [logoError, setLogoError] = useState(false);
 
   // Update time every second
   useEffect(() => {
@@ -45,19 +46,24 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
       {/* Left side - Management Office Info */}
       <div className="flex items-center space-x-6">
         {/* Logo or placeholder */}
-        {building?.office_logo ? (
-          <div className="w-20 h-20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-            <img 
-              src={building.office_logo.startsWith('http') ? building.office_logo : `${API_BASE_URL.replace('/api', '')}${building.office_logo.startsWith('/') ? building.office_logo : `/${building.office_logo}`}`}
-              alt="Office Logo" 
-              className="w-full h-full object-contain"
-            />
-          </div>
-        ) : (
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
-            <Building2 className="w-10 h-10 text-white" />
-          </div>
-        )}
+        {(() => {
+          const logoUrl = getOfficeLogoUrl(building?.office_logo);
+          return logoUrl && !logoError ? (
+            <div className="w-20 h-20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden bg-white/10">
+              <img 
+                src={logoUrl}
+                alt="Office Logo" 
+                className="w-full h-full object-contain"
+                onLoad={() => setLogoError(false)}
+                onError={() => setLogoError(true)}
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
+              <Building2 className="w-10 h-10 text-white" />
+            </div>
+          );
+        })()}
         
         {/* Management Office Details */}
         <div className="flex flex-col space-y-2">
@@ -85,6 +91,30 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
                 className="text-xs text-blue-200 hover:text-blue-100 transition-colors font-semibold"
               >
                 {building.management_office_phone}
+              </a>
+            </div>
+          )}
+          
+          {building?.management_office_phone_emergency && (
+            <div className="flex items-center space-x-3">
+              <Phone className="w-3 h-3 text-blue-300" />
+              <a 
+                href={`tel:${building.management_office_phone_emergency}`}
+                className="text-xs text-blue-200 hover:text-blue-100 transition-colors font-semibold"
+              >
+                Τηλ. Ανάγκης: {building.management_office_phone_emergency}
+              </a>
+            </div>
+          )}
+          
+          {building?.management_office_email && (
+            <div className="flex items-center space-x-3">
+              <Mail className="w-3 h-3 text-blue-300" />
+              <a 
+                href={`mailto:${building.management_office_email}`}
+                className="text-xs text-blue-200 hover:text-blue-100 transition-colors"
+              >
+                {building.management_office_email}
               </a>
             </div>
           )}
