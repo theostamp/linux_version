@@ -286,14 +286,30 @@ def update_office_details(request):
                 'file_content_type': getattr(file_obj, 'content_type', 'unknown'),
             })
     
-    serializer = OfficeDetailsSerializer(user, data=request.data, partial=True)
+    # DRF's request.data already includes FILES when using multipart/form-data
+    # But we need to ensure files are passed correctly to the serializer
+    serializer_data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+    
+    # Explicitly add files if they exist and aren't already in serializer_data
+    if request.FILES:
+        for key, file_obj in request.FILES.items():
+            if key not in serializer_data:
+                serializer_data[key] = file_obj
+    
+    serializer = OfficeDetailsSerializer(user, data=serializer_data, partial=True)
     
     if serializer.is_valid():
         serializer.save()
+        # Reload user instance to get updated logo URL
+        user.refresh_from_db()
         logger.info(f"[update_office_details] Office details updated successfully for user {user.id}")
+        logger.info(f"[update_office_details] Logo URL after save: {user.office_logo.url if user.office_logo else 'None'}")
+        
+        # Create new serializer instance with refreshed user to get correct logo URL
+        response_serializer = OfficeDetailsSerializer(user)
         return Response({
             'message': 'Τα στοιχεία γραφείου διαχείρισης ενημερώθηκαν επιτυχώς.',
-            'office_details': serializer.data
+            'office_details': response_serializer.data
         }, status=status.HTTP_200_OK)
     
     logger.warning(f"[update_office_details] Validation failed for user {user.id}", extra={

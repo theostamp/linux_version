@@ -221,7 +221,11 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
     
     def validate_office_logo(self, value):
         """Validate logo file"""
+        import logging
+        logger = logging.getLogger('django')
+        
         if value:
+            logger.info(f"[OfficeDetailsSerializer] Validating logo file: {value.name}, size: {value.size}, type: {getattr(value, 'content_type', 'unknown')}")
             # Check file size (2MB limit)
             if value.size > 2 * 1024 * 1024:  # 2MB in bytes
                 raise serializers.ValidationError("Το αρχείο πρέπει να είναι μικρότερο από 2MB.")
@@ -230,8 +234,28 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
             allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
             if value.content_type not in allowed_types:
                 raise serializers.ValidationError("Επιτρέπονται μόνο αρχεία τύπου JPEG, PNG ή SVG.")
+        else:
+            logger.info("[OfficeDetailsSerializer] No logo file provided in validation")
         
         return value
+    
+    def save(self, **kwargs):
+        """Override save to log logo saving"""
+        import logging
+        logger = logging.getLogger('django')
+        
+        logo_file = self.validated_data.get('office_logo')
+        if logo_file:
+            logger.info(f"[OfficeDetailsSerializer] Saving logo file: {logo_file.name}, size: {logo_file.size}")
+        else:
+            logger.info("[OfficeDetailsSerializer] No logo file in validated_data, keeping existing logo")
+        
+        instance = super().save(**kwargs)
+        
+        if logo_file:
+            logger.info(f"[OfficeDetailsSerializer] Logo saved successfully. New logo URL: {instance.office_logo.url if instance.office_logo else 'None'}")
+        
+        return instance
     
     def to_representation(self, instance):
         """Override to return logo URL instead of file path"""
