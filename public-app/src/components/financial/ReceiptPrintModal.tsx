@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Payment, PaymentMethod, PaymentType, PayerType } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
 import { useReceipts, FinancialReceipt } from '@/hooks/useReceipts';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { getOfficeLogoUrl } from '@/lib/utils';
 
 interface ReceiptPrintModalProps {
   isOpen: boolean;
@@ -34,9 +36,11 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
 }) => {
   const { toast } = useToast();
   const { loadReceipts } = useReceipts();
+  const { user } = useAuth();
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [storedReceipt, setStoredReceipt] = useState<FinancialReceipt | null>(receiptData || null);
+  const [logoError, setLogoError] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Load receipt data from database if not provided
@@ -268,16 +272,44 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
               <div className="flex justify-between items-start mb-5">
                 <div className="flex items-center gap-4">
                   <div className="flex-shrink-0">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="60" height="60" rx="12" fill="#2563eb"/>
-                      <path d="M15 20h30v25H15V20z" fill="white"/>
-                      <path d="M20 25h5v5h-5v-5z M25 25h5v5h-5v-5z M30 25h5v5h-5v-5z" fill="#2563eb"/>
-                      <path d="M20 35h5v5h-5v-5z M25 35h5v5h-5v-5z M30 35h5v5h-5v-5z" fill="#2563eb"/>
-                    </svg>
+                    {(() => {
+                      const logoUrl = getOfficeLogoUrl(user?.office_logo);
+                      return logoUrl && !logoError ? (
+                        <img 
+                          src={logoUrl}
+                          alt="Office Logo" 
+                          className="w-16 h-16 object-contain rounded-lg"
+                          onLoad={() => setLogoError(false)}
+                          onError={() => setLogoError(true)}
+                        />
+                      ) : (
+                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="60" height="60" rx="12" fill="#2563eb"/>
+                          <path d="M15 20h30v25H15V20z" fill="white"/>
+                          <path d="M20 25h5v5h-5v-5z M25 25h5v5h-5v-5z M30 25h5v5h-5v-5z" fill="#2563eb"/>
+                          <path d="M20 35h5v5h-5v-5z M25 35h5v5h-5v-5z M30 35h5v5h-5v-5z" fill="#2563eb"/>
+                        </svg>
+                      );
+                    })()}
                   </div>
                   <div className="text-left">
-                    <h2 className="text-lg font-bold text-blue-600 m-0">ΔΙΑΧΕΙΡΙΣΗ ΚΤΙΡΙΩΝ</h2>
-                    <p className="text-sm text-gray-600 m-0">New Concierge Management</p>
+                    <h2 className="text-lg font-bold text-blue-600 m-0">
+                      {user?.office_name || 'ΔΙΑΧΕΙΡΙΣΗ ΚΤΙΡΙΩΝ'}
+                    </h2>
+                    {user?.office_address && (
+                      <p className="text-xs text-gray-600 m-0 mt-1">{user.office_address}</p>
+                    )}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                      {user?.office_phone && (
+                        <p className="text-xs text-gray-600 m-0">Τηλ: {user.office_phone}</p>
+                      )}
+                      {user?.office_phone_emergency && (
+                        <p className="text-xs text-gray-600 m-0">Τηλ. Ανάγκης: {user.office_phone_emergency}</p>
+                      )}
+                      {user?.email && (
+                        <p className="text-xs text-gray-600 m-0">Email: {user.email}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">

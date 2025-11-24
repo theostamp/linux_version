@@ -78,6 +78,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text=_("Τηλέφωνο επικοινωνίας με το γραφείο διαχείρισης")
     )
+    office_phone_emergency = models.CharField(
+        _("Τηλέφωνο Ανάγκης Γραφείου Διαχείρισης"),
+        max_length=20,
+        blank=True,
+        help_text=_("Τηλέφωνο ανάγκης για επικοινωνία με το γραφείο διαχείρισης")
+    )
     office_address = models.CharField(
         _("Διεύθυνση Γραφείου Διαχείρισης"),
         max_length=255,

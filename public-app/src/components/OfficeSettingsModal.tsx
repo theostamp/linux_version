@@ -121,6 +121,19 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
       // Add logo file if selected
       if (logoFile) {
         formData.append('office_logo', logoFile);
+        console.log('[OfficeSettings] Sending logo file:', logoFile.name, logoFile.size, logoFile.type);
+      } else {
+        console.log('[OfficeSettings] No logo file to send');
+      }
+
+      // Debug: Log FormData contents
+      console.log('[OfficeSettings] FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
       }
 
       // Use api.patch which handles FormData automatically

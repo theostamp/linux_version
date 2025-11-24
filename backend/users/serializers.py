@@ -197,11 +197,14 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
     """
     Serializer for updating office management details
     """
+    office_logo = serializers.ImageField(required=False, allow_null=True)
+    
     class Meta:
         model = CustomUser
         fields = [
             'office_name', 
-            'office_phone', 
+            'office_phone',
+            'office_phone_emergency',
             'office_address', 
             'office_logo',
             'office_bank_name',
@@ -229,6 +232,13 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Επιτρέπονται μόνο αρχεία τύπου JPEG, PNG ή SVG.")
         
         return value
+    
+    def to_representation(self, instance):
+        """Override to return logo URL instead of file path"""
+        representation = super().to_representation(instance)
+        if instance.office_logo:
+            representation['office_logo'] = instance.office_logo.url
+        return representation
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

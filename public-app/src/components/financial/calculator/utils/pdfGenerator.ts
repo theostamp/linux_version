@@ -394,6 +394,18 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                   <div class="card-subtitle" style="color: #15803d; font-family: monospace; background: #f0fdf4; padding: 8px; border-radius: 4px; margin: 4px 0;">IBAN: GR16 0110 1250 0000 1234 5678 901</div>
                   <div class="card-subtitle" style="color: #15803d;">Δικαιούχος: Πολυκατοικία ${buildingName}</div>
                 </div>
+
+                ${managementOfficeName || managementOfficePhone || managementOfficeAddress || managementOfficeLogo ? `
+                <div class="info-card" style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-color: #f59e0b;">
+                  ${managementOfficeLogo ? `<div style="text-align: center; margin-bottom: 8px;"><img src="${managementOfficeLogo}" alt="Office Logo" style="max-width: 60px; max-height: 60px; object-fit: contain;" /></div>` : ''}
+                  <div class="card-title" style="color: #92400e;">
+                    🏢 ΓΡΑΦΕΙΟ ΔΙΑΧΕΙΡΙΣΗΣ
+                  </div>
+                  ${managementOfficeName ? `<div class="card-content" style="color: #78350f; font-weight: bold;">${managementOfficeName}</div>` : ''}
+                  ${managementOfficeAddress ? `<div class="card-subtitle" style="color: #92400e;">📍 ${managementOfficeAddress}</div>` : ''}
+                  ${managementOfficePhone ? `<div class="card-subtitle" style="color: #92400e;">📞 ${managementOfficePhone}</div>` : ''}
+                </div>
+                ` : ''}
               </div>
 
               <!-- Middle Column: Expense Analysis -->
