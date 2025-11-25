@@ -58,6 +58,11 @@ urlpatterns = [
     path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
     path('subscription/create/', UserCreateSubscriptionView.as_view(), name='user-create-subscription'),
 
+    # Invitation endpoints
+    path('invitations/', views.list_invitations_view, name='list-invitations'),
+    path('invite/', views.create_invitation_view, name='invite-user'),
+    path('accept-invitation/', views.accept_invitation_view, name='accept-invitation'),
+    
     # Include router URLs (MUST be last to avoid conflicts with specific paths)
     path('', include(router.urls)),
     

@@ -178,15 +178,15 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
               Κτίριο {assignedRole === 'internal_manager' && '*'}
             </Label>
             <Select
-              value={selectedBuildingId?.toString() || ''}
-              onValueChange={(value) => setSelectedBuildingId(value ? Number(value) : null)}
+              value={selectedBuildingId?.toString() || 'none'}
+              onValueChange={(value) => setSelectedBuildingId(value === 'none' ? null : Number(value))}
               disabled={submitting}
             >
               <SelectTrigger id="building">
                 <SelectValue placeholder="Επιλέξτε κτίριο (προαιρετικό)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Χωρίς κτίριο</SelectItem>
+                <SelectItem value="none">Χωρίς κτίριο</SelectItem>
                 {buildings.map((building) => (
                   <SelectItem key={building.id} value={building.id.toString()}>
                     {building.name}
