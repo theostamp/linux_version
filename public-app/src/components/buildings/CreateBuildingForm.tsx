@@ -90,11 +90,14 @@ export default function CreateBuildingForm({
     total_apartments: initialData?.total_apartments || initialData?.apartments_count || undefined,
     heating_system: normalizeHeatingSystem(initialData?.heating_system),
     heating_fixed_percentage: initialData?.heating_fixed_percentage || 30,
+    // Νέα πεδία για internal manager (user-based)
+    internal_manager_id: initialData?.internal_manager?.id || null,
+    internal_manager_can_record_payments: initialData?.internal_manager_can_record_payments || false,
+    // Legacy πεδία (backward compatibility - για residents χωρίς user account)
     internal_manager_name: initialData?.internal_manager_name || '',
     internal_manager_phone: initialData?.internal_manager_phone || '',
     internal_manager_apartment: initialData?.internal_manager_apartment || '',
     internal_manager_collection_schedule: initialData?.internal_manager_collection_schedule || 'Δευ-Παρ 9:00-17:00',
-    internal_manager_can_record_payments: initialData?.internal_manager_can_record_payments || false,
     management_office_name: initialData?.management_office_name || user?.office_name || '',
     management_office_phone: initialData?.management_office_phone || user?.office_phone || '',
     management_office_address: initialData?.management_office_address || user?.office_address || '',
@@ -179,12 +182,26 @@ export default function CreateBuildingForm({
   };
 
   const handleResidentSelect = (resident: BuildingResident) => {
-    setFormData(prev => ({
-      ...prev,
-      internal_manager_name: resident.name,
-      internal_manager_phone: resident.phone,
-      internal_manager_apartment: resident.apartment_number,
-    }));
+    setFormData(prev => {
+      const updates: Partial<BuildingPayload> = {
+        internal_manager_apartment: resident.apartment_number,
+      };
+      
+      // Αν ο resident έχει user account, χρησιμοποιούμε internal_manager_id
+      if (resident.user_id) {
+        updates.internal_manager_id = resident.user_id;
+        // Clear legacy fields όταν έχουμε user ID
+        updates.internal_manager_name = '';
+        updates.internal_manager_phone = '';
+      } else {
+        // Αν δεν έχει user account, χρησιμοποιούμε legacy fields
+        updates.internal_manager_id = null;
+        updates.internal_manager_name = resident.name;
+        updates.internal_manager_phone = resident.phone;
+      }
+      
+      return { ...prev, ...updates };
+    });
     setShowResidentsDropdown(false);
   };
 
@@ -222,11 +239,14 @@ export default function CreateBuildingForm({
         total_apartments: initialData.total_apartments || initialData.apartments_count || undefined,
         heating_system: normalizedHeatingSystem,
         heating_fixed_percentage: initialData.heating_fixed_percentage || 30,
+        // Νέα πεδία για internal manager (user-based)
+        internal_manager_id: initialData?.internal_manager?.id || null,
+        internal_manager_can_record_payments: initialData.internal_manager_can_record_payments || false,
+        // Legacy πεδία (backward compatibility)
         internal_manager_name: initialData.internal_manager_name || '',
         internal_manager_phone: initialData.internal_manager_phone || '',
         internal_manager_apartment: initialData.internal_manager_apartment || '',
         internal_manager_collection_schedule: initialData.internal_manager_collection_schedule || 'Δευ-Παρ 9:00-17:00',
-        internal_manager_can_record_payments: initialData.internal_manager_can_record_payments || false,
         management_office_name: initialData.management_office_name || user?.office_name || '',
         management_office_phone: initialData.management_office_phone || user?.office_phone || '',
         management_office_address: initialData.management_office_address || user?.office_address || '',
@@ -361,6 +381,16 @@ export default function CreateBuildingForm({
       // Ensure apartments_count is set
       if (payload.total_apartments && !payload.apartments_count) {
         payload.apartments_count = payload.total_apartments;
+      }
+
+      // Αν έχουμε internal_manager_id, καθαρίζουμε legacy fields (για consistency)
+      if (payload.internal_manager_id) {
+        payload.internal_manager_name = '';
+        payload.internal_manager_phone = '';
+      }
+      // Αν δεν έχουμε internal_manager_id, καθαρίζουμε το field (για να μην στέλνουμε null)
+      else if (!payload.internal_manager_id && !payload.internal_manager_name) {
+        payload.internal_manager_id = null;
       }
 
       let result: Building;
@@ -899,7 +929,7 @@ export default function CreateBuildingForm({
         )}
 
         {/* Toggle για δικαίωμα καταχώρησης πληρωμών */}
-        {formData.internal_manager_name && (
+        {(formData.internal_manager_id || formData.internal_manager_name) && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-start space-x-2">

@@ -348,7 +348,8 @@ class ApartmentViewSet(viewsets.ModelViewSet):
                     'phone': apartment.owner_phone,
                     'email': apartment.owner_email or '',
                     'type': 'owner',
-                    'display_text': f"{apartment.owner_name} (Ιδιοκτήτης - Διαμέρισμα {apartment.number})"
+                    'display_text': f"{apartment.owner_name} (Ιδιοκτήτης - Διαμέρισμα {apartment.number})",
+                    'user_id': apartment.owner_user.id if apartment.owner_user else None,  # User ID για internal_manager_id
                 })
             
             # Προσθέτουμε ενοικιαστή αν υπάρχει όνομα και τηλέφωνο
@@ -361,7 +362,8 @@ class ApartmentViewSet(viewsets.ModelViewSet):
                     'phone': apartment.tenant_phone,
                     'email': apartment.tenant_email or '',
                     'type': 'tenant',
-                    'display_text': f"{apartment.tenant_name} (Ενοίκος - Διαμέρισμα {apartment.number})"
+                    'display_text': f"{apartment.tenant_name} (Ενοίκος - Διαμέρισμα {apartment.number})",
+                    'user_id': apartment.tenant_user.id if apartment.tenant_user else None,  # User ID για internal_manager_id
                 })
         
         # Ταξινόμηση κατά όνομα

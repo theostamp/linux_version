@@ -4,11 +4,11 @@ from core.permissions import IsManager, IsResident, IsRelatedToBuilding
 
 class MaintenancePermission(permissions.BasePermission):
     """
-    Maintenance permissions με RBAC integration
+    Maintenance permissions με RBAC integration και νέο role-based system
     
-    - Ανάγνωση: Managers, Residents (μόνο για τα κτίριά τους)
-    - Δημιουργία: Managers, Residents (μόνο για τα κτίριά τους)
-    - Επεξεργασία/Διαγραφή: Μόνο Managers
+    - Ανάγνωση: Office Managers, Internal Managers, Residents (μόνο για τα κτίριά τους)
+    - Δημιουργία: Office Managers, Internal Managers, Residents (μόνο για τα κτίριά τους)
+    - Επεξεργασία/Διαγραφή: Μόνο Office Managers
     """
 
     def has_permission(self, request, view):
@@ -24,13 +24,26 @@ class MaintenancePermission(permissions.BasePermission):
         if user.is_staff:
             return True
 
-        # RBAC: Ανάγνωση και Δημιουργία - Managers και Residents
+        # Ανάγνωση και Δημιουργία - Managers, Office Managers, Internal Managers και Residents
         if request.method in permissions.SAFE_METHODS or request.method == 'POST':
+            # Office Managers και Internal Managers
+            if (getattr(user, 'is_office_manager', False) or 
+                getattr(user, 'is_internal_manager', False)):
+                return True
+            # Residents (νέο role-based system)
+            if (getattr(user, 'is_resident_role', False) or 
+                getattr(user, 'role', '') == 'resident'):
+                return True
+            # RBAC groups fallback
             return (user.groups.filter(name='Manager').exists() or 
                    user.groups.filter(name='Resident').exists())
 
-        # RBAC: Επεξεργασία/Διαγραφή - Μόνο Managers
+        # Επεξεργασία/Διαγραφή - Μόνο Office Managers (όχι Internal Managers ή Residents)
         elif request.method in ['PUT', 'PATCH', 'DELETE']:
+            # Office Managers
+            if getattr(user, 'is_office_manager', False):
+                return True
+            # RBAC groups fallback
             return user.groups.filter(name='Manager').exists()
 
         # Legacy fallback
@@ -53,8 +66,25 @@ class MaintenancePermission(permissions.BasePermission):
         if user.is_staff:
             return True
 
-        # RBAC: Ανάγνωση και Δημιουργία - Managers και Residents (μόνο για τα κτίριά τους)
+        # Ανάγνωση και Δημιουργία - Managers, Office Managers, Internal Managers και Residents
         if request.method in permissions.SAFE_METHODS or request.method == 'POST':
+            # Office Managers βλέπουν όλα
+            if getattr(user, 'is_office_manager', False):
+                return True
+            
+            # Internal Managers βλέπουν μόνο τη δική τους πολυκατοικία
+            if getattr(user, 'is_internal_manager', False):
+                building = getattr(obj, 'building', None)
+                if building:
+                    return user.is_internal_manager_of(building)
+                return True  # Θα ελεγχθεί σε object level
+            
+            # Residents βλέπουν μόνο τα κτίριά τους
+            if (getattr(user, 'is_resident_role', False) or 
+                getattr(user, 'role', '') == 'resident'):
+                return IsRelatedToBuilding().has_object_permission(request, view, obj)
+            
+            # RBAC groups fallback
             is_manager = user.groups.filter(name='Manager').exists()
             is_resident = user.groups.filter(name='Resident').exists()
             
@@ -64,8 +94,12 @@ class MaintenancePermission(permissions.BasePermission):
                 # Residents βλέπουν μόνο τα κτίριά τους
                 return IsRelatedToBuilding().has_object_permission(request, view, obj)
 
-        # RBAC: Επεξεργασία/Διαγραφή - Μόνο Managers
+        # Επεξεργασία/Διαγραφή - Μόνο Office Managers (όχι Internal Managers ή Residents)
         elif request.method in ['PUT', 'PATCH', 'DELETE']:
+            # Office Managers
+            if getattr(user, 'is_office_manager', False):
+                return True
+            # RBAC groups fallback
             return user.groups.filter(name='Manager').exists()
 
         # Legacy fallback
