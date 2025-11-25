@@ -79,7 +79,7 @@ function DashboardContent() {
           </div>
 
           {/* Hero Section with Key Metrics - Selected Building */}
-          <HeroSection data={buildingDashboardData} loading={buildingDashboardLoading} />
+          <HeroSection data={buildingDashboardData} loading={buildingDashboardLoading} showWelcome={false} />
 
           {/* Financial Overview - Selected Building */}
           <FinancialOverview data={buildingDashboardData} loading={buildingDashboardLoading} />
