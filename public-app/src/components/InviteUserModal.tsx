@@ -99,8 +99,40 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       // Close modal
       onOpenChange(false);
     } catch (err) {
-      const error = err as { response?: { data?: { error?: string } }; message?: string };
-      const errorMessage = error?.response?.data?.error || error?.message || 'Αποτυχία αποστολής πρόσκλησης';
+      // Handle various error formats from the API
+      const error = err as { 
+        response?: { data?: Record<string, string | string[]> }; 
+        message?: string;
+        email?: string[];
+        detail?: string;
+      };
+      
+      let errorMessage = 'Αποτυχία αποστολής πρόσκλησης';
+      
+      // Check for field-level validation errors (e.g., { email: ["error message"] })
+      const errorData = error?.response?.data || error;
+      if (errorData) {
+        if (typeof errorData === 'object') {
+          // Handle field validation errors like { email: ["Χρήστης με αυτό το email υπάρχει ήδη."] }
+          const firstKey = Object.keys(errorData).find(key => 
+            key !== 'response' && key !== 'message' && errorData[key]
+          );
+          if (firstKey) {
+            const fieldError = errorData[firstKey];
+            if (Array.isArray(fieldError) && fieldError.length > 0) {
+              errorMessage = fieldError[0];
+            } else if (typeof fieldError === 'string') {
+              errorMessage = fieldError;
+            }
+          }
+        }
+      }
+      
+      // Fallback to generic message
+      if (errorMessage === 'Αποτυχία αποστολής πρόσκλησης' && error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
