@@ -116,14 +116,14 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
 
         {/* Weather Widget - Middle (compact, with forecast) */}
-        <div className="h-[43%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+        <div className="h-[39%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
             <WeatherWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
-        {/* Announcements, Expenses & Heating Chart Slider - Bottom */}
-        <div className="h-[24%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+        {/* Announcements, Expenses & Heating Chart Slider - Bottom (increased height) */}
+        <div className="h-[28%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
             <AnnouncementsExpensesSlider data={data} isLoading={false} error={undefined} buildingId={buildingId} />
           </div>
@@ -150,16 +150,16 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* News Widget - Fixed to bottom with breathing room */}
-      <div className="fixed bottom-4 left-5 right-5 h-14 bg-slate-900/90 backdrop-blur-xl border border-emerald-500/20 shadow-2xl shadow-emerald-900/40 rounded-xl z-50">
+      {/* News Widget - Fixed to bottom with space for copyright */}
+      <div className="fixed bottom-6 left-5 right-5 h-14 bg-slate-900/90 backdrop-blur-xl border border-emerald-500/20 shadow-2xl shadow-emerald-900/40 rounded-xl z-50">
         <div className="h-full px-5">
           <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
       </div>
 
-      {/* Copyright Footer - Larger and more visible */}
-      <div className="fixed bottom-0 left-0 right-0 h-7 flex items-center justify-center z-40 bg-black/40 backdrop-blur-sm">
-        <p className="text-base text-lime-400 font-semibold tracking-wider drop-shadow-lg">
+      {/* Copyright Footer - Discrete lime text below news ticker */}
+      <div className="fixed bottom-1 left-0 right-0 flex items-center justify-center z-40">
+        <p className="text-[10px] text-lime-400/70 font-normal tracking-wide">
           © {new Date().getFullYear()} New Concierge. All rights reserved.
         </p>
       </div>

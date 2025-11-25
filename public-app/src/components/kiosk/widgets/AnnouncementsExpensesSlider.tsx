@@ -15,7 +15,12 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  const widgets = [
+  // Check if we're in non-heating season (June to September)
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const isNonHeatingSeason = currentMonth >= 6 && currentMonth <= 9;
+
+  // Define base widgets
+  const allWidgets = [
     {
       id: 'announcements',
       name: 'Ανακοινώσεις & Ψηφοφορίες',
@@ -32,6 +37,11 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
       Component: HeatingChartWidget,
     },
   ];
+
+  // Filter out heating widget during non-heating season (June-September)
+  const widgets = isNonHeatingSeason 
+    ? allWidgets.filter(w => w.id !== 'heating')
+    : allWidgets;
 
   // Auto-advance slider every 15 seconds
   useEffect(() => {
