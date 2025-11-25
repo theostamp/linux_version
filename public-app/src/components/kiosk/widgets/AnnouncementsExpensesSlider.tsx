@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BaseWidgetProps } from '@/types/kiosk';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AnnouncementsVotesCarousel from './AnnouncementsVotesCarousel';
@@ -11,37 +11,44 @@ interface AnnouncementsExpensesSliderProps extends BaseWidgetProps {
   buildingId?: number | null;
 }
 
+// Check if we're in heating season (October to May)
+const isHeatingSeasonActive = (): boolean => {
+  const month = new Date().getMonth(); // 0-11
+  // Heating season: October (9) to May (4)
+  // NOT heating season: June (5) to September (8)
+  return month <= 4 || month >= 9;
+};
+
 export default function AnnouncementsExpensesSlider({ data, isLoading, error, buildingId }: AnnouncementsExpensesSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  // Check if we're in non-heating season (June to September)
-  const currentMonth = new Date().getMonth() + 1; // 1-12
-  const isNonHeatingSeason = currentMonth >= 6 && currentMonth <= 9;
-
-  // Define base widgets
-  const allWidgets = [
-    {
-      id: 'announcements',
-      name: 'Ανακοινώσεις & Ψηφοφορίες',
-      Component: AnnouncementsVotesCarousel,
-    },
-    {
-      id: 'expenses',
-      name: 'Δαπάνες Τρέχοντος Μήνα',
-      Component: CurrentMonthExpensesWidget,
-    },
-    {
-      id: 'heating',
-      name: 'Κατανάλωση Θέρμανσης',
-      Component: HeatingChartWidget,
-    },
-  ];
-
-  // Filter out heating widget during non-heating season (June-September)
-  const widgets = isNonHeatingSeason 
-    ? allWidgets.filter(w => w.id !== 'heating')
-    : allWidgets;
+  // Filter widgets based on heating season
+  const widgets = useMemo(() => {
+    const baseWidgets = [
+      {
+        id: 'announcements',
+        name: 'Ανακοινώσεις & Ψηφοφορίες',
+        Component: AnnouncementsVotesCarousel,
+      },
+      {
+        id: 'expenses',
+        name: 'Δαπάνες Τρέχοντος Μήνα',
+        Component: CurrentMonthExpensesWidget,
+      },
+    ];
+    
+    // Only show heating chart during heating season (October-May)
+    if (isHeatingSeasonActive()) {
+      baseWidgets.push({
+        id: 'heating',
+        name: 'Κατανάλωση Θέρμανσης',
+        Component: HeatingChartWidget,
+      });
+    }
+    
+    return baseWidgets;
+  }, []);
 
   // Auto-advance slider every 15 seconds
   useEffect(() => {

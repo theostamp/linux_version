@@ -41,12 +41,10 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
   const building = data?.building_info;
   const currentDate = currentTime;
 
-  // Debug logging - more detailed
+  // Debug logging
   useEffect(() => {
     const logoUrl = getOfficeLogoUrl(building?.office_logo);
-    console.log('[ManagementOfficeWidget] Full data object:', data);
-    console.log('[ManagementOfficeWidget] Building info:', building);
-    console.log('[ManagementOfficeWidget] Office details:', {
+    console.log('[ManagementOfficeWidget] Building info:', {
       office_logo_raw: building?.office_logo,
       office_logo_url: logoUrl,
       management_office_name: building?.management_office_name,
@@ -55,7 +53,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
       management_office_address: building?.management_office_address,
       management_office_phone_emergency: building?.management_office_phone_emergency,
     });
-  }, [data, building]);
+  }, [building]);
 
   return (
     <div className="h-full flex items-center justify-between px-6 py-3">
