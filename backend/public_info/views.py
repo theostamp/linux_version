@@ -52,6 +52,7 @@ def building_info(request, building_id: int):
             if building.manager_id:
                 from users.models import CustomUser
                 from django.db import connection
+                from django.conf import settings
                 # Query public schema for manager user
                 with connection.cursor() as cursor:
                     cursor.execute(
@@ -74,9 +75,17 @@ def building_info(request, building_id: int):
                         management_office_email = row[5] or None
                         
                         # Get logo URL if exists
+                        # office_logo_path from database is relative to MEDIA_ROOT (e.g., "office_logos/logo.jpg")
                         if office_logo_path:
-                            from django.conf import settings
-                            office_logo = f"{settings.MEDIA_URL}{office_logo_path}"
+                            # Remove leading slash if present and construct URL
+                            logo_path_clean = office_logo_path.lstrip('/')
+                            # MEDIA_URL is usually "/media/" so we combine them
+                            office_logo = f"{settings.MEDIA_URL.rstrip('/')}/{logo_path_clean}"
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.info(f"[public_info] Office logo path: {office_logo_path}, Clean: {logo_path_clean}, Final URL: {office_logo}")
+                        else:
+                            office_logo = None
             
             building_info = {
                 'id': building.id,
