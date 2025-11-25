@@ -3,6 +3,8 @@
 import { BaseWidgetProps } from '@/types/kiosk';
 import { Flame, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
+import { format } from 'date-fns';
+import { el } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface HeatingChartWidgetProps extends BaseWidgetProps {
@@ -10,29 +12,7 @@ interface HeatingChartWidgetProps extends BaseWidgetProps {
 }
 
 export default function HeatingChartWidget({ data, isLoading, error, buildingId }: HeatingChartWidgetProps) {
-  // Get current heating season (September to May)
-  const getHeatingSeasonMonths = (year: number) => {
-    const months = [];
-    // September to December
-    for (let month = 9; month <= 12; month++) {
-      months.push({
-        date: `${year}-${month.toString().padStart(2, '0')}`,
-        label: new Date(year, month - 1).toLocaleDateString('el-GR', { month: 'short' }),
-      });
-    }
-    // January to May
-    for (let month = 1; month <= 5; month++) {
-      months.push({
-        date: `${year + 1}-${month.toString().padStart(2, '0')}`,
-        label: new Date(year + 1, month - 1).toLocaleDateString('el-GR', { month: 'short' }),
-      });
-    }
-    return months;
-  };
-
-  const currentYear = new Date().getFullYear();
-  const heatingYear = new Date().getMonth() >= 8 ? currentYear : currentYear - 1; // If after August, use current year
-  const months = useMemo(() => getHeatingSeasonMonths(heatingYear), [heatingYear]);
+  const heatingPeriod = data?.financial?.heating_period;
 
   // Get expenses from data prop (from useKioskData hook) - already filtered by backend
   const expenses = useMemo(() => {
@@ -41,10 +21,71 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
       count: expensesData.length,
       expenses: expensesData,
       financial: data?.financial,
-      heatingYear
+      heatingPeriod,
     });
     return expensesData;
-  }, [data, heatingYear]);
+  }, [data, heatingPeriod]);
+
+  const chartData = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        label: string;
+        amount: number;
+        count: number;
+      }
+    >();
+
+    expenses.forEach((expense: any) => {
+      const rawDate = expense.date || expense.expense_date;
+      if (!rawDate) return;
+
+      const parsedDate = new Date(rawDate);
+      if (Number.isNaN(parsedDate.getTime())) return;
+
+      const monthKey = format(parsedDate, 'yyyy-MM');
+      const label = format(parsedDate, 'MMM yy', { locale: el });
+      const amountValue = parseFloat(expense.amount) || 0;
+
+      const existing = grouped.get(monthKey);
+      if (existing) {
+        existing.amount += amountValue;
+        existing.count += 1;
+      } else {
+        grouped.set(monthKey, {
+          label,
+          amount: amountValue,
+          count: 1,
+        });
+      }
+    });
+
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => (a > b ? 1 : -1))
+      .map(([, value]) => ({
+        month: value.label,
+        amount: Number(value.amount.toFixed(2)),
+        count: value.count,
+      }));
+  }, [expenses]);
+
+  const seasonLabel = useMemo(() => {
+    if (heatingPeriod?.season_label) {
+      return heatingPeriod.season_label.replace('-', ' - ');
+    }
+
+    if (heatingPeriod?.start && heatingPeriod?.end) {
+      try {
+        const startLabel = format(new Date(heatingPeriod.start), 'MMM yyyy', { locale: el });
+        const endLabel = format(new Date(heatingPeriod.end), 'MMM yyyy', { locale: el });
+        return `${startLabel} - ${endLabel}`;
+      } catch {
+        return 'Περίοδος Θέρμανσης';
+      }
+    }
+
+    return 'Περίοδος Θέρμανσης';
+  }, [heatingPeriod]);
 
   if (isLoading) {
     return (
@@ -65,24 +106,6 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
     );
   }
 
-  // Group expenses by month
-  const chartData = months.map(month => {
-    const monthExpenses = expenses.filter((exp: any) => {
-      const expenseDate = exp.date || exp.expense_date || '';
-      // Handle both YYYY-MM-DD and YYYY-MM formats
-      if (!expenseDate) return false;
-      const dateStr = typeof expenseDate === 'string' ? expenseDate : expenseDate.toString();
-      // Extract YYYY-MM from date string (handles both YYYY-MM-DD and YYYY-MM)
-      return dateStr.startsWith(month.date);
-    });
-    const total = monthExpenses.reduce((sum: number, exp: any) => sum + (parseFloat(exp.amount) || 0), 0);
-    return {
-      month: month.label,
-      amount: total,
-      count: monthExpenses.length,
-    };
-  });
-
   const hasData = chartData.some(d => d.amount > 0);
   const totalAmount = chartData.reduce((sum, d) => sum + d.amount, 0);
 
@@ -92,7 +115,9 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
         <div className="text-center">
           <Flame className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">Δεν υπάρχουν δαπάνες θέρμανσης</p>
-          <p className="text-xs mt-1">Περίοδος: Σεπ {heatingYear} - Μάι {heatingYear + 1}</p>
+          {seasonLabel && (
+            <p className="text-xs mt-1">{seasonLabel}</p>
+          )}
         </div>
       </div>
     );
@@ -106,9 +131,9 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
           <Flame className="w-5 h-5 text-orange-300" />
           <h3 className="text-lg font-semibold text-white">Κατανάλωση Θέρμανσης</h3>
         </div>
-        <div className="text-xs text-orange-300/70">
-          {heatingYear}-{heatingYear + 1}
-        </div>
+          <div className="text-xs text-orange-300/70">
+            {seasonLabel}
+          </div>
       </div>
 
       {/* Total Summary */}
@@ -122,6 +147,11 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
             </span>
           </div>
         </div>
+        {heatingPeriod?.is_fallback && (
+          <p className="text-[10px] uppercase tracking-wide text-orange-200/70 mt-1">
+            Εμφανίζονται τα πιο πρόσφατα διαθέσιμα στοιχεία
+          </p>
+        )}
       </div>
 
       {/* Chart */}

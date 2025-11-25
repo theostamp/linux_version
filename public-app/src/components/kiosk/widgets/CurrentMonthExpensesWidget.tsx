@@ -38,6 +38,21 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
   }
 
   const currentMonth = format(new Date(), 'MMMM yyyy', { locale: el });
+  const periodInfo = data?.financial?.current_month_period;
+
+  const periodLabel = useMemo(() => {
+    if (periodInfo?.is_fallback) {
+      return 'Πρόσφατες Δαπάνες';
+    }
+    if (periodInfo?.start) {
+      try {
+        return format(new Date(periodInfo.start), 'MMMM yyyy', { locale: el });
+      } catch {
+        return currentMonth;
+      }
+    }
+    return currentMonth;
+  }, [periodInfo, currentMonth]);
   const totalAmount = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
   const topExpenses = expenses.slice(0, 5);
 
@@ -47,7 +62,7 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-green-500/20">
         <div className="flex items-center space-x-2">
           <Euro className="w-5 h-5 text-green-300" />
-          <h3 className="text-lg font-semibold text-white">Δαπάνες {currentMonth}</h3>
+          <h3 className="text-lg font-semibold text-white">Δαπάνες {periodLabel}</h3>
         </div>
         <Calendar className="w-4 h-4 text-green-300" />
       </div>
@@ -63,8 +78,15 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
             </span>
           </div>
         </div>
-        <div className="text-xs text-green-300/70 mt-1">
-          {expenses.length} {expenses.length === 1 ? 'δαπάνη' : 'δαπάνες'}
+        <div className="text-xs text-green-300/70 mt-1 flex items-center justify-between">
+          <span>
+            {expenses.length} {expenses.length === 1 ? 'δαπάνη' : 'δαπάνες'}
+          </span>
+          {periodInfo?.is_fallback && (
+            <span className="text-[10px] uppercase tracking-wide text-green-200/70">
+              Εμφανίζονται οι πιο πρόσφατες
+            </span>
+          )}
         </div>
       </div>
 

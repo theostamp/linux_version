@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime, timedelta
 
@@ -129,6 +130,7 @@ def building_info(request, building_id: int):
 
         # Calculate financial data
         try:
+            logger = logging.getLogger('django')
             # Get total credits and debits for collection rate
             total_credits = Transaction.objects.filter(
                 apartment__building_id=building_id,
@@ -154,17 +156,30 @@ def building_info(request, building_id: int):
                 building_id=building_id
             ).order_by('-date')[:3].values('id', 'description', 'amount', 'date')
 
-            # Get current month expenses
-            current_month_start = timezone.now().replace(day=1).date()
-            current_month_end = (timezone.now().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-            current_month_expenses = Expense.objects.filter(
+            # Determine current month period (timezone aware)
+            today = timezone.localdate()
+            current_month_start = today.replace(day=1)
+            first_day_next_month = (current_month_start + timedelta(days=32)).replace(day=1)
+            current_month_end = first_day_next_month - timedelta(days=1)
+
+            current_month_expenses_qs = Expense.objects.filter(
                 building_id=building_id,
                 date__gte=current_month_start,
                 date__lte=current_month_end
             ).order_by('-date').values('id', 'title', 'description', 'amount', 'date', 'category')
 
+            current_month_fallback = False
+            if not current_month_expenses_qs.exists():
+                current_month_fallback = True
+                fallback_limit = 10
+                current_month_expenses_qs = Expense.objects.filter(
+                    building_id=building_id
+                ).order_by('-date').values('id', 'title', 'description', 'amount', 'date', 'category')[:fallback_limit]
+
+            current_month_expenses = list(current_month_expenses_qs)
+
             # Get heating expenses (September to May of current heating season)
-            now = timezone.now()
+            now = timezone.localdate()
             current_year = now.year
             current_month = now.month
             
@@ -172,8 +187,12 @@ def building_info(request, building_id: int):
             heating_year = current_year if current_month >= 9 else current_year - 1
             
             # Heating season: September (heating_year) to May (heating_year + 1)
-            heating_start_date = datetime(heating_year, 9, 1).date()
-            heating_end_date = datetime(heating_year + 1, 5, 31).date()
+            def get_heating_period(year: int):
+                start = datetime(year, 9, 1).date()
+                end = datetime(year + 1, 5, 31).date()
+                return start, end
+
+            heating_start_date, heating_end_date = get_heating_period(heating_year)
             
             # Heating keywords for filtering
             heating_keywords = ['θέρμανσ', 'θερμανσ', 'heating', 'πετρέλαιο', 'πετρελαιο', 'αέριο', 'αεριο', 'gas', 'mazout']
@@ -183,15 +202,43 @@ def building_info(request, building_id: int):
             for keyword in heating_keywords:
                 heating_q |= Q(title__icontains=keyword) | Q(description__icontains=keyword) | Q(category__icontains=keyword)
             
-            heating_expenses = Expense.objects.filter(
+            heating_qs = Expense.objects.filter(
                 building_id=building_id,
                 date__gte=heating_start_date,
                 date__lte=heating_end_date
-            ).filter(heating_q).order_by('date').values('id', 'title', 'description', 'amount', 'date', 'category')
+            ).filter(heating_q)
+
+            heating_fallback = False
+
+            if not heating_qs.exists():
+                previous_year = heating_year - 1
+                prev_start, prev_end = get_heating_period(previous_year)
+                heating_qs = Expense.objects.filter(
+                    building_id=building_id,
+                    date__gte=prev_start,
+                    date__lte=prev_end
+                ).filter(heating_q)
+                if heating_qs.exists():
+                    heating_year = previous_year
+                    heating_start_date, heating_end_date = prev_start, prev_end
+
+            if not heating_qs.exists():
+                heating_fallback = True
+                fallback_days = 365
+                fallback_start = now - timedelta(days=fallback_days)
+                heating_start_date = fallback_start
+                heating_end_date = now
+                heating_qs = Expense.objects.filter(
+                    building_id=building_id,
+                    date__gte=fallback_start,
+                    date__lte=now
+                ).filter(heating_q)
+
+            heating_expenses = list(
+                heating_qs.order_by('date').values('id', 'title', 'description', 'amount', 'date', 'category')
+            )
 
             # Debug logging
-            import logging
-            logger = logging.getLogger('django')
             logger.info(f"[public_info] Building {building_id} expenses:", {
                 'current_month_count': len(current_month_expenses),
                 'heating_count': len(heating_expenses),
@@ -208,6 +255,17 @@ def building_info(request, building_id: int):
                 'recent_expenses': list(recent_expenses),
                 'current_month_expenses': list(current_month_expenses),
                 'heating_expenses': list(heating_expenses),
+                'current_month_period': {
+                    'start': current_month_start.isoformat(),
+                    'end': current_month_end.isoformat(),
+                    'is_fallback': current_month_fallback,
+                },
+                'heating_period': {
+                    'start': heating_start_date.isoformat() if heating_start_date else None,
+                    'end': heating_end_date.isoformat() if heating_end_date else None,
+                    'season_label': f"{heating_start_date.year}-{heating_end_date.year}" if heating_start_date and heating_end_date else None,
+                    'is_fallback': heating_fallback,
+                },
                 'total_credits': round(total_credits, 2),
                 'total_debits': round(total_debits, 2),
                 'total_obligations': 0,
@@ -216,15 +274,28 @@ def building_info(request, building_id: int):
                 'top_debtors': [],
             }
         except Exception as e:
-            import logging
             logger = logging.getLogger('django')
             logger.error(f"[public_info] Error fetching expenses for building {building_id}: {str(e)}", exc_info=True)
+            today = timezone.localdate()
+            first_day = today.replace(day=1)
+            fallback_period = {
+                'start': first_day.isoformat(),
+                'end': today.isoformat(),
+                'is_fallback': True,
+            }
             financial_data = {
                 'collection_rate': 0,
                 'reserve_fund': 0,
                 'recent_expenses': [],
                 'current_month_expenses': [],
                 'heating_expenses': [],
+                'current_month_period': fallback_period,
+                'heating_period': {
+                    'start': (today - timedelta(days=365)).isoformat(),
+                    'end': today.isoformat(),
+                    'season_label': None,
+                    'is_fallback': True,
+                },
                 'total_credits': 0,
                 'total_debits': 0,
                 'total_obligations': 0,

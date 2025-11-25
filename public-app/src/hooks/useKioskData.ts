@@ -101,6 +101,17 @@ export interface KioskFinancialInfo {
     tenant_name?: string | null;
     status?: string;
   }>;
+  current_month_period?: {
+    start?: string;
+    end?: string;
+    is_fallback?: boolean;
+  };
+  heating_period?: {
+    start?: string;
+    end?: string;
+    season_label?: string;
+    is_fallback?: boolean;
+  };
 }
 
 export interface KioskMaintenanceInfo {
@@ -165,6 +176,17 @@ interface PublicFinancialInfo {
   recent_expenses?: PublicExpense[];
   current_month_expenses?: PublicExpense[];
   heating_expenses?: PublicExpense[];
+  current_month_period?: {
+    start?: string;
+    end?: string;
+    is_fallback?: boolean;
+  };
+  heating_period?: {
+    start?: string;
+    end?: string;
+    season_label?: string;
+    is_fallback?: boolean;
+  };
   total_payments?: number;
   pending_payments?: number;
   overdue_payments?: number;
@@ -356,6 +378,8 @@ export const useKioskData = (buildingId: number | null = 1) => {
           date: expense.date,
           category: expense.category
         })),
+        current_month_period: financialSource?.current_month_period,
+        heating_period: financialSource?.heating_period,
         total_payments: financialSource?.total_payments || 0,
         pending_payments: financialSource?.pending_payments || 0,
         overdue_payments: financialSource?.overdue_payments || 0,
