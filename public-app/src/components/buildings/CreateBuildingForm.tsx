@@ -11,7 +11,8 @@ import { createBuilding, updateBuilding, fetchBuildingResidents, fetchApartments
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { Building as BuildingIcon, Users, Info, ChevronDown, Loader2 } from 'lucide-react';
+import { Building as BuildingIcon, Users, Info, ChevronDown, Loader2, CreditCard } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface CreateBuildingFormProps {
@@ -93,6 +94,7 @@ export default function CreateBuildingForm({
     internal_manager_phone: initialData?.internal_manager_phone || '',
     internal_manager_apartment: initialData?.internal_manager_apartment || '',
     internal_manager_collection_schedule: initialData?.internal_manager_collection_schedule || 'Δευ-Παρ 9:00-17:00',
+    internal_manager_can_record_payments: initialData?.internal_manager_can_record_payments || false,
     management_office_name: initialData?.management_office_name || user?.office_name || '',
     management_office_phone: initialData?.management_office_phone || user?.office_phone || '',
     management_office_address: initialData?.management_office_address || user?.office_address || '',
@@ -224,6 +226,7 @@ export default function CreateBuildingForm({
         internal_manager_phone: initialData.internal_manager_phone || '',
         internal_manager_apartment: initialData.internal_manager_apartment || '',
         internal_manager_collection_schedule: initialData.internal_manager_collection_schedule || 'Δευ-Παρ 9:00-17:00',
+        internal_manager_can_record_payments: initialData.internal_manager_can_record_payments || false,
         management_office_name: initialData.management_office_name || user?.office_name || '',
         management_office_phone: initialData.management_office_phone || user?.office_phone || '',
         management_office_address: initialData.management_office_address || user?.office_address || '',
@@ -892,6 +895,30 @@ export default function CreateBuildingForm({
         {buildingId && residents.length > 0 && (
           <div className="text-xs text-gray-600">
             💡 <strong>Σημείωση:</strong> Η επιλογή διαχειριστή από τη λίστα θα συμπληρώσει αυτόματα το όνομα, τηλέφωνο και διαμέρισμα.
+          </div>
+        )}
+
+        {/* Toggle για δικαίωμα καταχώρησης πληρωμών */}
+        {formData.internal_manager_name && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start space-x-2">
+                <CreditCard className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-amber-800 font-medium">Δικαίωμα Καταχώρησης Πληρωμών</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={formData.internal_manager_can_record_payments || false}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
+                }
+                disabled={loading}
+              />
+            </div>
           </div>
         )}
       </div>

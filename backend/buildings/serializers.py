@@ -93,6 +93,16 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                 return 0
         return 0
 
+class InternalManagerSerializer(serializers.ModelSerializer):
+    """Serializer για τον εσωτερικό διαχειριστή (nested)"""
+    full_name = serializers.CharField(source='get_full_name', read_only=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'first_name', 'last_name', 'full_name']
+        read_only_fields = ['id', 'email', 'first_name', 'last_name', 'full_name']
+
+
 class BuildingSerializer(serializers.ModelSerializer):
     # Manager field - allow updates but default to current user
     manager = serializers.PrimaryKeyRelatedField(
@@ -101,6 +111,22 @@ class BuildingSerializer(serializers.ModelSerializer):
         allow_null=True,
         default=serializers.CurrentUserDefault()
     )
+    
+    # Εσωτερικός Διαχειριστής - ForeignKey
+    internal_manager = InternalManagerSerializer(read_only=True)
+    internal_manager_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        source='internal_manager',
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
+    
+    # Δικαίωμα καταχώρησης πληρωμών για τον εσωτερικό διαχειριστή
+    internal_manager_can_record_payments = serializers.BooleanField(required=False, default=False)
+    
+    # Computed field: Όνομα εμφάνισης του εσωτερικού διαχειριστή
+    internal_manager_display_name = serializers.SerializerMethodField()
     
     # Προσθήκη nested serializer για το service_package
     service_package = ServicePackageSerializer(read_only=True)
@@ -120,8 +146,14 @@ class BuildingSerializer(serializers.ModelSerializer):
         model = Building
         fields = [
             'id', 'name', 'address', 'city', 'postal_code', 
-            'apartments_count', 'internal_manager_name', 'internal_manager_phone',
+            'apartments_count', 
+            # Internal Manager - νέα πεδία
+            'internal_manager', 'internal_manager_id', 'internal_manager_can_record_payments',
+            'internal_manager_display_name',
+            # Legacy internal manager fields (για backward compatibility)
+            'internal_manager_name', 'internal_manager_phone',
             'internal_manager_apartment', 'internal_manager_collection_schedule',
+            # Management Office
             'management_office_name', 'management_office_phone', 'management_office_address',
             'management_fee_per_apartment', 'service_package', 'service_package_id', 'service_package_start_date',
             'current_reserve', 'heating_system', 'heating_fixed_percentage', 'reserve_contribution_per_apartment',
@@ -131,6 +163,10 @@ class BuildingSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'current_reserve']
+
+    def get_internal_manager_display_name(self, obj):
+        """Επιστρέφει το όνομα εμφάνισης του εσωτερικού διαχειριστή"""
+        return obj.get_internal_manager_display_name()
 
     def create(self, validated_data):
         """
@@ -188,19 +224,61 @@ class BuildingPermissionsSerializer(serializers.Serializer):
     """
     Serializer για το BuildingPermissions DTO.
     Επιστρέφει τα permissions του user για το συγκεκριμένο building.
+    
+    Ιεραρχία Ρόλων:
+    - is_admin_level: Superuser/Staff/Office Manager
+    - is_internal_manager: Εσωτερικός διαχειριστής
+    - is_resident: Ένοικος
     """
+    # Basic permissions
+    can_view = serializers.BooleanField(
+        default=True,
+        help_text="Δικαίωμα προβολής"
+    )
     can_edit = serializers.BooleanField(
         help_text="Δικαίωμα επεξεργασίας του κτιρίου"
     )
     can_delete = serializers.BooleanField(
         help_text="Δικαίωμα διαγραφής του κτιρίου"
     )
+    
+    # Financial permissions
     can_manage_financials = serializers.BooleanField(
-        help_text="Δικαίωμα διαχείρισης οικονομικών"
+        help_text="Δικαίωμα πλήρους διαχείρισης οικονομικών (Office Manager only)"
     )
-    can_view = serializers.BooleanField(
+    can_view_financials = serializers.BooleanField(
         default=True,
-        help_text="Δικαίωμα προβολής"
+        help_text="Δικαίωμα προβολής οικονομικών (όλοι οι ρόλοι)"
+    )
+    can_record_payments = serializers.BooleanField(
+        default=False,
+        help_text="Δικαίωμα καταχώρησης πληρωμών (Office Manager ή Internal Manager με opt-in)"
+    )
+    
+    # Assembly/Meeting permissions
+    can_create_assembly = serializers.BooleanField(
+        default=False,
+        help_text="Δικαίωμα δημιουργίας συνελεύσεων"
+    )
+    
+    # Offers/Projects permissions
+    can_manage_offers = serializers.BooleanField(
+        default=False,
+        help_text="Δικαίωμα διαχείρισης προσφορών/έργων"
+    )
+    
+    # Role indicators
+    is_admin_level = serializers.BooleanField(
+        default=False,
+        help_text="Αν ο χρήστης είναι admin-level (Superuser/Staff/Office Manager)"
+    )
+    is_internal_manager = serializers.BooleanField(
+        default=False,
+        help_text="Αν ο χρήστης είναι εσωτερικός διαχειριστής αυτής της πολυκατοικίας"
+    )
+    is_resident = serializers.BooleanField(
+        default=False,
+        help_text="Αν ο χρήστης είναι ένοικος αυτής της πολυκατοικίας"
     )
 
 
@@ -257,10 +335,29 @@ class BuildingContextSerializer(serializers.Serializer):
         required=False,
         help_text="User ID του διαχειριστή"
     )
+    
+    # Internal Manager - νέα πεδία
+    internal_manager_id = serializers.IntegerField(
+        allow_null=True,
+        required=False,
+        help_text="User ID του εσωτερικού διαχειριστή"
+    )
+    internal_manager_can_record_payments = serializers.BooleanField(
+        default=False,
+        help_text="Αν ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές"
+    )
+    internal_manager_display_name = serializers.CharField(
+        max_length=255,
+        allow_blank=True,
+        required=False,
+        help_text="Όνομα εμφάνισης εσωτερικού διαχειριστή"
+    )
+    
+    # Legacy internal manager fields (για backward compatibility)
     internal_manager_name = serializers.CharField(
         max_length=255,
         allow_blank=True,
-        help_text="Όνομα εσωτερικού διαχειριστή"
+        help_text="Όνομα εσωτερικού διαχειριστή (legacy)"
     )
     internal_manager_phone = serializers.CharField(
         max_length=20,

@@ -37,6 +37,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     class SystemRole(models.TextChoices):
         ADMIN = 'admin', _('Admin')  # Superusers only
         OFFICE_MANAGER = 'manager', _('Office Manager')  # Γραφείο διαχείρισης (Tenant owner)
+        INTERNAL_MANAGER = 'internal_manager', _('Internal Manager')  # Εσωτερικός διαχειριστής πολυκατοικίας
+        RESIDENT = 'resident', _('Resident')  # Ένοικος/Ιδιοκτήτης
 
     email = models.EmailField(unique=True)
     username = models.CharField(
@@ -294,6 +296,21 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def is_admin(self):
         return self.role == self.SystemRole.ADMIN
 
+    @property
+    def is_internal_manager(self):
+        """Ελέγχει αν ο χρήστης είναι εσωτερικός διαχειριστής"""
+        return self.role == self.SystemRole.INTERNAL_MANAGER
+
+    @property
+    def is_resident_role(self):
+        """Ελέγχει αν ο χρήστης έχει ρόλο ενοίκου"""
+        return self.role == self.SystemRole.RESIDENT
+
+    @property
+    def is_admin_level(self):
+        """Ελέγχει αν ο χρήστης έχει δικαιώματα admin (superuser, staff ή office manager)"""
+        return self.is_superuser or self.is_staff or self.is_office_manager
+
     # ------- Helper ιδιότητες για ρόλους ανά πολυκατοικία --------
     def is_manager_of(self, building):
         """
@@ -301,6 +318,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """
         return hasattr(building, "manager") and building.manager == self
 
+    def is_internal_manager_of(self, building):
+        """
+        Επιστρέφει True αν ο χρήστης είναι ο εσωτερικός διαχειριστής του δοσμένου κτιρίου.
+        """
+        if not self.is_internal_manager:
+            return False
+        # Έλεγχος μέσω του ForeignKey internal_manager στο Building
+        return hasattr(building, 'internal_manager') and building.internal_manager == self
 
     def is_resident_of(self, building):
         return self.memberships.filter(building=building).exists()
@@ -311,9 +336,32 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def get_buildings_as_resident(self):
         return [m.building for m in self.memberships.all()]
 
+    def get_building_as_internal_manager(self):
+        """Επιστρέφει την πολυκατοικία που διαχειρίζεται ως εσωτερικός διαχειριστής"""
+        if not self.is_internal_manager:
+            return None
+        # Χρησιμοποιούμε το related_name 'managed_buildings_internal'
+        managed = getattr(self, 'managed_buildings_internal', None)
+        if managed:
+            return managed.first()
+        return None
+
     def get_apartment_in(self, building):
         membership = self.memberships.filter(building=building).first()
         return membership.apartment if membership else None
+
+    def can_access_building(self, building):
+        """
+        Ελέγχει αν ο χρήστης έχει πρόσβαση στη συγκεκριμένη πολυκατοικία.
+        Office Managers έχουν πρόσβαση σε όλες, οι υπόλοιποι μόνο στις δικές τους.
+        """
+        if self.is_superuser or self.is_staff or self.is_office_manager:
+            return True
+        if self.is_internal_manager_of(building):
+            return True
+        if self.is_resident_of(building):
+            return True
+        return False
 
 
 class UserInvitation(models.Model):

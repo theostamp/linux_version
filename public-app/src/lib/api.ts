@@ -712,6 +712,15 @@ export async function logoutUser(): Promise<void> {
 // Building API Functions
 // ============================================================================
 
+// Internal Manager nested type (when reading from API)
+export type InternalManager = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+};
+
 export type Building = {
   id: number;
   name: string;
@@ -725,6 +734,11 @@ export type Building = {
   apartments_count?: number;
   heating_system?: string;
   heating_fixed_percentage?: number;
+  // Νέα πεδία για εσωτερικό διαχειριστή (ForeignKey)
+  internal_manager?: InternalManager | null;
+  internal_manager_can_record_payments?: boolean;
+  internal_manager_display_name?: string;
+  // Legacy πεδία (backward compatibility)
   internal_manager_name?: string;
   internal_manager_phone?: string;
   internal_manager_apartment?: string;
@@ -738,9 +752,11 @@ export type Building = {
   updated_at: string;
 };
 
-export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at' | 'latitude' | 'longitude'>> & {
+export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at' | 'latitude' | 'longitude' | 'internal_manager'>> & {
   latitude?: number | null;
   longitude?: number | null;
+  // Write-only: για να ορίσεις τον εσωτερικό διαχειριστή στέλνεις το ID
+  internal_manager_id?: number | null;
 };
 
 export type BuildingsResponse = {

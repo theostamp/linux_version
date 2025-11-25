@@ -10,7 +10,7 @@ import { User, Building as BuildingIcon, Settings, Calendar } from 'lucide-react
 import { getOfficeLogoUrl } from '@/lib/utils';
 
 // Helper function to get user role label
-const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string } | null): string => {
+const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string; profile?: { role?: string } } | null): string => {
   if (!user) return 'Χρήστης';
 
   if (user.is_superuser) return 'Ultra Admin';
@@ -21,9 +21,12 @@ const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; ro
       case 'admin':
       case 'manager':
         return 'Διαχειριστής';
+      case 'internal_manager':
+        return 'Εσωτερικός Διαχειριστής';
       case 'owner':
         return 'Ιδιοκτήτης';
       case 'tenant':
+      case 'resident':
         return 'Ένοικος';
       default:
         return user.role;
@@ -36,6 +39,8 @@ const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; ro
         return 'Ultra Admin';
       case 'manager':
         return 'Διαχειριστής';
+      case 'internal_manager':
+        return 'Εσωτερικός Διαχειριστής';
       case 'resident':
         return 'Κάτοικος';
       default:
@@ -44,6 +49,16 @@ const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; ro
   }
 
   return 'Χρήστης';
+};
+
+// Helper function to check if user is admin-level (can see building selector)
+const isAdminLevel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string; profile?: { role?: string } } | null): boolean => {
+  if (!user) return false;
+  if (user.is_superuser || user.is_staff) return true;
+  
+  const role = user.role || user.profile?.role;
+  // Only 'manager' (Office Manager) is admin-level
+  return role === 'manager';
 };
 
 export default function GlobalHeader() {
@@ -126,15 +141,17 @@ export default function GlobalHeader() {
                     )}
                   </div>
 
-                  {/* Building Selector */}
-                  <div className="hidden lg:flex items-center gap-2 min-w-0">
-                    <span className="text-xs font-medium text-gray-600 whitespace-nowrap">Κτίριο:</span>
-                    <BuildingSelectorButton
-                      onBuildingSelect={setSelectedBuilding}
-                      selectedBuilding={selectedBuilding}
-                      className="min-w-[160px]"
-                    />
-                  </div>
+                  {/* Building Selector - ADMIN-ONLY (Office Manager, Staff, Superuser) */}
+                  {isAdminLevel(user) && (
+                    <div className="hidden lg:flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium text-gray-600 whitespace-nowrap">Κτίριο:</span>
+                      <BuildingSelectorButton
+                        onBuildingSelect={setSelectedBuilding}
+                        selectedBuilding={selectedBuilding}
+                        className="min-w-[160px]"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile version - Office Name Only */}
@@ -159,23 +176,27 @@ export default function GlobalHeader() {
                 <Calendar className="w-5 h-5" />
               </button>
 
-              {/* Settings Button - Desktop */}
-              <button
-                onClick={handleSettingsModalOpen}
-                className="hidden sm:flex p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                title="Ρυθμίσεις Γραφείου Διαχείρισης"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
+              {/* Settings Button - Desktop - ADMIN-ONLY */}
+              {isAdminLevel(user) && (
+                <button
+                  onClick={handleSettingsModalOpen}
+                  className="hidden sm:flex p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  title="Ρυθμίσεις Γραφείου Διαχείρισης"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+              )}
 
-              {/* Settings Button - Mobile */}
-              <button
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="sm:hidden p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                title="Ρυθμίσεις"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
+              {/* Settings Button - Mobile - ADMIN-ONLY */}
+              {isAdminLevel(user) && (
+                <button
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="sm:hidden p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  title="Ρυθμίσεις"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              )}
 
               {/* User Info Card */}
               {user && (
