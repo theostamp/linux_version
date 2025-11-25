@@ -49,6 +49,11 @@ def building_info(request, building_id: int):
             manager_office_phone = None
             manager_office_address = None
             
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"[public_info] Building {building_id}: manager_id = {building.manager_id}")
+            logger.info(f"[public_info] Building fields: management_office_name={building.management_office_name}, management_office_phone={building.management_office_phone}")
+            
             if building.manager_id:
                 from users.models import CustomUser
                 from django.db import connection
@@ -65,6 +70,7 @@ def building_info(request, building_id: int):
                         [building.manager_id]
                     )
                     row = cursor.fetchone()
+                    logger.info(f"[public_info] Manager query result: {row}")
                     if row:
                         # Use manager's office details if building doesn't have them
                         manager_office_name = row[0] or None
