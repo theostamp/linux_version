@@ -38,6 +38,12 @@ def building_info(request, building_id: int):
         if domain_entry and domain_entry.tenant:
             schema_name = domain_entry.tenant.schema_name
 
+    logger = logging.getLogger('django')
+    logger.info("[public_info] Resolving schema", extra={
+        'requested_host': requested_host,
+        'schema_name': schema_name,
+    })
+
     with schema_context(schema_name):
         # Get building information
         try:
