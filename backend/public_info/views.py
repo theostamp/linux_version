@@ -189,6 +189,19 @@ def building_info(request, building_id: int):
                 date__lte=heating_end_date
             ).filter(heating_q).order_by('date').values('id', 'title', 'description', 'amount', 'date', 'category')
 
+            # Debug logging
+            import logging
+            logger = logging.getLogger('django')
+            logger.info(f"[public_info] Building {building_id} expenses:", {
+                'current_month_count': len(current_month_expenses),
+                'heating_count': len(heating_expenses),
+                'current_month_start': str(current_month_start),
+                'current_month_end': str(current_month_end),
+                'heating_start': str(heating_start_date),
+                'heating_end': str(heating_end_date),
+                'heating_year': heating_year,
+            })
+
             financial_data = {
                 'collection_rate': round(collection_rate, 1),
                 'reserve_fund': round(reserve_fund, 2),
@@ -203,10 +216,15 @@ def building_info(request, building_id: int):
                 'top_debtors': [],
             }
         except Exception as e:
+            import logging
+            logger = logging.getLogger('django')
+            logger.error(f"[public_info] Error fetching expenses for building {building_id}: {str(e)}", exc_info=True)
             financial_data = {
                 'collection_rate': 0,
                 'reserve_fund': 0,
                 'recent_expenses': [],
+                'current_month_expenses': [],
+                'heating_expenses': [],
                 'total_credits': 0,
                 'total_debits': 0,
                 'total_obligations': 0,

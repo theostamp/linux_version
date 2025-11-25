@@ -36,8 +36,15 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
 
   // Get expenses from data prop (from useKioskData hook) - already filtered by backend
   const expenses = useMemo(() => {
-    return data?.financial?.heating_expenses || [];
-  }, [data]);
+    const expensesData = data?.financial?.heating_expenses || [];
+    console.log('[HeatingChartWidget] Heating expenses data:', {
+      count: expensesData.length,
+      expenses: expensesData,
+      financial: data?.financial,
+      heatingYear
+    });
+    return expensesData;
+  }, [data, heatingYear]);
 
   if (isLoading) {
     return (
@@ -62,7 +69,11 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
   const chartData = months.map(month => {
     const monthExpenses = expenses.filter((exp: any) => {
       const expenseDate = exp.date || exp.expense_date || '';
-      return expenseDate.startsWith(month.date);
+      // Handle both YYYY-MM-DD and YYYY-MM formats
+      if (!expenseDate) return false;
+      const dateStr = typeof expenseDate === 'string' ? expenseDate : expenseDate.toString();
+      // Extract YYYY-MM from date string (handles both YYYY-MM-DD and YYYY-MM)
+      return dateStr.startsWith(month.date);
     });
     const total = monthExpenses.reduce((sum: number, exp: any) => sum + (parseFloat(exp.amount) || 0), 0);
     return {

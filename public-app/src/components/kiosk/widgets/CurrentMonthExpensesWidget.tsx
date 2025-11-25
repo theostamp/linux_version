@@ -9,7 +9,13 @@ import { useMemo } from 'react';
 export default function CurrentMonthExpensesWidget({ data, isLoading, error, buildingId }: BaseWidgetProps & { buildingId?: number | null }) {
   // Get expenses from data prop (from useKioskData hook)
   const expenses = useMemo(() => {
-    return data?.financial?.current_month_expenses || [];
+    const expensesData = data?.financial?.current_month_expenses || [];
+    console.log('[CurrentMonthExpensesWidget] Expenses data:', {
+      count: expensesData.length,
+      expenses: expensesData,
+      financial: data?.financial
+    });
+    return expensesData;
   }, [data]);
 
   if (isLoading) {

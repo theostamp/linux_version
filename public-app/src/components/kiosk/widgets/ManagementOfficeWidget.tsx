@@ -108,30 +108,6 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
               </a>
             </div>
           )}
-          
-          {building?.management_office_phone_emergency && (
-            <div className="flex items-center space-x-3">
-              <Phone className="w-3 h-3 text-blue-300" />
-              <a 
-                href={`tel:${building.management_office_phone_emergency}`}
-                className="text-xs text-blue-200 hover:text-blue-100 transition-colors font-semibold"
-              >
-                Τηλ. Ανάγκης: {building.management_office_phone_emergency}
-              </a>
-            </div>
-          )}
-          
-          {building?.management_office_email && (
-            <div className="flex items-center space-x-3">
-              <Mail className="w-3 h-3 text-blue-300" />
-              <a 
-                href={`mailto:${building.management_office_email}`}
-                className="text-xs text-blue-200 hover:text-blue-100 transition-colors"
-              >
-                {building.management_office_email}
-              </a>
-            </div>
-          )}
         </div>
       </div>
 
