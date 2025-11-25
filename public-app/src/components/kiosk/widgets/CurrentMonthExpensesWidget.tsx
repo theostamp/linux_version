@@ -4,46 +4,15 @@ import { BaseWidgetProps } from '@/types/kiosk';
 import { Euro, TrendingUp, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
 export default function CurrentMonthExpensesWidget({ data, isLoading, error, buildingId }: BaseWidgetProps & { buildingId?: number | null }) {
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
+  // Get expenses from data prop (from useKioskData hook)
+  const expenses = useMemo(() => {
+    return data?.financial?.current_month_expenses || [];
+  }, [data]);
 
-  useEffect(() => {
-    if (!buildingId) return;
-
-    const fetchCurrentMonthExpenses = async () => {
-      setIsLoadingExpenses(true);
-      try {
-        const today = new Date();
-        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const startDate = `${currentMonth}-01`;
-        const endDate = `${currentMonth}-31`;
-
-        const response = await fetch(
-          `/api/financial/expenses/?building=${buildingId}&expense_date_after=${startDate}&expense_date_before=${endDate}&page_size=10`
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-          const expensesList = result.results || result || [];
-          setExpenses(expensesList);
-        }
-      } catch (err) {
-        console.error('Error fetching expenses:', err);
-      } finally {
-        setIsLoadingExpenses(false);
-      }
-    };
-
-    fetchCurrentMonthExpenses();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchCurrentMonthExpenses, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [buildingId]);
-
-  if (isLoading || isLoadingExpenses) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-300"></div>

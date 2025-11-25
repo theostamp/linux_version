@@ -63,6 +63,22 @@ export interface KioskFinancialInfo {
     amount: number;
     date?: string;
   }>;
+  current_month_expenses?: Array<{
+    id: number;
+    title?: string;
+    description: string;
+    amount: number;
+    date?: string;
+    category?: string;
+  }>;
+  heating_expenses?: Array<{
+    id: number;
+    title?: string;
+    description: string;
+    amount: number;
+    date?: string;
+    category?: string;
+  }>;
   total_expenses?: number;
   pending_payments?: number;
   overdue_payments?: number;
@@ -136,15 +152,19 @@ interface PublicAnnouncement {
 
 interface PublicExpense {
   id: number;
+  title?: string;
   description: string;
   amount: number;
   date?: string;
+  category?: string;
 }
 
 interface PublicFinancialInfo {
   collection_rate?: number;
   reserve_fund?: number;
   recent_expenses?: PublicExpense[];
+  current_month_expenses?: PublicExpense[];
+  heating_expenses?: PublicExpense[];
   total_payments?: number;
   pending_payments?: number;
   overdue_payments?: number;
@@ -319,6 +339,22 @@ export const useKioskData = (buildingId: number | null = 1) => {
           description: expense.description,
           amount: expense.amount,
           date: expense.date
+        })),
+        current_month_expenses: (financialSource?.current_month_expenses || []).map((expense) => ({
+          id: expense.id,
+          title: expense.title,
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date,
+          category: expense.category
+        })),
+        heating_expenses: (financialSource?.heating_expenses || []).map((expense) => ({
+          id: expense.id,
+          title: expense.title,
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date,
+          category: expense.category
         })),
         total_payments: financialSource?.total_payments || 0,
         pending_payments: financialSource?.pending_payments || 0,

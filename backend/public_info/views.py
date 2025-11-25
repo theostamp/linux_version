@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -41,7 +42,7 @@ def building_info(request, building_id: int):
         try:
             building = Building.objects.get(id=building_id)
             
-            # Get manager user details from public schema if manager_id exists
+            # Get manager user details from public schema
             office_logo = None
             management_office_email = None
             management_office_phone_emergency = None
@@ -49,31 +50,39 @@ def building_info(request, building_id: int):
             manager_office_phone = None
             manager_office_address = None
             
-            if building.manager_id:
-                from users.models import CustomUser
-                # Query public schema for manager user - use schema_context to access public schema
-                with schema_context('public'):
+            from users.models import CustomUser
+            
+            # Query public schema for manager user
+            with schema_context('public'):
+                manager_user = None
+                
+                # First, try to get manager by building.manager_id if it exists
+                if building.manager_id:
                     try:
                         manager_user = CustomUser.objects.get(id=building.manager_id)
-                        # Use manager's office details if building doesn't have them
-                        manager_office_name = manager_user.office_name or None
-                        manager_office_phone = manager_user.office_phone or None
-                        management_office_phone_emergency = manager_user.office_phone_emergency or None
-                        manager_office_address = manager_user.office_address or None
-                        management_office_email = manager_user.email or None
-                        
-                        # Get logo URL if exists - same approach as /users/me/ endpoint
-                        if manager_user.office_logo:
-                            office_logo = manager_user.office_logo.url
-                        else:
-                            office_logo = None
                     except CustomUser.DoesNotExist:
-                        # Manager user not found, use None values
-                        manager_office_name = None
-                        manager_office_phone = None
-                        management_office_phone_emergency = None
-                        manager_office_address = None
-                        management_office_email = None
+                        manager_user = None
+                
+                # If no manager_id or manager not found, search for any user with office details
+                if not manager_user:
+                    # Find first user with office details (office_name or office_phone filled)
+                    manager_user = CustomUser.objects.filter(
+                        Q(office_name__isnull=False) & ~Q(office_name='') |
+                        Q(office_phone__isnull=False) & ~Q(office_phone='')
+                    ).first()
+                
+                # Extract office details from manager user if found
+                if manager_user:
+                    manager_office_name = manager_user.office_name or None
+                    manager_office_phone = manager_user.office_phone or None
+                    management_office_phone_emergency = manager_user.office_phone_emergency or None
+                    manager_office_address = manager_user.office_address or None
+                    management_office_email = manager_user.email or None
+                    
+                    # Get logo URL if exists - same approach as /users/me/ endpoint
+                    if manager_user.office_logo:
+                        office_logo = manager_user.office_logo.url
+                    else:
                         office_logo = None
             
             building_info = {
@@ -145,10 +154,47 @@ def building_info(request, building_id: int):
                 building_id=building_id
             ).order_by('-date')[:3].values('id', 'description', 'amount', 'date')
 
+            # Get current month expenses
+            current_month_start = timezone.now().replace(day=1).date()
+            current_month_end = (timezone.now().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            current_month_expenses = Expense.objects.filter(
+                building_id=building_id,
+                date__gte=current_month_start,
+                date__lte=current_month_end
+            ).order_by('-date').values('id', 'title', 'description', 'amount', 'date', 'category')
+
+            # Get heating expenses (September to May of current heating season)
+            now = timezone.now()
+            current_year = now.year
+            current_month = now.month
+            
+            # Determine heating season year: if after August, use current year; otherwise use previous year
+            heating_year = current_year if current_month >= 9 else current_year - 1
+            
+            # Heating season: September (heating_year) to May (heating_year + 1)
+            heating_start_date = datetime(heating_year, 9, 1).date()
+            heating_end_date = datetime(heating_year + 1, 5, 31).date()
+            
+            # Heating keywords for filtering
+            heating_keywords = ['θέρμανσ', 'θερμανσ', 'heating', 'πετρέλαιο', 'πετρελαιο', 'αέριο', 'αεριο', 'gas', 'mazout']
+            
+            # Build Q filter for heating keywords
+            heating_q = Q()
+            for keyword in heating_keywords:
+                heating_q |= Q(title__icontains=keyword) | Q(description__icontains=keyword) | Q(category__icontains=keyword)
+            
+            heating_expenses = Expense.objects.filter(
+                building_id=building_id,
+                date__gte=heating_start_date,
+                date__lte=heating_end_date
+            ).filter(heating_q).order_by('date').values('id', 'title', 'description', 'amount', 'date', 'category')
+
             financial_data = {
                 'collection_rate': round(collection_rate, 1),
                 'reserve_fund': round(reserve_fund, 2),
                 'recent_expenses': list(recent_expenses),
+                'current_month_expenses': list(current_month_expenses),
+                'heating_expenses': list(heating_expenses),
                 'total_credits': round(total_credits, 2),
                 'total_debits': round(total_debits, 2),
                 'total_obligations': 0,

@@ -2,7 +2,7 @@
 
 import { BaseWidgetProps } from '@/types/kiosk';
 import { Flame, TrendingUp } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface HeatingChartWidgetProps extends BaseWidgetProps {
@@ -10,9 +10,6 @@ interface HeatingChartWidgetProps extends BaseWidgetProps {
 }
 
 export default function HeatingChartWidget({ data, isLoading, error, buildingId }: HeatingChartWidgetProps) {
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
-
   // Get current heating season (September to May)
   const getHeatingSeasonMonths = (year: number) => {
     const months = [];
@@ -36,50 +33,13 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
   const currentYear = new Date().getFullYear();
   const heatingYear = new Date().getMonth() >= 8 ? currentYear : currentYear - 1; // If after August, use current year
   const months = useMemo(() => getHeatingSeasonMonths(heatingYear), [heatingYear]);
-  const startDate = `${months[0].date}-01`;
-  const endDate = `${months[months.length - 1].date}-31`;
 
-  useEffect(() => {
-    if (!buildingId) return;
+  // Get expenses from data prop (from useKioskData hook) - already filtered by backend
+  const expenses = useMemo(() => {
+    return data?.financial?.heating_expenses || [];
+  }, [data]);
 
-    const fetchHeatingExpenses = async () => {
-      setIsLoadingExpenses(true);
-      try {
-        const response = await fetch(
-          `/api/financial/expenses/?building=${buildingId}&expense_date_after=${startDate}&expense_date_before=${endDate}&page_size=100`
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-          const expensesList = result.results || result || [];
-          
-          // Filter heating-related expenses
-          const heatingKeywords = ['θέρμανσ', 'θερμανσ', 'heating', 'πετρέλαιο', 'πετρελαιο', 'αέριο', 'αεριο', 'gas', 'mazout'];
-          const heatingExpenses = expensesList.filter((exp: any) => {
-            const title = (exp.title || '').toLowerCase();
-            const desc = (exp.description || '').toLowerCase();
-            const category = (exp.category || '').toLowerCase();
-            return heatingKeywords.some(keyword => 
-              title.includes(keyword) || desc.includes(keyword) || category.includes(keyword)
-            );
-          });
-          
-          setExpenses(heatingExpenses);
-        }
-      } catch (err) {
-        console.error('Error fetching heating expenses:', err);
-      } finally {
-        setIsLoadingExpenses(false);
-      }
-    };
-
-    fetchHeatingExpenses();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchHeatingExpenses, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [buildingId, startDate, endDate]);
-
-  if (isLoading || isLoadingExpenses) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-300"></div>
