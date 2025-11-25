@@ -68,20 +68,6 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
         {/* Auto-Scrolling Widgets Area - Slide Animation */}
         <div className="flex-1 bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden relative border border-purple-500/20">
-          {/* Widget Indicators - Film Strip Style */}
-          <div className="absolute top-3 right-3 z-10 flex space-x-1.5">
-            {sidebarWidgets.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  index === currentSidebarWidget 
-                    ? 'w-8 bg-purple-400 shadow-lg shadow-purple-500/50' 
-                    : 'w-2 bg-slate-600/50'
-                }`}
-              />
-            ))}
-          </div>
-
           {/* Sliding Widget Container - Smooth Film Strip Animation */}
           <div className="h-full w-full relative overflow-hidden">
             {sidebarWidgets.map((widget, index) => {
