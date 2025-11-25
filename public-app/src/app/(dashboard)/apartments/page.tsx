@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { fetchApartments, ApartmentList } from '@/lib/api';
@@ -62,7 +62,53 @@ const getStatusBadge = (apartment: ApartmentList) => {
   return <Badge className="bg-blue-100 text-blue-800">{status}</Badge>;
 };
 
-const renderContactBlock = (label: string, name?: string, phone?: string, email?: string) => (
+// Component για email με ένδειξη καταχώρησης
+const EmailWithStatus = ({ 
+  email, 
+  isRegistered, 
+  buildingId,
+  apartmentId,
+  canInvite 
+}: { 
+  email: string; 
+  isRegistered: boolean;
+  buildingId?: number;
+  apartmentId?: number;
+  canInvite?: boolean;
+}) => {
+  return (
+    <div className="flex items-center gap-1.5">
+      <a href={`mailto:${email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
+        <Mail className="w-3 h-3" />
+        {email}
+      </a>
+      {isRegistered ? (
+        <UserCheck className="w-3.5 h-3.5 text-green-600" title="Καταχωρημένος χρήστης" />
+      ) : canInvite ? (
+        <Link 
+          href={`/users?invite=${encodeURIComponent(email)}&building=${buildingId || ''}&apartment=${apartmentId || ''}`}
+          className="text-blue-600 hover:text-blue-800 transition-colors"
+          title="Πρόσκληση χρήστη"
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+        </Link>
+      ) : (
+        <UserPlus className="w-3.5 h-3.5 text-gray-400" title="Μη καταχωρημένος" />
+      )}
+    </div>
+  );
+};
+
+const renderContactBlock = (
+  label: string, 
+  name?: string, 
+  phone?: string, 
+  email?: string,
+  isRegistered?: boolean,
+  buildingId?: number,
+  apartmentId?: number,
+  canInvite?: boolean
+) => (
   <div>
     <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
     <p className="text-sm font-medium text-gray-900">{name || 'Δεν έχει οριστεί'}</p>
@@ -74,10 +120,13 @@ const renderContactBlock = (label: string, name?: string, phone?: string, email?
         </a>
       )}
       {email && (
-        <a href={`mailto:${email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-          <Mail className="w-3 h-3" />
-          {email}
-        </a>
+        <EmailWithStatus 
+          email={email} 
+          isRegistered={isRegistered || false}
+          buildingId={buildingId}
+          apartmentId={apartmentId}
+          canInvite={canInvite}
+        />
       )}
       {!phone && !email && <span>Χωρίς στοιχεία επικοινωνίας</span>}
     </div>
@@ -534,10 +583,13 @@ const ApartmentsPageContent = () => {
                                 </a>
                               )}
                               {apartment.owner_email && (
-                                <a href={`mailto:${apartment.owner_email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-                                  <Mail className="w-3 h-3" />
-                                  {apartment.owner_email}
-                                </a>
+                                <EmailWithStatus 
+                                  email={apartment.owner_email}
+                                  isRegistered={!!apartment.owner_user}
+                                  buildingId={buildingId}
+                                  apartmentId={apartment.id}
+                                  canInvite={canManage}
+                                />
                               )}
                             </div>
                           </div>
@@ -555,10 +607,13 @@ const ApartmentsPageContent = () => {
                                 </a>
                               )}
                               {apartment.tenant_email && (
-                                <a href={`mailto:${apartment.tenant_email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-                                  <Mail className="w-3 h-3" />
-                                  {apartment.tenant_email}
-                                </a>
+                                <EmailWithStatus 
+                                  email={apartment.tenant_email}
+                                  isRegistered={!!apartment.tenant_user}
+                                  buildingId={buildingId}
+                                  apartmentId={apartment.id}
+                                  canInvite={canManage}
+                                />
                               )}
                             </div>
                           </div>
@@ -635,12 +690,25 @@ const ApartmentsPageContent = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {renderContactBlock('Ιδιοκτήτης', apartment.owner_name, apartment.owner_phone, apartment.owner_email)}
+                    {renderContactBlock(
+                      'Ιδιοκτήτης', 
+                      apartment.owner_name, 
+                      apartment.owner_phone, 
+                      apartment.owner_email,
+                      !!apartment.owner_user,
+                      buildingId,
+                      apartment.id,
+                      canManage
+                    )}
                     {renderContactBlock(
                       'Ένοικος / Χρήστης',
                       apartment.tenant_name || apartment.occupant_name,
                       apartment.tenant_phone || apartment.occupant_phone,
                       apartment.tenant_email || apartment.occupant_email,
+                      !!apartment.tenant_user,
+                      buildingId,
+                      apartment.id,
+                      canManage
                     )}
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-sm">

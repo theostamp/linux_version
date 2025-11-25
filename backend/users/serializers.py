@@ -343,9 +343,29 @@ class UserInvitationCreateSerializer(serializers.ModelSerializer):
     """
     Serializer για τη δημιουργία νέων προσκλήσεων
     """
+    assigned_role = serializers.ChoiceField(
+        choices=['resident', 'internal_manager', 'manager', 'staff'],
+        required=False,
+        allow_null=True,
+        help_text='Ρόλος που θα ανατεθεί στον χρήστη (resident, internal_manager, manager, staff)'
+    )
+    
     class Meta:
         model = UserInvitation
         fields = ('email', 'first_name', 'last_name', 'invitation_type', 'building_id', 'assigned_role')
+    
+    def validate(self, data):
+        """Validation για building_id και assigned_role"""
+        building_id = data.get('building_id')
+        assigned_role = data.get('assigned_role')
+        
+        # Αν assigned_role είναι internal_manager, building_id είναι υποχρεωτικό
+        if assigned_role == 'internal_manager' and not building_id:
+            raise serializers.ValidationError({
+                'building_id': 'Το building_id είναι υποχρεωτικό όταν ο ρόλος είναι internal_manager'
+            })
+        
+        return data
     
     def validate_email(self, value):
         """Έλεγχος αν το email υπάρχει ήδη"""

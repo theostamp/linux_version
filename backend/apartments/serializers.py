@@ -67,6 +67,10 @@ class ApartmentListSerializer(serializers.ModelSerializer):
     occupant_email = serializers.CharField(read_only=True)
     status_display = serializers.CharField(read_only=True)
     
+    # Πεδία για έλεγχο αν ο χρήστης είναι καταχωρημένος
+    owner_user = serializers.PrimaryKeyRelatedField(read_only=True)
+    tenant_user = serializers.PrimaryKeyRelatedField(read_only=True)
+    
     class Meta:
         model = Apartment
         fields = [
@@ -80,6 +84,7 @@ class ApartmentListSerializer(serializers.ModelSerializer):
             'owner_phone',
             'owner_phone2',
             'owner_email',
+            'owner_user',
             'ownership_percentage',
             'participation_mills',
             'heating_mills',
@@ -88,6 +93,7 @@ class ApartmentListSerializer(serializers.ModelSerializer):
             'tenant_phone',
             'tenant_phone2',
             'tenant_email',
+            'tenant_user',
             'occupant_name',
             'occupant_phone',
             'occupant_phone2',

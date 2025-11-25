@@ -1215,6 +1215,7 @@ export type ApartmentList = {
   owner_phone: string;
   owner_phone2: string;
   owner_email: string;
+  owner_user?: number | null;  // User ID αν ο ιδιοκτήτης είναι καταχωρημένος
   ownership_percentage?: number;
   participation_mills?: number;
   heating_mills?: number;
@@ -1223,6 +1224,7 @@ export type ApartmentList = {
   tenant_phone: string;
   tenant_phone2: string;
   tenant_email: string;
+  tenant_user?: number | null;  // User ID αν ο ένοικος είναι καταχωρημένος
   occupant_name: string;
   occupant_phone: string;
   occupant_phone2: string;
@@ -1257,6 +1259,7 @@ export type BuildingResident = {
   email: string;
   type: 'owner' | 'tenant';
   display_text: string;
+  user_id?: number | null;  // User ID για internal_manager_id (όταν υπάρχει user account)
 };
 
 export type BuildingResidentsResponse = {
@@ -1851,4 +1854,46 @@ export async function deleteContractor(id: number): Promise<void> {
 
 export async function fetchContractor(id: number): Promise<Contractor> {
   return await api.get<Contractor>(`/api/maintenance/contractors/${id}/`);
+}
+
+// ============================================================================
+// INVITATION API
+// ============================================================================
+
+export type UserInvitation = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  invitation_type: 'registration' | 'building_access' | 'role_assignment';
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  building_id?: number | null;
+  building_name?: string;
+  assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
+  token: string;
+  expires_at: string;
+  created_at: string;
+  invited_by: number;
+  invited_by_name?: string;
+};
+
+export type CreateInvitationPayload = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  invitation_type?: 'registration' | 'building_access' | 'role_assignment';
+  building_id?: number | null;
+  assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
+};
+
+export async function createInvitation(payload: CreateInvitationPayload): Promise<UserInvitation> {
+  return await apiPost<UserInvitation>('/users/invite/', payload);
+}
+
+export async function listInvitations(): Promise<UserInvitation[]> {
+  return await apiGet<UserInvitation[]>('/users/invitations/');
+}
+
+export async function acceptInvitation(token: string, password: string): Promise<{ access: string; refresh: string }> {
+  return await apiPost<{ access: string; refresh: string }>('/users/accept-invitation/', { token, password });
 }

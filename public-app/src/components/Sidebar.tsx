@@ -208,6 +208,13 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
+        href: '/users',
+        label: 'Διαχείριση Χρηστών',
+        icon: <Users className="w-4 h-4" />,
+        // ADMIN-ONLY: Προσκλήσεις χρηστών
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
         href: '/apartments',
         label: 'Διαχείριση Διαμερισμάτων',
         icon: <Building className="w-4 h-4" />,

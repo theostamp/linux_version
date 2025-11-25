@@ -593,8 +593,12 @@ class InvitationService:
             email_verified=True
         )
         
-        # Ανάθεση ρόλου αν υπάρχει
+        # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
+            user.role = invitation.assigned_role
+            user.save(update_fields=['role'])
+            
+            # Ανάθεση σε RBAC group αν υπάρχει
             from django.contrib.auth.models import Group
             try:
                 group = Group.objects.get(name=invitation.assigned_role)
@@ -607,12 +611,25 @@ class InvitationService:
             try:
                 from buildings.models import Building, BuildingMembership
                 building = Building.objects.get(id=invitation.building_id)
+                
+                # Χρήση assigned_role για building membership role (ή default 'resident')
+                membership_role = invitation.assigned_role or 'resident'
+                
                 BuildingMembership.objects.create(
-                    user=user,
+                    resident=user,
                     building=building,
-                    role='resident'  # Default role
+                    role=membership_role
                 )
-            except:
+                
+                # Αν ο ρόλος είναι internal_manager, ορίζουμε building.internal_manager
+                if invitation.assigned_role == 'internal_manager':
+                    building.internal_manager = user
+                    building.save(update_fields=['internal_manager'])
+                    
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to create building membership: {e}")
                 pass  # Building might not exist in current tenant
         
         # Ενημέρωση invitation
