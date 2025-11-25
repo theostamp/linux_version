@@ -51,41 +51,30 @@ def building_info(request, building_id: int):
             
             if building.manager_id:
                 from users.models import CustomUser
-                from django.db import connection
-                from django.conf import settings
-                # Query public schema for manager user
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        """
-                        SELECT office_name, office_phone, office_phone_emergency, 
-                               office_address, office_logo, email
-                        FROM public.users_customuser 
-                        WHERE id = %s
-                        """,
-                        [building.manager_id]
-                    )
-                    row = cursor.fetchone()
-                    if row:
+                # Query public schema for manager user - use schema_context to access public schema
+                with schema_context('public'):
+                    try:
+                        manager_user = CustomUser.objects.get(id=building.manager_id)
                         # Use manager's office details if building doesn't have them
-                        manager_office_name = row[0] or None
-                        manager_office_phone = row[1] or None
-                        management_office_phone_emergency = row[2] or None
-                        manager_office_address = row[3] or None
-                        office_logo_path = row[4] or None
-                        management_office_email = row[5] or None
+                        manager_office_name = manager_user.office_name or None
+                        manager_office_phone = manager_user.office_phone or None
+                        management_office_phone_emergency = manager_user.office_phone_emergency or None
+                        manager_office_address = manager_user.office_address or None
+                        management_office_email = manager_user.email or None
                         
-                        # Get logo URL if exists
-                        # office_logo_path from database is relative to MEDIA_ROOT (e.g., "office_logos/logo.jpg")
-                        if office_logo_path:
-                            # Remove leading slash if present and construct URL
-                            logo_path_clean = office_logo_path.lstrip('/')
-                            # MEDIA_URL is usually "/media/" so we combine them
-                            office_logo = f"{settings.MEDIA_URL.rstrip('/')}/{logo_path_clean}"
-                            import logging
-                            logger = logging.getLogger(__name__)
-                            logger.info(f"[public_info] Office logo path: {office_logo_path}, Clean: {logo_path_clean}, Final URL: {office_logo}")
+                        # Get logo URL if exists - same approach as /users/me/ endpoint
+                        if manager_user.office_logo:
+                            office_logo = manager_user.office_logo.url
                         else:
                             office_logo = None
+                    except CustomUser.DoesNotExist:
+                        # Manager user not found, use None values
+                        manager_office_name = None
+                        manager_office_phone = None
+                        management_office_phone_emergency = None
+                        manager_office_address = None
+                        management_office_email = None
+                        office_logo = None
             
             building_info = {
                 'id': building.id,
