@@ -539,9 +539,13 @@ class InvitationService:
     
     @staticmethod
     def create_invitation(invited_by, email, first_name="", last_name="", 
-                         invitation_type="registration", building=None, assigned_role=None):
+                         invitation_type="registration", building=None, building_id=None, assigned_role=None):
         """
         Δημιουργία νέας πρόσκλησης
+        
+        Args:
+            building: Building object (optional, legacy support)
+            building_id: Building ID (optional, preferred)
         """
         # Έλεγχος αν υπάρχει ήδη χρήστης με αυτό το email
         if User.objects.filter(email=email).exists():
@@ -551,6 +555,9 @@ class InvitationService:
         if UserInvitation.objects.filter(email=email, status='pending').exists():
             raise ValueError("Υπάρχει ήδη ενεργή πρόσκληση για αυτό το email.")
         
+        # Determine building_id from either parameter
+        final_building_id = building_id or (building.id if building else None)
+        
         # Δημιουργία invitation
         invitation = UserInvitation.objects.create(
             email=email,
@@ -558,7 +565,7 @@ class InvitationService:
             last_name=last_name,
             invitation_type=invitation_type,
             invited_by=invited_by,
-            building_id=building.id if building else None,
+            building_id=final_building_id,
             assigned_role=assigned_role
         )
         
