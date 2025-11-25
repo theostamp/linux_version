@@ -178,7 +178,7 @@ def building_info(request, building_id: int):
                 building_id=building_id,
                 date__gte=current_month_start,
                 date__lte=current_month_end
-            ).order_by('-date').values('id', 'title', 'description', 'amount', 'date', 'category')
+            ).order_by('-date').values('id', 'title', 'notes', 'amount', 'date', 'category')
 
             current_month_fallback = False
             if not current_month_expenses_qs.exists():
@@ -186,7 +186,7 @@ def building_info(request, building_id: int):
                 fallback_limit = 10
                 current_month_expenses_qs = Expense.objects.filter(
                     building_id=building_id
-                ).order_by('-date').values('id', 'title', 'description', 'amount', 'date', 'category')[:fallback_limit]
+                ).order_by('-date').values('id', 'title', 'notes', 'amount', 'date', 'category')[:fallback_limit]
 
             current_month_expenses = list(current_month_expenses_qs)
 
@@ -212,7 +212,7 @@ def building_info(request, building_id: int):
             # Build Q filter for heating keywords
             heating_q = Q()
             for keyword in heating_keywords:
-                heating_q |= Q(title__icontains=keyword) | Q(description__icontains=keyword) | Q(category__icontains=keyword)
+                heating_q |= Q(title__icontains=keyword) | Q(notes__icontains=keyword) | Q(category__icontains=keyword)
             
             heating_qs = Expense.objects.filter(
                 building_id=building_id,
@@ -247,7 +247,7 @@ def building_info(request, building_id: int):
                 ).filter(heating_q)
 
             heating_expenses = list(
-                heating_qs.order_by('date').values('id', 'title', 'description', 'amount', 'date', 'category')
+                heating_qs.order_by('date').values('id', 'title', 'notes', 'amount', 'date', 'category')
             )
 
             # Debug logging
