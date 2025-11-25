@@ -91,15 +91,21 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
 
   return (
     <div className="h-full flex flex-col">
-      {/* Minimal Header - just icon, total amount and season */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <Flame className="w-5 h-5 text-orange-400" />
-          <span className="text-xl font-bold text-white">€{totalAmount.toFixed(0)}</span>
+      {/* Header */}
+      <div className="mb-3 pb-2 border-b border-orange-500/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Flame className="w-5 h-5 text-orange-400" />
+            <h3 className="text-lg font-semibold text-white">Κατανάλωση Θέρμανσης</h3>
+          </div>
+          {seasonLabel && (
+            <span className="text-xs text-orange-300/70">{seasonLabel}</span>
+          )}
         </div>
-        {seasonLabel && (
-          <span className="text-xs text-orange-300/60">{seasonLabel}</span>
-        )}
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-xs text-orange-200/80">Συνολική Δαπάνη</span>
+          <span className="text-lg font-bold text-white">€{totalAmount.toFixed(2)}</span>
+        </div>
       </div>
 
       {/* Chart - Full height with all heating months */}
