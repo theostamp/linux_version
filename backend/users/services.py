@@ -84,7 +84,23 @@ class EmailService:
         """
         Αποστολή email πρόσκλησης
         """
-        invitation_url = f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}"
+        # Get tenant subdomain for the invitation URL
+        from django.db import connection
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the invitation URL with tenant subdomain
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            # Replace the base domain with tenant subdomain
+            # e.g., https://newconcierge.app -> https://theo.newconcierge.app
+            invitation_url = f"https://{tenant_subdomain}.newconcierge.app/accept-invitation?token={invitation.token}"
+        else:
+            invitation_url = f"{base_url}/accept-invitation?token={invitation.token}"
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Πρόσκληση στο New Concierge"
         
