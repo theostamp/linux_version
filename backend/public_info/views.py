@@ -54,10 +54,36 @@ def building_info(request, building_id: int):
             logger.info(f"[public_info] Building {building_id}: manager_id = {building.manager_id}")
             logger.info(f"[public_info] Building fields: management_office_name={building.management_office_name}, management_office_phone={building.management_office_phone}")
             
-            if building.manager_id:
-                from users.models import CustomUser
-                from django.db import connection
-                from django.conf import settings
+            from django.db import connection
+            from django.conf import settings
+            
+            # Try to get manager from building.manager_id first
+            # If not found, try to get the tenant owner (first staff user with office details)
+            manager_user_id = building.manager_id
+            
+            if not manager_user_id:
+                # Fallback: Find the tenant owner from public schema
+                # This is typically the user who created the tenant and has office details
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT cu.id 
+                        FROM public.users_customuser cu
+                        JOIN public.tenants_tenantusermembership tm ON tm.user_id = cu.id
+                        JOIN public.tenants_client tc ON tc.id = tm.tenant_id
+                        WHERE tc.schema_name = %s 
+                        AND (cu.office_name IS NOT NULL AND cu.office_name != '')
+                        ORDER BY tm.id ASC
+                        LIMIT 1
+                        """,
+                        [schema_name]
+                    )
+                    row = cursor.fetchone()
+                    if row:
+                        manager_user_id = row[0]
+                        logger.info(f"[public_info] Found tenant owner with office details: user_id={manager_user_id}")
+            
+            if manager_user_id:
                 # Query public schema for manager user
                 with connection.cursor() as cursor:
                     cursor.execute(
@@ -67,10 +93,10 @@ def building_info(request, building_id: int):
                         FROM public.users_customuser 
                         WHERE id = %s
                         """,
-                        [building.manager_id]
+                        [manager_user_id]
                     )
                     row = cursor.fetchone()
-                    logger.info(f"[public_info] Manager query result: {row}")
+                    logger.info(f"[public_info] Manager query result for user_id={manager_user_id}: {row}")
                     if row:
                         # Use manager's office details if building doesn't have them
                         manager_office_name = row[0] or None
