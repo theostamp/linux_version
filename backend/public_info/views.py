@@ -40,6 +40,44 @@ def building_info(request, building_id: int):
         # Get building information
         try:
             building = Building.objects.get(id=building_id)
+            
+            # Get manager user details from public schema if manager_id exists
+            office_logo = None
+            management_office_email = None
+            management_office_phone_emergency = None
+            manager_office_name = None
+            manager_office_phone = None
+            manager_office_address = None
+            
+            if building.manager_id:
+                from users.models import CustomUser
+                from django.db import connection
+                # Query public schema for manager user
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT office_name, office_phone, office_phone_emergency, 
+                               office_address, office_logo, email
+                        FROM public.users_customuser 
+                        WHERE id = %s
+                        """,
+                        [building.manager_id]
+                    )
+                    row = cursor.fetchone()
+                    if row:
+                        # Use manager's office details if building doesn't have them
+                        manager_office_name = row[0] or None
+                        manager_office_phone = row[1] or None
+                        management_office_phone_emergency = row[2] or None
+                        manager_office_address = row[3] or None
+                        office_logo_path = row[4] or None
+                        management_office_email = row[5] or None
+                        
+                        # Get logo URL if exists
+                        if office_logo_path:
+                            from django.conf import settings
+                            office_logo = f"{settings.MEDIA_URL}{office_logo_path}"
+            
             building_info = {
                 'id': building.id,
                 'name': building.name,
@@ -49,10 +87,13 @@ def building_info(request, building_id: int):
                 'apartments_count': building.apartments_count,
                 'internal_manager_name': building.internal_manager_name,
                 'internal_manager_phone': building.internal_manager_phone,
-                'management_office_name': building.management_office_name,
-                'management_office_phone': building.management_office_phone,
-                'management_office_address': building.management_office_address,
-                'office_logo': None,  # Building model doesn't have direct manager relation
+                # Use building's management office data, fallback to manager's office data
+                'management_office_name': building.management_office_name or manager_office_name,
+                'management_office_phone': building.management_office_phone or manager_office_phone,
+                'management_office_address': building.management_office_address or manager_office_address,
+                'management_office_email': management_office_email,
+                'management_office_phone_emergency': management_office_phone_emergency,
+                'office_logo': office_logo,
             }
         except Building.DoesNotExist:
             building_info = None

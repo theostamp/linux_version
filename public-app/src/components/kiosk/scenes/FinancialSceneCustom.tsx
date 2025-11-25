@@ -5,6 +5,7 @@ import AnnouncementsWidget from '@/components/kiosk/widgets/AnnouncementsWidget'
 import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
+import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 import CommonExpenseBillWidget from '@/components/kiosk/widgets/CommonExpenseBillWidget';
 
 interface FinancialSceneCustomProps {
@@ -52,15 +53,24 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
   const CurrentSidebarComponent = sidebarWidgets[currentSidebarWidget].Component;
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex overflow-hidden">
-      {/* Left Sidebar - 20% */}
-      <div className="w-[20%] flex flex-col space-y-3 p-3">
-        {/* Sticky Top - Announcements */}
-        <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
-          <div className="h-full overflow-y-auto p-3">
-            <AnnouncementsWidget data={data} isLoading={false} error={undefined} />
-          </div>
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex flex-col overflow-hidden">
+      {/* Top Bar - Management Office Info */}
+      <div className="h-[12%] bg-slate-800/90 backdrop-blur-md border-b border-blue-500/20 shadow-lg">
+        <div className="h-full">
+          <ManagementOfficeWidget data={data} isLoading={false} error={undefined} />
         </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - 20% */}
+        <div className="w-[20%] flex flex-col space-y-3 p-3">
+          {/* Sticky Top - Announcements */}
+          <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+            <div className="h-full overflow-y-auto p-3">
+              <AnnouncementsWidget data={data} isLoading={false} error={undefined} />
+            </div>
+          </div>
 
         {/* Auto-Scrolling Widgets Area - Slide Animation */}
         <div className="flex-1 bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden relative border border-blue-500/20">
@@ -100,15 +110,16 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
             })}
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Right Area - 80% - Common Expenses Sheet ONLY (No Headers) */}
-      <div className="flex-1 p-3">
-        {/* Clean container with blue theme - NO HEADER */}
-        <div className="h-full w-full bg-slate-800/80 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/30">
-          {/* Bill Image - FULL Container, No Header */}
-          <div className="h-full w-full">
-            <CommonExpenseBillWidget data={data} isLoading={false} error={undefined} />
+        {/* Right Area - 80% - Common Expenses Sheet ONLY (No Headers) */}
+        <div className="flex-1 p-3">
+          {/* Clean container with blue theme - NO HEADER */}
+          <div className="h-full w-full bg-slate-800/80 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/30">
+            {/* Bill Image - FULL Container, No Header */}
+            <div className="h-full w-full">
+              <CommonExpenseBillWidget data={data} isLoading={false} error={undefined} />
+            </div>
           </div>
         </div>
       </div>

@@ -156,6 +156,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
       </div>
+
+      {/* Copyright Footer - Discrete text below News Widget */}
+      <div className="fixed bottom-0 left-0 right-0 h-4 flex items-center justify-center z-40">
+        <p className="text-[9px] text-slate-500/50 font-light tracking-wider">
+          © {new Date().getFullYear()} New Concierge. All rights reserved.
+        </p>
+      </div>
     </div>
   );
 }
