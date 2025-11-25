@@ -156,15 +156,17 @@ def building_info(request, building_id: int):
             collection_rate = (total_credits / total_debits * 100) if total_debits > 0 else 0
 
             # Get reserve fund (sum of all reserve fund contributions)
+            # Transaction model uses 'description' field
             reserve_fund = Transaction.objects.filter(
                 apartment__building_id=building_id,
                 description__icontains='εφεδρεί'  # Greek for "reserve"
             ).aggregate(total=Sum('amount'))['total'] or 0
 
             # Get recent expenses (last 3)
+            # Expense model uses 'title' and 'notes' instead of 'description'
             recent_expenses = Expense.objects.filter(
                 building_id=building_id
-            ).order_by('-date')[:3].values('id', 'description', 'amount', 'date')
+            ).order_by('-date')[:3].values('id', 'title', 'notes', 'amount', 'date')
 
             # Determine current month period (timezone aware)
             today = timezone.localdate()
