@@ -7,7 +7,7 @@ import AnnouncementsWidget from '@/components/kiosk/widgets/AnnouncementsWidget'
 import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
 import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
-import AnnouncementsVotesCarousel from '@/components/kiosk/widgets/AnnouncementsVotesCarousel';
+import AnnouncementsExpensesSlider from '@/components/kiosk/widgets/AnnouncementsExpensesSlider';
 import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
 import { Building2 } from 'lucide-react';
@@ -122,10 +122,10 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
         </div>
 
-        {/* Announcements & Votes Carousel - Bottom */}
+        {/* Announcements, Expenses & Heating Chart Slider - Bottom */}
         <div className="h-[24%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
-            <AnnouncementsVotesCarousel data={data} isLoading={false} error={undefined} />
+            <AnnouncementsExpensesSlider data={data} isLoading={false} error={undefined} buildingId={buildingId} />
           </div>
         </div>
 
