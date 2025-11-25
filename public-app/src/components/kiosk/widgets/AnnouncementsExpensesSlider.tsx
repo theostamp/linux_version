@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { BaseWidgetProps } from '@/types/kiosk';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import AnnouncementsVotesCarousel from './AnnouncementsVotesCarousel';
 import CurrentMonthExpensesWidget from './CurrentMonthExpensesWidget';
 import HeatingChartWidget from './HeatingChartWidget';
 
@@ -11,12 +10,12 @@ interface AnnouncementsExpensesSliderProps extends BaseWidgetProps {
   buildingId?: number | null;
 }
 
-// Check if we're in heating season (October to May)
+// Check if we're in heating season (September to May)
 const isHeatingSeasonActive = (): boolean => {
   const month = new Date().getMonth(); // 0-11
-  // Heating season: October (9) to May (4)
-  // NOT heating season: June (5) to September (8)
-  return month <= 4 || month >= 9;
+  // Heating season: September (8) to May (4)
+  // NOT heating season: June (5) to August (7)
+  return month <= 4 || month >= 8;
 };
 
 export default function AnnouncementsExpensesSlider({ data, isLoading, error, buildingId }: AnnouncementsExpensesSliderProps) {
@@ -27,18 +26,13 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
   const widgets = useMemo(() => {
     const baseWidgets = [
       {
-        id: 'announcements',
-        name: 'Ανακοινώσεις & Ψηφοφορίες',
-        Component: AnnouncementsVotesCarousel,
-      },
-      {
         id: 'expenses',
         name: 'Δαπάνες Τρέχοντος Μήνα',
         Component: CurrentMonthExpensesWidget,
       },
     ];
     
-    // Only show heating chart during heating season (October-May)
+    // Only show heating chart during heating season (September-May)
     if (isHeatingSeasonActive()) {
       baseWidgets.push({
         id: 'heating',
