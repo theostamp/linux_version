@@ -137,15 +137,19 @@ def building_info(request, building_id: int):
         # Calculate financial data
         try:
             logger = logging.getLogger('django')
-            # Get total credits and debits for collection rate
+            # Get total credits (payments received) and debits (charges) for collection rate
+            # Credits: payments received
+            credit_types = ['common_expense_payment', 'expense_payment', 'refund', 'payment_received']
             total_credits = Transaction.objects.filter(
                 apartment__building_id=building_id,
-                transaction_type='credit'
+                type__in=credit_types
             ).aggregate(total=Sum('amount'))['total'] or 0
 
+            # Debits: charges/expenses
+            debit_types = ['common_expense_charge', 'expense_created', 'expense_issued', 'interest_charge', 'penalty_charge']
             total_debits = Transaction.objects.filter(
                 apartment__building_id=building_id,
-                transaction_type='debit'
+                type__in=debit_types
             ).aggregate(total=Sum('amount'))['total'] or 0
 
             # Collection rate = (credits / debits) * 100 if debits > 0
