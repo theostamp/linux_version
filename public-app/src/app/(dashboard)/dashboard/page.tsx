@@ -112,10 +112,10 @@ function DashboardContent() {
               <Link
                 key={building.id}
                 href={`/buildings/${building.id}`}
-                className="block border-0 rounded-none p-6 shadow-md hover:shadow-lg transition-all duration-200 bg-card group"
+                className="block border-0 rounded-lg p-6 shadow-md hover:shadow-lg transition-all duration-200 bg-card group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-none flex items-center justify-center group-hover:bg-primary/20 transition-colors shadow-sm">
+                  <div className="w-12 h-12 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors shadow-sm">
                     <Building className="w-6 h-6 text-primary" />
                   </div>
                   <div className="text-right">
@@ -133,7 +133,7 @@ function DashboardContent() {
 
       {/* Empty State */}
       {effectiveBuildings.length === 0 && (
-        <div className="bg-card rounded-none shadow-lg p-8">
+        <div className="bg-card rounded-lg shadow-lg p-8">
           <div className="text-center">
             <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-foreground mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>

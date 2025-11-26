@@ -87,7 +87,7 @@ export default function GlobalHeader() {
                 {(() => {
                   const logoUrl = getOfficeLogoUrl(user?.office_logo);
                   return logoUrl && !logoError ? (
-                    <div className="w-12 h-12 rounded-none flex items-center justify-center shadow-md overflow-hidden bg-muted">
+                    <div className="w-12 h-12 rounded-md flex items-center justify-center shadow-md overflow-hidden bg-muted">
                       <img
                         src={logoUrl}
                         alt="Office Logo"
@@ -104,7 +104,7 @@ export default function GlobalHeader() {
                       />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 bg-primary rounded-none flex items-center justify-center shadow-md">
+                    <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center shadow-md">
                       <BuildingIcon className="w-6 h-6 text-white" />
                     </div>
                   );
@@ -170,7 +170,7 @@ export default function GlobalHeader() {
                   const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
                   window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
                 }}
-                className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-none transition-all duration-200"
+                className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
                 title="Άνοιγμα Ημερολογίου σε νέο παράθυρο"
               >
                 <Calendar className="w-5 h-5" />
@@ -180,7 +180,7 @@ export default function GlobalHeader() {
               {isAdminLevel(user) && (
                 <button
                   onClick={handleSettingsModalOpen}
-                  className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-none transition-all duration-200"
+                  className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
                   title="Ρυθμίσεις Γραφείου Διαχείρισης"
                 >
                   <Settings className="w-5 h-5" />
@@ -191,7 +191,7 @@ export default function GlobalHeader() {
               {isAdminLevel(user) && (
                 <button
                   onClick={() => setIsSettingsModalOpen(true)}
-                  className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-none transition-all duration-200"
+                  className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
                   title="Ρυθμίσεις"
                 >
                   <Settings className="w-4 h-4" />
@@ -200,8 +200,8 @@ export default function GlobalHeader() {
 
               {/* User Info Card */}
               {user && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-muted rounded-none shadow-sm">
-                  <div className="w-8 h-8 bg-muted-foreground rounded-none flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 px-4 py-2 bg-muted rounded-md shadow-sm">
+                  <div className="w-8 h-8 bg-muted-foreground rounded-full flex items-center justify-center flex-shrink-0">
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <div className="hidden sm:block">

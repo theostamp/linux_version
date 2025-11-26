@@ -447,10 +447,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </div>
         
         {/* Context Banner - Building & Month */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-primary/5 rounded-none shadow-md">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-primary/5 rounded-lg shadow-md">
           {/* Building Info */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-none shadow-sm">
+            <div className="p-2 bg-primary/10 rounded-md shadow-sm">
               <Building2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
@@ -462,7 +462,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           
           {/* Month Selector */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-none shadow-sm">
+            <div className="p-2 bg-primary/10 rounded-md shadow-sm">
               <Calendar className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
@@ -479,7 +479,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   }}
                   variant="outline"
                   size="sm"
-                  className="bg-card hover:bg-primary/10 border-0 shadow-sm text-primary hover:text-primary/80 transition-colors rounded-none"
+                  className="bg-card hover:bg-primary/10 border-0 shadow-sm text-primary hover:text-primary/80 transition-colors rounded-md"
                 >
                   Τρέχων
                 </Button>
@@ -538,7 +538,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <ConditionalRender permission="financial_write">
                 <button
                   onClick={() => handleTabChange('calculator')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-none border-0 transition-all duration-200 shadow-md ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
                     activeTab === 'calculator'
                       ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-lg'
                       : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
@@ -551,7 +551,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <ConditionalRender permission="financial_read">
                 <button
                   onClick={() => handleTabChange('balances')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-none border-0 transition-all duration-200 shadow-md ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
                     activeTab === 'balances'
                       ? 'bg-emerald-100 border-emerald-300 text-emerald-700 shadow-lg'
                       : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
@@ -564,7 +564,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <ConditionalRender permission="expense_manage">
                 <button
                   onClick={() => handleTabChange('expenses')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-none border-0 transition-all duration-200 shadow-md ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
                     activeTab === 'expenses'
                       ? 'bg-green-100 border-green-300 text-green-700 shadow-lg'
                       : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
@@ -577,7 +577,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <ConditionalRender permission="financial_write">
                 <button
                   onClick={() => handleTabChange('meters')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-none border-0 transition-all duration-200 shadow-md ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
                     activeTab === 'meters'
                       ? 'bg-orange-100 border-orange-300 text-orange-700 shadow-lg'
                       : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
@@ -590,7 +590,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <ConditionalRender permission="financial_read">
                 <button
                   onClick={() => handleTabChange('history')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-none border-0 transition-all duration-200 shadow-md ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
                     activeTab === 'history'
                       ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-lg'
                       : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
@@ -603,7 +603,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <ConditionalRender permission="financial_read">
                 <button
                   onClick={() => handleTabChange('charts')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-none border-0 transition-all duration-200 shadow-md ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
                     activeTab === 'charts'
                       ? 'bg-purple-100 border-purple-300 text-purple-700 shadow-lg'
                       : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
@@ -621,7 +621,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ConditionalRender permission="financial_write">
               <button
                 onClick={() => handleTabChange('calculator')}
-                className={`group flex flex-col items-center p-4 rounded-none border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
+                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'calculator'
                     ? 'bg-blue-50 border-blue-200 shadow-lg'
                     : 'bg-background border-border hover:border-primary/30 hover:bg-primary/5'
@@ -647,7 +647,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('balances')}
-                className={`group flex flex-col items-center p-4 rounded-none border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
+                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'balances'
                     ? 'bg-emerald-50 border-emerald-200 shadow-lg'
                     : 'bg-card shadow-sm hover:shadow-md hover:bg-emerald-50/30'
@@ -673,7 +673,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ConditionalRender permission="expense_manage">
               <button
                 onClick={() => handleTabChange('expenses')}
-                className={`group flex flex-col items-center p-4 rounded-none border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
+                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'expenses'
                     ? 'bg-green-50 border-green-200 shadow-lg'
                     : 'bg-card shadow-sm hover:shadow-md hover:bg-green-50/30'
@@ -699,7 +699,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ConditionalRender permission="financial_write">
               <button
                 onClick={() => handleTabChange('meters')}
-                className={`group flex flex-col items-center p-4 rounded-none border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
+                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'meters'
                     ? 'bg-orange-50 border-orange-200 shadow-lg'
                     : 'bg-white border-gray-200 hover:border-orange-200 hover:bg-orange-50/30'
@@ -725,7 +725,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('history')}
-                className={`group flex flex-col items-center p-4 rounded-none border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
+                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'history'
                     ? 'bg-indigo-50 border-indigo-200 shadow-lg'
                     : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30'
@@ -751,7 +751,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('charts')}
-                className={`group flex flex-col items-center p-4 rounded-none border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
+                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'charts'
                     ? 'bg-purple-50 border-purple-200 shadow-lg'
                     : 'bg-white border-gray-200 hover:border-purple-200 hover:bg-purple-50/30'
