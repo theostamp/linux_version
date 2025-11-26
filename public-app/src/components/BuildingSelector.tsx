@@ -118,12 +118,12 @@ export default function BuildingSelector({
       >
         <div 
           ref={modalRef}
-          className="bg-card rounded-none shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border-0 pointer-events-auto"
+          className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-border pointer-events-auto"
         >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2">
-            <BuildingIcon className="w-5 h-5 text-blue-600" />
+            <BuildingIcon className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Επιλογή Κτιρίου</h2>
           </div>
           <button
@@ -135,7 +135,7 @@ export default function BuildingSelector({
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-border bg-card">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input
@@ -143,7 +143,7 @@ export default function BuildingSelector({
               placeholder="Αναζήτηση κτιρίου..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border-0 rounded-none shadow-sm bg-card focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
+              className="w-full pl-10 pr-4 py-2 border border-input rounded-md shadow-sm bg-background focus:ring-2 focus:ring-ring focus:outline-none text-foreground placeholder:text-muted-foreground"
               autoFocus
             />
           </div>
@@ -155,7 +155,7 @@ export default function BuildingSelector({
                 value={manualId}
                 onChange={(e) => setManualId(e.target.value)}
                 placeholder="ID κτιρίου (χειροκίνητα)"
-                className="w-full px-3 py-2 border-0 rounded-none shadow-sm bg-muted focus:ring-2 focus:ring-ring focus:outline-none text-sm text-foreground"
+                className="w-full px-3 py-2 border border-input rounded-md shadow-sm bg-background focus:ring-2 focus:ring-ring focus:outline-none text-sm text-foreground placeholder:text-muted-foreground"
               />
               <button
                 type="button"
@@ -167,7 +167,7 @@ export default function BuildingSelector({
                     setManualId('');
                   }
                 }}
-                className="px-3 py-2 bg-primary text-primary-foreground text-sm rounded-none shadow-sm disabled:opacity-50"
+                className="px-3 py-2 bg-primary text-primary-foreground text-sm rounded-md shadow-sm disabled:opacity-50 hover:bg-primary/90 transition-colors"
                 disabled={!manualId}
               >
                 ΟΚ
@@ -187,13 +187,13 @@ export default function BuildingSelector({
               {/* Επιλογή "Όλα" */}
               <div
                 onClick={() => handleBuildingSelect(null)}
-                className={`flex items-center justify-between p-4 hover:bg-muted cursor-pointer transition-colors ${
-                  selectedBuilding === null ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                  selectedBuilding === null ? 'bg-primary/5 border-r-4 border-primary' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary rounded-none flex items-center justify-center shadow-sm">
-                    <BuildingIcon className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm text-primary-foreground">
+                    <BuildingIcon className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="font-medium text-foreground">Όλα τα Κτίρια</div>
@@ -201,7 +201,7 @@ export default function BuildingSelector({
                   </div>
                 </div>
                 {selectedBuilding === null && (
-                  <Check className="w-5 h-5 text-blue-600" />
+                  <Check className="w-5 h-5 text-primary" />
                 )}
               </div>
 
@@ -211,25 +211,25 @@ export default function BuildingSelector({
               {/* Τρέχον κτίριο (αν υπάρχει) */}
               {currentBuilding && (
                 <>
-                  <div className="px-4 py-2 bg-muted border-b border-border">
+                  <div className="px-4 py-2 bg-muted/50 border-b border-border">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Τρέχον κτίριο
                     </div>
                   </div>
                   <div
                     onClick={() => handleBuildingSelect(currentBuilding)}
-                    className={`flex items-center justify-between p-4 hover:bg-muted cursor-pointer transition-colors ${
-                      selectedBuilding?.id === currentBuilding.id ? 'bg-green-50 border-r-4 border-green-500' : ''
+                    className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      selectedBuilding?.id === currentBuilding.id ? 'bg-success/10 border-r-4 border-success' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-success rounded-none flex items-center justify-center shadow-sm">
-                        <MapPin className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 bg-success rounded-md flex items-center justify-center shadow-sm text-success-foreground">
+                        <MapPin className="w-4 h-4" />
                       </div>
                       <div>
                         <div className="font-medium text-foreground flex items-center gap-2">
                           {currentBuilding.name}
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-success/20 text-success-foreground px-2 py-1 rounded-full border border-success/20">
                             Τρέχον
                           </span>
                         </div>
@@ -240,7 +240,7 @@ export default function BuildingSelector({
                       </div>
                     </div>
                     {selectedBuilding?.id === currentBuilding.id && (
-                      <Check className="w-5 h-5 text-green-600" />
+                      <Check className="w-5 h-5 text-success" />
                     )}
                   </div>
                   <div className="border-t border-border mx-4"></div>
@@ -248,8 +248,8 @@ export default function BuildingSelector({
               )}
 
               {/* Λίστα κτιρίων */}
-              <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+              <div className="px-4 py-2 bg-muted/30 border-b border-border">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Άλλα κτίρια
                 </div>
               </div>
@@ -262,13 +262,13 @@ export default function BuildingSelector({
                   <div
                     key={building.id}
                     onClick={() => handleBuildingSelect(building)}
-                    className={`flex items-center justify-between p-4 hover:bg-muted cursor-pointer transition-colors ${
-                      selectedBuilding?.id === building.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                    className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      selectedBuilding?.id === building.id ? 'bg-primary/5 border-r-4 border-primary' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                        <BuildingIcon className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm text-primary-foreground">
+                        <BuildingIcon className="w-4 h-4" />
                       </div>
                       <div>
                         <div className="font-medium text-foreground">{building.name}</div>
@@ -279,7 +279,7 @@ export default function BuildingSelector({
                       </div>
                     </div>
                     {selectedBuilding?.id === building.id && (
-                      <Check className="w-5 h-5 text-blue-600" />
+                      <Check className="w-5 h-5 text-primary" />
                     )}
                   </div>
                 ))
