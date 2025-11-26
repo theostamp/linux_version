@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { fetchApartments, ApartmentList } from '@/lib/api';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import EditTenantModal from '@/components/apartments/EditTenantModal';
 
 type OccupancyFilter = 'all' | 'owner' | 'tenant' | 'vacant';
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -149,6 +150,8 @@ const ApartmentsPageContent = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editTenantModalOpen, setEditTenantModalOpen] = useState(false);
+  const [selectedApartment, setSelectedApartment] = useState<ApartmentList | null>(null);
 
   const canManage = !!(user?.is_superuser || user?.is_staff);
 
@@ -650,6 +653,19 @@ const ApartmentsPageContent = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {canManage && (apartment.tenant_name || apartment.is_rented) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedApartment(apartment);
+                                  setEditTenantModalOpen(true);
+                                }}
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Ενημέρωση
+                              </Button>
+                            )}
                             <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
                               <Button variant="outline" size="sm">
                                 Λεπτομέρειες
@@ -735,12 +751,27 @@ const ApartmentsPageContent = () => {
                     <p className="text-xs text-gray-500">
                       Δημιουργήθηκε: {formatDate(apartment.created_at)}
                     </p>
-                    <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
-                      <Button variant="ghost" size="sm">
-                        Λεπτομέρειες
-                        <ArrowRight className="w-3 h-3 ml-1" />
-                      </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      {canManage && (apartment.tenant_name || apartment.is_rented) && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedApartment(apartment);
+                            setEditTenantModalOpen(true);
+                          }}
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Ενημέρωση
+                        </Button>
+                      )}
+                      <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
+                        <Button variant="ghost" size="sm">
+                          Λεπτομέρειες
+                          <ArrowRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -748,6 +779,16 @@ const ApartmentsPageContent = () => {
           )}
         </>
       )}
+
+      {/* Edit Tenant Modal */}
+      <EditTenantModal
+        open={editTenantModalOpen}
+        onOpenChange={setEditTenantModalOpen}
+        apartment={selectedApartment}
+        onSuccess={() => {
+          loadApartments();
+        }}
+      />
     </div>
   );
 };

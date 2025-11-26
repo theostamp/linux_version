@@ -1279,6 +1279,30 @@ export async function fetchBuildingResidents(buildingId: number): Promise<Buildi
   }
 }
 
+export type UpdateTenantData = {
+  tenant_name?: string;
+  tenant_phone?: string;
+  tenant_phone2?: string;
+  tenant_email?: string;
+  is_rented?: boolean;
+  is_closed?: boolean;
+  rent_start_date?: string;
+  rent_end_date?: string;
+};
+
+export async function updateApartmentTenant(apartmentId: number, tenantData: UpdateTenantData): Promise<ApartmentList> {
+  try {
+    const response = await apiPost<{ apartment: ApartmentList; message: string }>(
+      `/apartments/${apartmentId}/update-tenant/`,
+      tenantData
+    );
+    return response.apartment;
+  } catch (error) {
+    console.error('[updateApartmentTenant] Error updating tenant:', error);
+    throw error;
+  }
+}
+
 // ============================================================================
 // API Instance Export (for backward compatibility)
 // ============================================================================
