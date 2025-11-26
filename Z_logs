@@ -1,1 +1,58 @@
-﻿
+﻿2025-11-25 18:47:39.388 [info] {"timestamp":"2025-11-25T18:47:39.378Z","level":"info","message":"[tenantProxy:users] URL constructed","method":"POST","originalPath":"/api/users/invite","backendPath":"users/invite","normalizedPath":"api/users/invite/","base":"https://linuxversion-production.up.railway.app","finalUrl":"https://linuxversion-production.up.railway.app/api/users/invite/","ensureTrailingSlash":true}
+2025-11-25 18:47:39.388 [info] [tenantProxy:headers] Using Origin header: theo.newconcierge.app
+2025-11-25 18:47:39.388 [info] [tenantProxy:headers] Using X-Forwarded-Host header: theo.newconcierge.app
+2025-11-25 18:47:39.389 [info] {"timestamp":"2025-11-25T18:47:39.378Z","level":"info","message":"[tenantProxy:headers] Forward headers created","Host":"theo.newconcierge.app","X-Forwarded-Host":"theo.newconcierge.app","subdomain":"theo","requestHost":"theo.newconcierge.app","forwardedHost":"theo.newconcierge.app","referer":"https://theo.newconcierge.app/users?invite=theostam1966%40gmail.com&building=2&apartment=11","origin":"https://theo.newconcierge.app","decision":"using-origin"}
+2025-11-25 18:47:39.389 [info] {"timestamp":"2025-11-25T18:47:39.379Z","level":"info","message":"[tenantProxy:users] Request received","method":"POST","path":"/api/users/invite","searchParams":"","host":"theo.newconcierge.app","targetUrl":"https://linuxversion-production.up.railway.app/api/users/invite/","hasBody":true,"bodySize":152,"headers":{"accept":"*/*","accept-encoding":"gzip, deflate, br, zstd","accept-language":"el-GR,el;q=0.9","authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0MDk4MjE1LCJpYXQiOjE3NjQwOTY0MTUsImp0aSI6Ijk1YzYxMzYzZThjZjQ1OWFiNWE0YTA0OTFiODlmOWVjIiwidXNlcl9pZCI6IjgyMiJ9.ShJuYKfhtESs_BxwIF27jo9rtFWMCQk9cOGW4lKmrAQ","cache-control":"no-store, no-cache, must-revalidate","content-type":"application/json","expires":"0","forwarded":"for=62.74.56.32;host=theo.newconcierge.app;proto=https;sig=0QmVhcmVyIGEwYTc2NTUzMDBhODk5OWI1Nzg0NGRhZjkyMzgxZTg5ZTJhZTFjMTJjZDdmYjExNGFkYmVlYzA4MjViODc4MGQ=;exp=1764096759","host":"theo.newconcierge.app","origin":"https://theo.newconcierge.app","pragma":"no-cache","priority":"u=1, i","referer":"https://theo.newconcierge.app/users?invite=theostam1966%40gmail.com&building=2&apartment=11","sec-ch-ua":"\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"Windows\"","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","x-forwarded-for":"62.74.56.32","x-forwarded-host":"theo.newconcierge.app","x-forwarded-port":"443","x-forwarded-proto":"https","x-matched-path":"/api/users/[...path]","x-real-ip":"62.74.56.32","x-tenant-host":"theo.newconcierge.app","x-vercel-deployment-url":"linux-version-e8gycjque-theo-stams-projects.vercel.app","x-vercel-forwarded-for":"62.74.56.32","x-vercel-id":"fra1::wl9jh-1764096459298-4b41bb9a902c","x-vercel-internal-bot-check":"skip","x-vercel-internal-ingress-bucket":"bucket016","x-vercel-internal-ingress-port":"16445","x-vercel-ip-as-number":"3329","x-vercel-ip-city":"Athens","x-vercel-ip-continent":"EU","x-vercel-ip-country":"GR","x-vercel-ip-country-region":"I","x-vercel-ip-latitude":"37.9842","x-vercel-ip-longitude":"23.7353","x-vercel-ip-timezone":"Europe/Athens","x-vercel-ja4-digest":"t13d1515h2_8daaf6152771_811b1b7ded6b","x-vercel-oidc-token":"eyJ0eXAiOiJKV1QiLCJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiJ9.eyJvd25lcl9pZCI6InRlYW1fbDBDQTZKWWJ6ckpVTFZxUTV2VHVwNXRaIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL3RoZW8tc3RhbXMtcHJvamVjdHMiLCJwcm9qZWN0X2lkIjoicHJqX0ZmS3A3WndQdWRjbmJnN0c0emFGemZxemZRZEEiLCJwcm9qZWN0IjoibGludXgtdmVyc2lvbiIsIm93bmVyIjoidGhlby1zdGFtcy1wcm9qZWN0cyIsImlzcyI6Imh0dHBzOlwvXC9vaWRjLnZlcmNlbC5jb21cL3RoZW8tc3RhbXMtcHJvamVjdHMiLCJ2ZXJjZWxfaWQiOiJmcmExOjpjcjZrdi0xNzY0MDk1NjIxOTE4LWNjNzA0ZTQ5N2FhMyIsInN1YiI6Im93bmVyOnRoZW8tc3RhbXMtcHJvamVjdHM6cHJvamVjdDpsaW51eC12ZXJzaW9uOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOnRoZW8tc3RhbXMtcHJvamVjdHM6cHJvamVjdDpsaW51eC12ZXJzaW9uOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJleHAiOjE3NjQwOTkyMjIsIm5iZiI6MTc2NDA5NTYyMiwicGxhbiI6InBybyIsImlhdCI6MTc2NDA5NTYyMn0.hIgBxCb9_zPRbOUj0O9ZAJSD1f9l1wV08v63elCyV2BO8j3g1JgfZmUdrJnkWs0vFzpagL9W1rFPbm3_3lkMPDTopLY5dsx9mYIDRWj7PF7rGdvxd5RFcFt_UMaalChu6IIfC-nnCoAgSDan_xogEl_nHgNerj-2p6A83GZtu6c1e-9IjjOiDzKRvca8ROHX2yASGtyzP-vEt7w_WMRz5IcKMZTz3bRadGyXnNY-e9jn53xz085csiwLzqJ2A-B275lJKgMxysWnsPA7VyRh-l5qHNKJtpNb5C8OPbjRMW7i2QTGsz4iLTGTp82lXJ2vyjyVON5qyCtzwna8BvRcBQ","x-vercel-proxied-for":"62.74.56.32","x-vercel-proxy-signature":"Bearer a0a7655300a8999b57844daf92381e89e2ae1c12cd7fb114adbeec0825b8780d","x-vercel-proxy-signature-ts":"1764096759","x-vercel-sc-basepath":"","x-vercel-sc-headers":"{\"Authorization\":\"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjQwOTczNzksImlzcyI6InNlcnZlcmxlc3MiLCJwcm9qZWN0SWQiOiJwcmpfRmZLcDdad1B1ZGNuYmc3RzR6YUZ6ZnF6ZlFkQSIsIm93bmVySWQiOiJ0ZWFtX2wwQ0E2SllienJKVUxWcVE1dlR1cDV0WiIsInBsYW4iOiJwcm8iLCJuZXh0VmVyc2lvbiI6IjE1LjUuNiIsInVubGltaXRlZCI6ZmFsc2UsImlhdCI6MTc2NDA5NjQ1OSwiZGVwbG95bWVudElkIjoiZHBsX0c4TDNCVlRZYm16aEdhR2tXbkVDTWlTR21VOWEiLCJlbnYiOiJwcm9kdWN0aW9uIiwiYmxvY2siOmZhbHNlLCJyZXF1ZXN0SWQiOiJ3bDlqaC0xNzY0MDk2NDU5Mjk4LTRiNDFiYjlhOTAyYyIsImRvbWFpbiI6InRoZW8ubmV3Y29uY2llcmdlLmFwcCJ9.4VTKGVSlPkZ-ECNxZcWPpAWexNcZi5hiKk0scHFbOnc\",\"x-vercel-ept\":\"1\",\"x-vercel-function-platform\":\"vercel\\/proxy+serverless\"}","x-vercel-sc-host":"iad1.suspense-cache.vercel-infra.com"},"subdomain":"theo"}
+2025-11-25 18:47:39.612 [info] {"timestamp":"2025-11-25T18:47:39.612Z","level":"info","message":"[tenantProxy:users] Upstream response received","method":"POST","path":"/api/users/invite","targetUrl":"https://linuxversion-production.up.railway.app/api/users/invite/","status":400,"statusText":"Bad Request","durationMs":233,"contentType":"application/json","contentLength":"76","responseHeaders":{"access-control-allow-credentials":"true","access-control-allow-origin":"https://theo.newconcierge.app","access-control-expose-headers":"Content-Type, X-CSRFToken","allow":"POST, OPTIONS","content-length":"76","content-type":"application/json","cross-origin-opener-policy":"same-origin","date":"Tue, 25 Nov 2025 18:47:39 GMT","referrer-policy":"same-origin","server":"railway-edge","vary":"Cookie, origin","x-content-type-options":"nosniff","x-frame-options":"DENY","x-railway-edge":"railway/us-east4-eqdc4a","x-railway-request-id":"HeeuxiBGSxqMfiZYezItjw"}}
+2025-11-25 18:47:39.613 [error] {"timestamp":"2025-11-25T18:47:39.612Z","level":"error","message":"[tenantProxy:users] Upstream error response","error":"undefined","method":"POST","path":"/api/users/invite","targetUrl":"https://linuxversion-production.up.railway.app/api/users/invite/","status":400,"statusText":"Bad Request","durationMs":233,"errorBody":"{\"email\":[\"Χρήστης με αυτό το email υπάρχει ήδη.\"]}","errorBodyLength":51}
+
+
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [AuthContext] loadUserOnMount starting...
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 AuthContext: Fetching current user
+bb63ab0a908a3db8.js?…hGaGkWnECMiSGmU9a:1 [API CALL] Attempting to fetch /api/users/me/
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [AuthContext] Token check interval disabled to debug hanging issue
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [ReactQueryProvider] Setting up global refresh system
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [Global Refresh] Query client registered
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [Global Refresh] Initializing global refresh system
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Current pathname: /users
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Dashboard: true
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Kiosk Mode: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Info Screen: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is No Sidebar Route: false
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 AuthContext: Current user fetched successfully: etherm2021@gmail.com
+f36adfbf5dac39b0.js?…hGaGkWnECMiSGmU9a:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
+bb63ab0a908a3db8.js?…hGaGkWnECMiSGmU9a:1 [API CALL] Fetching buildings from /buildings/
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
+bb63ab0a908a3db8.js?…hGaGkWnECMiSGmU9a:1 [API CALL] Fetching buildings from /buildings/
+bb63ab0a908a3db8.js?…hGaGkWnECMiSGmU9a:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/buildings/?page_size=1000&page=1_{"page_size":1000,"page":1}
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [AuthContext] Token check interval disabled to debug hanging issue
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Loaded buildings: 2 buildings
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Loaded buildings: 2 buildings
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+f36adfbf5dac39b0.js?…hGaGkWnECMiSGmU9a:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Building changed to 2, invalidating queries...
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] ✓ Queries invalidated for building 2
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Fetching context for building 2...
+7514d4549740a460.js?…hGaGkWnECMiSGmU9a:1 [BuildingContext] Building context loaded: 
+Object
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Current pathname: /apartments
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Dashboard: true
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Kiosk Mode: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Info Screen: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is No Sidebar Route: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Current pathname: /users
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Dashboard: true
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Kiosk Mode: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is Info Screen: false
+2eca722865ec682d.js?…hGaGkWnECMiSGmU9a:1 [AppProviders] Is No Sidebar Route: false
+bb63ab0a908a3db8.js?…hGaGkWnECMiSGmU9a:1 
+ POST https://theo.newconcierge.app/api/users/invite 400 (Bad Request)
+
+ {"timestamp":"2025-11-25T18:46:51.635Z","level":"error","message":"[tenantProxy:users] Upstream error response","error":"undefined","method":"POST","path":"/api/users/logout","targetUrl":"https://linuxversion-production.up.railway.app/api/users/logout/","status":405,"statusText":"Method Not Allowed","durationMs":188,"errorBody":"{\"detail\":\"Η μέθοδος \\\"POST\\\" δεν επιτρέπεται.\"}","errorBodyLength":48}
+
+
+
+ {"timestamp":"2025-11-25T18:44:42.458Z","level":"error","message":"[tenantProxy:announcements] Upstream error response","error":"undefined","method":"GET","path":"/api/announcements","targetUrl":"https://linuxversion-production.up.railway.app/api/announcements/?page_size=5&ordering=-created_at&building=1","status":404,"statusText":"Not Found","durationMs":16,"errorBody":"{\"status\":\"error\",\"code\":404,\"message\":\"Application not found\",\"request_id\":\"hqFEDIcCSiezUTjnCx5-qw\"}","errorBodyLength":101}

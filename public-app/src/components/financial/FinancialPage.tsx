@@ -541,7 +541,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 shadow-md ${
                     activeTab === 'calculator'
                       ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-lg'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg'
+                      : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
                   }`}
                 >
                   <Calculator className="h-4 w-4" />
@@ -554,7 +554,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 shadow-md ${
                     activeTab === 'balances'
                       ? 'bg-emerald-100 border-emerald-300 text-emerald-700 shadow-lg'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg'
+                      : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
                   }`}
                 >
                   <DollarSign className="h-4 w-4" />
@@ -567,7 +567,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 shadow-md ${
                     activeTab === 'expenses'
                       ? 'bg-green-100 border-green-300 text-green-700 shadow-lg'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg'
+                      : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
                   }`}
                 >
                   <Plus className="h-4 w-4" />
@@ -580,7 +580,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 shadow-md ${
                     activeTab === 'meters'
                       ? 'bg-orange-100 border-orange-300 text-orange-700 shadow-lg'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg'
+                      : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
                   }`}
                 >
                   <TrendingUp className="h-4 w-4" />
@@ -593,7 +593,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 shadow-md ${
                     activeTab === 'history'
                       ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-lg'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg'
+                      : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
                   }`}
                 >
                   <History className="h-4 w-4" />
@@ -606,7 +606,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 shadow-md ${
                     activeTab === 'charts'
                       ? 'bg-purple-100 border-purple-300 text-purple-700 shadow-lg'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-lg'
+                      : 'bg-background border-border text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
                   }`}
                 >
                   <PieChart className="h-4 w-4" />
@@ -624,22 +624,22 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 shadow-md hover:shadow-lg ${
                   activeTab === 'calculator'
                     ? 'bg-blue-50 border-blue-200 shadow-lg'
-                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/30'
+                    : 'bg-background border-border hover:border-primary/30 hover:bg-primary/5'
                 }`}
               >
                 <div className={`mb-3 p-3 rounded-full transition-colors ${
                   activeTab === 'calculator' 
                     ? 'bg-blue-100 text-blue-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                    : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
                 }`}>
                   <Calculator className="h-6 w-6" />
                 </div>
                 <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'calculator' ? 'text-blue-700' : 'text-gray-700'
+                  activeTab === 'calculator' ? 'text-blue-700' : 'text-foreground'
                 }`}>
                   Κοινόχρηστα
                 </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   Υπολογισμός & Έκδοση
                 </p>
               </button>
@@ -665,7 +665,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   Εισπράξεις
                 </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   Κατάσταση Διαμερισμάτων
                 </p>
               </button>
@@ -691,7 +691,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   Δαπάνες
                 </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   Διαχείριση Εξόδων
                 </p>
               </button>
@@ -717,7 +717,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   Μετρητές
                 </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   Καταγραφή Μετρήσεων
                 </p>
               </button>
@@ -743,7 +743,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   Ιστορικό
                 </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   Αρχείο Συναλλαγών
                 </p>
               </button>
@@ -769,7 +769,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   Γραφήματα
                 </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   Οπτικοποίηση Δεδομένων
                 </p>
               </button>

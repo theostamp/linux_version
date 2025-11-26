@@ -184,8 +184,8 @@ export default function PaymentNotificationModal({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b print:hidden">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">
                 Ειδοποιητήριο Πληρωμής Κοινοχρήστων
@@ -200,7 +200,7 @@ export default function PaymentNotificationModal({
                     onClose();
                     onPaymentClick();
                   }}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  className="flex items-center gap-2 bg-success hover:bg-success/90"
                 >
                   <CreditCard className="h-4 w-4" />
                   Πληρωμή
@@ -287,7 +287,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Apartment Information */}
-            <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:border print:border-gray-300">
+            <div className="bg-muted rounded-lg p-4 print:bg-white print:border print:border-border">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 Στοιχεία Διαμερίσματος
@@ -315,7 +315,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Payment Information */}
-            <div className="bg-blue-50 rounded-lg p-4 print:bg-white print:border print:border-blue-300">
+            <div className="bg-primary/10 rounded-lg p-4 print:bg-white print:border print:border-primary/30">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Euro className="w-4 h-4" />
                 Πληροφορίες Πληρωμής
@@ -441,16 +441,16 @@ export default function PaymentNotificationModal({
                     
                     return Object.values(groupedExpenses).map((group, groupIndex) => (
                       <div key={groupIndex} className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-gray-100 px-3 py-2 border-b border-gray-200">
-                          <h5 className="text-sm font-semibold text-gray-700">{group.month_display}</h5>
+                        <div className="bg-muted px-3 py-2 border-b border-border">
+                          <h5 className="text-sm font-semibold text-foreground">{group.month_display}</h5>
                         </div>
                         
                         {/* ΠΙΝΑΚΑΣ ΜΕ 3 ΣΤΗΛΕΣ */}
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-muted">
                               <tr>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
                                   Περιγραφή Δαπάνης
                                 </th>
                                 <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
@@ -473,7 +473,7 @@ export default function PaymentNotificationModal({
                                 
                                 return (
                                   <tr key={index} className="border-t border-gray-100">
-                                    <td className="px-3 py-2 text-gray-700">{expense.expense_title}</td>
+                                    <td className="px-3 py-2 text-foreground">{expense.expense_title}</td>
                                     <td className="px-3 py-2 text-right font-medium">
                                       {residentCharge > 0 ? formatCurrency(residentCharge) : '-'}
                                     </td>
@@ -484,12 +484,12 @@ export default function PaymentNotificationModal({
                                 );
                               })}
                             </tbody>
-                            <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                            <tfoot className="bg-muted border-t-2 border-border">
                               <tr>
-                                <td className="px-3 py-2 text-sm font-semibold text-gray-700">
+                                <td className="px-3 py-2 text-sm font-semibold text-foreground">
                                   Σύνολο {group.month_display}:
                                 </td>
-                                <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">
+                                <td className="px-3 py-2 text-right text-sm font-semibold text-primary">
                                   {formatCurrency(
                                     group.expenses.reduce((sum, exp) => 
                                       sum + (exp.payer_responsibility === 'owner' ? 0 : exp.share_amount), 0

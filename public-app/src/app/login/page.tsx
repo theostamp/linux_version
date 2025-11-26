@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function LoginForm() {
   const router = useRouter();
@@ -360,10 +361,12 @@ function LoginForm() {
                 </Link>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-primary text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                variant="default"
+                size="full"
+                className="w-full py-3 px-6 font-semibold"
               >
                 {isLoading ? (
                   <>
@@ -376,7 +379,7 @@ function LoginForm() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </>
                 )}
-              </button>
+              </Button>
             </form>
 
             <div className="mt-6 text-center">

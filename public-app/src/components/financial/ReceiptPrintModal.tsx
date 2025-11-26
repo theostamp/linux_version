@@ -254,7 +254,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
         <div className="space-y-4">
           {/* Print Action Buttons */}
           <div className="flex gap-2 justify-end border-b pb-4 no-print">
-            <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handlePrint} variant="default">
               🖨️ Εκτύπωση με Παράθυρο
             </Button>
             <Button onClick={handleDirectPrint} variant="outline">
