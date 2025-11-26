@@ -517,6 +517,100 @@ def list_invitations_view(request):
 
 
 @api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def resend_invitation_view(request):
+    """
+    POST /api/users/invitations/resend/
+    Επαναποστολή πρόσκλησης
+    Body: { "invitation_id": 123 } ή { "email": "user@example.com", "building_id": 1 }
+    """
+    from core.permissions import IsManager
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManager().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να επαναστέλουν προσκλήσεις.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    invitation_id = request.data.get('invitation_id')
+    email = request.data.get('email')
+    building_id = request.data.get('building_id')
+    
+    try:
+        if invitation_id:
+            # Βρες invitation από ID
+            invitation = UserInvitation.objects.get(
+                id=invitation_id,
+                invited_by=request.user
+            )
+        elif email:
+            # Βρες το πιο πρόσφατο pending invitation για αυτό το email
+            query = UserInvitation.objects.filter(
+                email=email,
+                invited_by=request.user,
+                status=UserInvitation.InvitationStatus.PENDING
+            )
+            if building_id:
+                query = query.filter(building_id=building_id)
+            
+            invitation = query.order_by('-created_at').first()
+            
+            if not invitation:
+                # Αν δεν υπάρχει pending, δημιούργησε νέο
+                from .services import InvitationService
+                invitation = InvitationService.create_invitation(
+                    invited_by=request.user,
+                    email=email,
+                    building_id=building_id,
+                    assigned_role=request.data.get('assigned_role')
+                )
+                return Response({
+                    'message': 'Η πρόσκληση δημιουργήθηκε και στάλθηκε επιτυχώς',
+                    'invitation': UserInvitationSerializer(invitation).data
+                }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'error': 'Πρέπει να δοθεί invitation_id ή email'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Έλεγχος αν η πρόσκληση μπορεί να σταλεί ξανά
+        if invitation.status != UserInvitation.InvitationStatus.PENDING:
+            return Response({
+                'error': f'Η πρόσκληση δεν μπορεί να σταλεί ξανά (κατάσταση: {invitation.status})'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if invitation.is_expired:
+            # Ανανέωσε την ημερομηνία λήξης
+            from django.utils import timezone
+            invitation.expires_at = timezone.now() + timezone.timedelta(days=7)
+            invitation.save()
+        
+        # Αποστολή email
+        from .services import EmailService
+        success = EmailService.send_invitation_email(invitation)
+        
+        if success:
+            return Response({
+                'message': 'Η πρόσκληση στάλθηκε ξανά επιτυχώς',
+                'invitation': UserInvitationSerializer(invitation).data
+            })
+        else:
+            return Response({
+                'error': 'Αποτυχία αποστολής email'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    except UserInvitation.DoesNotExist:
+        return Response({
+            'error': 'Η πρόσκληση δεν βρέθηκε'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'error': f'Σφάλμα: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def accept_invitation_view(request):
     """

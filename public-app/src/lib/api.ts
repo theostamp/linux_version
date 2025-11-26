@@ -1921,3 +1921,14 @@ export async function listInvitations(): Promise<UserInvitation[]> {
 export async function acceptInvitation(token: string, password: string): Promise<{ access: string; refresh: string }> {
   return await apiPost<{ access: string; refresh: string }>('/users/accept-invitation/', { token, password });
 }
+
+export type ResendInvitationPayload = {
+  invitation_id?: number;
+  email?: string;
+  building_id?: number;
+  assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
+};
+
+export async function resendInvitation(payload: ResendInvitationPayload): Promise<{ message: string; invitation: UserInvitation }> {
+  return await apiPost<{ message: string; invitation: UserInvitation }>('/users/invitations/resend/', payload);
+}

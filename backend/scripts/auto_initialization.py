@@ -267,7 +267,7 @@ def create_public_tenant():
     from users.models import CustomUser
     
     ultra_user, created = CustomUser.objects.get_or_create(
-        email='theostam1966@gmail.com',
+        email='thodoris_st@hotmail.com',
         defaults={
             'first_name': 'Theo',
             'last_name': 'Ultra Admin',
@@ -282,7 +282,7 @@ def create_public_tenant():
     if created:
         ultra_user.set_password('theo123!@#')
         ultra_user.save()
-        print("✅ Δημιουργήθηκε Ultra-Superuser: theostam1966@gmail.com")
+        print("✅ Δημιουργήθηκε Ultra-Superuser: thodoris_st@hotmail.com")
     else:
         # Ενημέρωση password αν υπάρχει ήδη
         ultra_user.set_password('theo123!@#')
@@ -291,11 +291,11 @@ def create_public_tenant():
         ultra_user.is_active = True
         ultra_user.email_verified = True
         ultra_user.save()
-        print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
+        print("✅ Ενημερώθηκε Ultra-Superuser: thodoris_st@hotmail.com")
 
     # Verify authentication works
     from django.contrib.auth import authenticate
-    test_auth = authenticate(username='theostam1966@gmail.com', password='theo123!@#')
+    test_auth = authenticate(username='thodoris_st@hotmail.com', password='theo123!@#')
     if test_auth:
         print("   ✅ Authentication verified - login will work!")
     else:
@@ -877,7 +877,7 @@ def save_credentials():
 🏢 PUBLIC SCHEMA (localhost):
 -----------------------------
 👑 Ultra-Superuser (System Administrator):
-   Email: theostam1966@gmail.com
+   Email: thodoris_st@hotmail.com
    Password: theo123!@#
    Permissions: Complete system management, all tenants and users
    Admin URL: http://localhost:8000/admin/
@@ -1018,7 +1018,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser (theostam1966@gmail.com):
+👑 Ultra-Superuser (thodoris_st@hotmail.com):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1121,7 +1121,7 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    print("   Email: theostam1966@gmail.com")
+    print("   Email: thodoris_st@hotmail.com")
     print("   Password: theo123!@#")
     print("   Permissions: Complete system management")
     

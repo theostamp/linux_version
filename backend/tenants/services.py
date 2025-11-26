@@ -532,7 +532,7 @@ class TenantService:
                     logger.info(f"Created BuildingMembership for user {tenant_user.email} in schema {schema_name} for Βουλής 6 -Demo")
                 
                 # Create 15 apartments for Βουλής 6 -Demo with realistic Greek names
-                # First apartment has 100 mills and email theostam1966@gmail.com
+                # First apartment has 100 mills and email thodoris_st@hotmail.com
                 # Remaining 14 apartments need to sum to 900 mills total
                 # All mills (participation, heating, elevator) must sum to 1000
                 vouli_apartments_data = [

@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { fetchApartments, ApartmentList } from '@/lib/api';
+import { fetchApartments, ApartmentList, resendInvitation } from '@/lib/api';
+import { toast } from 'sonner';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import ErrorMessage from '@/components/ErrorMessage';
 import Pagination from '@/components/Pagination';
@@ -63,20 +64,76 @@ const getStatusBadge = (apartment: ApartmentList) => {
   return <Badge className="bg-blue-100 text-blue-800">{status}</Badge>;
 };
 
-// Component για email με ένδειξη καταχώρησης
+// Component για email με ένδειξη καταχώρησης και resend
 const EmailWithStatus = ({ 
   email, 
   isRegistered, 
   buildingId,
   apartmentId,
-  canInvite 
+  canInvite,
+  isTenant = false
 }: { 
   email: string; 
   isRegistered: boolean;
   buildingId?: number;
   apartmentId?: number;
   canInvite?: boolean;
+  isTenant?: boolean;
 }) => {
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResend = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!canInvite || !email) return;
+    
+    setIsResending(true);
+    try {
+      await resendInvitation({
+        email,
+        building_id: buildingId,
+        assigned_role: isTenant ? 'resident' : undefined
+      });
+      toast.success('Η πρόσκληση στάλθηκε επιτυχώς');
+    } catch (err) {
+      const error = err as { 
+        response?: { data?: Record<string, string | string[]> }; 
+        message?: string;
+        detail?: string;
+      };
+      
+      let errorMessage = 'Αποτυχία επαναποστολής πρόσκλησης';
+      
+      const errorData = error?.response?.data || error;
+      if (errorData) {
+        if (typeof errorData === 'object') {
+          const firstKey = Object.keys(errorData).find(key => 
+            key !== 'response' && key !== 'message' && errorData[key]
+          );
+          if (firstKey) {
+            const fieldError = errorData[firstKey];
+            if (Array.isArray(fieldError) && fieldError.length > 0) {
+              errorMessage = fieldError[0];
+            } else if (typeof fieldError === 'string') {
+              errorMessage = fieldError;
+            }
+          } else if (errorData.error) {
+            errorMessage = typeof errorData.error === 'string' ? errorData.error : String(errorData.error);
+          }
+        }
+      }
+      
+      if (errorMessage === 'Αποτυχία επαναποστολής πρόσκλησης' && error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1.5">
       <a href={`mailto:${email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
@@ -86,13 +143,29 @@ const EmailWithStatus = ({
       {isRegistered ? (
         <UserCheck className="w-3.5 h-3.5 text-green-600" title="Καταχωρημένος χρήστης" />
       ) : canInvite ? (
-        <Link 
-          href={`/users?invite=${encodeURIComponent(email)}&building=${buildingId || ''}&apartment=${apartmentId || ''}`}
-          className="text-blue-600 hover:text-blue-800 transition-colors"
-          title="Πρόσκληση χρήστη"
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link 
+            href={`/users?invite=${encodeURIComponent(email)}&building=${buildingId || ''}&apartment=${apartmentId || ''}`}
+            className="text-blue-600 hover:text-blue-800 transition-colors"
+            title="Πρόσκληση χρήστη"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+          </Link>
+          {isTenant && (
+            <button
+              onClick={handleResend}
+              disabled={isResending}
+              className="text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Επαναποστολή πρόσκλησης"
+            >
+              {isResending ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
       ) : (
         <UserPlus className="w-3.5 h-3.5 text-gray-400" title="Μη καταχωρημένος" />
       )}
@@ -108,7 +181,8 @@ const renderContactBlock = (
   isRegistered?: boolean,
   buildingId?: number,
   apartmentId?: number,
-  canInvite?: boolean
+  canInvite?: boolean,
+  isTenant?: boolean
 ) => (
   <div>
     <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
@@ -127,6 +201,7 @@ const renderContactBlock = (
           buildingId={buildingId}
           apartmentId={apartmentId}
           canInvite={canInvite}
+          isTenant={isTenant}
         />
       )}
       {!phone && !email && <span>Χωρίς στοιχεία επικοινωνίας</span>}
@@ -616,6 +691,7 @@ const ApartmentsPageContent = () => {
                                   buildingId={buildingId}
                                   apartmentId={apartment.id}
                                   canInvite={canManage}
+                                  isTenant={true}
                                 />
                               )}
                             </div>
@@ -724,7 +800,8 @@ const ApartmentsPageContent = () => {
                       !!apartment.tenant_user,
                       buildingId,
                       apartment.id,
-                      canManage
+                      canManage,
+                      true // isTenant
                     )}
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-sm">
