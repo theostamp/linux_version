@@ -590,11 +590,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
             {/* Total Amount Display */}
             <div className="space-y-2">
               <Label>Συνολικό Ποσό Εισπράξεως</Label>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="text-lg font-semibold text-blue-900">
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="text-lg font-semibold text-primary">
                   {formatCurrency(formData.amount || 0)}
                 </div>
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-primary/80">
                   Κοινόχρηστα: {formatCurrency(formData.amount || 0)}
                   {(() => {
                     const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
