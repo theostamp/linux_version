@@ -78,9 +78,9 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-sm shadow-md">
-        <div className="w-full px-4 sm:px-6 lg:px-8 lg:pl-64 lg:pr-8">
-          <div className="max-w-[1600px] mx-auto">
+      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm shadow-md border-b border-border/40">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto">
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-8 h-20 py-3">
               {/* Left Section - Logo */}
               <div className="flex-shrink-0">

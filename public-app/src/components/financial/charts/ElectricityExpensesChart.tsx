@@ -219,30 +219,36 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
 
       <ResponsiveContainer width="100%" height={height}>
         <ChartComponent data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
           <XAxis
             dataKey="month"
             angle={-45}
             textAnchor="end"
             height={60}
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
           />
-          <YAxis>
-            <Label value="Ποσό (€)" angle={-90} position="insideLeft" />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+          >
+            <Label value="Ποσό (€)" angle={-90} position="insideLeft" style={{ fill: 'hsl(var(--muted-foreground))' }} />
           </YAxis>
           <Tooltip
+            cursor={{ fill: 'hsl(var(--muted)/0.4)' }}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const data = payload[0].payload;
                 return (
-                  <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
-                    <p className="font-semibold">{data.fullMonth} {year}</p>
-                    <p className="text-blue-600">Κοινόχρηστα: €{data.commonAreas.toFixed(2)}</p>
-                    <p className="text-purple-600">Ανελκυστήρας: €{data.elevator.toFixed(2)}</p>
-                    <p className="font-semibold text-gray-800 border-t pt-1 mt-1">
+                  <div className="bg-popover p-3 border border-border rounded-lg shadow-app-md">
+                    <p className="font-semibold text-popover-foreground">{data.fullMonth} {year}</p>
+                    <p className="text-primary">Κοινόχρηστα: €{data.commonAreas.toFixed(2)}</p>
+                    <p className="text-accent-foreground">Ανελκυστήρας: €{data.elevator.toFixed(2)}</p>
+                    <p className="font-semibold text-foreground border-t border-border pt-1 mt-1">
                       Σύνολο: €{data.total.toFixed(2)}
                     </p>
                     {data.expenseCount > 0 && (
-                      <p className="text-gray-500 text-xs mt-1">
+                      <p className="text-muted-foreground text-xs mt-1">
                         Καταχωρήσεις: {data.expenseCount}
                       </p>
                     )}
@@ -258,13 +264,13 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
               <Bar
                 dataKey="commonAreas"
                 stackId="a"
-                fill="#3B82F6"
+                fill="hsl(var(--primary))"
                 name={`Κοινόχρηστα ${year}`}
               />
               <Bar
                 dataKey="elevator"
                 stackId="a"
-                fill="#8B5CF6"
+                fill="hsl(var(--accent-foreground))"
                 name={`Ανελκυστήρας ${year}`}
               />
               {showComparison && compareYear && (
@@ -272,14 +278,14 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
                   <Bar
                     dataKey="compareCommonAreas"
                     stackId="b"
-                    fill="#F97316"
+                    fill="hsl(var(--warning))"
                     name={`Κοινόχρηστα ${compareYear}`}
                     opacity={0.7}
                   />
                   <Bar
                     dataKey="compareElevator"
                     stackId="b"
-                    fill="#EF4444"
+                    fill="hsl(var(--destructive))"
                     name={`Ανελκυστήρας ${compareYear}`}
                     opacity={0.7}
                   />
@@ -291,21 +297,21 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
               <Line
                 type="monotone"
                 dataKey="commonAreas"
-                stroke="#3B82F6"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
                 name="Κοινόχρηστα"
               />
               <Line
                 type="monotone"
                 dataKey="elevator"
-                stroke="#8B5CF6"
+                stroke="hsl(var(--accent-foreground))"
                 strokeWidth={2}
                 name="Ανελκυστήρας"
               />
               <Line
                 type="monotone"
                 dataKey="total"
-                stroke="#10B981"
+                stroke="hsl(var(--success))"
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 name="Σύνολο"
@@ -318,46 +324,46 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
       {/* Summary Statistics */}
       <div className="mt-4">
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-blue-50 p-3 rounded">
-            <div className="text-sm text-blue-600">Κοινόχρηστα {year}</div>
-            <div className="text-xl font-semibold text-blue-800">
+          <div className="bg-primary/5 p-3 rounded">
+            <div className="text-sm text-primary">Κοινόχρηστα {year}</div>
+            <div className="text-xl font-semibold text-primary/80">
               €{chartData.reduce((sum, d) => sum + d.commonAreas, 0).toFixed(2)}
             </div>
             {showComparison && compareYear && (
-              <div className="text-sm text-orange-600 mt-1">
+              <div className="text-sm text-warning mt-1">
                 {compareYear}: €{chartData.reduce((sum, d) => sum + d.compareCommonAreas, 0).toFixed(2)}
               </div>
             )}
           </div>
-          <div className="bg-purple-50 p-3 rounded">
-            <div className="text-sm text-purple-600">Ανελκυστήρας {year}</div>
-            <div className="text-xl font-semibold text-purple-800">
+          <div className="bg-accent/10 p-3 rounded">
+            <div className="text-sm text-accent-foreground">Ανελκυστήρας {year}</div>
+            <div className="text-xl font-semibold text-accent-foreground/80">
               €{chartData.reduce((sum, d) => sum + d.elevator, 0).toFixed(2)}
             </div>
             {showComparison && compareYear && (
-              <div className="text-sm text-red-600 mt-1">
+              <div className="text-sm text-destructive mt-1">
                 {compareYear}: €{chartData.reduce((sum, d) => sum + d.compareElevator, 0).toFixed(2)}
               </div>
             )}
           </div>
-          <div className="bg-green-50 p-3 rounded">
-            <div className="text-sm text-green-600">Σύνολο {year}</div>
-            <div className="text-xl font-semibold text-green-800">
+          <div className="bg-success/10 p-3 rounded">
+            <div className="text-sm text-success">Σύνολο {year}</div>
+            <div className="text-xl font-semibold text-success-foreground/80">
               €{chartData.reduce((sum, d) => sum + d.total, 0).toFixed(2)}
             </div>
             {showComparison && compareYear && (
-              <div className="text-sm text-red-600 mt-1">
+              <div className="text-sm text-destructive mt-1">
                 {compareYear}: €{chartData.reduce((sum, d) => sum + d.compareTotal, 0).toFixed(2)}
               </div>
             )}
           </div>
-          <div className="bg-gray-50 p-3 rounded">
-            <div className="text-sm text-gray-600">Μ.Ό./Μήνα {year}</div>
-            <div className="text-xl font-semibold text-gray-800">
+          <div className="bg-muted p-3 rounded">
+            <div className="text-sm text-muted-foreground">Μ.Ό./Μήνα {year}</div>
+            <div className="text-xl font-semibold text-foreground">
               €{(chartData.reduce((sum, d) => sum + d.total, 0) / 12).toFixed(2)}
             </div>
             {showComparison && compareYear && (
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-muted-foreground mt-1">
                 {compareYear}: €{(chartData.reduce((sum, d) => sum + d.compareTotal, 0) / 12).toFixed(2)}
               </div>
             )}

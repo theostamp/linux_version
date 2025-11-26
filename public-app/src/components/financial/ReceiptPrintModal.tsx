@@ -284,44 +284,44 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                         />
                       ) : (
                         <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect width="60" height="60" rx="12" fill="#2563eb"/>
+                          <rect width="60" height="60" rx="12" fill="currentColor" className="text-primary"/>
                           <path d="M15 20h30v25H15V20z" fill="white"/>
-                          <path d="M20 25h5v5h-5v-5z M25 25h5v5h-5v-5z M30 25h5v5h-5v-5z" fill="#2563eb"/>
-                          <path d="M20 35h5v5h-5v-5z M25 35h5v5h-5v-5z M30 35h5v5h-5v-5z" fill="#2563eb"/>
+                          <path d="M20 25h5v5h-5v-5z M25 25h5v5h-5v-5z M30 25h5v5h-5v-5z" fill="currentColor" className="text-primary"/>
+                          <path d="M20 35h5v5h-5v-5z M25 35h5v5h-5v-5z M30 35h5v5h-5v-5z" fill="currentColor" className="text-primary"/>
                         </svg>
                       );
                     })()}
                   </div>
                   <div className="text-left">
-                    <h2 className="text-lg font-bold text-blue-600 m-0">
+                    <h2 className="text-lg font-bold text-primary m-0">
                       {user?.office_name || 'ΔΙΑΧΕΙΡΙΣΗ ΚΤΙΡΙΩΝ'}
                     </h2>
                     {user?.office_address && (
-                      <p className="text-xs text-gray-600 m-0 mt-1">{user.office_address}</p>
+                      <p className="text-xs text-muted-foreground m-0 mt-1">{user.office_address}</p>
                     )}
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                       {user?.office_phone && (
-                        <p className="text-xs text-gray-600 m-0">Τηλ: {user.office_phone}</p>
+                        <p className="text-xs text-muted-foreground m-0">Τηλ: {user.office_phone}</p>
                       )}
                       {user?.office_phone_emergency && (
-                        <p className="text-xs text-gray-600 m-0">Τηλ. Ανάγκης: {user.office_phone_emergency}</p>
+                        <p className="text-xs text-muted-foreground m-0">Τηλ. Ανάγκης: {user.office_phone_emergency}</p>
                       )}
                       {user?.email && (
-                        <p className="text-xs text-gray-600 m-0">Email: {user.email}</p>
+                        <p className="text-xs text-muted-foreground m-0">Email: {user.email}</p>
                       )}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <h3 className="text-xs text-gray-600 font-normal m-0 mb-1">ΑΡΙΘΜΟΣ ΑΠΟΔΕΙΞΗΣ</h3>
-                  <div className="text-base font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded border border-blue-600">
+                  <h3 className="text-xs text-muted-foreground font-normal m-0 mb-1">ΑΡΙΘΜΟΣ ΑΠΟΔΕΙΞΗΣ</h3>
+                  <div className="text-base font-bold text-primary bg-primary/10 px-3 py-2 rounded border border-primary">
                     {receiptNumber}
                   </div>
                 </div>
               </div>
-              <h1 className="text-2xl font-bold text-blue-600 m-0">ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΕΩΣ</h1>
+              <h1 className="text-2xl font-bold text-primary m-0">ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΕΩΣ</h1>
               <p className="mt-2 mb-1"><strong>{apartmentInfo.building_name || 'Κτίριο'}</strong></p>
-              <p className="text-gray-600">Ημερομηνία: {currentDate} • Ώρα: {currentTime}</p>
+              <p className="text-muted-foreground">Ημερομηνία: {currentDate} • Ώρα: {currentTime}</p>
             </div>
 
             {/* Receipt Info Grid */}
@@ -399,10 +399,10 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             </div>
 
             {/* Amount Section */}
-            <div className="text-center bg-blue-50 border-2 border-blue-600 p-6 rounded-lg my-8">
-              <h2 className="text-xl font-bold text-blue-900 mb-2">ΠΟΣΟ ΕΙΣΠΡΑΞΕΩΣ</h2>
-              <div className="text-4xl font-bold text-blue-600 my-4">{payment.amount}€</div>
-              <p className="text-blue-800">Ολογράφως: {numberToWords(Number(payment.amount))} ευρώ</p>
+            <div className="text-center bg-primary/10 border-2 border-primary p-6 rounded-lg my-8">
+              <h2 className="text-xl font-bold text-primary mb-2">ΠΟΣΟ ΕΙΣΠΡΑΞΕΩΣ</h2>
+              <div className="text-4xl font-bold text-primary my-4">{payment.amount}€</div>
+              <p className="text-primary/90">Ολογράφως: {numberToWords(Number(payment.amount))} ευρώ</p>
             </div>
 
             {/* Notes */}

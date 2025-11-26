@@ -53,8 +53,8 @@ export default function DashboardLayout({
         {/* Header */}
         <GlobalHeader />
 
-        {/* Page Content - 7% απόσταση από header και 7% περιθώρια στα πλαινά */}
-        <div className="pt-[7vh] px-[7%]">
+        {/* Page Content - Standardized container layout */}
+        <div className="py-8 container mx-auto px-4 sm:px-6 lg:px-8">
           {children}
         </div>
       </div>

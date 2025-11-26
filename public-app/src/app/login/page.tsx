@@ -213,7 +213,7 @@ function LoginForm() {
 
       <main className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
-          <div className="bg-card rounded-none shadow-lg p-8">
+          <div className="bg-card rounded-xl shadow-app-lg p-8 border border-border/50">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
                 Σύνδεση
@@ -224,7 +224,7 @@ function LoginForm() {
             </div>
             
             {errors.general && (
-              <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-none shadow-sm mb-6">
+              <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md shadow-sm mb-6 border border-destructive/20">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {errors.general}
@@ -243,7 +243,7 @@ function LoginForm() {
             )}
 
             {resendSuccess && (
-              <div className="bg-success/10 text-success px-4 py-3 rounded-none shadow-sm mb-6">
+              <div className="bg-success/10 text-success px-4 py-3 rounded-md shadow-sm mb-6 border border-success/20">
                 Το email επιβεβαίωσης στάλθηκε επιτυχώς! Ελέγξτε το inbox σας (και spam folder).
               </div>
             )}
@@ -251,7 +251,7 @@ function LoginForm() {
             {/* Google OAuth Button */}
             <button
               onClick={handleGoogleLogin}
-              className="w-full bg-card shadow-sm text-foreground py-3 px-6 rounded-none font-semibold hover:shadow-md transition-shadow flex items-center justify-center mb-6"
+              className="w-full bg-card shadow-sm border border-input text-foreground py-3 px-6 rounded-md font-semibold hover:shadow-md hover:bg-accent/50 transition-all flex items-center justify-center mb-6"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -297,8 +297,8 @@ function LoginForm() {
                     value={formData.email}
                     onChange={handleInputChange}
                     autoComplete="email"
-                    className={`w-full pl-10 pr-4 py-3 rounded-none shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground ${
-                      errors.email ? 'ring-2 ring-destructive' : ''
+                    className={`w-full pl-10 pr-4 py-3 rounded-md shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground border border-input ${
+                      errors.email ? 'ring-2 ring-destructive border-destructive' : ''
                     }`}
                     placeholder="john@example.com"
                   />
@@ -321,8 +321,8 @@ function LoginForm() {
                     value={formData.password}
                     onChange={handleInputChange}
                     autoComplete="current-password"
-                    className={`w-full pl-10 pr-12 py-3 rounded-none shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground ${
-                      errors.password ? 'ring-2 ring-destructive' : ''
+                    className={`w-full pl-10 pr-12 py-3 rounded-md shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground border border-input ${
+                      errors.password ? 'ring-2 ring-destructive border-destructive' : ''
                     }`}
                     placeholder="••••••••"
                   />
@@ -350,7 +350,7 @@ function LoginForm() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-primary focus:ring-ring rounded-none"
+                    className="h-4 w-4 text-primary focus:ring-ring rounded border-input"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
                     Να με θυμάσαι
