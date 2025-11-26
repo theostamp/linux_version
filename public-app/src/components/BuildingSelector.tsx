@@ -118,10 +118,10 @@ export default function BuildingSelector({
       >
         <div 
           ref={modalRef}
-          className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-border pointer-events-auto"
+          className="bg-white dark:bg-popover rounded-xl shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-border pointer-events-auto"
         >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-muted">
           <div className="flex items-center gap-2">
             <BuildingIcon className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Επιλογή Κτιρίου</h2>
@@ -135,7 +135,7 @@ export default function BuildingSelector({
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-border bg-card">
+        <div className="p-4 border-b border-border bg-white dark:bg-popover">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input
@@ -211,7 +211,7 @@ export default function BuildingSelector({
               {/* Τρέχον κτίριο (αν υπάρχει) */}
               {currentBuilding && (
                 <>
-                  <div className="px-4 py-2 bg-muted/50 border-b border-border">
+                  <div className="px-4 py-2 bg-muted border-b border-border">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Τρέχον κτίριο
                     </div>
@@ -248,7 +248,7 @@ export default function BuildingSelector({
               )}
 
               {/* Λίστα κτιρίων */}
-              <div className="px-4 py-2 bg-muted/30 border-b border-border">
+              <div className="px-4 py-2 bg-muted border-b border-border">
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Άλλα κτίρια
                 </div>
