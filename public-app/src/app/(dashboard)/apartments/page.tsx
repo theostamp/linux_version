@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import EditTenantModal from '@/components/apartments/EditTenantModal';
+import EditOwnerModal from '@/components/apartments/EditOwnerModal';
 
 type OccupancyFilter = 'all' | 'owner' | 'tenant' | 'vacant';
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -226,6 +227,7 @@ const ApartmentsPageContent = () => {
   const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
   const [editTenantModalOpen, setEditTenantModalOpen] = useState(false);
+  const [editOwnerModalOpen, setEditOwnerModalOpen] = useState(false);
   const [selectedApartment, setSelectedApartment] = useState<ApartmentList | null>(null);
 
   const canManage = !!(user?.is_superuser || user?.is_staff);
@@ -729,18 +731,37 @@ const ApartmentsPageContent = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {canManage && (apartment.tenant_name || apartment.is_rented) && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedApartment(apartment);
-                                  setEditTenantModalOpen(true);
-                                }}
-                              >
-                                <Edit className="w-3 h-3 mr-1" />
-                                Ενημέρωση
-                              </Button>
+                            {canManage && (
+                              <>
+                                {apartment.owner_name && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedApartment(apartment);
+                                      setEditOwnerModalOpen(true);
+                                    }}
+                                    title="Ενημέρωση ιδιοκτήτη"
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Ιδιοκτήτης
+                                  </Button>
+                                )}
+                                {(apartment.tenant_name || apartment.is_rented) && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedApartment(apartment);
+                                      setEditTenantModalOpen(true);
+                                    }}
+                                    title="Ενημέρωση ενοίκου"
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Ένοικος
+                                  </Button>
+                                )}
+                              </>
                             )}
                             <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
                               <Button variant="outline" size="sm">
@@ -829,18 +850,37 @@ const ApartmentsPageContent = () => {
                       Δημιουργήθηκε: {formatDate(apartment.created_at)}
                     </p>
                     <div className="flex gap-2">
-                      {canManage && (apartment.tenant_name || apartment.is_rented) && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedApartment(apartment);
-                            setEditTenantModalOpen(true);
-                          }}
-                        >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Ενημέρωση
-                        </Button>
+                      {canManage && (
+                        <>
+                          {apartment.owner_name && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedApartment(apartment);
+                                setEditOwnerModalOpen(true);
+                              }}
+                              title="Ενημέρωση ιδιοκτήτη"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Ιδιοκτήτης
+                            </Button>
+                          )}
+                          {(apartment.tenant_name || apartment.is_rented) && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedApartment(apartment);
+                                setEditTenantModalOpen(true);
+                              }}
+                              title="Ενημέρωση ενοίκου"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Ένοικος
+                            </Button>
+                          )}
+                        </>
                       )}
                       <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
                         <Button variant="ghost" size="sm">
@@ -861,6 +901,16 @@ const ApartmentsPageContent = () => {
       <EditTenantModal
         open={editTenantModalOpen}
         onOpenChange={setEditTenantModalOpen}
+        apartment={selectedApartment}
+        onSuccess={() => {
+          loadApartments();
+        }}
+      />
+
+      {/* Edit Owner Modal */}
+      <EditOwnerModal
+        open={editOwnerModalOpen}
+        onOpenChange={setEditOwnerModalOpen}
         apartment={selectedApartment}
         onSuccess={() => {
           loadApartments();

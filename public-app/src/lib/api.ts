@@ -1303,6 +1303,30 @@ export async function updateApartmentTenant(apartmentId: number, tenantData: Upd
   }
 }
 
+export type UpdateOwnerData = {
+  owner_name?: string;
+  owner_phone?: string;
+  owner_phone2?: string;
+  owner_email?: string;
+  identifier?: string;
+  participation_mills?: number;
+  heating_mills?: number;
+  elevator_mills?: number;
+};
+
+export async function updateApartmentOwner(apartmentId: number, ownerData: UpdateOwnerData): Promise<ApartmentList> {
+  try {
+    const response = await apiPost<{ apartment: ApartmentList; message: string }>(
+      `/apartments/${apartmentId}/update-owner/`,
+      ownerData
+    );
+    return response.apartment;
+  } catch (error) {
+    console.error('[updateApartmentOwner] Error updating owner:', error);
+    throw error;
+  }
+}
+
 // ============================================================================
 // API Instance Export (for backward compatibility)
 // ============================================================================
