@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import InviteUserModal from '@/components/InviteUserModal';
 import InvitationsList from '@/components/InvitationsList';
+import UsersList from '@/components/UsersList';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Mail } from 'lucide-react';
+import { UserPlus, Mail, Users } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 
 export default function UsersPage() {
@@ -59,6 +60,14 @@ export default function UsersPage() {
             <UserPlus className="h-4 w-4 mr-2" />
             Προσκάλεσε Χρήστη
           </Button>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-5 w-5 text-gray-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Καταχωρημένοι Χρήστες</h2>
+          </div>
+          <UsersList />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

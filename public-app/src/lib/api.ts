@@ -1956,3 +1956,27 @@ export type ResendInvitationPayload = {
 export async function resendInvitation(payload: ResendInvitationPayload): Promise<{ message: string; invitation: UserInvitation }> {
   return await apiPost<{ message: string; invitation: UserInvitation }>('/users/invitations/resend/', payload);
 }
+
+// ============================================================================
+// User Management API Functions
+// ============================================================================
+
+export async function fetchUsers(): Promise<User[]> {
+  return await apiGet<User[]>('/users/');
+}
+
+export type UpdateUserPayload = {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+  is_active?: boolean;
+};
+
+export async function updateUser(userId: number, payload: UpdateUserPayload): Promise<User> {
+  return await apiPatch<User>(`/users/${userId}/`, payload);
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  return await apiDelete(`/users/${userId}/`);
+}
