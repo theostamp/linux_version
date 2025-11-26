@@ -21,7 +21,7 @@ const statusConfig = {
   pending: { label: 'Εκκρεμής', icon: Clock, color: 'bg-yellow-100 text-yellow-800' },
   accepted: { label: 'Αποδεκτή', icon: CheckCircle, color: 'bg-green-100 text-green-800' },
   expired: { label: 'Ληγμένη', icon: AlertCircle, color: 'bg-red-100 text-red-800' },
-  cancelled: { label: 'Ακυρωμένη', icon: XCircle, color: 'bg-gray-100 text-gray-800' },
+  cancelled: { label: 'Ακυρωμένη', icon: XCircle, color: 'bg-muted text-muted-foreground' },
 };
 
 const roleLabels = {
@@ -40,16 +40,16 @@ export default function InvitationsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-600">Φόρτωση προσκλήσεων...</span>
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Φόρτωση προσκλήσεων...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-800">Σφάλμα φόρτωσης προσκλήσεων</p>
+      <div className="p-4 bg-destructive/10 border-0 rounded-none shadow-sm">
+        <p className="text-destructive">Σφάλμα φόρτωσης προσκλήσεων προσκλήσεων</p>
         <Button onClick={() => refetch()} variant="outline" size="sm" className="mt-2">
           Δοκιμή Ξανά
         </Button>
@@ -59,8 +59,8 @@ export default function InvitationsList() {
 
   if (!invitations || invitations.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500">
-        <Mail className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+      <div className="p-8 text-center text-muted-foreground">
+        <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
         <p>Δεν υπάρχουν προσκλήσεις</p>
       </div>
     );
@@ -119,11 +119,11 @@ export default function InvitationsList() {
                       {statusInfo.label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className="text-sm text-muted-foreground">
                     {format(new Date(invitation.created_at), 'dd/MM/yyyy HH:mm', { locale: el })}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <span className={isExpired ? 'text-red-600' : 'text-gray-600'}>
+                    <span className={isExpired ? 'text-destructive' : 'text-muted-foreground'}>
                       {format(new Date(invitation.expires_at), 'dd/MM/yyyy HH:mm', { locale: el })}
                     </span>
                   </TableCell>

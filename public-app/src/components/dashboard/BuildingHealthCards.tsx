@@ -18,12 +18,12 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
   if (loading) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Κατάσταση Κτιρίων</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Κατάσταση Κτιρίων</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
-                <div className="h-24 bg-gray-300 rounded" />
+                <div className="h-24 bg-muted-foreground/20 rounded-none" />
               </CardContent>
             </Card>
           ))}
@@ -63,7 +63,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
   
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-xl font-semibold text-foreground mb-4">
         🏢 Κατάσταση Κτιρίων
       </h2>
       
@@ -72,7 +72,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
           <Card
             key={building.id}
             onClick={() => router.push(`/buildings/${building.id}`)}
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 group border-2"
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 group border-0 shadow-md"
             style={{
               borderColor: `${getHealthColor(building.health_score)}40`,
             }}
@@ -81,15 +81,15 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                  <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                     {building.name}
                   </h3>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
                     {building.address}
                   </p>
                 </div>
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ml-3"
+                  className="w-10 h-10 rounded-none flex items-center justify-center flex-shrink-0 ml-3 shadow-sm"
                   style={{
                     backgroundColor: `${getHealthColor(building.health_score)}20`,
                     color: getHealthColor(building.health_score),
@@ -102,7 +102,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
               {/* Health Score */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Κατάσταση</span>
+                  <span className="text-sm text-muted-foreground">Κατάσταση</span>
                   <span
                     className="text-sm font-semibold"
                     style={{ color: getHealthColor(building.health_score) }}
@@ -118,11 +118,11 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-gray-500 text-xs mb-1">Διαμερίσματα</p>
-                  <p className="font-semibold text-gray-900">{building.apartments_count}</p>
+                  <p className="text-muted-foreground text-xs mb-1">Διαμερίσματα</p>
+                  <p className="font-semibold text-foreground">{building.apartments_count}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500 text-xs mb-1">Υπόλοιπο</p>
+                  <p className="text-muted-foreground text-xs mb-1">Υπόλοιπο</p>
                   <div className="flex items-center gap-1">
                     {building.balance >= 0 ? (
                       <TrendingUp className="w-3 h-3 text-green-600" />
@@ -138,7 +138,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
               
               {/* Pending Obligations Warning */}
               {building.pending_obligations > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="mt-3 pt-3 border-t border-border">
                   <div className="flex items-center gap-2 text-orange-600">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <p className="text-xs">

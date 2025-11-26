@@ -454,7 +454,7 @@ export default function CreateBuildingForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
           Βασικές Πληροφορίες
         </h3>
 
@@ -488,7 +488,7 @@ export default function CreateBuildingForm({
                 id="useGoogleMaps"
                 checked={useGoogleMaps}
                 onChange={(e) => setUseGoogleMaps(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded-none border-0 shadow-sm"
               />
               <Label htmlFor="useGoogleMaps" className="cursor-pointer">
                 Χρήση Google Maps για αυτόματη συμπλήρωση διεύθυνσης
@@ -707,7 +707,7 @@ export default function CreateBuildingForm({
 
       {/* Heating System */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
           Σύστημα Θέρμανσης
         </h3>
 
@@ -755,12 +755,12 @@ export default function CreateBuildingForm({
 
       {/* Manager Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
           Στοιχεία Διαχειριστή (Προαιρετικά)
         </h3>
 
         {buildingId && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-primary/10 border-0 rounded-none shadow-sm p-4 mb-4">
             <div className="flex items-start space-x-2">
               <Users className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <div>
@@ -784,7 +784,7 @@ export default function CreateBuildingForm({
                   onClick={toggleResidentsDropdown}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
                 >
-                  <span className={formData.internal_manager_name ? 'text-gray-900' : 'text-gray-500'}>
+                  <span className={formData.internal_manager_name ? 'text-foreground' : 'text-muted-foreground'}>
                     {formData.internal_manager_name || 'Επιλέξτε από ενοίκους...'}
                   </span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showResidentsDropdown ? 'rotate-180' : ''}`} />
@@ -955,7 +955,7 @@ export default function CreateBuildingForm({
 
       {/* Management Office Information - Auto-filled from user settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
           Στοιχεία Γραφείου Διαχείρισης
         </h3>
 
@@ -994,7 +994,7 @@ export default function CreateBuildingForm({
 
       {/* Financial System Settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
           Οικονομικές Ρυθμίσεις
         </h3>
 

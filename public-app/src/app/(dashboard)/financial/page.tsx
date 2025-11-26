@@ -95,7 +95,7 @@ function FinancialContent() {
 
   if (!buildingId) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <ErrorMessage message="Δεν βρέθηκε κτίριο. Παρακαλώ επιλέξτε ένα κτίριο από τις ρυθμίσεις." />
       </div>
     );

@@ -365,8 +365,8 @@ const ApartmentsPageContent = () => {
 
   if (buildingsLoading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center justify-center py-16 text-gray-600">
+      <div>
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <RefreshCw className="w-8 h-8 animate-spin mb-4" />
           <p>Φόρτωση κτιρίων...</p>
         </div>
@@ -376,7 +376,7 @@ const ApartmentsPageContent = () => {
 
   if (buildingError) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <ErrorMessage message={buildingError} />
       </div>
     );
@@ -384,11 +384,11 @@ const ApartmentsPageContent = () => {
 
   if (!buildingId) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
-        <div className="bg-white border rounded-2xl p-8 text-center shadow-sm">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Δεν έχει επιλεγεί κτίριο</h1>
-          <p className="text-gray-600 mb-6">
+      <div className="space-y-6">
+        <div className="bg-card rounded-none p-8 text-center shadow-md">
+          <AlertTriangle className="w-12 h-12 text-warning mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold text-foreground mb-2">Δεν έχει επιλεγεί κτίριο</h1>
+          <p className="text-muted-foreground mb-6">
             Για να δείτε τα διαμερίσματα, επιλέξτε πρώτα ένα κτίριο από την αριστερή στήλη ή δημιουργήστε ένα νέο.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -407,7 +407,7 @@ const ApartmentsPageContent = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm text-primary font-semibold uppercase tracking-wide">Κτίριο: {activeBuilding?.name}</p>
@@ -439,7 +439,7 @@ const ApartmentsPageContent = () => {
       <BuildingFilterIndicator />
 
       {/* Building Summary */}
-      <div className="bg-white rounded-2xl border shadow-sm p-6">
+      <div className="bg-card rounded-none shadow-md p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 text-foreground">
@@ -455,22 +455,22 @@ const ApartmentsPageContent = () => {
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1">
-            <div className="bg-primary/10 border border-primary/20 rounded-xl p-3">
+            <div className="bg-primary/10 rounded-none shadow-sm p-3">
               <p className="text-xs text-primary">Σύνολο</p>
               <p className="text-2xl font-semibold text-primary">{stats.total}</p>
               <p className="text-xs text-primary/70">διαμερίσματα</p>
             </div>
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+            <div className="bg-indigo-50 rounded-none shadow-sm p-3">
               <p className="text-xs text-indigo-600">Με ενοικιαστή</p>
               <p className="text-2xl font-semibold text-indigo-700">{stats.rented}</p>
               <p className="text-xs text-indigo-500">ενεργά μισθωτήρια</p>
             </div>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+            <div className="bg-emerald-50 rounded-none shadow-sm p-3">
               <p className="text-xs text-emerald-600">Ιδιοκατοίκηση</p>
               <p className="text-2xl font-semibold text-emerald-700">{stats.ownerOccupied}</p>
               <p className="text-xs text-emerald-500">ιδιοκτήτες</p>
             </div>
-            <div className="bg-muted border border-border rounded-xl p-3">
+            <div className="bg-muted rounded-none shadow-sm p-3">
               <p className="text-xs text-muted-foreground">Μέσο μέγεθος</p>
               <p className="text-2xl font-semibold text-foreground">{stats.avgSize || '—'}</p>
               <p className="text-xs text-muted-foreground">τ.μ.</p>
@@ -480,7 +480,7 @@ const ApartmentsPageContent = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border shadow-sm p-4 space-y-4">
+      <div className="bg-card rounded-none shadow-md p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -497,7 +497,7 @@ const ApartmentsPageContent = () => {
               <select
                 value={occupancyFilter}
                 onChange={(e) => setOccupancyFilter(e.target.value as OccupancyFilter)}
-                className="flex-1 border border-input rounded-lg px-3 py-2 bg-background"
+                className="flex-1 border-0 shadow-sm rounded-none px-3 py-2 bg-card"
               >
                 <option value="all">Όλοι οι τύποι</option>
                 <option value="owner">Ιδιοκατοικούμενα</option>
@@ -510,7 +510,7 @@ const ApartmentsPageContent = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="flex-1 border border-input rounded-lg px-3 py-2 bg-background"
+                className="flex-1 border-0 shadow-sm rounded-none px-3 py-2 bg-card"
               >
                 <option value="all">Όλες οι καταστάσεις</option>
                 <option value="active">Ενεργά</option>
@@ -526,7 +526,7 @@ const ApartmentsPageContent = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortKey)}
-                className="border border-input rounded-lg px-3 py-2 bg-background"
+                className="border-0 shadow-sm rounded-none px-3 py-2 bg-card"
               >
                 <option value="number">Αριθμός Διαμερίσματος</option>
                 <option value="owner">Ιδιοκτήτης (Α-Ω)</option>
@@ -539,7 +539,7 @@ const ApartmentsPageContent = () => {
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border border-input rounded-lg px-3 py-2 bg-background"
+                className="border-0 shadow-sm rounded-none px-3 py-2 bg-card"
               >
                 <option value={10}>10</option>
                 <option value={15}>15</option>
@@ -550,7 +550,7 @@ const ApartmentsPageContent = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Προβολή:</span>
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className="flex bg-muted rounded-none p-1">
               <Button
                 variant={viewMode === 'table' ? 'default' : 'ghost'}
                 size="sm"
@@ -578,14 +578,14 @@ const ApartmentsPageContent = () => {
 
       {/* Results */}
       {isLoading ? (
-        <div className="bg-white rounded-2xl border shadow-sm p-12 text-center text-gray-500">
+        <div className="bg-card rounded-none shadow-md p-12 text-center text-muted-foreground">
           <div className="flex flex-col items-center gap-4">
             <RefreshCw className="w-8 h-8 animate-spin text-primary" />
             <p>Φόρτωση διαμερισμάτων...</p>
           </div>
         </div>
       ) : filteredApartments.length === 0 ? (
-        <div className="bg-white rounded-2xl border shadow-sm p-12 text-center text-muted-foreground">
+        <div className="bg-card rounded-none shadow-md p-12 text-center text-muted-foreground">
           <Home className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
           <p className="font-medium mb-2">Δεν βρέθηκαν διαμερίσματα με τα τρέχοντα φίλτρα.</p>
           {searchTerm || occupancyFilter !== 'all' || statusFilter !== 'all' ? (
@@ -610,7 +610,7 @@ const ApartmentsPageContent = () => {
       ) : (
         <>
           {viewMode === 'table' ? (
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none shadow-md overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[960px]">
                   <thead className="bg-muted border-b">
@@ -618,13 +618,13 @@ const ApartmentsPageContent = () => {
                       <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Διαμέρισμα
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Ιδιοκτήτης
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Ένοικος / Χρήστης
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Στοιχεία
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -638,7 +638,7 @@ const ApartmentsPageContent = () => {
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-none bg-primary/10 shadow-sm flex items-center justify-center">
                                 <Home className="w-5 h-5 text-primary" />
                               </div>
                               <div>
@@ -708,22 +708,22 @@ const ApartmentsPageContent = () => {
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-500">Συμμετοχή</p>
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-xs text-muted-foreground">Συμμετοχή</p>
+                              <p className="text-sm font-semibold text-foreground">
                                 {typeof apartment.participation_mills === 'number'
                                   ? `${apartment.participation_mills}‰`
                                   : '—'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-500">Όροφος</p>
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-xs text-muted-foreground">Όροφος</p>
+                              <p className="text-sm font-semibold text-foreground">
                                 {apartment.floor !== undefined ? apartment.floor : '—'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-500">Ενημέρωση</p>
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-xs text-muted-foreground">Ενημέρωση</p>
+                              <p className="text-sm font-semibold text-foreground">
                                 {formatDate(apartment.updated_at)}
                               </p>
                             </div>
@@ -790,7 +790,7 @@ const ApartmentsPageContent = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {paginatedApartments.map((apartment) => (
-                <div key={apartment.id} className="bg-white rounded-2xl border shadow-sm p-5 space-y-4">
+                <div key={apartment.id} className="bg-card rounded-none shadow-md p-5 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wide">Διαμέρισμα</p>
@@ -835,14 +835,14 @@ const ApartmentsPageContent = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Τετρ. μέτρα</p>
-                      <p className="font-semibold text-gray-900">
+                      <p className="text-xs text-muted-foreground">Τετρ. μέτρα</p>
+                      <p className="font-semibold text-foreground">
                         {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Τελευταία ενημέρωση</p>
-                      <p className="font-semibold text-gray-900">{formatDate(apartment.updated_at)}</p>
+                      <p className="text-xs text-muted-foreground">Τελευταία ενημέρωση</p>
+                      <p className="font-semibold text-foreground">{formatDate(apartment.updated_at)}</p>
                     </div>
                   </div>
                   <div className="flex justify-between items-center pt-2">

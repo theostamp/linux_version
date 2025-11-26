@@ -66,15 +66,15 @@ export default function UsersList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-600">Φόρτωση χρηστών...</span>
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Φόρτωση χρηστών...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+      <div className="p-4 bg-destructive/10 border-0 rounded-none shadow-sm text-destructive">
         <div className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5" />
           <span>Σφάλμα κατά τη φόρτωση των χρηστών. Παρακαλώ δοκιμάστε ξανά.</span>
@@ -85,8 +85,8 @@ export default function UsersList() {
 
   if (!users || users.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500">
-        <UserX className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+      <div className="p-8 text-center text-muted-foreground">
+        <UserX className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
         <p>Δεν υπάρχουν καταχωρημένοι χρήστες.</p>
       </div>
     );

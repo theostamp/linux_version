@@ -195,16 +195,16 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-card shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <Link href="/" className="flex items-center">
               <Building className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
+              <span className="ml-2 text-2xl font-bold text-foreground">New Concierge</span>
             </Link>
-            <Link href="/signup" className="text-gray-600 hover:text-gray-900">
+            <Link href="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
               Δημιουργία Λογαριασμού
             </Link>
           </div>
@@ -213,18 +213,18 @@ function LoginForm() {
 
       <main className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="bg-card rounded-none shadow-lg p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 Σύνδεση
               </h1>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Καλώς ήρθατε ξανά στο New Concierge
               </p>
             </div>
             
             {errors.general && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-none shadow-sm mb-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {errors.general}
@@ -243,7 +243,7 @@ function LoginForm() {
             )}
 
             {resendSuccess && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+              <div className="bg-success/10 text-success px-4 py-3 rounded-none shadow-sm mb-6">
                 Το email επιβεβαίωσης στάλθηκε επιτυχώς! Ελέγξτε το inbox σας (και spam folder).
               </div>
             )}
@@ -251,7 +251,7 @@ function LoginForm() {
             {/* Google OAuth Button */}
             <button
               onClick={handleGoogleLogin}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center mb-6"
+              className="w-full bg-card shadow-sm text-foreground py-3 px-6 rounded-none font-semibold hover:shadow-md transition-shadow flex items-center justify-center mb-6"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -276,20 +276,20 @@ function LoginForm() {
 
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-muted"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">ή</span>
+                <span className="px-2 bg-card text-muted-foreground">ή</span>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                   Διεύθυνση Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <input
                     type="email"
                     id="email"
@@ -297,23 +297,23 @@ function LoginForm() {
                     value={formData.email}
                     onChange={handleInputChange}
                     autoComplete="email"
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                      errors.email ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full pl-10 pr-4 py-3 rounded-none shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground ${
+                      errors.email ? 'ring-2 ring-destructive' : ''
                     }`}
                     placeholder="john@example.com"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-1 text-sm text-destructive">{errors.email}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
                   Κωδικός
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
@@ -321,15 +321,15 @@ function LoginForm() {
                     value={formData.password}
                     onChange={handleInputChange}
                     autoComplete="current-password"
-                    className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                      errors.password ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full pl-10 pr-12 py-3 rounded-none shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground ${
+                      errors.password ? 'ring-2 ring-destructive' : ''
                     }`}
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors"
                     aria-label={showPassword ? "Απόκρυψη κωδικού" : "Εμφάνιση κωδικού"}
                   >
                     {showPassword ? (
@@ -340,7 +340,7 @@ function LoginForm() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 text-sm text-destructive">{errors.password}</p>
                 )}
               </div>
 
@@ -350,13 +350,13 @@ function LoginForm() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    className="h-4 w-4 text-primary focus:ring-ring rounded-none"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
                     Να με θυμάσαι
                   </label>
                 </div>
-                <Link href="/forgot-password" className="text-sm text-primary hover:text-primary-hover">
+                <Link href="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
                   Ξέχασες τον κωδικό;
                 </Link>
               </div>
@@ -383,9 +383,9 @@ function LoginForm() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Δεν έχετε λογαριασμό;{' '}
-                <Link href="/signup" className="text-primary hover:text-primary-hover font-semibold">
+                <Link href="/signup" className="text-primary hover:text-primary/80 font-semibold transition-colors">
                   Δημιουργήστε έναν
                 </Link>
               </p>
@@ -400,12 +400,11 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-600">Φόρτωση...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Φόρτωση...</div>
       </div>
     }>
       <LoginForm />
     </Suspense>
   );
 }
-

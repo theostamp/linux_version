@@ -126,7 +126,7 @@ export default function RequestDetailPage() {
 
   if (!isAuthReady || loading) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div>
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-300 rounded w-3/4"></div>
           <div className="h-20 bg-gray-300 rounded"></div>
@@ -138,7 +138,7 @@ export default function RequestDetailPage() {
 
   if (error) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div>
         <Link href="/requests">
           <Button variant="secondary" className="mb-4">⬅ Επιστροφή στα Αιτήματα</Button>
         </Link>
@@ -149,7 +149,7 @@ export default function RequestDetailPage() {
 
   if (!request) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div>
         <Link href="/requests">
           <Button variant="secondary" className="mb-4">⬅ Επιστροφή στα Αιτήματα</Button>
         </Link>
@@ -159,7 +159,7 @@ export default function RequestDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Navigation */}
       <Link href="/requests">
         <Button variant="secondary">⬅ Επιστροφή στα Αιτήματα</Button>

@@ -17,16 +17,16 @@ export function FinancialOverview({ data, loading = false }: FinancialOverviewPr
   if (loading) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Οικονομική Επισκόπηση</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Οικονομική Επισκόπηση</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader className="pb-3">
-                <div className="h-4 w-24 bg-gray-300 rounded" />
+                <div className="h-4 w-24 bg-muted-foreground/20 rounded-none" />
               </CardHeader>
               <CardContent>
-                <div className="h-8 w-20 bg-gray-300 rounded mb-2" />
-                <div className="h-3 w-32 bg-gray-300 rounded" />
+                <div className="h-8 w-20 bg-muted-foreground/20 rounded-none mb-2" />
+                <div className="h-3 w-32 bg-muted-foreground/20 rounded-none" />
               </CardContent>
             </Card>
           ))}
@@ -46,24 +46,24 @@ export function FinancialOverview({ data, loading = false }: FinancialOverviewPr
   
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-xl font-semibold text-foreground mb-4">
         💰 Οικονομική Επισκόπηση
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Reserve Card */}
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+        <Card className="border-0 shadow-md bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-blue-900">
+            <CardTitle className="text-sm font-medium text-foreground">
               Συνολικό Αποθεματικό
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-900">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(totalReserve)}
             </div>
-            <p className="text-xs text-blue-700 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {totalReserve >= 0 ? (
                 <span className="flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
@@ -80,42 +80,42 @@ export function FinancialOverview({ data, loading = false }: FinancialOverviewPr
         </Card>
         
         {/* Pending Expenses Card */}
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+        <Card className="border-0 shadow-md bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-orange-900">
+            <CardTitle className="text-sm font-medium text-foreground">
               Ανέκδοτες Δαπάνες
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertTriangle className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-900">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(totalPendingExpenses)}
             </div>
-            <p className="text-xs text-orange-700 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Δεν έχουν εκδοθεί
             </p>
           </CardContent>
         </Card>
         
         {/* Collection Rate Card */}
-        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-white">
+        <Card className="border-0 shadow-md bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-green-900">
+            <CardTitle className="text-sm font-medium text-foreground">
               Ποσοστό Είσπραξης
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-900">
+            <div className="text-2xl font-bold text-foreground">
               {formatPercentage(collectionRate)}
             </div>
-            <p className="text-xs text-green-700 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Οφειλές: {formatCurrency(totalPendingObligations)}
             </p>
             {/* Progress Bar */}
-            <div className="mt-3 w-full bg-green-200 rounded-full h-2">
+            <div className="mt-3 w-full bg-success/20 rounded-none h-2">
               <div
-                className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                className="bg-success h-2 rounded-none transition-all duration-500"
                 style={{ width: `${Math.min(collectionRate, 100)}%` }}
               />
             </div>

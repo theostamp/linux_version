@@ -51,7 +51,7 @@ export default function NewVotePage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Link href="/votes">
         <Button variant="secondary">⬅ Επιστροφή στις Ψηφοφορίες</Button>
       </Link>

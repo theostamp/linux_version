@@ -102,7 +102,7 @@ function VotesPageContent() {
 
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-6">🗳️ Ψηφοφορίες</h1>
         <BuildingFilterIndicator className="mb-4" />
         <p>Φόρτωση ψηφοφοριών...</p>
@@ -112,7 +112,7 @@ function VotesPageContent() {
 
   if (isError) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-6">🗳️ Ψηφοφορίες</h1>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />
@@ -146,12 +146,12 @@ function VotesPageContent() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
         {canCreateVote && (
           <Link href="/votes/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button>
               ➕ Νέα Ψηφοφορία
             </Button>
           </Link>
@@ -214,7 +214,7 @@ function VotesPageContent() {
       {canCreateVote && (
         <Link 
           href="/votes/new"
-          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-none shadow-lg transition-all duration-200 hover:scale-110"
           title="Νέα Ψηφοφορία"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

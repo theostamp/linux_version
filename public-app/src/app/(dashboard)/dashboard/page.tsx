@@ -40,8 +40,8 @@ function DashboardContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Φόρτωση dashboard...</p>
+          <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Φόρτωση dashboard...</p>
         </div>
       </div>
     );
@@ -55,12 +55,12 @@ function DashboardContent() {
   const effectiveBuildings = buildingsData || buildings || [];
 
   return (
-    <main className="p-6 max-w-[1600px] mx-auto">
+    <main>
       {/* Section 1: Όλα τα Κτίρια - Overall Summary */}
       <div className="mb-12">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Όλα τα Κτίρια</h2>
-          <p className="text-gray-600">Συγκεντρωτικά στοιχεία από όλα τα κτίρια</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Όλα τα Κτίρια</h2>
+          <p className="text-muted-foreground">Συγκεντρωτικά στοιχεία από όλα τα κτίρια</p>
         </div>
 
         {/* Hero Section with Key Metrics - All Buildings */}
@@ -72,10 +72,10 @@ function DashboardContent() {
 
       {/* Section 2: Επιλεγμένο Κτίριο - Selected Building Only */}
       {selectedBuilding && (
-        <div className="mb-12 border-t-4 border-blue-500 pt-8">
+        <div className="mb-12 border-t-4 border-primary pt-8">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedBuilding.name}</h2>
-            <p className="text-gray-600">{selectedBuilding.address}</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">{selectedBuilding.name}</h2>
+            <p className="text-muted-foreground">{selectedBuilding.address}</p>
           </div>
 
           {/* Hero Section with Key Metrics - Selected Building */}
@@ -98,7 +98,7 @@ function DashboardContent() {
       {/* Announcements Carousel */}
       {announcements.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">📢 Πρόσφατες Ανακοινώσεις</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">📢 Πρόσφατες Ανακοινώσεις</h2>
           <AnnouncementsCarousel announcements={announcements} />
         </div>
       )}
@@ -106,25 +106,25 @@ function DashboardContent() {
       {/* Buildings List - Fallback for when no dashboard data */}
       {effectiveBuildings.length > 0 && !dashboardData?.buildings?.length && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">🏢 Τα Κτίριά σας</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">🏢 Τα Κτίριά σας</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {effectiveBuildings.map((building) => (
               <Link
                 key={building.id}
                 href={`/buildings/${building.id}`}
-                className="block border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-200 bg-white group"
+                className="block border-0 rounded-none p-6 shadow-md hover:shadow-lg transition-all duration-200 bg-card group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                    <Building className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-none flex items-center justify-center group-hover:bg-primary/20 transition-colors shadow-sm">
+                    <Building className="w-6 h-6 text-primary" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">Διαμερίσματα</p>
-                    <p className="text-2xl font-bold text-gray-900">{building.total_apartments || 0}</p>
+                    <p className="text-sm text-muted-foreground">Διαμερίσματα</p>
+                    <p className="text-2xl font-bold text-foreground">{building.total_apartments || 0}</p>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{building.name}</h3>
-                <p className="text-sm text-gray-600 truncate">{building.address}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-1">{building.name}</h3>
+                <p className="text-sm text-muted-foreground truncate">{building.address}</p>
               </Link>
             ))}
           </div>
@@ -133,15 +133,15 @@ function DashboardContent() {
 
       {/* Empty State */}
       {effectiveBuildings.length === 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-card rounded-none shadow-lg p-8">
           <div className="text-center">
-            <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
-            <p className="text-gray-600 mb-6">
+            <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
+            <p className="text-muted-foreground mb-6">
               Ξεκινήστε προσθέτοντας το πρώτο σας κτίριο για να αρχίσετε τη διαχείριση.
             </p>
             <Link href="/buildings/new">
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button>
                 Προσθήκη Κτιρίου
               </Button>
             </Link>

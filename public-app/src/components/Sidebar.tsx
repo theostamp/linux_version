@@ -335,18 +335,18 @@ export default function Sidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
         >
-          <Menu className="w-5 h-5 text-gray-600" />
+          <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* Loading Sidebar */}
-        <aside className="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col justify-center items-center p-4 z-50 transform transition-transform duration-300 lg:translate-x-0 -translate-x-full">
+        <aside className="fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col justify-center items-center p-4 z-50 transform transition-transform duration-300 lg:translate-x-0 -translate-x-full">
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-primary rounded-none flex items-center justify-center shadow-lg">
               <Loader2 className="h-6 w-6 animate-spin text-white" />
             </div>
-            <p className="text-xs text-gray-600 font-medium">Φόρτωση μενού...</p>
+            <p className="text-xs text-muted-foreground font-medium">Φόρτωση μενού...</p>
           </div>
         </aside>
 
@@ -369,37 +369,37 @@ export default function Sidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
         >
-          <Menu className="w-5 h-5 text-gray-600" />
+          <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* No Access Sidebar */}
         <aside className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300",
+          "fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
         )}>
           {/* Close button for mobile */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700"
+            className="lg:hidden absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-destructive rounded-none flex items-center justify-center shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-base font-semibold text-gray-800">Δεν έχετε πρόσβαση</h3>
-              <p className="text-xs text-gray-600">
+              <h3 className="text-base font-semibold text-foreground">Δεν έχετε πρόσβαση</h3>
+              <p className="text-xs text-muted-foreground">
                 Επικοινωνήστε με τον διαχειριστή για να αντιστοιχιστείτε σε κάποιο κτίριο.
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-none hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Επιστροφή στην Αρχική
             </Link>
@@ -442,37 +442,37 @@ export default function Sidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
         >
-          <Menu className="w-5 h-5 text-gray-600" />
+          <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* No Buildings Sidebar */}
         <aside className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300",
+          "fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
         )}>
           {/* Close button for mobile */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700"
+            className="lg:hidden absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-warning rounded-none flex items-center justify-center shadow-lg">
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-base font-semibold text-gray-800">Δεν υπάρχουν κτίρια</h3>
+              <h3 className="text-base font-semibold text-foreground">Δεν υπάρχουν κτίρια</h3>
               <p className="text-xs text-gray-600">
                 Δεν υπάρχουν διαθέσιμα κτίρια για εσάς. Επικοινωνήστε με τον διαχειριστή.
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-none hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Επιστροφή στην Αρχική
             </Link>
@@ -501,33 +501,33 @@ export default function Sidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
       >
-        <Menu className="w-5 h-5 text-gray-600" />
+        <Menu className="w-5 h-5 text-muted-foreground" />
       </button>
 
       {/* Main Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col z-50 transform transition-transform duration-300",
+        "fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col z-50 transform transition-transform duration-300",
         isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
       )}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="p-4 border-b border-border bg-card">
           {/* Close button for mobile */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-3 right-3 p-2 text-gray-500 hover:text-gray-700"
+            className="lg:hidden absolute top-3 right-3 p-2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" />
           </button>
 
           <div className="flex items-center space-x-3 mb-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 bg-primary rounded-none flex items-center justify-center shadow-lg">
               <Building2 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-gray-800 tracking-tight leading-tight">Digital Concierge</h1>
-              <p className="text-xs text-gray-500 tracking-wide leading-tight">Διαχείριση Κτιρίων</p>
+              <h1 className="text-base font-bold text-foreground tracking-tight leading-tight">Digital Concierge</h1>
+              <p className="text-xs text-muted-foreground tracking-wide leading-tight">Διαχείριση Κτιρίων</p>
             </div>
           </div>
         </div>
@@ -536,12 +536,12 @@ export default function Sidebar() {
         <nav className="flex-1 p-3 space-y-3 overflow-y-auto">
           {availableGroups.map((group) => (
             <div key={group.id} className={cn(
-              "rounded-lg border p-2",
+              "rounded-none border-0 shadow-sm p-2",
               group.bgColor,
               group.borderColor
             )}>
               <h3 className={cn(
-                "text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide",
+                "text-xs font-semibold mb-2 px-2 py-1 rounded-none tracking-wide",
                 group.color === 'orange' && "text-orange-700 bg-orange-100",
                 group.color === 'blue' && "text-blue-700 bg-blue-100",
                 group.color === 'indigo' && "text-indigo-700 bg-indigo-100",
@@ -559,11 +559,11 @@ export default function Sidebar() {
                     key={link.href}
                     onClick={() => handleNavigation(link.href, `Μετάβαση στο ${link.label.toLowerCase()}...`)}
                     className={cn(
-                      'flex items-center justify-start w-full px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide',
-                      'hover:bg-white/60',
+                      'flex items-center justify-start w-full px-2 py-1.5 rounded-none text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide',
+                      'hover:bg-card/60',
                       'hover:shadow-sm hover:transform hover:-translate-y-0.5',
                       isActive && "text-white shadow-md transform -translate-y-0.5",
-                      !isActive && "text-gray-700",
+                      !isActive && "text-foreground",
                       // Active state colors
                       isActive && group.color === 'orange' && "bg-orange-500",
                       isActive && group.color === 'blue' && "bg-blue-500",
@@ -583,7 +583,7 @@ export default function Sidebar() {
                     <span className={cn(
                       'mr-2 transition-colors duration-200 flex-shrink-0',
                       isActive && "text-white",
-                      !isActive && "text-gray-500",
+                      !isActive && "text-muted-foreground",
                       // Hover icon colors
                       !isActive && group.color === 'orange' && "group-hover:text-orange-600",
                       !isActive && group.color === 'blue' && "group-hover:text-blue-600",
@@ -597,7 +597,7 @@ export default function Sidebar() {
                     <span className="text-left flex-1">{link.label}</span>
                     {link.isBeta && (
                       <span className={cn(
-                        'ml-2 px-1.5 py-0.5 text-xs font-bold rounded-full transition-colors duration-200',
+                        'ml-2 px-1.5 py-0.5 text-xs font-bold rounded-none transition-colors duration-200',
                         isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
                       )}>
                         BETA
@@ -612,14 +612,14 @@ export default function Sidebar() {
         </nav>
 
         {/* Calculator Section */}
-        <div className="p-3 border-t border-gray-200 bg-gray-50">
-          <div className="rounded-lg border border-gray-200 p-2 bg-white">
-            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide text-gray-700 bg-gray-100">
+        <div className="p-3 border-t border-border bg-muted">
+          <div className="rounded-none border-0 shadow-sm p-2 bg-card">
+            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded-none tracking-wide text-foreground bg-muted">
               Εργαλεία
             </h3>
             <CalculatorModal>
-              <button className="flex items-center justify-start w-full px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide text-gray-700 hover:bg-gray-100 hover:shadow-sm hover:transform hover:-translate-y-0.5">
-                <Calculator className="w-4 h-4 mr-2 transition-colors duration-200 flex-shrink-0 text-gray-500 group-hover:text-blue-600" />
+              <button className="flex items-center justify-start w-full px-2 py-1.5 rounded-none text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide text-foreground hover:bg-muted hover:shadow-sm hover:transform hover:-translate-y-0.5">
+                <Calculator className="w-4 h-4 mr-2 transition-colors duration-200 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
                 <span className="text-left">Αριθμομηχανή</span>
               </button>
             </CalculatorModal>

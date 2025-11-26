@@ -5,18 +5,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-none text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-sm',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default: 'bg-primary text-primary-foreground hover:bg-[hsl(204,96%,38%)] shadow-md',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        success: 'bg-success text-success-foreground hover:bg-success/90',
-        warning: 'bg-amber-500 text-white hover:bg-amber-600', // Warning needs theme color
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md',
+        outline: 'border-0 bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md',
+        link: 'text-primary underline-offset-4 hover:underline shadow-none',
+        ghost: 'hover:bg-accent hover:text-accent-foreground shadow-none',
+        success: 'bg-success text-success-foreground hover:bg-success/90 shadow-md',
+        warning: 'bg-warning text-warning-foreground hover:bg-[hsl(24,96%,38%)] shadow-md',
       },
       size: {
         xs: 'h-8 px-3 text-xs',
@@ -31,8 +31,8 @@ const buttonVariants = cva(
       },
       animation: {
         none: '',
-        scale: 'hover:shadow-md hover:scale-[1.01] transition-transform duration-200',
-        lift: 'hover:-translate-y-0.5 transition-transform duration-150',
+        scale: 'hover:shadow-lg hover:scale-[1.01] transition-transform duration-200',
+        lift: 'hover:-translate-y-0.5 hover:shadow-lg transition-transform duration-150',
       },
     },
     defaultVariants: {
@@ -58,4 +58,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-

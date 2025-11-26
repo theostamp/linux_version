@@ -36,7 +36,7 @@ export default function NewRequestPage() {
 
   if (!buildingToUse) {
     return (
-      <div className="p-6 max-w-xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-4">📋 Νέο Αίτημα</h1>
         <p className="text-red-600">Παρακαλώ επιλέξτε κτίριο για να συνεχίσετε.</p>
         <Link href="/requests">
@@ -94,7 +94,7 @@ export default function NewRequestPage() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Link href="/requests">
         <Button variant="secondary">⬅ Επιστροφή στα Αιτήματα</Button>
       </Link>

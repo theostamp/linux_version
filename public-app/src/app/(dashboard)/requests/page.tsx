@@ -80,7 +80,7 @@ function RequestsPageContent() {
 
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-6">🔧 Αιτήματα Συντήρησης</h1>
         <BuildingFilterIndicator className="mb-4" />
         <div className="space-y-4">
@@ -94,7 +94,7 @@ function RequestsPageContent() {
 
   if (isError) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-6">🔧 Αιτήματα Συντήρησης</h1>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης αιτημάτων." />
@@ -143,7 +143,7 @@ function RequestsPageContent() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-2">

@@ -25,10 +25,10 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
       {/* Welcome Text */}
       {showWelcome && (
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Καλώς ήρθατε{user?.first_name ? `, ${user.first_name}` : ''}!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Επισκόπηση όλων των κτιρίων και δραστηριοτήτων σας
           </p>
         </div>

@@ -36,9 +36,9 @@ function AnnouncementsPageContent() {
 
   if (buildingLoading || isLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -58,9 +58,9 @@ function AnnouncementsPageContent() {
 
   if (isError) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -78,9 +78,9 @@ function AnnouncementsPageContent() {
 
   if (announcements.length === 0) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -91,7 +91,7 @@ function AnnouncementsPageContent() {
           </Button>
         </div>
         <BuildingFilterIndicator className="mb-4" />
-        <p className="text-gray-500 text-center">
+        <p className="text-muted-foreground text-center">
           Δεν υπάρχουν ενεργές ανακοινώσεις αυτή τη στιγμή.
         </p>
       </div>
@@ -105,7 +105,7 @@ function AnnouncementsPageContent() {
   const item = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">📢 Ανακοινώσεις</h1>
         <div className="flex gap-3">

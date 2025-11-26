@@ -1,56 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 9%;
+  /* Background colors */
+  --background: 0 0% 98%;          /* #FAFAFA - ελαφρύ γκρι */
+  --foreground: 0 0% 10%;          /* #1A1A1A - σχεδόν μαύρο */
   
   /* Popover/Dropdown colors */
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 9%;
+  --popover-foreground: 0 0% 10%;
   
   /* Accent colors */
-  --accent: 240 5% 96%;
-  --accent-foreground: 0 0% 9%;
+  --accent: 204 30% 95%;           /* Ελαφρύ μπλε accent */
+  --accent-foreground: 204 96% 25%;
   
   /* Muted colors */
-  --muted: 240 5% 96%;
-  --muted-foreground: 240 4% 46%;
+  --muted: 0 0% 96%;               /* #F4F4F5 */
+  --muted-foreground: 0 0% 32%;    /* #525252 - Neutral-600 για καλή αναγνωσιμότητα */
   
-  /* Border and input */
-  --border: 240 6% 90%;
-  --input: 240 6% 90%;
-  --ring: 180 70% 41%;
+  /* Border and input - χρησιμοποιούμε shadows αντί borders */
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 204 96% 29%;             /* Ίδιο με primary */
   
-  /* Primary color - fancy turquoise */
-  --primary: 186 100% 20%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 186 100% 17%;
+  /* Primary color - νέο μπλε #035E92 */
+  --primary: 204 96% 29%;          /* rgb(3, 94, 146) */
+  --primary-foreground: 0 0% 100%; /* Λευκό για υψηλή αντίθεση */
+  --primary-hover: 204 96% 38%;    /* #047ABD - πιο φωτεινό */
 
   /* Secondary color */
-  --secondary: 240 5% 96%;
-  --secondary-foreground: 0 0% 9%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 10%;
 
-  /* Destructive color */
-  --destructive: 0 84% 60%;
+  /* Destructive color - Red-600 */
+  --destructive: 0 72% 51%;        /* #DC2626 */
   --destructive-foreground: 0 0% 100%;
   
-  /* Success color */
-  --success: 142 71% 45%; /* emerald-600 */
+  /* Success color - Teal-700 */
+  --success: 173 80% 26%;          /* #0F766E */
   --success-foreground: 0 0% 100%;
   
-  /* Warning color */
-  --warning: 43 96% 56%; /* amber-500 */
+  /* Warning color - Complementary orange */
+  --warning: 24 96% 29%;           /* #924503 - συμπληρωματικό πορτοκαλί */
   --warning-foreground: 0 0% 100%;
   
   /* Card colors */
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 9%;
+  --card: 0 0% 100%;               /* Λευκό */
+  --card-foreground: 0 0% 10%;
   
-  /* Radius */
+  /* Radius - χωρίς στρογγυλοποίηση */
   --radius: 0;
-  --radius-sm: 0.125rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  
+  /* Shadows - αντί borders */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
 }
 
 @theme inline {
@@ -58,6 +66,7 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-destructive: var(--destructive);
@@ -80,6 +89,12 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-condensed: var(--font-ubuntu-condensed);
+  /* Shadow utilities */
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
 }
 
 /* Headings use Ubuntu Condensed */
@@ -89,56 +104,85 @@ h1, h2, h3, h4 {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 93%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 95%;
     
     /* Popover/Dropdown colors - dark mode */
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 93%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
     
     /* Accent colors - dark mode */
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 93%;
+    --accent: 204 30% 15%;
+    --accent-foreground: 204 70% 70%;
     
     /* Muted colors - dark mode */
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 65%;
     
     /* Border and input - dark mode */
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 180 70% 41%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 204 96% 45%;
     
-    /* Primary - dark mode */
-    --primary: 188 100% 32%;
+    /* Primary - dark mode (πιο φωτεινό για dark backgrounds) */
+    --primary: 204 96% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 188 100% 28%;
+    --primary-hover: 204 96% 55%;
 
     /* Secondary - dark mode */
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 93%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 95%;
 
     /* Destructive - dark mode */
-    --destructive: 0 72% 28%;
-    --destructive-foreground: 0 0% 93%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Success - dark mode */
-    --success: 142 71% 35%; /* darker emerald for dark mode */
+    --success: 173 80% 35%;
     --success-foreground: 0 0% 100%;
 
     /* Warning - dark mode */
-    --warning: 43 96% 46%; /* darker amber for dark mode */
+    --warning: 24 96% 40%;
     --warning-foreground: 0 0% 100%;
 
     /* Card colors - dark mode */
-    --card: 240 6% 10%;
-    --card-foreground: 0 0% 93%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+    
+    /* Shadows - dark mode (πιο έντονες) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.35);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23005A66' fill-opacity='0.05'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v11h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9-h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h6zm10 0h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h1zm10 0h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h1zm10 0h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h1zm10 0h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h1zm10 0h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h1z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* Subtle pattern με το νέο primary color */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23035E92' fill-opacity='0.03'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v11h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9h4v4h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9h-1v-9h-9v9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0V0h6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Utility classes for shadows */
+.shadow-app-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-app {
+  box-shadow: var(--shadow);
+}
+
+.shadow-app-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-app-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-app-xl {
+  box-shadow: var(--shadow-xl);
 }

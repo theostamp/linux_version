@@ -71,7 +71,7 @@ export default function BuildingDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           <p className="ml-3 text-gray-600">Φόρτωση δεδομένων κτιρίου...</p>
@@ -82,7 +82,7 @@ export default function BuildingDetailPage() {
 
   if (error) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <div className="mb-6">
           <Link href="/buildings">
             <Button variant="outline" className="mb-4">
@@ -98,7 +98,7 @@ export default function BuildingDetailPage() {
 
   if (!building) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <Link href="/buildings">
           <Button variant="outline" className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -111,7 +111,7 @@ export default function BuildingDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

@@ -126,7 +126,7 @@ export default function MyProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div>
       <form className="space-y-8" onSubmit={handleSubmit}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

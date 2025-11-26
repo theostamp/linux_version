@@ -13,7 +13,7 @@ export default function NewAssemblyPage() {
   if (!isAccessAllowed) return <p className="p-4 text-red-600">🚫 Δεν έχετε πρόσβαση σε αυτή τη σελίδα.</p>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
           🏛️ Νέα Γενική Συνέλευση
