@@ -327,6 +327,43 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        DELETE /api/users/<id>/
+        Διαγραφή χρήστη - μόνο residents μπορούν να διαγραφούν.
+        Admins και managers δεν μπορούν να διαγραφούν.
+        """
+        from core.permissions import IsManager
+        
+        # Έλεγχος αν ο χρήστης έχει δικαίωμα διαγραφής (πρέπει να είναι manager)
+        if not IsManager().has_permission(request, self):
+            return Response({
+                'error': 'Μόνο οι διαχειριστές μπορούν να διαγράφουν χρήστες.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        user_to_delete = self.get_object()
+        
+        # Προστασία: Δεν επιτρέπεται η διαγραφή admins, managers, ή του εαυτού σου
+        protected_roles = ['admin', 'manager', 'superadmin', 'ultraadmin']
+        user_role = getattr(user_to_delete, 'role', None)
+        
+        if user_role in protected_roles:
+            return Response({
+                'error': f'Δεν επιτρέπεται η διαγραφή χρήστη με ρόλο "{user_role}".'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if user_to_delete.is_superuser:
+            return Response({
+                'error': 'Δεν επιτρέπεται η διαγραφή superuser.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if user_to_delete.id == request.user.id:
+            return Response({
+                'error': 'Δεν μπορείτε να διαγράψετε τον εαυτό σας.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        return super().destroy(request, *args, **kwargs)
 
 
 # ===== AUTHENTICATION ENDPOINTS =====
@@ -782,19 +819,4 @@ def user_profile_view(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet για user data
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-    
-    @action(detail=False, methods=['get'])
-    def me(self, request):
-        """
-        GET /api/users/me/
-        Επιστρέφει τα στοιχεία του τρέχοντος χρήστη
-        """
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+# UserViewSet is defined above (line ~321) - removed duplicate definition

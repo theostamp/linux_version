@@ -63,7 +63,7 @@ urlpatterns = [
     # Invitation endpoints
     path('invitations/', views.list_invitations_view, name='list-invitations'),
     path('invitations/resend/', views.resend_invitation_view, name='resend-invitation'),
-    path('invitations/<uuid:pk>/', views.delete_invitation_view, name='delete-invitation'),
+    path('invitations/<int:pk>/', views.delete_invitation_view, name='delete-invitation'),
     path('invite/', views.create_invitation_view, name='invite-user'),
     path('accept-invitation/', views.accept_invitation_view, name='accept-invitation'),
     
