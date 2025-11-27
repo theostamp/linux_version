@@ -34,26 +34,35 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
   const [assignedRole, setAssignedRole] = useState<'resident' | 'internal_manager' | 'manager' | 'staff' | null>('resident');
   const [submitting, setSubmitting] = useState(false);
   const queryClient = useQueryClient();
-  const { buildings } = useBuilding();
+  const { buildings, selectedBuilding } = useBuilding();
+
+  // Υπολογισμός αν το κτίριο είναι υποχρεωτικό (για resident και internal_manager)
+  const isBuildingRequired = assignedRole === 'resident' || assignedRole === 'internal_manager';
 
   // Update form when defaultEmail or defaultBuildingId changes
+  // Αυτόματη επιλογή του τρέχοντος κτιρίου αν δεν υπάρχει defaultBuildingId
   useEffect(() => {
     if (open) {
       if (defaultEmail) {
         setEmail(defaultEmail);
       }
+      // Προτεραιότητα: defaultBuildingId > selectedBuilding > null
       if (defaultBuildingId) {
         setSelectedBuildingId(defaultBuildingId);
+      } else if (selectedBuilding?.id) {
+        // Αυτόματη επιλογή του τρέχοντος κτιρίου
+        setSelectedBuildingId(selectedBuilding.id);
       }
     } else {
       // Reset form when modal closes
       setEmail('');
       setFirstName('');
       setLastName('');
-      setSelectedBuildingId(defaultBuildingId || null);
+      // Επαναφορά στο τρέχον κτίριο ή default
+      setSelectedBuildingId(defaultBuildingId || selectedBuilding?.id || null);
       setAssignedRole('resident');
     }
-  }, [open, defaultEmail, defaultBuildingId]);
+  }, [open, defaultEmail, defaultBuildingId, selectedBuilding?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,9 +74,10 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       return;
     }
 
-    // Validation: internal_manager requires building_id
-    if (assignedRole === 'internal_manager' && !selectedBuildingId) {
-      toast.error('Το κτίριο είναι υποχρεωτικό για εσωτερικό διαχειριστή');
+    // Validation: resident και internal_manager απαιτούν building_id
+    if (isBuildingRequired && !selectedBuildingId) {
+      const roleLabel = assignedRole === 'internal_manager' ? 'εσωτερικό διαχειριστή' : 'ένοικο';
+      toast.error(`Το κτίριο είναι υποχρεωτικό για ${roleLabel}`);
       setSubmitting(false);
       return;
     }
@@ -207,7 +217,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
 
           <div>
             <Label htmlFor="building">
-              Κτίριο {assignedRole === 'internal_manager' && '*'}
+              Κτίριο {isBuildingRequired && <span className="text-red-500">*</span>}
             </Label>
             <Select
               value={selectedBuildingId?.toString() || 'none'}
@@ -215,10 +225,13 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
               disabled={submitting}
             >
               <SelectTrigger id="building">
-                <SelectValue placeholder="Επιλέξτε κτίριο (προαιρετικό)" />
+                <SelectValue placeholder={isBuildingRequired ? "Επιλέξτε κτίριο" : "Επιλέξτε κτίριο (προαιρετικό)"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Χωρίς κτίριο</SelectItem>
+                {/* Εμφάνιση "Χωρίς κτίριο" μόνο αν δεν είναι υποχρεωτικό */}
+                {!isBuildingRequired && (
+                  <SelectItem value="none">Χωρίς κτίριο</SelectItem>
+                )}
                 {buildings.map((building) => (
                   <SelectItem key={building.id} value={building.id.toString()}>
                     {building.name}
@@ -226,14 +239,14 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
                 ))}
               </SelectContent>
             </Select>
-            {assignedRole === 'internal_manager' && (
+            {isBuildingRequired && (
               <p className="mt-1 text-xs text-amber-600">
-                Το κτίριο είναι υποχρεωτικό για εσωτερικό διαχειριστή
+                Το κτίριο είναι υποχρεωτικό για {assignedRole === 'internal_manager' ? 'εσωτερικό διαχειριστή' : 'ένοικο'}
               </p>
             )}
-            {assignedRole === 'resident' && (
+            {!isBuildingRequired && (
               <p className="mt-1 text-xs text-gray-500">
-                Προαιρετικό: Αν επιλεγεί, ο χρήστης θα προστεθεί στο συγκεκριμένο κτίριο
+                Προαιρετικό για managers και staff
               </p>
             )}
           </div>
