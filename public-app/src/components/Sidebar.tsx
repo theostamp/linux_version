@@ -60,10 +60,26 @@ interface NavigationGroup {
 type UserRoleType = 'superuser' | 'staff' | 'manager' | 'office_staff' | 'internal_manager' | 'resident';
 
 // Grouped navigation links with categories
-// Roles explanation:
-// - manager: Office Manager (Γραφείο Διαχείρισης) - πλήρης πρόσβαση
-// - internal_manager: Εσωτερικός Διαχειριστής - read + προσφορές/συνελεύσεις
-// - resident: Ένοικος - read-only + αιτήματα
+// =====================================================
+// ΡΟΛΟΙ ΚΑΙ ΔΙΚΑΙΩΜΑΤΑ:
+// =====================================================
+// - resident: Ένοικος
+//   ✅ Βλέπει ανακοινώσεις (read-only)
+//   ✅ Ψηφίζει
+//   ✅ Δημιουργεί αιτήματα
+//   ✅ Βλέπει μόνο το δικό του διαμέρισμα (/my-apartment)
+//   ❌ ΔΕΝ βλέπει οικονομικά άλλων
+//
+// - internal_manager: Εσωτερικός Διαχειριστής
+//   ✅ Όλα τα παραπάνω
+//   ✅ Δημιουργεί ανακοινώσεις
+//   ✅ Δημιουργεί ψηφοφορίες
+//   ✅ Βλέπει όλα τα οικονομικά της πολυκατοικίας του (/financial)
+//   ✅ (Μελλοντικά) Καταχωρεί πληρωμές αν έχει toggle enabled
+//
+// - manager: Office Manager (Γραφείο Διαχείρισης)
+//   ✅ Πλήρης πρόσβαση σε όλα
+// =====================================================
 const navigationGroups: NavigationGroup[] = [
   {
     id: 'my-space',
@@ -76,8 +92,8 @@ const navigationGroups: NavigationGroup[] = [
         href: '/my-apartment',
         label: 'Το Διαμέρισμά μου',
         icon: <Home className="w-4 h-4" />,
-        // Μόνο για ενοίκους - οι managers βλέπουν το πλήρες financial
-        roles: ['resident', 'internal_manager'],
+        // Μόνο για ενοίκους - βλέπουν μόνο το δικό τους διαμέρισμα
+        roles: ['resident'],
       },
     ]
   },
@@ -92,28 +108,30 @@ const navigationGroups: NavigationGroup[] = [
         href: '/financial',
         label: 'Οικονομικά',
         icon: <Euro className="w-4 h-4" />,
-        // Μόνο για managers - οι residents βλέπουν το /my-apartment
-        roles: ['manager', 'office_staff', 'staff', 'superuser'],
+        // Internal managers βλέπουν τα οικονομικά της πολυκατοικίας τους
+        // Residents ΔΕΝ βλέπουν - έχουν το /my-apartment
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/maintenance',
         label: 'Υπηρεσίες & Δαπάνες',
         icon: <Wrench className="w-4 h-4" />,
-        // Office Staff, Internal Manager μπορεί να βλέπει, Resident μόνο read
-        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Μόνο managers - residents δεν βλέπουν
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/projects',
         label: 'Προσφορές & Έργα',
         icon: <FileText className="w-4 h-4" />,
-        // Office Staff, Internal Manager μπορεί να διαχειρίζεται, Resident μόνο read
-        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Μόνο managers - residents δεν βλέπουν
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/documents',
         label: 'Παραστατικά',
         icon: <FileText className="w-4 h-4" />,
-        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Μόνο managers
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
         isBeta: true,
       },
     ]
@@ -136,32 +154,35 @@ const navigationGroups: NavigationGroup[] = [
         href: '/announcements',
         label: 'Ανακοινώσεις',
         icon: <Megaphone className="w-4 h-4" />,
+        // Όλοι βλέπουν ανακοινώσεις
         roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/votes',
         label: 'Ψηφοφορίες',
         icon: <CheckSquare className="w-4 h-4" />,
-        // Office Staff, Internal Manager μπορεί να δημιουργεί, Resident μπορεί να ψηφίζει
+        // Όλοι μπορούν να ψηφίζουν, internal_manager μπορεί να δημιουργεί
         roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/requests',
         label: 'Αιτήματα',
         icon: <ClipboardList className="w-4 h-4" />,
-        // Office Staff μπορεί να διαχειρίζεται, Residents μπορούν να δημιουργούν
+        // Residents μπορούν να δημιουργούν αιτήματα
         roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/chat',
         label: 'Chat',
         icon: <MessageCircle className="w-4 h-4" />,
-        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Μόνο managers - residents δεν έχουν chat
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/notifications',
         label: 'Ειδοποιήσεις',
         icon: <Send className="w-4 h-4" />,
+        // Μόνο managers
         roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
     ]
