@@ -1957,6 +1957,10 @@ export async function resendInvitation(payload: ResendInvitationPayload): Promis
   return await apiPost<{ message: string; invitation: UserInvitation }>('/users/invitations/resend/', payload);
 }
 
+export async function deleteInvitation(invitationId: string | number): Promise<void> {
+  await apiDelete(`/users/invitations/${invitationId}/`);
+}
+
 // ============================================================================
 // User Management API Functions
 // ============================================================================

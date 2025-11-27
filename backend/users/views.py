@@ -610,6 +610,38 @@ def resend_invitation_view(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def delete_invitation_view(request, pk):
+    """
+    DELETE /api/users/invitations/<id>/
+    Διαγραφή πρόσκλησης (μόνο για Managers)
+    """
+    from core.permissions import IsManager
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManager().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να διαγράφουν προσκλήσεις.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        invitation = UserInvitation.objects.get(
+            id=pk,
+            invited_by=request.user
+        )
+        
+        invitation.delete()
+        return Response({'message': 'Η πρόσκληση διαγράφηκε επιτυχώς'}, status=status.HTTP_200_OK)
+        
+    except UserInvitation.DoesNotExist:
+        return Response({
+            'error': 'Η πρόσκληση δεν βρέθηκε'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def accept_invitation_view(request):
