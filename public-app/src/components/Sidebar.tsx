@@ -432,13 +432,16 @@ export default function Sidebar() {
   } else if (user?.is_staff) {
     userRole = 'staff';
   } else {
-    // Check for specific role from profile
+    // Check for specific role - can be on user.role or user.profile.role
+    const directRole = user?.role;
     const profileRole = user?.profile?.role;
-    if (profileRole === 'manager' || profileRole === 'internal_manager' || profileRole === 'resident') {
-      userRole = profileRole as UserRoleType;
+    const effectiveRole = directRole || profileRole;
+    
+    if (effectiveRole === 'manager' || effectiveRole === 'office_staff' || effectiveRole === 'internal_manager' || effectiveRole === 'resident') {
+      userRole = effectiveRole as UserRoleType;
     } else {
-      // Legacy fallback
-      userRole = profileRole as UserRoleType | undefined;
+      // Legacy fallback - default to resident if no role specified
+      userRole = effectiveRole as UserRoleType | undefined;
     }
   }
 
