@@ -974,9 +974,7 @@ function ProjectsDashboardContent() {
           )}
         </div>
       </div>
-      </div>
 
-      
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
         <DialogContent>
