@@ -3,6 +3,8 @@ import { exportHandlers } from "../../_utils/exportHandlers";
 
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 
+console.log("[ROUTE HANDLER] /api/users/[[...path]]/route.ts loaded - handles root and subpaths");
+
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "users",
