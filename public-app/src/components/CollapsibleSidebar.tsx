@@ -133,6 +133,12 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
+        href: '/office-staff',
+        label: 'Υπάλληλοι',
+        icon: <UserCheck className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
         href: '/apartments',
         label: 'Διαμερίσματα',
         icon: <Building className="w-5 h-5" />,
