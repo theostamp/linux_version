@@ -529,29 +529,9 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       {/* Main Content - Bento Grid Layout */}
       <BentoGrid className="max-w-[1920px] auto-rows-auto gap-6">
         
-        {/* Right Column - Building Overview (Now First/Top on Mobile, Side on Desktop) */}
-        <BentoGridItem
-          className="md:col-span-1 md:row-span-2 h-fit sticky top-4"
-          title={
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
-              <span className="text-lg font-bold">Επισκόπηση</span>
-            </div>
-          }
-          description="Συνολική οικονομική εικόνα του κτιρίου"
-          header={
-            <BuildingOverviewSection 
-              ref={buildingOverviewRef}
-              buildingId={activeBuildingId}
-              selectedMonth={selectedMonth}
-              onReserveFundAmountChange={setReserveFundMonthlyAmount}
-            />
-          }
-        />
-
         {/* Left Column - Main Tabs Content */}
         <BentoGridItem
-          className="md:col-span-2 md:row-span-2"
+          className="md:col-span-2 md:row-span-2 order-2 md:order-1"
           header={
             <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
@@ -869,6 +849,26 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
               </Tabs>
             </div>
+          }
+        />
+
+        {/* Right Column - Building Overview */}
+        <BentoGridItem
+          className="md:col-span-1 md:row-span-2 h-fit sticky top-4 order-1 md:order-2"
+          title={
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-indigo-600" />
+              <span className="text-lg font-bold text-slate-900">Επισκόπηση</span>
+            </div>
+          }
+          description="Συνολική οικονομική εικόνα του κτιρίου"
+          header={
+            <BuildingOverviewSection 
+              ref={buildingOverviewRef}
+              buildingId={activeBuildingId}
+              selectedMonth={selectedMonth}
+              onReserveFundAmountChange={setReserveFundMonthlyAmount}
+            />
           }
         />
       </BentoGrid>
