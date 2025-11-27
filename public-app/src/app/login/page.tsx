@@ -6,10 +6,48 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// Καθορίζει τη σωστή landing page βάσει του ρόλου του χρήστη
+interface UserData {
+  is_superuser?: boolean;
+  is_staff?: boolean;
+  role?: string;
+}
+
+function getRedirectForRole(user: UserData | null, explicitRedirect?: string): string {
+  // Αν υπάρχει explicit redirect, χρησιμοποίησέ το
+  if (explicitRedirect) return explicitRedirect;
+  
+  if (!user) return '/announcements';
+  
+  // Superusers, staff -> Dashboard
+  if (user.is_superuser || user.is_staff) {
+    return '/dashboard';
+  }
+  
+  // Check role
+  const role = user.role;
+  if (role === 'manager' || role === 'office_staff') {
+    return '/dashboard';
+  }
+  
+  // Internal managers -> Financial (βλέπουν τα οικονομικά της πολυκατοικίας τους)
+  if (role === 'internal_manager') {
+    return '/financial';
+  }
+  
+  // Residents -> My Apartment
+  if (role === 'resident') {
+    return '/my-apartment';
+  }
+  
+  // Default για άγνωστους ρόλους -> announcements (safe default)
+  return '/announcements';
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const explicitRedirect = searchParams.get('redirect'); // null αν δεν υπάρχει
   
   const [formData, setFormData] = useState({
     email: '',
@@ -99,11 +137,14 @@ function LoginForm() {
         localStorage.setItem('refresh_token', data.refresh);
       }
 
+      // Καθορισμός redirect URL βάσει ρόλου χρήστη
+      const targetRedirect = getRedirectForRole(data.user, explicitRedirect || undefined);
+      
       // Redirect to tenant domain or specified redirect
       if (data.tenant_url) {
-        window.location.href = `https://${data.tenant_url}${redirectTo}`;
+        window.location.href = `https://${data.tenant_url}${targetRedirect}`;
       } else {
-        router.push(redirectTo);
+        router.push(targetRedirect);
       }
       
     } catch (error) {
@@ -187,7 +228,7 @@ function LoginForm() {
     const redirectUri = `${window.location.origin}/auth/callback`;
     const state = JSON.stringify({ 
       provider: 'google',
-      redirect: redirectTo 
+      redirect: explicitRedirect || '/dashboard'  // Google OAuth χρειάζεται explicit redirect
     });
     const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
     
