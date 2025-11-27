@@ -335,15 +335,15 @@ export default function Sidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-slate-200/60"
         >
-          <Menu className="w-5 h-5 text-muted-foreground" />
+          <Menu className="w-5 h-5 text-slate-500" />
         </button>
 
         {/* Loading Sidebar */}
-        <aside className="fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col justify-center items-center p-4 z-50 transform transition-transform duration-300 lg:translate-x-0 -translate-x-full">
+        <aside className="fixed left-0 top-0 h-full w-64 bg-white shadow-xl flex flex-col justify-center items-center p-4 z-50 transform transition-transform duration-300 lg:translate-x-0 -translate-x-full border-r border-slate-200/60">
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-12 h-12 bg-primary rounded-none flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <Loader2 className="h-6 w-6 animate-spin text-white" />
             </div>
             <p className="text-xs text-muted-foreground font-medium">Φόρτωση μενού...</p>
@@ -353,7 +353,7 @@ export default function Sidebar() {
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
@@ -369,26 +369,26 @@ export default function Sidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-slate-200/60"
         >
-          <Menu className="w-5 h-5 text-muted-foreground" />
+          <Menu className="w-5 h-5 text-slate-500" />
         </button>
 
         {/* No Access Sidebar */}
         <aside className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300",
+          "fixed left-0 top-0 h-full w-64 bg-white shadow-xl flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300 border-r border-slate-200/60",
           isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
         )}>
           {/* Close button for mobile */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
+            className="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-16 h-16 bg-destructive rounded-none flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-red-500 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
@@ -399,7 +399,7 @@ export default function Sidebar() {
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-none hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md shadow-indigo-500/25 hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Επιστροφή στην Αρχική
             </Link>
@@ -409,7 +409,7 @@ export default function Sidebar() {
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
@@ -442,14 +442,14 @@ export default function Sidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-slate-200/60"
         >
           <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* No Buildings Sidebar */}
         <aside className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300",
+          "fixed left-0 top-0 h-full w-64 bg-white shadow-xl flex flex-col justify-center items-center p-6 text-center z-50 transform transition-transform duration-300 border-r border-slate-200/60",
           isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
         )}>
           {/* Close button for mobile */}
@@ -461,7 +461,7 @@ export default function Sidebar() {
           </button>
 
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-16 h-16 bg-warning rounded-none flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
@@ -472,7 +472,7 @@ export default function Sidebar() {
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 text-xs font-medium text-primary-foreground bg-primary rounded-none hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md shadow-indigo-500/25 hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Επιστροφή στην Αρχική
             </Link>
@@ -482,7 +482,7 @@ export default function Sidebar() {
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
@@ -501,18 +501,18 @@ export default function Sidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-none shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-slate-200/60"
       >
         <Menu className="w-5 h-5 text-muted-foreground" />
       </button>
 
       {/* Main Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-card shadow-xl flex flex-col z-50 transform transition-transform duration-300",
+        "fixed left-0 top-0 h-full w-64 bg-white shadow-xl flex flex-col z-50 transform transition-transform duration-300 border-r border-slate-200/60",
         isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
       )}>
         {/* Header */}
-        <div className="p-4 border-b border-border bg-card">
+        <div className="p-4 border-b border-slate-200/60 bg-white">
           {/* Close button for mobile */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
@@ -522,7 +522,7 @@ export default function Sidebar() {
           </button>
 
           <div className="flex items-center space-x-3 mb-3">
-            <div className="w-8 h-8 bg-primary rounded-none flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <Building2 className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -533,15 +533,15 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-3 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-3 overflow-y-auto bg-slate-50/50">
           {availableGroups.map((group) => (
             <div key={group.id} className={cn(
-              "rounded-none border-0 shadow-sm p-2",
+              "rounded-xl border shadow-sm p-2",
               group.bgColor,
               group.borderColor
             )}>
               <h3 className={cn(
-                "text-xs font-semibold mb-2 px-2 py-1 rounded-none tracking-wide",
+                "text-xs font-semibold mb-2 px-2 py-1 rounded-lg tracking-wide",
                 group.color === 'orange' && "text-orange-700 bg-orange-100",
                 group.color === 'blue' && "text-blue-700 bg-blue-100",
                 group.color === 'indigo' && "text-indigo-700 bg-indigo-100",
@@ -559,8 +559,8 @@ export default function Sidebar() {
                     key={link.href}
                     onClick={() => handleNavigation(link.href, `Μετάβαση στο ${link.label.toLowerCase()}...`)}
                     className={cn(
-                      'flex items-center justify-start w-full px-2 py-1.5 rounded-none text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide',
-                      'hover:bg-card/60',
+                      'flex items-center justify-start w-full px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide',
+                      'hover:bg-white/80',
                       'hover:shadow-sm hover:transform hover:-translate-y-0.5',
                       isActive && "text-white shadow-md transform -translate-y-0.5",
                       !isActive && "text-foreground",
@@ -597,7 +597,7 @@ export default function Sidebar() {
                     <span className="text-left flex-1">{link.label}</span>
                     {link.isBeta && (
                       <span className={cn(
-                        'ml-2 px-1.5 py-0.5 text-xs font-bold rounded-none transition-colors duration-200',
+                        'ml-2 px-1.5 py-0.5 text-xs font-bold rounded-full transition-colors duration-200',
                         isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'
                       )}>
                         BETA
@@ -612,13 +612,13 @@ export default function Sidebar() {
         </nav>
 
         {/* Calculator Section */}
-        <div className="p-3 border-t border-border bg-muted">
-          <div className="rounded-none border-0 shadow-sm p-2 bg-card">
-            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded-none tracking-wide text-foreground bg-muted">
+        <div className="p-3 border-t border-slate-200/60 bg-white">
+          <div className="rounded-xl border border-slate-200/60 shadow-sm p-2 bg-slate-50">
+            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded-lg tracking-wide text-slate-700 bg-slate-100">
               Εργαλεία
             </h3>
             <CalculatorModal>
-              <button className="flex items-center justify-start w-full px-2 py-1.5 rounded-none text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide text-foreground hover:bg-muted hover:shadow-sm hover:transform hover:-translate-y-0.5">
+              <button className="flex items-center justify-start w-full px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide text-slate-700 hover:bg-white hover:shadow-sm hover:transform hover:-translate-y-0.5">
                 <Calculator className="w-4 h-4 mr-2 transition-colors duration-200 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
                 <span className="text-left">Αριθμομηχανή</span>
               </button>
@@ -630,7 +630,7 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
