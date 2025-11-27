@@ -334,10 +334,10 @@ class UserViewSet(viewsets.ModelViewSet):
         Διαγραφή χρήστη - μόνο residents μπορούν να διαγραφούν.
         Admins και managers δεν μπορούν να διαγραφούν.
         """
-        from core.permissions import IsManager
+        from core.permissions import IsManagerOrSuperuser
         
-        # Έλεγχος αν ο χρήστης έχει δικαίωμα διαγραφής (πρέπει να είναι manager)
-        if not IsManager().has_permission(request, self):
+        # Έλεγχος αν ο χρήστης έχει δικαίωμα διαγραφής (πρέπει να είναι manager ή superuser)
+        if not IsManagerOrSuperuser().has_permission(request, self):
             return Response({
                 'error': 'Μόνο οι διαχειριστές μπορούν να διαγράφουν χρήστες.'
             }, status=status.HTTP_403_FORBIDDEN)
@@ -653,12 +653,12 @@ def resend_invitation_view(request):
 def delete_invitation_view(request, pk):
     """
     DELETE /api/users/invitations/<id>/
-    Διαγραφή πρόσκλησης (μόνο για Managers)
+    Διαγραφή πρόσκλησης (μόνο για Managers ή Superusers)
     """
-    from core.permissions import IsManager
+    from core.permissions import IsManagerOrSuperuser
     
     # Έλεγχος δικαιωμάτων
-    if not IsManager().has_permission(request, None):
+    if not IsManagerOrSuperuser().has_permission(request, None):
         return Response({
             'error': 'Μόνο οι διαχειριστές μπορούν να διαγράφουν προσκλήσεις.'
         }, status=status.HTTP_403_FORBIDDEN)
