@@ -9,6 +9,7 @@ import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
 import { UserPlus, Mail, Users } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 export default function UsersPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);

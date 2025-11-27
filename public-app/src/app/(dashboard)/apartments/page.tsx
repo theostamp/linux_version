@@ -18,6 +18,7 @@ import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import EditTenantModal from '@/components/apartments/EditTenantModal';
 import EditOwnerModal from '@/components/apartments/EditOwnerModal';
+import { Button } from '@/components/ui/button';
 
 type OccupancyFilter = 'all' | 'owner' | 'tenant' | 'vacant';
 type StatusFilter = 'all' | 'active' | 'inactive';

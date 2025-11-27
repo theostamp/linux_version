@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { Button } from '@/components/ui/button';
 
 function isActive(start: string, end: string) {
   const today = new Date().toISOString().split('T')[0];

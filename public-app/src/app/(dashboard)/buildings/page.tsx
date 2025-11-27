@@ -14,6 +14,7 @@ import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { Button } from '@/components/ui/button';
 
 const BuildingsPageContent = () => {
   const {
