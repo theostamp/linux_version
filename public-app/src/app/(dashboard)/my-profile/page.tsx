@@ -15,6 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+
 type ProfileFormState = {
   first_name: string;
   last_name: string;
@@ -125,8 +127,6 @@ export default function MyProfilePage() {
       </div>
     );
   }
-
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
   return (
     <div className="space-y-6">

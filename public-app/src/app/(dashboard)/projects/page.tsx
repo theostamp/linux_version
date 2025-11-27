@@ -975,8 +975,9 @@ function ProjectsDashboardContent() {
             </div>
           )}
         </div>
-        }
-        />
+      </div>
+      }
+      />
       </BentoGrid>
       
       {/* Delete Confirmation Dialog */}
