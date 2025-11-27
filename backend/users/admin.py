@@ -147,8 +147,13 @@ class CustomUserAdmin(UserAdmin):
         ]
         
         # Tables with SET_NULL (set to NULL instead of deleting)
+        # These tables have on_delete=SET_NULL in their ForeignKey definition
         set_null_tables = [
             ('votes_vote', 'creator_id'),  # Votes created by user (SET_NULL)
+            ('financial_financialauditlog', 'user_id'),  # Financial audit logs (SET_NULL)
+            ('financial_financialreceipt', 'created_by_id'),  # Financial receipts (SET_NULL)
+            ('financial_unifiedreceipt', 'created_by_id'),  # Unified receipts (SET_NULL)
+            ('financial_unifiedreceipt', 'cancelled_by_id'),  # Unified receipts cancelled (SET_NULL)
         ]
         
         # Delete CASCADE tables
