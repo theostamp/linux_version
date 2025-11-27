@@ -5,18 +5,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-sm',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-gradient-to-b from-primary/90 to-primary text-primary-foreground hover:from-primary hover:to-primary/90 shadow-md border-t border-white/20 shadow-[0px_2px_0px_0px_rgba(255,255,255,0.1)_inset]',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/50',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md border-t border-white/20',
-        outline: 'border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline shadow-none',
-        ghost: 'hover:bg-accent hover:text-accent-foreground shadow-none',
-        success: 'bg-gradient-to-b from-success/90 to-success text-success-foreground hover:from-success hover:to-success/90 shadow-md border-t border-white/20',
-        warning: 'bg-gradient-to-b from-warning/90 to-warning text-warning-foreground hover:from-warning hover:to-warning/90 shadow-md border-t border-white/20',
+        default: 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-md shadow-indigo-500/25 border-t border-white/20',
+        secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60 shadow-sm',
+        destructive: 'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-md shadow-red-500/25 border-t border-white/20',
+        outline: 'border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300',
+        link: 'text-indigo-600 underline-offset-4 hover:underline shadow-none',
+        ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-none',
+        success: 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-500/25 border-t border-white/20',
+        warning: 'bg-gradient-to-b from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md shadow-amber-500/25 border-t border-white/20',
       },
       size: {
         xs: 'h-8 px-3 text-xs',
