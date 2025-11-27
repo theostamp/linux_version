@@ -130,25 +130,35 @@ class CustomUserAdmin(UserAdmin):
             id_where_clause = f"id IN ({placeholders})"
             id_params = ids
         
-        # Delete related objects first (in public schema)
+        # Delete related objects first
         # Each deletion in its own transaction to avoid "transaction aborted" errors
         # IMPORTANT ORDER:
-        # 1. SET_NULL first (to remove FK references)
-        # 2. CASCADE deletes (to remove dependent records)
+        # 1. SET_NULL first (to remove FK references) - in ALL schemas
+        # 2. CASCADE deletes (to remove dependent records) - in public schema
         # 3. Delete user last
         
-        # Tables with SET_NULL (set to NULL instead of deleting)
-        # These tables have on_delete=SET_NULL in their ForeignKey definition
-        # MUST be processed FIRST to avoid FK constraint violations
-        set_null_tables = [
+        # Get all tenant schemas for tenant-specific tables
+        from tenants.models import Client
+        tenant_schemas = list(Client.objects.exclude(schema_name='public').values_list('schema_name', flat=True))
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Deleting user(s) {ids}, found {len(tenant_schemas)} tenant schemas")
+        
+        # Tables with SET_NULL in PUBLIC schema
+        set_null_public_tables = [
             ('votes_vote', 'creator_id'),  # Votes created by user (SET_NULL)
+        ]
+        
+        # Tables with SET_NULL in TENANT schemas (financial app is tenant-specific)
+        set_null_tenant_tables = [
             ('financial_financialauditlog', 'user_id'),  # Financial audit logs (SET_NULL)
             ('financial_financialreceipt', 'created_by_id'),  # Financial receipts (SET_NULL)
             ('financial_unifiedreceipt', 'created_by_id'),  # Unified receipts (SET_NULL)
             ('financial_unifiedreceipt', 'cancelled_by_id'),  # Unified receipts cancelled (SET_NULL)
         ]
         
-        # Tables with CASCADE delete (must delete these records)
+        # Tables with CASCADE delete (in public schema)
         cascade_tables = [
             'django_admin_log',  # Admin log entries (CASCADE) - must be deleted first
             'votes_votesubmission',  # User submissions in votes (CASCADE)
@@ -159,33 +169,43 @@ class CustomUserAdmin(UserAdmin):
             'todo_management_todo',  # Todos created by user (CASCADE)
         ]
         
-        # STEP 1: Set SET_NULL fields to NULL FIRST
-        # This removes FK references before attempting to delete the user
-        for table, field in set_null_tables:
+        # STEP 1a: Set SET_NULL fields to NULL in PUBLIC schema
+        for table, field in set_null_public_tables:
             try:
                 with transaction.atomic():
                     with connection.cursor() as cursor:
-                        # Use ids directly (user IDs) for the WHERE clause
                         if len(ids) == 1:
-                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} = %s", [ids[0]])
+                            cursor.execute(f"UPDATE public.{table} SET {field} = NULL WHERE {field} = %s", [ids[0]])
                         else:
-                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} IN ({placeholders})", ids)
-                        
-                        # Log how many rows were updated
-                        import logging
-                        logger = logging.getLogger(__name__)
-                        logger.info(f"SET NULL on {table}.{field} for user IDs {ids}: {cursor.rowcount} rows affected")
+                            cursor.execute(f"UPDATE public.{table} SET {field} = NULL WHERE {field} IN ({placeholders})", ids)
+                        logger.info(f"SET NULL on public.{table}.{field} for user IDs {ids}: {cursor.rowcount} rows affected")
             except ProgrammingError as e:
-                # Table might not exist - skip silently
                 error_str = str(e)
                 if 'does not exist' not in error_str.lower():
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Could not update {table}.{field}: {e}")
+                    logger.warning(f"Could not update public.{table}.{field}: {e}")
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Error updating {table}.{field}: {e}")
+                logger.warning(f"Error updating public.{table}.{field}: {e}")
+        
+        # STEP 1b: Set SET_NULL fields to NULL in ALL TENANT schemas
+        for schema in tenant_schemas:
+            for table, field in set_null_tenant_tables:
+                try:
+                    with transaction.atomic():
+                        with connection.cursor() as cursor:
+                            # Use schema-qualified table name
+                            qualified_table = f'"{schema}".{table}'
+                            if len(ids) == 1:
+                                cursor.execute(f"UPDATE {qualified_table} SET {field} = NULL WHERE {field} = %s", [ids[0]])
+                            else:
+                                cursor.execute(f"UPDATE {qualified_table} SET {field} = NULL WHERE {field} IN ({placeholders})", ids)
+                            if cursor.rowcount > 0:
+                                logger.info(f"SET NULL on {qualified_table}.{field} for user IDs {ids}: {cursor.rowcount} rows affected")
+                except ProgrammingError as e:
+                    error_str = str(e)
+                    if 'does not exist' not in error_str.lower():
+                        logger.warning(f"Could not update {schema}.{table}.{field}: {e}")
+                except Exception as e:
+                    logger.warning(f"Error updating {schema}.{table}.{field}: {e}")
         
         # STEP 2: Delete CASCADE tables
         for table in cascade_tables:
