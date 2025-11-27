@@ -209,7 +209,7 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
           {/* Upload Αρχείου */}
           <div className="space-y-2">
             <Label>Φύλλο Κοινοχρήστων</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+            <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
               {attachment ? (
                 <div className="flex items-center justify-center gap-3">
                   <FileSpreadsheet className="h-8 w-8 text-blue-600" />

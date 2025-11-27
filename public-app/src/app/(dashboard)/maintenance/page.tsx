@@ -235,7 +235,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
         <CardContent>
           {operationalExpensesQ.isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             </div>
           ) : expenseRows.length === 0 ? (
             <div className="text-center py-8">
@@ -732,7 +732,7 @@ function MaintenanceDashboardContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -849,25 +849,25 @@ function MaintenanceDashboardContent() {
           title="Γρήγορες Ενέργειες"
           header={
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
                 <Link href="/maintenance/receipts/new">
                   <FileText className="w-6 h-6 mb-2 text-primary" />
                   <span>Ανέβασμα Απόδειξης</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
                 <Link href="/maintenance/contractors">
                   <Users className="w-6 h-6 mb-2 text-blue-600" />
                   <span>Διαχείριση Συνεργείων</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
                 <Link href="/maintenance/scheduled">
                   <Calendar className="w-6 h-6 mb-2 text-indigo-600" />
                   <span>Προγραμματισμένα Έργα</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
                 <Link href="/maintenance/reports">
                   <TrendingUp className="w-6 h-6 mb-2 text-emerald-600" />
                   <span>Reports</span>

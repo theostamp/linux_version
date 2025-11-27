@@ -228,7 +228,7 @@ const BuildingsPageContent = () => {
             header={
               <div className="space-y-6">
                 {/* Filters Bar */}
-                <div className="bg-card rounded-xl border border-border/50 p-4 shadow-sm">
+                <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
                   <div className="flex flex-col md:flex-row gap-4 items-center">
                     {/* Search */}
                     <div className="flex-1 relative w-full">

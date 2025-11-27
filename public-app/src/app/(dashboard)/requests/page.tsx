@@ -188,7 +188,7 @@ function RequestsPageContent() {
           </div>
         )}
         {selectedBuilding && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-secondary/30 px-3 py-2 rounded-lg border border-border/50">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-secondary/30 px-3 py-2 rounded-lg border border-slate-200/50">
             <MapPin className="w-4 h-4" />
             <span>
               Τρέχον κτίριο: <span className="font-medium text-foreground">{selectedBuilding.name}</span>
@@ -207,7 +207,7 @@ function RequestsPageContent() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-card border border-border/50 rounded-xl p-4 space-y-4 overflow-hidden shadow-sm"
+            className="bg-card border border-slate-200/50 rounded-xl p-4 space-y-4 overflow-hidden shadow-sm"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search Filter */}
@@ -287,7 +287,7 @@ function RequestsPageContent() {
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
-              <div className="pt-4 border-t border-border/50">
+              <div className="pt-4 border-t border-slate-200/50">
                 <div className="flex flex-wrap gap-2">
                   {searchTerm && (
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">

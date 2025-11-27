@@ -143,7 +143,7 @@ function DashboardContent() {
 
       {/* Empty State / New User */}
       {effectiveBuildings.length === 0 && (
-        <div className="mt-8 bg-card rounded-xl shadow-lg p-8 text-center border border-dashed border-border">
+        <div className="mt-8 bg-card rounded-xl shadow-lg p-8 text-center border border-dashed border-slate-200/60">
           <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
           <p className="text-muted-foreground mb-6">

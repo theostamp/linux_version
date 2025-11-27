@@ -191,7 +191,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
       </div>
 
       {/* Controls Section */}
-      <div className="p-4 bg-muted border-b border-border">
+      <div className="p-4 bg-muted border-b border-slate-200/50">
         <div className="flex flex-wrap items-center gap-4">
 
           {/* Period Selector - only for relevant charts */}
@@ -201,7 +201,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value as 'month' | 'quarter' | 'year')}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {periods.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -267,7 +267,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                 <select
                   value={heatingYear}
                   onChange={(e) => setHeatingYear(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
                   {Array.from({ length: 5 }, (_, i) => currentYear - 3 + i).map(year => (
                     <option key={year} value={year.toString()}>
@@ -282,7 +282,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                   <select
                     value={compareYear}
                     onChange={(e) => setCompareYear(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                   >
                     {Array.from({ length: 5 }, (_, i) => currentYear - 4 + i).map(year => (
                       <option key={year} value={year.toString()}>
@@ -301,7 +301,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                 <select
                   value={electricityYear}
                   onChange={(e) => setElectricityYear(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
                   {Array.from({ length: 5 }, (_, i) => currentYear - 3 + i).map(year => (
                     <option key={year} value={year.toString()}>
@@ -316,7 +316,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                   <select
                     value={compareYear}
                     onChange={(e) => setCompareYear(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                   >
                     {Array.from({ length: 5 }, (_, i) => currentYear - 4 + i).map(year => (
                       <option key={year} value={year.toString()}>

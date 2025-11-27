@@ -326,8 +326,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
 
             {/* Receipt Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-800 text-base border-b border-gray-300 pb-2 mb-3">
+              <div className="border border-slate-200 p-4 rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-gray-800 text-base border-b border-slate-200 pb-2 mb-3">
                   Στοιχεία Διαμερίσματος
                 </h3>
                 <div className="space-y-2">
@@ -348,8 +348,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                 </div>
               </div>
               
-              <div className="border border-gray-300 p-4 rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-gray-800 text-base border-b border-gray-300 pb-2 mb-3">
+              <div className="border border-slate-200 p-4 rounded-lg bg-gray-50">
+                <h3 className="font-semibold text-gray-800 text-base border-b border-slate-200 pb-2 mb-3">
                   Στοιχεία Πληρωμής
                 </h3>
                 <div className="space-y-2">
@@ -376,8 +376,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             </div>
 
             {/* Payer Info */}
-            <div className="border border-gray-300 p-4 rounded-lg bg-gray-50 mb-8">
-              <h3 className="font-semibold text-gray-800 text-base border-b border-gray-300 pb-2 mb-3">
+            <div className="border border-slate-200 p-4 rounded-lg bg-gray-50 mb-8">
+              <h3 className="font-semibold text-gray-800 text-base border-b border-slate-200 pb-2 mb-3">
                 Στοιχεία Ενοίκου
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -407,8 +407,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
 
             {/* Notes */}
             {(storedReceipt?.notes || payment.notes) && (
-              <div className="border border-gray-300 p-4 rounded-lg bg-gray-50 mb-8">
-                <h3 className="font-semibold text-gray-800 text-base border-b border-gray-300 pb-2 mb-3">
+              <div className="border border-slate-200 p-4 rounded-lg bg-gray-50 mb-8">
+                <h3 className="font-semibold text-gray-800 text-base border-b border-slate-200 pb-2 mb-3">
                   Σημειώσεις
                 </h3>
                 <p className="text-gray-900">{storedReceipt?.notes || payment.notes}</p>
@@ -430,7 +430,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-300 pt-6 mt-12">
+            <div className="border-t border-slate-200 pt-6 mt-12">
               <div className="flex justify-between items-start gap-8">
                 <div className="flex-1 text-xs text-gray-600">
                   <p><strong>Επαλήθευση Απόδειξης:</strong></p>
@@ -452,7 +452,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                       alt="QR Code για επαλήθευση" 
                       width="100" 
                       height="100" 
-                      className="border border-gray-300 rounded"
+                      className="border border-slate-200 rounded"
                     />
                   ) : null}
                   <p className="text-xs text-gray-500 mt-1">Σκανάρετε για επαλήθευση</p>

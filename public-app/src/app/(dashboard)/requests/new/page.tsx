@@ -135,7 +135,7 @@ export default function NewRequestPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Συνοπτική περιγραφή του προβλήματος"
             />
           </div>
@@ -150,7 +150,7 @@ export default function NewRequestPage() {
               onChange={(e) => setDescription(e.target.value)}
               required
               rows={4}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Αναλυτική περιγραφή του προβλήματος, συμπτώματα, κλπ."
             />
           </div>
@@ -163,7 +163,7 @@ export default function NewRequestPage() {
               id="category"
               value={maintenanceCategory}
               onChange={(e) => setMaintenanceCategory(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">-- Επιλέξτε κατηγορία --</option>
               {MAINTENANCE_CATEGORIES.map((category) => (
@@ -182,7 +182,7 @@ export default function NewRequestPage() {
               id="priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {PRIORITY_LEVELS.map((level) => (
                 <option key={level.value} value={level.value}>
@@ -201,7 +201,7 @@ export default function NewRequestPage() {
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">-- Επιλέξτε τοποθεσία --</option>
               {LOCATION_TYPES.map((loc) => (
@@ -222,7 +222,7 @@ export default function NewRequestPage() {
               type="text"
               value={apartmentNumber}
               onChange={(e) => setApartmentNumber(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="π.χ. Α1, 2ος όροφος, κλπ."
             />
           </div>
@@ -245,7 +245,7 @@ export default function NewRequestPage() {
               type="checkbox"
               checked={isUrgent}
               onChange={() => setIsUrgent(!isUrgent)}
-              className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              className="w-5 h-5 text-red-600 border-slate-200 rounded focus:ring-red-500"
             />
             <label htmlFor="urgent" className="text-sm font-medium text-red-700 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />

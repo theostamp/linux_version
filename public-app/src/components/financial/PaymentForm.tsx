@@ -911,7 +911,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   setLastSelectedApartment(null);
                   setLastPayerInfo(null);
                 }}
-                className="bg-gray-100 hover:bg-gray-200 border-gray-300 h-14"
+                className="bg-gray-100 hover:bg-gray-200 border-slate-200 h-14"
               >
                 ✕ Κλείσιμο Modal
               </Button>

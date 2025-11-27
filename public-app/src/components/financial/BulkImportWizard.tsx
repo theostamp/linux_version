@@ -215,7 +215,7 @@ export const BulkImportWizard: React.FC = () => {
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
                 isDragActive
                   ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  : 'border-slate-200 hover:border-gray-400'
               }`}
             >
               <input {...getInputProps()} />

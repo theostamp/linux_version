@@ -240,11 +240,11 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
               if (active && payload && payload.length) {
                 const data = payload[0].payload;
                 return (
-                  <div className="bg-popover p-3 border border-border rounded-lg shadow-app-md">
+                  <div className="bg-popover p-3 border border-slate-200/60 rounded-lg shadow-app-md">
                     <p className="font-semibold text-popover-foreground">{data.fullMonth} {year}</p>
                     <p className="text-primary">Κοινόχρηστα: €{data.commonAreas.toFixed(2)}</p>
                     <p className="text-accent-foreground">Ανελκυστήρας: €{data.elevator.toFixed(2)}</p>
-                    <p className="font-semibold text-foreground border-t border-border pt-1 mt-1">
+                    <p className="font-semibold text-foreground border-t border-slate-200/50 pt-1 mt-1">
                       Σύνολο: €{data.total.toFixed(2)}
                     </p>
                     {data.expenseCount > 0 && (

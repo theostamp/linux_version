@@ -480,7 +480,7 @@ const ApartmentsPageContent = () => {
           header={
             <div className="space-y-6">
               {/* Filters Bar */}
-              <div className="bg-card rounded-xl border border-border/50 p-4 shadow-sm">
+              <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
@@ -521,7 +521,7 @@ const ApartmentsPageContent = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-border/50">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-slate-200/50">
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Ταξινόμηση:</span>
@@ -804,7 +804,7 @@ const ApartmentsPageContent = () => {
                               {getStatusBadge(apartment)}
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-border/50 py-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-slate-200/50 py-4">
                             {renderContactBlock(
                               'Ιδιοκτήτης', 
                               apartment.owner_name, 
@@ -847,7 +847,7 @@ const ApartmentsPageContent = () => {
                               <p className="font-semibold text-foreground">{formatDate(apartment.updated_at)}</p>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center pt-2 border-t border-border/50 mt-2">
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-200/50 mt-2">
                             <p className="text-xs text-muted-foreground">
                               Δημιουργήθηκε: {formatDate(apartment.created_at)}
                             </p>

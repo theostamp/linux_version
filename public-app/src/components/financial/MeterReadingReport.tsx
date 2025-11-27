@@ -627,7 +627,7 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
 
       {/* Summary Stats - optimized for print */}
       {apartmentReadings.length > 0 && heatingMeterType && (
-        <div className={`grid grid-cols-1 ${(heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && heatingExpenseAmount > 0 ? 'md:grid-cols-6' : 'md:grid-cols-3'} gap-4 p-4 bg-green-50 rounded-lg border border-green-200 print:bg-white print:border-gray-300 print:gap-2 print:p-2`}>
+        <div className={`grid grid-cols-1 ${(heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && heatingExpenseAmount > 0 ? 'md:grid-cols-6' : 'md:grid-cols-3'} gap-4 p-4 bg-green-50 rounded-lg border border-green-200 print:bg-white print:border-slate-200 print:gap-2 print:p-2`}>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-700 print:text-lg">{apartmentReadings.length}</div>
             <div className="text-sm text-green-600 print:text-xs">Διαμερίσματα</div>

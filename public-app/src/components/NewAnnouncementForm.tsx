@@ -153,7 +153,7 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
           type="checkbox"
           checked={isActive}
           onChange={(e) => setIsActive(e.target.checked)}
-          className="h-4 w-4 text-green-600 border-gray-300 rounded"
+          className="h-4 w-4 text-green-600 border-slate-200 rounded"
         />
         <Label htmlFor="is_active" className="ml-2">
           Ενεργή ανακοίνωση (δημοσιευμένη)

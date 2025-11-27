@@ -118,10 +118,10 @@ export default function BuildingSelector({
       >
         <div 
           ref={modalRef}
-          className="bg-white dark:bg-popover rounded-xl shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-border pointer-events-auto"
+          className="bg-white dark:bg-popover rounded-xl shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-slate-200/60 pointer-events-auto"
         >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200/50 bg-muted">
           <div className="flex items-center gap-2">
             <BuildingIcon className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Επιλογή Κτιρίου</h2>
@@ -135,7 +135,7 @@ export default function BuildingSelector({
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-border bg-white dark:bg-popover">
+        <div className="p-4 border-b border-slate-200/50 bg-white dark:bg-popover">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input
@@ -206,12 +206,12 @@ export default function BuildingSelector({
               </div>
 
               {/* Διαχωριστική γραμμή */}
-              <div className="border-t border-border mx-4"></div>
+              <div className="border-t border-slate-200/50 mx-4"></div>
 
               {/* Τρέχον κτίριο (αν υπάρχει) */}
               {currentBuilding && (
                 <>
-                  <div className="px-4 py-2 bg-muted border-b border-border">
+                  <div className="px-4 py-2 bg-muted border-b border-slate-200/50">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Τρέχον κτίριο
                     </div>
@@ -243,12 +243,12 @@ export default function BuildingSelector({
                       <Check className="w-5 h-5 text-success" />
                     )}
                   </div>
-                  <div className="border-t border-border mx-4"></div>
+                  <div className="border-t border-slate-200/50 mx-4"></div>
                 </>
               )}
 
               {/* Λίστα κτιρίων */}
-              <div className="px-4 py-2 bg-muted border-b border-border">
+              <div className="px-4 py-2 bg-muted border-b border-slate-200/50">
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Άλλα κτίρια
                 </div>
@@ -289,7 +289,7 @@ export default function BuildingSelector({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border bg-muted">
+        <div className="p-4 border-t border-slate-200/50 bg-muted">
           <div className="text-sm text-muted-foreground">
             Επιλέξτε ένα κτίριο για φιλτράρισμα ή "Όλα τα Κτίρια" για προβολή όλων
           </div>

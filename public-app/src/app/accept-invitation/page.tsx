@@ -225,7 +225,7 @@ function AcceptInvitationForm() {
                       onChange={handleInputChange}
                       autoComplete="new-password"
                       className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                        errors.password ? 'border-red-300' : 'border-gray-300'
+                        errors.password ? 'border-red-300' : 'border-slate-200'
                       }`}
                       placeholder="••••••••"
                     />
@@ -264,7 +264,7 @@ function AcceptInvitationForm() {
                       onChange={handleInputChange}
                       autoComplete="new-password"
                       className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                        errors.passwordConfirm ? 'border-red-300' : 'border-gray-300'
+                        errors.passwordConfirm ? 'border-red-300' : 'border-slate-200'
                       }`}
                       placeholder="••••••••"
                     />

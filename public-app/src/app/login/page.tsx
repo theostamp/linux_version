@@ -213,7 +213,7 @@ function LoginForm() {
 
       <main className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
-          <div className="bg-card rounded-xl shadow-app-lg p-8 border border-border/50">
+          <div className="bg-card rounded-xl shadow-app-lg p-8 border border-slate-200/50">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
                 Σύνδεση

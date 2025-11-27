@@ -154,7 +154,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           className={`text-xs font-medium px-3 py-1 rounded-full border ${
             isCurrentlyActive
               ? 'bg-green-100 text-green-700 border-green-300'
-              : 'bg-gray-200 text-gray-600 border-gray-300'
+              : 'bg-gray-200 text-gray-600 border-slate-200'
           }`}
         >
           {isCurrentlyActive ? '✅ Ενεργή' : '⏸ Ανενεργή'}

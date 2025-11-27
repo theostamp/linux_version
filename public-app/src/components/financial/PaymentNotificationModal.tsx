@@ -287,7 +287,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Apartment Information */}
-            <div className="bg-muted rounded-lg p-4 print:bg-white print:border print:border-border">
+            <div className="bg-muted rounded-lg p-4 print:bg-white print:border print:border-slate-200/60">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 Στοιχεία Διαμερίσματος
@@ -441,7 +441,7 @@ export default function PaymentNotificationModal({
                     
                     return Object.values(groupedExpenses).map((group, groupIndex) => (
                       <div key={groupIndex} className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-muted px-3 py-2 border-b border-border">
+                        <div className="bg-muted px-3 py-2 border-b border-slate-200/50">
                           <h5 className="text-sm font-semibold text-foreground">{group.month_display}</h5>
                         </div>
                         
@@ -484,7 +484,7 @@ export default function PaymentNotificationModal({
                                 );
                               })}
                             </tbody>
-                            <tfoot className="bg-muted border-t-2 border-border">
+                            <tfoot className="bg-muted border-t-2 border-slate-200/60">
                               <tr>
                                 <td className="px-3 py-2 text-sm font-semibold text-foreground">
                                   Σύνολο {group.month_display}:
@@ -530,7 +530,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Footer - Print Only */}
-            <div className="hidden print:block border-t border-gray-300 pt-4 mt-6">
+            <div className="hidden print:block border-t border-slate-200 pt-4 mt-6">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-semibold">Τραπεζικά Στοιχεία:</p>

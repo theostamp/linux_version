@@ -78,7 +78,7 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm shadow-md border-b border-border/40">
+      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm shadow-md border-b border-slate-200/40">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="container mx-auto">
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-8 h-20 py-3">

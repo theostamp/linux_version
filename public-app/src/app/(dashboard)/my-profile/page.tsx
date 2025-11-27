@@ -133,7 +133,7 @@ export default function MyProfilePage() {
       <form onSubmit={handleSubmit}>
         
         {/* Header Action Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-card p-6 rounded-xl border border-border/50 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-card p-6 rounded-xl border border-slate-200/50 shadow-sm">
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-condensed text-foreground">Το προφίλ μου</h1>
             <p className="text-muted-foreground mt-1">Διατήρησε ενημερωμένα τα προσωπικά σου στοιχεία και τις πληροφορίες διαχείρισης.</p>

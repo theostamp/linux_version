@@ -454,7 +454,7 @@ export default function CreateBuildingForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Βασικές Πληροφορίες
         </h3>
 
@@ -707,7 +707,7 @@ export default function CreateBuildingForm({
 
       {/* Heating System */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Σύστημα Θέρμανσης
         </h3>
 
@@ -719,7 +719,7 @@ export default function CreateBuildingForm({
               name="heating_system"
               value={formData.heating_system || 'none'}
               onChange={(e) => handleInputChange('heating_system', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               disabled={loading}
             >
               <option value="none">Χωρίς Κεντρική Θέρμανση</option>
@@ -755,7 +755,7 @@ export default function CreateBuildingForm({
 
       {/* Manager Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Στοιχεία Διαχειριστή (Προαιρετικά)
         </h3>
 
@@ -782,7 +782,7 @@ export default function CreateBuildingForm({
                 <button
                   type="button"
                   onClick={toggleResidentsDropdown}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
                 >
                   <span className={formData.internal_manager_name ? 'text-foreground' : 'text-muted-foreground'}>
                     {formData.internal_manager_name || 'Επιλέξτε από ενοίκους...'}
@@ -791,7 +791,7 @@ export default function CreateBuildingForm({
                 </button>
 
                 {showResidentsDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {residents.map((resident) => (
                       <button
                         key={resident.id}
@@ -849,7 +849,7 @@ export default function CreateBuildingForm({
                 <button
                   type="button"
                   onClick={toggleApartmentsDropdown}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
                 >
                   <span className={formData.internal_manager_apartment ? 'text-gray-900' : 'text-gray-500'}>
                     {formData.internal_manager_apartment || 'Επιλέξτε διαμέρισμα...'}
@@ -858,7 +858,7 @@ export default function CreateBuildingForm({
                 </button>
 
                 {showApartmentsDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {apartments.map((apartment) => (
                       <button
                         key={apartment.id}
@@ -901,7 +901,7 @@ export default function CreateBuildingForm({
               name="internal_manager_collection_schedule"
               value={formData.internal_manager_collection_schedule || ''}
               onChange={(e) => handleInputChange('internal_manager_collection_schedule', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               disabled={loading}
             >
               <option value="">Επιλέξτε ώρες είσπραξης...</option>
@@ -955,7 +955,7 @@ export default function CreateBuildingForm({
 
       {/* Management Office Information - Auto-filled from user settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Στοιχεία Γραφείου Διαχείρισης
         </h3>
 
@@ -994,7 +994,7 @@ export default function CreateBuildingForm({
 
       {/* Financial System Settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Οικονομικές Ρυθμίσεις
         </h3>
 

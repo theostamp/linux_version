@@ -60,7 +60,7 @@ export default function RecipientSelector({
             'flex-1 flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all',
             sendToAll
               ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-200 hover:border-gray-300 text-gray-600'
+              : 'border-gray-200 hover:border-slate-200 text-gray-600'
           )}
         >
           <Users className="h-5 w-5" />
@@ -75,7 +75,7 @@ export default function RecipientSelector({
             'flex-1 flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all',
             !sendToAll
               ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-200 hover:border-gray-300 text-gray-600'
+              : 'border-gray-200 hover:border-slate-200 text-gray-600'
           )}
         >
           <User className="h-5 w-5" />

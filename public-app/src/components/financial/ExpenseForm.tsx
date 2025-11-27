@@ -424,7 +424,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                     {...register('title', { 
                       required: selectedCategory === 'other' ? 'Απαιτείται περιγραφή για την κατηγορία "Άλλο"' : false 
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Περιγράψτε την κατηγορία δαπάνης..."
                   />
                   <p className="text-xs text-gray-500">
@@ -478,7 +478,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                       }
                     }
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"
                 />
                 {errors.amount && (
@@ -499,7 +499,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                 <input
                   type="date"
                   {...register('date', { required: 'Απαιτείται' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 {errors.date && (
                   <p className="text-sm text-red-600">{errors.date.message}</p>
@@ -514,7 +514,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                 <input
                   type="date"
                   {...register('due_date')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <p className="text-xs text-gray-500">
                   Ημερομηνία πληρωμής της δαπάνης (προαιρετικό)
@@ -552,7 +552,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                 </label>
                 <select
                   {...register('distribution_type', { required: 'Απαιτείται' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {DISTRIBUTION_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -577,7 +577,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                 </label>
                 <select
                   {...register('payer_responsibility', { required: 'Απαιτείται' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="resident">Ένοικος</option>
                   <option value="owner">Ιδιοκτήτης</option>
@@ -613,7 +613,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                         return true;
                       }
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0.5 (50% ιδιοκτήτης, 50% ένοικος)"
                   />
                   {errors.split_ratio && (
@@ -720,7 +720,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
               <textarea
                 {...register('notes')}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Προσθέστε σημειώσεις για αυτή τη δαπάνη..."
               />
             </div>

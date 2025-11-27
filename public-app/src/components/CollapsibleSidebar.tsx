@@ -329,14 +329,14 @@ export default function CollapsibleSidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-slate-200/60"
         >
           <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* Loading Sidebar */}
         <aside 
-          className="hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-border flex-col justify-center items-center z-40"
+          className="hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
           style={{ 
             width: '80px',
           }}
@@ -352,7 +352,7 @@ export default function CollapsibleSidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-slate-200/60"
       >
         <Menu className="w-5 h-5 text-muted-foreground" />
       </button>
@@ -362,7 +362,7 @@ export default function CollapsibleSidebar() {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-border flex-col z-40 overflow-hidden",
+          "hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
@@ -372,7 +372,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Header */}
         <div 
-          className="p-4 border-b border-border flex items-center gap-3 min-h-[64px]"
+          className="p-4 border-b border-slate-200/50 flex items-center gap-3 min-h-[64px]"
         >
           <div 
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-primary text-primary-foreground"
@@ -508,7 +508,7 @@ export default function CollapsibleSidebar() {
 
         {/* Calculator Tool */}
         <div 
-          className="p-3 border-t border-border"
+          className="p-3 border-t border-slate-200/50"
         >
           <CalculatorModal>
             <button 
@@ -538,7 +538,7 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 bg-card shadow-xl border-r border-border flex flex-col z-50",
+          "lg:hidden fixed left-0 top-0 h-full w-64 bg-card shadow-xl border-r border-slate-200/60 flex flex-col z-50",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -548,7 +548,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-border flex items-center justify-between"
+          className="p-4 border-b border-slate-200/50 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <div 

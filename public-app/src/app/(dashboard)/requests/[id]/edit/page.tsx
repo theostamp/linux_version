@@ -131,7 +131,7 @@ export default function EditRequestPage() {
             type="checkbox"
             checked={isUrgent}
             onChange={(e) => setIsUrgent(e.target.checked)}
-            className="h-4 w-4 text-red-600 border-gray-300 rounded"
+            className="h-4 w-4 text-red-600 border-slate-200 rounded"
           />
           <label htmlFor="urgent" className="ml-2 block text-sm text-gray-700">
             Επείγον

@@ -111,7 +111,7 @@ function KioskManagementContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-card rounded-xl p-6 border border-border/50 shadow-sm">
+      <div className="bg-card rounded-xl p-6 border border-slate-200/50 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center text-foreground font-condensed">
@@ -122,7 +122,7 @@ function KioskManagementContent() {
               Διαχείριση και παραμετροποίηση του συστήματος kiosk
             </p>
           </div>
-          <div className="flex items-center gap-4 bg-secondary/20 p-3 rounded-lg border border-border/50">
+          <div className="flex items-center gap-4 bg-secondary/20 p-3 rounded-lg border border-slate-200/50">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Τρέχον Κτίριο</p>
               <p className="text-base font-bold text-foreground">{building.name}</p>

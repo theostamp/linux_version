@@ -1388,7 +1388,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </PopoverTrigger>
           <PopoverContent className="w-80 p-2" align="end" sideOffset={8}>
             <div className="grid gap-2">
-              <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b border-border/50 mb-1">
+              <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b border-slate-200/50 mb-1">
                 Διαθέσιμες Ενέργειες
               </div>
               
@@ -1434,7 +1434,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 </div>
               </Button>
 
-              <div className="my-1 border-t border-border/50" />
+              <div className="my-1 border-t border-slate-200/50" />
 
               <Button 
                 onClick={handleIssue}
