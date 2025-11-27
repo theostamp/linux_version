@@ -132,10 +132,23 @@ class CustomUserAdmin(UserAdmin):
         
         # Delete related objects first (in public schema)
         # Each deletion in its own transaction to avoid "transaction aborted" errors
-        # Order matters: delete child records before parent records
+        # IMPORTANT ORDER:
+        # 1. SET_NULL first (to remove FK references)
+        # 2. CASCADE deletes (to remove dependent records)
+        # 3. Delete user last
+        
+        # Tables with SET_NULL (set to NULL instead of deleting)
+        # These tables have on_delete=SET_NULL in their ForeignKey definition
+        # MUST be processed FIRST to avoid FK constraint violations
+        set_null_tables = [
+            ('votes_vote', 'creator_id'),  # Votes created by user (SET_NULL)
+            ('financial_financialauditlog', 'user_id'),  # Financial audit logs (SET_NULL)
+            ('financial_financialreceipt', 'created_by_id'),  # Financial receipts (SET_NULL)
+            ('financial_unifiedreceipt', 'created_by_id'),  # Unified receipts (SET_NULL)
+            ('financial_unifiedreceipt', 'cancelled_by_id'),  # Unified receipts cancelled (SET_NULL)
+        ]
         
         # Tables with CASCADE delete (must delete these records)
-        # Order matters: delete child records before parent records
         cascade_tables = [
             'django_admin_log',  # Admin log entries (CASCADE) - must be deleted first
             'votes_votesubmission',  # User submissions in votes (CASCADE)
@@ -146,17 +159,35 @@ class CustomUserAdmin(UserAdmin):
             'todo_management_todo',  # Todos created by user (CASCADE)
         ]
         
-        # Tables with SET_NULL (set to NULL instead of deleting)
-        # These tables have on_delete=SET_NULL in their ForeignKey definition
-        set_null_tables = [
-            ('votes_vote', 'creator_id'),  # Votes created by user (SET_NULL)
-            ('financial_financialauditlog', 'user_id'),  # Financial audit logs (SET_NULL)
-            ('financial_financialreceipt', 'created_by_id'),  # Financial receipts (SET_NULL)
-            ('financial_unifiedreceipt', 'created_by_id'),  # Unified receipts (SET_NULL)
-            ('financial_unifiedreceipt', 'cancelled_by_id'),  # Unified receipts cancelled (SET_NULL)
-        ]
+        # STEP 1: Set SET_NULL fields to NULL FIRST
+        # This removes FK references before attempting to delete the user
+        for table, field in set_null_tables:
+            try:
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        # Use ids directly (user IDs) for the WHERE clause
+                        if len(ids) == 1:
+                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} = %s", [ids[0]])
+                        else:
+                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} IN ({placeholders})", ids)
+                        
+                        # Log how many rows were updated
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.info(f"SET NULL on {table}.{field} for user IDs {ids}: {cursor.rowcount} rows affected")
+            except ProgrammingError as e:
+                # Table might not exist - skip silently
+                error_str = str(e)
+                if 'does not exist' not in error_str.lower():
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Could not update {table}.{field}: {e}")
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Error updating {table}.{field}: {e}")
         
-        # Delete CASCADE tables
+        # STEP 2: Delete CASCADE tables
         for table in cascade_tables:
             try:
                 with transaction.atomic():
@@ -180,28 +211,7 @@ class CustomUserAdmin(UserAdmin):
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Error deleting from {table}: {e}")
         
-        # Set SET_NULL fields to NULL
-        for table, field in set_null_tables:
-            try:
-                with transaction.atomic():
-                    with connection.cursor() as cursor:
-                        if len(ids) == 1:
-                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} = %s", id_params)
-                        else:
-                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} IN ({placeholders})", id_params)
-            except ProgrammingError as e:
-                # Table might not exist - skip silently
-                error_str = str(e)
-                if 'does not exist' not in error_str.lower():
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Could not update {table}.{field}: {e}")
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Error updating {table}.{field}: {e}")
-        
-        # Now delete the user in main transaction
+        # STEP 3: Now delete the user in main transaction
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
