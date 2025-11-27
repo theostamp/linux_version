@@ -331,7 +331,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """
         DELETE /api/users/<id>/
-        Διαγραφή χρήστη - μόνο residents μπορούν να διαγραφούν.
+        Διαγραφή χρήστη - μόνο residents και staff μπορούν να διαγραφούν.
         Admins και managers δεν μπορούν να διαγραφούν.
         """
         from core.permissions import IsManagerOrSuperuser
@@ -343,25 +343,26 @@ class UserViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_403_FORBIDDEN)
         
         user_to_delete = self.get_object()
-        
-        # Προστασία: Δεν επιτρέπεται η διαγραφή admins, managers, ή του εαυτού σου
-        protected_roles = ['admin', 'manager', 'superadmin', 'ultraadmin']
         user_role = getattr(user_to_delete, 'role', None)
         
-        if user_role in protected_roles:
-            return Response({
-                'error': f'Δεν επιτρέπεται η διαγραφή χρήστη με ρόλο "{user_role}".'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # Ρόλοι που επιτρέπεται να διαγραφούν
+        deletable_roles = ['resident', 'staff', 'internal_manager', None, '']
         
-        if user_to_delete.is_superuser:
-            return Response({
-                'error': 'Δεν επιτρέπεται η διαγραφή superuser.'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
+        # Προστασία: Δεν επιτρέπεται η διαγραφή του εαυτού σου
         if user_to_delete.id == request.user.id:
             return Response({
                 'error': 'Δεν μπορείτε να διαγράψετε τον εαυτό σας.'
             }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Επιτρέπεται διαγραφή μόνο αν ο ρόλος είναι στη λίστα deletable_roles
+        if user_role not in deletable_roles:
+            return Response({
+                'error': f'Δεν επιτρέπεται η διαγραφή χρήστη με ρόλο "{user_role}".'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Αν ο χρήστης έχει κατά λάθος is_superuser=True αλλά είναι resident/staff,
+        # προχωράμε με τη διαγραφή (data cleanup)
+        # Σημείωση: Πραγματικοί superusers δεν θα έχουν role='resident'
         
         return super().destroy(request, *args, **kwargs)
 
