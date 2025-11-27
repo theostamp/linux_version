@@ -66,6 +66,22 @@ type UserRoleType = 'superuser' | 'staff' | 'manager' | 'office_staff' | 'intern
 // - resident: Ένοικος - read-only + αιτήματα
 const navigationGroups: NavigationGroup[] = [
   {
+    id: 'my-space',
+    title: 'Ο Χώρος μου',
+    color: 'emerald',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+    links: [
+      {
+        href: '/my-apartment',
+        label: 'Το Διαμέρισμά μου',
+        icon: <Home className="w-4 h-4" />,
+        // Μόνο για ενοίκους - οι managers βλέπουν το πλήρες financial
+        roles: ['resident', 'internal_manager'],
+      },
+    ]
+  },
+  {
     id: 'operations',
     title: 'Οικονομικά και Έργα',
     color: 'orange',
@@ -76,8 +92,8 @@ const navigationGroups: NavigationGroup[] = [
         href: '/financial',
         label: 'Οικονομικά',
         icon: <Euro className="w-4 h-4" />,
-        // Office Staff, Internal Manager και Resident μπορούν να βλέπουν
-        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Μόνο για managers - οι residents βλέπουν το /my-apartment
+        roles: ['manager', 'office_staff', 'staff', 'superuser'],
       },
       {
         href: '/maintenance',

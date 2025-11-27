@@ -5,7 +5,7 @@ from .views import (
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
     SystemHealthCheckView, auto_fix_system_issues, financial_overview,
-    FinancialReceiptViewSet, MonthlyBalanceViewSet
+    FinancialReceiptViewSet, MonthlyBalanceViewSet, my_apartment_data
 )
 from .tests_views import (
     run_financial_tests, stop_financial_tests, get_tests_status,
@@ -47,4 +47,6 @@ urlpatterns = [
     path('tests/status/', get_tests_status, name='get-tests-status'),
     path('tests/coverage/', get_test_coverage_info, name='get-test-coverage'),
     path('tests/clear/', clear_test_results, name='clear-test-results'),
+    # My Apartment endpoint για ενοίκους
+    path('my-apartment/', my_apartment_data, name='my-apartment-data'),
 ] 

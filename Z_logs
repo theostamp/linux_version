@@ -1,44 +1,109 @@
-﻿﻿
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [AuthContext] loadUserOnMount starting...
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
-8f3135668fa79c16.js?…8KxrqYDDsDJQAYSP6:1 [API CALL] Attempting to fetch /api/users/me/
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [AuthContext] Token check interval disabled to debug hanging issue
-8f62366d5ff86b3f.js?…8KxrqYDDsDJQAYSP6:1 [ReactQueryProvider] Setting up global refresh system
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [Global Refresh] Query client registered
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [Global Refresh] Initializing global refresh system
-8f62366d5ff86b3f.js?…8KxrqYDDsDJQAYSP6:1 [AppProviders] Current pathname: /office-staff
-8f62366d5ff86b3f.js?…8KxrqYDDsDJQAYSP6:1 [AppProviders] Is Dashboard: true
-8f62366d5ff86b3f.js?…8KxrqYDDsDJQAYSP6:1 [AppProviders] Is Kiosk Mode: false
-8f62366d5ff86b3f.js?…8KxrqYDDsDJQAYSP6:1 [AppProviders] Is Info Screen: false
-8f62366d5ff86b3f.js?…8KxrqYDDsDJQAYSP6:1 [AppProviders] Is No Sidebar Route: false
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 AuthContext: Refreshed user data: etherm2021@gmail.com
-950c825e226ac179.js?…8KxrqYDDsDJQAYSP6:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
-8f3135668fa79c16.js?…8KxrqYDDsDJQAYSP6:1 [API CALL] Fetching buildings from /buildings/
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
-8f3135668fa79c16.js?…8KxrqYDDsDJQAYSP6:1 [API CALL] Fetching buildings from /buildings/
-8f3135668fa79c16.js?…8KxrqYDDsDJQAYSP6:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/buildings/?page_size=1000&page=1_{"page_size":1000,"page":1}
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [AuthContext] Token check interval disabled to debug hanging issue
-8f3135668fa79c16.js?…8KxrqYDDsDJQAYSP6:1 
- GET https://theo.newconcierge.app/api/office/staff 404 (Not Found)
-620b34c3a6ef9521.js?…8KxrqYDDsDJQAYSP6:1 Error fetching staff: Error: GET https://theo.newconcierge.app/api/office/staff/ failed: 404
-    at d (8f3135668fa79c16.js?…YDDsDJQAYSP6:1:2785)
-    at 8f3135668fa79c16.js?…YDDsDJQAYSP6:1:5555
-    at async J (620b34c3a6ef9521.js?…YDDsDJQAYSP6:1:4915)
-8f3135668fa79c16.js?…8KxrqYDDsDJQAYSP6:1 
- GET https://theo.newconcierge.app/api/office/activity-logs 404 (Not Found)
-620b34c3a6ef9521.js?…8KxrqYDDsDJQAYSP6:1 Error fetching logs: Error: GET https://theo.newconcierge.app/api/office/activity-logs/ failed: 404
-    at d (8f3135668fa79c16.js?…YDDsDJQAYSP6:1:2785)
-    at 8f3135668fa79c16.js?…YDDsDJQAYSP6:1:5555
-    at async Q (620b34c3a6ef9521.js?…YDDsDJQAYSP6:1:5109)
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Loaded buildings: 2 buildings
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Loaded buildings: 2 buildings
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
-950c825e226ac179.js?…8KxrqYDDsDJQAYSP6:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Building changed to 2, invalidating queries...
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] ✓ Queries invalidated for building 2
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Fetching context for building 2...
-22cb4cb270f16909.js?…8KxrqYDDsDJQAYSP6:1 [BuildingContext] Building context loaded: 
+﻿﻿﻿
+api/user-requests?building=2:1 
+ Failed to load resource: the server responded with a status of 404 ()
+621e86b667b62afd.js?…t7Q3Mrd2gEm4HekGz:1 Uncaught ReferenceError: SlidersHorizontal is not defined
+    at W (621e86b667b62afd.js?…d2gEm4HekGz:1:29422)
+    at l8 (1e1a0feececdabb8.js?…d2gEm4HekGz:1:59389)
+    at o_ (1e1a0feececdabb8.js?…d2gEm4HekGz:1:79070)
+    at oV (1e1a0feececdabb8.js?…d2gEm4HekGz:1:90100)
+    at iy (1e1a0feececdabb8.js?…2gEm4HekGz:1:122762)
+    at 1e1a0feececdabb8.js?…2gEm4HekGz:1:122607
+    at ig (1e1a0feececdabb8.js?…2gEm4HekGz:1:122615)
+    at il (1e1a0feececdabb8.js?…2gEm4HekGz:1:119698)
+    at iK (1e1a0feececdabb8.js?…2gEm4HekGz:1:141129)
+    at iH (1e1a0feececdabb8.js?…2gEm4HekGz:1:139341)
+
+
+ εδω δεν εμφανιζεται sidebar ενω εμφανιζεται το κουμπι "νεα ανακοινωση"   στην ουσια πρπει να ειναι ανενεργο ή κρυμμενο -> ﻿
+Navigated to https://theo.newconcierge.app/announcements
+ XHR finished loading: GET "https://gc.kis.v2.scr.kaspersky-labs.com/7D8B79A2-8974-4D7B-A76A-F4F29624C0…ltZSI6MTc2NDI4NTE5MjkxNn0%3D&nocache=14a59&tm=2025-11-27T23%3A13%3A13.533Z".
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [AuthContext] loadUserOnMount starting...
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 AuthContext: Found cached user: thodoris_st@hotmail.com but will verify with API
+8b5f02fd24f7bbdd.js?…t7Q3Mrd2gEm4HekGz:1 [API CALL] Attempting to fetch /api/users/me/
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [AuthContext] Token check interval disabled to debug hanging issue
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [ReactQueryProvider] Setting up global refresh system
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [Global Refresh] Query client registered
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [Global Refresh] Initializing global refresh system
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Current pathname: /announcements
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is Dashboard: true
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is Kiosk Mode: false
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is Info Screen: false
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is No Sidebar Route: false
+ XHR finished loading: POST "https://gc.kis.v2.scr.kaspersky-labs.com/4773058C-1E4F-45BD-9BDA-CFB733ADC0…1F3-434E-9587-D992E6A3500A/to/abn.statInfo?tm=2025-11-27T23%3A13%3A14.307Z".
+13
+Fetch finished loading: GET "<URL>".
+ XHR finished loading: POST "https://gc.kis.v2.scr.kaspersky-labs.com/4773058C-1E4F-45BD-9BDA-CFB733ADC0…434E-9587-D992E6A3500A/to/wsm.onHashChange?tm=2025-11-27T23%3A13%3A14.451Z".
+ XHR finished loading: GET "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true".
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 AuthContext: Refreshed user data: thodoris_st@hotmail.com
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] currentBuilding: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] selectedBuilding: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] buildingId used: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements received: 
+[]
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements count: 0
+8b5f02fd24f7bbdd.js?…t7Q3Mrd2gEm4HekGz:1 [API CALL] Fetching buildings from /buildings/
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
+8b5f02fd24f7bbdd.js?…t7Q3Mrd2gEm4HekGz:1 [API CALL] Fetching buildings from /buildings/
+8b5f02fd24f7bbdd.js?…t7Q3Mrd2gEm4HekGz:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/buildings/?page_size=1000&page=1_{"page_size":1000,"page":1}
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [AuthContext] Token check interval disabled to debug hanging issue
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] currentBuilding: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] selectedBuilding: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] buildingId used: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements received: 
+[]
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements count: 0
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] currentBuilding: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] selectedBuilding: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] buildingId used: null
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements received: 
+[{…}]
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements count: 1
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Loaded buildings: 1 buildings
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Loaded buildings: 1 buildings
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] currentBuilding: 
+{id: 2, name: 'Βουλής 6 -Demo', address: 'Βουλής 6, Αθήνα', city: 'Αθήνα', postal_code: '10557', …}
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] selectedBuilding: 
+{id: 2, name: 'Βουλής 6 -Demo', address: 'Βουλής 6, Αθήνα', city: 'Αθήνα', postal_code: '10557', …}
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] buildingId used: 2
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements received: 
+[]
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements count: 0
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Building changed to 2, invalidating queries...
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] ✓ Queries invalidated for building 2
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Fetching context for building 2...
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] currentBuilding: 
+{id: 2, name: 'Βουλής 6 -Demo', address: 'Βουλής 6, Αθήνα', city: 'Αθήνα', postal_code: '10557', …}
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] selectedBuilding: 
+{id: 2, name: 'Βουλής 6 -Demo', address: 'Βουλής 6, Αθήνα', city: 'Αθήνα', postal_code: '10557', …}
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] buildingId used: 2
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements received: 
+[]
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements count: 0
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] currentBuilding: 
+{id: 2, name: 'Βουλής 6 -Demo', address: 'Βουλής 6, Αθήνα', city: 'Αθήνα', postal_code: '10557', …}
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] selectedBuilding: 
+{id: 2, name: 'Βουλής 6 -Demo', address: 'Βουλής 6, Αθήνα', city: 'Αθήνα', postal_code: '10557', …}
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] buildingId used: 2
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements received: 
+[{…}]
+a51fd14f2e3e2f2d.js?…t7Q3Mrd2gEm4HekGz:1 [AnnouncementsPage] announcements count: 1
+87d332520bf3795c.js?…t7Q3Mrd2gEm4HekGz:1 [BuildingContext] Building context loaded: 
 {id: 2, name: 'Βουλής 6 -Demo', permissions: {…}}
+ XHR finished loading: POST "https://gc.kis.v2.scr.kaspersky-labs.com/4773058C-1E4F-45BD-9BDA-CFB733ADC0…-9587-D992E6A3500A/to/wsm.sessionActivated?tm=2025-11-27T23%3A13%3A20.632Z".
+VM309 a610245001b0aa4a.js:1 useSuperUserGuard: Checking permissions 
+{user: 'thodoris_st@hotmail.com', is_superuser: false, is_staff: false, hasAccess: false}
+VM309 a610245001b0aa4a.js:1 useSuperUserGuard: Access denied, redirecting to unauthorized
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Current pathname: /announcements/new
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is Dashboard: true
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is Kiosk Mode: false
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is Info Screen: false
+e5e11e6645ea3e12.js?…t7Q3Mrd2gEm4HekGz:1 [AppProviders] Is No Sidebar Route: false
+ XHR finished loading: POST "https://gc.kis.v2.scr.kaspersky-labs.com/4773058C-1E4F-45BD-9BDA-CFB733ADC0…434E-9587-D992E6A3500A/to/wsm.onHashChange?tm=2025-11-27T23%3A13%3A20.834Z".
+ 
+ GET https://theo.newconcierge.app/unauthorized?_rsc=1njff 404 (Not Found)
+ Fetch failed loading: GET "https://theo.newconcierge.app/unauthorized?_rsc=1njff".
+﻿
