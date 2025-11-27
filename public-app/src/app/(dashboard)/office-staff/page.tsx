@@ -114,7 +114,6 @@ const permissionGroups = [
 
 export default function OfficeStaffPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const { currentBuilding } = useBuilding();
   
   // State
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
