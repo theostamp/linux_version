@@ -199,7 +199,7 @@ function SignupForm() {
                   const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
                   window.location.href = googleAuthUrl;
                 }}
-                className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center mb-6"
+                className="w-full bg-white border-2 border-slate-200 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center mb-6"
               >
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                   <path
@@ -224,7 +224,7 @@ function SignupForm() {
 
               <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t border-slate-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white text-gray-500">ή</span>
@@ -247,7 +247,7 @@ function SignupForm() {
                         onChange={handleInputChange}
                         autoComplete="given-name"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.firstName ? 'border-red-300' : 'border-gray-300'
+                          errors.firstName ? 'border-red-300' : 'border-slate-200'
                         }`}
                         placeholder="John"
                       />
@@ -271,7 +271,7 @@ function SignupForm() {
                         onChange={handleInputChange}
                         autoComplete="family-name"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.lastName ? 'border-red-300' : 'border-gray-300'
+                          errors.lastName ? 'border-red-300' : 'border-slate-200'
                         }`}
                         placeholder="Doe"
                       />
@@ -296,7 +296,7 @@ function SignupForm() {
                       onChange={handleInputChange}
                       autoComplete="email"
                       className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.email ? 'border-red-300' : 'border-gray-300'
+                        errors.email ? 'border-red-300' : 'border-slate-200'
                       }`}
                       placeholder="john@example.com"
                     />
@@ -319,7 +319,7 @@ function SignupForm() {
                       value={formData.tenantSubdomain}
                       onChange={handleInputChange}
                       className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.tenantSubdomain ? 'border-red-300' : 'border-gray-300'
+                        errors.tenantSubdomain ? 'border-red-300' : 'border-slate-200'
                       }`}
                       placeholder="my-building"
                     />
@@ -347,7 +347,7 @@ function SignupForm() {
                         onChange={handleInputChange}
                         autoComplete="new-password"
                         className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.password ? 'border-red-300' : 'border-gray-300'
+                          errors.password ? 'border-red-300' : 'border-slate-200'
                         }`}
                         placeholder="••••••••"
                       />
@@ -383,7 +383,7 @@ function SignupForm() {
                         onChange={handleInputChange}
                         autoComplete="new-password"
                         className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                          errors.confirmPassword ? 'border-red-300' : 'border-slate-200'
                         }`}
                         placeholder="••••••••"
                       />

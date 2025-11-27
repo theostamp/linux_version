@@ -27,8 +27,15 @@ export default function NewVotePage() {
   }
 
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   async function handleSubmit(data: CreateVotePayload) {
+    // Προστασία από double submission
+    if (isSubmitting) {
+      return;
+    }
+    
+    setIsSubmitting(true);
     try {
       await createVote(data);
       // ✅ Invalidate AND explicitly refetch for immediate UI update
@@ -39,11 +46,12 @@ export default function NewVotePage() {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Αποτυχία δημιουργίας ψηφοφορίας';
       toast.error(errorMessage);
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Link href="/votes">
         <Button variant="secondary">⬅ Επιστροφή στις Ψηφοφορίες</Button>
       </Link>
@@ -51,7 +59,7 @@ export default function NewVotePage() {
       <h1 className="text-2xl font-bold">🗳️ Νέα Ψηφοφορία</h1>
       <BuildingFilterIndicator className="mb-4" />
 
-      <NewVoteForm onSubmit={handleSubmit} buildingId={buildingId} />
+      <NewVoteForm onSubmit={handleSubmit} buildingId={buildingId} isSubmitting={isSubmitting} />
     </div>
   );
 }

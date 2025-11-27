@@ -15,6 +15,7 @@ import { fetchAllBuildings, api } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ========================================================================
 // NEW: Enhanced types for Building Context with Permissions
@@ -147,6 +148,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
   const { isLoading: authLoading, user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
   const loadBuildings = useCallback(async () => {
@@ -370,11 +372,44 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   // Keep currentBuilding in sync with selectedBuilding
   // Only update if selectedBuilding changes, don't override if it's null (user might want to see "all buildings")
   useEffect(() => {
-    if (selectedBuilding) {
+    if (selectedBuilding && selectedBuilding.id !== currentBuilding?.id) {
       setCurrentBuilding(selectedBuilding);
     }
     // Don't auto-select first building if selectedBuilding is null - let user choose
-  }, [selectedBuilding]);
+  }, [selectedBuilding, currentBuilding]);
+
+  // 🔄 AUTO-REFETCH: Invalidate queries όταν αλλάζει το selectedBuilding
+  // Αυτό εξασφαλίζει ότι όλα τα δεδομένα ανανεώνονται αυτόματα
+  useEffect(() => {
+    if (selectedBuilding?.id) {
+      console.log(`[BuildingContext] Building changed to ${selectedBuilding.id}, invalidating queries...`);
+      
+      // Invalidate όλα τα queries που εξαρτώνται από buildingId
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          // Invalidate queries που έχουν buildingId στο query key
+          const queryKey = query.queryKey as unknown[];
+          return queryKey.some(key => 
+            Array.isArray(key) ? key.includes(selectedBuilding.id) : false
+          ) || (
+            // Ή queries που έχουν building-related keys
+            typeof queryKey[0] === 'string' && (
+              queryKey[0] === 'announcements' ||
+              queryKey[0] === 'votes' ||
+              queryKey[0] === 'expenses' ||
+              queryKey[0] === 'payments' ||
+              queryKey[0] === 'apartments' ||
+              queryKey[0] === 'monthlyExpenses' ||
+              queryKey[0] === 'monthlyBalance' ||
+              queryKey[0] === 'meterReadings'
+            )
+          );
+        }
+      });
+      
+      console.log(`[BuildingContext] ✓ Queries invalidated for building ${selectedBuilding.id}`);
+    }
+  }, [selectedBuilding?.id, queryClient]);
 
   useEffect(() => {
     // If auth is ready and no user, stop loading

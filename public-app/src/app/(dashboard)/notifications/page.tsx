@@ -1,33 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { Bell, History, Calendar, FileText, BarChart3, Send } from 'lucide-react';
+import { Bell, Send, History, Settings } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import NotificationsList from '@/components/notifications/NotificationsList';
-import MonthlyTasksManager from '@/components/notifications/MonthlyTasksManager';
-import NotificationTemplateEditor from '@/components/notifications/NotificationTemplateEditor';
-import NotificationAnalytics from '@/components/notifications/NotificationAnalytics';
-import QuickSend from '@/components/notifications/QuickSend';
-import NotificationModeBoard from '@/components/notifications/NotificationModeBoard';
+
+// New simplified components
+import SendPanel from '@/components/notifications-v2/SendPanel';
+import HistoryPanel from '@/components/notifications-v2/HistoryPanel';
+import SettingsPanel from '@/components/notifications-v2/SettingsPanel';
 
 function NotificationsPageContent() {
-  const [activeTab, setActiveTab] = useState('quick');
+  const [activeTab, setActiveTab] = useState('send');
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-indigo-100 p-2 text-indigo-600">
-              <Bell className="h-5 w-5" />
+            <div className="rounded-full bg-indigo-100 p-2.5 text-indigo-600">
+              <Bell className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Ειδοποιήσεις & Ενημερώσεις</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Ειδοποιήσεις</h1>
               <p className="text-sm text-gray-500">
-                Διαχείριση ειδοποιήσεων, μηνιαίων αποστολών και προτύπων
+                Αποστολή μηνυμάτων στους ενοίκους
               </p>
             </div>
           </div>
@@ -35,49 +35,33 @@ function NotificationsPageContent() {
         </div>
       </div>
 
+      {/* Main Tabs - Simplified to 3 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="quick" className="flex items-center gap-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="send" className="flex items-center gap-2">
             <Send className="h-4 w-4" />
-            <span className="hidden sm:inline">Γρήγορη αποστολή</span>
-          </TabsTrigger>
-          <TabsTrigger value="monthly" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Προγραμματισμός</span>
-          </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Πρότυπα</span>
+            <span>Αποστολή</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Ιστορικό</span>
+            <span>Ιστορικό</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Analytics</span>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span>Ρυθμίσεις</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="quick" className="mt-6 space-y-6">
-          <NotificationModeBoard />
-          <QuickSend />
+        <TabsContent value="send" className="mt-6">
+          <SendPanel />
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
-          <NotificationsList />
+          <HistoryPanel />
         </TabsContent>
 
-        <TabsContent value="monthly" className="mt-6">
-          <MonthlyTasksManager />
-        </TabsContent>
-
-        <TabsContent value="templates" className="mt-6">
-          <NotificationTemplateEditor />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="mt-6">
-          <NotificationAnalytics />
+        <TabsContent value="settings" className="mt-6">
+          <SettingsPanel />
         </TabsContent>
       </Tabs>
     </div>

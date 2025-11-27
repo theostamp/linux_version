@@ -92,14 +92,14 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
       <div>
         <Label htmlFor="building">Κτίριο</Label>
         <Select
-          value={selectedBuildingId?.toString() || ''}
-          onValueChange={(value) => setSelectedBuildingId(value ? Number(value) : null)}
+          value={selectedBuildingId?.toString() || '0'}
+          onValueChange={(value) => setSelectedBuildingId(value === '0' ? null : Number(value))}
         >
           <SelectTrigger id="building" className="mt-1">
             <SelectValue placeholder="Επιλέξτε κτίριο" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Όλα τα κτίρια (Καθολική ανακοίνωση)</SelectItem>
+            <SelectItem value="0">Όλα τα κτίρια (Καθολική ανακοίνωση)</SelectItem>
             {buildings.map((building) => (
               <SelectItem key={building.id} value={building.id.toString()}>
                 {building.name}
@@ -153,7 +153,7 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
           type="checkbox"
           checked={isActive}
           onChange={(e) => setIsActive(e.target.checked)}
-          className="h-4 w-4 text-green-600 border-gray-300 rounded"
+          className="h-4 w-4 text-green-600 border-slate-200 rounded"
         />
         <Label htmlFor="is_active" className="ml-2">
           Ενεργή ανακοίνωση (δημοσιευμένη)

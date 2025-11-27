@@ -14,6 +14,7 @@ export type User = {
   // Office Management Details
   office_name?: string;
   office_phone?: string;
+  office_phone_emergency?: string; // Τηλέφωνο ανάγκης
   office_address?: string;
   office_logo?: string; // URL to the office logo image
   

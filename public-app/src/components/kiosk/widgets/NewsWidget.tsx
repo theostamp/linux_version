@@ -1,44 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { useNews } from '@/hooks/useNews';
 
 export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [newsOpacity, setNewsOpacity] = useState(1);
 
   // Use the existing news hook
   const { news, loading: newsLoading, error: newsError } = useNews(180000); // 3 minutes refresh
 
-  // Auto-advance news every 12 seconds (slower ticker)
-  useEffect(() => {
-    if (!isAutoPlaying || news.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % news.length;
-        
-        // Fade out current text
-        setNewsOpacity(0);
-        
-        // Change text after fade out
-        setTimeout(() => {
-          setNewsOpacity(1);
-        }, 300);
-        
-        return nextIndex;
-      });
-    }, 12000);
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, news.length]);
-
-  // Pause auto-play on hover
-  const handleMouseEnter = () => setIsAutoPlaying(false);
-  const handleMouseLeave = () => setIsAutoPlaying(true);
+  // Build continuous ticker text with colored separators
+  const marqueeContent = useMemo(() => {
+    if (news.length === 0) return null;
+    
+    // Duplicate news array for seamless loop
+    const allNews = [...news, ...news];
+    
+    return allNews.map((item, idx) => (
+      <span key={idx} className="inline-flex items-center">
+        <span className="text-emerald-50">{item}</span>
+        <span className="mx-4 text-amber-400 font-bold">◆</span>
+      </span>
+    ));
+  }, [news]);
 
   if (isLoading || newsLoading) {
     return (
@@ -70,17 +56,9 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
     );
   }
 
-  const currentNews = news[currentIndex];
-  const nextNews = news.length > 1 ? news[(currentIndex + 1) % news.length] : '';
-  const marqueeText = [currentNews, nextNews].filter(Boolean).join(' • ');
-
   return (
-    <div 
-      className="h-full flex items-center"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* News ticker - Horizontal layout without dots */}
+    <div className="h-full flex items-center">
+      {/* News ticker - Horizontal layout */}
       <div className="flex items-center space-x-3 w-full">
         {/* News label */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] uppercase tracking-[0.14em] text-emerald-100 flex-shrink-0">
@@ -88,29 +66,28 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
           <span>Νέα</span>
         </div>
         
-        {/* News text with fade animation - Continuous ticker */}
+        {/* Continuous scrolling ticker - slower speed, tighter spacing */}
         <div className="relative flex-1 overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
-          <div 
-            className="text-sm text-emerald-50 whitespace-nowrap"
-            style={{ opacity: newsOpacity, transition: 'opacity 0.3s ease-in-out' }}
-          >
-            <div className="animate-scroll-left">
-              {marqueeText}
-            </div>
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-900 to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none z-10" />
+          <div className="text-sm whitespace-nowrap animate-ticker">
+            {marqueeContent}
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes scroll-left {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
+        @keyframes ticker {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
         
-        .animate-scroll-left {
-          animation: scroll-left 30s linear infinite;
+        .animate-ticker {
+          animation: ticker 60s linear infinite;
+        }
+        
+        .animate-ticker:hover {
+          animation-play-state: paused;
         }
       `}</style>
     </div>

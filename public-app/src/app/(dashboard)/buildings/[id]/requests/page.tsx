@@ -64,7 +64,7 @@ export default function BuildingRequestsPage() {
 
   if (!buildingId) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <p>Δεν έχει επιλεγεί κτήριο.</p>
       </div>
     );
@@ -72,7 +72,7 @@ export default function BuildingRequestsPage() {
 
   if (error) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <Link href={`/buildings/${buildingId}`}>
           <Button variant="outline" className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -85,7 +85,7 @@ export default function BuildingRequestsPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Link href={`/buildings/${buildingId}`}>
           <Button variant="outline">

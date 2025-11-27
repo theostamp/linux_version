@@ -1,0 +1,88 @@
+{% extends "emails/base.html" %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block content %}
+<div style="font-size: 15px; color: #374151;">
+    
+    {% if notification_type == 'common_expense' %}
+    <!-- Κοινόχρηστα -->
+    <div style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 40px;">📊</span>
+        <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Λογαριασμός Κοινοχρήστων</h2>
+    </div>
+    
+    {% elif notification_type == 'debt_reminder' %}
+    <!-- Υπενθύμιση Οφειλής -->
+    <div style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 40px;">💰</span>
+        <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Υπενθύμιση Οφειλής</h2>
+    </div>
+    
+    {% elif notification_type == 'meeting' %}
+    <!-- Πρόσκληση Συνέλευσης -->
+    <div style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 40px;">👥</span>
+        <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Πρόσκληση Συνέλευσης</h2>
+    </div>
+    
+    {% elif notification_type == 'maintenance' %}
+    <!-- Εργασίες Συντήρησης -->
+    <div style="background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 40px;">🔧</span>
+        <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Ενημέρωση Συντήρησης</h2>
+    </div>
+    
+    {% elif notification_type == 'emergency' %}
+    <!-- Έκτακτη Ειδοποίηση -->
+    <div style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 40px;">🚨</span>
+        <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Επείγουσα Ειδοποίηση</h2>
+    </div>
+    
+    {% else %}
+    <!-- Γενική Ανακοίνωση -->
+    <div style="background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 40px;">📢</span>
+        <h2 style="color: white; margin: 12px 0 0; font-size: 20px;">Ανακοίνωση</h2>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div style="background-color: #F9FAFB; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+        <div style="white-space: pre-wrap; line-height: 1.7;">{{ body|safe }}</div>
+    </div>
+
+    {% if attachment_url %}
+    <!-- Attachment -->
+    <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #1E40AF;">
+            <strong>📎 Συνημμένο αρχείο</strong><br>
+            <a href="{{ attachment_url }}" style="color: #2563EB; text-decoration: underline;">Κάντε κλικ εδώ για λήψη</a>
+        </p>
+    </div>
+    {% endif %}
+
+    {% if action_url %}
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 32px 0;">
+        <a href="{{ action_url }}" style="display: inline-block; background-color: #4F46E5; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+            {{ action_text|default:"Δείτε περισσότερα" }}
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Building Info -->
+    {% if building_name %}
+    <div style="border-top: 1px solid #E5E7EB; padding-top: 20px; margin-top: 20px;">
+        <p style="margin: 0; color: #6B7280; font-size: 14px;">
+            <strong>🏢 {{ building_name }}</strong><br>
+            {% if building_address %}{{ building_address }}{% endif %}
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+

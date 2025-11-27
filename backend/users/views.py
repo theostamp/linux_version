@@ -260,16 +260,61 @@ def update_office_details(request):
     PUT/PATCH /api/users/office-details/
     Ενημέρωση των στοιχείων γραφείου διαχείρισης του authenticated χρήστη.
     """
+    import logging
+    logger = logging.getLogger('django')
+    
     user = request.user
-    serializer = OfficeDetailsSerializer(user, data=request.data, partial=True)
+    content_type = request.content_type or 'unknown'
+    has_files = bool(request.FILES)
+    data_keys = list(request.data.keys()) if hasattr(request, 'data') else []
+    files_keys = list(request.FILES.keys()) if hasattr(request, 'FILES') else []
+    
+    logger.info(f"[update_office_details] Request received for user {user.id}", extra={
+        'content_type': content_type,
+        'has_files': has_files,
+        'data_keys': data_keys,
+        'files_keys': files_keys,
+        'method': request.method,
+    })
+    
+    # Log file info if present
+    if has_files:
+        for key, file_obj in request.FILES.items():
+            logger.info(f"[update_office_details] File received: {key}", extra={
+                'file_name': file_obj.name,
+                'file_size': file_obj.size,
+                'file_content_type': getattr(file_obj, 'content_type', 'unknown'),
+            })
+    
+    # DRF's request.data already includes FILES when using multipart/form-data
+    # But we need to ensure files are passed correctly to the serializer
+    serializer_data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+    
+    # Explicitly add files if they exist and aren't already in serializer_data
+    if request.FILES:
+        for key, file_obj in request.FILES.items():
+            if key not in serializer_data:
+                serializer_data[key] = file_obj
+    
+    serializer = OfficeDetailsSerializer(user, data=serializer_data, partial=True)
     
     if serializer.is_valid():
         serializer.save()
+        # Reload user instance to get updated logo URL
+        user.refresh_from_db()
+        logger.info(f"[update_office_details] Office details updated successfully for user {user.id}")
+        logger.info(f"[update_office_details] Logo URL after save: {user.office_logo.url if user.office_logo else 'None'}")
+        
+        # Create new serializer instance with refreshed user to get correct logo URL
+        response_serializer = OfficeDetailsSerializer(user)
         return Response({
             'message': 'Τα στοιχεία γραφείου διαχείρισης ενημερώθηκαν επιτυχώς.',
-            'office_details': serializer.data
+            'office_details': response_serializer.data
         }, status=status.HTTP_200_OK)
     
+    logger.warning(f"[update_office_details] Validation failed for user {user.id}", extra={
+        'errors': serializer.errors,
+    })
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -469,6 +514,100 @@ def list_invitations_view(request):
     invitations = UserInvitation.objects.filter(invited_by=request.user).order_by('-created_at')
     serializer = UserInvitationSerializer(invitations, many=True)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def resend_invitation_view(request):
+    """
+    POST /api/users/invitations/resend/
+    Επαναποστολή πρόσκλησης
+    Body: { "invitation_id": 123 } ή { "email": "user@example.com", "building_id": 1 }
+    """
+    from core.permissions import IsManager
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManager().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να επαναστέλουν προσκλήσεις.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    invitation_id = request.data.get('invitation_id')
+    email = request.data.get('email')
+    building_id = request.data.get('building_id')
+    
+    try:
+        if invitation_id:
+            # Βρες invitation από ID
+            invitation = UserInvitation.objects.get(
+                id=invitation_id,
+                invited_by=request.user
+            )
+        elif email:
+            # Βρες το πιο πρόσφατο pending invitation για αυτό το email
+            query = UserInvitation.objects.filter(
+                email=email,
+                invited_by=request.user,
+                status=UserInvitation.InvitationStatus.PENDING
+            )
+            if building_id:
+                query = query.filter(building_id=building_id)
+            
+            invitation = query.order_by('-created_at').first()
+            
+            if not invitation:
+                # Αν δεν υπάρχει pending, δημιούργησε νέο
+                from .services import InvitationService
+                invitation = InvitationService.create_invitation(
+                    invited_by=request.user,
+                    email=email,
+                    building_id=building_id,
+                    assigned_role=request.data.get('assigned_role')
+                )
+                return Response({
+                    'message': 'Η πρόσκληση δημιουργήθηκε και στάλθηκε επιτυχώς',
+                    'invitation': UserInvitationSerializer(invitation).data
+                }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'error': 'Πρέπει να δοθεί invitation_id ή email'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Έλεγχος αν η πρόσκληση μπορεί να σταλεί ξανά
+        if invitation.status != UserInvitation.InvitationStatus.PENDING:
+            return Response({
+                'error': f'Η πρόσκληση δεν μπορεί να σταλεί ξανά (κατάσταση: {invitation.status})'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if invitation.is_expired:
+            # Ανανέωσε την ημερομηνία λήξης
+            from django.utils import timezone
+            invitation.expires_at = timezone.now() + timezone.timedelta(days=7)
+            invitation.save()
+        
+        # Αποστολή email
+        from .services import EmailService
+        success = EmailService.send_invitation_email(invitation)
+        
+        if success:
+            return Response({
+                'message': 'Η πρόσκληση στάλθηκε ξανά επιτυχώς',
+                'invitation': UserInvitationSerializer(invitation).data
+            })
+        else:
+            return Response({
+                'error': 'Αποτυχία αποστολής email'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    except UserInvitation.DoesNotExist:
+        return Response({
+            'error': 'Η πρόσκληση δεν βρέθηκε'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'error': f'Σφάλμα: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

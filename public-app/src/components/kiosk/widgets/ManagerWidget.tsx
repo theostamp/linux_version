@@ -44,6 +44,7 @@ export default function ManagerWidget({ data, isLoading, error }: BaseWidgetProp
     management_office: {
       name: buildingInfo.management_office_name || null,
       phone: buildingInfo.management_office_phone || null,
+      phone_emergency: buildingInfo.management_office_phone_emergency || null,
       email: buildingInfo.management_office_email || null,
       address: buildingInfo.management_office_address || null,
       working_hours: buildingInfo.management_office_hours || null
@@ -199,27 +200,29 @@ export default function ManagerWidget({ data, isLoading, error }: BaseWidgetProp
         )}
 
         {/* Emergency Contact */}
-        <div className="bg-gradient-to-br from-kiosk-error/40 to-kiosk-error-light/40 backdrop-blur-sm p-4 rounded-xl border border-kiosk-error/30 hover:shadow-2xl transition-all duration-300">
-          <div className="flex items-center space-x-2 mb-3">
-            <Phone className="w-4 h-4 text-kiosk-error-light" />
-            <h3 className="text-sm font-semibold text-kiosk-error-light">Έκτακτη Ανάγκη</h3>
+        {managerData.management_office.phone_emergency && (
+          <div className="bg-gradient-to-br from-kiosk-error/40 to-kiosk-error-light/40 backdrop-blur-sm p-4 rounded-xl border border-kiosk-error/30 hover:shadow-2xl transition-all duration-300">
+            <div className="flex items-center space-x-2 mb-3">
+              <Phone className="w-4 h-4 text-kiosk-error-light" />
+              <h3 className="text-sm font-semibold text-kiosk-error-light">Έκτακτη Ανάγκη</h3>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-lg font-bold text-white mb-2">
+                24/7 Υποστήριξη
+              </div>
+              <div 
+                className="text-2xl font-bold text-kiosk-error-light cursor-pointer hover:text-kiosk-error transition-colors"
+                onClick={() => handlePhoneCall(managerData.management_office.phone_emergency)}
+              >
+                {managerData.management_office.phone_emergency}
+              </div>
+              <div className="text-xs text-kiosk-error-light mt-1">
+                Μόνο για επείγουσες περιπτώσεις
+              </div>
+            </div>
           </div>
-          
-          <div className="text-center">
-            <div className="text-lg font-bold text-white mb-2">
-              24/7 Υποστήριξη
-            </div>
-            <div 
-              className="text-2xl font-bold text-kiosk-error-light cursor-pointer hover:text-kiosk-error transition-colors"
-              onClick={() => handlePhoneCall('+30 210 123 4567')}
-            >
-              +30 210 123 4567
-            </div>
-            <div className="text-xs text-kiosk-error-light mt-1">
-              Μόνο για επείγουσες περιπτώσεις
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">

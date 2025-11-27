@@ -115,6 +115,7 @@ SHARED_APPS = [
     'django.contrib.admin', # ✅ μεταφέρθηκε εδώ
     'django.contrib.auth',
     'users',
+    'office_staff',         # Office Staff Management (shared - relates to users)
     'billing',              # Subscription & Billing System (shared across tenants)
 
     'corsheaders',
@@ -344,7 +345,14 @@ STATIC_ROOT = Path(os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles'))
 # WhiteNoise configuration for serving static files in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
+# Media files configuration - use Railway volume if available
+railway_volume = os.getenv('RAILWAY_VOLUME_MOUNT_PATH', '/data')
+if os.path.exists(railway_volume):
+    MEDIA_ROOT = Path(railway_volume) / 'media'
+    # Ensure media directory exists
+    MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+else:
+    MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -446,7 +454,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:3000$",
     r"^http://[\w\-]+\.localhost:3001$",
     r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
-]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app
+    r"^https://[\w\.-]+\.newconcierge\.app$",  # Production domains (*.newconcierge.app)
+]  # ✅ Επιτρέπει *.localhost:*, *.vercel.app και *.newconcierge.app
 
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGIN_REGEXES count: {len(CORS_ALLOWED_ORIGIN_REGEXES)}")

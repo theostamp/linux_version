@@ -68,18 +68,18 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
                 <div key={groupKey} className="border rounded">
                   <button
                     onClick={() => toggleGroup(`resident_${groupKey}`)}
-                    className="w-full bg-gray-50 hover:bg-gray-100 p-2 flex items-center justify-between transition-colors"
+                    className="w-full bg-muted hover:bg-accent p-2 flex items-center justify-between transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span>{group.icon}</span>
-                      <span className="text-sm font-semibold text-gray-700">{group.label}</span>
+                      <span className="text-sm font-semibold text-foreground">{group.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-blue-600">{formatAmount(group.total)}€</span>
+                      <span className="text-sm font-bold text-primary">{formatAmount(group.total)}€</span>
                       {expandedGroups[`resident_${groupKey}`] ? (
-                        <ChevronUp className="h-4 w-4 text-gray-500" />
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
                   </button>
@@ -88,8 +88,8 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
                     <div className="p-2 space-y-1">
                       {group.expenses.map((expense, idx) => (
                         <div key={idx} className="flex items-center justify-between py-1 px-2 bg-white rounded text-xs">
-                          <span className="text-gray-600">{expense.category_display}</span>
-                          <span className="font-semibold text-gray-700">{formatAmount(expense.amount)}€</span>
+                          <span className="text-muted-foreground">{expense.category_display}</span>
+                          <span className="font-semibold text-foreground">{formatAmount(expense.amount)}€</span>
                         </div>
                       ))}
                     </div>
@@ -139,18 +139,18 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
                 <div key={groupKey} className="border rounded">
                   <button
                     onClick={() => toggleGroup(`owner_${groupKey}`)}
-                    className="w-full bg-gray-50 hover:bg-gray-100 p-2 flex items-center justify-between transition-colors"
+                    className="w-full bg-muted hover:bg-accent p-2 flex items-center justify-between transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span>{group.icon}</span>
-                      <span className="text-sm font-semibold text-gray-700">{group.label}</span>
+                      <span className="text-sm font-semibold text-foreground">{group.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-blue-600">{formatAmount(group.total)}€</span>
+                      <span className="text-sm font-bold text-primary">{formatAmount(group.total)}€</span>
                       {expandedGroups[`owner_${groupKey}`] ? (
-                        <ChevronUp className="h-4 w-4 text-gray-500" />
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
                   </button>
@@ -159,8 +159,8 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
                     <div className="p-2 space-y-1">
                       {group.expenses.map((expense, idx) => (
                         <div key={idx} className="flex items-center justify-between py-1 px-2 bg-white rounded text-xs">
-                          <span className="text-gray-600">{expense.category_display}</span>
-                          <span className="font-semibold text-gray-700">{formatAmount(expense.amount)}€</span>
+                          <span className="text-muted-foreground">{expense.category_display}</span>
+                          <span className="font-semibold text-foreground">{formatAmount(expense.amount)}€</span>
                         </div>
                       ))}
                     </div>
@@ -210,18 +210,18 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
                 <div key={groupKey} className="border rounded">
                   <button
                     onClick={() => toggleGroup(`shared_${groupKey}`)}
-                    className="w-full bg-gray-50 hover:bg-gray-100 p-2 flex items-center justify-between transition-colors"
+                    className="w-full bg-muted hover:bg-accent p-2 flex items-center justify-between transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span>{group.icon}</span>
-                      <span className="text-sm font-semibold text-gray-700">{group.label}</span>
+                      <span className="text-sm font-semibold text-foreground">{group.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-blue-600">{formatAmount(group.total)}€</span>
+                      <span className="text-sm font-bold text-primary">{formatAmount(group.total)}€</span>
                       {expandedGroups[`shared_${groupKey}`] ? (
-                        <ChevronUp className="h-4 w-4 text-gray-500" />
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
                   </button>
@@ -230,8 +230,8 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
                     <div className="p-2 space-y-1">
                       {group.expenses.map((expense, idx) => (
                         <div key={idx} className="flex items-center justify-between py-1 px-2 bg-white rounded text-xs">
-                          <span className="text-gray-600">{expense.category_display}</span>
-                          <span className="font-semibold text-gray-700">{formatAmount(expense.amount)}€</span>
+                          <span className="text-muted-foreground">{expense.category_display}</span>
+                          <span className="font-semibold text-foreground">{formatAmount(expense.amount)}€</span>
                         </div>
                       ))}
                     </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { API_BASE_URL } from '@/lib/api';
+import { getOfficeLogoUrl } from '@/lib/utils';
 import { 
   X, 
   Printer, 
@@ -90,6 +90,7 @@ export default function PaymentNotificationModal({
 }: PaymentNotificationModalProps) {
   const { user } = useAuth();
   const [paymentDeadline, setPaymentDeadline] = useState<string>('');
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (apartment) {
@@ -183,8 +184,8 @@ export default function PaymentNotificationModal({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b print:hidden">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">
                 Ειδοποιητήριο Πληρωμής Κοινοχρήστων
@@ -199,7 +200,7 @@ export default function PaymentNotificationModal({
                     onClose();
                     onPaymentClick();
                   }}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                  className="flex items-center gap-2 bg-success hover:bg-success/90"
                 >
                   <CreditCard className="h-4 w-4" />
                   Πληρωμή
@@ -231,13 +232,18 @@ export default function PaymentNotificationModal({
               <div className="flex items-center justify-between">
                 {/* Αριστερά: Στοιχεία Γραφείου */}
                 <div className="flex items-center gap-3">
-                  {user?.office_logo && (
-                    <img
-                      src={user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`}
-                      alt="Office Logo"
-                      className="w-14 h-14 object-contain"
-                    />
-                  )}
+                  {(() => {
+                    const logoUrl = getOfficeLogoUrl(user?.office_logo);
+                    return logoUrl && !logoError ? (
+                      <img
+                        src={logoUrl}
+                        alt="Office Logo"
+                        className="w-14 h-14 object-contain"
+                        onLoad={() => setLogoError(false)}
+                        onError={() => setLogoError(true)}
+                      />
+                    ) : null;
+                  })()}
                   <div>
                     <h1 className="text-lg font-bold text-gray-900">
                       {user?.office_name || 'Γραφείο Διαχείρισης'}
@@ -281,7 +287,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Apartment Information */}
-            <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:border print:border-gray-300">
+            <div className="bg-muted rounded-lg p-4 print:bg-white print:border print:border-slate-200/60">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 Στοιχεία Διαμερίσματος
@@ -309,7 +315,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Payment Information */}
-            <div className="bg-blue-50 rounded-lg p-4 print:bg-white print:border print:border-blue-300">
+            <div className="bg-primary/10 rounded-lg p-4 print:bg-white print:border print:border-primary/30">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Euro className="w-4 h-4" />
                 Πληροφορίες Πληρωμής
@@ -360,15 +366,46 @@ export default function PaymentNotificationModal({
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900">Ανάλυση Οφειλών</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white border border-gray-200 rounded-lg p-3">
-                  <span className="text-sm text-gray-600">Παλαιότερες Οφειλές:</span>
-                  <div className="font-medium text-lg">
+              {/* Παλαιότερες Οφειλές με διαχωρισμό */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-purple-900">Παλαιότερες Οφειλές:</span>
+                  <div className="font-bold text-lg text-purple-900">
                     {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                   </div>
                 </div>
+                
+                {/* Διαχωρισμός Παλαιότερων Οφειλών */}
+                {apartment.previous_balance > 0 && (
+                  <div className="ml-4 space-y-1 text-sm border-l-2 border-purple-300 pl-3">
+                    {(apartment as any).previous_owner_expenses > 0 && (
+                      <div className="flex items-center justify-between text-red-700">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">├─</span>
+                          <span>Δαπάνες Ιδιοκτήτη</span>
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs px-1 py-0">Δ</Badge>
+                        </div>
+                        <span className="font-medium">{formatCurrency((apartment as any).previous_owner_expenses)}</span>
+                      </div>
+                    )}
+                    {(apartment as any).previous_resident_expenses > 0 && (
+                      <div className="flex items-center justify-between text-green-700">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">{(apartment as any).previous_owner_expenses > 0 ? '└─' : '├─'}</span>
+                          <span>Δαπάνες Ενοίκου</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs px-1 py-0">Ε</Badge>
+                        </div>
+                        <span className="font-medium">{formatCurrency((apartment as any).previous_resident_expenses)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* Τρέχων Μήνας και Πληρωμές */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
-                  <span className="text-sm text-gray-600">Ποσό Κοινοχρήστων:</span>
+                  <span className="text-sm text-gray-600">Ποσό Κοινοχρήστων (Τρέχων):</span>
                   <div className="font-medium text-lg">
                     {formatCurrency(apartment.expense_share)}
                   </div>
@@ -404,16 +441,16 @@ export default function PaymentNotificationModal({
                     
                     return Object.values(groupedExpenses).map((group, groupIndex) => (
                       <div key={groupIndex} className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-gray-100 px-3 py-2 border-b border-gray-200">
-                          <h5 className="text-sm font-semibold text-gray-700">{group.month_display}</h5>
+                        <div className="bg-muted px-3 py-2 border-b border-slate-200/50">
+                          <h5 className="text-sm font-semibold text-foreground">{group.month_display}</h5>
                         </div>
                         
                         {/* ΠΙΝΑΚΑΣ ΜΕ 3 ΣΤΗΛΕΣ */}
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-muted">
                               <tr>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
                                   Περιγραφή Δαπάνης
                                 </th>
                                 <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
@@ -436,7 +473,7 @@ export default function PaymentNotificationModal({
                                 
                                 return (
                                   <tr key={index} className="border-t border-gray-100">
-                                    <td className="px-3 py-2 text-gray-700">{expense.expense_title}</td>
+                                    <td className="px-3 py-2 text-foreground">{expense.expense_title}</td>
                                     <td className="px-3 py-2 text-right font-medium">
                                       {residentCharge > 0 ? formatCurrency(residentCharge) : '-'}
                                     </td>
@@ -447,12 +484,12 @@ export default function PaymentNotificationModal({
                                 );
                               })}
                             </tbody>
-                            <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                            <tfoot className="bg-muted border-t-2 border-slate-200/60">
                               <tr>
-                                <td className="px-3 py-2 text-sm font-semibold text-gray-700">
+                                <td className="px-3 py-2 text-sm font-semibold text-foreground">
                                   Σύνολο {group.month_display}:
                                 </td>
-                                <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">
+                                <td className="px-3 py-2 text-right text-sm font-semibold text-primary">
                                   {formatCurrency(
                                     group.expenses.reduce((sum, exp) => 
                                       sum + (exp.payer_responsibility === 'owner' ? 0 : exp.share_amount), 0
@@ -493,7 +530,7 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Footer - Print Only */}
-            <div className="hidden print:block border-t border-gray-300 pt-4 mt-6">
+            <div className="hidden print:block border-t border-slate-200 pt-4 mt-6">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-semibold">Τραπεζικά Στοιχεία:</p>

@@ -70,7 +70,7 @@ export default function BuildingAnnouncementsPage() {
   const item = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Link href={`/buildings/${buildingId}`}>
           <Button variant="outline">

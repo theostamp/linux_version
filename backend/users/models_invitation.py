@@ -29,6 +29,7 @@ class TenantInvitation(models.Model):
         RESIDENT = 'resident', 'Resident'
         MANAGER = 'manager', 'Manager'
         STAFF = 'staff', 'Staff'
+        INTERNAL_MANAGER = 'internal_manager', 'Internal Manager'
     
     # Unique identifier
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

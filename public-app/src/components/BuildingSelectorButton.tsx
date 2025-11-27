@@ -71,30 +71,30 @@ export default function BuildingSelectorButton({
           onClick={handleOpen}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`flex items-center gap-2 px-4 py-2 bg-white border-0 rounded-none shadow-sm hover:bg-gray-50 hover:shadow-md transition-all ${className}`}
+          className={`flex items-center gap-2 px-4 py-2 bg-white dark:bg-popover border border-input rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md transition-all ${className}`}
         >
-          <BuildingIcon className="w-4 h-4 text-gray-600" />
-          <span className="text-sm font-medium text-gray-700">
+          <BuildingIcon className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">
             {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
           </span>
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </button>
 
         {/* Hover Tooltip */}
         {showTooltip && (
           <div className="absolute bottom-full left-0 mb-2 opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-            <div className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs rounded-lg p-2 shadow-lg border border-gray-200 max-w-xs">
+            <div className="bg-white dark:bg-popover text-popover-foreground text-xs rounded-md p-2 shadow-md border border-slate-200/60 max-w-xs">
               <div className="flex items-start gap-2">
-                <Info className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
+                <Info className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium mb-1 text-xs">Αλλαγή Κτιρίου</p>
-                  <p className="text-gray-600 text-xs leading-relaxed">
+                  <p className="text-muted-foreground text-xs leading-relaxed">
                     Κάνε κλικ για να επιλέξεις διαφορετικό κτίριο.
                   </p>
                 </div>
               </div>
               {/* Arrow */}
-              <div className="absolute top-full left-4 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/95"></div>
+              <div className="absolute top-full left-4 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-border"></div>
             </div>
           </div>
         )}

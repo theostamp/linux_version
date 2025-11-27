@@ -413,8 +413,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
           <DataComponent
             type="monotone"
             dataKey="expense"
-            stroke="#10B981"
-            fill="#10B981"
+            stroke="hsl(var(--success))"
+            fill="hsl(var(--success))"
             name={`Δαπάνη ${heatingYear}-${parseInt(heatingYear) + 1} (€)`}
             strokeWidth={chartType === 'line' ? 2 : undefined}
           />
@@ -422,8 +422,8 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
             <DataComponent
               type="monotone"
               dataKey="compareExpense"
-              stroke="#EF4444"
-              fill="#EF4444"
+              stroke="hsl(var(--destructive))"
+              fill="hsl(var(--destructive))"
               name={`Δαπάνη ${compareYear}-${parseInt(compareYear) + 1} (€)`}
               strokeWidth={chartType === 'line' ? 2 : undefined}
               opacity={0.7}
@@ -435,24 +435,24 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
       {/* Summary Statistics */}
       <div className="mt-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-green-50 p-3 rounded">
-            <div className="text-sm text-green-600">Συνολική Δαπάνη {heatingYear}-{parseInt(heatingYear) + 1}</div>
-            <div className="text-xl font-semibold text-green-800">
+          <div className="bg-success/10 p-3 rounded">
+            <div className="text-sm text-success">Συνολική Δαπάνη {heatingYear}-{parseInt(heatingYear) + 1}</div>
+            <div className="text-xl font-semibold text-success-foreground/80">
               €{chartData.reduce((sum, d) => sum + d.expense, 0).toFixed(2)}
             </div>
             {showComparison && compareYear && (
-              <div className="text-sm text-red-600 mt-1">
+              <div className="text-sm text-destructive mt-1">
                 {compareYear}-{parseInt(compareYear) + 1}: €{chartData.reduce((sum, d) => sum + d.compareExpense, 0).toFixed(2)}
               </div>
             )}
           </div>
-          <div className="bg-gray-50 p-3 rounded">
-            <div className="text-sm text-gray-600">Μέσος Όρος/Μήνα</div>
-            <div className="text-xl font-semibold text-gray-800">
+          <div className="bg-muted p-3 rounded">
+            <div className="text-sm text-muted-foreground">Μέσος Όρος/Μήνα</div>
+            <div className="text-xl font-semibold text-foreground">
               €{(chartData.reduce((sum, d) => sum + d.expense, 0) / 9).toFixed(2)}
             </div>
             {showComparison && compareYear && (
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-muted-foreground mt-1">
                 {compareYear}-{parseInt(compareYear) + 1}: €{(chartData.reduce((sum, d) => sum + d.compareExpense, 0) / 9).toFixed(2)}
               </div>
             )}

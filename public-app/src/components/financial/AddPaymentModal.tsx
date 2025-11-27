@@ -390,7 +390,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
               </h2>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleClose} className="text-white hover:bg-green-700">
+          <Button variant="ghost" size="sm" onClick={handleClose} className="text-white hover:bg-success/90">
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -431,13 +431,13 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                           <span className="font-medium mr-3 min-w-[3rem]">{apartment.number}</span>
                           <div className="text-sm text-gray-600 ml-2 flex flex-col gap-1">
                             <div className="flex items-center gap-2">
-                              <span className="inline-block px-1 rounded bg-green-50 text-green-700 border border-green-200 text-xs">Ιδιοκτήτης</span>
+                              <span className="inline-block px-1 rounded bg-success/10 text-success border border-success/20 text-xs">Ιδιοκτήτης</span>
                               <span className="truncate max-w-[200px]">
                                 {apartment.owner_name || '—'}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="inline-block px-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs">Ενοικιαστής</span>
+                              <span className="inline-block px-1 rounded bg-primary/10 text-primary border border-primary/20 text-xs">Ενοικιαστής</span>
                               <span className="truncate max-w-[200px]">
                                 {apartment.tenant_name || '—'}
                               </span>
@@ -456,26 +456,26 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 
                 {/* Apartment Info */}
                 {selectedApartment && (
-                  <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                  <div className="mt-2 p-3 bg-muted rounded-md">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <div>
-                        <span className="text-gray-600">Ενοίκος:</span>
+                        <span className="text-muted-foreground">Ενοίκος:</span>
                         <p className="font-medium">
                           {selectedApartment.tenant_name ? (
-                            <span className="text-blue-600">
-                              {selectedApartment.tenant_name} <span className="text-xs text-blue-500">(Ενοικιαστής)</span>
+                            <span className="text-primary">
+                              {selectedApartment.tenant_name} <span className="text-xs text-primary/70">(Ενοικιαστής)</span>
                             </span>
                           ) : selectedApartment.owner_name ? (
-                            <span className="text-green-600">
-                              {selectedApartment.owner_name} <span className="text-xs text-green-500">(Ιδιοκτήτης)</span>
+                            <span className="text-success">
+                              {selectedApartment.owner_name} <span className="text-xs text-success/70">(Ιδιοκτήτης)</span>
                             </span>
                           ) : (
-                            <span className="text-gray-400">Μη καταχωρημένος</span>
+                            <span className="text-muted-foreground">Μη καταχωρημένος</span>
                           )}
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-600">Τρέχον Υπόλοιπο:</span>
+                        <span className="text-muted-foreground">Τρέχον Υπόλοιπο:</span>
                         <p className={`font-medium ${
                           Number(selectedApartment.current_balance || 0) < 0 ? 'text-red-600' : 'text-green-600'
                         }`}>
@@ -497,8 +497,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                     </div>
                     {selectedApartment.last_payment_date && (
                       <div className="mt-2 pt-2 border-t border-gray-200">
-                        <span className="text-gray-600 text-xs">Τελευταία πληρωμή:</span>
-                        <span className="ml-2 text-xs text-gray-700">
+                        <span className="text-muted-foreground text-xs">Τελευταία πληρωμή:</span>
+                        <span className="ml-2 text-xs text-foreground">
                           {formatCurrency(
                             typeof selectedApartment.latest_payment_amount === 'string'
                               ? parseFloat(selectedApartment.latest_payment_amount)
@@ -548,13 +548,13 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   required
                 />
                 {isCalculatingShares && selectedMonth && (
-                  <p className="text-xs text-gray-500 mt-1">Υπολογισμός προτεινόμενου ποσού κοινοχρήστων για τον επιλεγμένο μήνα...</p>
+                  <p className="text-xs text-muted-foreground mt-1">Υπολογισμός προτεινόμενου ποσού κοινοχρήστων για τον επιλεγμένο μήνα...</p>
                 )}
                 {!amountTouched && selectedApartment && (monthlyShares?.[selectedApartment.id] || selectedApartment.monthly_due) ? (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Προτεινόμενο ποσό: {formatCurrency(Math.max(0, (monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due) || 0))}
                     <br />
-                    <span className="text-xs text-blue-600">
+                    <span className="text-xs text-primary">
                       (Μηνιαία οφειλή κοινοχρήστων με βάση χιλιοστά)
                     </span>
                   </p>
@@ -590,11 +590,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
             {/* Total Amount Display */}
             <div className="space-y-2">
               <Label>Συνολικό Ποσό Εισπράξεως</Label>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="text-lg font-semibold text-blue-900">
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="text-lg font-semibold text-primary">
                   {formatCurrency(formData.amount || 0)}
                 </div>
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-primary/80">
                   Κοινόχρηστα: {formatCurrency(formData.amount || 0)}
                   {(() => {
                     const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
@@ -622,7 +622,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   <Calendar className="h-4 w-4" />
                   Ημερομηνία *
                   {monthContext && (
-                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
                       📅 {monthContext.label}
                     </span>
                   )}
@@ -737,7 +737,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 className="mt-1"
               />
               {receiptFile && (
-                <p className="mt-1 text-sm text-green-600">
+                <p className="mt-1 text-sm text-success">
                   Επιλεγμένο αρχείο: {receiptFile.name}
                 </p>
               )}
@@ -749,14 +749,14 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t flex justify-between">
+        <div className="bg-muted px-6 py-4 border-t flex justify-between">
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Ακύρωση
           </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={isSubmitting || !formData.apartment_id || Number(formData.amount || 0) <= 0}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-success hover:bg-success/90"
           >
             {isSubmitting ? (
               <>

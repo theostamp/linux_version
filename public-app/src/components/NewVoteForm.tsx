@@ -12,11 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, X } from 'lucide-react';
 
 type Props = Readonly<{
-  onSubmit: (data: CreateVotePayload) => void;
+  onSubmit: (data: CreateVotePayload) => void | Promise<void>;
   buildingId?: number;
+  isSubmitting?: boolean;
 }>;
 
-export default function NewVoteForm({ onSubmit, buildingId }: Props) {
+export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: externalIsSubmitting }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -25,6 +26,9 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(buildingId || null);
   const [submitting, setSubmitting] = useState(false);
   const { buildings } = useBuilding();
+  
+  // Χρησιμοποιούμε external isSubmitting αν υπάρχει, αλλιώς local state
+  const isSubmittingState = externalIsSubmitting !== undefined ? externalIsSubmitting : submitting;
 
   const handleChoiceChange = (index: number, value: string) => {
     const newChoices = [...choices];
@@ -46,25 +50,39 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    
+    // Προστασία από double submission
+    if (isSubmittingState) {
+      return;
+    }
+    
+    if (externalIsSubmitting === undefined) {
+      setSubmitting(true);
+    }
 
     const trimmedChoices = choices.map(c => c.trim()).filter(Boolean);
 
     if (!title.trim() || !description.trim()) {
       toast.error('Ο τίτλος και η περιγραφή είναι υποχρεωτικά');
-      setSubmitting(false);
+      if (externalIsSubmitting === undefined) {
+        setSubmitting(false);
+      }
       return;
     }
 
     if (!startDate) {
       toast.error('Η ημερομηνία έναρξης είναι υποχρεωτική');
-      setSubmitting(false);
+      if (externalIsSubmitting === undefined) {
+        setSubmitting(false);
+      }
       return;
     }
 
     if (trimmedChoices.length < 2) {
       toast.error('Πρέπει να υπάρχουν τουλάχιστον δύο επιλογές');
-      setSubmitting(false);
+      if (externalIsSubmitting === undefined) {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -78,12 +96,15 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
     };
 
     try {
-      onSubmit(payload);
+      // Περιμένουμε να ολοκληρωθεί το onSubmit πριν reset το submitting
+      await Promise.resolve(onSubmit(payload));
+      // Αν το onSubmit ολοκληρώθηκε επιτυχώς, το parent component θα χειριστεί το reset
     } catch (err) {
       console.error('Vote submission failed:', err);
       toast.error('Αποτυχία υποβολής');
-    } finally {
-      setSubmitting(false);
+      if (externalIsSubmitting === undefined) {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -115,14 +136,14 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
       <div>
         <Label htmlFor="building">Κτίριο</Label>
         <Select
-          value={selectedBuildingId?.toString() || ''}
-          onValueChange={(value) => setSelectedBuildingId(value ? Number(value) : null)}
+          value={selectedBuildingId?.toString() || '0'}
+          onValueChange={(value) => setSelectedBuildingId(value === '0' ? null : Number(value))}
         >
           <SelectTrigger id="building" className="mt-1">
             <SelectValue placeholder="Επιλέξτε κτίριο" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Όλα τα κτίρια (Καθολική ψηφοφορία)</SelectItem>
+            <SelectItem value="0">Όλα τα κτίρια (Καθολική ψηφοφορία)</SelectItem>
             {buildings.map((building) => (
               <SelectItem key={building.id} value={building.id.toString()}>
                 {building.name}
@@ -197,10 +218,10 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
 
       <Button
         type="submit"
-        disabled={submitting}
+        disabled={isSubmittingState}
         className="w-full"
       >
-        {submitting ? 'Υποβολή…' : 'Δημιουργία Ψηφοφορίας'}
+        {isSubmittingState ? 'Υποβολή…' : 'Δημιουργία Ψηφοφορίας'}
       </Button>
     </form>
   );

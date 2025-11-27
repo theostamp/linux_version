@@ -58,9 +58,12 @@ interface ApartmentBalanceWithDetails {
   previous_balance: number;
   reserve_fund_share: number;  // ← ΝΕΟ FIELD - Αποθεματικό
   expense_share: number;
-  // ΝΕΑ FIELDS: Διαχωρισμός δαπανών
-  resident_expenses: number;  // Δαπάνες Ενοίκου
-  owner_expenses: number;     // Δαπάνες Ιδιοκτήτη
+  // ΝΕΑ FIELDS: Διαχωρισμός δαπανών τρέχοντος μήνα
+  resident_expenses: number;  // Δαπάνες Ενοίκου (τρέχων μήνας)
+  owner_expenses: number;     // Δαπάνες Ιδιοκτήτη (τρέχων μήνας)
+  // 🔧 ΝΕΑ FIELDS 2025-11-24: Διαχωρισμός προηγούμενων οφειλών
+  previous_resident_expenses?: number;  // Δαπάνες Ενοίκου (προηγούμενοι)
+  previous_owner_expenses?: number;     // Δαπάνες Ιδιοκτήτη (προηγούμενοι)
   total_obligations: number;
   total_payments: number;
   net_obligation: number;
@@ -179,7 +182,13 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       }
 
       console.log('✅ Apartment balances loaded:', responseData);
-      console.log('✅ Management fee per apartment:', financialSummary.management_fee_per_apartment);
+      console.log('✅ Management fee per apartment:', 
+        Number(
+          (financialSummary as { management_fee_per_apartment?: number })?.management_fee_per_apartment ??
+            (responseData as { management_fee_per_apartment?: number })?.management_fee_per_apartment ??
+            0
+        )
+      );
     } catch (err: any) {
       console.error('❌ Error loading apartment balances:', err);
       setError(err.response?.data?.detail || err.message || 'Σφάλμα φόρτωσης δεδομένων');
@@ -309,7 +318,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       });
       
       // The api.delete returns data directly
-      const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
+      const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`) as { success?: boolean; message?: string };
       
       if (response.success) {
         await loadApartmentBalances(true);
@@ -702,7 +711,6 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               </Button>
             </div>
             <PaymentForm 
-              buildingId={buildingId}
               onSuccess={handlePaymentSuccess}
               onCancel={handlePaymentCancel}
               apartments={apartmentBalances.map(apt => ({

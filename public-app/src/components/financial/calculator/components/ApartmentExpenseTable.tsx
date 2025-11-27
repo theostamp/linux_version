@@ -33,36 +33,36 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
       <Table className="min-w-full common-expense-table" style={{ minWidth: '1400px' }}>
         <TableHeader>
           <TableRow className="bg-gray-50">
-            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>Α/Δ</TableHead>
-            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
-            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΑΠΟ ΜΕΤΑΦΟΡΑ</TableHead>
+            <TableHead className="text-center border font-bold text-xs bg-destructive text-destructive-foreground">Α/Δ</TableHead>
+            <TableHead className="text-center border font-bold text-xs bg-destructive text-destructive-foreground">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
+            <TableHead className="text-center border font-bold text-xs bg-destructive text-destructive-foreground">ΑΠΟ ΜΕΤΑΦΟΡΑ</TableHead>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 στήλες ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ + ΔΙΑΧΕΙΡΙΣΗ */}
-            <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>
+            <TableHead className="text-center border font-bold text-xs bg-warning text-warning-foreground" colSpan={3}>
               <div className="flex items-center justify-center gap-1">
                 ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ
-                <span className="bg-green-600 text-white text-xs px-1 py-0.5 rounded">Ε</span>
+                <span className="bg-white/20 text-white text-xs px-1 py-0.5 rounded">Ε</span>
               </div>
             </TableHead>
             {/* ✅ ΤΡΟΠΟΠΟΙΗΘΗΚΕ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ με 2 υποστήλες (Έργα + Αποθεματικό) */}
-            <TableHead className="text-center border font-bold text-xs text-white" colSpan={2} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>
+            <TableHead className="text-center border font-bold text-xs bg-success text-success-foreground" colSpan={2}>
               <div className="flex items-center justify-center gap-1">
                 ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ
-                <span className="bg-red-600 text-white text-xs px-1 py-0.5 rounded">Δ</span>
+                <span className="bg-white/20 text-white text-xs px-1 py-0.5 rounded">Δ</span>
               </div>
             </TableHead>
-            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
+            <TableHead className="text-center border font-bold text-xs bg-destructive text-destructive-foreground">ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
           </TableRow>
           <TableRow className="bg-gray-100">
             <TableHead className="text-center border"></TableHead>
             <TableHead className="text-center border"></TableHead>
             <TableHead className="text-center border"></TableHead>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 υπο-στήλες χιλιοστών + ΔΙΑΧΕΙΡΙΣΗ */}
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>Κ/ΧΡΗΣΤΑ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead>
+            <TableHead className="text-center border bg-warning text-warning-foreground text-[10px] w-[80px]">Κ/ΧΡΗΣΤΑ</TableHead>
+            <TableHead className="text-center border bg-warning text-warning-foreground text-[10px] w-[80px]">ΑΝΕΛ/ΡΑΣ</TableHead>
+            <TableHead className="text-center border bg-warning text-warning-foreground text-[10px] w-[80px]">ΘΕΡΜ/ΣΗ</TableHead>
             {/* ✅ ΝΕΟ: 2 υπο-στήλες για δαπάνες ιδιοκτητών */}
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "100px"}}>ΕΡΓΑ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "#048C63", fontSize: "10px", width: "100px"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
+            <TableHead className="text-center border bg-success text-success-foreground text-[10px] w-[100px]">ΕΡΓΑ</TableHead>
+            <TableHead className="text-center border bg-success text-success-foreground text-[10px] w-[100px]">ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
             <TableHead className="text-center border"></TableHead>
           </TableRow>
         </TableHeader>

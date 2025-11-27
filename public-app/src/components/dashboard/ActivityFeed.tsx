@@ -22,12 +22,12 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
         {[1, 2].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="h-5 w-32 bg-gray-300 rounded" />
+              <div className="h-5 w-32 bg-muted-foreground/20 rounded-none" />
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-16 bg-gray-200 rounded" />
+                  <div key={j} className="h-16 bg-muted rounded-none" />
                 ))}
               </div>
             </CardContent>
@@ -55,7 +55,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
     } else if (type === 'vote') {
       return <CheckCircle className={`w-4 h-4 ${isUrgent ? 'text-red-600' : 'text-green-600'}`} />;
     }
-    return <Clock className="w-4 h-4 text-gray-600" />;
+    return <Clock className="w-4 h-4 text-muted-foreground" />;
   };
   
   const formatActivityType = (type: string) => {
@@ -71,7 +71,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           {title}
-          <span className="text-sm font-normal text-gray-500">({items.length})</span>
+          <span className="text-sm font-normal text-muted-foreground">({items.length})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -81,24 +81,24 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
               <div
                 key={`${activity.type}-${activity.id}-${index}`}
                 onClick={() => handleActivityClick(activity)}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group"
+                className="flex items-start gap-3 p-3 rounded-none hover:bg-muted cursor-pointer transition-colors group"
               >
                 <div className="flex-shrink-0 mt-0.5">
                   {getActivityIcon(activity.type, activity.is_urgent)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    <p className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                       {activity.title}
                     </p>
-                    <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                    <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {formatActivityType(activity.type)}
                     </span>
-                    <span className="text-xs text-gray-400">•</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground/50">•</span>
+                    <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(activity.date), { addSuffix: true, locale: el })}
                     </span>
                   </div>
@@ -107,7 +107,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 text-sm">
+          <div className="text-center py-8 text-muted-foreground text-sm">
             {emptyMessage}
           </div>
         )}
@@ -117,7 +117,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
   
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-xl font-semibold text-foreground mb-4">
         📰 Πρόσφατη Δραστηριότητα
       </h2>
       

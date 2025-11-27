@@ -9,16 +9,19 @@ import AnnouncementSkeleton from '@/components/AnnouncementSkeleton';
 import ErrorMessage from '@/components/ErrorMessage';
 import { motion } from 'framer-motion';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Plus, Building2, Megaphone } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 
 function AnnouncementsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
 
-  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα
-  const buildingId = selectedBuilding?.id ?? null;
+  // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
+  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
 
   const {
     data: announcements = [],
@@ -36,9 +39,9 @@ function AnnouncementsPageContent() {
 
   if (buildingLoading || isLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -58,9 +61,9 @@ function AnnouncementsPageContent() {
 
   if (isError) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -78,9 +81,9 @@ function AnnouncementsPageContent() {
 
   if (announcements.length === 0) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -91,7 +94,7 @@ function AnnouncementsPageContent() {
           </Button>
         </div>
         <BuildingFilterIndicator className="mb-4" />
-        <p className="text-gray-500 text-center">
+        <p className="text-muted-foreground text-center">
           Δεν υπάρχουν ενεργές ανακοινώσεις αυτή τη στιγμή.
         </p>
       </div>
@@ -105,38 +108,49 @@ function AnnouncementsPageContent() {
   const item = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">📢 Ανακοινώσεις</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">📢 Ανακοινώσεις</h1>
+          <p className="text-muted-foreground mt-1">Ενημερώσεις και νέα για το κτίριο</p>
+        </div>
         <div className="flex gap-3">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm">
             <Link href="/announcements/new-assembly">
-              🏛️ Νέα Συνέλευση
+              <Building2 className="w-4 h-4 mr-2" />
+              Νέα Συνέλευση
             </Link>
           </Button>
-          <Button asChild>
+          <Button asChild size="sm">
             <Link href="/announcements/new">
-              {selectedBuilding 
-                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
-                : "Νέα Ανακοίνωση"
-              }
+              <Plus className="w-4 h-4 mr-2" />
+              {selectedBuilding ? "Νέα Ανακοίνωση" : "Νέα Ανακοίνωση"}
             </Link>
           </Button>
         </div>
       </div>
-      <BuildingFilterIndicator className="mb-4" />
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
-        {announcements.map((a: Announcement) => (
-          <motion.div key={a.id} variants={item}>
-            <AnnouncementCard announcement={a} />
-          </motion.div>
-        ))}
-      </motion.div>
+      
+      <BuildingFilterIndicator className="mb-2" />
+      
+      {announcements.length === 0 ? (
+        <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+          <Megaphone className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+          <p className="font-medium mb-4">Δεν υπάρχουν ενεργές ανακοινώσεις.</p>
+          <Button asChild>
+            <Link href="/announcements/new">Δημιουργία πρώτης ανακοίνωσης</Link>
+          </Button>
+        </div>
+      ) : (
+        <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+          {announcements.map((a: Announcement) => (
+            <BentoGridItem
+              key={a.id}
+              className="md:col-span-1"
+              header={<AnnouncementCard announcement={a} className="h-full border-0 shadow-none bg-transparent p-0" />}
+            />
+          ))}
+        </BentoGrid>
+      )}
     </div>
   );
 }

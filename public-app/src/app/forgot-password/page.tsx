@@ -124,7 +124,7 @@ function ForgotPasswordForm() {
                         }}
                         autoComplete="email"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          error ? 'border-red-300' : 'border-gray-300'
+                          error ? 'border-red-300' : 'border-slate-200'
                         }`}
                         placeholder="john@example.com"
                         required
@@ -185,7 +185,7 @@ function ForgotPasswordForm() {
                       setIsSuccess(false);
                       setEmail('');
                     }}
-                    className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                    className="border border-slate-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
                   >
                     Στείλετε Ξανά
                   </button>

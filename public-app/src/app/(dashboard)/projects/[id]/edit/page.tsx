@@ -218,7 +218,7 @@ export default function EditProjectPage() {
     return (
       <AuthGate>
         <SubscriptionGate>
-          <div className="max-w-5xl mx-auto space-y-6">
+          <div className="space-y-6">
             <BackButton href="/projects" label="Επιστροφή" size="sm" />
             <Card>
               <CardContent className="pt-6">
@@ -240,7 +240,7 @@ export default function EditProjectPage() {
   return (
     <AuthGate>
       <SubscriptionGate>
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center gap-4">
             <BackButton href={`/projects/${projectId}`} label="Επιστροφή" size="sm" />
             <div>

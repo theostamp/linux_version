@@ -84,7 +84,23 @@ class EmailService:
         """
         Αποστολή email πρόσκλησης
         """
-        invitation_url = f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}"
+        # Get tenant subdomain for the invitation URL
+        from django.db import connection
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the invitation URL with tenant subdomain
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            # Replace the base domain with tenant subdomain
+            # e.g., https://newconcierge.app -> https://theo.newconcierge.app
+            invitation_url = f"https://{tenant_subdomain}.newconcierge.app/accept-invitation?token={invitation.token}"
+        else:
+            invitation_url = f"{base_url}/accept-invitation?token={invitation.token}"
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Πρόσκληση στο New Concierge"
         
@@ -539,9 +555,13 @@ class InvitationService:
     
     @staticmethod
     def create_invitation(invited_by, email, first_name="", last_name="", 
-                         invitation_type="registration", building=None, assigned_role=None):
+                         invitation_type="registration", building=None, building_id=None, assigned_role=None):
         """
         Δημιουργία νέας πρόσκλησης
+        
+        Args:
+            building: Building object (optional, legacy support)
+            building_id: Building ID (optional, preferred)
         """
         # Έλεγχος αν υπάρχει ήδη χρήστης με αυτό το email
         if User.objects.filter(email=email).exists():
@@ -551,6 +571,9 @@ class InvitationService:
         if UserInvitation.objects.filter(email=email, status='pending').exists():
             raise ValueError("Υπάρχει ήδη ενεργή πρόσκληση για αυτό το email.")
         
+        # Determine building_id from either parameter
+        final_building_id = building_id or (building.id if building else None)
+        
         # Δημιουργία invitation
         invitation = UserInvitation.objects.create(
             email=email,
@@ -558,7 +581,7 @@ class InvitationService:
             last_name=last_name,
             invitation_type=invitation_type,
             invited_by=invited_by,
-            building_id=building.id if building else None,
+            building_id=final_building_id,
             assigned_role=assigned_role
         )
         
@@ -593,8 +616,12 @@ class InvitationService:
             email_verified=True
         )
         
-        # Ανάθεση ρόλου αν υπάρχει
+        # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
+            user.role = invitation.assigned_role
+            user.save(update_fields=['role'])
+            
+            # Ανάθεση σε RBAC group αν υπάρχει
             from django.contrib.auth.models import Group
             try:
                 group = Group.objects.get(name=invitation.assigned_role)
@@ -607,12 +634,25 @@ class InvitationService:
             try:
                 from buildings.models import Building, BuildingMembership
                 building = Building.objects.get(id=invitation.building_id)
+                
+                # Χρήση assigned_role για building membership role (ή default 'resident')
+                membership_role = invitation.assigned_role or 'resident'
+                
                 BuildingMembership.objects.create(
-                    user=user,
+                    resident=user,
                     building=building,
-                    role='resident'  # Default role
+                    role=membership_role
                 )
-            except:
+                
+                # Αν ο ρόλος είναι internal_manager, ορίζουμε building.internal_manager
+                if invitation.assigned_role == 'internal_manager':
+                    building.internal_manager = user
+                    building.save(update_fields=['internal_manager'])
+                    
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to create building membership: {e}")
                 pass  # Building might not exist in current tenant
         
         # Ενημέρωση invitation

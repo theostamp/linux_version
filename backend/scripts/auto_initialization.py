@@ -267,7 +267,7 @@ def create_public_tenant():
     from users.models import CustomUser
     
     ultra_user, created = CustomUser.objects.get_or_create(
-        email='theostam1966@gmail.com',
+        email='thodoris_st@hotmail.com',
         defaults={
             'first_name': 'Theo',
             'last_name': 'Ultra Admin',
@@ -282,7 +282,7 @@ def create_public_tenant():
     if created:
         ultra_user.set_password('theo123!@#')
         ultra_user.save()
-        print("✅ Δημιουργήθηκε Ultra-Superuser: theostam1966@gmail.com")
+        print("✅ Δημιουργήθηκε Ultra-Superuser: thodoris_st@hotmail.com")
     else:
         # Ενημέρωση password αν υπάρχει ήδη
         ultra_user.set_password('theo123!@#')
@@ -291,11 +291,11 @@ def create_public_tenant():
         ultra_user.is_active = True
         ultra_user.email_verified = True
         ultra_user.save()
-        print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
+        print("✅ Ενημερώθηκε Ultra-Superuser: thodoris_st@hotmail.com")
 
     # Verify authentication works
     from django.contrib.auth import authenticate
-    test_auth = authenticate(username='theostam1966@gmail.com', password='theo123!@#')
+    test_auth = authenticate(username='thodoris_st@hotmail.com', password='theo123!@#')
     if test_auth:
         print("   ✅ Authentication verified - login will work!")
     else:
@@ -543,7 +543,7 @@ def create_demo_data(tenant_schema):
             if building.name == 'Αλκμάνος 22':
                 # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'thodoris_st@hotmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
                     {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
                     {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
@@ -877,7 +877,7 @@ def save_credentials():
 🏢 PUBLIC SCHEMA (localhost):
 -----------------------------
 👑 Ultra-Superuser (System Administrator):
-   Email: theostam1966@gmail.com
+   Email: thodoris_st@hotmail.com
    Password: theo123!@#
    Permissions: Complete system management, all tenants and users
    Admin URL: http://localhost:8000/admin/
@@ -1018,7 +1018,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser (theostam1966@gmail.com):
+👑 Ultra-Superuser (thodoris_st@hotmail.com):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1121,7 +1121,7 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    print("   Email: theostam1966@gmail.com")
+    print("   Email: thodoris_st@hotmail.com")
     print("   Password: theo123!@#")
     print("   Permissions: Complete system management")
     

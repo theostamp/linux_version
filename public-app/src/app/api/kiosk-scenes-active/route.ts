@@ -38,11 +38,39 @@ export async function GET(request: NextRequest) {
 
   // Use Docker service name for backend
   const backendUrl = (process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000').replace(/\/$/, '');
-  
+
+  // Resolve public host to forward to backend for correct tenant resolution
+  const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
+  const forwardedHostHeader = request.headers.get('x-tenant-host') || request.headers.get('x-forwarded-host') || request.headers.get('host');
+  let publicHostname = forwardedHostHeader || url.host;
+
+  const referer = request.headers.get('referer');
+  const origin = request.headers.get('origin');
+
+  // Prefer origin/referer when host is a platform domain
+  const isPlatformHost = (host?: string | null) =>
+    !!host && (host.includes('railway.app') || host.includes('vercel.app') || host === 'localhost:3000');
+
+  if (isPlatformHost(publicHostname)) {
+    const candidate = origin || referer;
+    if (candidate) {
+      try {
+        publicHostname = new URL(candidate).host;
+      } catch {
+        // ignore parse errors
+      }
+    }
+  }
+
+  const finalHost = publicHostname || 'demo.localhost';
+
   // Headers for the request
   const headers = {
     'Content-Type': 'application/json',
-    'X-Forwarded-Host': 'demo.localhost',
+    Host: finalHost,
+    'X-Forwarded-Host': finalHost,
+    'X-Tenant-Host': finalHost,
+    'X-Forwarded-Proto': forwardedProto,
   };
 
   try {

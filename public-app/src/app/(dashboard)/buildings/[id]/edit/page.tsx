@@ -108,7 +108,7 @@ export default function EditBuildingPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           <p className="ml-3 text-gray-600">Φόρτωση δεδομένων κτιρίου...</p>
@@ -119,7 +119,7 @@ export default function EditBuildingPage() {
 
   if (error) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <div className="mb-6">
           <Link href="/buildings">
             <Button variant="outline" className="mb-4">
@@ -134,7 +134,7 @@ export default function EditBuildingPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-gray-500">
         <Link href="/buildings" className="hover:text-blue-600 transition-colors">

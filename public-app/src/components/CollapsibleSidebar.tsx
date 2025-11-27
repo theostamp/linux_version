@@ -133,6 +133,12 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
+        href: '/office-staff',
+        label: 'Υπάλληλοι',
+        icon: <UserCheck className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
         href: '/apartments',
         label: 'Διαμερίσματα',
         icon: <Building className="w-5 h-5" />,
@@ -152,31 +158,32 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  {
-    id: 'collaboration',
-    title: 'Συνεργασίες',
-    colorKey: 'info',
-    links: [
-      {
-        href: '/teams',
-        label: 'Ομάδες',
-        icon: <Users className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/collaborators',
-        label: 'Συνεργάτες',
-        icon: <UserCheck className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/suppliers',
-        label: 'Προμηθευτές',
-        icon: <Truck className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-    ]
-  },
+  // Προσωρινά απενεργοποιημένο - Συνεργασίες & Ομάδες
+  // {
+  //   id: 'collaboration',
+  //   title: 'Συνεργασίες',
+  //   colorKey: 'info',
+  //   links: [
+  //     {
+  //       href: '/teams',
+  //       label: 'Ομάδες',
+  //       icon: <Users className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //     {
+  //       href: '/collaborators',
+  //       label: 'Συνεργάτες',
+  //       icon: <UserCheck className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //     {
+  //       href: '/suppliers',
+  //       label: 'Προμηθευτές',
+  //       icon: <Truck className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //   ]
+  // },
   {
     id: 'communication',
     title: 'Επικοινωνία',
@@ -234,19 +241,20 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  {
-    id: 'system',
-    title: 'Σύστημα',
-    colorKey: 'danger',
-    links: [
-      {
-        href: '/financial-tests',
-        label: 'Tests',
-        icon: <TestTube2 className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-    ]
-  },
+  // Προσωρινά απενεργοποιημένο - Σύστημα & Ελέγχοι (Automated Tests Οικονομικού Πυρήνα)
+  // {
+  //   id: 'system',
+  //   title: 'Σύστημα',
+  //   colorKey: 'danger',
+  //   links: [
+  //     {
+  //       href: '/financial-tests',
+  //       label: 'Tests',
+  //       icon: <TestTube2 className="w-5 h-5" />,
+  //       roles: ['manager', 'staff', 'superuser'],
+  //     },
+  //   ]
+  // },
 ];
 
 export default function CollapsibleSidebar() {
@@ -327,21 +335,19 @@ export default function CollapsibleSidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border"
-          style={{ borderColor: designSystem.colors.gray[200] }}
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-slate-200/60"
         >
-          <Menu className="w-5 h-5" style={{ color: designSystem.colors.gray[600] }} />
+          <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* Loading Sidebar */}
         <aside 
-          className="hidden lg:flex fixed left-0 top-0 h-full bg-white shadow-xl border-r flex-col justify-center items-center z-40"
+          className="hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
           style={{ 
             width: '80px',
-            borderColor: designSystem.colors.gray[200],
           }}
         >
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: designSystem.colors.primary[500] }} />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </aside>
       </>
     );
@@ -352,10 +358,9 @@ export default function CollapsibleSidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border"
-        style={{ borderColor: designSystem.colors.gray[200] }}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-slate-200/60"
       >
-        <Menu className="w-5 h-5" style={{ color: designSystem.colors.gray[600] }} />
+        <Menu className="w-5 h-5 text-muted-foreground" />
       </button>
 
       {/* Desktop Sidebar - Collapsible */}
@@ -363,30 +368,22 @@ export default function CollapsibleSidebar() {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full bg-white shadow-xl border-r flex-col z-40 overflow-hidden",
+          "hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
           width: isExpanded ? '256px' : '80px',
-          borderColor: designSystem.colors.gray[200],
-          fontFamily: designSystem.typography.fontFamily.sans.join(', '),
+          fontFamily: 'var(--font-sans)',
         }}
       >
         {/* Header */}
         <div 
-          className="p-4 border-b flex items-center gap-3"
-          style={{ 
-            borderColor: designSystem.colors.gray[200],
-            minHeight: '64px',
-          }}
+          className="p-4 border-b border-slate-200/50 flex items-center gap-3 min-h-[64px]"
         >
           <div 
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
-            style={{ 
-              background: `linear-gradient(135deg, ${designSystem.colors.primary[500]}, ${designSystem.colors.primary[600]})`,
-            }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-primary text-primary-foreground"
           >
-            <Building2 className="h-6 w-6 text-white" />
+            <Building2 className="h-6 w-6" />
           </div>
           <div 
             className={cn(
@@ -395,20 +392,12 @@ export default function CollapsibleSidebar() {
             )}
           >
             <h1 
-              className="font-bold tracking-tight whitespace-nowrap"
-              style={{ 
-                fontSize: designSystem.typography.fontSize.sm,
-                color: designSystem.colors.gray[900],
-              }}
+              className="font-bold tracking-tight whitespace-nowrap text-sm text-foreground"
             >
               Digital Concierge
             </h1>
             <p 
-              className="tracking-wide whitespace-nowrap"
-              style={{ 
-                fontSize: designSystem.typography.fontSize.xs,
-                color: designSystem.colors.gray[500],
-              }}
+              className="tracking-wide whitespace-nowrap text-xs text-muted-foreground"
             >
               Διαχείριση Κτιρίων
             </p>
@@ -419,7 +408,7 @@ export default function CollapsibleSidebar() {
             "ml-auto transition-all duration-300",
             isExpanded ? "opacity-100" : "opacity-0"
           )}>
-            <ChevronRight className="w-4 h-4" style={{ color: designSystem.colors.gray[400] }} />
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
         </div>
 
@@ -525,8 +514,7 @@ export default function CollapsibleSidebar() {
 
         {/* Calculator Tool */}
         <div 
-          className="p-3 border-t"
-          style={{ borderColor: designSystem.colors.gray[200] }}
+          className="p-3 border-t border-slate-200/50"
         >
           <CalculatorModal>
             <button 
@@ -534,21 +522,11 @@ export default function CollapsibleSidebar() {
               className={cn(
                 'flex items-center w-full rounded-lg font-medium transition-all duration-200',
                 isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
+                'text-sm text-foreground hover:bg-muted'
               )}
-              style={{
-                fontSize: designSystem.typography.fontSize.sm,
-                color: designSystem.colors.gray[700],
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = designSystem.colors.gray[100];
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
             >
               <Calculator 
-                className={cn('w-5 h-5 transition-colors', isExpanded && 'mr-3')}
-                style={{ color: designSystem.colors.gray[500] }}
+                className={cn('w-5 h-5 transition-colors text-muted-foreground', isExpanded && 'mr-3')}
               />
               <span 
                 className={cn(
@@ -566,44 +544,32 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 bg-white shadow-xl border-r flex flex-col z-50",
+          "lg:hidden fixed left-0 top-0 h-full w-64 bg-card shadow-xl border-r border-slate-200/60 flex flex-col z-50",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{
-          borderColor: designSystem.colors.gray[200],
-          fontFamily: designSystem.typography.fontFamily.sans.join(', '),
+          fontFamily: 'var(--font-sans)',
         }}
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b flex items-center justify-between"
-          style={{ borderColor: designSystem.colors.gray[200] }}
+          className="p-4 border-b border-slate-200/50 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
-              style={{ 
-                background: `linear-gradient(135deg, ${designSystem.colors.primary[500]}, ${designSystem.colors.primary[600]})`,
-              }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-primary text-primary-foreground"
             >
-              <Building2 className="h-6 w-6 text-white" />
+              <Building2 className="h-6 w-6" />
             </div>
             <div>
               <h1 
-                className="font-bold tracking-tight"
-                style={{ 
-                  fontSize: designSystem.typography.fontSize.sm,
-                  color: designSystem.colors.gray[900],
-                }}
+                className="font-bold tracking-tight text-sm text-foreground"
               >
                 Digital Concierge
               </h1>
               <p 
-                style={{ 
-                  fontSize: designSystem.typography.fontSize.xs,
-                  color: designSystem.colors.gray[500],
-                }}
+                className="text-xs text-muted-foreground"
               >
                 Διαχείριση Κτιρίων
               </p>
@@ -611,8 +577,7 @@ export default function CollapsibleSidebar() {
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2"
-            style={{ color: designSystem.colors.gray[500] }}
+            className="p-2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-5 h-5" />
           </button>

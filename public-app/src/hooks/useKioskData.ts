@@ -2,7 +2,7 @@
 
 // hooks/useKioskData.ts - Specialized hook for public kiosk data (no auth required)
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Simple API get function for kiosk (no complex auth).
 // It calls a relative Next.js API route, which then proxies the request to the backend.
@@ -35,6 +35,7 @@ export interface KioskBuildingInfo {
   office_logo?: string | null;
   management_office_name?: string | null;
   management_office_phone?: string | null;
+  management_office_phone_emergency?: string | null; // Τηλέφωνο ανάγκης
   management_office_email?: string | null;
   management_office_address?: string | null;
   internal_manager_name?: string | null;
@@ -62,6 +63,22 @@ export interface KioskFinancialInfo {
     amount: number;
     date?: string;
   }>;
+  current_month_expenses?: Array<{
+    id: number;
+    title?: string;
+    description: string;
+    amount: number;
+    date?: string;
+    category?: string;
+  }>;
+  heating_expenses?: Array<{
+    id: number;
+    title?: string;
+    description: string;
+    amount: number;
+    date?: string;
+    category?: string;
+  }>;
   total_expenses?: number;
   pending_payments?: number;
   overdue_payments?: number;
@@ -84,6 +101,17 @@ export interface KioskFinancialInfo {
     tenant_name?: string | null;
     status?: string;
   }>;
+  current_month_period?: {
+    start?: string;
+    end?: string;
+    is_fallback?: boolean;
+  };
+  heating_period?: {
+    start?: string;
+    end?: string;
+    season_label?: string;
+    is_fallback?: boolean;
+  };
 }
 
 export interface KioskMaintenanceInfo {
@@ -135,15 +163,30 @@ interface PublicAnnouncement {
 
 interface PublicExpense {
   id: number;
+  title?: string;
   description: string;
   amount: number;
   date?: string;
+  category?: string;
 }
 
 interface PublicFinancialInfo {
   collection_rate?: number;
   reserve_fund?: number;
   recent_expenses?: PublicExpense[];
+  current_month_expenses?: PublicExpense[];
+  heating_expenses?: PublicExpense[];
+  current_month_period?: {
+    start?: string;
+    end?: string;
+    is_fallback?: boolean;
+  };
+  heating_period?: {
+    start?: string;
+    end?: string;
+    season_label?: string;
+    is_fallback?: boolean;
+  };
   total_payments?: number;
   pending_payments?: number;
   overdue_payments?: number;
@@ -200,23 +243,36 @@ export const useKioskData = (buildingId: number | null = 1) => {
   const [data, setData] = useState<KioskData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const fetchKioskData = useCallback(async () => {
     if (buildingId == null) return;
 
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
+    setData(null);
 
     try {
       const today = new Date();
       const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
+      console.log(`[useKioskData] 🏢 Fetching data for building ID: ${buildingId}`);
+      
       // Use unified public-info endpoint that returns all kiosk data
-      const publicData = await apiGet<PublicInfoResponse>(`/api/public-info/${buildingId}/?month=${currentMonth}`);
+      const apiUrl = `/api/public-info/${buildingId}/?month=${currentMonth}`;
+      console.log(`[useKioskData] 📡 API URL: ${apiUrl}`);
+      
+      const publicData = await apiGet<PublicInfoResponse>(apiUrl);
 
-      console.log('[useKioskData] API response:', {
+      console.log('[useKioskData] 📦 API response:', {
+        buildingId: buildingId,
+        requestedBuildingId: buildingId,
         announcementsCount: publicData.announcements?.length || 0,
-        announcements: publicData.announcements
+        announcements: publicData.announcements?.map(a => ({ 
+          id: a.id, 
+          title: a.title?.substring(0, 30) 
+        }))
       });
 
       const buildingInfo: PublicBuildingInfo = publicData.building_info ?? {
@@ -306,6 +362,24 @@ export const useKioskData = (buildingId: number | null = 1) => {
           amount: expense.amount,
           date: expense.date
         })),
+        current_month_expenses: (financialSource?.current_month_expenses || []).map((expense) => ({
+          id: expense.id,
+          title: expense.title,
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date,
+          category: expense.category
+        })),
+        heating_expenses: (financialSource?.heating_expenses || []).map((expense) => ({
+          id: expense.id,
+          title: expense.title,
+          description: expense.description,
+          amount: expense.amount,
+          date: expense.date,
+          category: expense.category
+        })),
+        current_month_period: financialSource?.current_month_period,
+        heating_period: financialSource?.heating_period,
         total_payments: financialSource?.total_payments || 0,
         pending_payments: financialSource?.pending_payments || 0,
         overdue_payments: financialSource?.overdue_payments || 0,
@@ -387,7 +461,8 @@ export const useKioskData = (buildingId: number | null = 1) => {
           office_logo: buildingInfo.office_logo ?? null,
           management_office_name: buildingInfo.management_office_name ?? null,
           management_office_phone: buildingInfo.management_office_phone ?? null,
-           management_office_email: buildingInfo.management_office_email ?? null,
+          management_office_phone_emergency: buildingInfo.management_office_phone_emergency ?? null,
+          management_office_email: buildingInfo.management_office_email ?? null,
           management_office_address: buildingInfo.management_office_address ?? null,
           internal_manager_name: buildingInfo.internal_manager_name ?? null,
           internal_manager_phone: buildingInfo.internal_manager_phone ?? null
@@ -403,26 +478,49 @@ export const useKioskData = (buildingId: number | null = 1) => {
         }
       };
 
+      if (requestId !== requestIdRef.current) return;
+
       setData(kioskData);
 
     } catch (err: unknown) {
       console.error('[useKioskData] Error fetching kiosk data:', err);
       const message = err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση δεδομένων';
-      setError(message);
+      if (requestId === requestIdRef.current) {
+        setError(message);
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [buildingId]);
 
   // Auto-refresh data every 5 minutes
   useEffect(() => {
-    fetchKioskData();
+    let cancelled = false;
+
+    // Clear stale data when switching κτίριο
+    setData(null);
+    setError(null);
+
+    const run = async () => {
+      try {
+        await fetchKioskData();
+      } catch {
+        if (cancelled) return;
+      }
+    };
+
+    run();
 
     const interval = setInterval(() => {
       fetchKioskData();
     }, 5 * 60 * 1000); // 5 minutes
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [fetchKioskData]);
 
   const refetch = useCallback(() => {

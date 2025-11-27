@@ -88,10 +88,30 @@ class Building(models.Model):
         default=0
     )
 
+    # 👤 Εσωτερικός Διαχειριστής - Σύνδεση με User
+    internal_manager = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='managed_buildings_internal',
+        verbose_name=_("Εσωτερικός Διαχειριστής"),
+        help_text=_("Ο χρήστης που είναι εσωτερικός διαχειριστής της πολυκατοικίας")
+    )
+    
+    # 💳 Δικαίωμα καταχώρησης πληρωμών (opt-in για τον εσωτερικό διαχειριστή)
+    internal_manager_can_record_payments = models.BooleanField(
+        _("Δικαίωμα Καταχώρησης Πληρωμών"),
+        default=False,
+        help_text=_("Αν ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές")
+    )
+
+    # Legacy πεδία για backward compatibility (πληροφοριακά)
     internal_manager_name = models.CharField(
         max_length=255,
         blank=True,
-        verbose_name=_("Όνομα Εσωτερικού Διαχειριστή")
+        verbose_name=_("Όνομα Εσωτερικού Διαχειριστή"),
+        help_text=_("Πληροφοριακό πεδίο - χρησιμοποιείται αν δεν υπάρχει συνδεδεμένος χρήστης")
     )
     internal_manager_phone = models.CharField(
         max_length=20,
@@ -299,6 +319,27 @@ class Building(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_internal_manager_display_name(self):
+        """
+        Επιστρέφει το όνομα του εσωτερικού διαχειριστή.
+        Αν υπάρχει συνδεδεμένος χρήστης, επιστρέφει το full_name του.
+        Αλλιώς επιστρέφει το legacy πεδίο internal_manager_name.
+        """
+        if self.internal_manager:
+            return self.internal_manager.get_full_name() or self.internal_manager.email
+        return self.internal_manager_name
+
+    def get_internal_manager_phone_display(self):
+        """
+        Επιστρέφει το τηλέφωνο του εσωτερικού διαχειριστή.
+        """
+        # TODO: Αν θέλουμε να πάρουμε τηλέφωνο από user profile, μπορούμε να το προσθέσουμε
+        return self.internal_manager_phone
+
+    def can_internal_manager_record_payments(self):
+        """Ελέγχει αν ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές"""
+        return self.internal_manager is not None and self.internal_manager_can_record_payments
     
     def get_google_calendar_url(self):
         """Επιστρέφει το Google Calendar URL αν υπάρχει"""
@@ -446,9 +487,14 @@ class Building(models.Model):
 
 
 class BuildingMembership(models.Model):
+    """
+    Σχέση χρήστη με πολυκατοικία.
+    Περιλαμβάνει τους ρόλους: Κάτοικος, Εκπρόσωπος, Εσωτερικός Διαχειριστής
+    """
     RESIDENT_ROLES = [
         ("resident", "Κάτοικος"),
         ("representative", "Εκπρόσωπος"),
+        ("internal_manager", "Εσωτερικός Διαχειριστής"),
     ]
 
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name="memberships")
@@ -458,7 +504,24 @@ class BuildingMembership(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = _("Μέλος Πολυκατοικίας")
+        verbose_name_plural = _("Μέλη Πολυκατοικίας")
         unique_together = ('building', 'resident')
 
     def __str__(self):
         return f"{self.resident.email} → {self.building.name} ({self.get_role_display()})"
+
+    @property
+    def is_internal_manager(self):
+        """Ελέγχει αν το membership είναι εσωτερικού διαχειριστή"""
+        return self.role == 'internal_manager'
+
+    @property
+    def is_representative(self):
+        """Ελέγχει αν το membership είναι εκπροσώπου"""
+        return self.role == 'representative'
+
+    @property
+    def is_resident(self):
+        """Ελέγχει αν το membership είναι απλού κατοίκου"""
+        return self.role == 'resident'

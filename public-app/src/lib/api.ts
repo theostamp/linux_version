@@ -118,6 +118,43 @@ const trimErrorBody = (body?: string) => {
     : body;
 };
 
+// Global flag to prevent multiple 401 error toasts from showing simultaneously
+let hasShown401Error = false;
+let last401ErrorTime = 0;
+const ERROR_TOAST_COOLDOWN = 5000; // 5 seconds cooldown between 401 error toasts
+
+/**
+ * Handle 401 Unauthorized errors with user-friendly message
+ * Uses deduplication to prevent multiple toasts for concurrent requests
+ */
+function handle401Error(): void {
+  // Only show toast in browser environment
+  if (typeof window === 'undefined') return;
+  
+  const now = Date.now();
+  
+  // Check if we've shown a 401 error recently (within cooldown period)
+  if (hasShown401Error && (now - last401ErrorTime) < ERROR_TOAST_COOLDOWN) {
+    return;
+  }
+  
+  // Dynamically import errorMessages to avoid circular dependencies
+  // and to ensure it's only loaded in browser environment
+  import('@/lib/errorMessages').then(({ showBuildingError }) => {
+    showBuildingError('SESSION_EXPIRED');
+    hasShown401Error = true;
+    last401ErrorTime = now;
+    
+    // Reset flag after cooldown period
+    setTimeout(() => {
+      hasShown401Error = false;
+    }, ERROR_TOAST_COOLDOWN);
+  }).catch((err) => {
+    // Fallback if errorMessages fails to load
+    console.error('Failed to load errorMessages:', err);
+  });
+}
+
 const createApiError = (
   method: string,
   url: string,
@@ -131,6 +168,12 @@ const createApiError = (
   ) as ApiError;
   error.status = status;
   error.response = { status, body: trimmedBody };
+  
+  // Handle 401 errors with user-friendly message
+  if (status === 401) {
+    handle401Error();
+  }
+  
   return error;
 };
 
@@ -669,6 +712,15 @@ export async function logoutUser(): Promise<void> {
 // Building API Functions
 // ============================================================================
 
+// Internal Manager nested type (when reading from API)
+export type InternalManager = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+};
+
 export type Building = {
   id: number;
   name: string;
@@ -682,6 +734,11 @@ export type Building = {
   apartments_count?: number;
   heating_system?: string;
   heating_fixed_percentage?: number;
+  // Νέα πεδία για εσωτερικό διαχειριστή (ForeignKey)
+  internal_manager?: InternalManager | null;
+  internal_manager_can_record_payments?: boolean;
+  internal_manager_display_name?: string;
+  // Legacy πεδία (backward compatibility)
   internal_manager_name?: string;
   internal_manager_phone?: string;
   internal_manager_apartment?: string;
@@ -695,9 +752,11 @@ export type Building = {
   updated_at: string;
 };
 
-export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at' | 'latitude' | 'longitude'>> & {
+export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at' | 'latitude' | 'longitude' | 'internal_manager'>> & {
   latitude?: number | null;
   longitude?: number | null;
+  // Write-only: για να ορίσεις τον εσωτερικό διαχειριστή στέλνεις το ID
+  internal_manager_id?: number | null;
 };
 
 export type BuildingsResponse = {
@@ -1156,6 +1215,7 @@ export type ApartmentList = {
   owner_phone: string;
   owner_phone2: string;
   owner_email: string;
+  owner_user?: number | null;  // User ID αν ο ιδιοκτήτης είναι καταχωρημένος
   ownership_percentage?: number;
   participation_mills?: number;
   heating_mills?: number;
@@ -1164,6 +1224,7 @@ export type ApartmentList = {
   tenant_phone: string;
   tenant_phone2: string;
   tenant_email: string;
+  tenant_user?: number | null;  // User ID αν ο ένοικος είναι καταχωρημένος
   occupant_name: string;
   occupant_phone: string;
   occupant_phone2: string;
@@ -1198,6 +1259,7 @@ export type BuildingResident = {
   email: string;
   type: 'owner' | 'tenant';
   display_text: string;
+  user_id?: number | null;  // User ID για internal_manager_id (όταν υπάρχει user account)
 };
 
 export type BuildingResidentsResponse = {
@@ -1213,6 +1275,54 @@ export async function fetchBuildingResidents(buildingId: number): Promise<Buildi
       console.warn('[fetchBuildingResidents] Endpoint returned 404, returning empty list');
       return { residents: [] };
     }
+    throw error;
+  }
+}
+
+export type UpdateTenantData = {
+  tenant_name?: string;
+  tenant_phone?: string;
+  tenant_phone2?: string;
+  tenant_email?: string;
+  is_rented?: boolean;
+  is_closed?: boolean;
+  rent_start_date?: string;
+  rent_end_date?: string;
+};
+
+export async function updateApartmentTenant(apartmentId: number, tenantData: UpdateTenantData): Promise<ApartmentList> {
+  try {
+    const response = await apiPost<{ apartment: ApartmentList; message: string }>(
+      `/apartments/${apartmentId}/update-tenant/`,
+      tenantData
+    );
+    return response.apartment;
+  } catch (error) {
+    console.error('[updateApartmentTenant] Error updating tenant:', error);
+    throw error;
+  }
+}
+
+export type UpdateOwnerData = {
+  owner_name?: string;
+  owner_phone?: string;
+  owner_phone2?: string;
+  owner_email?: string;
+  identifier?: string;
+  participation_mills?: number;
+  heating_mills?: number;
+  elevator_mills?: number;
+};
+
+export async function updateApartmentOwner(apartmentId: number, ownerData: UpdateOwnerData): Promise<ApartmentList> {
+  try {
+    const response = await apiPost<{ apartment: ApartmentList; message: string }>(
+      `/apartments/${apartmentId}/update-owner/`,
+      ownerData
+    );
+    return response.apartment;
+  } catch (error) {
+    console.error('[updateApartmentOwner] Error updating owner:', error);
     throw error;
   }
 }
@@ -1792,4 +1902,81 @@ export async function deleteContractor(id: number): Promise<void> {
 
 export async function fetchContractor(id: number): Promise<Contractor> {
   return await api.get<Contractor>(`/api/maintenance/contractors/${id}/`);
+}
+
+// ============================================================================
+// INVITATION API
+// ============================================================================
+
+export type UserInvitation = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  invitation_type: 'registration' | 'building_access' | 'role_assignment';
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  building_id?: number | null;
+  building_name?: string;
+  assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
+  token: string;
+  expires_at: string;
+  created_at: string;
+  invited_by: number;
+  invited_by_name?: string;
+};
+
+export type CreateInvitationPayload = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  invitation_type?: 'registration' | 'building_access' | 'role_assignment';
+  building_id?: number | null;
+  assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
+};
+
+export async function createInvitation(payload: CreateInvitationPayload): Promise<UserInvitation> {
+  return await apiPost<UserInvitation>('/users/invite/', payload);
+}
+
+export async function listInvitations(): Promise<UserInvitation[]> {
+  return await apiGet<UserInvitation[]>('/users/invitations/');
+}
+
+export async function acceptInvitation(token: string, password: string): Promise<{ access: string; refresh: string }> {
+  return await apiPost<{ access: string; refresh: string }>('/users/accept-invitation/', { token, password });
+}
+
+export type ResendInvitationPayload = {
+  invitation_id?: number;
+  email?: string;
+  building_id?: number;
+  assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
+};
+
+export async function resendInvitation(payload: ResendInvitationPayload): Promise<{ message: string; invitation: UserInvitation }> {
+  return await apiPost<{ message: string; invitation: UserInvitation }>('/users/invitations/resend/', payload);
+}
+
+// ============================================================================
+// User Management API Functions
+// ============================================================================
+
+export async function fetchUsers(): Promise<User[]> {
+  return await apiGet<User[]>('/users/');
+}
+
+export type UpdateUserPayload = {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+  is_active?: boolean;
+};
+
+export async function updateUser(userId: number, payload: UpdateUserPayload): Promise<User> {
+  return await apiPatch<User>(`/users/${userId}/`, payload);
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  return await apiDelete(`/users/${userId}/`);
 }

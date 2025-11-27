@@ -66,7 +66,7 @@ export default function EditRequestPage() {
   }
 
   if (loading) return (
-    <div className="p-6 max-w-xl mx-auto">
+    <div>
       <div className="animate-pulse space-y-4">
         <div className="h-8 bg-gray-300 rounded w-3/4"></div>
         <div className="h-20 bg-gray-300 rounded"></div>
@@ -76,7 +76,7 @@ export default function EditRequestPage() {
   );
 
   if (error) return (
-    <div className="p-6 max-w-xl mx-auto">
+    <div>
       <ErrorMessage message={error} />
       <Link href={`/requests/${id}`}>
         <Button variant="secondary" className="mt-4">⬅ Επιστροφή</Button>
@@ -85,7 +85,7 @@ export default function EditRequestPage() {
   );
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
+    <div>
       <Link href={`/requests/${id}`}>
         <Button variant="secondary" className="mb-4">⬅ Επιστροφή</Button>
       </Link>
@@ -131,7 +131,7 @@ export default function EditRequestPage() {
             type="checkbox"
             checked={isUrgent}
             onChange={(e) => setIsUrgent(e.target.checked)}
-            className="h-4 w-4 text-red-600 border-gray-300 rounded"
+            className="h-4 w-4 text-red-600 border-slate-200 rounded"
           />
           <label htmlFor="urgent" className="ml-2 block text-sm text-gray-700">
             Επείγον

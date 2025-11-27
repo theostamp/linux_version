@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format } from 'date-fns';
+import { API_BASE_URL } from './api';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -164,5 +165,42 @@ export function parseAmount(value: number | string | null | undefined): number {
 
   const num = parseFloat(str);
   return isNaN(num) ? 0 : num;
+}
+
+/**
+ * Constructs the full URL for an office logo image
+ * Handles both absolute URLs (http/https) and relative paths
+ * @param logoPath - The logo path from the API (can be relative or absolute URL)
+ * @returns The full URL to the logo image, or null if logoPath is empty
+ */
+export function getOfficeLogoUrl(logoPath: string | null | undefined): string | null {
+  if (!logoPath) return null;
+  
+  // If it's already a full URL (http/https), return as is
+  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+    return logoPath;
+  }
+  
+  // Normalize the path - remove leading /media/ if present and add /api/media/
+  let normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+  
+  // If path starts with /media/, replace with /api/media/ to use our proxy
+  if (normalizedPath.startsWith('/media/')) {
+    normalizedPath = normalizedPath.replace('/media/', '/api/media/');
+  } else if (!normalizedPath.startsWith('/api/media/')) {
+    // If it doesn't start with /media/ or /api/media/, assume it's a relative path from media root
+    normalizedPath = `/api/media/${normalizedPath.replace(/^\//, '')}`;
+  }
+  
+  // Construct the full URL
+  if (typeof window !== 'undefined') {
+    // In browser: use current origin
+    const baseUrl = window.location.origin;
+    return `${baseUrl}${normalizedPath}`;
+  } else {
+    // Server-side: use API_BASE_URL logic
+    const baseUrl = API_BASE_URL.replace('/api', '') || '';
+    return baseUrl ? `${baseUrl}${normalizedPath}` : normalizedPath;
+  }
 }
 

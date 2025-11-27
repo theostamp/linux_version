@@ -51,7 +51,7 @@ export default function NewBuildingPage() {
 
   if (!canManage && !authLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-4">
+      <div className="space-y-4">
         <Link href="/buildings">
           <Button variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -65,7 +65,7 @@ export default function NewBuildingPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
           <p className="ml-3 text-gray-600">Φόρτωση...</p>
@@ -76,7 +76,7 @@ export default function NewBuildingPage() {
 
   if (error && buildings.length === 0) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-4">
+      <div className="space-y-4">
         <Link href="/buildings">
           <Button variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -90,7 +90,7 @@ export default function NewBuildingPage() {
 
   if (!authLoading && user && !user.tenant) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-4">
+      <div className="space-y-4">
         <Link href="/buildings">
           <Button variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -103,7 +103,7 @@ export default function NewBuildingPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center space-x-4">
           <Link href="/buildings">

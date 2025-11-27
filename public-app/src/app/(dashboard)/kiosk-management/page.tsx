@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { Monitor, Settings, Eye, Plus, BarChart3, Activity, AlertCircle, RefreshCw } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { Card } from '@/components/ui/card';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { Card } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 
 export default function KioskManagementPage() {
   return (
@@ -108,24 +111,24 @@ function KioskManagementContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
+      <div className="bg-card rounded-xl p-6 border border-slate-200/50 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center">
-              <Monitor className="w-8 h-8 mr-3" />
-              Kiosk Management Dashboard
+            <h1 className="text-3xl font-bold mb-2 flex items-center text-foreground font-condensed">
+              <Monitor className="w-8 h-8 mr-3 text-primary" />
+              Kiosk Management
             </h1>
-            <p className="text-purple-100">
-              Διαχείριση και παραμετροποίηση του συστήματος kiosk για όλα τα κτίρια
+            <p className="text-muted-foreground">
+              Διαχείριση και παραμετροποίηση του συστήματος kiosk
             </p>
           </div>
-          <div className="text-right flex flex-col gap-2">
+          <div className="flex items-center gap-4 bg-secondary/20 p-3 rounded-lg border border-slate-200/50">
             <div>
-              <p className="text-sm text-purple-200">Τρέχον Κτίριο</p>
-              <p className="text-lg font-semibold">{building.name}</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Τρέχον Κτίριο</p>
+              <p className="text-base font-bold text-foreground">{building.name}</p>
             </div>
             <Button 
-              variant="secondary" 
+              variant="outline" 
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
@@ -138,228 +141,154 @@ function KioskManagementContent() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      {isLoadingStats ? (
-        <StatsLoadingSkeleton />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-6 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards" style={{ animationDelay: '0ms' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Ενεργά Scenes</p>
-                <p className="text-3xl font-bold text-purple-600 tabular-nums">{stats?.enabledScenes || 0}</p>
-                <p className="text-xs text-gray-500 mt-1">από {stats?.totalScenes || 0} σύνολο</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Monitor className="w-8 h-8 text-purple-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards" style={{ animationDelay: '100ms' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Ενεργά Widgets</p>
-                <p className="text-3xl font-bold text-blue-600 tabular-nums">{stats?.enabledWidgets || 0}</p>
-                <p className="text-xs text-gray-500 mt-1">από {stats?.totalWidgets || 0} σύνολο</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Settings className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards" style={{ animationDelay: '200ms' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Κτίρια</p>
-                <p className="text-3xl font-bold text-green-600 tabular-nums">{buildings.length}</p>
-                <p className="text-xs text-gray-500 mt-1">διαθέσιμα</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <BarChart3 className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards" style={{ animationDelay: '300ms' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Τελευταία Ενημέρωση</p>
-                <p className="text-sm font-bold text-gray-700 tabular-nums">
-                  {stats?.lastUpdated.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {stats?.lastUpdated.toLocaleDateString('el-GR')}
-                </p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse" />
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Setup Modes - 2 Primary Choices */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Quick Setup with Scenes */}
-        <Card className="p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white hover:shadow-xl transition-all duration-300">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Monitor className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Γρήγορη Ρύθμιση με Scenes</h3>
-              <p className="text-sm text-gray-600">
-                Χρησιμοποιήστε έτοιμα templates όπως η <strong>"Πρωινή Επισκόπηση"</strong> για άμεση εμφάνιση
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button asChild className="flex-1">
-              <Link href="/kiosk-management/scenes">
-                <Eye className="w-4 h-4 mr-2" />
-                Διαχείριση Scenes
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/kiosk-management/preview">
-                <Monitor className="w-4 h-4 mr-2" />
-                Preview
-              </Link>
-            </Button>
-          </div>
-        </Card>
-
-        {/* Advanced Custom Widgets */}
-        <Card className="p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white hover:shadow-xl transition-all duration-300">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Settings className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Προχωρημένη Προσαρμογή</h3>
-              <p className="text-sm text-gray-600">
-                Δημιουργήστε custom εμφάνιση με ξεχωριστά widgets και πλήρη έλεγχο
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button asChild className="flex-1" variant="outline">
-              <Link href="/kiosk-management/widgets">
-                <Settings className="w-4 h-4 mr-2" />
-                Widgets
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/kiosk-management/widgets/create">
-                <Plus className="w-4 h-4 mr-2" />
-                Νέο Widget
-              </Link>
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Quick Actions Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link href="/kiosk-management/preview" className="group">
-          <Card className="p-5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-green-200 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-600 transition-colors">
-                <Eye className="w-5 h-5 text-green-600 group-hover:text-white transition-colors" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">Live Preview</h4>
-                <p className="text-xs text-gray-500">Προεπισκόπηση display</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
+      {/* Bento Grid Layout */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
         
-        <Link href="/kiosk-management/settings" className="group">
-          <Card className="p-5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-orange-200 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-600 transition-colors">
-                <Settings className="w-5 h-5 text-orange-600 group-hover:text-white transition-colors" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">Ρυθμίσεις</h4>
-                <p className="text-xs text-gray-500">Γενικές ρυθμίσεις</p>
-              </div>
-            </div>
-          </Card>
-        </Link>
+        {/* Row 1: Stats */}
+        {isLoadingStats ? (
+          // Using Bento Items for skeleton to maintain layout
+          [1, 2, 3, 4].map(i => (
+            <BentoGridItem key={i} className="col-span-1" header={<Skeleton className="h-24 w-full" />} />
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Ενεργά Scenes"
+              value={stats?.enabledScenes || 0}
+              subtitle={`από ${stats?.totalScenes || 0} σύνολο`}
+              icon={<Monitor className="w-5 h-5" />}
+              color="purple"
+            />
+            <StatCard
+              title="Ενεργά Widgets"
+              value={stats?.enabledWidgets || 0}
+              subtitle={`από ${stats?.totalWidgets || 0} σύνολο`}
+              icon={<Settings className="w-5 h-5" />}
+              color="info"
+            />
+            <StatCard
+              title="Κτίρια"
+              value={buildings.length}
+              subtitle="διαθέσιμα"
+              icon={<BarChart3 className="w-5 h-5" />}
+              color="success"
+            />
+            <StatCard
+              title="Τελευταία Ενημέρωση"
+              value={stats?.lastUpdated.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) || '--:--'}
+              subtitle={stats?.lastUpdated.toLocaleDateString('el-GR')}
+              icon={<Activity className="w-5 h-5" />}
+              color="default"
+            />
+          </>
+        )}
 
-        <Link href="/kiosk" target="_blank" className="group">
-          <Card className="p-5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-purple-200 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-600 transition-colors">
-                <Monitor className="w-5 h-5 text-purple-600 group-hover:text-white transition-colors" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">Public Kiosk</h4>
-                <p className="text-xs text-gray-500">Άνοιγμα σε νέο tab</p>
-              </div>
+        {/* Row 2: Main Actions */}
+        <BentoGridItem
+          className="md:col-span-2"
+          title="Γρήγορη Ρύθμιση με Scenes"
+          description="Χρησιμοποιήστε έτοιμα templates για άμεση εμφάνιση"
+          header={
+            <div className="flex gap-3 mt-4">
+              <Button asChild className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
+                <Link href="/kiosk-management/scenes">
+                  <Eye className="w-4 h-4 mr-2" />
+                  Διαχείριση Scenes
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/kiosk-management/preview">
+                  <Monitor className="w-4 h-4 mr-2" />
+                  Preview
+                </Link>
+              </Button>
             </div>
-          </Card>
-        </Link>
-      </div>
+          }
+          icon={<Monitor className="w-4 h-4 text-purple-500" />}
+        />
 
-      {/* Recent Activity */}
-      <Card className="p-6 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-purple-600" />
-            Πρόσφατη Δραστηριότητα
-          </h2>
-          {stats && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              Τελευταία ενημέρωση: {stats.lastUpdated.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
-        </div>
-        <div className="space-y-3">
-          {stats && stats.totalWidgets > 0 ? (
-            <>
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100/50 rounded-lg border border-green-200 hover:border-green-300 transition-colors">
-                <div className="flex items-center space-x-3">
+        <BentoGridItem
+          className="md:col-span-2"
+          title="Προχωρημένη Προσαρμογή"
+          description="Δημιουργήστε custom εμφάνιση με ξεχωριστά widgets"
+          header={
+            <div className="flex gap-3 mt-4">
+              <Button asChild className="flex-1" variant="outline">
+                <Link href="/kiosk-management/widgets">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Widgets
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/kiosk-management/widgets/create">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Νέο Widget
+                </Link>
+              </Button>
+            </div>
+          }
+          icon={<Settings className="w-4 h-4 text-blue-500" />}
+        />
+
+        {/* Row 3: Secondary Actions & Activity */}
+        <BentoGridItem
+          className="md:col-span-1"
+          title="Live Preview"
+          description="Προεπισκόπηση display"
+          header={
+            <Link href="/kiosk-management/preview" className="block mt-2 group">
+              <div className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900/30 group-hover:bg-green-100 dark:group-hover:bg-green-900/20 transition-colors">
+                <Eye className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+            </Link>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-1"
+          title="Ρυθμίσεις"
+          description="Γενικές ρυθμίσεις"
+          header={
+            <Link href="/kiosk-management/settings" className="block mt-2 group">
+              <div className="flex items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/10 rounded-lg border border-orange-100 dark:border-orange-900/30 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/20 transition-colors">
+                <Settings className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+              </div>
+            </Link>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-1"
+          title="Public Kiosk"
+          description="Άνοιγμα σε νέο tab"
+          header={
+            <Link href="/kiosk" target="_blank" className="block mt-2 group">
+              <div className="flex items-center justify-center p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg border border-purple-100 dark:border-purple-900/30 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/20 transition-colors">
+                <Monitor className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+              </div>
+            </Link>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-1"
+          title="Δραστηριότητα"
+          description="Πρόσφατες ενημερώσεις"
+          header={
+            <div className="space-y-2 mt-2 text-sm">
+              {stats && stats.totalWidgets > 0 ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-sm text-gray-700">
-                    <strong>{stats.enabledWidgets}</strong> widgets ενεργά στο κτίριο <strong>{building.name}</strong>
-                  </span>
+                  <span>{stats.enabledWidgets} widgets ενεργά</span>
                 </div>
-                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">τώρα</span>
-              </div>
-              {stats.totalScenes > 0 && (
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg border border-blue-200 hover:border-blue-300 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                    <span className="text-sm text-gray-700">
-                      <strong>{stats.enabledScenes}</strong> scenes διαμορφωμένα και έτοιμα προς χρήση
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">τώρα</span>
-                </div>
+              ) : (
+                <span className="text-muted-foreground">Καμία δραστηριότητα</span>
               )}
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100/50 rounded-lg border border-purple-200 hover:border-purple-300 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                  <span className="text-sm text-gray-700">
-                    Σύστημα kiosk ενεργό για το κτίριο <strong>{building.name}</strong>
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">τώρα</span>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">Δεν υπάρχει πρόσφατη δραστηριότητα</p>
-              <p className="text-xs mt-1">Δημιουργήστε το πρώτο σας widget για να ξεκινήσετε</p>
             </div>
-          )}
-        </div>
-      </Card>
+          }
+        />
 
+      </BentoGrid>
     </div>
   );
 }

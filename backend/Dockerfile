@@ -37,4 +37,9 @@ COPY . .
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
+# Create media and static directories with proper permissions
+RUN mkdir -p /data/media/office_logos /data/static && \
+    chmod -R 755 /data && \
+    chown -R nobody:nogroup /data
+
 CMD ["/app/entrypoint.sh"]

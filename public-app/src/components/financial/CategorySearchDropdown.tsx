@@ -256,7 +256,7 @@ export const CategorySearchDropdown: React.FC<CategorySearchDropdownProps> = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        className={`w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
           error ? 'border-red-500' : ''
         } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
       />
@@ -272,7 +272,7 @@ export const CategorySearchDropdown: React.FC<CategorySearchDropdownProps> = ({
 
       {/* Categories dropdown */}
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredCategories.length === 0 ? (
             <div className="px-3 py-2 text-gray-500">
               Δεν βρέθηκαν κατηγορίες

@@ -2,18 +2,24 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { fetchApartments, ApartmentList } from '@/lib/api';
+import { fetchApartments, ApartmentList, resendInvitation } from '@/lib/api';
+import { toast } from 'sonner';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import ErrorMessage from '@/components/ErrorMessage';
 import Pagination from '@/components/Pagination';
-import { Button } from '@/components/ui/button';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import EditTenantModal from '@/components/apartments/EditTenantModal';
+import EditOwnerModal from '@/components/apartments/EditOwnerModal';
+import { Button } from '@/components/ui/button';
+import { StatCard } from '@/components/ui/stat-card';
 
 type OccupancyFilter = 'all' | 'owner' | 'tenant' | 'vacant';
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -44,9 +50,9 @@ const getOccupancyBadge = (apartment: ApartmentList) => {
     case 'tenant':
       return <Badge className="bg-indigo-100 text-indigo-800">Με ενοικιαστή</Badge>;
     case 'owner':
-      return <Badge className="bg-emerald-100 text-emerald-800">Ιδιοκατοίκηση</Badge>;
+      return <Badge className="bg-success/10 text-success">Ιδιοκατοίκηση</Badge>;
     default:
-      return <Badge className="bg-gray-100 text-gray-600">Κενό</Badge>;
+      return <Badge className="bg-muted text-muted-foreground">Κενό</Badge>;
   }
 };
 
@@ -54,30 +60,153 @@ const getStatusBadge = (apartment: ApartmentList) => {
   const status = apartment.status_display || 'Ενεργό';
   const normalized = status.toLowerCase();
   if (normalized.includes('ανενεργ') || normalized.includes('inactive') || normalized.includes('archived')) {
-    return <Badge className="bg-gray-100 text-gray-700">{status}</Badge>;
+    return <Badge className="bg-muted text-muted-foreground">{status}</Badge>;
   }
   if (normalized.includes('εκκρεμ') || normalized.includes('pending')) {
     return <Badge className="bg-amber-100 text-amber-800">{status}</Badge>;
   }
-  return <Badge className="bg-blue-100 text-blue-800">{status}</Badge>;
+  return <Badge className="bg-primary/10 text-primary">{status}</Badge>;
 };
 
-const renderContactBlock = (label: string, name?: string, phone?: string, email?: string) => (
+// Component για email με ένδειξη καταχώρησης και resend
+const EmailWithStatus = ({ 
+  email, 
+  isRegistered, 
+  buildingId,
+  apartmentId,
+  canInvite,
+  isTenant = false
+}: { 
+  email: string; 
+  isRegistered: boolean;
+  buildingId?: number;
+  apartmentId?: number;
+  canInvite?: boolean;
+  isTenant?: boolean;
+}) => {
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResend = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!canInvite || !email) return;
+    
+    setIsResending(true);
+    try {
+      await resendInvitation({
+        email,
+        building_id: buildingId,
+        assigned_role: isTenant ? 'resident' : undefined
+      });
+      toast.success('Η πρόσκληση στάλθηκε επιτυχώς');
+    } catch (err) {
+      const error = err as { 
+        response?: { data?: Record<string, string | string[]> }; 
+        message?: string;
+        detail?: string;
+      };
+      
+      let errorMessage = 'Αποτυχία επαναποστολής πρόσκλησης';
+      
+      const errorData = error?.response?.data || error;
+      if (errorData) {
+        if (typeof errorData === 'object') {
+          const firstKey = Object.keys(errorData).find(key => 
+            key !== 'response' && key !== 'message' && errorData[key]
+          );
+          if (firstKey) {
+            const fieldError = errorData[firstKey];
+            if (Array.isArray(fieldError) && fieldError.length > 0) {
+              errorMessage = fieldError[0];
+            } else if (typeof fieldError === 'string') {
+              errorMessage = fieldError;
+            }
+          } else if (errorData.error) {
+            errorMessage = typeof errorData.error === 'string' ? errorData.error : String(errorData.error);
+          }
+        }
+      }
+      
+      if (errorMessage === 'Αποτυχία επαναποστολής πρόσκλησης' && error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <a href={`mailto:${email}`} className="flex items-center gap-1 text-primary hover:underline">
+        <Mail className="w-3 h-3" />
+        {email}
+      </a>
+      {isRegistered ? (
+        <UserCheck className="w-3.5 h-3.5 text-success" title="Καταχωρημένος χρήστης" />
+      ) : canInvite ? (
+        <div className="flex items-center gap-1">
+          <Link 
+            href={`/users?invite=${encodeURIComponent(email)}&building=${buildingId || ''}&apartment=${apartmentId || ''}`}
+            className="text-primary hover:text-primary/80 transition-colors"
+            title="Πρόσκληση χρήστη"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+          </Link>
+          {isTenant && (
+            <button
+              onClick={handleResend}
+              disabled={isResending}
+              className="text-primary hover:text-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Επαναποστολή πρόσκλησης"
+            >
+              {isResending ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
+      ) : (
+        <UserPlus className="w-3.5 h-3.5 text-muted-foreground" title="Μη καταχωρημένος" />
+      )}
+    </div>
+  );
+};
+
+const renderContactBlock = (
+  label: string, 
+  name?: string, 
+  phone?: string, 
+  email?: string,
+  isRegistered?: boolean,
+  buildingId?: number,
+  apartmentId?: number,
+  canInvite?: boolean,
+  isTenant?: boolean
+) => (
   <div>
-    <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
-    <p className="text-sm font-medium text-gray-900">{name || 'Δεν έχει οριστεί'}</p>
-    <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-600">
+    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">{label}</p>
+    <p className="text-sm font-medium text-foreground">{name || 'Δεν έχει οριστεί'}</p>
+    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
       {phone && (
-        <a href={`tel:${phone}`} className="flex items-center gap-1 text-blue-600 hover:underline">
+        <a href={`tel:${phone}`} className="flex items-center gap-1 text-primary hover:underline">
           <Phone className="w-3 h-3" />
           {phone}
         </a>
       )}
       {email && (
-        <a href={`mailto:${email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-          <Mail className="w-3 h-3" />
-          {email}
-        </a>
+        <EmailWithStatus 
+          email={email} 
+          isRegistered={isRegistered || false}
+          buildingId={buildingId}
+          apartmentId={apartmentId}
+          canInvite={canInvite}
+          isTenant={isTenant}
+        />
       )}
       {!phone && !email && <span>Χωρίς στοιχεία επικοινωνίας</span>}
     </div>
@@ -100,6 +229,9 @@ const ApartmentsPageContent = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editTenantModalOpen, setEditTenantModalOpen] = useState(false);
+  const [editOwnerModalOpen, setEditOwnerModalOpen] = useState(false);
+  const [selectedApartment, setSelectedApartment] = useState<ApartmentList | null>(null);
 
   const canManage = !!(user?.is_superuser || user?.is_staff);
 
@@ -236,8 +368,8 @@ const ApartmentsPageContent = () => {
 
   if (buildingsLoading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center justify-center py-16 text-gray-600">
+      <div>
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <RefreshCw className="w-8 h-8 animate-spin mb-4" />
           <p>Φόρτωση κτιρίων...</p>
         </div>
@@ -247,7 +379,7 @@ const ApartmentsPageContent = () => {
 
   if (buildingError) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <ErrorMessage message={buildingError} />
       </div>
     );
@@ -255,11 +387,11 @@ const ApartmentsPageContent = () => {
 
   if (!buildingId) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
-        <div className="bg-white border rounded-2xl p-8 text-center shadow-sm">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Δεν έχει επιλεγεί κτίριο</h1>
-          <p className="text-gray-600 mb-6">
+      <div className="space-y-6">
+        <div className="bg-card rounded-none p-8 text-center shadow-md">
+          <AlertTriangle className="w-12 h-12 text-warning mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold text-foreground mb-2">Δεν έχει επιλεγεί κτίριο</h1>
+          <p className="text-muted-foreground mb-6">
             Για να δείτε τα διαμερίσματα, επιλέξτε πρώτα ένα κτίριο από την αριστερή στήλη ή δημιουργήστε ένα νέο.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -278,28 +410,28 @@ const ApartmentsPageContent = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-sm text-blue-600 font-semibold uppercase tracking-wide">Κτίριο: {activeBuilding?.name}</p>
-          <h1 className="text-3xl font-bold text-gray-900">🏘️ Διαχείριση Διαμερισμάτων</h1>
-          <p className="text-gray-600 mt-1">
-            Παρακολουθήστε ιδιοκτήτες, ενοικιαστές και στοιχεία συμμετοχής για κάθε διαμέρισμα του κτιρίου.
+          <p className="text-sm text-primary font-semibold uppercase tracking-wide">Κτίριο: {activeBuilding?.name}</p>
+          <h1 className="text-3xl font-bold text-foreground font-condensed">🏘️ Διαχείριση Διαμερισμάτων</h1>
+          <p className="text-muted-foreground mt-1">
+            Παρακολουθήστε ιδιοκτήτες, ενοικιαστές και στοιχεία συμμετοχής.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={loadApartments} disabled={isLoading}>
+          <Button variant="outline" onClick={loadApartments} disabled={isLoading} size="sm">
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Ανανέωση
           </Button>
           <Link href={`/buildings/${buildingId}/dashboard`}>
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               Προβολή κτιρίου
             </Button>
           </Link>
           {canManage && (
             <Link href={`/buildings/${buildingId}/edit`}>
-              <Button>
+              <Button size="sm">
                 Διαχείριση κτιρίου
               </Button>
             </Link>
@@ -309,377 +441,486 @@ const ApartmentsPageContent = () => {
 
       <BuildingFilterIndicator />
 
-      {/* Building Summary */}
-      <div className="bg-white rounded-2xl border shadow-sm p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 text-gray-700">
-              <Building2 className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm font-semibold text-gray-500">Ενεργό κτίριο</p>
-                <p className="text-lg font-bold text-gray-900">{activeBuilding?.name}</p>
+      {/* Bento Grid Layout */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+        
+        {/* Stats Row */}
+        <StatCard
+          title="Σύνολο"
+          value={stats.total}
+          subtitle="διαμερίσματα"
+          icon={<Building2 className="w-5 h-5" />}
+          color="primary"
+        />
+        <StatCard
+          title="Με ενοικιαστή"
+          value={stats.rented}
+          subtitle="ενεργά μισθωτήρια"
+          icon={<UserCheck className="w-5 h-5" />}
+          color="info"
+        />
+        <StatCard
+          title="Ιδιοκατοίκηση"
+          value={stats.ownerOccupied}
+          subtitle="ιδιοκτήτες"
+          icon={<Home className="w-5 h-5" />}
+          color="success"
+        />
+        <StatCard
+          title="Μέσο μέγεθος"
+          value={stats.avgSize || '—'}
+          subtitle="τετραγωνικά μέτρα"
+          icon={<Grid className="w-5 h-5" />}
+          color="default"
+        />
+
+        {/* Filters & Content */}
+        <BentoGridItem
+          className="md:col-span-4"
+          header={
+            <div className="space-y-6">
+              {/* Filters Bar */}
+              <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Αναζήτηση (αριθμός, ιδιοκτήτης, ένοικος, σημειώσεις...)"
+                        className="pl-10 bg-background border-input"
+                      />
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex items-center gap-2 flex-1">
+                        <Filter className="w-4 h-4 text-muted-foreground" />
+                        <select
+                          value={occupancyFilter}
+                          onChange={(e) => setOccupancyFilter(e.target.value as OccupancyFilter)}
+                          className="flex-1 bg-background border border-input rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="all">Όλοι οι τύποι</option>
+                          <option value="owner">Ιδιοκατοικούμενα</option>
+                          <option value="tenant">Με ενοικιαστή</option>
+                          <option value="vacant">Κενά</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2 flex-1">
+                        <Filter className="w-4 h-4 text-muted-foreground" />
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                          className="flex-1 bg-background border border-input rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="all">Όλες οι καταστάσεις</option>
+                          <option value="active">Ενεργά</option>
+                          <option value="inactive">Ανενεργά</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-slate-200/50">
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Ταξινόμηση:</span>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as SortKey)}
+                          className="bg-background border border-input rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="number">Αριθμός Διαμερίσματος</option>
+                          <option value="owner">Ιδιοκτήτης (Α-Ω)</option>
+                          <option value="tenant">Ένοικος (Α-Ω)</option>
+                          <option value="mills">Συμμετοχή (‰)</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Ανά σελίδα:</span>
+                        <select
+                          value={pageSize}
+                          onChange={(e) => setPageSize(Number(e.target.value))}
+                          className="bg-background border border-input rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary"
+                        >
+                          <option value={10}>10</option>
+                          <option value={15}>15</option>
+                          <option value={25}>25</option>
+                          <option value={50}>50</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Προβολή:</span>
+                      <div className="flex bg-secondary/30 rounded-lg p-1">
+                        <Button
+                          variant={viewMode === 'table' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('table')}
+                          className="h-7 px-3 text-xs"
+                        >
+                          <List className="w-3.5 h-3.5 mr-1" />
+                          Λίστα
+                        </Button>
+                        <Button
+                          variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('cards')}
+                          className="h-7 px-3 text-xs"
+                        >
+                          <Grid className="w-3.5 h-3.5 mr-1" />
+                          Κάρτες
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <p className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-              <MapPin className="w-4 h-4" />
-              {activeBuilding?.address || 'Χωρίς διεύθυνση'}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-              <p className="text-xs text-blue-600">Σύνολο</p>
-              <p className="text-2xl font-semibold text-blue-700">{stats.total}</p>
-              <p className="text-xs text-blue-500">διαμερίσματα</p>
-            </div>
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
-              <p className="text-xs text-indigo-600">Με ενοικιαστή</p>
-              <p className="text-2xl font-semibold text-indigo-700">{stats.rented}</p>
-              <p className="text-xs text-indigo-500">ενεργά μισθωτήρια</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-              <p className="text-xs text-emerald-600">Ιδιοκατοίκηση</p>
-              <p className="text-2xl font-semibold text-emerald-700">{stats.ownerOccupied}</p>
-              <p className="text-xs text-emerald-500">ιδιοκτήτες</p>
-            </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-              <p className="text-xs text-gray-600">Μέσο μέγεθος</p>
-              <p className="text-2xl font-semibold text-gray-800">{stats.avgSize || '—'}</p>
-              <p className="text-xs text-gray-500">τ.μ.</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl border shadow-sm p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Αναζήτηση (αριθμός, ιδιοκτήτης, ένοικος, σημειώσεις...)"
-              className="pl-10"
-            />
-          </div>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex items-center gap-2 flex-1">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <select
-                value={occupancyFilter}
-                onChange={(e) => setOccupancyFilter(e.target.value as OccupancyFilter)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
-              >
-                <option value="all">Όλοι οι τύποι</option>
-                <option value="owner">Ιδιοκατοικούμενα</option>
-                <option value="tenant">Με ενοικιαστή</option>
-                <option value="vacant">Κενά</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2 flex-1">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
-              >
-                <option value="all">Όλες οι καταστάσεις</option>
-                <option value="active">Ενεργά</option>
-                <option value="inactive">Ανενεργά</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Ταξινόμηση:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortKey)}
-                className="border border-gray-300 rounded-lg px-3 py-2"
-              >
-                <option value="number">Αριθμός Διαμερίσματος</option>
-                <option value="owner">Ιδιοκτήτης (Α-Ω)</option>
-                <option value="tenant">Ένοικος (Α-Ω)</option>
-                <option value="mills">Συμμετοχή (‰)</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Ανά σελίδα:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border border-gray-300 rounded-lg px-3 py-2"
-              >
-                <option value={10}>10</option>
-                <option value={15}>15</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Προβολή:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className="text-xs"
-              >
-                <List className="w-4 h-4 mr-1" />
-                Λίστα
-              </Button>
-              <Button
-                variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('cards')}
-                className="text-xs"
-              >
-                <Grid className="w-4 h-4 mr-1" />
-                Κάρτες
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+              {error && <ErrorMessage message={error} />}
 
-      {error && <ErrorMessage message={error} />}
-
-      {/* Results */}
-      {isLoading ? (
-        <div className="bg-white rounded-2xl border shadow-sm p-12 text-center text-gray-500">
-          <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
-            <p>Φόρτωση διαμερισμάτων...</p>
-          </div>
-        </div>
-      ) : filteredApartments.length === 0 ? (
-        <div className="bg-white rounded-2xl border shadow-sm p-12 text-center text-gray-500">
-          <Home className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="font-medium mb-2">Δεν βρέθηκαν διαμερίσματα με τα τρέχοντα φίλτρα.</p>
-          {searchTerm || occupancyFilter !== 'all' || statusFilter !== 'all' ? (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm('');
-                setOccupancyFilter('all');
-                setStatusFilter('all');
-              }}
-            >
-              Καθαρισμός φίλτρων
-            </Button>
-          ) : (
-            canManage && (
-              <Link href={`/buildings/${buildingId}/edit`}>
-                <Button>Προσθήκη διαμερίσματος</Button>
-              </Link>
-            )
-          )}
-        </div>
-      ) : (
-        <>
-          {viewMode === 'table' ? (
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[960px]">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Διαμέρισμα
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Ιδιοκτήτης
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Ένοικος / Χρήστης
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Στοιχεία
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Ενέργειες
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {paginatedApartments.map((apartment) => (
-                      <tr key={apartment.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
-                                <Home className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="text-base font-semibold text-gray-900">{apartment.number}</p>
-                                <p className="text-sm text-gray-500">{apartment.identifier || '—'}</p>
-                              </div>
+              {/* Results */}
+              {isLoading ? (
+                <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center gap-4">
+                    <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+                    <p>Φόρτωση διαμερισμάτων...</p>
+                  </div>
+                </div>
+              ) : filteredApartments.length === 0 ? (
+                <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+                  <Home className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <p className="font-medium mb-2">Δεν βρέθηκαν διαμερίσματα με τα τρέχοντα φίλτρα.</p>
+                  {searchTerm || occupancyFilter !== 'all' || statusFilter !== 'all' ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setOccupancyFilter('all');
+                        setStatusFilter('all');
+                      }}
+                    >
+                      Καθαρισμός φίλτρων
+                    </Button>
+                  ) : (
+                    canManage && (
+                      <Link href={`/buildings/${buildingId}/edit`}>
+                        <Button>Προσθήκη διαμερίσματος</Button>
+                      </Link>
+                    )
+                  )}
+                </div>
+              ) : (
+                <>
+                  {viewMode === 'table' ? (
+                    <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[960px]">
+                          <thead className="bg-muted/50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Διαμέρισμα
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Ιδιοκτήτης
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Ένοικος / Χρήστης
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Στοιχεία
+                              </th>
+                              <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Ενέργειες
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border bg-background">
+                            {paginatedApartments.map((apartment) => (
+                              <tr key={apartment.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 rounded-lg bg-primary/10 shadow-sm flex items-center justify-center">
+                                        <Home className="w-5 h-5 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="text-base font-semibold text-foreground">{apartment.number}</p>
+                                        <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      {getOccupancyBadge(apartment)}
+                                      {getStatusBadge(apartment)}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="space-y-1">
+                                    <p className="text-sm font-medium text-foreground">{apartment.owner_name || '—'}</p>
+                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                      {apartment.owner_phone && (
+                                        <a href={`tel:${apartment.owner_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+                                          <Phone className="w-3 h-3" />
+                                          {apartment.owner_phone}
+                                        </a>
+                                      )}
+                                      {apartment.owner_email && (
+                                        <EmailWithStatus 
+                                          email={apartment.owner_email}
+                                          isRegistered={!!apartment.owner_user}
+                                          buildingId={buildingId}
+                                          apartmentId={apartment.id}
+                                          canInvite={canManage}
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="space-y-1">
+                                    <p className="text-sm font-medium text-foreground">
+                                      {apartment.tenant_name || apartment.occupant_name || '—'}
+                                    </p>
+                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                      {apartment.tenant_phone && (
+                                        <a href={`tel:${apartment.tenant_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+                                          <Phone className="w-3 h-3" />
+                                          {apartment.tenant_phone}
+                                        </a>
+                                      )}
+                                      {apartment.tenant_email && (
+                                        <EmailWithStatus 
+                                          email={apartment.tenant_email}
+                                          isRegistered={!!apartment.tenant_user}
+                                          buildingId={buildingId}
+                                          apartmentId={apartment.id}
+                                          canInvite={canManage}
+                                          isTenant={true}
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Τ.μ.</p>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Συμμετοχή</p>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        {typeof apartment.participation_mills === 'number'
+                                          ? `${apartment.participation_mills}‰`
+                                          : '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Όροφος</p>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        {apartment.floor !== undefined ? apartment.floor : '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Ενημέρωση</p>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        {formatDate(apartment.updated_at)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {canManage && (
+                                      <>
+                                        {apartment.owner_name && (
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => {
+                                              setSelectedApartment(apartment);
+                                              setEditOwnerModalOpen(true);
+                                            }}
+                                            title="Ενημέρωση ιδιοκτήτη"
+                                          >
+                                            <Edit className="w-3 h-3" />
+                                          </Button>
+                                        )}
+                                        {(apartment.tenant_name || apartment.is_rented) && (
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => {
+                                              setSelectedApartment(apartment);
+                                              setEditTenantModalOpen(true);
+                                            }}
+                                            title="Ενημέρωση ενοίκου"
+                                          >
+                                            <Edit className="w-3 h-3" />
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                    <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <ArrowRight className="w-4 h-4" />
+                                      </Button>
+                                    </Link>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="border-t px-6 py-4 bg-muted/20">
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          totalItems={totalItems}
+                          pageSize={pageSize}
+                          onPageChange={setCurrentPage}
+                          itemLabel="διαμερίσματα"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {paginatedApartments.map((apartment) => (
+                        <div key={apartment.id} className="bg-card rounded-xl shadow-sm border p-5 space-y-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Διαμέρισμα</p>
+                              <p className="text-2xl font-bold text-foreground">{apartment.number}</p>
+                              <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
                             </div>
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex flex-col items-end gap-2">
                               {getOccupancyBadge(apartment)}
                               {getStatusBadge(apartment)}
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-900">{apartment.owner_name || '—'}</p>
-                            <div className="flex flex-col text-xs text-gray-500">
-                              {apartment.owner_phone && (
-                                <a href={`tel:${apartment.owner_phone}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-                                  <Phone className="w-3 h-3" />
-                                  {apartment.owner_phone}
-                                </a>
-                              )}
-                              {apartment.owner_email && (
-                                <a href={`mailto:${apartment.owner_email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-                                  <Mail className="w-3 h-3" />
-                                  {apartment.owner_email}
-                                </a>
-                              )}
-                            </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-slate-200/50 py-4">
+                            {renderContactBlock(
+                              'Ιδιοκτήτης', 
+                              apartment.owner_name, 
+                              apartment.owner_phone, 
+                              apartment.owner_email,
+                              !!apartment.owner_user,
+                              buildingId,
+                              apartment.id,
+                              canManage
+                            )}
+                            {renderContactBlock(
+                              'Ένοικος / Χρήστης',
+                              apartment.tenant_name || apartment.occupant_name,
+                              apartment.tenant_phone || apartment.occupant_phone,
+                              apartment.tenant_email || apartment.occupant_email,
+                              !!apartment.tenant_user,
+                              buildingId,
+                              apartment.id,
+                              canManage,
+                              true // isTenant
+                            )}
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {apartment.tenant_name || apartment.occupant_name || '—'}
-                            </p>
-                            <div className="flex flex-col text-xs text-gray-500">
-                              {apartment.tenant_phone && (
-                                <a href={`tel:${apartment.tenant_phone}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-                                  <Phone className="w-3 h-3" />
-                                  {apartment.tenant_phone}
-                                </a>
-                              )}
-                              {apartment.tenant_email && (
-                                <a href={`mailto:${apartment.tenant_email}`} className="flex items-center gap-1 text-blue-600 hover:underline">
-                                  <Mail className="w-3 h-3" />
-                                  {apartment.tenant_email}
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-3 gap-4 text-sm">
                             <div>
-                              <p className="text-xs text-gray-500">Τ.μ.</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500">Συμμετοχή</p>
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-xs text-muted-foreground">Συμμετοχή</p>
+                              <p className="font-semibold text-foreground">
                                 {typeof apartment.participation_mills === 'number'
                                   ? `${apartment.participation_mills}‰`
                                   : '—'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-500">Όροφος</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {apartment.floor !== undefined ? apartment.floor : '—'}
+                              <p className="text-xs text-muted-foreground">Τετρ. μέτρα</p>
+                              <p className="font-semibold text-foreground">
+                                {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-500">Ενημέρωση</p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {formatDate(apartment.updated_at)}
-                              </p>
+                              <p className="text-xs text-muted-foreground">Τελευταία ενημέρωση</p>
+                              <p className="font-semibold text-foreground">{formatDate(apartment.updated_at)}</p>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
-                              <Button variant="outline" size="sm">
-                                Λεπτομέρειες
-                                <ArrowRight className="w-3 h-3 ml-1" />
-                              </Button>
-                            </Link>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-200/50 mt-2">
+                            <p className="text-xs text-muted-foreground">
+                              Δημιουργήθηκε: {formatDate(apartment.created_at)}
+                            </p>
+                            <div className="flex gap-2">
+                              {canManage && (
+                                <>
+                                  {apartment.owner_name && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => {
+                                        setSelectedApartment(apartment);
+                                        setEditOwnerModalOpen(true);
+                                      }}
+                                      title="Ενημέρωση ιδιοκτήτη"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                  {(apartment.tenant_name || apartment.is_rented) && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => {
+                                        setSelectedApartment(apartment);
+                                        setEditTenantModalOpen(true);
+                                      }}
+                                      title="Ενημέρωση ενοίκου"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                              <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <ArrowRight className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="border-t px-6 py-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={totalItems}
-                  pageSize={pageSize}
-                  onPageChange={setCurrentPage}
-                  itemLabel="διαμερίσματα"
-                />
-              </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {paginatedApartments.map((apartment) => (
-                <div key={apartment.id} className="bg-white rounded-2xl border shadow-sm p-5 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">Διαμέρισμα</p>
-                      <p className="text-2xl font-semibold text-gray-900">{apartment.number}</p>
-                      <p className="text-sm text-gray-500">{apartment.identifier || '—'}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      {getOccupancyBadge(apartment)}
-                      {getStatusBadge(apartment)}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {renderContactBlock('Ιδιοκτήτης', apartment.owner_name, apartment.owner_phone, apartment.owner_email)}
-                    {renderContactBlock(
-                      'Ένοικος / Χρήστης',
-                      apartment.tenant_name || apartment.occupant_name,
-                      apartment.tenant_phone || apartment.occupant_phone,
-                      apartment.tenant_email || apartment.occupant_email,
-                    )}
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-xs text-gray-500">Συμμετοχή</p>
-                      <p className="font-semibold text-gray-900">
-                        {typeof apartment.participation_mills === 'number'
-                          ? `${apartment.participation_mills}‰`
-                          : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Τετρ. μέτρα</p>
-                      <p className="font-semibold text-gray-900">
-                        {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Τελευταία ενημέρωση</p>
-                      <p className="font-semibold text-gray-900">{formatDate(apartment.updated_at)}</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center pt-2">
-                    <p className="text-xs text-gray-500">
-                      Δημιουργήθηκε: {formatDate(apartment.created_at)}
-                    </p>
-                    <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
-                      <Button variant="ghost" size="sm">
-                        Λεπτομέρειες
-                        <ArrowRight className="w-3 h-3 ml-1" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+          }
+        />
+      </BentoGrid>
+
+      {/* Edit Tenant Modal */}
+      <EditTenantModal
+        open={editTenantModalOpen}
+        onOpenChange={setEditTenantModalOpen}
+        apartment={selectedApartment}
+        onSuccess={() => {
+          loadApartments();
+        }}
+      />
+
+      {/* Edit Owner Modal */}
+      <EditOwnerModal
+        open={editOwnerModalOpen}
+        onOpenChange={setEditOwnerModalOpen}
+        apartment={selectedApartment}
+        onSuccess={() => {
+          loadApartments();
+        }}
+      />
     </div>
   );
 };

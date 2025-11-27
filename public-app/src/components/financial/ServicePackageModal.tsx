@@ -597,7 +597,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                 ))}
                 
                 {/* Custom Package Option */}
-                <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-purple-300 border-2 border-dashed border-gray-300">
+                <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-purple-300 border-2 border-dashed border-slate-200">
                   <CardContent className="p-6 text-center space-y-4">
                     <Package className="h-12 w-12 text-purple-500 mx-auto" />
                     <div>

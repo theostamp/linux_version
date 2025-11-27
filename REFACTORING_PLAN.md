@@ -1,431 +1,174 @@
-# 📋 Αναλυτικό Πλάνο Refactoring - Επαναφορά Προηγούμενης Έκδοσης
+# Σχέδιο Refactoring του Design System
 
-## 🎯 Στόχος
-Επαναφορά της πλήρους λειτουργικότητας της προηγούμενης έκδοσης (commit `4203014f`) στο νέο `public-app` setup, με προσοχή στην αποφυγή conflicts και διατήρηση της συμβατότητας.
+Αυτό το έγγραφο περιγράφει ένα σχέδιο δράσης για το refactoring του UI της εφαρμογής, με στόχο τη δημιουργία ενός συνεπoύς και κεντρικοποιημένου Design System.
 
----
-
-## 📊 Ανάλυση Προηγούμενης Έκδοσης
-
-### Commit Αναφοράς
-- **Commit**: `4203014f` - "feat: Fix all TypeScript errors and prepare for production deployment"
-- **Date**: Fri Oct 24 21:28:59 2025
-- **Status**: Production-ready με TypeScript fixes
-
-### Αρχιτεκτονική
-
-#### 1. **Contexts** (5 files)
-- `AuthContext.tsx` - User authentication & session management
-- `BuildingContext.tsx` - Building selection & management
-- `DocumentLogContext.tsx` - Document logging
-- `LoadingContext.tsx` - Global loading states
-- `ReactQueryProvider.tsx` - React Query setup
-
-#### 2. **Components** (~100+ files)
-- **Core Components**:
-  - `Sidebar.tsx` - Main navigation sidebar με grouped menu
-  - `GlobalHeader.tsx` - Header με office logo, building selector
-  - `LayoutWrapper.tsx` - Layout wrapper για non-dashboard pages
-  - `AppProviders.tsx` - Root providers wrapper
-  
-- **UI Components** (~30+ shadcn/ui components):
-  - Button, Input, Select, Dialog, Toast, κτλ
-  
-- **Feature Components**:
-  - BuildingSelector, BuildingSelectorButton
-  - AnnouncementsCarousel, AnnouncementCard
-  - DashboardCards, BuildingStats
-  - ErrorBoundary, FullPageSpinner
-  - κτλ
-
-#### 3. **Hooks** (~60+ files)
-- `useAuth.ts`, `useAuthGuard.ts`
-- `useBuildings.ts`, `useBuildingCache.ts`, `useBuildingChange.ts`
-- `useFinancialDashboard.ts`, `useExpenses.ts`
-- `useNavigationWithLoading.ts`
-- `useCsrf.ts`, `useEnsureCsrf.ts`
-- `useKiosk.ts`, `useKioskWidgets.ts`
-- κτλ
-
-#### 4. **Types** (12 files)
-- `user.ts` - User types
-- `financial.ts` - Financial types
-- `kiosk.ts`, `kiosk-widgets.ts` - Kiosk types
-- `userRequests.ts`, `vote.ts` - Feature types
-- `google-maps.d.ts` - Google Maps types
-- κτλ
-
-#### 5. **Pages** (~100+ routes)
-- Dashboard pages: `/dashboard`, `/announcements`, `/votes`, `/requests`, `/buildings`, `/financial`, κτλ
-- Admin pages: `/admin/*`
-- Kiosk pages: `/kiosk/*`, `/kiosk-display`
-- Auth pages: `/login`, `/register`, `/logout`
-
-#### 6. **API Layer**
-- `lib/api.ts` - Centralized API client με throttling & caching
-- API routes: `/api/*` για server-side proxying
-
-#### 7. **Dependencies**
-- React Query (`@tanstack/react-query`)
-- Radix UI components
-- Framer Motion
-- Recharts
-- Axios
-- React Hook Form
-- Date-fns
-- Sonner & React Hot Toast
+## Στόχοι
+1.  **Κεντρικοποίηση:** Να οριστούν όλα τα βασικά στοιχεία του design (χρώματα, spacing, τυπογραφία) σε ένα σημείο, στο `tailwind.config.ts`.
+2.  **Συνέπεια:** Να εξαλειφθούν οι διπλότυποι ή ασυνεπείς components, ξεκινώντας από τα `Button` και `AppButton`.
+3.  **Συντηρησιμότητα:** Να αντικατασταθούν οι "hardcoded" τιμές με μεταβλητές του theme, κάνοντας τις μελλοντικές αλλαγές ευκολότερες.
 
 ---
 
-## 🔄 Σύγκριση με Τρέχουσα Έκδοση
+## Φάση 1: Κεντρικοποίηση του Design System στο `tailwind.config.ts`
 
-### Τρέχουσα Έκδοση (`public-app`)
-- ✅ Basic Sidebar & Header components
-- ✅ Dashboard layout
-- ✅ Basic API helper (`lib/api.ts`)
-- ✅ Simple dashboard page
-- ❌ Χωρίς Contexts (AuthContext, BuildingContext)
-- ❌ Χωρίς Hooks
-- ❌ Χωρίς UI components library
-- ❌ Χωρίς feature components
+**Οδηγία:** Αντικαταστήστε πλήρως το περιεχόμενο του αρχείου `public-app/tailwind.config.ts` με τον παρακάτω κώδικα. Αυτό θα δημιουργήσει μια ισχυρή βάση για το οπτικό στυλ της εφαρμογής.
 
-### Προηγούμενη Έκδοση (`frontend`)
-- ✅ Πλήρη Contexts system
-- ✅ 60+ custom hooks
-- ✅ 100+ components
-- ✅ Shadcn/ui UI library
-- ✅ Πλήρη API layer με throttling
-- ✅ TypeScript types
+```typescript
+import type { Config } from 'tailwindcss'
 
----
+const config: Config = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './node_modules/lucide-react/dist/esm/**/*.js',
+  ],
+  theme: {
+    extend: {
+      // -- ΟΡΙΣΜΟΣ ΧΡΩΜΑΤΩΝ --
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        // Το υπάρχον teal χρώμα, ενσωματωμένο σωστά
+        teal: {
+          '50': '#f0fdfa',
+          '100': '#ccfbf1',
+          '200': '#99f6e4',
+          '300': '#5eead4',
+          '400': '#2dd4bf',
+          '500': '#14b8a6', // Αυτό πιθανόν είναι το primary
+          '600': '#0d9488',
+          '700': '#0f766e',
+      '800': '#115e59',
+          '900': '#134e4a',
+          '950': '#042f2e',
+        },
+      },
+      // -- ΟΡΙΣΜΟΣ BORDER RADIUS --
+      borderRadius: {
+        lg: `var(--radius-lg)`,
+        md: `var(--radius-md)`,
+        sm: `var(--radius-sm)`,
+      },
+    },
+  },
+  plugins: [],
+}
 
-## 📝 Πλάνο Refactoring - Φάσεις
+export default config;
+```
 
-### **ΦΑΣΗ 1: Foundation & Dependencies** ⏱️ ~30 min
-**Στόχος**: Προετοιμασία infrastructure
-
-#### 1.1 Dependencies Installation
-- [ ] Install missing dependencies:
-  ```bash
-  npm install @tanstack/react-query @tanstack/react-query-devtools
-  npm install axios
-  npm install react-hot-toast sonner
-  npm install framer-motion
-  npm install recharts
-  npm install react-hook-form @hookform/resolvers
-  npm install date-fns
-  npm install @radix-ui/* (all UI components)
-  ```
-
-#### 1.2 Project Structure Setup
-- [ ] Create directories:
-  ```
-  public-app/src/
-    ├── components/
-    │   ├── contexts/
-    │   ├── ui/
-    │   └── ...
-    ├── hooks/
-    ├── types/
-    └── lib/
-  ```
-
-#### 1.3 Configuration Files
-- [ ] Copy `components.json` (shadcn/ui config)
-- [ ] Update `tsconfig.json` paths
-- [ ] Update `tailwind.config.js` (if needed)
-
----
-
-### **ΦΑΣΗ 2: Core Infrastructure** ⏱️ ~1-2 hours
-**Στόχος**: Core contexts & utilities
-
-#### 2.1 Types System
-- [ ] Copy all types from `frontend/types/`:
-  - `types/user.ts`
-  - `types/financial.ts`
-  - `types/userRequests.ts`
-  - `types/vote.ts`
-  - `types/kiosk.ts`
-  - `types/kiosk-widgets.ts`
-  - Type definitions files
-
-#### 2.2 API Layer Enhancement
-- [ ] Enhance `lib/api.ts`:
-  - Add throttling & caching
-  - Add retry logic with exponential backoff
-  - Add CSRF handling
-  - Add all API functions from old version
-
-#### 2.3 Utils & Helpers
-- [ ] Copy utility functions:
-  - `lib/utils.ts` (enhance with date formatting, amount formatting)
-  - Any other utility files
-
----
-
-### **ΦΑΣΗ 3: Contexts System** ⏱️ ~2-3 hours
-**Στόχος**: Core state management
-
-#### 3.1 AuthContext
-- [ ] Copy `components/contexts/AuthContext.tsx`
-- [ ] Adapt to new API structure:
-  - Update API calls to use new `lib/api.ts`
-  - Ensure localStorage keys match (`access_token` vs `access`)
-  - Test authentication flow
-
-#### 3.2 BuildingContext
-- [ ] Copy `components/contexts/BuildingContext.tsx`
-- [ ] Adapt API calls
-- [ ] Ensure building selection works
-
-#### 3.3 Other Contexts
-- [ ] Copy `LoadingContext.tsx`
-- [ ] Copy `ReactQueryProvider.tsx`
-- [ ] Copy `DocumentLogContext.tsx` (if needed)
-
-#### 3.4 AppProviders
-- [ ] Copy `components/AppProviders.tsx`
-- [ ] Adapt routing logic
-- [ ] Integrate with new layout structure
+**Σημείωση:** Ο παραπάνω κώδικας προϋποθέτει ότι θα ορίσετε τις αντίστοιχες CSS μεταβλητές HSL (π.χ. `--primary`, `--background`, κ.λπ.) στο global CSS αρχείο σας (`public-app/src/app/globals.css`). Αυτή είναι η standard πρακτική για theming σε Next.js/Tailwind εφαρμογές.
 
 ---
 
-### **ΦΑΣΗ 4: UI Components Library** ⏱️ ~2-3 hours
-**Στόχος**: Shadcn/ui components
+## Φάση 2: Ενοποίηση των Button Components
 
-#### 4.1 Core UI Components
-- [ ] Install shadcn/ui components:
-  ```bash
-  npx shadcn@latest add button
-  npx shadcn@latest add input
-  npx shadcn@latest add select
-  npx shadcn@latest add dialog
-  npx shadcn@latest add toast
-  npx shadcn@latest add dropdown-menu
-  npx shadcn@latest add tabs
-  # ... all other components
-  ```
+### 2.1 Ενημέρωση του Βασικού `Button` Component
 
-#### 4.2 Custom UI Components
-- [ ] Copy custom UI components from `frontend/components/ui/`
-- [ ] Adapt imports & paths
+**Οδηγία:** Ενημερώστε το αρχείο `public-app/src/components/ui/button.tsx` για να αφαιρέσετε τις hardcoded τιμές και να προσθέσετε το νέο animation variant.
 
----
+**Αντικαταστήστε αυτόν τον κώδικα:**
+```typescript
+const buttonVariants = cva(
+  'inline-flex items-center justify-center whitespace-nowrap rounded-none text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-sm',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-[#005866] hover:text-white hover:shadow-md hover:scale-[1.01]',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md hover:scale-[1.01]',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md hover:scale-[1.01]',
+        outline: 'border-2 border-primary text-[#005866] dark:text-primary bg-background hover:bg-primary hover:text-primary-foreground hover:shadow-md',
+        link: 'text-[#005866] dark:text-primary underline-offset-4 hover:underline hover:text-[#005866] dark:hover:text-primary shadow-none',
+        ghost: 'text-[#005866] dark:text-primary hover:bg-accent hover:text-accent-foreground',
+        success: 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-md hover:scale-[1.01]',
+        warning: 'bg-amber-500 text-white hover:bg-amber-600 hover:shadow-md hover:scale-[1.01]',
+      },
+```
 
-### **ΦΑΣΗ 5: Core Components** ⏱️ ~3-4 hours
-**Στόχος**: Main navigation & layout
+**Με αυτόν τον κώδικα:**
+```typescript
+const buttonVariants = cva(
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        success: 'bg-success text-success-foreground hover:bg-success/90',
+        warning: 'bg-amber-500 text-white hover:bg-amber-600', // Warning needs theme color
+      },
+      animation: {
+        none: '',
+        scale: 'hover:shadow-md hover:scale-[1.01] transition-transform duration-200',
+        lift: 'hover:-translate-y-0.5 transition-transform duration-150',
+      },
+```
 
-#### 5.1 Sidebar Enhancement
-- [ ] Enhance `components/Sidebar.tsx`:
-  - Add grouped navigation
-  - Add role-based filtering
-  - Add building selector integration
-  - Add calculator modal
-  - Improve mobile responsiveness
+**Σημαντικές Αλλαγές:**
+*   Αφαιρέθηκαν οι hardcoded τιμές (`#005866`) και αντικαταστάθηκαν με μεταβλητές του theme (π.χ., `text-primary`).
+*   Προστέθηκε ένα νέο `animation` variant με επιλογές `none`, `scale` (η παλιά συμπεριφορά), και `lift` (η συμπεριφορά του `AppButton`).
+*   Άλλαξε το `rounded-none` σε `rounded-md` για ένα πιο μοντέρνο look, χρησιμοποιώντας τη μεταβλητή από το theme.
 
-#### 5.2 GlobalHeader Enhancement
-- [ ] Enhance `components/Header.tsx`:
-  - Add office logo display
-  - Add building selector button
-  - Add notifications
-  - Add settings modal
-  - Add calendar button
+### 2.2 Αντικατάσταση του `AppButton`
 
-#### 5.3 Layout Components
-- [ ] Copy `components/LayoutWrapper.tsx`
-- [ ] Update `app/(dashboard)/layout.tsx`:
-  - Integrate with contexts
-  - Add loading states
-  - Add error boundaries
+**Οδηγία:** Πρέπει να αντικαταστήσετε όλες τις χρήσεις του `AppButton` με το `Button` component, χρησιμοποιώντας το νέο `animation` prop.
 
-#### 5.4 Supporting Components
-- [ ] Copy `components/BuildingSelector.tsx`
-- [ ] Copy `components/BuildingSelectorButton.tsx`
-- [ ] Copy `components/ErrorMessage.tsx`
-- [ ] Copy `components/FullPageSpinner.tsx`
-- [ ] Copy `components/ErrorBoundary.tsx`
-- [ ] Copy `components/GlobalLoadingOverlay.tsx`
-
----
-
-### **ΦΑΣΗ 6: Hooks System** ⏱️ ~2-3 hours
-**Στόχος**: Custom hooks
-
-#### 6.1 Core Hooks
-- [ ] Copy essential hooks:
-  - `hooks/useAuth.ts`
-  - `hooks/useAuthGuard.ts`
-  - `hooks/useBuildings.ts`
-  - `hooks/useBuildingCache.ts`
-  - `hooks/useNavigationWithLoading.ts`
-  - `hooks/useCsrf.ts`
-
-#### 6.2 Feature Hooks
-- [ ] Copy feature-specific hooks as needed:
-  - Financial hooks
-  - Announcements hooks
-  - Votes hooks
-  - Requests hooks
-  - κτλ
+1.  **Αναζήτηση:** Κάντε μια αναζήτηση σε όλο το project για `import { AppButton }`.
+2.  **Αντικατάσταση:** Σε κάθε αρχείο που το βρίσκετε, κάντε τις παρακάτω αλλαγές:
+    *   Αλλάξτε το import από `import { AppButton } from '@/components/ui/AppButton'` σε `import { Button } from '@/components/ui/button'`.
+    *   Αντικαταστήστε τη χρήση `<AppButton ... />` με `<Button animation="lift" ... />`.
 
 ---
 
-### **ΦΑΣΗ 7: Dashboard & Feature Pages** ⏱️ ~4-6 hours
-**Στόχος**: Main application pages
+## Φάση 3: Εκκαθάριση και Επαλήθευση
 
-#### 7.1 Dashboard Page
-- [ ] Enhance `app/(dashboard)/dashboard/page.tsx`:
-  - Add charts (Recharts)
-  - Add announcements carousel
-  - Add building stats
-  - Add obligations summary
-  - Add weather widget
-  - Add subscription info
+### 3.1 Διαγραφή Περιττού Αρχείου
+**Οδηγία:** Αφού ολοκληρωθεί η αντικατάσταση από τη Φάση 2, διαγράψτε το αρχείο `public-app/src/components/ui/AppButton.tsx`.
 
-#### 7.2 Feature Pages (Priority Order)
-1. **Buildings** (`/buildings`)
-   - [ ] List page
-   - [ ] Detail page
-   - [ ] Create/Edit forms
+### 3.2 Οπτική Επαλήθευση
+**Οδηγία:** Εκτελέστε την εφαρμογή τοπικά (`npm run dev`) και πλοηγηθείτε σε διάφορες σελίδες.
+*   Ελέγξτε ότι όλα τα buttons εμφανίζονται σωστά.
+*   Βεβαιωθείτε ότι τα animations (`lift` και `scale`) λειτουργούν όπως αναμένεται.
+*   Επιβεβαιώστε ότι τα χρώματα (`primary`, `destructive`, `success`, κ.λπ.) είναι συνεπή σε όλη την εφαρμογή.
 
-2. **Announcements** (`/announcements`)
-   - [ ] List page
-   - [ ] Create/Edit forms
-   - [ ] Detail page
-
-3. **Financial** (`/financial`)
-   - [ ] Dashboard
-   - [ ] Expenses
-   - [ ] Payments
-   - [ ] Reports
-
-4. **Votes** (`/votes`)
-   - [ ] List page
-   - [ ] Create/Edit forms
-   - [ ] Detail page with voting
-
-5. **Requests** (`/requests`)
-   - [ ] List page
-   - [ ] Create/Edit forms
-   - [ ] Detail page
-
----
-
-### **ΦΑΣΗ 8: Testing & Polish** ⏱️ ~2-3 hours
-**Στόχος**: Quality assurance
-
-#### 8.1 Testing
-- [ ] Test authentication flow
-- [ ] Test building selection
-- [ ] Test navigation
-- [ ] Test API calls
-- [ ] Test responsive design
-
-#### 8.2 Bug Fixes
-- [ ] Fix any TypeScript errors
-- [ ] Fix any runtime errors
-- [ ] Fix styling issues
-- [ ] Fix mobile responsiveness
-
-#### 8.3 Documentation
-- [ ] Update README
-- [ ] Document new components
-- [ ] Document hooks usage
-
----
-
-## ⚠️ Προσοχή - Potential Conflicts
-
-### 1. **API Structure**
-- **Conflict**: Old version uses `access` token, new uses `access_token`
-- **Solution**: Standardize on `access_token` and update AuthContext
-
-### 2. **Routing**
-- **Conflict**: Old version has different route structure
-- **Solution**: Maintain new `(dashboard)` route group structure
-
-### 3. **API Endpoints**
-- **Conflict**: Old version may use different API paths
-- **Solution**: Ensure backend-proxy handles all paths correctly
-
-### 4. **Environment Variables**
-- **Conflict**: Different env var names
-- **Solution**: Map old env vars to new ones or use both
-
-### 5. **Dependencies Versions**
-- **Conflict**: Version mismatches
-- **Solution**: Use latest compatible versions, test thoroughly
-
----
-
-## 📋 Checklist per Session
-
-### Session 1: Foundation
-- [ ] Install all dependencies
-- [ ] Setup project structure
-- [ ] Copy types
-- [ ] Enhance API layer
-
-### Session 2: Contexts
-- [ ] Copy & adapt AuthContext
-- [ ] Copy & adapt BuildingContext
-- [ ] Copy other contexts
-- [ ] Setup AppProviders
-
-### Session 3: UI Components
-- [ ] Install shadcn/ui components
-- [ ] Copy custom UI components
-- [ ] Test component rendering
-
-### Session 4: Core Components
-- [ ] Enhance Sidebar
-- [ ] Enhance Header
-- [ ] Update Layout
-- [ ] Copy supporting components
-
-### Session 5: Hooks & Features
-- [ ] Copy essential hooks
-- [ ] Enhance Dashboard page
-- [ ] Test functionality
-
-### Session 6: Feature Pages
-- [ ] Buildings pages
-- [ ] Announcements pages
-- [ ] Financial pages
-- [ ] Other priority pages
-
-### Session 7: Testing & Polish
-- [ ] Comprehensive testing
-- [ ] Bug fixes
-- [ ] Documentation
-
----
-
-## 🎯 Success Criteria
-
-- ✅ All contexts working
-- ✅ Sidebar & Header fully functional
-- ✅ Dashboard page with all widgets
-- ✅ Building selection working
-- ✅ Authentication flow working
-- ✅ API calls working with throttling
-- ✅ No TypeScript errors
-- ✅ Responsive design working
-- ✅ All critical features accessible
-
----
-
-## 📝 Notes
-
-- Προτεραιότητα: Core functionality πρώτα, features μετά
-- Testing: Test after each phase
-- Commits: Small, focused commits per phase
-- Documentation: Update as we go
-
----
-
-**Created**: 2025-11-12
-**Last Updated**: 2025-11-12
-**Status**: Ready for execution
-
+Ακολουθώντας αυτό το σχέδιο, το UI της εφαρμογής θα γίνει πιο συνεπές, επαγγελματικό και εύκολο στη διαχείριση.

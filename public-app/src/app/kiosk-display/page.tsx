@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -27,43 +27,59 @@ function KioskDisplayPageContent() {
   const pathname = usePathname();
   const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
   const [effectiveBuildingId, setEffectiveBuildingId] = useState<number>(1);
+  
+  // Track if we have a URL parameter - this takes absolute priority
+  const hasUrlParam = useRef<boolean>(false);
+  // Track the last building ID we set to avoid infinite loops
+  const lastSetBuildingId = useRef<number | null>(null);
 
   const buildingParam = useMemo(() => {
-    const primary = parseBuildingId(searchParams?.get('building'));
-    if (primary !== null) return primary;
-    return parseBuildingId(searchParams?.get('building_id'));
+    const fromBuildingId = parseBuildingId(searchParams?.get('building_id'));
+    if (fromBuildingId !== null) return fromBuildingId;
+    return parseBuildingId(searchParams?.get('building'));
   }, [searchParams]);
 
   const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();
 
-  // If building is passed via query string, set it in context (minimal stub for kiosk scenes)
+  // Effect 1: Handle URL parameter changes (highest priority)
+  // URL parameter ALWAYS overrides context - this prevents BuildingContext from resetting the building
   useEffect(() => {
-    // keep internal state in sync with URL param
-    if (buildingParam) {
+    console.log('[KioskDisplay] 🔍 URL buildingParam:', buildingParam);
+    
+    if (buildingParam !== null) {
+      hasUrlParam.current = true;
       setEffectiveBuildingId(buildingParam);
+      
+      console.log(`[KioskDisplay] ✅ Setting effectiveBuildingId from URL: ${buildingParam}`);
+      
+      // Only update context if it's different from what we last set
+      // This prevents infinite loops
+      if (lastSetBuildingId.current !== buildingParam) {
+        lastSetBuildingId.current = buildingParam;
+        const stubBuilding: Building = {
+          id: buildingParam,
+          name: `Κτίριο #${buildingParam}`,
+          address: '',
+          city: '',
+          created_at: FALLBACK_TIMESTAMP,
+          updated_at: FALLBACK_TIMESTAMP,
+        };
+        setSelectedBuilding(stubBuilding);
+      }
+    } else {
+      hasUrlParam.current = false;
+      lastSetBuildingId.current = null;
+      console.log('[KioskDisplay] ⚠️ No URL buildingParam, will use context');
     }
+  }, [buildingParam, setSelectedBuilding]);
 
-    if (!buildingParam) return;
-    if (selectedBuilding?.id === buildingParam) return;
-
-    const stubBuilding: Building = {
-      id: buildingParam,
-      name: `Κτίριο #${buildingParam}`,
-      address: '',
-      city: '',
-      created_at: FALLBACK_TIMESTAMP,
-      updated_at: FALLBACK_TIMESTAMP,
-    };
-
-    setSelectedBuilding(stubBuilding);
-  }, [buildingParam, selectedBuilding?.id, setSelectedBuilding]);
-
-  // Fallback to selectedBuilding when no query param provided
+  // Effect 2: Fallback to context building ONLY if no URL param exists
   useEffect(() => {
-    if (!buildingParam && selectedBuilding?.id) {
+    if (!hasUrlParam.current && selectedBuilding?.id) {
+      console.log(`[KioskDisplay] 📍 Setting effectiveBuildingId from context: ${selectedBuilding.id} (${selectedBuilding.name})`);
       setEffectiveBuildingId(selectedBuilding.id);
     }
-  }, [buildingParam, selectedBuilding?.id]);
+  }, [selectedBuilding?.id]);
 
   // Keyboard shortcut Ctrl+Alt+B opens selector (kiosk flow)
   useKeyboardShortcuts({
@@ -109,7 +125,11 @@ function KioskDisplayPageContent() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
-      <KioskSceneRenderer buildingIdOverride={effectiveBuildingId} allowSceneCreation={false} />
+      <KioskSceneRenderer
+        key={effectiveBuildingId ?? 'kiosk-default'}
+        buildingIdOverride={effectiveBuildingId}
+        allowSceneCreation={false}
+      />
       <BuildingSelector
         isOpen={isBuildingSelectorOpen}
         onClose={() => setIsBuildingSelectorOpen(false)}

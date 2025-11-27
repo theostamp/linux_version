@@ -1,130 +1,71 @@
-DEBUG 2025-11-16 08:29:46,552 monthly_balance_service 17 139773160139648    📊 Παλαιότερες οφειλές: €0.00
-DEBUG 2025-11-16 08:29:46,557 monthly_balance_service 17 139773160139648    🏢 Διαχειριστικά έξοδα: €0.00
-DEBUG 2025-11-16 08:29:46,562 monthly_balance_service 17 139773160139648    🏦 Αποθεματικό: €1000.00
-DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    🔧 Προγραμματισμένα έργα: €0.00
-DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    ⚖️ Καθαρό αποτέλεσμα: €-1000.00
-DEBUG 2025-11-16 08:29:46,566 monthly_balance_service 17 139773160139648    🔄 Carry Forward: €1000.00
-INFO 2025-11-16 08:29:46,570 monthly_balance_service 17 139773160139648    ✅ Ενημερώθηκε υπάρχον record για 11/2025
-📊 Apartment Α1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €100.00
-   Payments This Month: €0.00
-   Net Obligation: €100.00
-📊 Apartment Α2 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €97.00
-   Payments This Month: €0.00
-   Net Obligation: €97.00
-📊 Apartment Α3 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €88.00
-   Payments This Month: €0.00
-   Net Obligation: €88.00
-📊 Apartment Β1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €110.00
-   Payments This Month: €0.00
-   Net Obligation: €110.00
-📊 Apartment Β2 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €105.00
-   Payments This Month: €0.00
-   Net Obligation: €105.00
-📊 Apartment Β3 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €98.00
-   Payments This Month: €0.00
-   Net Obligation: €98.00
-📊 Apartment Γ1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €92.00
-   Payments This Month: €0.00
-   Net Obligation: €92.00
-📊 Apartment Γ2 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €115.00
-   Payments This Month: €0.00
-   Net Obligation: €115.00
-📊 Apartment Γ3 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €108.00
-   Payments This Month: €0.00
-   Net Obligation: €108.00
-📊 Apartment Δ1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €87.00
-   Payments This Month: €0.00
-   Net Obligation: €87.00
-/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2025-11-01 00:00:00) while time zone support is active.
-  warnings.warn(
-/usr/local/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1612: RuntimeWarning: DateTimeField Expense.created_at received a naive datetime (2025-12-01 00:00:00) while time zone support is active.
-⚠️ MonthlyBalance not found for 10/2025, using raw calculation
-   ✅ Overall activity: True
-   📤 Has expenses: True
-🔍 FinancialDashboard (snapshot_2025-11): current_reserve=-1000.00, total_obligations=0.00
-   📥 Has payments: False
-🔍 FinancialDashboard (snapshot_2025-11): total_balance=-2000.00
-   📋 Has issued expenses: True
-   Previous obligations for 2025-11: €0.00
-   System start date: 2025-11-01
-   Expenses before month (from 2025-11-01): €0.00
-   Payments before month (from 2025-11-01): €0.00
-🔧 TOTAL BALANCE: current_reserve=-1000.00 - current_obligations=1000.00 = -2000.00
-🔧 CURRENT MONTH EXPENSES: 1000.00 = 1000.00 - 0.00
-100.64.0.3 - - [16/Nov/2025:08:29:46 +0200] "GET /api/financial/dashboard/summary/?building_id=1&month=2025-11 HTTP/1.1" 200 9681 "https://theo.newconcierge.app/financial?month=2025-12&building=1&tab=balances" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
-🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
-  warnings.warn(
-🔍 Monthly Activity Check for 2025-11:
-📊 Apartment Α1 - 2025-11:
-   Current Month Expenses: €110.00
-   Previous Balance: €0.00
-   Current Month Expenses: €100.00
-   Payments This Month: €0.00
-   Payments This Month: €0.00
-   Net Obligation: €100.00
-   Net Obligation: €110.00
-📊 Apartment Α2 - 2025-11:
-   Previous Balance: €0.00
-📊 Apartment Β2 - 2025-11:
-   Current Month Expenses: €97.00
-   Payments This Month: €0.00
-   Net Obligation: €97.00
-📊 Apartment Α3 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €88.00
-   Payments This Month: €0.00
-   Net Obligation: €88.00
-📊 Apartment Β1 - 2025-11:
-   Previous Balance: €0.00
-🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
-   Previous Balance: €0.00
-   Current Month Expenses: €105.00
-   Payments This Month: €0.00
-   Net Obligation: €105.00
-📊 Apartment Β3 - 2025-11:
-   Previous Balance: €0.00
-   Previous Balance: €0.00
-   Current Month Expenses: €115.00
-   Current Month Expenses: €98.00
-   Payments This Month: €0.00
-   Payments This Month: €0.00
-   Net Obligation: €98.00
-📊 Apartment Γ1 - 2025-11:
-   Previous Balance: €0.00
-   Net Obligation: €115.00
-   Current Month Expenses: €92.00
-📊 Apartment Γ3 - 2025-11:
-   Payments This Month: €0.00
-   Previous Balance: €0.00
-   Net Obligation: €92.00
-   Current Month Expenses: €108.00
-📊 Apartment Γ2 - 2025-11:
-   Payments This Month: €0.00
-   Net Obligation: €108.00
-📊 Apartment Δ1 - 2025-11:
-   Previous Balance: €0.00
-   Current Month Expenses: €87.00
-   Payments This Month: €0.00
-   Net Obligation: €87.00
-100.64.0.3 - - [16/Nov/2025:08:29:47 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=1&month=2025-11 HTTP/1.1" 200 4603 "https://theo.newconcierge.app/financial?month=2025-12&building=1&tab=balances" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+﻿Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG fetchApartmentsWithFinancialData result: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 ✅ Apartments loaded successfully for 2025-11: 15 apartments
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG building API response: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 Request cancelled, newer request in progress
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🏢 CommonExpenseModal: Building data loaded: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG building API response: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG calling fetchApartmentsWithFinancialData...
+8f3135668fa79c16.js?…PSzHkWQtdWz58Hi3J:1 [API CALL] Attempting to fetch apartments with financial data: 2 month: 2025-11
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG Monthly expenses API response: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG useCommonExpenseCalculator: Data readiness check: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG expenseBreakdown: Using API data for month 2025-11 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG expenseBreakdown: Mapped API data to breakdown: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG managementFeeInfo: Starting calculation with: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 ⚠️ DEBUG managementFeeInfo: Using fallback state data 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 💰 DEBUG managementFeeInfo: Final result: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG useCommonExpenseCalculator: monthlyExpenses updated: 
+Object
+8f3135668fa79c16.js?…PSzHkWQtdWz58Hi3J:1 [API CALL] Successfully fetched apartments with financial data: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG fetchApartmentsWithFinancialData result: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 ✅ Apartments loaded successfully for 2025-11: 15 apartments
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 DEBUG useCommonExpenseCalculator: Data readiness check: 
+Object
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🔍 useCommonExpenseCalculator: aptWithFinancial updated: 
+Object
+f87501ec3d3809f0.js?…PSzHkWQtdWz58Hi3J:1 [API PUBLIC] Current hostname: theo.newconcierge.app, origin: https://theo.newconcierge.app
+f87501ec3d3809f0.js?…PSzHkWQtdWz58Hi3J:1 [API PUBLIC] Using same-origin API URL: https://theo.newconcierge.app/api
+77198e06ef560520.js?…PSzHkWQtdWz58Hi3J:1 🧹 FinancialPage cleaning up open-maintenance-overview event listener
+face86a04d1511c5.js?…PSzHkWQtdWz58Hi3J:1 [useBuildingEvents] WebSocket connection temporarily disabled to debug hanging issue
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Current pathname: /maintenance
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Dashboard: true
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Kiosk Mode: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Info Screen: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is No Sidebar Route: false
+face86a04d1511c5.js?…PSzHkWQtdWz58Hi3J:1 [useBuildingEvents] WebSocket connection temporarily disabled to debug hanging issue
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Current pathname: /projects
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Dashboard: true
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Kiosk Mode: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Info Screen: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is No Sidebar Route: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Current pathname: /projects/offers
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Dashboard: true
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Kiosk Mode: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is Info Screen: false
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [AppProviders] Is No Sidebar Route: false
+08db57ae9c673906.js?…PSzHkWQtdWz58Hi3J:1 Uncaught ReferenceError: StatCard is not defined
+    at H (08db57ae9c673906.js?…QtdWz58Hi3J:1:16885)
+    at l8 (1e1a0feececdabb8.js?…QtdWz58Hi3J:1:59389)
+    at o_ (1e1a0feececdabb8.js?…QtdWz58Hi3J:1:79070)
+    at oV (1e1a0feececdabb8.js?…QtdWz58Hi3J:1:90100)
+    at iy (1e1a0feececdabb8.js?…tdWz58Hi3J:1:122762)
+    at 1e1a0feececdabb8.js?…tdWz58Hi3J:1:122607
+    at ig (1e1a0feececdabb8.js?…tdWz58Hi3J:1:122615)
+    at il (1e1a0feececdabb8.js?…tdWz58Hi3J:1:119698)
+    at iq (1e1a0feececdabb8.js?…tdWz58Hi3J:1:141008)
+    at MessagePort.T (1e1a0feececdabb8.js?…WQtdWz58Hi3J:1:6433)
+e451d3bf71bbe0e1.js?…PSzHkWQtdWz58Hi3J:1 [ReactQueryProvider] Cleaning up global refresh system
+5f9de6d314215b63.js?…PSzHkWQtdWz58Hi3J:1 [Global Refresh] Cleaning up global refresh system

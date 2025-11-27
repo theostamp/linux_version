@@ -357,7 +357,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
                       : ''}
                   </p>
                   <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: right;">
-                    <a href="/buildings/${building.id}" style="display: inline-flex; align-items: center; gap: 4px; background-color: #026878; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500; transition: background-color 0.2s;">
+                    <a href="/buildings/${building.id}" style="display: inline-flex; align-items: center; gap: 4px; background-color: #005866; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500; transition: background-color 0.2s;">
                       Διαχείριση
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>

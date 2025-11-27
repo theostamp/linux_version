@@ -316,7 +316,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
       </Card>
 
       {/* Συμπαγής Αναλυση Δαπανών για Α4 */}
-      <Card className="border-2 border-gray-300 bg-white">
+      <Card className="border-2 border-slate-200 bg-white">
         <CardContent className="p-3">
           <h3 className="text-sm font-bold text-gray-800 mb-3 text-center">
             ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ

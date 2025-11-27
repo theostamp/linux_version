@@ -176,8 +176,8 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
               }}
               className={`p-3 rounded-lg transition-all ${
                 activeChart === chart.id
-                  ? 'bg-white shadow-md border-2 border-blue-500'
-                  : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                  ? 'bg-white shadow-md border-2 border-primary'
+                  : 'bg-muted hover:bg-accent border border-input'
               }`}
             >
               <div className="flex flex-col items-center">
@@ -191,7 +191,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
       </div>
 
       {/* Controls Section */}
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
+      <div className="p-4 bg-muted border-b border-slate-200/50">
         <div className="flex flex-wrap items-center gap-4">
 
           {/* Period Selector - only for relevant charts */}
@@ -201,7 +201,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value as 'month' | 'quarter' | 'year')}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {periods.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -219,7 +219,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                 type="checkbox"
                 checked={showComparison}
                 onChange={(e) => setShowComparison(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-input text-primary focus:ring-ring"
               />
               <span className="text-sm text-gray-700">Σύγκριση με προηγούμενη περίοδο</span>
             </label>
@@ -229,7 +229,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
           {apartmentId && (
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">Διαμέρισμα:</span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-medium">
+              <span className="px-2 py-1 bg-primary/10 text-primary rounded text-sm font-medium">
                 #{apartmentId}
               </span>
             </div>
@@ -240,15 +240,15 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
         {chartSubTypes[activeChart] && chartSubTypes[activeChart].length > 1 && (
           <div className="mt-3 flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-700">Τύπος:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex bg-muted rounded-lg p-1">
               {chartSubTypes[activeChart].map((subType) => (
                 <button
                   key={subType.id}
                   onClick={() => setChartSubType(subType.id)}
                   className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                     chartSubType === subType.id
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {subType.label}
@@ -267,7 +267,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                 <select
                   value={heatingYear}
                   onChange={(e) => setHeatingYear(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
                   {Array.from({ length: 5 }, (_, i) => currentYear - 3 + i).map(year => (
                     <option key={year} value={year.toString()}>
@@ -282,7 +282,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                   <select
                     value={compareYear}
                     onChange={(e) => setCompareYear(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                   >
                     {Array.from({ length: 5 }, (_, i) => currentYear - 4 + i).map(year => (
                       <option key={year} value={year.toString()}>
@@ -301,7 +301,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                 <select
                   value={electricityYear}
                   onChange={(e) => setElectricityYear(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
                   {Array.from({ length: 5 }, (_, i) => currentYear - 3 + i).map(year => (
                     <option key={year} value={year.toString()}>
@@ -316,7 +316,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                   <select
                     value={compareYear}
                     onChange={(e) => setCompareYear(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                   >
                     {Array.from({ length: 5 }, (_, i) => currentYear - 4 + i).map(year => (
                       <option key={year} value={year.toString()}>
@@ -342,7 +342,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">Ενεργό:</span>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 {chartTypes.find(c => c.id === activeChart)?.icon} {chartTypes.find(c => c.id === activeChart)?.label}
               </span>
             </div>

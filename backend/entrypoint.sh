@@ -9,6 +9,24 @@ echo "📅 Deployment: $(date '+%Y-%m-%d %H:%M:%S')"
 mkdir -p /app/logs
 echo "📁 Logs directory ready"
 
+# 0.5. Create media directories with proper permissions
+# Check if Railway volume is configured
+VOLUME_MOUNT_PATH="${RAILWAY_VOLUME_MOUNT_PATH:-/data}"
+echo "🔍 Checking volume mount path: $VOLUME_MOUNT_PATH"
+
+# Try to create directories in volume mount path
+if mkdir -p "$VOLUME_MOUNT_PATH/media/office_logos" "$VOLUME_MOUNT_PATH/static" 2>/dev/null && [ -d "$VOLUME_MOUNT_PATH" ]; then
+    chmod -R 755 "$VOLUME_MOUNT_PATH" 2>/dev/null || true
+    echo "📁 Media directories ready at $VOLUME_MOUNT_PATH/media"
+    echo "   Volume: ${RAILWAY_VOLUME_NAME:-unknown}"
+else
+    # Fallback to /app if volume mount path cannot be created
+    echo "⚠️  Volume mount path $VOLUME_MOUNT_PATH not available, using fallback"
+    mkdir -p /app/media/office_logos /app/static
+    chmod -R 755 /app/media /app/static 2>/dev/null || true
+    echo "📁 Media directories ready at /app/media (fallback)"
+fi
+
 # 1. Wait for Postgres
 # Parse DATABASE_URL to get host and port
 if [ -n "$DATABASE_URL" ]; then

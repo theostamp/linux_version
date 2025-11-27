@@ -294,8 +294,15 @@ SIMPLE_JWT = {
 # 📁 Static & Media Files
 # ----------------------------------------
 STATIC_URL = '/static/'
-STATIC_ROOT = '/vol/static'
-MEDIA_ROOT = '/vol/media'
+STATIC_ROOT = '/data/static'
+# Try Railway volume mount path first, fallback to /app/media if volume not mounted
+import os
+# Use RAILWAY_VOLUME_MOUNT_PATH if available, otherwise default to /data
+volume_mount_path = os.getenv('RAILWAY_VOLUME_MOUNT_PATH', '/data')
+if os.path.exists(volume_mount_path):
+    MEDIA_ROOT = os.path.join(volume_mount_path, 'media')
+else:
+    MEDIA_ROOT = '/app/media'
 MEDIA_URL = '/media/'
 
 # Static files optimization

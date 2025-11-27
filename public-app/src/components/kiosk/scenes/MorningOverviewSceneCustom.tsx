@@ -7,7 +7,7 @@ import AnnouncementsWidget from '@/components/kiosk/widgets/AnnouncementsWidget'
 import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
 import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
-import AnnouncementsVotesCarousel from '@/components/kiosk/widgets/AnnouncementsVotesCarousel';
+import AnnouncementsExpensesSlider from '@/components/kiosk/widgets/AnnouncementsExpensesSlider';
 import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
 import { Building2 } from 'lucide-react';
@@ -68,20 +68,6 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
         {/* Auto-Scrolling Widgets Area - Slide Animation */}
         <div className="flex-1 bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden relative border border-purple-500/20">
-          {/* Widget Indicators - Film Strip Style */}
-          <div className="absolute top-3 right-3 z-10 flex space-x-1.5">
-            {sidebarWidgets.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  index === currentSidebarWidget 
-                    ? 'w-8 bg-purple-400 shadow-lg shadow-purple-500/50' 
-                    : 'w-2 bg-slate-600/50'
-                }`}
-              />
-            ))}
-          </div>
-
           {/* Sliding Widget Container - Smooth Film Strip Animation */}
           <div className="h-full w-full relative overflow-hidden">
             {sidebarWidgets.map((widget, index) => {
@@ -116,16 +102,16 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
 
         {/* Weather Widget - Middle (compact, with forecast) */}
-        <div className="h-[43%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+        <div className="h-[39%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
             <WeatherWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
-        {/* Announcements & Votes Carousel - Bottom */}
-        <div className="h-[24%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+        {/* Announcements, Expenses & Heating Chart Slider - Bottom */}
+        <div className="h-[28%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
-            <AnnouncementsVotesCarousel data={data} isLoading={false} error={undefined} />
+            <AnnouncementsExpensesSlider data={data} isLoading={false} error={undefined} buildingId={buildingId} />
           </div>
         </div>
 
@@ -155,6 +141,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         <div className="h-full px-5">
           <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
+      </div>
+
+      {/* Copyright Footer - Discrete lime text below news ticker */}
+      <div className="fixed bottom-0.5 left-0 right-0 h-3 flex items-center justify-center z-40">
+        <p className="text-[9px] text-lime-400/60 font-normal tracking-wide">
+          © {new Date().getFullYear()} New Concierge. All rights reserved.
+        </p>
       </div>
     </div>
   );

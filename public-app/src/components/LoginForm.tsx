@@ -36,7 +36,7 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
   return (
     <Card className="max-w-sm mx-auto mt-10 shadow-xl">
       <CardContent className="p-6 space-y-4">
-        <h2 className="text-xl font-semibold text-center">Σύνδεση</h2>
+        <h2 className="text-xl font-semibold text-center text-foreground">Σύνδεση</h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <Label htmlFor="email">Email</Label>
@@ -63,7 +63,7 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -77,4 +77,3 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
     </Card>
   );
 }
-

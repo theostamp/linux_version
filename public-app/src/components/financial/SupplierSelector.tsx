@@ -59,7 +59,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          w-full px-3 py-2 text-left border border-gray-300 rounded-md 
+          w-full px-3 py-2 text-left border border-slate-200 rounded-md 
           focus:outline-none focus:ring-2 focus:ring-blue-500
           ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white hover:bg-gray-50'}
           ${selectedSupplier ? 'text-gray-900' : 'text-gray-500'}
@@ -93,7 +93,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
 
       {/* Dropdown */}
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-auto">
           {loading ? (
             <div className="px-3 py-2 text-gray-500">Φόρτωση προμηθευτών...</div>
           ) : error ? (

@@ -16,7 +16,8 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { fetchPublicMaintenanceCounters } from '@/lib/apiPublic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Trash2 } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -233,7 +235,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
         <CardContent>
           {operationalExpensesQ.isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             </div>
           ) : expenseRows.length === 0 ? (
             <div className="text-center py-8">
@@ -680,7 +682,8 @@ function MaintenanceDashboardContent() {
     description, 
     icon, 
     color = "default",
-    href 
+    href,
+    className
   }: {
     title: string;
     value: string | number;
@@ -688,57 +691,48 @@ function MaintenanceDashboardContent() {
     icon: React.ReactNode;
     color?: "default" | "success" | "warning" | "danger";
     href?: string;
+    className?: string;
   }) => {
     const colorClasses = {
-      default: "bg-blue-50 text-blue-600",
-      success: "bg-green-50 text-green-600",
-      warning: "bg-yellow-50 text-yellow-600",
-      danger: "bg-red-50 text-red-600",
+      default: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+      success: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
+      warning: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400",
+      danger: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400",
     };
 
-    if (href) {
-      return (
-        <Link href={href} className="block hover:shadow-md transition-shadow">
-          <Card className="h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{title}</CardTitle>
-              <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-                {icon}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{value}</div>
-              {description && (
-                <p className="text-xs text-muted-foreground">{description}</p>
-              )}
-            </CardContent>
-          </Card>
-        </Link>
-      );
-    }
-
-    return (
-      <Card className="h-full">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+    const content = (
+      <div className="flex flex-col h-full justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-muted-foreground">{title}</span>
           <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
             {icon}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
+        </div>
+        <div>
+          <div className="text-2xl font-bold font-condensed">{value}</div>
           {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    );
+
+    return (
+      <BentoGridItem
+        className={cn("col-span-1", className)}
+        header={href ? (
+          <Link href={href} className="block h-full hover:opacity-80 transition-opacity">
+            {content}
+          </Link>
+        ) : content}
+      />
     );
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -795,8 +789,9 @@ function MaintenanceDashboardContent() {
 
         <TabsContent value="overview" className="space-y-6 mt-6">
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Grid - Bento Layout */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+        {/* Row 1: Key Metrics */}
         <StatCard
           title="Συνεργεία"
           value={`${stats.active_contractors}/${stats.total_contractors}`}
@@ -808,7 +803,7 @@ function MaintenanceDashboardContent() {
         <StatCard
           title="Εκκρεμείς Αποδείξεις"
           value={stats.pending_receipts}
-          description={`Αποδείξεις για επεξεργασία — Ολοκληρωμένες: ${extractCount(receiptsCompletedQ.data ?? [])}`}
+          description={`Ολοκληρωμένες: ${extractCount(receiptsCompletedQ.data ?? [])}`}
           icon={<FileText className="w-4 h-4" />}
           color="warning"
           href="/maintenance/receipts"
@@ -829,16 +824,15 @@ function MaintenanceDashboardContent() {
           color="danger"
           href="/maintenance/scheduled?priority=urgent"
         />
-      </div>
 
-      {/* Additional Stats */}
-      <div className="grid gap-4 md:grid-cols-2">
+        {/* Row 2: Financials & Quick Actions */}
         <StatCard
           title="Ολοκληρωμένα Έργα"
           value={stats.completed_maintenance}
           description="Φέτος"
           icon={<CheckCircle className="w-4 h-4" />}
           color="success"
+          className="md:col-span-2"
         />
         <StatCard
           title="Συνολικά Έξοδα Συντήρησης"
@@ -846,76 +840,68 @@ function MaintenanceDashboardContent() {
           description="Φέτος (Έργα & Συντήρηση)"
           icon={<TrendingUp className="w-4 h-4" />}
           color="default"
+          className="md:col-span-2"
         />
-      </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Γρήγορες Ενέργειες</CardTitle>
-          <CardDescription>
-            Συχνές λειτουργίες για γρήγορη πρόσβαση
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/maintenance/receipts/new">
-                <FileText className="w-6 h-6 mb-2" />
-                <span>Ανέβασμα Απόδειξης</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/maintenance/contractors">
-                <Users className="w-6 h-6 mb-2" />
-                <span>Διαχείριση Συνεργείων</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/maintenance/scheduled">
-                <Calendar className="w-6 h-6 mb-2" />
-                <span>Προγραμματισμένα Έργα</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/maintenance/reports">
-                <TrendingUp className="w-6 h-6 mb-2" />
-                <span>Reports</span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Πρόσφατη Δραστηριότητα</CardTitle>
-          <CardDescription>
-            Τελευταίες ενημερώσεις και ενέργειες
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {activityItems.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
-          ) : (
-            <div className="space-y-4">
-              {activityItems.slice(0, 3).map((item) => (
-                <div key={item.key} className="flex items-center space-x-4">
-                  <div className={`p-2 rounded-lg ${item.bgClass}`}>
-                    {item.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.text}</p>
-                    <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
-                  </div>
-                  <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
-                </div>
-              ))}
+        {/* Row 3: Quick Actions & Activity Feed */}
+        <BentoGridItem
+          className="md:col-span-2 lg:col-span-3"
+          title="Γρήγορες Ενέργειες"
+          header={
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+                <Link href="/maintenance/receipts/new">
+                  <FileText className="w-6 h-6 mb-2 text-primary" />
+                  <span>Ανέβασμα Απόδειξης</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+                <Link href="/maintenance/contractors">
+                  <Users className="w-6 h-6 mb-2 text-blue-600" />
+                  <span>Διαχείριση Συνεργείων</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+                <Link href="/maintenance/scheduled">
+                  <Calendar className="w-6 h-6 mb-2 text-indigo-600" />
+                  <span>Προγραμματισμένα Έργα</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+                <Link href="/maintenance/reports">
+                  <TrendingUp className="w-6 h-6 mb-2 text-emerald-600" />
+                  <span>Reports</span>
+                </Link>
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-2 lg:col-span-1"
+          title="Πρόσφατη Δραστηριότητα"
+          header={
+            <div className="mt-4 space-y-4">
+              {activityItems.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
+              ) : (
+                activityItems.slice(0, 3).map((item) => (
+                  <div key={item.key} className="flex items-center space-x-3 p-2 hover:bg-accent/50 rounded-lg transition-colors">
+                    <div className={`p-2 rounded-lg ${item.bgClass} shrink-0`}>
+                      {item.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.text}</p>
+                      <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
+                    </div>
+                    <Badge variant={item.badge.variant} className="shrink-0">{item.badge.label}</Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          }
+        />
+      </BentoGrid>
         </TabsContent>
       </Tabs>
     </div>

@@ -461,7 +461,7 @@ class TenantService:
                 
                 # Create apartments with full data from auto_initialization.py - Total mills: 1000
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'thodoris_st@hotmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
                     {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
                     {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
@@ -532,11 +532,11 @@ class TenantService:
                     logger.info(f"Created BuildingMembership for user {tenant_user.email} in schema {schema_name} for Βουλής 6 -Demo")
                 
                 # Create 15 apartments for Βουλής 6 -Demo with realistic Greek names
-                # First apartment has 100 mills and email theostam1966@gmail.com
+                # First apartment has 100 mills and email thodoris_st@hotmail.com
                 # Remaining 14 apartments need to sum to 900 mills total
                 # All mills (participation, heating, elevator) must sum to 1000
                 vouli_apartments_data = [
-                    {'number': '1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': '1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'thodoris_st@hotmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': '2', 'floor': 0, 'owner_name': 'Ελένη Παπαδοπούλου', 'owner_phone': '2102345678', 'owner_email': 'eleni.papadopoulou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 66, 'heating_mills': 62, 'elevator_mills': 66},
                     {'number': '3', 'floor': 0, 'owner_name': 'Νικόλαος Γεωργίου', 'owner_phone': '2103456789', 'owner_email': 'nikos.georgiou@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2104567890', 'tenant_email': 'maria.konstantinou@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 77, 'heating_mills': 68, 'elevator_mills': 77},
                     {'number': '4', 'floor': 1, 'owner_name': 'Αικατερίνη Δημητρίου', 'owner_phone': '2105678901', 'owner_email': 'katerina.dimitriou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 70, 'heating_mills': 72, 'elevator_mills': 70},

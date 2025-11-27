@@ -173,3 +173,294 @@ class IsSuperuser(BasePermission):
             request.user.is_authenticated and 
             request.user.is_superuser
         )
+
+
+# ============================================================
+# 🏢 Internal Manager Permissions
+# ============================================================
+
+class IsInternalManager(BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε εσωτερικούς διαχειριστές πολυκατοικιών.
+    
+    Ο εσωτερικός διαχειριστής έχει πρόσβαση ΜΟΝΟ στη δική του πολυκατοικία.
+    """
+    
+    def has_permission(self, request, view):
+        """Έλεγχος αν ο χρήστης είναι εσωτερικός διαχειριστής"""
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            getattr(request.user, 'is_internal_manager', False)
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        """
+        Έλεγχος πρόσβασης σε συγκεκριμένο αντικείμενο.
+        Ο εσωτερικός διαχειριστής έχει πρόσβαση μόνο σε αντικείμενα της δικής του πολυκατοικίας.
+        """
+        if not self.has_permission(request, view):
+            return False
+        
+        # Βρες το building από το αντικείμενο
+        building = getattr(obj, 'building', None)
+        if building is None:
+            # Αν το αντικείμενο είναι Building
+            if hasattr(obj, 'internal_manager'):
+                building = obj
+        
+        if building is None:
+            return False
+        
+        # Έλεγχος αν ο χρήστης είναι ο internal manager αυτού του building
+        return request.user.is_internal_manager_of(building)
+
+
+class IsInternalManagerOfBuilding(BasePermission):
+    """
+    Επιτρέπει πρόσβαση ΜΟΝΟ στον εσωτερικό διαχειριστή της συγκεκριμένης πολυκατοικίας.
+    Χρησιμοποιείται για object-level permissions.
+    """
+    
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Superusers και office managers έχουν πάντα πρόσβαση
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Βρες το building
+        building = getattr(obj, 'building', None)
+        if building is None and hasattr(obj, 'internal_manager'):
+            building = obj
+        
+        if building is None:
+            return False
+        
+        # Έλεγχος αν είναι internal manager αυτού του building
+        return user.is_internal_manager_of(building)
+
+
+class IsInternalManagerWithPaymentRights(BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε εσωτερικούς διαχειριστές που έχουν 
+    παραχωρημένο δικαίωμα καταχώρησης πληρωμών.
+    """
+    
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Superusers και office managers έχουν πάντα πρόσβαση
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Έλεγχος αν είναι internal manager
+        if not getattr(user, 'is_internal_manager', False):
+            return False
+        
+        return True  # Θα γίνει object-level έλεγχος
+    
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Superusers και office managers έχουν πάντα πρόσβαση
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Βρες το building
+        building = getattr(obj, 'building', None)
+        if building is None and hasattr(obj, 'apartment'):
+            building = getattr(obj.apartment, 'building', None)
+        if building is None and hasattr(obj, 'internal_manager'):
+            building = obj
+        
+        if building is None:
+            return False
+        
+        # Έλεγχος αν είναι internal manager ΚΑΙ έχει δικαίωμα πληρωμών
+        if not user.is_internal_manager_of(building):
+            return False
+        
+        return building.can_internal_manager_record_payments()
+
+
+class IsOfficeManagerOrInternalManager(BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε Office Managers (πλήρης) 
+    ή Internal Managers (μόνο για τη δική τους πολυκατοικία).
+    """
+    
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Office managers και superusers έχουν πλήρη πρόσβαση
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Internal managers έχουν περιορισμένη πρόσβαση
+        if getattr(user, 'is_internal_manager', False):
+            return True
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Office managers και superusers έχουν πλήρη πρόσβαση
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Internal managers έχουν πρόσβαση μόνο στη δική τους πολυκατοικία
+        if getattr(user, 'is_internal_manager', False):
+            building = getattr(obj, 'building', None)
+            if building is None and hasattr(obj, 'internal_manager'):
+                building = obj
+            
+            if building:
+                return user.is_internal_manager_of(building)
+        
+        return False
+
+
+# ============================================================
+# 📋 Assembly & Offers Permissions
+# ============================================================
+
+class CanCreateAssembly(BasePermission):
+    """
+    Επιτρέπει τη δημιουργία συνελεύσεων σε:
+    - Office Managers (πλήρης πρόσβαση)
+    - Internal Managers (μόνο για τη δική τους πολυκατοικία)
+    """
+    
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Office managers και superusers
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Internal managers
+        if getattr(user, 'is_internal_manager', False):
+            return True
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        return IsOfficeManagerOrInternalManager().has_object_permission(request, view, obj)
+
+
+class CanManageOffers(BasePermission):
+    """
+    Επιτρέπει τη διαχείριση προσφορών σε:
+    - Office Managers (πλήρης πρόσβαση)
+    - Internal Managers (δημιουργία/επεξεργασία για τη δική τους πολυκατοικία)
+    
+    Οι Residents μπορούν μόνο να βλέπουν (read-only).
+    """
+    
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Read access για όλους τους authenticated
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return True
+        
+        # Write access για office managers και internal managers
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        if getattr(user, 'is_internal_manager', False):
+            return True
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Read access
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            # Office managers βλέπουν τα πάντα
+            if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+                return True
+            
+            # Internal managers και residents βλέπουν μόνο τη δική τους πολυκατοικία
+            building = getattr(obj, 'building', None)
+            if building:
+                return user.can_access_building(building)
+            return False
+        
+        # Write access
+        return IsOfficeManagerOrInternalManager().has_object_permission(request, view, obj)
+
+
+# ============================================================
+# 🔒 Admin-Only Permissions (Dashboard, Buildings, etc.)
+# ============================================================
+
+class IsAdminLevel(BasePermission):
+    """
+    Επιτρέπει πρόσβαση ΜΟΝΟ σε admin-level χρήστες:
+    - Superusers
+    - Staff users
+    - Office Managers
+    
+    Χρησιμοποιείται για: Dashboard, Κτίρια, Διαμερίσματα, Χάρτης, Μετανάστευση
+    """
+    
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        return (
+            user.is_superuser or 
+            user.is_staff or 
+            getattr(user, 'is_office_manager', False)
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
+
+
+class CanAccessBuilding(BasePermission):
+    """
+    Ελέγχει αν ο χρήστης έχει πρόσβαση σε συγκεκριμένη πολυκατοικία.
+    
+    - Office Managers: Πρόσβαση σε όλες
+    - Internal Managers: Μόνο στη δική τους
+    - Residents: Μόνο στη δική τους
+    """
+    
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Office managers έχουν πρόσβαση σε όλα
+        if user.is_superuser or user.is_staff or getattr(user, 'is_office_manager', False):
+            return True
+        
+        # Βρες το building
+        building = obj if hasattr(obj, 'internal_manager') else getattr(obj, 'building', None)
+        
+        if building is None:
+            return False
+        
+        return user.can_access_building(building)

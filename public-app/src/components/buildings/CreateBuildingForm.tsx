@@ -11,7 +11,8 @@ import { createBuilding, updateBuilding, fetchBuildingResidents, fetchApartments
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { Building as BuildingIcon, Users, Info, ChevronDown, Loader2 } from 'lucide-react';
+import { Building as BuildingIcon, Users, Info, ChevronDown, Loader2, CreditCard } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface CreateBuildingFormProps {
@@ -89,6 +90,10 @@ export default function CreateBuildingForm({
     total_apartments: initialData?.total_apartments || initialData?.apartments_count || undefined,
     heating_system: normalizeHeatingSystem(initialData?.heating_system),
     heating_fixed_percentage: initialData?.heating_fixed_percentage || 30,
+    // Νέα πεδία για internal manager (user-based)
+    internal_manager_id: initialData?.internal_manager?.id || null,
+    internal_manager_can_record_payments: initialData?.internal_manager_can_record_payments || false,
+    // Legacy πεδία (backward compatibility - για residents χωρίς user account)
     internal_manager_name: initialData?.internal_manager_name || '',
     internal_manager_phone: initialData?.internal_manager_phone || '',
     internal_manager_apartment: initialData?.internal_manager_apartment || '',
@@ -177,12 +182,26 @@ export default function CreateBuildingForm({
   };
 
   const handleResidentSelect = (resident: BuildingResident) => {
-    setFormData(prev => ({
-      ...prev,
-      internal_manager_name: resident.name,
-      internal_manager_phone: resident.phone,
-      internal_manager_apartment: resident.apartment_number,
-    }));
+    setFormData(prev => {
+      const updates: Partial<BuildingPayload> = {
+        internal_manager_apartment: resident.apartment_number,
+      };
+      
+      // Αν ο resident έχει user account, χρησιμοποιούμε internal_manager_id
+      if (resident.user_id) {
+        updates.internal_manager_id = resident.user_id;
+        // Clear legacy fields όταν έχουμε user ID
+        updates.internal_manager_name = '';
+        updates.internal_manager_phone = '';
+      } else {
+        // Αν δεν έχει user account, χρησιμοποιούμε legacy fields
+        updates.internal_manager_id = null;
+        updates.internal_manager_name = resident.name;
+        updates.internal_manager_phone = resident.phone;
+      }
+      
+      return { ...prev, ...updates };
+    });
     setShowResidentsDropdown(false);
   };
 
@@ -220,6 +239,10 @@ export default function CreateBuildingForm({
         total_apartments: initialData.total_apartments || initialData.apartments_count || undefined,
         heating_system: normalizedHeatingSystem,
         heating_fixed_percentage: initialData.heating_fixed_percentage || 30,
+        // Νέα πεδία για internal manager (user-based)
+        internal_manager_id: initialData?.internal_manager?.id || null,
+        internal_manager_can_record_payments: initialData.internal_manager_can_record_payments || false,
+        // Legacy πεδία (backward compatibility)
         internal_manager_name: initialData.internal_manager_name || '',
         internal_manager_phone: initialData.internal_manager_phone || '',
         internal_manager_apartment: initialData.internal_manager_apartment || '',
@@ -360,6 +383,16 @@ export default function CreateBuildingForm({
         payload.apartments_count = payload.total_apartments;
       }
 
+      // Αν έχουμε internal_manager_id, καθαρίζουμε legacy fields (για consistency)
+      if (payload.internal_manager_id) {
+        payload.internal_manager_name = '';
+        payload.internal_manager_phone = '';
+      }
+      // Αν δεν έχουμε internal_manager_id, καθαρίζουμε το field (για να μην στέλνουμε null)
+      else if (!payload.internal_manager_id && !payload.internal_manager_name) {
+        payload.internal_manager_id = null;
+      }
+
       let result: Building;
 
       if (isEditMode && initialData) {
@@ -421,7 +454,7 @@ export default function CreateBuildingForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Βασικές Πληροφορίες
         </h3>
 
@@ -455,7 +488,7 @@ export default function CreateBuildingForm({
                 id="useGoogleMaps"
                 checked={useGoogleMaps}
                 onChange={(e) => setUseGoogleMaps(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded-none border-0 shadow-sm"
               />
               <Label htmlFor="useGoogleMaps" className="cursor-pointer">
                 Χρήση Google Maps για αυτόματη συμπλήρωση διεύθυνσης
@@ -674,7 +707,7 @@ export default function CreateBuildingForm({
 
       {/* Heating System */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Σύστημα Θέρμανσης
         </h3>
 
@@ -686,7 +719,7 @@ export default function CreateBuildingForm({
               name="heating_system"
               value={formData.heating_system || 'none'}
               onChange={(e) => handleInputChange('heating_system', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               disabled={loading}
             >
               <option value="none">Χωρίς Κεντρική Θέρμανση</option>
@@ -722,12 +755,12 @@ export default function CreateBuildingForm({
 
       {/* Manager Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Στοιχεία Διαχειριστή (Προαιρετικά)
         </h3>
 
         {buildingId && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-primary/10 border-0 rounded-none shadow-sm p-4 mb-4">
             <div className="flex items-start space-x-2">
               <Users className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <div>
@@ -749,16 +782,16 @@ export default function CreateBuildingForm({
                 <button
                   type="button"
                   onClick={toggleResidentsDropdown}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
                 >
-                  <span className={formData.internal_manager_name ? 'text-gray-900' : 'text-gray-500'}>
+                  <span className={formData.internal_manager_name ? 'text-foreground' : 'text-muted-foreground'}>
                     {formData.internal_manager_name || 'Επιλέξτε από ενοίκους...'}
                   </span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showResidentsDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showResidentsDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {residents.map((resident) => (
                       <button
                         key={resident.id}
@@ -816,7 +849,7 @@ export default function CreateBuildingForm({
                 <button
                   type="button"
                   onClick={toggleApartmentsDropdown}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
                 >
                   <span className={formData.internal_manager_apartment ? 'text-gray-900' : 'text-gray-500'}>
                     {formData.internal_manager_apartment || 'Επιλέξτε διαμέρισμα...'}
@@ -825,7 +858,7 @@ export default function CreateBuildingForm({
                 </button>
 
                 {showApartmentsDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {apartments.map((apartment) => (
                       <button
                         key={apartment.id}
@@ -868,7 +901,7 @@ export default function CreateBuildingForm({
               name="internal_manager_collection_schedule"
               value={formData.internal_manager_collection_schedule || ''}
               onChange={(e) => handleInputChange('internal_manager_collection_schedule', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               disabled={loading}
             >
               <option value="">Επιλέξτε ώρες είσπραξης...</option>
@@ -894,11 +927,35 @@ export default function CreateBuildingForm({
             💡 <strong>Σημείωση:</strong> Η επιλογή διαχειριστή από τη λίστα θα συμπληρώσει αυτόματα το όνομα, τηλέφωνο και διαμέρισμα.
           </div>
         )}
+
+        {/* Toggle για δικαίωμα καταχώρησης πληρωμών */}
+        {(formData.internal_manager_id || formData.internal_manager_name) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start space-x-2">
+                <CreditCard className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-amber-800 font-medium">Δικαίωμα Καταχώρησης Πληρωμών</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={formData.internal_manager_can_record_payments || false}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
+                }
+                disabled={loading}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Management Office Information - Auto-filled from user settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Στοιχεία Γραφείου Διαχείρισης
         </h3>
 
@@ -937,7 +994,7 @@ export default function CreateBuildingForm({
 
       {/* Financial System Settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+        <h3 className="text-lg font-semibold text-foreground border-b border-slate-200/50 pb-2">
           Οικονομικές Ρυθμίσεις
         </h3>
 

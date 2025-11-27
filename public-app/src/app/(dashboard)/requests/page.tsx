@@ -7,8 +7,9 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
 import type { UserRequest } from '@/types/userRequests';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Trash2, Filter, Search, X, SlidersHorizontal, MapPin, Building as BuildingIcon } from 'lucide-react';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
+import { Plus, Wrench } from 'lucide-react';
 import { deleteUserRequest } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -19,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { Button } from '@/components/ui/button';
 
 function RequestsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
@@ -80,7 +82,7 @@ function RequestsPageContent() {
 
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-6">🔧 Αιτήματα Συντήρησης</h1>
         <BuildingFilterIndicator className="mb-4" />
         <div className="space-y-4">
@@ -94,7 +96,7 @@ function RequestsPageContent() {
 
   if (isError) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <h1 className="text-2xl font-bold mb-6">🔧 Αιτήματα Συντήρησης</h1>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης αιτημάτων." />
@@ -143,65 +145,60 @@ function RequestsPageContent() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">🔧 Αιτήματα Συντήρησης</h1>
-          {selectedBuilding === null && (
-            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-              <BuildingIcon className="w-4 h-4" />
-              <span>
-                <strong>Βλέπετε όλα τα κτίρια</strong>
-              </span>
-            </div>
-          )}
-          {selectedBuilding && (
-            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-              <MapPin className="w-4 h-4" />
-              <span>
-                Τρέχον κτίριο: <span className="font-medium text-gray-800">{selectedBuilding.name}</span>
-                {selectedBuilding.address && (
-                  <span className="text-gray-500 ml-2">({selectedBuilding.address})</span>
-                )}
-              </span>
-            </div>
-          )}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🔧 Αιτήματα Συντήρησης</h1>
+          <p className="text-muted-foreground mt-1">Διαχείριση τεχνικών θεμάτων και αιτημάτων ενοίκων</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3">
           <Button
             onClick={() => setShowFilters(!showFilters)}
             variant={hasActiveFilters ? "default" : "outline"}
-            className={`flex items-center gap-2 transition-all duration-200 flex-1 sm:flex-none ${
-              hasActiveFilters 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' 
-                : 'hover:bg-gray-50 border-2 border-gray-300 hover:border-blue-400'
-            }`}
+            className="gap-2"
           >
             <SlidersHorizontal className="w-4 h-4" />
-            <span className="hidden sm:inline">Φίλτρα</span>
-            <span className="sm:hidden">🔍</span>
+            <span>Φίλτρα</span>
             {hasActiveFilters && (
-              <span className={`text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold ${
-                hasActiveFilters 
-                  ? 'bg-white text-blue-600' 
-                  : 'bg-blue-600 text-white'
-              }`}>
+              <span className="ml-1 bg-background/20 text-current px-1.5 py-0.5 rounded-full text-xs font-bold">
                 {activeFilterCount}
               </span>
             )}
           </Button>
           {canCreateRequest && (
-            <Link href="/requests/new">
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
-                ➕ Νέο Αίτημα
-              </Button>
-            </Link>
+            <Button asChild className="gap-2">
+              <Link href="/requests/new">
+                <Plus className="w-4 h-4" />
+                Νέο Αίτημα
+              </Link>
+            </Button>
           )}
         </div>
       </div>
 
-      <BuildingFilterIndicator />
+      <BuildingFilterIndicator className="mb-2" />
+
+      {/* Building Info Bar if filtering all buildings or specific */}
+      <div className="flex flex-wrap gap-2">
+        {selectedBuilding === null && (
+          <div className="flex items-center gap-2 text-sm text-primary bg-primary/10 px-3 py-2 rounded-lg border border-primary/20">
+            <BuildingIcon className="w-4 h-4" />
+            <span><strong>Βλέπετε όλα τα κτίρια</strong></span>
+          </div>
+        )}
+        {selectedBuilding && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-secondary/30 px-3 py-2 rounded-lg border border-slate-200/50">
+            <MapPin className="w-4 h-4" />
+            <span>
+              Τρέχον κτίριο: <span className="font-medium text-foreground">{selectedBuilding.name}</span>
+              {selectedBuilding.address && (
+                <span className="ml-2 opacity-70">({selectedBuilding.address})</span>
+              )}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Filters Panel */}
       <AnimatePresence>
@@ -210,40 +207,40 @@ function RequestsPageContent() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-white border rounded-lg p-4 space-y-4 overflow-hidden"
+            className="bg-card border border-slate-200/50 rounded-xl p-4 space-y-4 overflow-hidden shadow-sm"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search Filter */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   🔍 Αναζήτηση
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Αναζήτηση..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
 
               {/* Status Filter */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   📊 Κατάσταση
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary h-[42px]"
                 >
                   <option value="">Όλες οι καταστάσεις</option>
                   {REQUEST_STATUSES.map((status) => (
                     <option key={status.value} value={status.value}>
-                      {status.icon} {status.label}
+                      {status.label}
                     </option>
                   ))}
                 </select>
@@ -251,18 +248,18 @@ function RequestsPageContent() {
 
               {/* Priority Filter */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   ⚡ Προτεραιότητα
                 </label>
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary h-[42px]"
                 >
                   <option value="">Όλες οι προτεραιότητες</option>
                   {PRIORITY_LEVELS.map((priority) => (
                     <option key={priority.value} value={priority.value}>
-                      {priority.icon} {priority.label}
+                      {priority.label}
                     </option>
                   ))}
                 </select>
@@ -270,18 +267,18 @@ function RequestsPageContent() {
 
               {/* Category Filter */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-sm font-semibold text-muted-foreground">
                   🏷️ Κατηγορία
                 </label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary h-[42px]"
                 >
                   <option value="">Όλες οι κατηγορίες</option>
                   {MAINTENANCE_CATEGORIES.map((category) => (
                     <option key={category.value} value={category.value}>
-                      {category.icon} {category.label}
+                      {category.label}
                     </option>
                   ))}
                 </select>
@@ -290,50 +287,30 @@ function RequestsPageContent() {
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-slate-200/50">
                 <div className="flex flex-wrap gap-2">
                   {searchTerm && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">
                       🔍 "{searchTerm}"
-                      <button
-                        onClick={() => setSearchTerm('')}
-                        className="ml-1 hover:text-blue-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={() => setSearchTerm('')} className="ml-1 hover:text-blue-600 dark:hover:text-blue-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {statusFilter && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">
                       📊 {REQUEST_STATUSES.find(s => s.value === statusFilter)?.label}
-                      <button
-                        onClick={() => setStatusFilter('')}
-                        className="ml-1 hover:text-green-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={() => setStatusFilter('')} className="ml-1 hover:text-green-600 dark:hover:text-green-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {priorityFilter && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium">
                       ⚡ {PRIORITY_LEVELS.find(p => p.value === priorityFilter)?.label}
-                      <button
-                        onClick={() => setPriorityFilter('')}
-                        className="ml-1 hover:text-yellow-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={() => setPriorityFilter('')} className="ml-1 hover:text-yellow-600 dark:hover:text-yellow-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {categoryFilter && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm font-medium">
                       🏷️ {MAINTENANCE_CATEGORIES.find(c => c.value === categoryFilter)?.label}
-                      <button
-                        onClick={() => setCategoryFilter('')}
-                        className="ml-1 hover:text-purple-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={() => setCategoryFilter('')} className="ml-1 hover:text-purple-600 dark:hover:text-purple-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                 </div>
@@ -345,102 +322,68 @@ function RequestsPageContent() {
 
       {/* Results Summary */}
       {hasActiveFilters && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4"
-        >
-          <p className="text-sm text-blue-800">
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+          <p className="text-sm text-primary font-medium">
             📊 Εμφανίζονται <strong>{filteredRequests.length}</strong> από <strong>{requests.length}</strong> αιτήματα
             {searchTerm && ` που περιέχουν "${searchTerm}"`}
           </p>
-        </motion.div>
+        </div>
       )}
 
-      {/* No Results */}
-      {isSuccess && filteredRequests.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center text-gray-500 space-y-4 py-12"
-        >
+      {isSuccess && filteredRequests.length === 0 ? (
+        <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           {hasActiveFilters ? (
             <>
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="text-lg font-medium">Δεν βρέθηκαν αιτήματα με τα επιλεγμένα φίλτρα.</p>
-              <p className="text-sm text-gray-400">Δοκιμάστε να αλλάξετε τα κριτήρια αναζήτησης.</p>
-              <Button onClick={clearFilters} variant="outline" size="lg" className="mt-4">
+              <Search className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="font-medium mb-4">Δεν βρέθηκαν αιτήματα με τα επιλεγμένα φίλτρα.</p>
+              <Button onClick={clearFilters} variant="outline">
                 <X className="w-4 h-4 mr-2" />
                 Καθαρισμός φίλτρων
               </Button>
             </>
           ) : (
             <>
-              <div className="text-6xl mb-4">📋</div>
-              <p className="text-lg font-medium">Δεν υπάρχουν διαθέσιμα αιτήματα.</p>
+              <Wrench className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="font-medium mb-4">Δεν υπάρχουν διαθέσιμα αιτήματα.</p>
               {canCreateRequest && (
-                <p className="text-sm text-gray-400">
-                  Δημιουργήστε το πρώτο αίτημα για να ξεκινήσετε.
-                </p>
+                <Button asChild>
+                  <Link href="/requests/new">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Δημιουργία πρώτου αιτήματος
+                  </Link>
+                </Button>
               )}
             </>
           )}
-        </motion.div>
+        </div>
+      ) : (
+        <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+          {filteredRequests.map((request: UserRequest) => (
+            <BentoGridItem
+              key={request.id}
+              className="md:col-span-1"
+              header={
+                <RequestItemContent 
+                  request={request}
+                  selectedBuilding={selectedBuilding}
+                  canDelete={!!canDelete}
+                  deletingId={deletingId}
+                  handleDelete={handleDelete}
+                />
+              }
+            />
+          ))}
+        </BentoGrid>
       )}
-
-      {/* Requests List */}
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="visible"
-        className="space-y-4"
-      >
-        {filteredRequests.map((request: UserRequest) => (
-          <motion.div
-            key={request.id}
-            variants={item}
-            className="relative"
-          >
-            {!selectedBuilding && (request as { building_name?: string }).building_name && (
-              <div className="absolute top-3 left-3 z-10">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-medium shadow-sm">
-                  🏢 {(request as { building_name?: string }).building_name}
-                </span>
-              </div>
-            )}
-            
-            {canDelete && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDelete(request);
-                }}
-                disabled={deletingId === request.id}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 z-10"
-                title="Διαγραφή αιτήματος"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-
-            <div className={`${!selectedBuilding && (request as { building_name?: string }).building_name ? 'pt-8' : ''}`}>
-              <RequestCard request={request} />
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
       
       {/* Floating Action Button */}
       {canCreateRequest && (
         <Link 
           href="/requests/new"
-          className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-50"
+          className="fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-lg transition-transform hover:scale-110 z-50 md:hidden"
           title="Νέο Αίτημα"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-6 h-6" />
         </Link>
       )}
     </div>

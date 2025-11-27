@@ -10,9 +10,10 @@ import type { DashboardOverview } from '@/hooks/useDashboardData';
 interface HeroSectionProps {
   data?: DashboardOverview;
   loading?: boolean;
+  showWelcome?: boolean;
 }
 
-export function HeroSection({ data, loading = false }: HeroSectionProps) {
+export function HeroSection({ data, loading = false, showWelcome = true }: HeroSectionProps) {
   const { user } = useAuth();
   
   // Determine if balances are positive or negative for display
@@ -22,14 +23,16 @@ export function HeroSection({ data, loading = false }: HeroSectionProps) {
   return (
     <div className="mb-8">
       {/* Welcome Text */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Καλώς ήρθατε{user?.first_name ? `, ${user.first_name}` : ''}!
-        </h1>
-        <p className="text-gray-600">
-          Επισκόπηση όλων των κτιρίων και δραστηριοτήτων σας
-        </p>
-      </div>
+      {showWelcome && (
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Καλώς ήρθατε{user?.first_name ? `, ${user.first_name}` : ''}!
+          </h1>
+          <p className="text-muted-foreground">
+            Επισκόπηση όλων των κτιρίων και δραστηριοτήτων σας
+          </p>
+        </div>
+      )}
       
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -2039,6 +2039,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
         """
         Λήψη aggregated overview για όλα τα κτίρια του χρήστη
         Endpoint: /api/financial/dashboard/overview/
+        Query params:
+        - building_id (optional): Φιλτράρισμα για συγκεκριμένο κτίριο
         """
         try:
             from django.db.models import Sum, Count, Q
@@ -2055,6 +2057,9 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
+            # Get building_id filter from query params
+            building_id = request.query_params.get('building_id')
+            
             # Get all buildings accessible to user (using same logic as BuildingViewSet)
             if user.is_superuser or user.is_staff:
                 buildings = Building.objects.all()
@@ -2069,6 +2074,22 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     buildings = Building.objects.filter(buildingmembership__resident=user).distinct()
             
             buildings = buildings.distinct()
+            
+            # Apply building_id filter if provided
+            if building_id:
+                try:
+                    building_id = int(building_id)
+                    buildings = buildings.filter(id=building_id)
+                    if not buildings.exists():
+                        return Response(
+                            {'error': 'Building not found or access denied'}, 
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                except (ValueError, TypeError):
+                    return Response(
+                        {'error': 'Invalid building_id'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             
             if not buildings.exists():
                 return Response({

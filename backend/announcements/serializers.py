@@ -10,11 +10,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    project = serializers.PrimaryKeyRelatedField(
-        queryset=Project.objects.all(),
-        required=False,
-        allow_null=True
-    )
     projects = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Project.objects.all(),
@@ -24,7 +19,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     days_remaining = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
     author_name = serializers.SerializerMethodField()
-    project_title = serializers.SerializerMethodField()
     projects_titles = serializers.SerializerMethodField()
 
     class Meta:
@@ -38,8 +32,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'author',
             'author_name',
             'building',
-            'project',
-            'project_title',
             'projects',
             'projects_titles',
             'file',
@@ -53,7 +45,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'days_remaining',
             'status_display',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'author', 'author_name', 'project_title', 'projects_titles']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'author', 'author_name', 'projects_titles']
 
     def validate_building(self, value):
         # If building is None (global announcement), allow it for staff users
@@ -107,9 +99,6 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
     def get_author_name(self, obj):
         return obj.author.get_full_name() or obj.author.email
-    
-    def get_project_title(self, obj):
-        return obj.project.title if obj.project else None
     
     def get_projects_titles(self, obj):
         return [p.title for p in obj.projects.all()]

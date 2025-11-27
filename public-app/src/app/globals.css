@@ -1,45 +1,115 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* -- Light Mode Palette (Clean Slate) -- */
   
-  /* Popover/Dropdown colors */
-  --popover: #ffffff;
-  --popover-foreground: #171717;
+  /* Background: Slate 50 (#F8FAFC) */
+  --background: 210 40% 98%;
   
-  /* Accent colors */
-  --accent: #f4f4f5;
-  --accent-foreground: #171717;
-  
-  /* Muted colors */
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  
-  /* Border and input */
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #1abcbd;
-  
-  /* Primary color - fancy turquoise */
-  --primary: #1abcbd;
-  --primary-foreground: #171717;
-  --primary-hover: #026878;
+  /* Foreground: Slate 900 (#0F172A) for strong text */
+  --foreground: 222 47% 11%;
 
-  /* Secondary color */
-  --secondary: #f4f4f5;
-  --secondary-foreground: #171717;
+  /* Primary: Indigo 600 (#4F46E5) */
+  --primary: 249 72% 59%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 249 72% 65%;
 
-  /* Destructive color */
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
+  /* Secondary: Slate 200 (#E2E8F0) */
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 222 47% 11%;
+
+  /* Muted: Slate 100 (#F1F5F9) */
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  /* Accent: Indigo 100 (#E0E7FF) for hover states */
+  --accent: 244 86% 94%;
+  --accent-foreground: 249 72% 59%;
+
+  /* Borders: Slate 200 */
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 249 72% 59%;
+
+  /* Semantic Colors */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
   
-  /* Card colors */
-  --card: #ffffff;
-  --card-foreground: #171717;
-  
+  /* Success: Teal 600 (#0D9488) */
+  --success: 176 84% 32%;
+  --success-foreground: 0 0% 100%;
+
+  /* Popovers/Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
   /* Radius */
-  --radius: 0;
+  --radius: 0.5rem;
+  --radius-sm: 0.3rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.8rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(15 23 42 / 0.1), 0 1px 2px -1px rgb(15 23 42 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* -- Dark Mode Palette (Deep Slate) -- */
+
+    /* Background: Slate 950 (#020617) - Slightly darker than 900 for depth */
+    --background: 222 47% 5%; 
+    
+    /* Foreground: Slate 50 (#F8FAFC) */
+    --foreground: 210 40% 98%;
+
+    /* Primary: Indigo 500 (#6366F1) - Vibrant on dark */
+    --primary: 239 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    --primary-hover: 239 84% 72%;
+
+    /* Secondary: Slate 800 (#1E293B) */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted: Slate 800 (#1E293B) */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent: Slate 800 for hover, or slight Indigo tint */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Borders: Slate 800 (#1E293B) - Subtle lines */
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 239 84% 67%;
+
+    /* Cards: Slate 900 (#0F172A) - Lighter than background to pop */
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Destructive */
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Success: Teal 500 (#14B8A6) */
+    --success: 173 80% 40%;
+    --success-foreground: 0 0% 100%;
+    
+    /* Shadows - slightly stronger for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  }
 }
 
 @theme inline {
@@ -47,6 +117,7 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-destructive: var(--destructive);
@@ -62,59 +133,29 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-condensed: var(--font-ubuntu-condensed);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+  
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
 }
 
-/* Headings use Ubuntu Condensed */
+/* Headings font inheritance */
 h1, h2, h3, h4 {
-  font-family: var(--font-ubuntu-condensed), sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    
-    /* Popover/Dropdown colors - dark mode */
-    --popover: #18181b;
-    --popover-foreground: #ededed;
-    
-    /* Accent colors - dark mode */
-    --accent: #27272a;
-    --accent-foreground: #ededed;
-    
-    /* Muted colors - dark mode */
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    
-    /* Border and input - dark mode */
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #1abcbd;
-    
-    /* Primary - dark mode */
-    --primary: #1abcbd;
-    --primary-foreground: #171717;
-    --primary-hover: #026878;
-
-    /* Secondary - dark mode */
-    --secondary: #27272a;
-    --secondary-foreground: #ededed;
-
-    /* Destructive - dark mode */
-    --destructive: #7f1d1d;
-    --destructive-foreground: #ededed;
-
-    /* Card colors - dark mode */
-    --card: #18181b;
-    --card-foreground: #ededed;
-  }
+  font-family: inherit;
+  font-weight: 600;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

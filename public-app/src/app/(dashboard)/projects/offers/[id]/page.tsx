@@ -133,7 +133,7 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
 
   if (isError || !offer) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 p-6">
+      <div className="space-y-6">
         <BackButton href="/projects/offers" label="Επιστροφή στις Προσφορές" size="sm" />
         <Card>
           <CardContent className="pt-6">
@@ -151,7 +151,7 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">

@@ -197,11 +197,14 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
     """
     Serializer for updating office management details
     """
+    office_logo = serializers.ImageField(required=False, allow_null=True)
+    
     class Meta:
         model = CustomUser
         fields = [
             'office_name', 
-            'office_phone', 
+            'office_phone',
+            'office_phone_emergency',
             'office_address', 
             'office_logo',
             'office_bank_name',
@@ -218,7 +221,11 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
     
     def validate_office_logo(self, value):
         """Validate logo file"""
+        import logging
+        logger = logging.getLogger('django')
+        
         if value:
+            logger.info(f"[OfficeDetailsSerializer] Validating logo file: {value.name}, size: {value.size}, type: {getattr(value, 'content_type', 'unknown')}")
             # Check file size (2MB limit)
             if value.size > 2 * 1024 * 1024:  # 2MB in bytes
                 raise serializers.ValidationError("Το αρχείο πρέπει να είναι μικρότερο από 2MB.")
@@ -227,8 +234,35 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
             allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
             if value.content_type not in allowed_types:
                 raise serializers.ValidationError("Επιτρέπονται μόνο αρχεία τύπου JPEG, PNG ή SVG.")
+        else:
+            logger.info("[OfficeDetailsSerializer] No logo file provided in validation")
         
         return value
+    
+    def save(self, **kwargs):
+        """Override save to log logo saving"""
+        import logging
+        logger = logging.getLogger('django')
+        
+        logo_file = self.validated_data.get('office_logo')
+        if logo_file:
+            logger.info(f"[OfficeDetailsSerializer] Saving logo file: {logo_file.name}, size: {logo_file.size}")
+        else:
+            logger.info("[OfficeDetailsSerializer] No logo file in validated_data, keeping existing logo")
+        
+        instance = super().save(**kwargs)
+        
+        if logo_file:
+            logger.info(f"[OfficeDetailsSerializer] Logo saved successfully. New logo URL: {instance.office_logo.url if instance.office_logo else 'None'}")
+        
+        return instance
+    
+    def to_representation(self, instance):
+        """Override to return logo URL instead of file path"""
+        representation = super().to_representation(instance)
+        if instance.office_logo:
+            representation['office_logo'] = instance.office_logo.url
+        return representation
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -309,9 +343,29 @@ class UserInvitationCreateSerializer(serializers.ModelSerializer):
     """
     Serializer για τη δημιουργία νέων προσκλήσεων
     """
+    assigned_role = serializers.ChoiceField(
+        choices=['resident', 'internal_manager', 'manager', 'staff'],
+        required=False,
+        allow_null=True,
+        help_text='Ρόλος που θα ανατεθεί στον χρήστη (resident, internal_manager, manager, staff)'
+    )
+    
     class Meta:
         model = UserInvitation
         fields = ('email', 'first_name', 'last_name', 'invitation_type', 'building_id', 'assigned_role')
+    
+    def validate(self, data):
+        """Validation για building_id και assigned_role"""
+        building_id = data.get('building_id')
+        assigned_role = data.get('assigned_role')
+        
+        # Αν assigned_role είναι internal_manager, building_id είναι υποχρεωτικό
+        if assigned_role == 'internal_manager' and not building_id:
+            raise serializers.ValidationError({
+                'building_id': 'Το building_id είναι υποχρεωτικό όταν ο ρόλος είναι internal_manager'
+            })
+        
+        return data
     
     def validate_email(self, value):
         """Έλεγχος αν το email υπάρχει ήδη"""

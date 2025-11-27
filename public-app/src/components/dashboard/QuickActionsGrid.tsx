@@ -76,16 +76,16 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
   if (loading) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Γρήγορες Ενέργειες</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Γρήγορες Ενέργειες</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="rounded-xl p-4 border bg-gray-100 animate-pulse"
+              className="rounded-none p-4 border-0 shadow-sm bg-muted animate-pulse"
             >
-              <div className="h-10 bg-gray-300 rounded mb-3" />
-              <div className="h-8 w-12 bg-gray-300 rounded mb-1" />
-              <div className="h-4 w-20 bg-gray-300 rounded" />
+              <div className="h-10 bg-muted-foreground/20 rounded-none mb-3" />
+              <div className="h-8 w-12 bg-muted-foreground/20 rounded-none mb-1" />
+              <div className="h-4 w-20 bg-muted-foreground/20 rounded-none" />
             </div>
           ))}
         </div>
@@ -95,7 +95,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
   
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <h2 className="text-xl font-semibold text-foreground mb-4">
         🚀 Γρήγορες Ενέργειες
       </h2>
       
@@ -105,14 +105,14 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
             key={action.key}
             onClick={() => router.push(action.link)}
             className={cn(
-              "cursor-pointer rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-105 border",
+              "cursor-pointer rounded-none p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-105 border-0",
               action.bgColor,
               action.borderColor
             )}
           >
             {/* Icon & Arrow */}
             <div className="flex items-center justify-between mb-3">
-              <div className={cn("p-2 rounded-lg bg-white/50", action.textColor)}>
+              <div className={cn("p-2 rounded-none bg-card/50 shadow-sm", action.textColor)}>
                 {action.icon}
               </div>
               <ArrowRight

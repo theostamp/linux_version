@@ -1,14 +1,15 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Phone, Building2, MapPin, Clock } from 'lucide-react';
+import { Phone, Building2, MapPin, Clock, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '@/lib/api';
+import { getOfficeLogoUrl } from '@/lib/utils';
 
 export default function ManagementOfficeWidget({ data, isLoading, error }: BaseWidgetProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [logoError, setLogoError] = useState(false);
 
   // Update time every second
   useEffect(() => {
@@ -40,24 +41,43 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
   const building = data?.building_info;
   const currentDate = currentTime;
 
+  // Debug logging
+  useEffect(() => {
+    const logoUrl = getOfficeLogoUrl(building?.office_logo);
+    console.log('[ManagementOfficeWidget] Building info:', {
+      office_logo_raw: building?.office_logo,
+      office_logo_url: logoUrl,
+      management_office_name: building?.management_office_name,
+      management_office_phone: building?.management_office_phone,
+      management_office_email: building?.management_office_email,
+      management_office_address: building?.management_office_address,
+      management_office_phone_emergency: building?.management_office_phone_emergency,
+    });
+  }, [building]);
+
   return (
     <div className="h-full flex items-center justify-between px-6 py-3">
       {/* Left side - Management Office Info */}
       <div className="flex items-center space-x-6">
         {/* Logo or placeholder */}
-        {building?.office_logo ? (
-          <div className="w-20 h-20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-            <img 
-              src={building.office_logo.startsWith('http') ? building.office_logo : `${API_BASE_URL.replace('/api', '')}${building.office_logo.startsWith('/') ? building.office_logo : `/${building.office_logo}`}`}
-              alt="Office Logo" 
-              className="w-full h-full object-contain"
-            />
-          </div>
-        ) : (
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
-            <Building2 className="w-10 h-10 text-white" />
-          </div>
-        )}
+        {(() => {
+          const logoUrl = getOfficeLogoUrl(building?.office_logo);
+          return logoUrl && !logoError ? (
+            <div className="w-20 h-20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden bg-white/10">
+              <img 
+                src={logoUrl}
+                alt="Office Logo" 
+                className="w-full h-full object-contain"
+                onLoad={() => setLogoError(false)}
+                onError={() => setLogoError(true)}
+              />
+            </div>
+          ) : (
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
+              <Building2 className="w-10 h-10 text-white" />
+            </div>
+          );
+        })()}
         
         {/* Management Office Details */}
         <div className="flex flex-col space-y-2">

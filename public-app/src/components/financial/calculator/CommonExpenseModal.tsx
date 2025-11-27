@@ -40,7 +40,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Building, PieChart, Receipt, BarChart, FileText, Calendar } from 'lucide-react';
 import { CommonExpenseModalProps } from './types/financial';
 import { useCommonExpenseCalculator } from './hooks/useCommonExpenseCalculator';
-import { api, API_BASE_URL, fetchBuilding } from '@/lib/api';
+import { api, fetchBuilding } from '@/lib/api';
+import { getOfficeLogoUrl } from '@/lib/utils';
 import { TraditionalViewTab } from './tabs/TraditionalViewTab';
 import { ExportTab } from './tabs/ExportTab';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
@@ -71,6 +72,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     managementOfficeLogo,
   } = props;
 
+  // Logo error handling
+  const [logoError, setLogoError] = React.useState(false);
+  
   // State for expense sheet month selection
   const [expenseSheetMonth, setExpenseSheetMonth] = React.useState(() => {
     // Default to current month
@@ -163,15 +167,20 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             <div className="flex items-center justify-between mb-3">
                 {/* Αριστερά: Logo + Γραφείο */}
                 <div className="flex items-center gap-3">
-                {managementOfficeLogo && (
-                      <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border-2 border-blue-200">
-                    <img 
-                      src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
-                      alt="Office Logo" 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                )}
+                {(() => {
+                  const logoUrl = getOfficeLogoUrl(managementOfficeLogo);
+                  return logoUrl && !logoError ? (
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border-2 border-blue-200">
+                      <img 
+                        src={logoUrl}
+                        alt="Office Logo" 
+                        className="w-full h-full object-contain"
+                        onLoad={() => setLogoError(false)}
+                        onError={() => setLogoError(true)}
+                      />
+                    </div>
+                  ) : null;
+                })()}
                 <div>
                       <h2 className="text-base font-bold text-blue-900">
                     {managementOfficeName || 'Γραφείο Διαχείρισης'}
@@ -248,13 +257,18 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
           <div className="flex items-center justify-between">
             {/* Αριστερά: Στοιχεία Γραφείου */}
             <div className="flex items-center gap-3">
-              {managementOfficeLogo && (
-                <img
-                  src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
-                  alt="Office Logo"
-                  className="w-14 h-14 object-contain"
-                />
-              )}
+              {(() => {
+                const logoUrl = getOfficeLogoUrl(managementOfficeLogo);
+                return logoUrl && !logoError ? (
+                  <img
+                    src={logoUrl}
+                    alt="Office Logo"
+                    className="w-14 h-14 object-contain"
+                    onLoad={() => setLogoError(false)}
+                    onError={() => setLogoError(true)}
+                  />
+                ) : null;
+              })()}
               <div>
                 <h1 className="text-lg font-bold text-gray-900">
                   {managementOfficeName || 'Γραφείο Διαχείρισης'}

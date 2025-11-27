@@ -64,7 +64,7 @@ export default function NewVoteClient() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
+    <div className="mt-20 p-6 bg-card rounded-none shadow-md">
       <h1 className="text-2xl font-bold mb-4 text-center">🗳️ Νέα Ψηφοφορία</h1>
       {error && <ErrorMessage message={error} />}
 
