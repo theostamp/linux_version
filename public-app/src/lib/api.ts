@@ -1966,7 +1966,16 @@ export async function deleteInvitation(invitationId: string | number): Promise<v
 // ============================================================================
 
 export async function fetchUsers(): Promise<User[]> {
-  return await apiGet<User[]>('/users/');
+  const response = await apiGet<User[] | { results: User[]; count?: number }>('/users/');
+  // Handle both array response and paginated response from DRF
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (response && typeof response === 'object' && 'results' in response) {
+    return response.results;
+  }
+  console.warn('[fetchUsers] Unexpected response format:', response);
+  return [];
 }
 
 export type UpdateUserPayload = {
