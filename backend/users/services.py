@@ -564,12 +564,23 @@ class InvitationService:
             building_id: Building ID (optional, preferred)
         """
         # Έλεγχος αν υπάρχει ήδη χρήστης με αυτό το email
-        if User.objects.filter(email=email).exists():
-            raise ValueError("Χρήστης με αυτό το email υπάρχει ήδη.")
+        existing_user = User.objects.filter(email=email).first()
+        if existing_user:
+            # Επιτρέπουμε επαναποστολή αν ο χρήστης δεν έχει επιβεβαιώσει το email ή δεν είναι ενεργός
+            email_verified = getattr(existing_user, 'email_verified', True)
+            is_active = getattr(existing_user, 'is_active', True)
+            
+            if email_verified and is_active:
+                raise ValueError("Χρήστης με αυτό το email υπάρχει ήδη και είναι ενεργός.")
+            
+            # Αν ο χρήστης δεν έχει επιβεβαιώσει ή δεν είναι ενεργός, διαγράφουμε τον χρήστη
+            # για να μπορέσει να ξαναγίνει η εγγραφή μέσω νέας πρόσκλησης
+            existing_user.delete()
         
-        # Έλεγχος για pending invitations
-        if UserInvitation.objects.filter(email=email, status='pending').exists():
-            raise ValueError("Υπάρχει ήδη ενεργή πρόσκληση για αυτό το email.")
+        # Έλεγχος για pending invitations - ακυρώνουμε τις παλιές
+        old_invitations = UserInvitation.objects.filter(email=email, status='pending')
+        if old_invitations.exists():
+            old_invitations.update(status='cancelled')
         
         # Determine building_id from either parameter
         final_building_id = building_id or (building.id if building else None)
