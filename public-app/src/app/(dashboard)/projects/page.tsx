@@ -579,52 +579,49 @@ function ProjectsDashboardContent() {
             </div>
           }
         />
+      </BentoGrid>
 
-        {/* Projects List - Full Width Item */}
-        <BentoGridItem
-          id="projects-list"
-          className="md:col-span-4"
-          header={
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold">Όλα τα Έργα</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {filteredProjects.length} από {projects.length} έργα
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 bg-secondary/30 p-1 rounded-lg">
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Grid3x3 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  {(isAdmin || isManager) && (
-                    <Button asChild>
-                      <Link href="/projects/new">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Νέο Έργο
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Existing Filter & List Logic - Simplified Wrapper */}
-              <div className="bg-card rounded-xl">
+      {/* Main Content Area - Projects List */}
+      <div id="projects-list" className="bg-background rounded-xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold">Όλα τα Έργα</h2>
+            <p className="text-sm text-muted-foreground">
+              {filteredProjects.length} από {projects.length} έργα
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-secondary/30 p-1 rounded-lg">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 w-8 p-0"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 w-8 p-0"
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </Button>
+            </div>
+            {(isAdmin || isManager) && (
+              <Button asChild>
+                <Link href="/projects/new">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Νέο Έργο
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Filter & List Logic */}
+        <div className="bg-card rounded-xl border border-slate-200/50 p-6 shadow-sm">
           {/* Filters */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-wrap gap-4">
@@ -977,9 +974,8 @@ function ProjectsDashboardContent() {
           )}
         </div>
       </div>
-      }
-      />
-      </BentoGrid>
+      </div>
+
       
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>

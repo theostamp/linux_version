@@ -221,12 +221,10 @@ const BuildingsPageContent = () => {
             icon={<TrendingUp className="w-5 h-5" />}
             color="info"
           />
+        </BentoGrid>
 
-          {/* Filters & Content */}
-          <BentoGridItem
-            className="md:col-span-3"
-            header={
-              <div className="space-y-6">
+        {/* Main Content Area - Filters & Buildings List */}
+        <div className="space-y-6">
                 {/* Filters Bar */}
                 <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
                   <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -366,9 +364,7 @@ const BuildingsPageContent = () => {
                   </div>
                 )}
               </div>
-            }
-          />
-        </BentoGrid>
+
       </div>
     </div>
   );
