@@ -441,8 +441,8 @@ const ApartmentsPageContent = () => {
 
       <BuildingFilterIndicator />
 
-      {/* Bento Grid Layout */}
-      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+      {/* Bento Grid Layout - Stats Only */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4 mb-8">
         
         {/* Stats Row */}
         <StatCard
@@ -473,12 +473,10 @@ const ApartmentsPageContent = () => {
           icon={<Grid className="w-5 h-5" />}
           color="default"
         />
+      </BentoGrid>
 
-        {/* Filters & Content */}
-        <BentoGridItem
-          className="md:col-span-4"
-          header={
-            <div className="space-y-6">
+      {/* Main Content Area - Filters & Table */}
+      <div className="space-y-6">
               {/* Filters Bar */}
               <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
                 <div className="flex flex-col gap-4">
@@ -898,9 +896,7 @@ const ApartmentsPageContent = () => {
                 </>
               )}
             </div>
-          }
-        />
-      </BentoGrid>
+
 
       {/* Edit Tenant Modal */}
       <EditTenantModal
