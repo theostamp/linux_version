@@ -647,29 +647,52 @@ class InvitationService:
         
         # Δημιουργία building membership αν υπάρχει building
         if invitation.building_id:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Creating building membership for user {user.email} in building {invitation.building_id}")
+            
             try:
                 from buildings.models import Building, BuildingMembership
+                from django.db import connection
+                
+                # Βεβαιωνόμαστε ότι είμαστε στο σωστό tenant schema
+                # Αν ο χρήστης έχει tenant, χρησιμοποιούμε αυτό το schema
+                if user.tenant:
+                    logger.info(f"Switching to tenant schema: {user.tenant.schema_name}")
+                    connection.set_tenant(user.tenant)
+                
                 building = Building.objects.get(id=invitation.building_id)
+                logger.info(f"Found building: {building.name} (ID: {building.id})")
                 
                 # Χρήση assigned_role για building membership role (ή default 'resident')
                 membership_role = invitation.assigned_role or 'resident'
                 
-                BuildingMembership.objects.create(
-                    resident=user,
-                    building=building,
-                    role=membership_role
-                )
+                # Έλεγχος αν υπάρχει ήδη membership
+                existing_membership = BuildingMembership.objects.filter(
+                    resident=user, 
+                    building=building
+                ).first()
+                
+                if existing_membership:
+                    logger.info(f"Membership already exists for user {user.email} in building {building.name}")
+                else:
+                    BuildingMembership.objects.create(
+                        resident=user,
+                        building=building,
+                        role=membership_role
+                    )
+                    logger.info(f"Created building membership: user={user.email}, building={building.name}, role={membership_role}")
                 
                 # Αν ο ρόλος είναι internal_manager, ορίζουμε building.internal_manager
                 if invitation.assigned_role == 'internal_manager':
                     building.internal_manager = user
                     building.save(update_fields=['internal_manager'])
+                    logger.info(f"Set {user.email} as internal manager of {building.name}")
                     
+            except Building.DoesNotExist:
+                logger.error(f"Building with ID {invitation.building_id} not found in current tenant schema")
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to create building membership: {e}")
-                pass  # Building might not exist in current tenant
+                logger.error(f"Failed to create building membership: {e}", exc_info=True)
         
         # Ενημέρωση invitation
         invitation.accept(user)
