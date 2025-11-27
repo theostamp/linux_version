@@ -115,6 +115,7 @@ SHARED_APPS = [
     'django.contrib.admin', # ✅ μεταφέρθηκε εδώ
     'django.contrib.auth',
     'users',
+    'office_staff',         # Office Staff Management (shared - relates to users)
     'billing',              # Subscription & Billing System (shared across tenants)
 
     'corsheaders',

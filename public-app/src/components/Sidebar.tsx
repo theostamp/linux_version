@@ -56,8 +56,8 @@ interface NavigationGroup {
   links: NavigationLink[];
 }
 
-// User role type - includes new internal_manager role
-type UserRoleType = 'superuser' | 'staff' | 'manager' | 'internal_manager' | 'resident';
+// User role type - includes new office_staff role
+type UserRoleType = 'superuser' | 'staff' | 'manager' | 'office_staff' | 'internal_manager' | 'resident';
 
 // Grouped navigation links with categories
 // Roles explanation:
@@ -76,28 +76,28 @@ const navigationGroups: NavigationGroup[] = [
         href: '/financial',
         label: 'Οικονομικά',
         icon: <Euro className="w-4 h-4" />,
-        // Internal Manager και Resident μπορούν να βλέπουν (read-only)
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Office Staff, Internal Manager και Resident μπορούν να βλέπουν
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/maintenance',
         label: 'Υπηρεσίες & Δαπάνες',
         icon: <Wrench className="w-4 h-4" />,
-        // Internal Manager μπορεί να βλέπει, Resident μόνο read
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Office Staff, Internal Manager μπορεί να βλέπει, Resident μόνο read
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/projects',
         label: 'Προσφορές & Έργα',
         icon: <FileText className="w-4 h-4" />,
-        // Internal Manager μπορεί να διαχειρίζεται, Resident μόνο read
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Office Staff, Internal Manager μπορεί να διαχειρίζεται, Resident μόνο read
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/documents',
         label: 'Παραστατικά',
         icon: <FileText className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
         isBeta: true,
       },
     ]
@@ -120,33 +120,33 @@ const navigationGroups: NavigationGroup[] = [
         href: '/announcements',
         label: 'Ανακοινώσεις',
         icon: <Megaphone className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/votes',
         label: 'Ψηφοφορίες',
         icon: <CheckSquare className="w-4 h-4" />,
-        // Internal Manager μπορεί να δημιουργεί, Resident μπορεί να ψηφίζει
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Office Staff, Internal Manager μπορεί να δημιουργεί, Resident μπορεί να ψηφίζει
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/requests',
         label: 'Αιτήματα',
         icon: <ClipboardList className="w-4 h-4" />,
-        // Residents μπορούν να δημιουργούν αιτήματα
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        // Office Staff μπορεί να διαχειρίζεται, Residents μπορούν να δημιουργούν
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/chat',
         label: 'Chat',
         icon: <MessageCircle className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
       {
         href: '/notifications',
         label: 'Ειδοποιήσεις',
         icon: <Send className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
     ]
   },
@@ -183,13 +183,13 @@ const navigationGroups: NavigationGroup[] = [
         href: '/kiosk-management',
         label: 'Kiosk Management',
         icon: <Settings className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/kiosk',
         label: 'Kiosk Display',
         icon: <Monitor className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'resident', 'staff', 'superuser'],
       },
     ]
   },
@@ -205,6 +205,13 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Διαχείριση Κτιρίων',
         icon: <Building2 className="w-4 h-4" />,
         // ADMIN-ONLY: Κτίρια
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/office-staff',
+        label: 'Υπάλληλοι Γραφείου',
+        icon: <UserCheck className="w-4 h-4" />,
+        // ADMIN-ONLY: Υπάλληλοι Γραφείου
         roles: ['manager', 'staff', 'superuser'],
       },
       {
@@ -260,7 +267,7 @@ const navigationGroups: NavigationGroup[] = [
         href: '/suppliers',
         label: 'Προμηθευτές',
         icon: <Truck className="w-4 h-4" />,
-        roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+        roles: ['manager', 'office_staff', 'internal_manager', 'staff', 'superuser'],
       },
     ]
   },

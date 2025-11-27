@@ -37,6 +37,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     class SystemRole(models.TextChoices):
         ADMIN = 'admin', _('Admin')  # Superusers only
         OFFICE_MANAGER = 'manager', _('Office Manager')  # Γραφείο διαχείρισης (Tenant owner)
+        OFFICE_STAFF = 'office_staff', _('Office Staff')  # Υπάλληλος γραφείου διαχείρισης
         INTERNAL_MANAGER = 'internal_manager', _('Internal Manager')  # Εσωτερικός διαχειριστής πολυκατοικίας
         RESIDENT = 'resident', _('Resident')  # Ένοικος/Ιδιοκτήτης
 
@@ -293,6 +294,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.role == self.SystemRole.OFFICE_MANAGER
 
     @property
+    def is_office_staff(self):
+        """Ελέγχει αν ο χρήστης είναι υπάλληλος γραφείου"""
+        return self.role == self.SystemRole.OFFICE_STAFF
+
+    @property
     def is_admin(self):
         return self.role == self.SystemRole.ADMIN
 
@@ -310,6 +316,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def is_admin_level(self):
         """Ελέγχει αν ο χρήστης έχει δικαιώματα admin (superuser, staff ή office manager)"""
         return self.is_superuser or self.is_staff or self.is_office_manager
+
+    @property
+    def is_office_level(self):
+        """Ελέγχει αν ο χρήστης ανήκει στο γραφείο (manager ή staff)"""
+        return self.is_office_manager or self.is_office_staff
 
     # ------- Helper ιδιότητες για ρόλους ανά πολυκατοικία --------
     def is_manager_of(self, building):

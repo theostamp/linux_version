@@ -106,6 +106,9 @@ urlpatterns = [
     # Admin endpoints
     path('api/admin/', include('admin.urls')),
 
+    # Office Staff Management
+    path('api/office/', include('office_staff.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]
