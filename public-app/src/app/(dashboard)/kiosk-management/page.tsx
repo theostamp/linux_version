@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 
 export default function KioskManagementPage() {
   return (

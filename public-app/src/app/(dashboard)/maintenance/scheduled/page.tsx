@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { StatCard } from '@/components/ui/stat-card';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';

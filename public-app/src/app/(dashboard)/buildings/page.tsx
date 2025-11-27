@@ -15,6 +15,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
+import { StatCard } from '@/components/ui/stat-card';
 
 const BuildingsPageContent = () => {
   const {
