@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Plus, Building2, Megaphone } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
