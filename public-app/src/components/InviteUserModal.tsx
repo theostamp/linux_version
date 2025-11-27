@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createInvitation, CreateInvitationPayload } from '@/lib/api';
+import { useState, useEffect, useMemo } from 'react';
+import { createInvitation, CreateInvitationPayload, fetchApartments, ApartmentList } from '@/lib/api';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,13 +17,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home, User } from 'lucide-react';
 
 type InviteUserModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultBuildingId?: number;
   defaultEmail?: string;
+};
+
+// Τύπος για επιλογή από dropdown διαμερισμάτων
+type ApartmentContact = {
+  apartmentId: number;
+  apartmentNumber: string;
+  type: 'owner' | 'tenant';
+  name: string;
+  email: string;
 };
 
 export default function InviteUserModal({ open, onOpenChange, defaultBuildingId, defaultEmail }: InviteUserModalProps) {
@@ -33,11 +42,51 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(defaultBuildingId || null);
   const [assignedRole, setAssignedRole] = useState<'resident' | 'internal_manager' | 'manager' | 'staff' | null>('resident');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedApartmentContact, setSelectedApartmentContact] = useState<string>('manual');
   const queryClient = useQueryClient();
   const { buildings, selectedBuilding } = useBuilding();
 
   // Υπολογισμός αν το κτίριο είναι υποχρεωτικό (για resident και internal_manager)
   const isBuildingRequired = assignedRole === 'resident' || assignedRole === 'internal_manager';
+
+  // Fetch apartments για το επιλεγμένο κτίριο
+  const { data: apartments = [], isLoading: isLoadingApartments } = useQuery({
+    queryKey: ['apartments', selectedBuildingId],
+    queryFn: () => fetchApartments(selectedBuildingId!),
+    enabled: !!selectedBuildingId && open,
+  });
+
+  // Δημιουργία λίστας επαφών από τα διαμερίσματα (ιδιοκτήτες + ένοικοι με email)
+  const apartmentContacts = useMemo((): ApartmentContact[] => {
+    const contacts: ApartmentContact[] = [];
+    
+    apartments.forEach((apt) => {
+      // Προσθήκη ιδιοκτήτη αν έχει email
+      if (apt.owner_email && apt.owner_email.trim()) {
+        contacts.push({
+          apartmentId: apt.id,
+          apartmentNumber: apt.number,
+          type: 'owner',
+          name: apt.owner_name || 'Ιδιοκτήτης',
+          email: apt.owner_email.trim(),
+        });
+      }
+      
+      // Προσθήκη ενοίκου αν έχει email (και είναι διαφορετικό από τον ιδιοκτήτη)
+      if (apt.tenant_email && apt.tenant_email.trim() && apt.tenant_email !== apt.owner_email) {
+        contacts.push({
+          apartmentId: apt.id,
+          apartmentNumber: apt.number,
+          type: 'tenant',
+          name: apt.tenant_name || 'Ένοικος',
+          email: apt.tenant_email.trim(),
+        });
+      }
+    });
+    
+    // Ταξινόμηση κατά αριθμό διαμερίσματος
+    return contacts.sort((a, b) => a.apartmentNumber.localeCompare(b.apartmentNumber, 'el', { numeric: true }));
+  }, [apartments]);
 
   // Update form when defaultEmail or defaultBuildingId changes
   // Αυτόματη επιλογή του τρέχοντος κτιρίου αν δεν υπάρχει defaultBuildingId
@@ -58,11 +107,44 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       setEmail('');
       setFirstName('');
       setLastName('');
+      setSelectedApartmentContact('manual');
       // Επαναφορά στο τρέχον κτίριο ή default
       setSelectedBuildingId(defaultBuildingId || selectedBuilding?.id || null);
       setAssignedRole('resident');
     }
   }, [open, defaultEmail, defaultBuildingId, selectedBuilding?.id]);
+
+  // Όταν αλλάζει η επιλογή διαμερίσματος, ενημέρωσε το email και το όνομα
+  const handleApartmentContactChange = (value: string) => {
+    setSelectedApartmentContact(value);
+    
+    if (value === 'manual') {
+      // Χειροκίνητη εισαγωγή - καθαρισμός
+      setEmail('');
+      setFirstName('');
+      setLastName('');
+      return;
+    }
+    
+    // Βρες την επαφή από το value (format: "apartmentId-type")
+    const [apartmentIdStr, type] = value.split('-');
+    const contact = apartmentContacts.find(
+      c => c.apartmentId.toString() === apartmentIdStr && c.type === type
+    );
+    
+    if (contact) {
+      setEmail(contact.email);
+      // Προσπάθεια διαχωρισμού ονόματος/επωνύμου
+      const nameParts = contact.name.trim().split(' ');
+      if (nameParts.length >= 2) {
+        setFirstName(nameParts[0]);
+        setLastName(nameParts.slice(1).join(' '));
+      } else {
+        setFirstName(contact.name);
+        setLastName('');
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,13 +242,77 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Επιλογή από διαμέρισμα ή χειροκίνητη εισαγωγή */}
+          {assignedRole === 'resident' && selectedBuildingId && (
+            <div>
+              <Label htmlFor="apartmentContact" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Επιλογή από Διαμέρισμα
+              </Label>
+              <Select
+                value={selectedApartmentContact}
+                onValueChange={handleApartmentContactChange}
+                disabled={submitting || isLoadingApartments}
+              >
+                <SelectTrigger id="apartmentContact">
+                  <SelectValue placeholder={isLoadingApartments ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα ή εισάγετε χειροκίνητα"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">
+                    <span className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      Χειροκίνητη εισαγωγή
+                    </span>
+                  </SelectItem>
+                  {apartmentContacts.length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
+                        Διαμερίσματα με email
+                      </div>
+                      {apartmentContacts.map((contact) => (
+                        <SelectItem 
+                          key={`${contact.apartmentId}-${contact.type}`} 
+                          value={`${contact.apartmentId}-${contact.type}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Home className="h-4 w-4 text-blue-500" />
+                            <span className="font-medium">Δ.{contact.apartmentNumber}</span>
+                            <span className="text-gray-500">-</span>
+                            <span>{contact.name}</span>
+                            <span className="text-xs text-gray-400">
+                              ({contact.type === 'owner' ? 'Ιδιοκτήτης' : 'Ένοικος'})
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {apartmentContacts.length === 0 && !isLoadingApartments && (
+                    <div className="px-2 py-1.5 text-xs text-gray-500 italic">
+                      Δεν βρέθηκαν διαμερίσματα με email
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-gray-500">
+                Επιλέξτε διαμέρισμα για αυτόματη συμπλήρωση στοιχείων
+              </p>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="email">Email *</Label>
             <Input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                // Αν ο χρήστης πληκτρολογεί, επαναφορά σε χειροκίνητη εισαγωγή
+                if (selectedApartmentContact !== 'manual') {
+                  setSelectedApartmentContact('manual');
+                }
+              }}
               placeholder="user@example.com"
               required
               disabled={submitting}
