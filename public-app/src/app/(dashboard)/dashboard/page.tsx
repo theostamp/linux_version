@@ -21,6 +21,8 @@ import {
   DashboardErrorBoundary 
 } from '@/components/dashboard';
 
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+
 function DashboardContent() {
   const { user, isLoading: authLoading, isAuthReady } = useAuth();
   const { selectedBuilding, buildings } = useBuilding();
@@ -28,10 +30,7 @@ function DashboardContent() {
   const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements(selectedBuilding?.id);
   
   // Use the new centralized dashboard data hook
-  // Fetch data for all buildings (overall summary)
   const { data: dashboardData, isLoading: dashboardLoading, isError, error: dashboardError } = useDashboardData();
-  
-  // Fetch data for selected building only
   const { data: buildingDashboardData, isLoading: buildingDashboardLoading } = useDashboardData(selectedBuilding?.id);
 
   const isLoading = authLoading || buildingsLoading || announcementsLoading || dashboardLoading;
@@ -49,103 +48,112 @@ function DashboardContent() {
 
   if (isError && dashboardError) {
     console.error('Dashboard error:', dashboardError);
-    // Don't block the entire page for dashboard errors - show partial data
   }
 
   const effectiveBuildings = buildingsData || buildings || [];
 
   return (
-    <main>
-      {/* Section 1: Όλα τα Κτίρια - Overall Summary */}
-      <div className="mb-12">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Όλα τα Κτίρια</h2>
-          <p className="text-muted-foreground">Συγκεντρωτικά στοιχεία από όλα τα κτίρια</p>
+    <main className="p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2 mb-8">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight font-condensed">
+            {selectedBuilding ? selectedBuilding.name : 'Επισκόπηση Χαρτοφυλακίου'}
+          </h2>
+          <p className="text-muted-foreground">
+            {selectedBuilding ? selectedBuilding.address : 'Συγκεντρωτικά στοιχεία για όλα τα κτίρια'}
+          </p>
         </div>
-
-        {/* Hero Section with Key Metrics - All Buildings */}
-        <HeroSection data={dashboardData} loading={dashboardLoading} />
-
-        {/* Financial Overview - All Buildings */}
-        <FinancialOverview data={dashboardData} loading={dashboardLoading} />
+        {/* Optional: Add Date Range Picker or other global actions here */}
       </div>
 
-      {/* Section 2: Επιλεγμένο Κτίριο - Selected Building Only */}
-      {selectedBuilding && (
-        <div className="mb-12 border-t-4 border-primary pt-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-foreground mb-2">{selectedBuilding.name}</h2>
-            <p className="text-muted-foreground">{selectedBuilding.address}</p>
-          </div>
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+        
+        {/* 1. Hero Metrics (Full Width) */}
+        <BentoGridItem
+          className="md:col-span-3"
+          header={
+            <HeroSection 
+              data={selectedBuilding ? buildingDashboardData : dashboardData} 
+              loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
+              showWelcome={!selectedBuilding}
+            />
+          }
+        />
 
-          {/* Hero Section with Key Metrics - Selected Building */}
-          <HeroSection data={buildingDashboardData} loading={buildingDashboardLoading} showWelcome={false} />
+        {/* 2. Financial Overview (Main Chart) - 2 Columns */}
+        <BentoGridItem
+          className="md:col-span-2 md:row-span-2"
+          title="Οικονομική Εικόνα"
+          description="Έσοδα και Έξοδα τρέχοντος έτους"
+          header={
+            <FinancialOverview 
+              data={selectedBuilding ? buildingDashboardData : dashboardData} 
+              loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading} 
+            />
+          }
+        />
 
-          {/* Financial Overview - Selected Building */}
-          <FinancialOverview data={buildingDashboardData} loading={buildingDashboardLoading} />
-        </div>
-      )}
+        {/* 3. Quick Actions (Side Panel) - 1 Column */}
+        <BentoGridItem
+          className="md:col-span-1"
+          title="Γρήγορες Ενέργειες"
+          header={
+            <QuickActionsGrid 
+              data={dashboardData} 
+              loading={dashboardLoading} 
+            />
+          }
+        />
 
-      {/* Quick Actions Grid */}
-      <QuickActionsGrid data={dashboardData} loading={dashboardLoading} />
+        {/* 4. Activity Feed & Health - Mixed Columns */}
+        <BentoGridItem
+          className="md:col-span-1"
+          title="Πρόσφατη Δραστηριότητα"
+          header={
+            <ActivityFeed 
+              data={dashboardData} 
+              loading={dashboardLoading} 
+            />
+          }
+        />
+        
+        {/* 5. Health Cards */}
+        <BentoGridItem
+          className="md:col-span-3"
+          title="Κατάσταση Κτιρίων"
+          header={
+            <BuildingHealthCards 
+              data={dashboardData} 
+              loading={dashboardLoading} 
+            />
+          }
+        />
 
-      {/* Activity Feed */}
-      <ActivityFeed data={dashboardData} loading={dashboardLoading} />
+        {/* 6. Announcements (if any) */}
+        {announcements.length > 0 && (
+          <BentoGridItem
+            className="md:col-span-3"
+            title="Ανακοινώσεις"
+            header={
+              <AnnouncementsCarousel announcements={announcements} />
+            }
+          />
+        )}
+      </BentoGrid>
 
-      {/* Building Health Cards */}
-      <BuildingHealthCards data={dashboardData} loading={dashboardLoading} />
-
-      {/* Announcements Carousel */}
-      {announcements.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-4">📢 Πρόσφατες Ανακοινώσεις</h2>
-          <AnnouncementsCarousel announcements={announcements} />
-        </div>
-      )}
-
-      {/* Buildings List - Fallback for when no dashboard data */}
-      {effectiveBuildings.length > 0 && !dashboardData?.buildings?.length && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-4">🏢 Τα Κτίριά σας</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {effectiveBuildings.map((building) => (
-              <Link
-                key={building.id}
-                href={`/buildings/${building.id}`}
-                className="block border-0 rounded-lg p-6 shadow-md hover:shadow-lg transition-all duration-200 bg-card group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-md flex items-center justify-center group-hover:bg-primary/20 transition-colors shadow-sm">
-                    <Building className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Διαμερίσματα</p>
-                    <p className="text-2xl font-bold text-foreground">{building.total_apartments || 0}</p>
-                  </div>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">{building.name}</h3>
-                <p className="text-sm text-muted-foreground truncate">{building.address}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
+      {/* Empty State / New User */}
       {effectiveBuildings.length === 0 && (
-        <div className="bg-card rounded-lg shadow-lg p-8">
-          <div className="text-center">
-            <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-foreground mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
-            <p className="text-muted-foreground mb-6">
-              Ξεκινήστε προσθέτοντας το πρώτο σας κτίριο για να αρχίσετε τη διαχείριση.
-            </p>
-            <Link href="/buildings/new">
-              <Button>
-                Προσθήκη Κτιρίου
-              </Button>
-            </Link>
-          </div>
+        <div className="mt-8 bg-card rounded-xl shadow-lg p-8 text-center border border-dashed border-border">
+          <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
+          <p className="text-muted-foreground mb-6">
+            Ξεκινήστε προσθέτοντας το πρώτο σας κτίριο για να αρχίσετε τη διαχείριση.
+          </p>
+          <Link href="/buildings/new">
+            <Button size="lg" className="shadow-lg">
+              Προσθήκη Κτιρίου
+            </Button>
+          </Link>
         </div>
       )}
     </main>

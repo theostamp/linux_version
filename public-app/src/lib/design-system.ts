@@ -2,7 +2,7 @@
  * NewConcierge Design System
  * 
  * Unified design tokens for consistent UI/UX across the application
- * Created for dashboard refactoring - Phase 1
+ * UPDATED: Refactored to match Slate 900 / Indigo Theme
  */
 
 // ============================================================================
@@ -10,116 +10,116 @@
 // ============================================================================
 
 export const colors = {
-  // Primary Brand Colors
+  // Primary Brand Colors - INDIGO (was Blue)
   primary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6',  // Main blue
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
+    50: '#eef2ff',
+    100: '#e0e7ff',
+    200: '#c7d2fe',
+    300: '#a5b4fc',
+    400: '#818cf8',
+    500: '#6366f1',  // Main Indigo
+    600: '#4f46e5',
+    700: '#4338ca',
+    800: '#3730a3',
+    900: '#312e81',
   },
   
-  // Semantic Colors - Success
+  // Semantic Colors - Success - TEAL (was Green)
   success: {
-    50: '#f0fdf4',
-    100: '#dcfce7',
-    200: '#bbf7d0',
-    300: '#86efac',
-    400: '#4ade80',
-    500: '#22c55e',  // Main green
-    600: '#16a34a',
-    700: '#15803d',
-    800: '#166534',
-    900: '#14532d',
+    50: '#f0fdfa',
+    100: '#ccfbf1',
+    200: '#99f6e4',
+    300: '#5eead4',
+    400: '#2dd4bf',
+    500: '#14b8a6',  // Main Teal
+    600: '#0d9488',
+    700: '#0f766e',
+    800: '#115e59',
+    900: '#134e4a',
   },
   
-  // Semantic Colors - Warning
+  // Semantic Colors - Warning - AMBER (unchanged)
   warning: {
-    50: '#fefce8',
-    100: '#fef9c3',
-    200: '#fef08a',
-    300: '#fde047',
-    400: '#facc15',
-    500: '#eab308',  // Main yellow
-    600: '#ca8a04',
-    700: '#a16207',
-    800: '#854d0e',
-    900: '#713f12',
+    50: '#fffbeb',
+    100: '#fef3c7',
+    200: '#fde68a',
+    300: '#fcd34d',
+    400: '#fbbf24',
+    500: '#f59e0b',
+    600: '#d97706',
+    700: '#b45309',
+    800: '#92400e',
+    900: '#78350f',
   },
   
-  // Semantic Colors - Danger/Error
+  // Semantic Colors - Danger/Error - ROSE (unchanged)
   danger: {
-    50: '#fef2f2',
-    100: '#fee2e2',
-    200: '#fecaca',
-    300: '#fca5a5',
-    400: '#f87171',
-    500: '#ef4444',  // Main red
-    600: '#dc2626',
-    700: '#b91c1c',
-    800: '#991b1b',
-    900: '#7f1d1d',
+    50: '#fff1f2',
+    100: '#ffe4e6',
+    200: '#fecdd3',
+    300: '#fda4af',
+    400: '#fb7185',
+    500: '#f43f5e',
+    600: '#e11d48',
+    700: '#be123c',
+    800: '#9f1239',
+    900: '#881337',
   },
   
-  // Semantic Colors - Info
+  // Semantic Colors - Info - SKY (unchanged but mapped to match Slate)
   info: {
     50: '#f0f9ff',
     100: '#e0f2fe',
     200: '#bae6fd',
     300: '#7dd3fc',
     400: '#38bdf8',
-    500: '#0ea5e9',  // Main cyan
+    500: '#0ea5e9',
     600: '#0284c7',
     700: '#0369a1',
     800: '#075985',
     900: '#0c4a6e',
   },
   
-  // Special - Purple for features
+  // Special - Violet (for accents)
   purple: {
-    50: '#faf5ff',
-    100: '#f3e8ff',
-    200: '#e9d5ff',
-    300: '#d8b4fe',
-    400: '#c084fc',
-    500: '#a855f7',  // Main purple
-    600: '#9333ea',
-    700: '#7e22ce',
-    800: '#6b21a8',
-    900: '#581c87',
+    50: '#f5f3ff',
+    100: '#ede9fe',
+    200: '#ddd6fe',
+    300: '#c4b5fd',
+    400: '#a78bfa',
+    500: '#8b5cf6',
+    600: '#7c3aed',
+    700: '#6d28d9',
+    800: '#5b21b6',
+    900: '#4c1d95',
   },
   
-  // Special - Orange for pending/attention
+  // Special - Orange (unchanged)
   orange: {
     50: '#fff7ed',
     100: '#ffedd5',
     200: '#fed7aa',
     300: '#fdba74',
     400: '#fb923c',
-    500: '#f97316',  // Main orange
+    500: '#f97316',
     600: '#ea580c',
     700: '#c2410c',
     800: '#9a3412',
     900: '#7c2d12',
   },
   
-  // Neutral/Gray Scale
+  // Neutral/Gray Scale - SLATE (Cool Gray)
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b',
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#0f172a', // The requested Slate 900
   },
 } as const;
 
@@ -129,8 +129,8 @@ export const colors = {
 
 export const typography = {
   fontFamily: {
-    sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-    mono: ['Fira Code', 'Consolas', 'Monaco', 'monospace'],
+    sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+    mono: ['var(--font-fira-code)', 'monospace'],
   },
   
   fontSize: {
@@ -189,13 +189,13 @@ export const spacing = {
 
 export const shadows = {
   none: 'none',
-  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-  base: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-  '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+  sm: '0 1px 2px 0 rgb(15 23 42 / 0.05)',
+  base: '0 1px 3px 0 rgb(15 23 42 / 0.1), 0 1px 2px 0 rgb(15 23 42 / 0.06)',
+  md: '0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -1px rgb(15 23 42 / 0.06)',
+  lg: '0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -2px rgb(15 23 42 / 0.05)',
+  xl: '0 20px 25px -5px rgb(15 23 42 / 0.1), 0 10px 10px -5px rgb(15 23 42 / 0.04)',
+  '2xl': '0 25px 50px -12px rgb(15 23 42 / 0.25)',
+  inner: 'inset 0 2px 4px 0 rgb(15 23 42 / 0.06)',
 } as const;
 
 // ============================================================================
@@ -391,5 +391,3 @@ export const designSystem = {
 } as const;
 
 export default designSystem;
-
-

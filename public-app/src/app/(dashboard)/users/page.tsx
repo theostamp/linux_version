@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import InviteUserModal from '@/components/InviteUserModal';
 import InvitationsList from '@/components/InvitationsList';
 import UsersList from '@/components/UsersList';
-import { Button } from '@/components/ui/button';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { UserPlus, Mail, Users } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 

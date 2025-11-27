@@ -7,8 +7,9 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
 import type { Vote } from '@/lib/api';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
+import { Plus, Vote as VoteIcon } from 'lucide-react';
 import { deleteVote } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -147,79 +148,65 @@ function VotesPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🗳️ Ψηφοφορίες</h1>
+          <p className="text-muted-foreground mt-1">Συμμετοχή στη λήψη αποφάσεων</p>
+        </div>
         {canCreateVote && (
-          <Link href="/votes/new">
-            <Button>
-              ➕ Νέα Ψηφοφορία
-            </Button>
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/votes/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Νέα Ψηφοφορία
+            </Link>
+          </Button>
         )}
       </div>
 
-      <BuildingFilterIndicator />
+      <BuildingFilterIndicator className="mb-2" />
 
-      {isSuccess && votes.length === 0 && (
-        <div className="text-center text-gray-500 space-y-2">
-          <p>Δεν υπάρχουν διαθέσιμες ψηφοφορίες.</p>
+      {isSuccess && votes.length === 0 ? (
+        <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+          <VoteIcon className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+          <p className="font-medium mb-4">Δεν υπάρχουν διαθέσιμες ψηφοφορίες.</p>
           {canCreateVote && (
-            <p className="text-sm text-gray-400">
-              Δημιουργήστε την πρώτη ψηφοφορία για να ξεκινήσετε.
-            </p>
+            <Button asChild>
+              <Link href="/votes/new">Δημιουργία πρώτης ψηφοφορίας</Link>
+            </Button>
           )}
         </div>
+      ) : (
+        <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+          {votes.map((vote: Vote) => {
+            const active = isActive(vote.start_date, vote.end_date);
+            return (
+              <BentoGridItem
+                key={vote.id}
+                className="md:col-span-1"
+                header={
+                  <VoteItemContent 
+                    vote={vote} 
+                    active={active} 
+                    selectedBuilding={selectedBuilding}
+                    canDelete={!!canDelete}
+                    deletingId={deletingId}
+                    handleDelete={handleDelete}
+                  />
+                }
+              />
+            );
+          })}
+        </BentoGrid>
       )}
-
-      {votes.map((vote: Vote) => {
-        const active = isActive(vote.start_date, vote.end_date);
-        return (
-          <div
-            key={vote.id}
-            className="p-4 border rounded-lg shadow-sm bg-white space-y-1 relative"
-          >
-            {/* Building badge - show only when viewing all buildings */}
-            {!selectedBuilding && (vote as { building_name?: string }).building_name && (
-              <div className="absolute top-3 left-3 z-10">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-medium shadow-sm">
-                  🏢 {(vote as { building_name?: string }).building_name}
-                </span>
-              </div>
-            )}
-            
-            {canDelete && (
-              <button
-                onClick={() => handleDelete(vote)}
-                disabled={deletingId === vote.id}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 z-10"
-                title="Διαγραφή ψηφοφορίας"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-            <div className={`${!selectedBuilding && (vote as { building_name?: string }).building_name ? 'pt-8' : ''}`}>
-              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 pr-10">{vote.title}</h2>
-              <p className="text-sm text-gray-600">{vote.description}</p>
-              <p className="text-xs text-gray-500">
-                Έναρξη: {vote.start_date} • Λήξη: {vote.end_date}
-              </p>
-
-              <VoteStatus voteId={vote.id} isActive={active} />
-            </div>
-          </div>
-        );
-      })}
       
-      {/* Floating Action Button for mobile/better UX */}
+      {/* Floating Action Button for mobile */}
       {canCreateVote && (
         <Link 
           href="/votes/new"
-          className="fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-none shadow-lg transition-all duration-200 hover:scale-110"
+          className="md:hidden fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-lg transition-transform hover:scale-110 z-50"
           title="Νέα Ψηφοφορία"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-6 h-6" />
         </Link>
       )}
     </div>

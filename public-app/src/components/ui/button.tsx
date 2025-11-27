@@ -9,14 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md',
-        outline: 'border-0 bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md',
+        default: 'bg-gradient-to-b from-primary/90 to-primary text-primary-foreground hover:from-primary hover:to-primary/90 shadow-md border-t border-white/20 shadow-[0px_2px_0px_0px_rgba(255,255,255,0.1)_inset]',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/50',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md border-t border-white/20',
+        outline: 'border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline shadow-none',
         ghost: 'hover:bg-accent hover:text-accent-foreground shadow-none',
-        success: 'bg-success text-success-foreground hover:bg-success/90 shadow-md',
-        warning: 'bg-warning text-warning-foreground hover:bg-[hsl(24,96%,38%)] shadow-md',
+        success: 'bg-gradient-to-b from-success/90 to-success text-success-foreground hover:from-success hover:to-success/90 shadow-md border-t border-white/20',
+        warning: 'bg-gradient-to-b from-warning/90 to-warning text-warning-foreground hover:from-warning hover:to-warning/90 shadow-md border-t border-white/20',
       },
       size: {
         xs: 'h-8 px-3 text-xs',

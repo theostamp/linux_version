@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid'; // Import BentoGrid
 import { 
   CommonExpenseCalculatorNew, 
   ExpenseForm, 
@@ -525,13 +526,37 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       
 
       
-      {/* Main Content - Two Column Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      {/* Main Content - Bento Grid Layout */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-6">
+        
+        {/* Right Column - Building Overview (Now First/Top on Mobile, Side on Desktop) */}
+        <BentoGridItem
+          className="md:col-span-1 md:row-span-2 h-fit sticky top-4"
+          title={
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              <span className="text-lg font-bold">Επισκόπηση</span>
+            </div>
+          }
+          description="Συνολική οικονομική εικόνα του κτιρίου"
+          header={
+            <BuildingOverviewSection 
+              ref={buildingOverviewRef}
+              buildingId={activeBuildingId}
+              selectedMonth={selectedMonth}
+              onReserveFundAmountChange={setReserveFundMonthlyAmount}
+            />
+          }
+        />
+
         {/* Left Column - Main Tabs Content */}
-        <div className="xl:col-span-3">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
-        {/* Enhanced Navigation with Cards - Sticky with Transparent Background */}
-        <div className="w-full sticky top-[10px] z-10 pb-4">
+        <BentoGridItem
+          className="md:col-span-2 md:row-span-2"
+          header={
+            <div className="space-y-6">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
+                {/* Navigation Tabs - Modern Style */}
+                <div className="w-full sticky top-[10px] z-10 pb-4 bg-background/80 backdrop-blur-sm pt-2 -mt-2">
           {/* Mobile: Scrollable horizontal menu */}
           <div className="block lg:hidden">
             <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
@@ -842,20 +867,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         
 
-          </Tabs>
-        </div>
-
-        {/* Right Column - Building Overview Section Only */}
-        <div className="xl:col-span-1 space-y-6 sticky top-4 h-fit">
-          {/* Building Overview Section - Moved to Right Column */}
-          <BuildingOverviewSection 
-            ref={buildingOverviewRef}
-            buildingId={activeBuildingId}
-            selectedMonth={selectedMonth}
-            onReserveFundAmountChange={setReserveFundMonthlyAmount}
-          />
-        </div>
-      </div>
+              </Tabs>
+            </div>
+          }
+        />
+      </BentoGrid>
       
       {/* Expense Form Modal */}
       <ConditionalRender permission="expense_manage">

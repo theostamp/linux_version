@@ -1365,43 +1365,98 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       
 
 
-      {/* Enhanced Action Menu */}
-      <Card className="border-blue-200 bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg text-blue-800">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Send className="h-5 w-5 text-blue-600" />
-              </div>
-              Ενέργειες Κοινοχρήστων
-          </CardTitle>
-            <div className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded-full">
-              {Object.keys(state.shares).length} Διαμερίσματα
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Primary Action - Common Expense Sheet */}
-          <div className="mb-6">
+      {/* Enhanced Floating Action Button using Popover */}
+      <div className="flex justify-end mb-4">
+        <Popover>
+          <PopoverTrigger asChild>
             <Button 
-              onClick={() => setShowCommonExpenseModal(true)}
-              className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
+              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-lg hover:shadow-indigo-500/25 border-0 rounded-full px-6 py-6 h-auto transition-all duration-300 transform hover:-translate-y-1"
             >
-              <div className="flex items-center justify-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
+                  <Send className="h-5 w-5" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-base">Ενέργειες Κοινοχρήστων</div>
+                  <div className="text-xs text-indigo-100 font-medium opacity-90">
+                    {Object.keys(state.shares).length} Διαμερίσματα
+                  </div>
+                </div>
+                <ChevronDown className="h-4 w-4 ml-2 opacity-70" />
+              </div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-2" align="end" sideOffset={8}>
+            <div className="grid gap-2">
+              <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b border-border/50 mb-1">
+                Διαθέσιμες Ενέργειες
+              </div>
+              
+              <Button 
+                onClick={() => setShowCommonExpenseModal(true)}
+                variant="ghost"
+                className="justify-start h-auto py-3 px-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 group"
+              >
+                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg mr-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                   <Eye className="h-5 w-5" />
                 </div>
                 <div className="text-left">
-                  <div>Φύλλο Κοινοχρήστων</div>
-                  <div className="text-xs text-blue-100 font-normal">
-                    Λεπτομερής προβολή
-                  </div>
+                  <div className="font-semibold text-foreground">Προβολή Φύλλου</div>
+                  <div className="text-xs text-muted-foreground">Λεπτομερής ανάλυση & εκτύπωση</div>
                 </div>
-              </div>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              </Button>
+
+              <Button 
+                onClick={() => handleExport('pdf')}
+                variant="ghost"
+                className="justify-start h-auto py-3 px-3 hover:bg-rose-50 dark:hover:bg-rose-900/20 group"
+              >
+                <div className="p-2 bg-rose-100 text-rose-600 rounded-lg mr-3 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Εξαγωγή PDF</div>
+                  <div className="text-xs text-muted-foreground">Αποθήκευση ως αρχείο PDF</div>
+                </div>
+              </Button>
+
+              <Button 
+                onClick={() => handleExport('excel')}
+                variant="ghost"
+                className="justify-start h-auto py-3 px-3 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 group"
+              >
+                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                  <Download className="h-5 w-5" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-foreground">Εξαγωγή Excel</div>
+                  <div className="text-xs text-muted-foreground">Για επεξεργασία δεδομένων</div>
+                </div>
+              </Button>
+
+              <div className="my-1 border-t border-border/50" />
+
+              <Button 
+                onClick={handleIssue}
+                disabled={state.isIssuing}
+                className="justify-center w-full bg-primary text-primary-foreground shadow-md hover:shadow-lg mt-1"
+              >
+                {state.isIssuing ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Έκδοση...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Οριστική Έκδοση
+                  </>
+                )}
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
 
 
 

@@ -6,7 +6,8 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useProjects, useProjectMutations } from '@/hooks/useProjects';
 import { useOffers } from '@/hooks/useOffers';
 import { getRelativeTimeEl } from '@/lib/date';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -286,7 +287,8 @@ function ProjectsDashboardContent() {
     description, 
     icon, 
     color = "default",
-    href 
+    href,
+    className
   }: {
     title: string;
     value: string | number;
@@ -294,12 +296,13 @@ function ProjectsDashboardContent() {
     icon: React.ReactNode;
     color?: "default" | "success" | "warning" | "danger";
     href?: string;
+    className?: string;
   }) => {
     const colorClasses = {
-      default: "bg-blue-50 text-blue-600",
-      success: "bg-green-50 text-green-600",
-      warning: "bg-yellow-50 text-yellow-600",
-      danger: "bg-red-50 text-red-600",
+      default: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+      success: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
+      warning: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400",
+      danger: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400",
     };
 
     const handleClick = (e: React.MouseEvent) => {
@@ -315,29 +318,32 @@ function ProjectsDashboardContent() {
       }
     };
 
-    const cardContent = (
-      <Card className="h-full">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+    const content = (
+      <div className="flex flex-col h-full justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-muted-foreground">{title}</span>
           <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
             {icon}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{value}</div>
+        </div>
+        <div>
+          <div className="text-2xl font-bold font-condensed">{value}</div>
           {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
 
-    return href ? (
-      <Link href={href} className="block hover:shadow-md transition-shadow" onClick={handleClick}>
-        {cardContent}
-      </Link>
-    ) : (
-      cardContent
+    return (
+      <BentoGridItem
+        className={cn("col-span-1", className)}
+        header={href ? (
+          <Link href={href} className="block h-full hover:opacity-80 transition-opacity" onClick={handleClick}>
+            {content}
+          </Link>
+        ) : content}
+      />
     );
   };
 
@@ -387,8 +393,10 @@ function ProjectsDashboardContent() {
         </div>
       </div>
 
-      {/* Main Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Main Content - Bento Grid */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+        
+        {/* Row 1: Key Metrics */}
         <StatCard
           title="Συνολικά Έργα"
           value={stats.total_projects}
@@ -421,205 +429,201 @@ function ProjectsDashboardContent() {
           color="success"
           href="/projects/offers?status=accepted"
         />
-      </div>
 
-      {/* Project Overview */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Επισκόπηση Έργων
-            </CardTitle>
-            <CardDescription>
-              Κατάσταση και πρόοδος έργων
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Ολοκληρωμένα Έργα</span>
-              <span className="text-lg font-bold text-green-600">
-                {stats.completed_projects}/{stats.total_projects}
-              </span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Μέσος Όρος Ολοκλήρωσης</span>
-                <span>{stats.average_completion_rate}%</span>
-              </div>
-              <Progress value={stats.average_completion_rate} className="h-2" />
-            </div>
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{stats.active_projects}</div>
-                <div className="text-xs text-blue-600">Σε Εξέλιξη</div>
-              </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{stats.completed_projects}</div>
-                <div className="text-xs text-green-600">Ολοκληρωμένα</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              Οικονομική Επισκόπηση
-            </CardTitle>
-            <CardDescription>
-              Προϋπολογισμός και έξοδα έργων
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Συνολικός Προϋπολογισμός</span>
-              <span className="text-lg font-bold text-blue-600">
-                €{stats.total_budget.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Συνολικά Έξοδα</span>
-              <span className="text-lg font-bold text-red-600">
-                €{stats.total_spent.toLocaleString()}
-              </span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Ποσοστό Χρήσης</span>
-                <span>{Math.round((stats.total_spent / stats.total_budget) * 100)}%</span>
-              </div>
-              <Progress 
-                value={(stats.total_spent / stats.total_budget) * 100} 
-                className="h-2" 
-              />
-            </div>
-            <div className="pt-2">
-              <div className="text-sm text-muted-foreground">
-                Διαθέσιμο: €{(stats.total_budget - stats.total_spent).toLocaleString()}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Γρήγορες Ενέργειες</CardTitle>
-          <CardDescription>
-            Συχνές λειτουργίες για γρήγορη πρόσβαση
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Button 
-              variant="outline" 
-              className="h-auto p-4 flex-col"
-              onClick={() => {
-                const element = document.getElementById('projects-list');
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                  router.push('/projects#projects-list');
-                }
-              }}
-            >
-              <FileText className="w-6 h-6 mb-2" />
-              <span>Όλα τα Έργα</span>
-            </Button>
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects/offers">
-                <Award className="w-6 h-6 mb-2" />
-                <span>Προσφορές</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects">
-                <Users className="w-6 h-6 mb-2" />
-                <span>Συμβόλαια</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects">
-                <TrendingUp className="w-6 h-6 mb-2" />
-                <span>Αναφορές</span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Πρόσφατη Δραστηριότητα</CardTitle>
-          <CardDescription>
-            Τελευταίες ενημερώσεις έργων και προσφορών
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {activityItems.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
-          ) : (
-            <div className="space-y-4">
-              {activityItems.slice(0, 3).map((item) => (
-                <div key={item.key} className="flex items-center space-x-4">
-                  <div className={`p-2 rounded-lg ${item.bgClass}`}>
-                    {item.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.text}</p>
-                    <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
-                  </div>
-                  <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Projects List */}
-      <Card id="projects-list">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Όλα τα Έργα</CardTitle>
-              <CardDescription>
-                {filteredProjects.length} από {projects.length} έργα
-              </CardDescription>
-            </div>
+        {/* Row 2: Overviews & Actions */}
+        <BentoGridItem
+          className="md:col-span-2"
+          title={
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                </Button>
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <span>Επισκόπηση Έργων</span>
+            </div>
+          }
+          description="Κατάσταση και πρόοδος έργων"
+          header={
+            <div className="space-y-4 mt-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Ολοκληρωμένα Έργα</span>
+                <span className="text-lg font-bold text-green-600">
+                  {stats.completed_projects}/{stats.total_projects}
+                </span>
               </div>
-              {(isAdmin || isManager) && (
-                <Button asChild>
-                  <Link href="/projects/new">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Νέο Έργο
-                  </Link>
-                </Button>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Μέσος Όρος Ολοκλήρωσης</span>
+                  <span>{stats.average_completion_rate}%</span>
+                </div>
+                <Progress value={stats.average_completion_rate} className="h-2" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{stats.active_projects}</div>
+                  <div className="text-xs text-blue-600">Σε Εξέλιξη</div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{stats.completed_projects}</div>
+                  <div className="text-xs text-green-600">Ολοκληρωμένα</div>
+                </div>
+              </div>
+            </div>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-2"
+          title={
+            <div className="flex items-center gap-2">
+              <Building className="w-5 h-5 text-primary" />
+              <span>Οικονομική Επισκόπηση</span>
+            </div>
+          }
+          description="Προϋπολογισμός και έξοδα έργων"
+          header={
+            <div className="space-y-4 mt-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Συνολικός Προϋπολογισμός</span>
+                <span className="text-lg font-bold text-blue-600">
+                  €{stats.total_budget.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Συνολικά Έξοδα</span>
+                <span className="text-lg font-bold text-red-600">
+                  €{stats.total_spent.toLocaleString()}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Ποσοστό Χρήσης</span>
+                  <span>{Math.round((stats.total_spent / Math.max(1, stats.total_budget)) * 100)}%</span>
+                </div>
+                <Progress 
+                  value={(stats.total_spent / Math.max(1, stats.total_budget)) * 100} 
+                  className="h-2" 
+                />
+              </div>
+              <div className="pt-2">
+                <div className="text-sm text-muted-foreground">
+                  Διαθέσιμο: €{(stats.total_budget - stats.total_spent).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          }
+        />
+
+        {/* Row 3: Actions & Activity */}
+        <BentoGridItem
+          className="md:col-span-2 lg:col-span-3"
+          title="Γρήγορες Ενέργειες"
+          header={
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60"
+                onClick={() => {
+                  const element = document.getElementById('projects-list');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  } else {
+                    router.push('/projects#projects-list');
+                  }
+                }}
+              >
+                <FileText className="w-6 h-6 mb-2 text-primary" />
+                <span>Όλα τα Έργα</span>
+              </Button>
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+                <Link href="/projects/offers">
+                  <Award className="w-6 h-6 mb-2 text-yellow-600" />
+                  <span>Προσφορές</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+                <Link href="/projects">
+                  <Users className="w-6 h-6 mb-2 text-blue-600" />
+                  <span>Συμβόλαια</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-border/60">
+                <Link href="/projects">
+                  <TrendingUp className="w-6 h-6 mb-2 text-purple-600" />
+                  <span>Αναφορές</span>
+                </Link>
+              </Button>
+            </div>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-2 lg:col-span-1"
+          title="Πρόσφατη Δραστηριότητα"
+          header={
+            <div className="mt-4 space-y-4">
+              {activityItems.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
+              ) : (
+                activityItems.slice(0, 3).map((item) => (
+                  <div key={item.key} className="flex items-center space-x-3 p-2 hover:bg-accent/50 rounded-lg transition-colors">
+                    <div className={`p-2 rounded-lg ${item.bgClass} shrink-0`}>
+                      {item.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.text}</p>
+                      <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
+                    </div>
+                    <Badge variant={item.badge.variant} className="shrink-0">{item.badge.label}</Badge>
+                  </div>
+                ))
               )}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+          }
+        />
+
+        {/* Projects List - Full Width Item */}
+        <BentoGridItem
+          id="projects-list"
+          className="md:col-span-4"
+          header={
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold">Όλα τα Έργα</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {filteredProjects.length} από {projects.length} έργα
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-secondary/30 p-1 rounded-lg">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {(isAdmin || isManager) && (
+                    <Button asChild>
+                      <Link href="/projects/new">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Νέο Έργο
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Existing Filter & List Logic - Simplified Wrapper */}
+              <div className="bg-card rounded-xl">
           {/* Filters */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-wrap gap-4">
@@ -970,8 +974,10 @@ function ProjectsDashboardContent() {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+        }
+        />
+      </BentoGrid>
       
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>

@@ -5,7 +5,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { User } from '@/types/user';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -125,185 +126,202 @@ export default function MyProfilePage() {
     );
   }
 
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+
   return (
-    <div>
-      <form className="space-y-8" onSubmit={handleSubmit}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Το προφίλ μου</h1>
-          <p className="text-muted-foreground">Διατήρησε ενημερωμένα τα προσωπικά σου στοιχεία και τις πληροφορίες διαχείρισης.</p>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit}>
+        
+        {/* Header Action Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-card p-6 rounded-xl border border-border/50 shadow-sm">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight font-condensed text-foreground">Το προφίλ μου</h1>
+            <p className="text-muted-foreground mt-1">Διατήρησε ενημερωμένα τα προσωπικά σου στοιχεία και τις πληροφορίες διαχείρισης.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Ανανέωση
+            </Button>
+            <Button type="submit" disabled={isPristine || mutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Αποθήκευση αλλαγών
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" onClick={() => refetch()} disabled={isLoading}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Ανανέωση
-          </Button>
-          <Button type="submit" disabled={isPristine || mutation.isPending}>
-            {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Αποθήκευση αλλαγών
-          </Button>
-        </div>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Βασικές πληροφορίες</CardTitle>
-            <CardDescription>Στοιχεία λογαριασμού και προφίλ διαχειριστή.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="first_name">Όνομα</Label>
-                <Input id="first_name" value={formState.first_name} onChange={handleChange('first_name')} placeholder="Π.χ. Μαρία" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last_name">Επώνυμο</Label>
-                <Input id="last_name" value={formState.last_name} onChange={handleChange('last_name')} placeholder="Π.χ. Παπαδοπούλου" />
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="email" className="pl-9" value={user.email} readOnly />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Ρόλος</Label>
-                <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  <span>{user.role || (user.is_superuser ? 'superuser' : user.is_staff ? 'manager' : 'tenant')}</span>
-                </div>
-              </div>
-            </div>
-            <Separator />
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="office_name">Επωνυμία γραφείου</Label>
-                <Input id="office_name" value={formState.office_name} onChange={handleChange('office_name')} placeholder="Π.χ. Theo Concierge" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="office_phone">Τηλέφωνο επικοινωνίας</Label>
-                <Input id="office_phone" value={formState.office_phone} onChange={handleChange('office_phone')} placeholder="+30 210 0000000" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="office_address">Διεύθυνση γραφείου</Label>
-              <Textarea
-                id="office_address"
-                value={formState.office_address}
-                onChange={handleChange('office_address')}
-                placeholder="Οδός, αριθμός, πόλη, Τ.Κ."
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Στοιχεία λογαριασμού</CardTitle>
-            <CardDescription>Ρυθμίσεις πρόσβασης και μισθωτή.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex items-center justify-between rounded-md border px-3 py-2">
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">Κατάσταση</p>
-                <p className="font-medium">{user.is_superuser ? 'Superuser' : user.is_staff ? 'Διαχειριστής' : 'Χρήστης'}</p>
-              </div>
-              <Badge variant={user.is_superuser ? 'default' : 'secondary'}>
-                {user.is_superuser ? 'Superuser' : user.is_staff ? 'Manager' : 'Tenant'}
-              </Badge>
-            </div>
-            <div className="space-y-1 rounded-md border px-3 py-2">
-              <p className="text-xs uppercase text-muted-foreground">Tenant</p>
-              {user.tenant ? (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{user.tenant.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.tenant.schema_name}</p>
+        <BentoGrid className="max-w-[1920px] auto-rows-auto gap-6">
+          
+          {/* Basic Info */}
+          <BentoGridItem
+            className="md:col-span-2"
+            title="Βασικές πληροφορίες"
+            description="Στοιχεία λογαριασμού και προφίλ διαχειριστή"
+            header={
+              <div className="space-y-6 mt-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name">Όνομα</Label>
+                    <Input id="first_name" value={formState.first_name} onChange={handleChange('first_name')} placeholder="Π.χ. Μαρία" />
                   </div>
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="last_name">Επώνυμο</Label>
+                    <Input id="last_name" value={formState.last_name} onChange={handleChange('last_name')} placeholder="Π.χ. Παπαδοπούλου" />
+                  </div>
                 </div>
-              ) : (
-                <p className="text-muted-foreground">Δεν βρέθηκε tenant.</p>
-              )}
-            </div>
-            <div className="space-y-1 rounded-md border px-3 py-2">
-              <p className="text-xs uppercase text-muted-foreground">Όνομα χρήστη</p>
-              <div className="flex items-center gap-2 font-medium">
-                <UserIcon className="h-4 w-4 text-muted-foreground" />
-                <span>{user.username}</span>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input id="email" className="pl-9" value={user.email} readOnly />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Ρόλος</Label>
+                    <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm h-10">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <span>{user.role || (user.is_superuser ? 'superuser' : user.is_staff ? 'manager' : 'tenant')}</span>
+                    </div>
+                  </div>
+                </div>
+                <Separator />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="office_name">Επωνυμία γραφείου</Label>
+                    <Input id="office_name" value={formState.office_name} onChange={handleChange('office_name')} placeholder="Π.χ. Theo Concierge" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="office_phone">Τηλέφωνο επικοινωνίας</Label>
+                    <Input id="office_phone" value={formState.office_phone} onChange={handleChange('office_phone')} placeholder="+30 210 0000000" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="office_address">Διεύθυνση γραφείου</Label>
+                  <Textarea
+                    id="office_address"
+                    value={formState.office_address}
+                    onChange={handleChange('office_address')}
+                    placeholder="Οδός, αριθμός, πόλη, Τ.Κ."
+                    rows={3}
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            }
+          />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Τραπεζικές πληροφορίες</CardTitle>
-            <CardDescription>Χρησιμοποιούνται σε ειδοποιήσεις πληρωμών και παραστατικά.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="office_bank_name">Τράπεζα</Label>
-              <div className="relative">
-                <CreditCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="office_bank_name" className="pl-9" value={formState.office_bank_name} onChange={handleChange('office_bank_name')} />
+          {/* Account Info */}
+          <BentoGridItem
+            className="md:col-span-1"
+            title="Στοιχεία λογαριασμού"
+            description="Ρυθμίσεις πρόσβασης και μισθωτή"
+            header={
+              <div className="space-y-4 mt-4 text-sm">
+                <div className="flex items-center justify-between rounded-lg border bg-card/50 px-4 py-3">
+                  <div>
+                    <p className="text-xs uppercase text-muted-foreground font-semibold">Κατάσταση</p>
+                    <p className="font-medium mt-1">{user.is_superuser ? 'Superuser' : user.is_staff ? 'Διαχειριστής' : 'Χρήστης'}</p>
+                  </div>
+                  <Badge variant={user.is_superuser ? 'default' : 'secondary'}>
+                    {user.is_superuser ? 'Superuser' : user.is_staff ? 'Manager' : 'Tenant'}
+                  </Badge>
+                </div>
+                <div className="space-y-1 rounded-lg border bg-card/50 px-4 py-3">
+                  <p className="text-xs uppercase text-muted-foreground font-semibold">Tenant</p>
+                  {user.tenant ? (
+                    <div className="flex items-center justify-between mt-1">
+                      <div>
+                        <p className="font-medium">{user.tenant.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.tenant.schema_name}</p>
+                      </div>
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground mt-1">Δεν βρέθηκε tenant.</p>
+                  )}
+                </div>
+                <div className="space-y-1 rounded-lg border bg-card/50 px-4 py-3">
+                  <p className="text-xs uppercase text-muted-foreground font-semibold">Όνομα χρήστη</p>
+                  <div className="flex items-center gap-2 font-medium mt-1">
+                    <UserIcon className="h-4 w-4 text-muted-foreground" />
+                    <span>{user.username}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="office_bank_account">Αριθμός λογαριασμού</Label>
-              <Input id="office_bank_account" value={formState.office_bank_account} onChange={handleChange('office_bank_account')} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="office_bank_iban">IBAN</Label>
-              <Input id="office_bank_iban" value={formState.office_bank_iban} onChange={handleChange('office_bank_iban')} placeholder="GRxx xxxx xxxx xxxx xxxx xxxx xxx" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="office_bank_beneficiary">Δικαιούχος</Label>
-              <Input id="office_bank_beneficiary" value={formState.office_bank_beneficiary} onChange={handleChange('office_bank_beneficiary')} />
-            </div>
-          </CardContent>
-        </Card>
+            }
+          />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Γρήγορες ενέργειες</CardTitle>
-            <CardDescription>Επαναφορά κατάστασης ή καθαρισμός token.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <p className="text-muted-foreground">
-              Σε περίπτωση που τα στοιχεία αυθεντικοποίησης έχουν λήξει, μπορείς να κάνεις επανασύνδεση από την σελίδα login ή να καθαρίσεις τα tokens.
-            </p>
-            <Separator />
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={handleReset} disabled={isPristine || mutation.isPending}>
-                Επαναφορά αλλαγών
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    localStorage.removeItem('access');
-                    localStorage.removeItem('refresh');
-                    toast.success('Τα tokens διαγράφηκαν. Συνδέσου ξανά αν χρειαστεί.');
-                  }
-                }}
-              >
-                Καθαρισμός token
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Banking Info */}
+          <BentoGridItem
+            className="md:col-span-2"
+            title="Τραπεζικές πληροφορίες"
+            description="Χρησιμοποιούνται σε ειδοποιήσεις πληρωμών"
+            header={
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="office_bank_name">Τράπεζα</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input id="office_bank_name" className="pl-9" value={formState.office_bank_name} onChange={handleChange('office_bank_name')} />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="office_bank_account">Αριθμός λογαριασμού</Label>
+                    <Input id="office_bank_account" value={formState.office_bank_account} onChange={handleChange('office_bank_account')} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="office_bank_iban">IBAN</Label>
+                    <Input id="office_bank_iban" value={formState.office_bank_iban} onChange={handleChange('office_bank_iban')} placeholder="GRxx xxxx xxxx xxxx xxxx xxxx xxx" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="office_bank_beneficiary">Δικαιούχος</Label>
+                  <Input id="office_bank_beneficiary" value={formState.office_bank_beneficiary} onChange={handleChange('office_bank_beneficiary')} />
+                </div>
+              </div>
+            }
+          />
+
+          {/* Quick Actions */}
+          <BentoGridItem
+            className="md:col-span-1"
+            title="Γρήγορες ενέργειες"
+            description="Επαναφορά και ασφάλεια"
+            header={
+              <div className="space-y-4 mt-4 text-sm">
+                <p className="text-muted-foreground">
+                  Σε περίπτωση που τα στοιχεία αυθεντικοποίησης έχουν λήξει, μπορείς να κάνεις επανασύνδεση από την σελίδα login ή να καθαρίσεις τα tokens.
+                </p>
+                <Separator />
+                <div className="flex flex-col gap-3">
+                  <Button type="button" variant="outline" onClick={handleReset} disabled={isPristine || mutation.isPending} className="w-full justify-start">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Επαναφορά αλλαγών
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        localStorage.removeItem('access');
+                        localStorage.removeItem('refresh');
+                        toast.success('Τα tokens διαγράφηκαν. Συνδέσου ξανά αν χρειαστεί.');
+                      }
+                    }}
+                    className="w-full justify-start text-destructive hover:text-destructive/90"
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Καθαρισμός token
+                  </Button>
+                </div>
+              </div>
+            }
+          />
+
+        </BentoGrid>
       </form>
     </div>
   );

@@ -1,64 +1,115 @@
 @import "tailwindcss";
 
 :root {
-  /* Background colors */
-  --background: 0 0% 98%;          /* #FAFAFA - ελαφρύ γκρι */
-  --foreground: 0 0% 10%;          /* #1A1A1A - σχεδόν μαύρο */
+  /* -- Light Mode Palette (Clean Slate) -- */
   
-  /* Popover/Dropdown colors */
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 10%;
+  /* Background: Slate 50 (#F8FAFC) */
+  --background: 210 40% 98%;
   
-  /* Accent colors */
-  --accent: 204 30% 95%;           /* Ελαφρύ μπλε accent */
-  --accent-foreground: 204 96% 25%;
-  
-  /* Muted colors */
-  --muted: 0 0% 96%;               /* #F4F4F5 */
-  --muted-foreground: 0 0% 32%;    /* #525252 - Neutral-600 για καλή αναγνωσιμότητα */
-  
-  /* Border and input - χρησιμοποιούμε shadows αντί borders */
-  --border: 0 0% 90%;
-  --input: 0 0% 90%;
-  --ring: 204 96% 29%;             /* Ίδιο με primary */
-  
-  /* Primary color - νέο μπλε #035E92 */
-  --primary: 204 96% 29%;          /* rgb(3, 94, 146) */
-  --primary-foreground: 0 0% 100%; /* Λευκό για υψηλή αντίθεση */
-  --primary-hover: 204 96% 38%;    /* #047ABD - πιο φωτεινό */
+  /* Foreground: Slate 900 (#0F172A) for strong text */
+  --foreground: 222 47% 11%;
 
-  /* Secondary color */
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 10%;
+  /* Primary: Indigo 600 (#4F46E5) */
+  --primary: 249 72% 59%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 249 72% 65%;
 
-  /* Destructive color - Red-600 */
-  --destructive: 0 72% 51%;        /* #DC2626 */
-  --destructive-foreground: 0 0% 100%;
+  /* Secondary: Slate 200 (#E2E8F0) */
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 222 47% 11%;
+
+  /* Muted: Slate 100 (#F1F5F9) */
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  /* Accent: Indigo 100 (#E0E7FF) for hover states */
+  --accent: 244 86% 94%;
+  --accent-foreground: 249 72% 59%;
+
+  /* Borders: Slate 200 */
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 249 72% 59%;
+
+  /* Semantic Colors */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
   
-  /* Success color - Teal-700 */
-  --success: 173 80% 26%;          /* #0F766E */
+  /* Success: Teal 600 (#0D9488) */
+  --success: 176 84% 32%;
   --success-foreground: 0 0% 100%;
-  
-  /* Warning color - Complementary orange */
-  --warning: 24 96% 29%;           /* #924503 - συμπληρωματικό πορτοκαλί */
-  --warning-foreground: 0 0% 100%;
-  
-  /* Card colors */
-  --card: 0 0% 100%;               /* Λευκό */
-  --card-foreground: 0 0% 10%;
-  
-  /* Radius - Modern rounded corners */
+
+  /* Popovers/Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  /* Radius */
   --radius: 0.5rem;
   --radius-sm: 0.3rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.8rem;
-  
-  /* Shadows - Modern diffuse shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(15 23 42 / 0.1), 0 1px 2px -1px rgb(15 23 42 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* -- Dark Mode Palette (Deep Slate) -- */
+
+    /* Background: Slate 950 (#020617) - Slightly darker than 900 for depth */
+    --background: 222 47% 5%; 
+    
+    /* Foreground: Slate 50 (#F8FAFC) */
+    --foreground: 210 40% 98%;
+
+    /* Primary: Indigo 500 (#6366F1) - Vibrant on dark */
+    --primary: 239 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    --primary-hover: 239 84% 72%;
+
+    /* Secondary: Slate 800 (#1E293B) */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted: Slate 800 (#1E293B) */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent: Slate 800 for hover, or slight Indigo tint */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Borders: Slate 800 (#1E293B) - Subtle lines */
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 239 84% 67%;
+
+    /* Cards: Slate 900 (#0F172A) - Lighter than background to pop */
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Destructive */
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Success: Teal 500 (#14B8A6) */
+    --success: 173 80% 40%;
+    --success-foreground: 0 0% 100%;
+    
+    /* Shadows - slightly stronger for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  }
 }
 
 @theme inline {
@@ -84,103 +135,27 @@
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-condensed: var(--font-ubuntu-condensed);
-  /* Shadow utilities */
+  
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+  
   --shadow-sm: var(--shadow-sm);
   --shadow: var(--shadow);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
 }
 
-/* Headings use Ubuntu Condensed */
+/* Headings font inheritance */
 h1, h2, h3, h4 {
-  font-family: var(--font-ubuntu-condensed), sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 95%;
-    
-    /* Popover/Dropdown colors - dark mode */
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
-    
-    /* Accent colors - dark mode */
-    --accent: 204 30% 15%;
-    --accent-foreground: 204 70% 70%;
-    
-    /* Muted colors - dark mode */
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 65%;
-    
-    /* Border and input - dark mode */
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 204 96% 45%;
-    
-    /* Primary - dark mode (πιο φωτεινό για dark backgrounds) */
-    --primary: 204 96% 45%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 204 96% 55%;
-
-    /* Secondary - dark mode */
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 0 0% 95%;
-
-    /* Destructive - dark mode */
-    --destructive: 0 72% 45%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Success - dark mode */
-    --success: 173 80% 35%;
-    --success-foreground: 0 0% 100%;
-
-    /* Warning - dark mode */
-    --warning: 24 96% 40%;
-    --warning-foreground: 0 0% 100%;
-
-    /* Card colors - dark mode */
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-    
-    /* Shadows - dark mode */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-  }
+  font-family: inherit;
+  font-weight: 600;
 }
 
 body {
-  background: hsl(var(--background));
+  background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Utility classes for shadows */
-.shadow-app-sm {
-  box-shadow: var(--shadow-sm);
-}
-
-.shadow-app {
-  box-shadow: var(--shadow);
-}
-
-.shadow-app-md {
-  box-shadow: var(--shadow-md);
-}
-
-.shadow-app-lg {
-  box-shadow: var(--shadow-lg);
-}
-
-.shadow-app-xl {
-  box-shadow: var(--shadow-xl);
+  font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
