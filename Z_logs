@@ -1,43 +1,44 @@
-﻿22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [AuthContext] loadUserOnMount starting...
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
-8f3135668fa79c16.js?…CRv2rH9mdcEuGYD9r:1 [API CALL] Attempting to fetch /api/users/me/
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [AuthContext] Token check interval disabled to debug hanging issue
-069ba3992cc1805e.js?…CRv2rH9mdcEuGYD9r:1 [ReactQueryProvider] Setting up global refresh system
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [Global Refresh] Query client registered
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [Global Refresh] Initializing global refresh system
-069ba3992cc1805e.js?…CRv2rH9mdcEuGYD9r:1 [AppProviders] Current pathname: /office-staff
-069ba3992cc1805e.js?…CRv2rH9mdcEuGYD9r:1 [AppProviders] Is Dashboard: false
-069ba3992cc1805e.js?…CRv2rH9mdcEuGYD9r:1 [AppProviders] Is Kiosk Mode: false
-069ba3992cc1805e.js?…CRv2rH9mdcEuGYD9r:1 [AppProviders] Is Info Screen: false
-069ba3992cc1805e.js?…CRv2rH9mdcEuGYD9r:1 [AppProviders] Is No Sidebar Route: false
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 AuthContext: Refreshed user data: etherm2021@gmail.com
-950c825e226ac179.js?…CRv2rH9mdcEuGYD9r:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
-8f3135668fa79c16.js?…CRv2rH9mdcEuGYD9r:1 [API CALL] Fetching buildings from /buildings/
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
-8f3135668fa79c16.js?…CRv2rH9mdcEuGYD9r:1 [API CALL] Fetching buildings from /buildings/
-8f3135668fa79c16.js?…CRv2rH9mdcEuGYD9r:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/buildings/?page_size=1000&page=1_{"page_size":1000,"page":1}
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [AuthContext] Token check interval disabled to debug hanging issue
-8f3135668fa79c16.js?…CRv2rH9mdcEuGYD9r:1 
+﻿﻿
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [AuthContext] loadUserOnMount starting...
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 AuthContext: Fetching current user
+8f3135668fa79c16.js?…2wJypgxMpYh2z82r9:1 [API CALL] Attempting to fetch /api/users/me/
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [AuthContext] Token check interval disabled to debug hanging issue
+8f62366d5ff86b3f.js?…2wJypgxMpYh2z82r9:1 [ReactQueryProvider] Setting up global refresh system
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [Global Refresh] Query client registered
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [Global Refresh] Initializing global refresh system
+8f62366d5ff86b3f.js?…2wJypgxMpYh2z82r9:1 [AppProviders] Current pathname: /office-staff
+8f62366d5ff86b3f.js?…2wJypgxMpYh2z82r9:1 [AppProviders] Is Dashboard: true
+8f62366d5ff86b3f.js?…2wJypgxMpYh2z82r9:1 [AppProviders] Is Kiosk Mode: false
+8f62366d5ff86b3f.js?…2wJypgxMpYh2z82r9:1 [AppProviders] Is Info Screen: false
+8f62366d5ff86b3f.js?…2wJypgxMpYh2z82r9:1 [AppProviders] Is No Sidebar Route: false
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 AuthContext: Current user fetched successfully: etherm2021@gmail.com
+950c825e226ac179.js?…2wJypgxMpYh2z82r9:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
+8f3135668fa79c16.js?…2wJypgxMpYh2z82r9:1 [API CALL] Fetching buildings from /buildings/
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
+8f3135668fa79c16.js?…2wJypgxMpYh2z82r9:1 [API CALL] Fetching buildings from /buildings/
+8f3135668fa79c16.js?…2wJypgxMpYh2z82r9:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/buildings/?page_size=1000&page=1_{"page_size":1000,"page":1}
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [AuthContext] Token check interval disabled to debug hanging issue
+8f3135668fa79c16.js?…2wJypgxMpYh2z82r9:1 
  GET https://theo.newconcierge.app/api/office/staff 404 (Not Found)
-620b34c3a6ef9521.js?…CRv2rH9mdcEuGYD9r:1 Error fetching staff: Error: GET https://theo.newconcierge.app/api/office/staff/ failed: 404
-    at d (8f3135668fa79c16.js?…H9mdcEuGYD9r:1:2785)
-    at 8f3135668fa79c16.js?…H9mdcEuGYD9r:1:5555
-    at async J (620b34c3a6ef9521.js?…H9mdcEuGYD9r:1:4915)
-8f3135668fa79c16.js?…CRv2rH9mdcEuGYD9r:1 
+620b34c3a6ef9521.js?…2wJypgxMpYh2z82r9:1 Error fetching staff: Error: GET https://theo.newconcierge.app/api/office/staff/ failed: 404
+    at d (8f3135668fa79c16.js?…gxMpYh2z82r9:1:2785)
+    at 8f3135668fa79c16.js?…gxMpYh2z82r9:1:5555
+    at async J (620b34c3a6ef9521.js?…gxMpYh2z82r9:1:4915)
+8f3135668fa79c16.js?…2wJypgxMpYh2z82r9:1 
  GET https://theo.newconcierge.app/api/office/activity-logs 404 (Not Found)
-620b34c3a6ef9521.js?…CRv2rH9mdcEuGYD9r:1 Error fetching logs: Error: GET https://theo.newconcierge.app/api/office/activity-logs/ failed: 404
-    at d (8f3135668fa79c16.js?…H9mdcEuGYD9r:1:2785)
-    at 8f3135668fa79c16.js?…H9mdcEuGYD9r:1:5555
-    at async Q (620b34c3a6ef9521.js?…H9mdcEuGYD9r:1:5109)
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Loaded buildings: 2 buildings
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Loaded buildings: 2 buildings
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
-950c825e226ac179.js?…CRv2rH9mdcEuGYD9r:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Building changed to 2, invalidating queries...
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] ✓ Queries invalidated for building 2
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Fetching context for building 2...
-22cb4cb270f16909.js?…CRv2rH9mdcEuGYD9r:1 [BuildingContext] Building context loaded: 
+620b34c3a6ef9521.js?…2wJypgxMpYh2z82r9:1 Error fetching logs: Error: GET https://theo.newconcierge.app/api/office/activity-logs/ failed: 404
+    at d (8f3135668fa79c16.js?…gxMpYh2z82r9:1:2785)
+    at 8f3135668fa79c16.js?…gxMpYh2z82r9:1:5555
+    at async Q (620b34c3a6ef9521.js?…gxMpYh2z82r9:1:5109)
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Loaded buildings: 2 buildings
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Loaded buildings: 2 buildings
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+950c825e226ac179.js?…2wJypgxMpYh2z82r9:1 [BuildingSelector] Filtered buildings (no search): 0 out of 0
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Building changed to 2, invalidating queries...
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] ✓ Queries invalidated for building 2
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Fetching context for building 2...
+22cb4cb270f16909.js?…2wJypgxMpYh2z82r9:1 [BuildingContext] Building context loaded: 
 {id: 2, name: 'Βουλής 6 -Demo', permissions: {…}}
