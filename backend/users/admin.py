@@ -32,6 +32,10 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Προσωπικά Στοιχεία', {'fields': ('first_name', 'last_name')}),
+        ('Ρόλος & Tenant', {
+            'fields': ('role', 'tenant', 'email_verified'),
+            'description': 'Κρίσιμα πεδία για το login και τα δικαιώματα του χρήστη'
+        }),
         ('Στοιχεία Γραφείου Διαχείρισης', {
             'fields': ('office_name', 'office_phone', 'office_address', 'office_logo'),
             'classes': ('collapse',)
