@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { Card } from '@/components/ui/card';
 
 export default function KioskManagementPage() {
   return (

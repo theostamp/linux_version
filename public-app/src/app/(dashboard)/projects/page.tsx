@@ -47,6 +47,7 @@ import { useRole } from '@/lib/auth';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { RefreshButton } from '@/components/ui/RefreshButton';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface ProjectStats {
   total_projects: number;
