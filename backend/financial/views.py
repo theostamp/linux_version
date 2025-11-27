@@ -2071,7 +2071,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 else:
                     # User is a resident - get buildings via BuildingMembership
                     from buildings.models import BuildingMembership
-                    buildings = Building.objects.filter(buildingmembership__resident=user).distinct()
+                    # Use 'memberships' related_name instead of default 'buildingmembership'
+                    buildings = Building.objects.filter(memberships__resident=user).distinct()
             
             buildings = buildings.distinct()
             
