@@ -435,20 +435,6 @@ function ScheduledMaintenanceDashboard() {
   );
 }
 
-function StatCard({ title, value, icon }: { title: string; value: number; icon: React.ReactNode }) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function FilterGroup<T extends string>({
   icon,
   label,
