@@ -278,7 +278,8 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
         # Residents -> μόνο τα κτίρια στα οποία ανήκουν
         if BuildingMembership.objects.filter(resident=user).exists():
-            queryset = Building.objects.filter(buildingmembership__resident=user).order_by('id')
+            # Use 'memberships' related_name (not default 'buildingmembership')
+            queryset = Building.objects.filter(memberships__resident=user).order_by('id')
             building_ids = list(queryset.values_list('id', flat=True))
             logger.info(f"User is a resident. Found buildings by membership: {building_ids}")
             return queryset
