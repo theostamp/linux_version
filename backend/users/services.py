@@ -627,6 +627,11 @@ class InvitationService:
             email_verified=True
         )
         
+        # Ορισμός tenant από τον χρήστη που έστειλε την πρόσκληση
+        if invitation.invited_by and hasattr(invitation.invited_by, 'tenant') and invitation.invited_by.tenant:
+            user.tenant = invitation.invited_by.tenant
+            user.save(update_fields=['tenant'])
+        
         # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
             user.role = invitation.assigned_role
