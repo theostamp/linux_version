@@ -33,14 +33,17 @@ function normalizeRole(role?: string | null): NormalizedRole | undefined {
 }
 
 export function getEffectiveRole(user: RoleAwareUser): NormalizedRole | undefined {
+  // First check declared role - this should take priority
   const declaredRole =
     normalizeRole(user?.role) ??
     normalizeRole(user?.profile?.role);
 
+  // If user has an explicit declared role, use it (even if they also have is_staff/is_superuser)
   if (declaredRole) {
     return declaredRole;
   }
 
+  // Only fall back to is_superuser/is_staff if no declared role exists
   if (user?.is_superuser) return 'superuser';
   if (user?.is_staff) return 'staff';
 
