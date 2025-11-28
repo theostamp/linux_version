@@ -6,11 +6,57 @@ import { useKioskData } from '@/hooks/useKioskData';
 import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
 import FinancialSceneCustom from '@/components/kiosk/scenes/FinancialSceneCustom';
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
+import LifestyleSceneCustom from '@/components/kiosk/scenes/LifestyleSceneCustom';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface KioskSceneRendererProps {
   buildingIdOverride?: number | null;
   allowSceneCreation?: boolean;
+}
+
+// Fallback scene rotator component
+function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: number | null }) {
+  const [fallbackSceneIndex, setFallbackSceneIndex] = useState(0);
+  const fallbackScenes = [
+    { name: 'Πρωινή Επισκόπηση', Component: MorningOverviewSceneCustom },
+    { name: 'Lifestyle & Community', Component: LifestyleSceneCustom },
+  ];
+
+  // Auto-rotate fallback scenes every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFallbackSceneIndex((prev) => (prev + 1) % fallbackScenes.length);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const CurrentFallbackScene = fallbackScenes[fallbackSceneIndex].Component;
+
+  return (
+    <div className="relative">
+      <CurrentFallbackScene data={data} buildingId={buildingId} />
+
+      {/* Scene indicator */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
+        {fallbackScenes.map((scene, index) => (
+          <div
+            key={index}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              index === fallbackSceneIndex
+                ? 'w-8 bg-gradient-to-r from-purple-400 to-pink-400'
+                : 'w-2 bg-gray-600'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Scene name overlay */}
+      <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
+        <p className="text-white text-sm font-medium">{fallbackScenes[fallbackSceneIndex].name}</p>
+      </div>
+    </div>
+  );
 }
 
 export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreation = true }: KioskSceneRendererProps = {}) {
@@ -167,12 +213,9 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     );
   }
 
-  // No scenes available
+  // No scenes available - Rotate between default scenes
   if (!scenes || scenes.length === 0) {
-    // Fallback to default Morning Overview layout so public display is never empty
-    return (
-      <MorningOverviewSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
-    );
+    return <FallbackSceneRotator data={kioskData} buildingId={effectiveBuildingId} />;
   }
 
   // Render current scene
@@ -217,13 +260,13 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   // Check if this is the Financial scene - use custom layout
   if (currentScene.name === 'Οικονομική Ενημέρωση') {
     return (
-      <div 
+      <div
         className={`transition-opacity duration-300 ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
         <FinancialSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
-        
+
         {/* Scene indicator */}
         {scenes.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
@@ -231,15 +274,49 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
               <div
                 key={scene.id}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentSceneIndex 
-                    ? 'w-8 bg-blue-400' 
+                  index === currentSceneIndex
+                    ? 'w-8 bg-blue-400'
                     : 'w-2 bg-gray-600'
                 }`}
               />
             ))}
           </div>
         )}
-        
+
+        {/* Scene name overlay */}
+        <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
+          <p className="text-white text-sm font-medium">{currentScene.name}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if this is the Lifestyle & Community scene - use custom layout
+  if (currentScene.name === 'Lifestyle & Community' || currentScene.name === 'Ζωή & Κοινότητα') {
+    return (
+      <div
+        className={`transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <LifestyleSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
+
+        {/* Scene indicator */}
+        {scenes.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
+            {scenes.map((scene, index) => (
+              <div
+                key={scene.id}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentSceneIndex
+                    ? 'w-8 bg-pink-400'
+                    : 'w-2 bg-gray-600'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Scene name overlay */}
         <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
           <p className="text-white text-sm font-medium">{currentScene.name}</p>

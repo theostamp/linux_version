@@ -19,25 +19,23 @@ function getRedirectForRole(user: UserData | null, explicitRedirect?: string): s
   
   if (!user) return '/announcements';
   
-  // Superusers, staff -> Dashboard
-  if (user.is_superuser || user.is_staff) {
-    return '/dashboard';
-  }
-  
-  // Check role
+  // Check role first so that residents δεν "πατιούνται" από flags is_superuser/is_staff
   const role = user.role;
-  if (role === 'manager' || role === 'office_staff') {
-    return '/dashboard';
+  if (role === 'resident') {
+    return '/my-apartment';
   }
   
-  // Internal managers -> Financial (βλέπουν τα οικονομικά της πολυκατοικίας τους)
   if (role === 'internal_manager') {
     return '/financial';
   }
   
-  // Residents -> My Apartment
-  if (role === 'resident') {
-    return '/my-apartment';
+  if (role === 'manager' || role === 'office_staff') {
+    return '/dashboard';
+  }
+  
+  // Superusers / staff (χωρίς explicit role) -> dashboard
+  if (user.is_superuser || user.is_staff) {
+    return '/dashboard';
   }
   
   // Default για άγνωστους ρόλους -> announcements (safe default)
