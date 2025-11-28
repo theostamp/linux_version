@@ -92,6 +92,7 @@ function LoginForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Tenant-Host': window.location.hostname, // Pass tenant hostname for multi-tenant support
         },
         credentials: 'include',
         body: JSON.stringify({
