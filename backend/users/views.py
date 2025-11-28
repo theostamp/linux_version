@@ -71,8 +71,8 @@ def login_view(request):
     # Force public schema for authentication - users are stored in public schema
     public_schema = get_public_schema_name()
     
-    email = request.data.get('email')
-    password = request.data.get('password')
+    email = request.data.get('email', '').strip()
+    password = request.data.get('password', '')
 
     print(f">>> Ελήφθησαν στοιχεία login: email={email}, password={'****' if password else None}")
 
@@ -111,6 +111,13 @@ def login_view(request):
                             status=status.HTTP_401_UNAUTHORIZED
                         )
                 else:
+                    # Check for unverified staff/superuser (blocked by EmailBackend)
+                    if (existing_user.is_staff or existing_user.is_superuser) and not existing_user.email_verified:
+                        return Response(
+                            {'error': 'Για λόγους ασφαλείας, οι διαχειριστές πρέπει να επιβεβαιώσουν το email τους πριν τη σύνδεση. Ελέγξτε το inbox σας.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+
                     # User exists and is active but password is wrong
                     return Response(
                         {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
