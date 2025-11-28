@@ -210,7 +210,7 @@ class StripeWebhookView(APIView):
                 # Link user to tenant and make them tenant admin
                 user.tenant = tenant
                 user.is_staff = True
-                user.is_superuser = True  # Full admin rights for their tenant
+                user.is_superuser = False  # NO superuser rights (security fix)
                 user.role = 'manager'  # Tenant owner/admin role
                 user.is_active = False  # Needs email verification before activation
                 user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role', 'is_active'])
