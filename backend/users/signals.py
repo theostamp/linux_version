@@ -1,14 +1,33 @@
 # backend/users/signals.py
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.db import transaction
 import time
+import logging
 
 from .models import CustomUser
 from tenants.models import Client, Domain
 from django_tenants.utils import get_public_schema_name
+
+logger = logging.getLogger(__name__)
+
+
+@receiver(pre_save, sender=CustomUser)
+def enforce_resident_permissions(sender, instance, **kwargs):
+    """
+    Διασφαλίζει ότι οι residents δεν έχουν ποτέ is_staff ή is_superuser.
+    Αυτό προστατεύει από λάθος τροποποιήσεις μέσω admin ή scripts.
+    """
+    if instance.role == 'resident':
+        if instance.is_staff or instance.is_superuser:
+            logger.warning(
+                f"⚠️ Resident {instance.email} had is_staff={instance.is_staff}, "
+                f"is_superuser={instance.is_superuser}. Resetting to False."
+            )
+            instance.is_staff = False
+            instance.is_superuser = False
 
 
 @receiver(post_save, sender=CustomUser)
