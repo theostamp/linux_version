@@ -98,6 +98,16 @@ def login_view(request):
         if user is None:
             try:
                 existing_user = user_model.objects.get(email=email)
+                
+                # DEBUG: Log user status
+                print(f">>> DEBUG: User found but auth failed:")
+                print(f">>>   is_active: {existing_user.is_active}")
+                print(f">>>   is_staff: {existing_user.is_staff}")
+                print(f">>>   is_superuser: {existing_user.is_superuser}")
+                print(f">>>   email_verified: {existing_user.email_verified}")
+                print(f">>>   role: {existing_user.role}")
+                print(f">>>   password check: {existing_user.check_password(password)}")
+                
                 # Check why authentication failed
                 if not existing_user.is_active:
                     if not existing_user.email_verified:
