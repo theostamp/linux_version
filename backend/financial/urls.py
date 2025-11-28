@@ -49,4 +49,5 @@ urlpatterns = [
     path('tests/clear/', clear_test_results, name='clear-test-results'),
     # My Apartment endpoint για ενοίκους
     path('my-apartment/', my_apartment_data, name='my-apartment-data'),
+    path('my-apartment', my_apartment_data, name='my-apartment-data-no-slash'),
 ] 
