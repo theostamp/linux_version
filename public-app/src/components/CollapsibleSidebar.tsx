@@ -8,6 +8,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
+import { getEffectiveRole } from '@/lib/roleUtils';
 import { designSystem } from '@/lib/design-system';
 import {
   Home,
@@ -302,14 +303,7 @@ export default function CollapsibleSidebar() {
   };
 
   // Determine user role
-  let userRole: 'superuser' | 'staff' | 'manager' | 'resident' | undefined;
-  if (user?.is_superuser) {
-    userRole = 'superuser';
-  } else if (user?.is_staff) {
-    userRole = 'staff';
-  } else {
-    userRole = user?.profile?.role as 'manager' | 'resident' | undefined;
-  }
+  const userRole = getEffectiveRole(user);
 
   // Filter available groups and links based on user role
   const availableGroups = navigationGroups.map(group => ({
