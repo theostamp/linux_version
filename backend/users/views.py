@@ -710,12 +710,18 @@ def accept_invitation_view(request):
     POST /api/users/accept-invitation/
     Αποδοχή πρόσκλησης και δημιουργία λογαριασμού
     """
+    print(f">>> ACCEPT_INVITATION: Request data keys: {list(request.data.keys())}")
+    print(f">>> ACCEPT_INVITATION: Password provided: {'password' in request.data}")
+    
     serializer = InvitationAcceptanceSerializer(data=request.data)
     if serializer.is_valid():
+        password = serializer.validated_data['password']
+        print(f">>> ACCEPT_INVITATION: Validated password length: {len(password) if password else 0}")
+        
         try:
             user = InvitationService.accept_invitation(
                 token=serializer.validated_data['token'],
-                password=serializer.validated_data['password']
+                password=password
             )
             
             # Δημιουργία JWT tokens
