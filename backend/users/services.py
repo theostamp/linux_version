@@ -555,13 +555,16 @@ class InvitationService:
     
     @staticmethod
     def create_invitation(invited_by, email, first_name="", last_name="", 
-                         invitation_type="registration", building=None, building_id=None, assigned_role=None):
+                         invitation_type="registration", building=None, building_id=None, 
+                         apartment_id=None, assigned_role=None):
         """
         Δημιουργία νέας πρόσκλησης
         
         Args:
             building: Building object (optional, legacy support)
             building_id: Building ID (optional, preferred)
+            apartment_id: Apartment ID for linking user to specific apartment
+            assigned_role: Role to assign to user (resident, internal_manager, etc.)
         """
         # Έλεγχος αν υπάρχει ήδη χρήστης με αυτό το email
         existing_user = User.objects.filter(email=email).first()
@@ -593,6 +596,7 @@ class InvitationService:
             invitation_type=invitation_type,
             invited_by=invited_by,
             building_id=final_building_id,
+            apartment_id=apartment_id,
             assigned_role=assigned_role
         )
         
@@ -661,12 +665,13 @@ class InvitationService:
             except Group.DoesNotExist:
                 pass
         
-        # Δημιουργία building membership αν υπάρχει building
+        # Δημιουργία building membership και σύνδεση με apartment
         if invitation.building_id:
             logger.info(f"Creating building membership for user {user.email} in building {invitation.building_id}")
             
             try:
                 from buildings.models import Building, BuildingMembership
+                from apartments.models import Apartment
                 from django_tenants.utils import schema_context
                 
                 # Χρησιμοποιούμε schema_context για να διασφαλίσουμε ότι επιστρέφουμε στο αρχικό schema
@@ -700,11 +705,52 @@ class InvitationService:
                             building.internal_manager = user
                             building.save(update_fields=['internal_manager'])
                             logger.info(f"Set {user.email} as internal manager of {building.name}")
+                        
+                        # ΝΕΟ: Σύνδεση χρήστη με διαμέρισμα αν υπάρχει apartment_id
+                        if invitation.apartment_id:
+                            try:
+                                apartment = Apartment.objects.get(id=invitation.apartment_id)
+                                role = (invitation.assigned_role or '').lower()
+                                
+                                # Καθορισμός του τύπου σύνδεσης βάσει ρόλου
+                                if role in ['resident', 'ένοικος', 'tenant', '']:
+                                    # Ένοικος - θέτουμε tenant_user
+                                    apartment.tenant_user = user
+                                    apartment.is_rented = True
+                                    apartment.save(update_fields=['tenant_user', 'is_rented'])
+                                    logger.info(f"✅ Set tenant_user for apartment {apartment.number} to user {user.email}")
+                                elif role in ['owner', 'ιδιοκτήτης']:
+                                    # Ιδιοκτήτης - θέτουμε owner_user
+                                    apartment.owner_user = user
+                                    apartment.save(update_fields=['owner_user'])
+                                    logger.info(f"✅ Set owner_user for apartment {apartment.number} to user {user.email}")
+                                else:
+                                    # Default: θεωρούμε ένοικο για άλλους ρόλους (π.χ. internal_manager)
+                                    apartment.tenant_user = user
+                                    apartment.is_rented = True
+                                    apartment.save(update_fields=['tenant_user', 'is_rented'])
+                                    logger.info(f"✅ Set tenant_user (default) for apartment {apartment.number} to user {user.email}")
+                                    
+                            except Apartment.DoesNotExist:
+                                logger.error(f"❌ Apartment with ID {invitation.apartment_id} not found")
+                            except Exception as e:
+                                logger.error(f"❌ Failed to link user to apartment: {e}", exc_info=True)
                     
             except Building.DoesNotExist:
                 logger.error(f"Building with ID {invitation.building_id} not found in current tenant schema")
             except Exception as e:
                 logger.error(f"Failed to create building membership: {e}", exc_info=True)
+        
+        # ΚΡΙΣΙΜΟ: Διασφάλιση ότι residents δεν έχουν admin permissions
+        # Αυτό προστατεύει από bugs ή data corruption που μπορεί να θέσουν λάθος flags
+        if invitation.assigned_role == 'resident' or not invitation.assigned_role:
+            user.refresh_from_db()
+            if user.is_staff or user.is_superuser:
+                logger.warning(f"⚠️ Correcting admin flags for resident {user.email}: is_staff={user.is_staff}, is_superuser={user.is_superuser}")
+                user.is_staff = False
+                user.is_superuser = False
+                user.save(update_fields=['is_staff', 'is_superuser'])
+                logger.info(f"✅ Admin flags corrected for {user.email}")
         
         # Ενημέρωση invitation (πρέπει να γίνει στο public schema)
         invitation.accept(user)
@@ -713,6 +759,7 @@ class InvitationService:
         EmailService.send_welcome_email(user)
         
         logger.info(f"[INVITATION] Invitation accepted successfully for {user.email}")
+        logger.info(f"[INVITATION] Final user state: role={user.role}, is_staff={user.is_staff}, is_superuser={user.is_superuser}")
         
         return user
 

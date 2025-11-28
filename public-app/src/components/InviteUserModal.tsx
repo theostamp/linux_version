@@ -40,6 +40,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(defaultBuildingId || null);
+  const [selectedApartmentId, setSelectedApartmentId] = useState<number | null>(null);
   const [assignedRole, setAssignedRole] = useState<'resident' | 'internal_manager' | 'manager' | 'staff' | null>('resident');
   const [submitting, setSubmitting] = useState(false);
   const [selectedApartmentContact, setSelectedApartmentContact] = useState<string>('manual');
@@ -108,13 +109,14 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       setFirstName('');
       setLastName('');
       setSelectedApartmentContact('manual');
+      setSelectedApartmentId(null);
       // Επαναφορά στο τρέχον κτίριο ή default
       setSelectedBuildingId(defaultBuildingId || selectedBuilding?.id || null);
       setAssignedRole('resident');
     }
   }, [open, defaultEmail, defaultBuildingId, selectedBuilding?.id]);
 
-  // Όταν αλλάζει η επιλογή διαμερίσματος, ενημέρωσε το email και το όνομα
+  // Όταν αλλάζει η επιλογή διαμερίσματος, ενημέρωσε το email, το όνομα και το apartment_id
   const handleApartmentContactChange = (value: string) => {
     setSelectedApartmentContact(value);
     
@@ -123,17 +125,20 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       setEmail('');
       setFirstName('');
       setLastName('');
+      setSelectedApartmentId(null);
       return;
     }
     
     // Βρες την επαφή από το value (format: "apartmentId-type")
     const [apartmentIdStr, type] = value.split('-');
+    const apartmentId = parseInt(apartmentIdStr, 10);
     const contact = apartmentContacts.find(
-      c => c.apartmentId.toString() === apartmentIdStr && c.type === type
+      c => c.apartmentId === apartmentId && c.type === type
     );
     
     if (contact) {
       setEmail(contact.email);
+      setSelectedApartmentId(contact.apartmentId);
       // Προσπάθεια διαχωρισμού ονόματος/επωνύμου
       const nameParts = contact.name.trim().split(' ');
       if (nameParts.length >= 2) {
@@ -171,6 +176,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
         last_name: lastName.trim() || undefined,
         invitation_type: 'building_access',
         building_id: selectedBuildingId || undefined,
+        apartment_id: selectedApartmentId || undefined,
         assigned_role: assignedRole || undefined,
       };
 
@@ -186,6 +192,8 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       setFirstName('');
       setLastName('');
       setSelectedBuildingId(defaultBuildingId || null);
+      setSelectedApartmentId(null);
+      setSelectedApartmentContact('manual');
       setAssignedRole('resident');
       
       // Close modal

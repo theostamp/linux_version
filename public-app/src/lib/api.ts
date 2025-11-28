@@ -1931,6 +1931,7 @@ export type CreateInvitationPayload = {
   last_name?: string;
   invitation_type?: 'registration' | 'building_access' | 'role_assignment';
   building_id?: number | null;
+  apartment_id?: number | null;
   assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
 };
 

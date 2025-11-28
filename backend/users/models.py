@@ -429,6 +429,14 @@ class UserInvitation(models.Model):
         help_text=_('ID του κτιρίου στο οποίο προσκλήθηκε ο χρήστης')
     )
     
+    # Apartment association (if applicable) - for linking user to specific apartment
+    apartment_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('Apartment ID'),
+        help_text=_('ID του διαμερίσματος στο οποίο θα συνδεθεί ο χρήστης')
+    )
+    
     # Role assignment (if applicable)
     assigned_role = models.CharField(
         _('Assigned Role'),

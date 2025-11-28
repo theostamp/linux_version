@@ -315,13 +315,15 @@ class UserInvitationSerializer(serializers.ModelSerializer):
     """
     invited_by_name = serializers.SerializerMethodField()
     building_name = serializers.SerializerMethodField()
+    apartment_number = serializers.SerializerMethodField()
     
     class Meta:
         model = UserInvitation
         fields = (
             'id', 'email', 'first_name', 'last_name', 'invitation_type',
             'status', 'expires_at', 'invited_by', 'invited_by_name',
-            'building_id', 'building_name', 'assigned_role', 'created_at'
+            'building_id', 'building_name', 'apartment_id', 'apartment_number',
+            'assigned_role', 'created_at'
         )
         read_only_fields = ('id', 'token', 'invited_by', 'status', 'created_at')
     
@@ -337,6 +339,16 @@ class UserInvitationSerializer(serializers.ModelSerializer):
             except:
                 return None
         return None
+    
+    def get_apartment_number(self, obj):
+        if obj.apartment_id:
+            try:
+                from apartments.models import Apartment
+                apartment = Apartment.objects.get(id=obj.apartment_id)
+                return apartment.number
+            except:
+                return None
+        return None
 
 
 class UserInvitationCreateSerializer(serializers.ModelSerializer):
@@ -349,14 +361,20 @@ class UserInvitationCreateSerializer(serializers.ModelSerializer):
         allow_null=True,
         help_text='Ρόλος που θα ανατεθεί στον χρήστη (resident, internal_manager, manager, staff)'
     )
+    apartment_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text='ID του διαμερίσματος στο οποίο θα συνδεθεί ο χρήστης'
+    )
     
     class Meta:
         model = UserInvitation
-        fields = ('email', 'first_name', 'last_name', 'invitation_type', 'building_id', 'assigned_role')
+        fields = ('email', 'first_name', 'last_name', 'invitation_type', 'building_id', 'apartment_id', 'assigned_role')
     
     def validate(self, data):
-        """Validation για building_id και assigned_role"""
+        """Validation για building_id, apartment_id και assigned_role"""
         building_id = data.get('building_id')
+        apartment_id = data.get('apartment_id')
         assigned_role = data.get('assigned_role')
         
         # Αν assigned_role είναι internal_manager, building_id είναι υποχρεωτικό
@@ -364,6 +382,25 @@ class UserInvitationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'building_id': 'Το building_id είναι υποχρεωτικό όταν ο ρόλος είναι internal_manager'
             })
+        
+        # Αν assigned_role είναι resident, συνιστάται apartment_id
+        if assigned_role == 'resident' and not apartment_id:
+            # Δεν είναι υποχρεωτικό, αλλά καλό είναι να υπάρχει
+            pass
+        
+        # Επαλήθευση ότι το apartment ανήκει στο building
+        if apartment_id and building_id:
+            try:
+                from apartments.models import Apartment
+                apartment = Apartment.objects.get(id=apartment_id)
+                if apartment.building_id != building_id:
+                    raise serializers.ValidationError({
+                        'apartment_id': 'Το διαμέρισμα δεν ανήκει στο επιλεγμένο κτίριο'
+                    })
+            except Apartment.DoesNotExist:
+                raise serializers.ValidationError({
+                    'apartment_id': 'Το διαμέρισμα δεν βρέθηκε'
+                })
         
         return data
     
