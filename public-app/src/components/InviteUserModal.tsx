@@ -308,6 +308,43 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
             </div>
           )}
 
+          {/* Επιλογή διαμερίσματος για χειροκίνητη εισαγωγή */}
+          {assignedRole === 'resident' && selectedBuildingId && selectedApartmentContact === 'manual' && (
+            <div>
+              <Label htmlFor="manualApartment" className="flex items-center gap-2">
+                <Home className="h-4 w-4 text-orange-500" />
+                Σύνδεση με Διαμέρισμα *
+              </Label>
+              <Select
+                value={selectedApartmentId?.toString() || ''}
+                onValueChange={(value) => setSelectedApartmentId(value ? Number(value) : null)}
+                disabled={submitting || isLoadingApartments}
+              >
+                <SelectTrigger id="manualApartment">
+                  <SelectValue placeholder={isLoadingApartments ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα για σύνδεση"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {apartments.map((apt) => (
+                    <SelectItem key={apt.id} value={apt.id.toString()}>
+                      <span className="flex items-center gap-2">
+                        <Home className="h-4 w-4 text-blue-500" />
+                        <span className="font-medium">Δ.{apt.number}</span>
+                        {apt.owner_name && (
+                          <span className="text-xs text-gray-400">
+                            ({apt.owner_name})
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-orange-600">
+                ⚠️ Επιλέξτε το διαμέρισμα στο οποίο θα συνδεθεί ο ένοικος
+              </p>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="email">Email *</Label>
             <Input
