@@ -608,6 +608,12 @@ class InvitationService:
         """
         Αποδοχή πρόσκλησης και δημιουργία χρήστη
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[INVITATION] Starting accept_invitation for token: {token}")
+        logger.info(f"[INVITATION] Password provided: {'Yes' if password else 'No'}, length: {len(password) if password else 0}")
+        
         try:
             invitation = UserInvitation.objects.get(token=token, status='pending')
         except UserInvitation.DoesNotExist:
@@ -616,6 +622,8 @@ class InvitationService:
         if invitation.is_expired:
             invitation.expire()
             raise ValueError("Η πρόσκληση έχει λήξει.")
+        
+        logger.info(f"[INVITATION] Found invitation for email: {invitation.email}")
         
         # Δημιουργία χρήστη - ΣΗΜΑΝΤΙΚΟ: is_superuser και is_staff πρέπει να είναι False
         # για όλους τους χρήστες που δημιουργούνται μέσω πρόσκλησης
@@ -629,6 +637,11 @@ class InvitationService:
             is_superuser=False,  # Explicit: δεν είναι superuser
             email_verified=True
         )
+        
+        # Verify password was set correctly
+        password_check = user.check_password(password)
+        logger.info(f"[INVITATION] User created: {user.email}, ID: {user.id}")
+        logger.info(f"[INVITATION] Password verification after creation: {password_check}")
         
         # Ορισμός tenant από τον χρήστη που έστειλε την πρόσκληση
         if invitation.invited_by and hasattr(invitation.invited_by, 'tenant') and invitation.invited_by.tenant:
