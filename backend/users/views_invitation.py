@@ -252,15 +252,30 @@ class AcceptInvitationView(APIView):
                     
                     # Link to apartment if specified
                     if invitation.apartment:
-                        invitation.apartment.residents.add(tenant_user)
-                        
-                        # Αν ο ρόλος είναι internal_manager, ορίζουμε building.internal_manager
-                        if invitation.invited_role == 'internal_manager':
-                            building = invitation.apartment.building
+                        apartment = invitation.apartment
+                        role = invitation.invited_role.lower() if invitation.invited_role else ''
+
+                        # Ορισμός χρήστη στο διαμέρισμα ανάλογα με τον ρόλο
+                        if role in ['resident', 'ένοικος', 'tenant']:
+                            # Ένοικος - θέτουμε tenant_user
+                            apartment.tenant_user = tenant_user
+                            apartment.is_rented = True
+                            logger.info(f"Set tenant_user for apartment {apartment.id} to user {tenant_user.email}")
+                        elif role in ['owner', 'ιδιοκτήτης']:
+                            # Ιδιοκτήτης - θέτουμε owner_user
+                            apartment.owner_user = tenant_user
+                            logger.info(f"Set owner_user for apartment {apartment.id} to user {tenant_user.email}")
+                        elif role == 'internal_manager':
+                            # Internal manager - θέτουμε ως tenant_user και ορίζουμε building.internal_manager
+                            apartment.tenant_user = tenant_user
+                            apartment.is_rented = True
+                            apartment.save(update_fields=['tenant_user', 'is_rented'])
+
+                            building = apartment.building
                             if building:
                                 building.internal_manager = tenant_user
                                 building.save(update_fields=['internal_manager'])
-                                
+
                                 # Δημιουργία BuildingMembership με role='internal_manager'
                                 from buildings.models import BuildingMembership
                                 BuildingMembership.objects.get_or_create(
@@ -268,6 +283,16 @@ class AcceptInvitationView(APIView):
                                     building=building,
                                     defaults={'role': 'internal_manager'}
                                 )
+                            logger.info(f"Set internal_manager for building {building.id} to user {tenant_user.email}")
+                        else:
+                            # Default: θεωρούμε ένοικο
+                            apartment.tenant_user = tenant_user
+                            apartment.is_rented = True
+                            logger.info(f"Set tenant_user (default) for apartment {apartment.id} to user {tenant_user.email}")
+
+                        # Αποθήκευση διαμερίσματος (εκτός αν ήδη αποθηκεύτηκε για internal_manager)
+                        if role != 'internal_manager':
+                            apartment.save(update_fields=['tenant_user', 'owner_user', 'is_rented'])
                 
                 # Mark invitation as accepted
                 invitation.accept(public_user)
