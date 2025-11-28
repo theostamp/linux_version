@@ -341,9 +341,10 @@ export default function CollapsibleSidebar() {
         </button>
 
         {/* Loading Sidebar */}
-        <aside 
-          className="hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
-          style={{ 
+        <aside
+          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
+          style={{
+            backgroundColor: '#FFFAF0',
             width: '80px',
           }}
         >
@@ -368,10 +369,11 @@ export default function CollapsibleSidebar() {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
+          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
+          backgroundColor: '#FFFAF0',
           width: isExpanded ? '256px' : '80px',
           fontFamily: 'var(--font-sans)',
         }}
@@ -544,11 +546,12 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 bg-card shadow-xl border-r border-slate-200/60 flex flex-col z-50",
+          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-slate-200/60 flex flex-col z-50",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{
+          backgroundColor: '#FFFAF0',
           fontFamily: 'var(--font-sans)',
         }}
       >
