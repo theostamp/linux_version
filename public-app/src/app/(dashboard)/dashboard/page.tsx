@@ -117,17 +117,19 @@ function DashboardContent() {
           }
         />
         
-        {/* 5. Health Cards */}
-        <BentoGridItem
-          className="md:col-span-3"
-          title="Κατάσταση Κτιρίων"
-          header={
-            <BuildingHealthCards 
-              data={dashboardData} 
-              loading={dashboardLoading} 
-            />
-          }
-        />
+        {/* 5. Health Cards - Μόνο για managers/admins, ΟΧΙ για residents */}
+        {user?.role !== 'resident' && (
+          <BentoGridItem
+            className="md:col-span-3"
+            title="Κατάσταση Κτιρίων"
+            header={
+              <BuildingHealthCards 
+                data={dashboardData} 
+                loading={dashboardLoading} 
+              />
+            }
+          />
+        )}
 
         {/* 6. Announcements (if any) */}
         {announcements.length > 0 && (

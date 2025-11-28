@@ -165,13 +165,21 @@ def oauth_callback(request):
         # Generate tokens
         tokens = OAuthService.generate_tokens(user)
         
-        # Determine redirect path based on tenant existence (same logic as login)
-        redirect_path = '/dashboard'  # Default
+        # Determine redirect path based on tenant existence and role (same logic as login)
+        redirect_path = '/dashboard'  # Default for managers/admins
+        tenant_url = None
         if not hasattr(user, 'tenant') or user.tenant is None:
             redirect_path = '/plans'
             logger.info(f"[OAUTH] User has no tenant, redirecting to /plans")
         else:
-            logger.info(f"[OAUTH] User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
+            tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
+            # Residents go to /my-apartment, managers/admins go to /dashboard
+            user_role = getattr(user, 'role', None)
+            if user_role == 'resident':
+                redirect_path = '/my-apartment'
+                logger.info(f"[OAUTH] User is resident, redirecting to /my-apartment")
+            else:
+                logger.info(f"[OAUTH] User has tenant: {user.tenant.schema_name}, role: {user_role}, redirecting to /dashboard")
 
         return Response({
             'access': tokens['access'],
@@ -184,7 +192,8 @@ def oauth_callback(request):
                 'is_active': user.is_active,
                 'role': getattr(user, 'role', None)
             },
-            'redirect_path': redirect_path
+            'redirect_path': redirect_path,
+            'tenant_url': tenant_url
         })
         
     except Exception as e:

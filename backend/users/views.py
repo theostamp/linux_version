@@ -165,15 +165,21 @@ def login_view(request):
     print(f">>> DEBUG: user_data keys = {list(user_data.keys())}")
     print(f">>> DEBUG: user_data['role'] = {repr(user_data.get('role'))}")
 
-    # Determine redirect path based on tenant existence
-    redirect_path = '/dashboard'  # Default
+    # Determine redirect path based on tenant existence and role
+    redirect_path = '/dashboard'  # Default for managers/admins
     tenant_url = None
     if not hasattr(user, 'tenant') or user.tenant is None:
         redirect_path = '/plans'
         print(f">>> DEBUG: User has no tenant, redirecting to /plans")
     else:
         tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
-        print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
+        # Residents go to /my-apartment, managers/admins go to /dashboard
+        user_role = getattr(user, 'role', None)
+        if user_role == 'resident':
+            redirect_path = '/my-apartment'
+            print(f">>> DEBUG: User is resident, redirecting to /my-apartment")
+        else:
+            print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, role: {user_role}, redirecting to /dashboard")
 
     return Response({
         'access': access,
