@@ -1,9 +1,64 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { BaseWidgetProps } from '@/types/kiosk';
-import { QrCode, Smartphone, Wifi } from 'lucide-react';
+import { QrCode, Smartphone, Building2 } from 'lucide-react';
+import QRCodeLib from 'qrcode';
 
 export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [qrUrl, setQrUrl] = useState<string>('');
+  const [qrError, setQrError] = useState<string>('');
+
+  // Generate QR code URL and token
+  useEffect(() => {
+    const generateQRUrl = () => {
+      try {
+        const buildingId = data?.building_info?.id || 1;
+
+        // Generate a simple token (in production, this should come from backend)
+        // For now, using a combination of building ID and timestamp
+        const token = btoa(`${buildingId}-${Date.now()}`).substring(0, 32);
+
+        // Construct the URL
+        const baseUrl = window.location.origin;
+        const url = `${baseUrl}/kiosk/connect?building=${buildingId}&token=${token}`;
+
+        setQrUrl(url);
+
+        // Generate QR code on canvas
+        if (canvasRef.current) {
+          QRCodeLib.toCanvas(
+            canvasRef.current,
+            url,
+            {
+              width: 200,
+              margin: 2,
+              color: {
+                dark: '#1e293b',  // slate-800
+                light: '#ffffff'
+              },
+              errorCorrectionLevel: 'H'
+            },
+            (err) => {
+              if (err) {
+                console.error('QR Code generation error:', err);
+                setQrError('Σφάλμα δημιουργίας QR code');
+              }
+            }
+          );
+        }
+      } catch (err) {
+        console.error('Error generating QR URL:', err);
+        setQrError('Σφάλμα δημιουργίας QR code');
+      }
+    };
+
+    if (data?.building_info) {
+      generateQRUrl();
+    }
+  }, [data?.building_info]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -12,38 +67,68 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
     );
   }
 
-  if (error) {
+  if (error || qrError) {
     return (
       <div className="flex items-center justify-center h-full text-red-300">
         <div className="text-center">
           <div className="text-2xl mb-2">⚠️</div>
-          <p className="text-sm">{error}</p>
+          <p className="text-sm">{error || qrError}</p>
         </div>
       </div>
     );
   }
 
-  const qrCodeData = {
-    url: window.location.origin,
-    buildingId: data?.building_info?.id || 1,
-    timestamp: Date.now()
-  };
-
   return (
     <div className="h-full flex flex-col items-center justify-center text-center p-4">
-      {/* QR Code Placeholder */}
+
+      {/* QR Code */}
       <div className="mb-4">
-        <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center mb-3">
-          <QrCode className="w-16 h-16 text-gray-800" />
+        <div className="bg-white rounded-2xl p-4 shadow-2xl border-4 border-blue-400/30">
+          <canvas
+            ref={canvasRef}
+            className="block"
+            style={{ imageRendering: 'pixelated' }}
+          />
         </div>
       </div>
 
-      {/* Info Text */}
-      <div className="bg-blue-500/20 border border-blue-400/40 rounded-lg p-3">
-        <div className="text-xs text-blue-200 leading-relaxed">
-          <p className="font-medium">Μπορείτε να δείτε την αναλυτική κατάσταση στο email που σας έχει σταλεί ή σαρώνωντας το QR code με το κινητό σας.</p>
+      {/* Building Info */}
+      {data?.building_info && (
+        <div className="flex items-center gap-2 mb-3 bg-blue-500/10 border border-blue-400/30 rounded-lg px-3 py-2">
+          <Building2 className="w-4 h-4 text-blue-300" />
+          <span className="text-sm font-semibold text-blue-200">
+            {data.building_info.name || `Κτίριο #${data.building_info.id}`}
+          </span>
+        </div>
+      )}
+
+      {/* Instructions */}
+      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/40 rounded-xl p-4 max-w-xs">
+        <div className="flex items-start gap-3 mb-3">
+          <Smartphone className="w-5 h-5 text-blue-300 flex-shrink-0 mt-0.5" />
+          <div className="text-left">
+            <p className="text-sm font-semibold text-blue-100 mb-1">
+              Σαρώστε για σύνδεση
+            </p>
+            <p className="text-xs text-blue-200/80 leading-relaxed">
+              Ανοίξτε την κάμερα του κινητού σας και σαρώστε το QR code για άμεση πρόσβαση στην εφαρμογή.
+            </p>
+          </div>
+        </div>
+
+        <div className="text-xs text-blue-200/60 leading-relaxed border-t border-blue-400/20 pt-3">
+          <p>✓ Αυτόματη σύνδεση με το κτίριο</p>
+          <p>✓ Δεν χρειάζεται εγκατάσταση</p>
+          <p>✓ Άμεση πρόσβαση στα δεδομένα σας</p>
         </div>
       </div>
+
+      {/* Debug info (only in development) */}
+      {process.env.NODE_ENV === 'development' && qrUrl && (
+        <div className="mt-4 text-[10px] text-white/30 font-mono break-all max-w-xs">
+          {qrUrl}
+        </div>
+      )}
     </div>
   );
 }
