@@ -617,13 +617,16 @@ class InvitationService:
             invitation.expire()
             raise ValueError("Η πρόσκληση έχει λήξει.")
         
-        # Δημιουργία χρήστη
+        # Δημιουργία χρήστη - ΣΗΜΑΝΤΙΚΟ: is_superuser και is_staff πρέπει να είναι False
+        # για όλους τους χρήστες που δημιουργούνται μέσω πρόσκλησης
         user = User.objects.create_user(
             email=invitation.email,
             first_name=invitation.first_name,
             last_name=invitation.last_name,
             password=password,
             is_active=True,
+            is_staff=False,  # Explicit: δεν είναι staff
+            is_superuser=False,  # Explicit: δεν είναι superuser
             email_verified=True
         )
         
