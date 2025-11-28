@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { UserPlus, Mail, Users } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export default function UsersPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -19,7 +20,7 @@ export default function UsersPage() {
   const { user } = useAuth();
   
   // Check if user has permission (manager, staff, or superuser)
-  const hasPermission = user?.is_superuser || user?.is_staff || user?.role === 'manager';
+  const hasPermission = hasOfficeAdminAccess(user);
   
   // Check for query parameters on mount
   useEffect(() => {

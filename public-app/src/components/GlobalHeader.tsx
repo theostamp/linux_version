@@ -8,62 +8,16 @@ import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { User, Building as BuildingIcon, Settings, Calendar } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
-
-// Helper function to get user role label
-const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string; profile?: { role?: string } } | null): string => {
-  if (!user) return 'Χρήστης';
-
-  if (user.is_superuser) return 'Ultra Admin';
-  if (user.is_staff) return 'Διαχειριστής';
-
-  if (user.role) {
-    switch (user.role.toLowerCase()) {
-      case 'admin':
-      case 'manager':
-        return 'Διαχειριστής';
-      case 'internal_manager':
-        return 'Εσωτερικός Διαχειριστής';
-      case 'owner':
-        return 'Ιδιοκτήτης';
-      case 'tenant':
-      case 'resident':
-        return 'Ένοικος';
-      default:
-        return user.role;
-    }
-  }
-
-  if (user.profile?.role) {
-    switch (user.profile.role) {
-      case 'superuser':
-        return 'Ultra Admin';
-      case 'manager':
-        return 'Διαχειριστής';
-      case 'internal_manager':
-        return 'Εσωτερικός Διαχειριστής';
-      case 'resident':
-        return 'Κάτοικος';
-      default:
-        return user.profile.role;
-    }
-  }
-
-  return 'Χρήστης';
-};
-
-// Helper function to check if user is admin-level (can see building selector)
-const isAdminLevel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string; profile?: { role?: string } } | null): boolean => {
-  if (!user) return false;
-  if (user.is_superuser || user.is_staff) return true;
-  
-  const role = user.role || user.profile?.role;
-  // Only 'manager' (Office Manager) is admin-level
-  return role === 'manager';
-};
+import { getRoleLabel, hasOfficeAdminAccess, isResident } from '@/lib/roleUtils';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding } = useBuilding();
+  const isAdminLevel = hasOfficeAdminAccess(user);
+  const isResidentUser = isResident(user);
+  const roleLabel = getRoleLabel(user);
+  const showOfficeDetails = isAdminLevel;
+
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
@@ -113,53 +67,66 @@ export default function GlobalHeader() {
 
               {/* Center Section - Office Details spread across width */}
               <div className="min-w-0">
-                {/* Desktop: Grid Layout for even spacing */}
-                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                  {/* Office Name and Address */}
+                {showOfficeDetails ? (
+                  <>
+                    {/* Desktop: Grid Layout for even spacing */}
+                    <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                      {/* Office Name and Address */}
+                      <div className="flex flex-col justify-center min-w-0">
+                        <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
+                          {user?.office_name || 'Γραφείο Διαχείρισης'}
+                        </h1>
+                        {user?.office_address && (
+                          <p className="text-xs text-muted-foreground leading-tight truncate">
+                            {user.office_address}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Contact Details */}
+                      <div className="flex flex-col justify-center min-w-0">
+                        {user?.office_phone && (
+                          <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
+                            📞 {user.office_phone}
+                          </p>
+                        )}
+                        {user?.email && (
+                          <p className="text-xs text-muted-foreground leading-tight truncate">
+                            ✉️ {user.email}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Building Selector - ADMIN-ONLY */}
+                      {isAdminLevel && (
+                        <div className="hidden lg:flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
+                          <BuildingSelectorButton
+                            onBuildingSelect={setSelectedBuilding}
+                            selectedBuilding={selectedBuilding}
+                            className="min-w-[160px]"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mobile version - Office Name Only */}
+                    <div className="sm:hidden">
+                      <h1 className="text-sm font-bold text-foreground leading-tight truncate">
+                        {user?.office_name?.substring(0, 15) || 'ΓΔ'}
+                      </h1>
+                    </div>
+                  </>
+                ) : (
                   <div className="flex flex-col justify-center min-w-0">
                     <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
-                      {user?.office_name || 'Γραφείο Διαχείρισης'}
+                      {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
                     </h1>
-                    {user?.office_address && (
-                      <p className="text-xs text-muted-foreground leading-tight truncate">
-                        {user.office_address}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground leading-tight truncate">
+                      {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
+                    </p>
                   </div>
-
-                  {/* Contact Details */}
-                  <div className="flex flex-col justify-center min-w-0">
-                    {user?.office_phone && (
-                      <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
-                        📞 {user.office_phone}
-                      </p>
-                    )}
-                    {user?.email && (
-                      <p className="text-xs text-muted-foreground leading-tight truncate">
-                        ✉️ {user.email}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Building Selector - ADMIN-ONLY (Office Manager, Staff, Superuser) */}
-                  {isAdminLevel(user) && (
-                    <div className="hidden lg:flex items-center gap-2 min-w-0">
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
-                      <BuildingSelectorButton
-                        onBuildingSelect={setSelectedBuilding}
-                        selectedBuilding={selectedBuilding}
-                        className="min-w-[160px]"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile version - Office Name Only */}
-                <div className="sm:hidden">
-                  <h1 className="text-sm font-bold text-foreground leading-tight truncate">
-                    {user?.office_name?.substring(0, 15) || 'ΓΔ'}
-                  </h1>
-                </div>
+                )}
               </div>
 
               {/* Right Section - Actions and User Info */}
@@ -177,7 +144,7 @@ export default function GlobalHeader() {
               </button>
 
               {/* Settings Button - Desktop - ADMIN-ONLY */}
-              {isAdminLevel(user) && (
+              {isAdminLevel && (
                 <button
                   onClick={handleSettingsModalOpen}
                   className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
@@ -188,7 +155,7 @@ export default function GlobalHeader() {
               )}
 
               {/* Settings Button - Mobile - ADMIN-ONLY */}
-              {isAdminLevel(user) && (
+              {isAdminLevel && (
                 <button
                   onClick={() => setIsSettingsModalOpen(true)}
                   className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
@@ -211,7 +178,7 @@ export default function GlobalHeader() {
                         : user.email}
                     </p>
                     <p className="text-xs text-muted-foreground leading-tight mt-0.5">
-                      {getUserRoleLabel(user)}
+                      {roleLabel}
                     </p>
                   </div>
                   <div className="sm:hidden">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/contexts/AuthContext';
+import { getEffectiveRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 type Role = 'any' | 'manager' | 'admin';
 
@@ -11,10 +12,10 @@ export function useAuthGuard(requiredRole: Role = 'any') {
     if (!user) return false;
     if (requiredRole === 'any') return true;
 
-    const role = user.role;
+    const normalizedRole = getEffectiveRole(user);
 
-    if (requiredRole === 'manager') return user.is_staff || role === 'manager';
-    if (requiredRole === 'admin') return user.is_superuser || role === 'superuser';
+    if (requiredRole === 'manager') return normalizedRole === 'manager' || normalizedRole === 'office_staff';
+    if (requiredRole === 'admin') return hasOfficeAdminAccess(user);
 
     return false;
   })();

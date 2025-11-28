@@ -19,6 +19,7 @@ import SubscriptionGate from '@/components/SubscriptionGate';
 import EditTenantModal from '@/components/apartments/EditTenantModal';
 import EditOwnerModal from '@/components/apartments/EditOwnerModal';
 import { Button } from '@/components/ui/button';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { StatCard } from '@/components/ui/stat-card';
 
 type OccupancyFilter = 'all' | 'owner' | 'tenant' | 'vacant';
@@ -233,7 +234,7 @@ const ApartmentsPageContent = () => {
   const [editOwnerModalOpen, setEditOwnerModalOpen] = useState(false);
   const [selectedApartment, setSelectedApartment] = useState<ApartmentList | null>(null);
 
-  const canManage = !!(user?.is_superuser || user?.is_staff);
+  const canManage = hasOfficeAdminAccess(user);
 
   const loadApartments = useCallback(async () => {
     if (!buildingId) return;

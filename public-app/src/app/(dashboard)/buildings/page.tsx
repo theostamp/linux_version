@@ -16,6 +16,7 @@ import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/stat-card';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 const BuildingsPageContent = () => {
   const {
@@ -110,7 +111,7 @@ const BuildingsPageContent = () => {
     window.location.reload();
   };
 
-  const canManage = user?.is_superuser || user?.is_staff;
+  const canManage = hasOfficeAdminAccess(user);
 
   if (isLoading) {
     return (

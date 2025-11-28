@@ -10,35 +10,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import type { User } from '@/types/user';
 import { Eye, EyeOff } from 'lucide-react';
-
-// Καθορίζει τη σωστή landing page βάσει του ρόλου του χρήστη
-function getRedirectForRole(user: User | null): string {
-  if (!user) return '/login';
-  
-  // Superusers, staff, managers -> Dashboard
-  if (user.is_superuser || user.is_staff) {
-    return '/dashboard';
-  }
-  
-  // Check role
-  const role = user.role;
-  if (role === 'manager' || role === 'office_staff') {
-    return '/dashboard';
-  }
-  
-  // Internal managers -> Financial (βλέπουν τα οικονομικά της πολυκατοικίας τους)
-  if (role === 'internal_manager') {
-    return '/financial';
-  }
-  
-  // Residents -> My Apartment
-  if (role === 'resident') {
-    return '/my-apartment';
-  }
-  
-  // Default για άγνωστους ρόλους -> announcements (safe default)
-  return '/announcements';
-}
+import { getDefaultLandingPath } from '@/lib/roleUtils';
 
 export default function LoginForm({ redirectTo }: { readonly redirectTo?: string }) {
   const router = useRouter();
@@ -58,7 +30,7 @@ export default function LoginForm({ redirectTo }: { readonly redirectTo?: string
       
       // Αν υπάρχει explicit redirectTo, χρησιμοποίησέ το
       // Αλλιώς, κατεύθυνε βάσει ρόλου
-      const targetUrl = redirectTo || getRedirectForRole(user);
+      const targetUrl = redirectTo || getDefaultLandingPath(user);
       router.push(targetUrl);
     } catch (err: unknown) {
       const error = err as { message?: string };

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { useQueryClient } from '@tanstack/react-query';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 interface BuildingTableProps {
   buildings: Building[];
@@ -35,7 +36,7 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const canManage = user?.is_superuser || user?.is_staff;
+  const canManage = hasOfficeAdminAccess(user);
 
   const handleDelete = async (building: Building) => {
     if (window.confirm(`Είστε βέβαιοι ότι θέλετε να διαγράψετε το κτίριο "${building.name}";`)) {

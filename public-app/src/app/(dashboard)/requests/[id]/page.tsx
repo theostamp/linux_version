@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Trash2, Edit } from 'lucide-react';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import PhotoGallery from '@/components/PhotoGallery';
 
 const statusLabels: Record<string, string> = {
@@ -44,8 +45,9 @@ export default function RequestDetailPage() {
   const [changingStatus, setChangingStatus] = useState(false);
 
   const isOwner = request?.created_by_username === user?.username;
-  const canDelete = user?.is_superuser || user?.is_staff || isOwner;
-  const canChangeStatus = user?.is_superuser || user?.is_staff;
+  const isAdmin = hasOfficeAdminAccess(user);
+  const canDelete = isAdmin || isOwner;
+  const canChangeStatus = isAdmin;
 
   async function loadRequest() {
     try {

@@ -1,4 +1,5 @@
 import { useAuth } from '@/components/contexts/AuthContext';
+import { getEffectiveRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export type FinancialPermission = 
   | 'financial_read'
@@ -15,13 +16,9 @@ export function useFinancialPermissions() {
   const hasPermission = (permission: FinancialPermission): boolean => {
     if (!user || !isAuthReady) return false;
 
-    // Superusers έχουν πλήρη πρόσβαση
-    if (user.is_superuser) return true;
-
-    // Staff users έχουν πρόσβαση σε όλες τις λειτουργίες
-    if (user.is_staff) return true;
-
-    const role = user.profile?.role;
+    const role = getEffectiveRole(user);
+    const isOfficeAdmin = role ? ['manager', 'office_staff', 'staff', 'superuser'].includes(role) : false;
+    const isSystemAdmin = role ? ['staff', 'superuser'].includes(role) : false;
 
     switch (permission) {
       case 'financial_read':
@@ -29,28 +26,25 @@ export function useFinancialPermissions() {
         return true;
 
       case 'financial_write':
-        // Managers και admins μπορούν να γράφουν
-        return role === 'manager' || role === 'admin';
+        // Γραφεία και admins μπορούν να γράφουν
+        return isOfficeAdmin;
 
       case 'financial_admin':
-        // Μόνο admins μπορούν να κάνουν διαχειριστικές λειτουργίες
-        return role === 'admin';
+        // Μόνο συστημικοί admins (staff/superuser)
+        return isSystemAdmin;
 
       case 'expense_manage':
-        // Managers και admins μπορούν να διαχειρίζονται δαπάνες
-        return role === 'manager' || role === 'admin';
+        // Γραφεία/administrators
+        return isOfficeAdmin;
 
       case 'payment_manage':
-        // Managers και admins μπορούν να διαχειρίζονται πληρωμές
-        return role === 'manager' || role === 'admin';
+        return isOfficeAdmin;
 
       case 'transaction_manage':
-        // Μόνο admins μπορούν να διαχειρίζονται κινήσεις
-        return role === 'admin';
+        return isSystemAdmin;
 
       case 'report_access':
-        // Managers και admins μπορούν να δουν αναφορές
-        return role === 'manager' || role === 'admin';
+        return isOfficeAdmin;
 
       default:
         return false;
@@ -104,8 +98,11 @@ export function useFinancialPermissions() {
     canIssueCommonExpenses,
     
     // Χρήσιμες συναρτήσεις
-    isManager: () => user?.is_staff || user?.profile?.role === 'manager',
-    isAdmin: () => user?.is_superuser || user?.profile?.role === 'admin',
-    isSuperUser: () => user?.is_superuser || user?.is_staff,
+    isManager: () => {
+      const role = getEffectiveRole(user);
+      return role === 'manager' || role === 'office_staff';
+    },
+    isAdmin: () => hasOfficeAdminAccess(user),
+    isSuperUser: () => getEffectiveRole(user) === 'superuser',
   };
 } 

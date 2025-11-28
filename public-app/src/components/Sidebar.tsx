@@ -8,6 +8,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
+import { getEffectiveRole } from '@/lib/roleUtils';
 import {
   Home,
   Megaphone,
@@ -461,26 +462,8 @@ export default function Sidebar() {
     );
   }
 
-  // Determine user role
-  // Ιεραρχία: superuser > staff > manager (office manager) > internal_manager > resident
-  let userRole: UserRoleType | undefined;
-  if (user?.is_superuser) {
-    userRole = 'superuser';
-  } else if (user?.is_staff) {
-    userRole = 'staff';
-  } else {
-    // Check for specific role - can be on user.role or user.profile.role
-    const directRole = user?.role;
-    const profileRole = user?.profile?.role;
-    const effectiveRole = directRole || profileRole;
-    
-    if (effectiveRole === 'manager' || effectiveRole === 'office_staff' || effectiveRole === 'internal_manager' || effectiveRole === 'resident') {
-      userRole = effectiveRole as UserRoleType;
-    } else {
-      // Legacy fallback - default to resident if no role specified
-      userRole = effectiveRole as UserRoleType | undefined;
-    }
-  }
+  // Determine user role with normalized priority
+  const userRole = getEffectiveRole(user) as UserRoleType | undefined;
 
   // Show no buildings message only after loading is complete and no buildings found
   if (!buildingsIsLoading && buildings.length === 0 && userRole !== 'superuser') {

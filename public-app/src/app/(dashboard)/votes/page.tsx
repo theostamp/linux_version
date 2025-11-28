@@ -19,6 +19,7 @@ import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 function isActive(start: string, end: string) {
   const today = new Date().toISOString().split('T')[0];
@@ -87,8 +88,8 @@ function VotesPageContent() {
   }, [selectedBuilding, currentBuilding, searchParams, router]);
 
   const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
-  const canDelete = user?.is_superuser || user?.is_staff;
-  const canCreateVote = user?.is_superuser || user?.is_staff;
+  const canDelete = hasOfficeAdminAccess(user);
+  const canCreateVote = hasOfficeAdminAccess(user);
 
   const {
     data: votesData = [],

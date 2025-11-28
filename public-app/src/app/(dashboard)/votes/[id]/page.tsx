@@ -15,6 +15,7 @@ import { deleteVote, type Vote } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export default function VoteDetailPage() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export default function VoteDetailPage() {
   const { data: myVote, refetch: refetchMyVote } = useMyVote(voteId);
   const { data: results, refetch: refetchResults } = useVoteResults(voteId);
 
-  const canDelete = user?.is_superuser || user?.is_staff;
+  const canDelete = hasOfficeAdminAccess(user);
 
   const handleDelete = async () => {
     if (!vote) return;
@@ -64,7 +65,7 @@ export default function VoteDetailPage() {
       return true;
     }
     
-    if (user?.is_staff || user?.is_superuser) {
+    if (hasOfficeAdminAccess(user)) {
       return buildings.some(building => building.id === vote.building);
     }
     

@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getDefaultLandingPath, type RoleDescriptor } from '@/lib/roleUtils';
 
 // Καθορίζει τη σωστή landing page βάσει του ρόλου του χρήστη
-interface UserData {
+interface UserData extends RoleDescriptor {
   is_superuser?: boolean;
   is_staff?: boolean;
   role?: string;
@@ -17,29 +18,7 @@ function getRedirectForRole(user: UserData | null, explicitRedirect?: string): s
   // Αν υπάρχει explicit redirect, χρησιμοποίησέ το
   if (explicitRedirect) return explicitRedirect;
   
-  if (!user) return '/announcements';
-  
-  // Check role first so that residents δεν "πατιούνται" από flags is_superuser/is_staff
-  const role = user.role;
-  if (role === 'resident') {
-    return '/my-apartment';
-  }
-  
-  if (role === 'internal_manager') {
-    return '/financial';
-  }
-  
-  if (role === 'manager' || role === 'office_staff') {
-    return '/dashboard';
-  }
-  
-  // Superusers / staff (χωρίς explicit role) -> dashboard
-  if (user.is_superuser || user.is_staff) {
-    return '/dashboard';
-  }
-  
-  // Default για άγνωστους ρόλους -> announcements (safe default)
-  return '/announcements';
+  return getDefaultLandingPath(user);
 }
 
 function LoginForm() {

@@ -17,15 +17,14 @@ import Link from 'next/link';
 import { Plus, Building2, Megaphone } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { hasInternalManagerAccess } from '@/lib/roleUtils';
 
 function AnnouncementsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { user } = useAuth();
   
   // Έλεγχος αν ο χρήστης μπορεί να δημιουργήσει ανακοινώσεις
-  // Μόνο superusers, staff, managers, internal_managers
-  const canCreateAnnouncement = user?.is_superuser || user?.is_staff || 
-    user?.role === 'manager' || user?.role === 'internal_manager';
+  const canCreateAnnouncement = hasInternalManagerAccess(user);
 
   // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
   const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;

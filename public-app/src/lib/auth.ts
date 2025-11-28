@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import React from 'react';
+import { getEffectiveRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 type Me = {
   id: number;
@@ -37,9 +38,10 @@ export function useRole() {
       if (raw) userData = JSON.parse(raw) as Me;
     } catch {}
   }
-  const role = userData?.role ?? null;
-  const isAdmin = !!userData?.is_superuser || role === 'admin';
-  const isManager = !!userData?.is_staff || role === 'manager';
+  const normalizedRole = getEffectiveRole(userData);
+  const role = normalizedRole ?? null;
+  const isAdmin = hasOfficeAdminAccess(userData);
+  const isManager = normalizedRole === 'manager' || normalizedRole === 'office_staff';
   return { role, isAdmin, isManager, isLoading };
 }
 

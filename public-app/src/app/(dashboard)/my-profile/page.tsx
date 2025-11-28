@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { getEffectiveRole, getRoleLabel, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
@@ -50,6 +51,9 @@ export default function MyProfilePage() {
 
   const [formState, setFormState] = React.useState<ProfileFormState>(createFormState());
   const [initialState, setInitialState] = React.useState<ProfileFormState>(createFormState());
+  const roleLabel = getRoleLabel(user);
+  const normalizedRole = getEffectiveRole(user);
+  const isAdminRole = hasOfficeAdminAccess(user);
 
   React.useEffect(() => {
     if (user) {
@@ -181,7 +185,7 @@ export default function MyProfilePage() {
                     <Label>Ρόλος</Label>
                     <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm h-10">
                       <Shield className="h-4 w-4 text-muted-foreground" />
-                      <span>{user.role || (user.is_superuser ? 'superuser' : user.is_staff ? 'manager' : 'tenant')}</span>
+                      <span>{roleLabel}</span>
                     </div>
                   </div>
                 </div>
@@ -220,10 +224,10 @@ export default function MyProfilePage() {
                 <div className="flex items-center justify-between rounded-lg border bg-card/50 px-4 py-3">
                   <div>
                     <p className="text-xs uppercase text-muted-foreground font-semibold">Κατάσταση</p>
-                    <p className="font-medium mt-1">{user.is_superuser ? 'Superuser' : user.is_staff ? 'Διαχειριστής' : 'Χρήστης'}</p>
+                    <p className="font-medium mt-1">{roleLabel}</p>
                   </div>
-                  <Badge variant={user.is_superuser ? 'default' : 'secondary'}>
-                    {user.is_superuser ? 'Superuser' : user.is_staff ? 'Manager' : 'Tenant'}
+                  <Badge variant={isAdminRole ? 'default' : 'secondary'}>
+                    {roleLabel}
                   </Badge>
                 </div>
                 <div className="space-y-1 rounded-lg border bg-card/50 px-4 py-3">

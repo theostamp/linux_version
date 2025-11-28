@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { useQueryClient } from '@tanstack/react-query';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 interface BuildingCardProps {
   building: Building;
@@ -25,7 +26,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const canManage = user?.is_superuser || user?.is_staff;
+  const canManage = hasOfficeAdminAccess(user);
 
   const handleDelete = async () => {
     if (window.confirm(`Είστε βέβαιοι ότι θέλετε να διαγράψετε το κτίριο "${building.name}";`)) {

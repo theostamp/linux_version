@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { getRoleLabel, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export function useSuperUserGuard() {
   const { user, isAuthReady } = useAuth();
@@ -11,21 +12,21 @@ export function useSuperUserGuard() {
   useEffect(() => {
     if (!isAuthReady) return;
     
+    const hasAccess = hasOfficeAdminAccess(user);
     console.log('useSuperUserGuard: Checking permissions', {
       user: user?.email,
-      is_superuser: user?.is_superuser,
-      is_staff: user?.is_staff,
-      hasAccess: user?.is_superuser || user?.is_staff
+      role: getRoleLabel(user),
+      hasAccess,
     });
     
-    if (!user?.is_superuser && !user?.is_staff) {
+    if (!hasAccess) {
       console.log('useSuperUserGuard: Access denied, redirecting to unauthorized');
       router.push('/unauthorized');
     }
   }, [user, isAuthReady, router]);
 
   return {
-    isAccessAllowed: isAuthReady && (user?.is_superuser || user?.is_staff),
+    isAccessAllowed: isAuthReady && hasOfficeAdminAccess(user),
     isLoading: !isAuthReady,
   };
 }
