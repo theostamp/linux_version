@@ -69,53 +69,53 @@ export default function GlobalHeader() {
               <div className="min-w-0">
                 {showOfficeDetails ? (
                   <>
-                    {/* Desktop: Grid Layout for even spacing */}
-                    <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                      {/* Office Name and Address */}
-                      <div className="flex flex-col justify-center min-w-0">
-                        <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
-                          {user?.office_name || 'Γραφείο Διαχείρισης'}
-                        </h1>
-                        {user?.office_address && (
-                          <p className="text-xs text-muted-foreground leading-tight truncate">
-                            {user.office_address}
-                          </p>
-                        )}
-                      </div>
+                {/* Desktop: Grid Layout for even spacing */}
+                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {/* Office Name and Address */}
+                  <div className="flex flex-col justify-center min-w-0">
+                    <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
+                      {user?.office_name || 'Γραφείο Διαχείρισης'}
+                    </h1>
+                    {user?.office_address && (
+                      <p className="text-xs text-muted-foreground leading-tight truncate">
+                        {user.office_address}
+                      </p>
+                    )}
+                  </div>
 
-                      {/* Contact Details */}
-                      <div className="flex flex-col justify-center min-w-0">
-                        {user?.office_phone && (
-                          <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
-                            📞 {user.office_phone}
-                          </p>
-                        )}
-                        {user?.email && (
-                          <p className="text-xs text-muted-foreground leading-tight truncate">
-                            ✉️ {user.email}
-                          </p>
-                        )}
-                      </div>
+                  {/* Contact Details */}
+                  <div className="flex flex-col justify-center min-w-0">
+                    {user?.office_phone && (
+                      <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
+                        📞 {user.office_phone}
+                      </p>
+                    )}
+                    {user?.email && (
+                      <p className="text-xs text-muted-foreground leading-tight truncate">
+                        ✉️ {user.email}
+                      </p>
+                    )}
+                  </div>
 
                       {/* Building Selector - ADMIN-ONLY */}
                       {isAdminLevel && (
-                        <div className="hidden lg:flex items-center gap-2 min-w-0">
-                          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
-                          <BuildingSelectorButton
-                            onBuildingSelect={setSelectedBuilding}
-                            selectedBuilding={selectedBuilding}
-                            className="min-w-[160px]"
-                          />
-                        </div>
-                      )}
+                    <div className="hidden lg:flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
+                      <BuildingSelectorButton
+                        onBuildingSelect={setSelectedBuilding}
+                        selectedBuilding={selectedBuilding}
+                        className="min-w-[160px]"
+                      />
                     </div>
+                  )}
+                </div>
 
-                    {/* Mobile version - Office Name Only */}
-                    <div className="sm:hidden">
-                      <h1 className="text-sm font-bold text-foreground leading-tight truncate">
-                        {user?.office_name?.substring(0, 15) || 'ΓΔ'}
-                      </h1>
-                    </div>
+                {/* Mobile version - Office Name Only */}
+                <div className="sm:hidden">
+                  <h1 className="text-sm font-bold text-foreground leading-tight truncate">
+                    {user?.office_name?.substring(0, 15) || 'ΓΔ'}
+                  </h1>
+                </div>
                   </>
                 ) : (
                   <div className="flex flex-col justify-center min-w-0">
