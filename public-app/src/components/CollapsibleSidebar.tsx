@@ -68,7 +68,19 @@ const navigationGroups: NavigationGroup[] = [
         href: '/dashboard',
         label: 'Πίνακας Ελέγχου',
         icon: <Home className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/my-apartment',
+        label: 'Το Διαμέρισμά μου',
+        icon: <Home className="w-5 h-5" />,
+        roles: ['resident'],
+      },
+      {
+        href: '/online-payments',
+        label: 'Πληρωμή Online',
+        icon: <CreditCard className="w-5 h-5" />,
+        roles: ['resident'],
       },
       {
         href: '/announcements',
