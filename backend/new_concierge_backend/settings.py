@@ -167,6 +167,7 @@ TENANT_APPS = [
     
     # 🔗 Integrations
     'integrations',
+    'management_office',
 
     # 📬 Notifications System
     'notifications',

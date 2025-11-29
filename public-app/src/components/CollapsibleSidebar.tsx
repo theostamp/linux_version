@@ -38,6 +38,7 @@ import {
   User,
   CreditCard,
   ChevronRight,
+  LayoutDashboard,
 } from 'lucide-react';
 
 // Navigation link interface
@@ -139,6 +140,12 @@ const navigationGroups: NavigationGroup[] = [
     title: 'Διαχείριση',
     colorKey: 'success',
     links: [
+      {
+        href: '/office-dashboard',
+        label: 'Κεντρικός Έλεγχος',
+        icon: <LayoutDashboard className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
       {
         href: '/buildings',
         label: 'Κτίρια',
