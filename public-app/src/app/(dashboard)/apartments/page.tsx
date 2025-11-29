@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send, Shield } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { fetchApartments, ApartmentList, resendInvitation } from '@/lib/api';
@@ -68,6 +68,21 @@ const getStatusBadge = (apartment: ApartmentList) => {
   }
   return <Badge className="bg-primary/10 text-primary">{status}</Badge>;
 };
+
+// Check if apartment belongs to internal manager
+const isInternalManagerApartment = (apartment: ApartmentList, internalManagerApartment?: string): boolean => {
+  if (!internalManagerApartment) return false;
+  return apartment.number === internalManagerApartment || 
+         apartment.identifier === internalManagerApartment;
+};
+
+// Internal Manager Badge Component
+const InternalManagerBadge = () => (
+  <Badge className="bg-amber-500 text-white flex items-center gap-1">
+    <Shield className="w-3 h-3" />
+    Εσωτ. Διαχειριστής
+  </Badge>
+);
 
 // Component για email με ένδειξη καταχώρησης και resend
 const EmailWithStatus = ({ 
@@ -219,6 +234,9 @@ const ApartmentsPageContent = () => {
   const { user } = useAuth();
   const activeBuilding = selectedBuilding || currentBuilding;
   const buildingId = activeBuilding?.id;
+  
+  // Get internal manager apartment number from building
+  const internalManagerApartment = activeBuilding?.internal_manager_apartment;
 
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -640,15 +658,26 @@ const ApartmentsPageContent = () => {
                                 <td className="px-6 py-4">
                                   <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-lg bg-primary/10 shadow-sm flex items-center justify-center">
-                                        <Home className="w-5 h-5 text-primary" />
+                                      <div className={`w-10 h-10 rounded-lg shadow-sm flex items-center justify-center ${
+                                        isInternalManagerApartment(apartment, internalManagerApartment) 
+                                          ? 'bg-amber-500/10' 
+                                          : 'bg-primary/10'
+                                      }`}>
+                                        {isInternalManagerApartment(apartment, internalManagerApartment) ? (
+                                          <Shield className="w-5 h-5 text-amber-600" />
+                                        ) : (
+                                          <Home className="w-5 h-5 text-primary" />
+                                        )}
                                       </div>
                                       <div>
                                         <p className="text-base font-semibold text-foreground">{apartment.number}</p>
                                         <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-2">
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                      {isInternalManagerApartment(apartment, internalManagerApartment) && (
+                                        <InternalManagerBadge />
+                                      )}
                                       {getOccupancyBadge(apartment)}
                                       {getStatusBadge(apartment)}
                                     </div>
@@ -791,14 +820,32 @@ const ApartmentsPageContent = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {paginatedApartments.map((apartment) => (
-                        <div key={apartment.id} className="bg-card rounded-xl shadow-sm border p-5 space-y-4 hover:shadow-md transition-shadow">
+                        <div key={apartment.id} className={`bg-card rounded-xl shadow-sm border p-5 space-y-4 hover:shadow-md transition-shadow ${
+                          isInternalManagerApartment(apartment, internalManagerApartment) ? 'ring-2 ring-amber-500/50' : ''
+                        }`}>
                           <div className="flex items-start justify-between">
-                            <div>
-                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Διαμέρισμα</p>
-                              <p className="text-2xl font-bold text-foreground">{apartment.number}</p>
-                              <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-lg shadow-sm flex items-center justify-center ${
+                                isInternalManagerApartment(apartment, internalManagerApartment) 
+                                  ? 'bg-amber-500/10' 
+                                  : 'bg-primary/10'
+                              }`}>
+                                {isInternalManagerApartment(apartment, internalManagerApartment) ? (
+                                  <Shield className="w-6 h-6 text-amber-600" />
+                                ) : (
+                                  <Home className="w-6 h-6 text-primary" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">Διαμέρισμα</p>
+                                <p className="text-2xl font-bold text-foreground">{apartment.number}</p>
+                                <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                              </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
+                              {isInternalManagerApartment(apartment, internalManagerApartment) && (
+                                <InternalManagerBadge />
+                              )}
                               {getOccupancyBadge(apartment)}
                               {getStatusBadge(apartment)}
                             </div>
