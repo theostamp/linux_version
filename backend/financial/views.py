@@ -3956,15 +3956,15 @@ def my_apartment_data(request):
             # Δαπάνες (expenses) που αφορούν το διαμέρισμα
             expense_shares = ApartmentShare.objects.filter(
                 apartment=apartment,
-                expense__date__gte=start_date
-            ).select_related('expense').order_by('-expense__date')
+                period__start_date__gte=start_date
+            ).select_related('period').order_by('-period__start_date')
             
             # Υπολογισμός τρέχουσας οφειλής
             current_balance = float(apartment.current_balance or 0)
             
             # Σύνοψη
             total_paid = sum(float(p.amount) for p in payments)
-            total_expenses = sum(float(es.amount) for es in expense_shares)
+            total_expenses = sum(float(es.total_amount) for es in expense_shares)
             
             apartment_data = {
                 'id': apartment.id,
@@ -3996,13 +3996,13 @@ def my_apartment_data(request):
                 ],
                 'expense_history': [
                     {
-                        'id': es.expense.id,
-                        'date': es.expense.date.isoformat() if es.expense.date else None,
-                        'title': es.expense.title,
-                        'category': es.expense.category,
-                        'total_amount': float(es.expense.amount),
-                        'your_share': float(es.amount),
-                        'payer_responsibility': es.expense.payer_responsibility,
+                        'id': es.id,
+                        'date': es.period.start_date.isoformat() if es.period.start_date else None,
+                        'title': es.period.period_name,
+                        'category': 'common_expenses',
+                        'total_amount': float(es.total_amount),
+                        'your_share': float(es.total_amount),
+                        'payer_responsibility': 'owner',  # Default
                     }
                     for es in expense_shares
                 ],
