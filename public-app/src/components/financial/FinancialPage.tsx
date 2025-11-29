@@ -746,7 +746,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                             <h3
                               className={cn(
                                 DESKTOP_LABEL_BASE_CLASSES,
-                                isActive ? tab.theme.labelActive : 'text-foreground',
+                                isActive ? tab.theme.labelActive : 'text-slate-900',
                                 tab.theme.labelHover
                               )}
                             >
@@ -766,6 +766,63 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                     })}
                   </div>
                 </div>
+
+                {/* Tab Contents */}
+                <TabsContent value="calculator" className="space-y-4" data-tab="calculator">
+                  <ProtectedFinancialRoute requiredPermission="financial_write">
+                    <CommonExpenseCalculatorNew 
+                      buildingId={activeBuildingId} 
+                      selectedMonth={selectedMonth} 
+                      reserveFundMonthlyAmount={reserveFundMonthlyAmount}
+                    />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="balances" className="space-y-4" data-tab="balances">
+                  <ProtectedFinancialRoute requiredPermission="financial_read">
+                    <ApartmentBalancesTab 
+                      buildingId={activeBuildingId} 
+                      selectedMonth={selectedMonth}
+                    />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="expenses" className="space-y-4" data-tab="expenses">
+                  <ProtectedFinancialRoute requiredPermission="expense_manage">
+                    <ExpenseList 
+                      ref={expenseListRef}
+                      selectedMonth={selectedMonth}
+                      onMonthChange={handleMonthChange}
+                      onExpenseSelect={(expense) => {
+                        console.log('Selected expense:', expense);
+                      }}
+                      showActions={true}
+                      onAddExpense={expenseModal.openModal}
+                    />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="meters" className="space-y-4" data-tab="meters">
+                  <ProtectedFinancialRoute requiredPermission="financial_write">
+                    <div className="space-y-6">
+                      <MeterReadingList buildingId={activeBuildingId} selectedMonth={selectedMonth} />
+                      <BulkImportWizard />
+                    </div>
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="history" className="space-y-4" data-tab="history">
+                  <ProtectedFinancialRoute requiredPermission="financial_read">
+                    <TransactionHistory limit={20} selectedMonth={selectedMonth} />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="charts" className="space-y-4" data-tab="charts">
+                  <ProtectedFinancialRoute requiredPermission="financial_read">
+                    <ChartsContainer selectedMonth={selectedMonth} />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+
               </Tabs>
             </div>
           }
