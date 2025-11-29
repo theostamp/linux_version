@@ -9,7 +9,7 @@ import type { UserRequest } from '@/types/userRequests';
 import Link from 'next/link';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
-import { Plus, Wrench, SlidersHorizontal } from 'lucide-react';
+import { Plus, Wrench, SlidersHorizontal, MapPin } from 'lucide-react';
 import { deleteUserRequest } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
