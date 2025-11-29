@@ -89,6 +89,48 @@ export default function SettingsPanel() {
     },
   });
 
+  const createTaskMutation = useMutation({
+    mutationFn: async (data: {
+      task_type: 'common_expense' | 'balance_reminder' | 'custom';
+      building?: number | null;
+      day_of_month: number;
+      time_to_send: string;
+      auto_send_enabled: boolean;
+    }) => {
+      // Use configure endpoint - template will be selected automatically by backend
+      return monthlyTasksApi.configure({
+        ...data,
+        template: 0, // Backend will select appropriate template based on task_type
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthly-tasks-settings'] });
+      toast.success('Η αυτόματη αποστολή δημιουργήθηκε');
+      setShowAddDialog(false);
+      // Reset form
+      setFormData({
+        taskType: 'common_expense',
+        buildingId: selectedBuilding?.id?.toString() ?? '',
+        dayOfMonth: '1',
+        timeToSend: '09:00',
+        autoSend: false,
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Αποτυχία δημιουργίας');
+    },
+  });
+
+  const handleCreateTask = () => {
+    createTaskMutation.mutate({
+      task_type: formData.taskType as 'common_expense' | 'balance_reminder' | 'custom',
+      building: formData.buildingId ? parseInt(formData.buildingId) : null,
+      day_of_month: parseInt(formData.dayOfMonth),
+      time_to_send: formData.timeToSend,
+      auto_send_enabled: formData.autoSend,
+    });
+  };
+
   const getTaskTypeLabel = (type: string) => {
     return TASK_TYPES.find(t => t.value === type)?.label || type;
   };
@@ -132,7 +174,17 @@ export default function SettingsPanel() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-gray-900">Προγραμματισμένες Αποστολές</h3>
-          <Badge variant="outline">{tasks.length} ρυθμίσεις</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{tasks.length} ρυθμίσεις</Badge>
+            <Button 
+              size="sm" 
+              onClick={() => setShowAddDialog(true)}
+              className="gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              Νέα Αυτόματη Αποστολή
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -232,6 +284,140 @@ export default function SettingsPanel() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Add New Task Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-blue-600" />
+              Νέα Αυτόματη Αποστολή
+            </DialogTitle>
+            <DialogDescription>
+              Δημιουργήστε μια νέα προγραμματισμένη αποστολή που θα εκτελείται αυτόματα κάθε μήνα.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Task Type */}
+            <div className="space-y-2">
+              <Label htmlFor="taskType">Τύπος Αποστολής</Label>
+              <Select
+                value={formData.taskType}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, taskType: value }))}
+              >
+                <SelectTrigger id="taskType">
+                  <SelectValue placeholder="Επιλέξτε τύπο" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TASK_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Building Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="building">Πολυκατοικία</Label>
+              <Select
+                value={formData.buildingId}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, buildingId: value }))}
+              >
+                <SelectTrigger id="building">
+                  <SelectValue placeholder="Επιλέξτε πολυκατοικία" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Όλες οι πολυκατοικίες</SelectItem>
+                  {buildings?.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Day of Month */}
+            <div className="space-y-2">
+              <Label htmlFor="dayOfMonth">Ημέρα του Μήνα</Label>
+              <Select
+                value={formData.dayOfMonth}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, dayOfMonth: value }))}
+              >
+                <SelectTrigger id="dayOfMonth">
+                  <SelectValue placeholder="Επιλέξτε ημέρα" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                    <SelectItem key={day} value={day.toString()}>
+                      {day}η ημέρα
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Συστήνεται η επιλογή ημέρας έως 28 για αποφυγή προβλημάτων με μικρούς μήνες
+              </p>
+            </div>
+
+            {/* Time to Send */}
+            <div className="space-y-2">
+              <Label htmlFor="timeToSend">Ώρα Αποστολής</Label>
+              <Input
+                id="timeToSend"
+                type="time"
+                value={formData.timeToSend}
+                onChange={(e) => setFormData(prev => ({ ...prev, timeToSend: e.target.value }))}
+              />
+            </div>
+
+            {/* Auto Send Toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="autoSend" className="font-medium">
+                  Αυτόματη Αποστολή
+                </Label>
+                <p className="text-xs text-gray-500">
+                  Αποστολή χωρίς επιβεβαίωση την καθορισμένη ημέρα
+                </p>
+              </div>
+              <Switch
+                id="autoSend"
+                checked={formData.autoSend}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoSend: checked }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAddDialog(false)}
+            >
+              Ακύρωση
+            </Button>
+            <Button
+              onClick={handleCreateTask}
+              disabled={createTaskMutation.isPending}
+            >
+              {createTaskMutation.isPending ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Δημιουργία...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Δημιουργία
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
