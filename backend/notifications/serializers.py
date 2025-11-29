@@ -424,7 +424,9 @@ class MonthlyTaskConfigureSerializer(serializers.Serializer):
         help_text="Time to send notification (HH:MM format)"
     )
     template = serializers.IntegerField(
-        help_text="NotificationTemplate ID"
+        required=False,
+        default=0,
+        help_text="NotificationTemplate ID (0 or omit to auto-select based on task_type)"
     )
     auto_send_enabled = serializers.BooleanField(
         default=False,

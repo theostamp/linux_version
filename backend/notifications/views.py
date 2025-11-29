@@ -575,7 +575,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             "building": 1,  // or null for all buildings
             "day_of_month": 1,
             "time_to_send": "09:00",
-            "template": 1,
+            "template": 1,  // optional - auto-selects based on task_type if 0 or not provided
             "auto_send_enabled": false,
             "period_month": "2025-11-01"  // optional
         }
@@ -591,11 +591,55 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             from buildings.models import Building
             building = get_object_or_404(Building, id=data['building'])
         
-        # Get template
-        template = get_object_or_404(
-            NotificationTemplate,
-            id=data['template']
-        )
+        # Get template - auto-select based on task_type if not provided or if 0
+        template_id = data.get('template')
+        if not template_id or template_id == 0:
+            # Map task_type to template category
+            task_type = data['task_type']
+            category_map = {
+                'common_expense': 'payment',
+                'balance_reminder': 'payment',
+                'custom': 'announcement',
+            }
+            category = category_map.get(task_type, 'announcement')
+            
+            # Try to find an active template for this category
+            template = NotificationTemplate.objects.filter(
+                category=category,
+                is_active=True
+            ).first()
+            
+            # If no template found, create a default one
+            if not template:
+                if task_type == 'common_expense':
+                    template = NotificationTemplate.objects.create(
+                        name=f'Κοινόχρηστα Μήνα (Auto)',
+                        category='payment',
+                        subject='Κοινόχρηστα {{month}}',
+                        body='Αγαπητέ/ή {{resident_name}},\n\nΕπισυνάπτονται τα κοινόχρηστα του μήνα {{month}}.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        is_active=True
+                    )
+                elif task_type == 'balance_reminder':
+                    template = NotificationTemplate.objects.create(
+                        name=f'Υπενθύμιση Οφειλής (Auto)',
+                        category='payment',
+                        subject='Υπενθύμιση Οφειλής',
+                        body='Αγαπητέ/ή {{resident_name}},\n\nΣας υπενθυμίζουμε ότι υπάρχει εκκρεμές υπόλοιπο στον λογαριασμό σας.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        is_active=True
+                    )
+                else:
+                    template = NotificationTemplate.objects.create(
+                        name=f'Γενική Ανακοίνωση (Auto)',
+                        category='announcement',
+                        subject='Ανακοίνωση',
+                        body='Αγαπητέ/ή {{resident_name}},\n\n{{message}}\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        is_active=True
+                    )
+        else:
+            template = get_object_or_404(
+                NotificationTemplate,
+                id=template_id
+            )
         
         # Configure task
         task = MonthlyTaskService.configure_task(
