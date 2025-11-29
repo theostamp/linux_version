@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Building, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -20,11 +22,20 @@ import {
   BuildingHealthCards,
   DashboardErrorBoundary 
 } from '@/components/dashboard';
+import { isResident } from '@/lib/roleUtils';
 
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 
 function DashboardContent() {
   const { user, isLoading: authLoading, isAuthReady } = useAuth();
+  const router = useRouter();
+
+  // Redirect residents to my-apartment page
+  useEffect(() => {
+    if (isAuthReady && user && isResident(user)) {
+      router.replace('/my-apartment');
+    }
+  }, [isAuthReady, user, router]);
   const { selectedBuilding, buildings } = useBuilding();
   const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
   const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements(selectedBuilding?.id);
@@ -34,6 +45,18 @@ function DashboardContent() {
   const { data: buildingDashboardData, isLoading: buildingDashboardLoading } = useDashboardData(selectedBuilding?.id);
 
   const isLoading = authLoading || buildingsLoading || announcementsLoading || dashboardLoading;
+
+  // Don't render dashboard for residents - they're being redirected
+  if (isAuthReady && user && isResident(user)) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Ανακατεύθυνση στη σελίδα διαμερίσματος...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthReady || isLoading) {
     return (
