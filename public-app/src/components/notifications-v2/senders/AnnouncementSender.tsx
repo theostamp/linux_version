@@ -2,14 +2,16 @@
 
 import { useState, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Megaphone, Send, Eye } from 'lucide-react';
+import { Megaphone, Send, Eye, Mail, MessageSquare, Phone, Bell } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { notificationsApi } from '@/lib/api/notifications';
+import type { NotificationChannel } from '@/types/notifications';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -25,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import RecipientSelector from '../shared/RecipientSelector';
+import ChannelSelector from '../shared/ChannelSelector';
 import { 
   extractBuildingData, 
   generateEmailSignature 
@@ -44,6 +47,7 @@ export default function AnnouncementSender({ onSuccess, onCancel }: Props) {
   const [sendToAll, setSendToAll] = useState(true);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [selectedChannels, setSelectedChannels] = useState<NotificationChannel[]>(['email']);
 
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
@@ -73,11 +77,22 @@ ${message.trim()}`;
       if (!title.trim()) throw new Error('Συμπληρώστε τον τίτλο');
       if (!message.trim()) throw new Error('Συμπληρώστε το μήνυμα');
 
+      // Determine notification_type based on selected channels
+      let notificationType: 'email' | 'sms' | 'both' | 'viber' | 'push' | 'all' = 'email';
+      if (selectedChannels.length > 1 || selectedChannels.includes('viber') || selectedChannels.includes('push')) {
+        notificationType = 'all';
+      } else if (selectedChannels.includes('sms') && selectedChannels.includes('email')) {
+        notificationType = 'both';
+      } else if (selectedChannels.includes('sms')) {
+        notificationType = 'sms';
+      }
+
       return notificationsApi.create({
         building_id: buildingId,
         subject: getSubject(),
         body: generateEmailBody(),
-        notification_type: 'email',
+        sms_body: message.substring(0, 160), // Truncate for SMS
+        notification_type: notificationType,
         priority: 'normal',
         send_to_all: sendToAll,
         ...(sendToAll ? {} : { apartment_ids: selectedIds }),
@@ -155,6 +170,12 @@ ${message.trim()}`;
               rows={6}
             />
           </div>
+
+          {/* Κανάλια Αποστολής */}
+          <ChannelSelector
+            selectedChannels={selectedChannels}
+            onChannelsChange={setSelectedChannels}
+          />
 
           {/* Παραλήπτες */}
           <RecipientSelector

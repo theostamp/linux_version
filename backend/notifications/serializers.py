@@ -7,7 +7,10 @@ from .models import (
     Notification,
     NotificationRecipient,
     MonthlyNotificationTask,
-    NotificationEvent
+    NotificationEvent,
+    UserDeviceToken,
+    UserViberSubscription,
+    NotificationPreference,
 )
 from apartments.models import Apartment
 
@@ -449,3 +452,179 @@ class MonthlyTaskTestSendSerializer(serializers.Serializer):
     test_email = serializers.EmailField(
         help_text="Email address to send test notification to"
     )
+
+
+class UserDeviceTokenSerializer(serializers.ModelSerializer):
+    """Serializer for user device tokens (push notifications)."""
+
+    class Meta:
+        model = UserDeviceToken
+        fields = [
+            'id',
+            'token',
+            'platform',
+            'device_name',
+            'is_active',
+            'created_at',
+            'updated_at',
+            'last_used_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'last_used_at']
+    
+    def create(self, validated_data):
+        """Create or update device token."""
+        user = self.context['request'].user
+        token = validated_data.get('token')
+        
+        # Update existing or create new
+        device, created = UserDeviceToken.objects.update_or_create(
+            token=token,
+            defaults={
+                'user': user,
+                'platform': validated_data.get('platform', 'android'),
+                'device_name': validated_data.get('device_name', ''),
+                'is_active': True,
+            }
+        )
+        return device
+
+
+class UserViberSubscriptionSerializer(serializers.ModelSerializer):
+    """Serializer for Viber subscriptions."""
+
+    class Meta:
+        model = UserViberSubscription
+        fields = [
+            'id',
+            'viber_user_id',
+            'viber_name',
+            'viber_avatar',
+            'is_subscribed',
+            'subscribed_at',
+            'unsubscribed_at',
+            'last_message_at',
+        ]
+        read_only_fields = [
+            'id',
+            'viber_user_id',
+            'viber_name',
+            'viber_avatar',
+            'subscribed_at',
+            'unsubscribed_at',
+            'last_message_at',
+        ]
+
+
+class NotificationPreferenceSerializer(serializers.ModelSerializer):
+    """Serializer for notification preferences."""
+    
+    building_name = serializers.CharField(source='building.name', read_only=True, allow_null=True)
+    enabled_channels = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotificationPreference
+        fields = [
+            'id',
+            'user',
+            'building',
+            'building_name',
+            'category',
+            'email_enabled',
+            'sms_enabled',
+            'viber_enabled',
+            'push_enabled',
+            'instant_notifications',
+            'digest_only',
+            'quiet_hours_start',
+            'quiet_hours_end',
+            'enabled_channels',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'building_name', 'enabled_channels']
+    
+    def get_enabled_channels(self, obj):
+        """Get list of enabled channel names."""
+        return obj.get_enabled_channels()
+    
+    def create(self, validated_data):
+        """Create preference for current user."""
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class NotificationPreferenceUpdateSerializer(serializers.Serializer):
+    """Serializer for batch updating notification preferences."""
+    
+    category = serializers.CharField(default='all')
+    building_id = serializers.IntegerField(required=False, allow_null=True)
+    email_enabled = serializers.BooleanField(required=False)
+    sms_enabled = serializers.BooleanField(required=False)
+    viber_enabled = serializers.BooleanField(required=False)
+    push_enabled = serializers.BooleanField(required=False)
+    instant_notifications = serializers.BooleanField(required=False)
+    digest_only = serializers.BooleanField(required=False)
+    quiet_hours_start = serializers.TimeField(required=False, allow_null=True)
+    quiet_hours_end = serializers.TimeField(required=False, allow_null=True)
+
+
+class ChannelStatusSerializer(serializers.Serializer):
+    """Serializer for channel status information."""
+    
+    channel = serializers.CharField()
+    enabled = serializers.BooleanField()
+    priority = serializers.IntegerField()
+    healthy = serializers.BooleanField()
+    status = serializers.CharField()
+    provider = serializers.CharField(required=False)
+
+
+class MultiChannelNotificationSerializer(serializers.Serializer):
+    """Serializer for multi-channel notification sending."""
+    
+    building_id = serializers.IntegerField(
+        help_text="ID του κτιρίου"
+    )
+    
+    # Content
+    subject = serializers.CharField(max_length=200)
+    message = serializers.CharField()
+    sms_message = serializers.CharField(required=False, allow_blank=True)
+    push_title = serializers.CharField(max_length=100, required=False)
+    push_data = serializers.DictField(required=False, default=dict)
+    
+    # Channels
+    channels = serializers.ListField(
+        child=serializers.ChoiceField(choices=['email', 'sms', 'viber', 'push']),
+        default=['email'],
+        help_text="Κανάλια αποστολής"
+    )
+    
+    # Recipients
+    apartment_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+    )
+    send_to_all = serializers.BooleanField(default=False)
+    
+    # Options
+    priority = serializers.ChoiceField(
+        choices=['low', 'normal', 'high', 'urgent'],
+        default='normal'
+    )
+    use_fallbacks = serializers.BooleanField(
+        default=True,
+        help_text="Χρήση fallback καναλιών αν αποτύχει το πρωτεύον"
+    )
+    respect_preferences = serializers.BooleanField(
+        default=True,
+        help_text="Σεβασμός προτιμήσεων χρηστών"
+    )
+    
+    def validate(self, data):
+        """Validate the request."""
+        if not data.get('apartment_ids') and not data.get('send_to_all'):
+            raise serializers.ValidationError(
+                "Πρέπει να δώσετε apartment_ids ή send_to_all=true"
+            )
+        return data
