@@ -5,11 +5,11 @@ import { useVotes } from '@/hooks/useVotes';
 import VoteStatus from '@/components/VoteStatus';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
-import type { Vote } from '@/lib/api';
+import type { Vote, Building } from '@/lib/api';
 import Link from 'next/link';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
-import { Plus, Vote as VoteIcon } from 'lucide-react';
+import { Plus, Vote as VoteIcon, Calendar, Clock, Trash2, Building2 } from 'lucide-react';
 import { deleteVote } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -21,9 +21,100 @@ import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils';
 
-function isActive(start: string, end: string) {
-  const today = new Date().toISOString().split('T')[0];
-  return start <= today && today <= end;
+interface VoteItemContentProps {
+  readonly vote: Vote;
+  readonly active: boolean;
+  readonly selectedBuilding: Building | null;
+  readonly canDelete: boolean;
+  readonly deletingId: number | null;
+  readonly handleDelete: (vote: Vote) => void | Promise<void>;
+}
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+  return date.toLocaleDateString('el-GR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+function VoteItemContent({
+  vote,
+  active,
+  selectedBuilding,
+  canDelete,
+  deletingId,
+  handleDelete,
+}: VoteItemContentProps) {
+  const buildingName = (vote as { building_name?: string | null }).building_name;
+  const showBuildingBadge = !selectedBuilding && (buildingName || vote.building === null);
+  const endSoon = active && new Date(vote.end_date).getTime() - Date.now() < 1000 * 60 * 60 * 24 * 2;
+
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-border/40 bg-background p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <VoteIcon className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground leading-tight">
+              {vote.title}
+            </h3>
+            {showBuildingBadge && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                <Building2 className="h-3 w-3" />
+                {buildingName || 'Όλα τα κτίρια'}
+              </span>
+            )}
+            {endSoon && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-700">
+                <Clock className="h-3 w-3" /> Λήγει σύντομα
+              </span>
+            )}
+          </div>
+          {vote.description && (
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {vote.description}
+            </p>
+          )}
+        </div>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => handleDelete(vote)}
+            disabled={deletingId === vote.id}
+            className={cn(
+              'rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition-colors hover:bg-red-100 hover:text-red-700',
+              deletingId === vote.id && 'opacity-60 cursor-not-allowed'
+            )}
+            title="Διαγραφή ψηφοφορίας"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <Calendar className="h-3 w-3" />
+          {formatDate(vote.start_date)} – {formatDate(vote.end_date)}
+        </span>
+        <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5', active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600')}>
+          {active ? 'Ενεργή' : 'Μη ενεργή'}
+        </span>
+        {vote.participation_percentage !== undefined && vote.participation_percentage !== null && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+            Συμμετοχή: {vote.participation_percentage.toFixed(1)}%
+          </span>
+        )}
+      </div>
+
+      <VoteStatus voteId={vote.id} isActive={active} />
+    </div>
+  );
 }
 
 function VotesPageContent() {

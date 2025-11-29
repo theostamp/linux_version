@@ -630,32 +630,35 @@ const ApartmentsPageContent = () => {
               ) : (
                 <>
                   {viewMode === 'table' ? (
-                    <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+                    <div className="bg-card rounded-2xl shadow-sm border border-border/50 overflow-hidden">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[960px]">
-                          <thead className="bg-muted/50 border-b">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <table className="w-full min-w-[960px] text-sm">
+                          <thead className="bg-muted/40 text-muted-foreground">
+                            <tr className="text-xs font-semibold uppercase tracking-wide">
+                              <th className="px-5 py-3 text-left first:rounded-tl-2xl">
                                 Διαμέρισμα
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              <th className="px-5 py-3 text-left">
                                 Ιδιοκτήτης
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              <th className="px-5 py-3 text-left">
                                 Ένοικος / Χρήστης
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              <th className="px-5 py-3 text-left">
                                 Στοιχεία
                               </th>
-                              <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              <th className="px-5 py-3 text-right last:rounded-tr-2xl">
                                 Ενέργειες
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-border bg-background">
+                          <tbody className="bg-background">
                             {paginatedApartments.map((apartment) => (
-                              <tr key={apartment.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4">
+                              <tr
+                                key={apartment.id}
+                                className="even:bg-muted/20 odd:bg-background hover:bg-muted/40 transition-colors"
+                              >
+                                <td className="px-5 py-4 align-top">
                                   <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-3">
                                       <div className={`w-10 h-10 rounded-lg shadow-sm flex items-center justify-center ${
@@ -683,7 +686,7 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-5 py-4 align-top">
                                   <div className="space-y-1">
                                     <p className="text-sm font-medium text-foreground">{apartment.owner_name || '—'}</p>
                                     <div className="flex flex-col text-xs text-muted-foreground">
@@ -705,7 +708,7 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-5 py-4 align-top">
                                   <div className="space-y-1">
                                     <p className="text-sm font-medium text-foreground">
                                       {apartment.tenant_name || apartment.occupant_name || '—'}
@@ -730,7 +733,7 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-5 py-4">
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
                                       <p className="text-xs text-muted-foreground">Τ.μ.</p>
@@ -760,7 +763,7 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-5 py-4 text-right align-top">
                                   <div className="flex items-center justify-end gap-2">
                                     {canManage && (
                                       <>
@@ -806,7 +809,7 @@ const ApartmentsPageContent = () => {
                           </tbody>
                         </table>
                       </div>
-                      <div className="border-t px-6 py-4 bg-muted/20">
+                      <div className="border-t border-border/40 px-6 py-4 bg-muted/20">
                         <Pagination
                           currentPage={currentPage}
                           totalPages={totalPages}

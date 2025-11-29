@@ -946,6 +946,11 @@ export type Announcement = {
   description: string;
   file: string | null;
   building?: number | null;
+  building_name?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_currently_active?: boolean;
+  status_display?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -998,9 +1003,19 @@ export type Vote = {
   title: string;
   description: string;
   building?: number | null;
+  building_name?: string | null;
+  start_date: string;
+  end_date: string;
+  is_active?: boolean;
+  status_display?: string | null;
+  is_urgent?: boolean;
+  days_remaining?: number | null;
+  total_votes?: number;
+  participation_percentage?: number | null;
+  min_participation?: number | null;
+  choices?: string[];
   created_at: string;
   updated_at: string;
-  choices?: string[];
 };
 
 export type VoteSubmission = {
