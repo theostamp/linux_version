@@ -117,7 +117,6 @@ SHARED_APPS = [
     'users',
     'office_staff',         # Office Staff Management (shared - relates to users)
     'billing',              # Subscription & Billing System (shared across tenants)
-    'office_finance',       # Office Income/Expense Management
 
     'corsheaders',
     'django.contrib.contenttypes',
@@ -174,6 +173,9 @@ TENANT_APPS = [
     
     # 📊 Office Analytics (Command Center for Management Offices)
     'office_analytics',
+    
+    # 💼 Office Finance (Income/Expense Management for the Office)
+    'office_finance',
 ]
 
 

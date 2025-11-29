@@ -10,9 +10,9 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
-import { AuthGate } from '@/components/AuthGate';
-import { SubscriptionGate } from '@/components/SubscriptionGate';
-import { DashboardErrorBoundary } from '@/components/DashboardErrorBoundary';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
+import { DashboardErrorBoundary } from '@/components/dashboard/DashboardErrorBoundary';
 import { 
   FinanceSummaryCards,
   IncomeByBuildingChart,
