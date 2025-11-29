@@ -263,14 +263,18 @@ def create_public_tenant():
             print(f"ℹ️ Υπάρχει ήδη Railway domain: {railway_domain}")
     
     # Δημιουργία Ultra-Superuser στο public schema
+    # ΣΗΜΑΝΤΙΚΟ: Χρησιμοποιούμε dedicated admin email για να μην γίνεται conflict
+    # με πραγματικούς χρήστες που προσκαλούνται ως ένοικοι
     print("\n👑 Δημιουργία Ultra-Superuser...")
     from users.models import CustomUser
     
+    ADMIN_EMAIL = 'admin@newconcierge.app'  # Dedicated admin email - NEVER use a real user email
+    
     ultra_user, created = CustomUser.objects.get_or_create(
-        email='thodoris_st@hotmail.com',
+        email=ADMIN_EMAIL,
         defaults={
-            'first_name': 'Theo',
-            'last_name': 'Ultra Admin',
+            'first_name': 'System',
+            'last_name': 'Administrator',
             'is_staff': True,
             'is_superuser': True,
             'is_active': True,
@@ -282,20 +286,18 @@ def create_public_tenant():
     if created:
         ultra_user.set_password('theo123!@#')
         ultra_user.save()
-        print("✅ Δημιουργήθηκε Ultra-Superuser: thodoris_st@hotmail.com")
+        print(f"✅ Δημιουργήθηκε Ultra-Superuser: {ADMIN_EMAIL}")
     else:
-        # Ενημέρωση password αν υπάρχει ήδη
+        # ΜΟΝΟ ενημέρωση password, ΟΧΙ αλλαγή δικαιωμάτων σε υπάρχοντες χρήστες
+        # Αυτό προστατεύει από conflict με χρήστες που προσκλήθηκαν ως ένοικοι
         ultra_user.set_password('theo123!@#')
-        ultra_user.is_superuser = True
-        ultra_user.is_staff = True
-        ultra_user.is_active = True
-        ultra_user.email_verified = True
-        ultra_user.save()
-        print("✅ Ενημερώθηκε Ultra-Superuser: thodoris_st@hotmail.com")
+        # Διατηρούμε τα υπάρχοντα δικαιώματα - δεν τα αλλάζουμε
+        ultra_user.save(update_fields=['password'])
+        print(f"✅ Ενημερώθηκε password για Ultra-Superuser: {ADMIN_EMAIL}")
 
     # Verify authentication works
     from django.contrib.auth import authenticate
-    test_auth = authenticate(username='thodoris_st@hotmail.com', password='theo123!@#')
+    test_auth = authenticate(username=ADMIN_EMAIL, password='theo123!@#')
     if test_auth:
         print("   ✅ Authentication verified - login will work!")
     else:
@@ -877,7 +879,7 @@ def save_credentials():
 🏢 PUBLIC SCHEMA (localhost):
 -----------------------------
 👑 Ultra-Superuser (System Administrator):
-   Email: thodoris_st@hotmail.com
+   Email: admin@newconcierge.app
    Password: theo123!@#
    Permissions: Complete system management, all tenants and users
    Admin URL: http://localhost:8000/admin/
@@ -1018,7 +1020,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser (thodoris_st@hotmail.com):
+👑 Ultra-Superuser (admin@newconcierge.app):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1121,7 +1123,7 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    print("   Email: thodoris_st@hotmail.com")
+    print("   Email: admin@newconcierge.app")
     print("   Password: theo123!@#")
     print("   Permissions: Complete system management")
     
