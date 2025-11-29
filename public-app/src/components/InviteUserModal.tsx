@@ -252,96 +252,101 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Επιλογή από διαμέρισμα ή χειροκίνητη εισαγωγή */}
           {assignedRole === 'resident' && selectedBuildingId && (
-            <div>
-              <Label htmlFor="apartmentContact" className="flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Επιλογή από Διαμέρισμα
-              </Label>
-              <Select
-                value={selectedApartmentContact}
-                onValueChange={handleApartmentContactChange}
-                disabled={submitting || isLoadingApartments}
-              >
-                <SelectTrigger id="apartmentContact">
-                  <SelectValue placeholder={isLoadingApartments ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα ή εισάγετε χειροκίνητα"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">
-                    <span className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      Χειροκίνητη εισαγωγή
-                    </span>
-                  </SelectItem>
-                  {apartmentContacts.length > 0 && (
-                    <>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
-                        Διαμερίσματα με email
-                      </div>
-                      {apartmentContacts.map((contact) => (
-                        <SelectItem 
-                          key={`${contact.apartmentId}-${contact.type}`} 
-                          value={`${contact.apartmentId}-${contact.type}`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Home className="h-4 w-4 text-blue-500" />
-                            <span className="font-medium">Δ.{contact.apartmentNumber}</span>
-                            <span className="text-gray-500">-</span>
-                            <span>{contact.name}</span>
-                            <span className="text-xs text-gray-400">
-                              ({contact.type === 'owner' ? 'Ιδιοκτήτης' : 'Ένοικος'})
-                            </span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
-                  {apartmentContacts.length === 0 && !isLoadingApartments && (
-                    <div className="px-2 py-1.5 text-xs text-gray-500 italic">
-                      Δεν βρέθηκαν διαμερίσματα με email
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="mt-1 text-xs text-gray-500">
-                Επιλέξτε διαμέρισμα για αυτόματη συμπλήρωση στοιχείων
-              </p>
-            </div>
-          )}
-
-          {/* Επιλογή διαμερίσματος για χειροκίνητη εισαγωγή */}
-          {assignedRole === 'resident' && selectedBuildingId && selectedApartmentContact === 'manual' && (
-            <div>
-              <Label htmlFor="manualApartment" className="flex items-center gap-2">
-                <Home className="h-4 w-4 text-orange-500" />
-                Σύνδεση με Διαμέρισμα *
-              </Label>
-              <Select
-                value={selectedApartmentId?.toString() || ''}
-                onValueChange={(value) => setSelectedApartmentId(value ? Number(value) : null)}
-                disabled={submitting || isLoadingApartments}
-              >
-                <SelectTrigger id="manualApartment">
-                  <SelectValue placeholder={isLoadingApartments ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα για σύνδεση"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {apartments.map((apt) => (
-                    <SelectItem key={apt.id} value={apt.id.toString()}>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="apartmentContact" className="flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  Επιλογή Επαφής
+                </Label>
+                <Select
+                  value={selectedApartmentContact}
+                  onValueChange={handleApartmentContactChange}
+                  disabled={submitting || isLoadingApartments}
+                >
+                  <SelectTrigger id="apartmentContact">
+                    <SelectValue placeholder={isLoadingApartments ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα ή εισάγετε χειροκίνητα"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">
                       <span className="flex items-center gap-2">
-                        <Home className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium">Δ.{apt.number}</span>
-                        {apt.owner_name && (
-                          <span className="text-xs text-gray-400">
-                            ({apt.owner_name})
-                          </span>
-                        )}
+                        <User className="h-4 w-4 text-gray-500" />
+                        Χειροκίνητη εισαγωγή
                       </span>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="mt-1 text-xs text-orange-600">
-                ⚠️ Επιλέξτε το διαμέρισμα στο οποίο θα συνδεθεί ο ένοικος
-              </p>
+                    {apartmentContacts.length > 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
+                          Διαμερίσματα με email
+                        </div>
+                        {apartmentContacts.map((contact) => (
+                          <SelectItem 
+                            key={`${contact.apartmentId}-${contact.type}`} 
+                            value={`${contact.apartmentId}-${contact.type}`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <Home className="h-4 w-4 text-blue-500" />
+                              <span className="font-medium">Δ.{contact.apartmentNumber}</span>
+                              <span className="text-gray-500">-</span>
+                              <span>{contact.name}</span>
+                              <span className="text-xs text-gray-400">
+                                ({contact.type === 'owner' ? 'Ιδιοκτήτης' : 'Ένοικος'})
+                              </span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                    {apartmentContacts.length === 0 && !isLoadingApartments && (
+                      <div className="px-2 py-1.5 text-xs text-gray-500 italic">
+                        Δεν βρέθηκαν διαμερίσματα με email
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Πεδίο Σύνδεσης Διαμερίσματος */}
+              <div>
+                <Label htmlFor="linkedApartment" className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-blue-500" />
+                  Σύνδεση με Διαμέρισμα *
+                </Label>
+                <Select
+                  value={selectedApartmentId?.toString() || ''}
+                  onValueChange={(value) => setSelectedApartmentId(value ? Number(value) : null)}
+                  disabled={submitting || isLoadingApartments}
+                >
+                  <SelectTrigger id="linkedApartment" className="bg-blue-50 border-blue-200">
+                    <SelectValue placeholder={isLoadingApartments ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apartments.map((apt) => (
+                      <SelectItem key={apt.id} value={apt.id.toString()}>
+                        <span className="flex items-center gap-2">
+                          <Home className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">Δ.{apt.number}</span>
+                          <span className="text-xs text-gray-400">(ID: {apt.id})</span>
+                          {apt.owner_name && (
+                            <span className="text-xs text-gray-400">
+                              - {apt.owner_name}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedApartmentId && (
+                  <p className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                    ✓ Ο χρήστης θα συνδεθεί με το Διαμέρισμα {apartments.find(a => a.id === selectedApartmentId)?.number || selectedApartmentId}
+                  </p>
+                )}
+                {!selectedApartmentId && (
+                  <p className="mt-1 text-xs text-orange-600">
+                    ⚠️ Επιλέξτε διαμέρισμα για σύνδεση του ενοίκου
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
