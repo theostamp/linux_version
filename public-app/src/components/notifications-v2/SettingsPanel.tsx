@@ -323,14 +323,17 @@ export default function SettingsPanel() {
             <div className="space-y-2">
               <Label htmlFor="building">Πολυκατοικία</Label>
               <Select
-                value={formData.buildingId}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, buildingId: value }))}
+                value={formData.buildingId || '_all_'}
+                onValueChange={(value) => setFormData(prev => ({ 
+                  ...prev, 
+                  buildingId: value === '_all_' ? '' : value 
+                }))}
               >
                 <SelectTrigger id="building">
                   <SelectValue placeholder="Επιλέξτε πολυκατοικία" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Όλες οι πολυκατοικίες</SelectItem>
+                  <SelectItem value="_all_">Όλες οι πολυκατοικίες</SelectItem>
                   {buildings?.map((building) => (
                     <SelectItem key={building.id} value={building.id.toString()}>
                       {building.name}
