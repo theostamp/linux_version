@@ -37,7 +37,7 @@ export const BentoGridItem = ({
   return (
     <div
       className={cn(
-        "row-span-1 rounded-2xl group/bento border border-border/50 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg p-5 sm:p-6 flex flex-col gap-5",
+        "row-span-1 rounded-2xl group/bento border border-slate-200/50 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg p-5 sm:p-6 flex flex-col gap-5",
         className
       )}
     >
@@ -45,17 +45,17 @@ export const BentoGridItem = ({
       {hasMeta && (
         <div className="space-y-2">
           {icon && (
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
               {icon}
             </div>
           )}
           {title && (
-            <div className="font-condensed text-lg font-semibold text-foreground">
+            <div className="font-condensed text-lg font-semibold text-slate-900">
               {title}
             </div>
           )}
           {description && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-500">
               {description}
             </p>
           )}

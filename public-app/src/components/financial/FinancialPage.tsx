@@ -72,12 +72,12 @@ interface FinancialTabDefinition {
 }
 
 const DESKTOP_TAB_BASE_CLASSES =
-  'group flex flex-col items-center p-2.5 rounded-lg border border-border/40 bg-card text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
-const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
+  'group flex flex-col items-center p-2.5 rounded-lg border border-slate-200/50 bg-white text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white';
+const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-slate-200/50';
 const MOBILE_TAB_BASE_CLASSES =
-  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border/40 bg-card text-sm text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
-const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
-const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-background';
+  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200/50 bg-white text-sm text-slate-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white';
+const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-slate-200/50';
+const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-white';
 const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
 const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
 const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
@@ -585,11 +585,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </div>
         
         {/* Context Banner - Building & Month */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-primary/5 rounded-lg shadow-md">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-50 rounded-lg shadow-md">
           {/* Building Info */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-md shadow-sm">
-              <Building2 className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-indigo-100 rounded-md shadow-sm">
+              <Building2 className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
               <p className="text-lg font-bold text-blue-700 font-condensed">
@@ -600,7 +600,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           
           {/* Month Selector */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-md shadow-sm">
+            <div className="p-2 bg-indigo-100 rounded-md shadow-sm">
               <Calendar className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
@@ -617,7 +617,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   }}
                   variant="outline"
                   size="sm"
-                  className="bg-card hover:bg-primary/10 border-0 shadow-sm text-primary hover:text-primary/80 transition-colors rounded-md"
+                  className="bg-white hover:bg-indigo-50 border-0 shadow-sm text-indigo-600 hover:text-indigo-700 transition-colors rounded-md"
                 >
                   Τρέχων
                 </Button>
@@ -704,7 +704,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                               <span
                                 className={cn(
                                   MOBILE_LABEL_BASE_CLASSES,
-                                  isActive ? tab.theme.labelActive : 'text-foreground',
+                                  isActive ? tab.theme.labelActive : 'text-slate-900',
                                   tab.theme.labelHover
                                 )}
                               >
