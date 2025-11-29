@@ -84,3 +84,31 @@
 
 Η εφαρμογή είναι ένα **ισχυρότατο εργαλείο** που με τις προτεινόμενες προσθήκες "Bulk Operations" θα κυριαρχήσει στην αγορά.
 
+---
+
+## 6. Υλοποιημένες Βελτιώσεις (29/11/2025)
+
+### 6.1. Office Analytics App (Backend)
+Δημιουργήθηκε νέο Django app `office_analytics` με:
+*   **OfficeAnalyticsService**: Παρέχει συγκεντρωτικά δεδομένα από όλα τα κτίρια
+*   **API Endpoints**:
+    *   `GET /api/office-analytics/dashboard/` - Πλήρες dashboard
+    *   `GET /api/office-analytics/portfolio/` - Επισκόπηση χαρτοφυλακίου
+    *   `GET /api/office-analytics/buildings-status/` - Κατάσταση κτιρίων
+    *   `GET /api/office-analytics/top-debtors/` - Top 10 οφειλέτες
+    *   `GET /api/office-analytics/pending-maintenance/` - Εκκρεμή αιτήματα
+    *   `GET /api/office-analytics/cash-flow/` - Cash flow 6 μηνών
+    *   `GET /api/office-analytics/alerts/` - Ειδοποιήσεις/Alerts
+
+### 6.2. Office Dashboard (Frontend)
+Δημιουργήθηκε νέα σελίδα `/office-dashboard` με:
+*   **PortfolioMetrics**: Συγκεντρωτικά KPIs (κτίρια, διαμερίσματα, αποθεματικό, είσπραξη)
+*   **BuildingsStatusTable**: Πίνακας με όλα τα κτίρια και την οικονομική τους κατάσταση
+*   **TopDebtorsCard**: Λίστα με τους μεγαλύτερους οφειλέτες
+*   **AlertsPanel**: Ειδοποιήσεις για κρίσιμες καταστάσεις
+*   **PendingTasksList**: Εκκρεμή αιτήματα συντήρησης
+*   **CashFlowChart**: Γράφημα εισπράξεων/δαπανών
+
+### 6.3. Πρόσβαση
+Το "Κέντρο Ελέγχου" προστέθηκε στο sidebar για ρόλους: `manager`, `staff`, `superuser`.
+

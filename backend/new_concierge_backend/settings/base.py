@@ -55,6 +55,7 @@ SHARED_APPS = [
     'users',
     'office_staff',         # Office Staff Management (shared - relates to users)
     'billing',              # Subscription & Billing System (shared across tenants)
+    'office_finance',       # Office Income/Expense Management
 
     'corsheaders',
     'django.contrib.contenttypes',
