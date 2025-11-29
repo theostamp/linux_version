@@ -930,25 +930,67 @@ export default function CreateBuildingForm({
 
         {/* Toggle για δικαίωμα καταχώρησης πληρωμών */}
         {(formData.internal_manager_id || formData.internal_manager_name) && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start space-x-2">
-                <CreditCard className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className={`rounded-xl p-5 mt-4 transition-all duration-300 ${
+            formData.internal_manager_can_record_payments 
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 shadow-lg shadow-green-100' 
+              : 'bg-slate-50 border-2 border-slate-200'
+          }`}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start space-x-3">
+                <div className={`p-2 rounded-lg transition-colors ${
+                  formData.internal_manager_can_record_payments 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-slate-300 text-slate-600'
+                }`}>
+                  <CreditCard className="w-5 h-5" />
+                </div>
                 <div>
-                  <p className="text-sm text-amber-800 font-medium">Δικαίωμα Καταχώρησης Πληρωμών</p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.
+                  <p className={`font-semibold ${
+                    formData.internal_manager_can_record_payments 
+                      ? 'text-green-800' 
+                      : 'text-slate-700'
+                  }`}>
+                    Δικαίωμα Καταχώρησης Πληρωμών
+                  </p>
+                  <p className={`text-sm mt-1 ${
+                    formData.internal_manager_can_record_payments 
+                      ? 'text-green-600' 
+                      : 'text-slate-500'
+                  }`}>
+                    {formData.internal_manager_can_record_payments 
+                      ? '✅ Ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές κοινοχρήστων.'
+                      : 'Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.'
+                    }
                   </p>
                 </div>
               </div>
-              <Switch
-                checked={formData.internal_manager_can_record_payments || false}
-                onCheckedChange={(checked) => 
-                  setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
-                }
-                disabled={loading}
-              />
+              <div className={`transition-all duration-300 ${
+                formData.internal_manager_can_record_payments 
+                  ? 'scale-110' 
+                  : 'scale-100'
+              }`}>
+                <Switch
+                  checked={formData.internal_manager_can_record_payments || false}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
+                  }
+                  disabled={loading}
+                  className={`${
+                    formData.internal_manager_can_record_payments 
+                      ? 'data-[state=checked]:bg-green-500' 
+                      : ''
+                  }`}
+                />
+              </div>
             </div>
+            {formData.internal_manager_can_record_payments && (
+              <div className="mt-3 pt-3 border-t border-green-200">
+                <p className="text-xs text-green-700 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Ενεργό - Ο διαχειριστής μπορεί να εισπράττει και να καταγράφει πληρωμές
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

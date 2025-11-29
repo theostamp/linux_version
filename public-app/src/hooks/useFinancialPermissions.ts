@@ -1,4 +1,5 @@
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { getEffectiveRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export type FinancialPermission = 
@@ -12,6 +13,7 @@ export type FinancialPermission =
 
 export function useFinancialPermissions() {
   const { user, isAuthReady } = useAuth();
+  const { selectedBuilding } = useBuilding();
 
   const hasPermission = (permission: FinancialPermission): boolean => {
     if (!user || !isAuthReady) return false;
@@ -19,32 +21,40 @@ export function useFinancialPermissions() {
     const role = getEffectiveRole(user);
     const isOfficeAdmin = role ? ['manager', 'office_staff', 'staff', 'superuser'].includes(role) : false;
     const isSystemAdmin = role ? ['staff', 'superuser'].includes(role) : false;
+    const isInternalManager = role === 'internal_manager';
+    
+    // Check if internal manager has payment recording permission for this building
+    const internalManagerCanRecordPayments = isInternalManager && 
+      selectedBuilding?.internal_manager_can_record_payments === true;
 
     switch (permission) {
       case 'financial_read':
         // Όλοι οι αυθεντικοποιημένοι χρήστες μπορούν να διαβάζουν
+        // Internal managers μπορούν πάντα να βλέπουν τα οικονομικά
         return true;
 
       case 'financial_write':
-        // Γραφεία και admins μπορούν να γράφουν
-        return isOfficeAdmin;
+        // Γραφεία, admins και internal managers με δικαίωμα
+        return isOfficeAdmin || internalManagerCanRecordPayments;
 
       case 'financial_admin':
         // Μόνο συστημικοί admins (staff/superuser)
         return isSystemAdmin;
 
       case 'expense_manage':
-        // Γραφεία/administrators
+        // Γραφεία/administrators (εσωτερικοί διαχειριστές δεν διαχειρίζονται δαπάνες)
         return isOfficeAdmin;
 
       case 'payment_manage':
-        return isOfficeAdmin;
+        // Γραφεία/administrators ΚΑΙ internal managers με δικαίωμα
+        return isOfficeAdmin || internalManagerCanRecordPayments;
 
       case 'transaction_manage':
         return isSystemAdmin;
 
       case 'report_access':
-        return isOfficeAdmin;
+        // Internal managers μπορούν να βλέπουν αναφορές
+        return isOfficeAdmin || isInternalManager;
 
       default:
         return false;
