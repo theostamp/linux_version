@@ -6,17 +6,19 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
-import { User, Building as BuildingIcon, Settings, Calendar } from 'lucide-react';
+import { User, Building as BuildingIcon, Settings, Calendar, Shield } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
-import { getRoleLabel, hasOfficeAdminAccess, isResident } from '@/lib/roleUtils';
+import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAccess, getEffectiveRole } from '@/lib/roleUtils';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding } = useBuilding();
   const isAdminLevel = hasOfficeAdminAccess(user);
   const isResidentUser = isResident(user);
+  const isInternalManager = getEffectiveRole(user) === 'internal_manager';
   const roleLabel = getRoleLabel(user);
-  const showOfficeDetails = isAdminLevel;
+  // Show office details for admins AND internal managers
+  const showOfficeDetails = isAdminLevel || isInternalManager;
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -167,26 +169,48 @@ export default function GlobalHeader() {
 
               {/* User Info Card */}
               {user && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-muted rounded-md shadow-sm">
-                  <div className="w-8 h-8 bg-muted-foreground rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-white" />
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-md shadow-sm ${
+                  isInternalManager ? 'bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-500/30' : 'bg-muted'
+                }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isInternalManager ? 'bg-amber-500' : 'bg-muted-foreground'
+                  }`}>
+                    {isInternalManager ? (
+                      <Shield className="w-4 h-4 text-white" />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <div className="hidden sm:block">
-                    <p className="text-sm font-medium text-foreground leading-tight">
-                      {user.first_name || user.last_name
-                        ? `${user.first_name} ${user.last_name}`.trim()
-                        : user.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground leading-tight">
+                        {user.first_name || user.last_name
+                          ? `${user.first_name} ${user.last_name}`.trim()
+                          : user.email}
+                      </p>
+                      {isInternalManager && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-amber-500 text-white rounded">
+                          Διαχειριστής
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs leading-tight mt-0.5 ${
+                      isInternalManager ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'
+                    }`}>
                       {roleLabel}
                     </p>
                   </div>
                   <div className="sm:hidden">
-                    <p className="text-xs font-medium text-foreground leading-tight">
-                      {user.first_name || user.last_name
-                        ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
-                        : user.email.split('@')[0]}
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-medium text-foreground leading-tight">
+                        {user.first_name || user.last_name
+                          ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
+                          : user.email.split('@')[0]}
+                      </p>
+                      {isInternalManager && (
+                        <Shield className="w-3 h-3 text-amber-600" />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
