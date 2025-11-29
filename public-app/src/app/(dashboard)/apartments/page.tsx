@@ -630,42 +630,30 @@ const ApartmentsPageContent = () => {
               ) : (
                 <>
                   {viewMode === 'table' ? (
-                    <div className="bg-card rounded-2xl shadow-sm border border-border/50 overflow-hidden">
+                    <div className="table-container">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[960px] text-sm">
-                          <thead className="bg-muted/40 text-muted-foreground">
-                            <tr className="text-xs font-semibold uppercase tracking-wide">
-                              <th className="px-5 py-3 text-left first:rounded-tl-2xl">
-                                Διαμέρισμα
-                              </th>
-                              <th className="px-5 py-3 text-left">
-                                Ιδιοκτήτης
-                              </th>
-                              <th className="px-5 py-3 text-left">
-                                Ένοικος / Χρήστης
-                              </th>
-                              <th className="px-5 py-3 text-left">
-                                Στοιχεία
-                              </th>
-                              <th className="px-5 py-3 text-right last:rounded-tr-2xl">
-                                Ενέργειες
-                              </th>
+                        <table className="data-table min-w-[960px]">
+                          <thead>
+                            <tr>
+                              <th>Διαμέρισμα</th>
+                              <th>Ιδιοκτήτης</th>
+                              <th>Ένοικος / Χρήστης</th>
+                              <th>Στοιχεία</th>
+                              <th className="text-right">Ενέργειες</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-background">
+                          <tbody>
                             {paginatedApartments.map((apartment) => (
-                              <tr
-                                key={apartment.id}
-                                className="even:bg-muted/20 odd:bg-background hover:bg-muted/40 transition-colors"
-                              >
-                                <td className="px-5 py-4 align-top">
-                                  <div className="flex flex-col gap-1">
+                              <tr key={apartment.id}>
+                                <td>
+                                  <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-3">
-                                      <div className={`w-10 h-10 rounded-lg shadow-sm flex items-center justify-center ${
+                                      <div className={cn(
+                                        "w-10 h-10 rounded-lg flex items-center justify-center",
                                         isInternalManagerApartment(apartment, internalManagerApartment) 
-                                          ? 'bg-amber-500/10' 
+                                          ? 'bg-amber-100 dark:bg-amber-500/20' 
                                           : 'bg-primary/10'
-                                      }`}>
+                                      )}>
                                         {isInternalManagerApartment(apartment, internalManagerApartment) ? (
                                           <Shield className="w-5 h-5 text-amber-600" />
                                         ) : (
@@ -673,11 +661,11 @@ const ApartmentsPageContent = () => {
                                         )}
                                       </div>
                                       <div>
-                                        <p className="text-base font-semibold text-foreground">{apartment.number}</p>
-                                        <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                                        <p className="text-base font-semibold text-foreground leading-tight">{apartment.number}</p>
+                                        <p className="text-xs text-muted-foreground">{apartment.identifier || '—'}</p>
                                       </div>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                       {isInternalManagerApartment(apartment, internalManagerApartment) && (
                                         <InternalManagerBadge />
                                       )}
@@ -686,12 +674,12 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-5 py-4 align-top">
+                                <td>
                                   <div className="space-y-1">
-                                    <p className="text-sm font-medium text-foreground">{apartment.owner_name || '—'}</p>
-                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                    <p className="font-medium text-foreground">{apartment.owner_name || '—'}</p>
+                                    <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                                       {apartment.owner_phone && (
-                                        <a href={`tel:${apartment.owner_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+                                        <a href={`tel:${apartment.owner_phone}`} className="inline-flex items-center gap-1 text-primary hover:underline">
                                           <Phone className="w-3 h-3" />
                                           {apartment.owner_phone}
                                         </a>
@@ -708,14 +696,14 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-5 py-4 align-top">
+                                <td>
                                   <div className="space-y-1">
-                                    <p className="text-sm font-medium text-foreground">
+                                    <p className="font-medium text-foreground">
                                       {apartment.tenant_name || apartment.occupant_name || '—'}
                                     </p>
-                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                    <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                                       {apartment.tenant_phone && (
-                                        <a href={`tel:${apartment.tenant_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+                                        <a href={`tel:${apartment.tenant_phone}`} className="inline-flex items-center gap-1 text-primary hover:underline">
                                           <Phone className="w-3 h-3" />
                                           {apartment.tenant_phone}
                                         </a>
@@ -733,16 +721,16 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-5 py-4">
-                                  <div className="grid grid-cols-2 gap-3">
+                                <td>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Τ.μ.</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Τ.μ.</p>
                                       <p className="text-sm font-semibold text-foreground">
-                                        {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
+                                        {typeof apartment.square_meters === 'number' ? apartment.square_meters : '—'}
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Συμμετοχή</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Συμμετοχή</p>
                                       <p className="text-sm font-semibold text-foreground">
                                         {typeof apartment.participation_mills === 'number'
                                           ? `${apartment.participation_mills}‰`
@@ -750,20 +738,20 @@ const ApartmentsPageContent = () => {
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Όροφος</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Όροφος</p>
                                       <p className="text-sm font-semibold text-foreground">
                                         {apartment.floor !== undefined ? apartment.floor : '—'}
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Ενημέρωση</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Ενημέρωση</p>
                                       <p className="text-sm font-semibold text-foreground">
                                         {formatDate(apartment.updated_at)}
                                       </p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-5 py-4 text-right align-top">
+                                <td className="text-right">
                                   <div className="flex items-center justify-end gap-2">
                                     {canManage && (
                                       <>
@@ -809,7 +797,7 @@ const ApartmentsPageContent = () => {
                           </tbody>
                         </table>
                       </div>
-                      <div className="border-t border-border/40 px-6 py-4 bg-muted/20">
+                      <div className="table-footer">
                         <Pagination
                           currentPage={currentPage}
                           totalPages={totalPages}
