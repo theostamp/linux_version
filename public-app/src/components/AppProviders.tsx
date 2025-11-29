@@ -33,7 +33,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/map-visualization', '/residents', '/maintenance', '/collaborators', '/documents',
     '/kiosk-widgets', '/kiosk-management', '/financial', '/projects', '/teams', '/admin', '/calendar',
     '/chat', '/data-migration', '/suppliers', '/system-health',
-    '/financial-tests', '/users', '/office-staff', '/my-profile', '/my-subscription'
+    '/financial-tests', '/users', '/office-staff', '/my-profile', '/my-subscription',
+    '/my-apartment', '/online-payments'  // Resident pages
   ];
 
   const isDashboard = dashboardRoutes.some(route => pathname?.startsWith(route));
