@@ -70,3 +70,6 @@ out/
 tmp/
 temp/
 *.tmp
+
+*BrowserCredits.txt
+/home/theo/project/BrowserCredits.txt

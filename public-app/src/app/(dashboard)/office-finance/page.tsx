@@ -10,8 +10,6 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
-import AuthGate from '@/components/AuthGate';
-import SubscriptionGate from '@/components/SubscriptionGate';
 import { DashboardErrorBoundary } from '@/components/dashboard/DashboardErrorBoundary';
 import { 
   FinanceSummaryCards,
@@ -205,15 +203,9 @@ function OfficeFinanceContent() {
 
 export default function OfficeFinancePage() {
   return (
-    <AuthGate requiredRoles={['manager', 'staff', 'superuser']}>
-      <SubscriptionGate requiredFeature="office_finance">
-        <DashboardErrorBoundary>
-          <div className="p-6">
-            <OfficeFinanceContent />
-          </div>
-        </DashboardErrorBoundary>
-      </SubscriptionGate>
-    </AuthGate>
+    <DashboardErrorBoundary>
+      <OfficeFinanceContent />
+    </DashboardErrorBoundary>
   );
 }
 
