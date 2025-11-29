@@ -72,17 +72,17 @@ interface FinancialTabDefinition {
 }
 
 const DESKTOP_TAB_BASE_CLASSES =
-  'group flex flex-col items-center p-4 rounded-xl border border-border/40 bg-card text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+  'group flex flex-col items-center p-2.5 rounded-lg border border-border/40 bg-card text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
 const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
 const MOBILE_TAB_BASE_CLASSES =
-  'group flex-shrink-0 items-center gap-3 px-4 py-3 rounded-lg border border-border/40 bg-card text-sm text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border/40 bg-card text-sm text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
 const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
-const TAB_ACTIVE_SHARED_CLASSES = 'shadow-lg ring-2 ring-offset-2 ring-offset-background';
-const DESKTOP_ICON_BASE_CLASSES = 'mb-3 p-3 rounded-full transition-colors bg-muted text-muted-foreground';
-const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-9 w-9 rounded-full transition-colors bg-muted text-muted-foreground';
-const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-sm font-condensed transition-colors duration-200';
-const MOBILE_LABEL_BASE_CLASSES = 'font-medium whitespace-nowrap transition-colors duration-200';
-const DESCRIPTION_BASE_CLASSES = 'text-xs text-muted-foreground text-center mt-1 transition-colors duration-200';
+const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-background';
+const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
+const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
+const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
+const MOBILE_LABEL_BASE_CLASSES = 'font-medium text-xs whitespace-nowrap transition-colors duration-200';
+const DESCRIPTION_BASE_CLASSES = 'text-[10px] text-muted-foreground text-center mt-0.5 transition-colors duration-200';
 
 const FINANCIAL_TABS: FinancialTabDefinition[] = [
   {
@@ -735,14 +735,14 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                             )}
                           >
                             <div
-                              className={cn(
-                                DESKTOP_ICON_BASE_CLASSES,
-                                tab.theme.iconHover,
-                                isActive && tab.theme.iconActive
-                              )}
-                            >
-                              <Icon className="h-6 w-6" />
-                            </div>
+                                              className={cn(
+                                                DESKTOP_ICON_BASE_CLASSES,
+                                                tab.theme.iconHover,
+                                                isActive && tab.theme.iconActive
+                                              )}
+                                            >
+                                              <Icon className="h-4 w-4" />
+                                            </div>
                             <h3
                               className={cn(
                                 DESKTOP_LABEL_BASE_CLASSES,
