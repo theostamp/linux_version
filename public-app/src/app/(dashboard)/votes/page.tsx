@@ -19,7 +19,7 @@ import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
-import { hasOfficeAdminAccess } from '@/lib/roleUtils';
+import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils';
 
 function isActive(start: string, end: string) {
   const today = new Date().toISOString().split('T')[0];
@@ -89,7 +89,8 @@ function VotesPageContent() {
 
   const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
   const canDelete = hasOfficeAdminAccess(user);
-  const canCreateVote = hasOfficeAdminAccess(user);
+  // Internal managers μπορούν να δημιουργούν ψηφοφορίες
+  const canCreateVote = hasInternalManagerAccess(user);
 
   const {
     data: votesData = [],

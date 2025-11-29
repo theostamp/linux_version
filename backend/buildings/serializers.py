@@ -243,8 +243,30 @@ class BuildingSerializer(serializers.ModelSerializer):
             
             # Ανάθεση ρόλου στον νέο internal_manager
             if new_internal_manager:
+                # Αλλαγή ρόλου σε internal_manager
                 if new_internal_manager.role != 'internal_manager':
                     new_internal_manager.role = 'internal_manager'
+                
+                # Αντιγραφή στοιχείων γραφείου από τον manager του κτιρίου
+                # ώστε ο internal_manager να βλέπει σωστά το logo και τα στοιχεία
+                manager = instance.manager
+                if manager:
+                    update_fields = ['role']
+                    if manager.office_name and not new_internal_manager.office_name:
+                        new_internal_manager.office_name = manager.office_name
+                        update_fields.append('office_name')
+                    if manager.office_phone and not new_internal_manager.office_phone:
+                        new_internal_manager.office_phone = manager.office_phone
+                        update_fields.append('office_phone')
+                    if manager.office_address and not new_internal_manager.office_address:
+                        new_internal_manager.office_address = manager.office_address
+                        update_fields.append('office_address')
+                    if manager.office_logo and not new_internal_manager.office_logo:
+                        new_internal_manager.office_logo = manager.office_logo
+                        update_fields.append('office_logo')
+                    new_internal_manager.save(update_fields=update_fields)
+                    logger.info(f"Assigned internal_manager role to user {new_internal_manager.email} with office details")
+                else:
                     new_internal_manager.save(update_fields=['role'])
                     logger.info(f"Assigned internal_manager role to user {new_internal_manager.email}")
                 
