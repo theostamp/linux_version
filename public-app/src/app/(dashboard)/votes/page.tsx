@@ -42,6 +42,22 @@ const formatDate = (value: string) => {
   });
 };
 
+/**
+ * Ελέγχει αν μια ψηφοφορία είναι ενεργή βάσει ημερομηνιών
+ */
+const isActive = (startDate: string, endDate: string): boolean => {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Αν οι ημερομηνίες δεν είναι έγκυρες, θεωρούμε ότι δεν είναι ενεργή
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return false;
+  }
+  
+  return now >= start && now <= end;
+};
+
 function VoteItemContent({
   vote,
   active,
