@@ -3988,9 +3988,9 @@ def my_apartment_data(request):
                         'id': p.id,
                         'date': p.date.isoformat() if p.date else None,
                         'amount': float(p.amount),
-                        'payment_method': p.payment_method,
+                        'payment_method': p.method,
                         'notes': p.notes,
-                        'receipt_number': p.receipt_number,
+                        'receipt_number': p.reference_number,
                     }
                     for p in payments
                 ],
