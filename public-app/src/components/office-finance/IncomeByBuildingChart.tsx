@@ -32,7 +32,7 @@ const COLORS = [
 export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChartProps) {
   if (isLoading) {
     return (
-      <div className="bg-card/50 rounded-xl border border-border p-6">
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-success/20 p-2.5 rounded-lg">
             <Building2 className="w-5 h-5 text-success" />
@@ -56,7 +56,7 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-card/50 rounded-xl border border-border p-6">
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-success/20 p-2.5 rounded-lg">
             <Building2 className="w-5 h-5 text-success" />
@@ -79,7 +79,7 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
   const totalIncome = data.reduce((sum, d) => sum + d.total, 0);
 
   return (
-    <div className="bg-card/50 rounded-xl border border-border p-6">
+    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-success/20 p-2.5 rounded-lg">

@@ -58,7 +58,7 @@ const CATEGORY_BG_COLORS: Record<string, string> = {
 export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryChartProps) {
   if (isLoading) {
     return (
-      <div className="bg-card/50 rounded-xl border border-border p-6">
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-destructive/20 p-2.5 rounded-lg">
             <PieChart className="w-5 h-5 text-destructive" />
@@ -85,7 +85,7 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-card/50 rounded-xl border border-border p-6">
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-destructive/20 p-2.5 rounded-lg">
             <PieChart className="w-5 h-5 text-destructive" />
@@ -110,7 +110,7 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
   const sortedData = [...data].sort((a, b) => b.total - a.total);
 
   return (
-    <div className="bg-card/50 rounded-xl border border-border p-6">
+    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="bg-destructive/20 p-2.5 rounded-lg">

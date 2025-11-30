@@ -54,7 +54,7 @@ export function RecentTransactions({
 
   if (isLoading) {
     return (
-      <div className="bg-card/50 rounded-xl border border-border p-6">
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-primary/20 p-2.5 rounded-lg">
             <Clock className="w-5 h-5 text-primary" />
@@ -102,7 +102,7 @@ export function RecentTransactions({
   const transactions = getFilteredTransactions();
 
   return (
-    <div className="bg-card/50 rounded-xl border border-border p-6">
+    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
