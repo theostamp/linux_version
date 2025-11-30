@@ -23,6 +23,7 @@ interface StaffPermissions {
   id: number;
   job_title: string;
   can_view_financials: boolean;
+  can_access_office_finance: boolean; // Νέο: Οικονομικά Γραφείου
   can_record_payments: boolean;
   can_create_expenses: boolean;
   can_edit_expenses: boolean;
@@ -67,13 +68,22 @@ interface ActivityLogEntry {
 // Permission groups for the UI
 const permissionGroups = [
   {
-    title: 'Οικονομικά',
-    icon: '💰',
+    title: 'Οικονομικά Πολυκατοικιών',
+    icon: '🏠',
+    description: 'Πρόσβαση σε οικονομικά στοιχεία πολυκατοικιών',
     permissions: [
-      { key: 'can_view_financials', label: 'Προβολή Οικονομικών', description: 'Μπορεί να βλέπει οικονομικά στοιχεία' },
-      { key: 'can_record_payments', label: 'Καταχώρηση Πληρωμών', description: 'Μπορεί να καταχωρεί πληρωμές' },
-      { key: 'can_create_expenses', label: 'Δημιουργία Δαπανών', description: 'Μπορεί να δημιουργεί δαπάνες' },
-      { key: 'can_edit_expenses', label: 'Επεξεργασία Δαπανών', description: 'Μπορεί να επεξεργάζεται δαπάνες' },
+      { key: 'can_view_financials', label: 'Προβολή Οικονομικών', description: 'Μπορεί να βλέπει οικονομικά στοιχεία κτιρίων' },
+      { key: 'can_record_payments', label: 'Καταχώρηση Πληρωμών', description: 'Μπορεί να καταχωρεί πληρωμές ενοίκων' },
+      { key: 'can_create_expenses', label: 'Δημιουργία Δαπανών', description: 'Μπορεί να δημιουργεί δαπάνες κτιρίων' },
+      { key: 'can_edit_expenses', label: 'Επεξεργασία Δαπανών', description: 'Μπορεί να επεξεργάζεται δαπάνες κτιρίων' },
+    ]
+  },
+  {
+    title: 'Οικονομικά Γραφείου Διαχείρισης',
+    icon: '💼',
+    description: 'Πρόσβαση σε έσοδα/έξοδα του γραφείου διαχείρισης',
+    permissions: [
+      { key: 'can_access_office_finance', label: 'Πρόσβαση Οικονομικών Γραφείου', description: 'Μπορεί να βλέπει έσοδα/έξοδα του γραφείου' },
     ]
   },
   {
@@ -137,6 +147,7 @@ export default function OfficeStaffPage() {
     job_title: '',
     // Default permissions
     can_view_financials: true,
+    can_access_office_finance: false, // Νέο: Οικονομικά Γραφείου (default off)
     can_record_payments: false,
     can_create_expenses: false,
     can_edit_expenses: false,
@@ -261,6 +272,7 @@ export default function OfficeStaffPage() {
       password: '',
       job_title: '',
       can_view_financials: true,
+      can_access_office_finance: false,
       can_record_payments: false,
       can_create_expenses: false,
       can_edit_expenses: false,
@@ -286,6 +298,7 @@ export default function OfficeStaffPage() {
       password: '',
       job_title: staff.permissions?.job_title || '',
       can_view_financials: staff.permissions?.can_view_financials ?? true,
+      can_access_office_finance: staff.permissions?.can_access_office_finance ?? false,
       can_record_payments: staff.permissions?.can_record_payments ?? false,
       can_create_expenses: staff.permissions?.can_create_expenses ?? false,
       can_edit_expenses: staff.permissions?.can_edit_expenses ?? false,
@@ -498,6 +511,9 @@ export default function OfficeStaffPage() {
                         <div className="mt-4 pt-4 border-t border-slate-100">
                           <p className="text-xs text-slate-500 mb-2">Δικαιώματα:</p>
                           <div className="flex flex-wrap gap-1">
+                            {staff.permissions.can_access_office_finance && (
+                              <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full">Οικ. Γραφείου</span>
+                            )}
                             {staff.permissions.can_record_payments && (
                               <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">Πληρωμές</span>
                             )}
