@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -13,13 +13,16 @@ import {
   AlertCircle,
   ExternalLink,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { BuildingStatus } from '@/hooks/useOfficeDashboard';
 
 interface BuildingsStatusTableProps {
   data?: BuildingStatus[];
   loading?: boolean;
+  initialVisibleCount?: number;
 }
 
 const formatCurrency = (value: number) => {
@@ -57,8 +60,13 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export function BuildingsStatusTable({ data, loading = false }: BuildingsStatusTableProps) {
+export function BuildingsStatusTable({ 
+  data, 
+  loading = false,
+  initialVisibleCount = 3 
+}: BuildingsStatusTableProps) {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (loading) {
     return (
@@ -71,7 +79,7 @@ export function BuildingsStatusTable({ data, loading = false }: BuildingsStatusT
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
@@ -102,6 +110,11 @@ export function BuildingsStatusTable({ data, loading = false }: BuildingsStatusT
   const criticalCount = data.filter(b => b.status === 'critical').length;
   const warningCount = data.filter(b => b.status === 'warning').length;
   const healthyCount = data.filter(b => b.status === 'healthy').length;
+
+  // Determine visible buildings
+  const hasMore = data.length > initialVisibleCount;
+  const visibleBuildings = isExpanded ? data : data.slice(0, initialVisibleCount);
+  const hiddenCount = data.length - initialVisibleCount;
 
   return (
     <Card className="border-0 shadow-md">
@@ -143,7 +156,7 @@ export function BuildingsStatusTable({ data, loading = false }: BuildingsStatusT
               </tr>
             </thead>
             <tbody>
-              {data.map((building) => {
+              {visibleBuildings.map((building) => {
                 const statusConfig = getStatusConfig(building.status);
                 const StatusIcon = statusConfig.icon;
                 
@@ -218,10 +231,33 @@ export function BuildingsStatusTable({ data, loading = false }: BuildingsStatusT
             </tbody>
           </table>
         </div>
+
+        {/* Expand/Collapse Button */}
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-primary hover:text-primary/80 hover:bg-primary/5"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-2" />
+                  Λιγότερα
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  Περισσότερα ({hiddenCount} ακόμα)
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export default BuildingsStatusTable;
-

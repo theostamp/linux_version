@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -11,13 +11,16 @@ import {
   User, 
   Building2,
   Clock,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { Debtor } from '@/hooks/useOfficeDashboard';
 
 interface TopDebtorsCardProps {
   data?: Debtor[];
   loading?: boolean;
+  initialVisibleCount?: number;
 }
 
 const formatCurrency = (value: number) => {
@@ -36,8 +39,13 @@ const getDaysOverdueLabel = (days: number) => {
   return { label: `${days} ημέρες`, className: 'bg-red-50 text-red-700' };
 };
 
-export function TopDebtorsCard({ data, loading = false }: TopDebtorsCardProps) {
+export function TopDebtorsCard({ 
+  data, 
+  loading = false,
+  initialVisibleCount = 3
+}: TopDebtorsCardProps) {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (loading) {
     return (
@@ -50,7 +58,7 @@ export function TopDebtorsCard({ data, loading = false }: TopDebtorsCardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
@@ -84,6 +92,11 @@ export function TopDebtorsCard({ data, loading = false }: TopDebtorsCardProps) {
   // Total debt
   const totalDebt = data.reduce((sum, d) => sum + Math.abs(d.balance), 0);
 
+  // Determine visible debtors
+  const hasMore = data.length > initialVisibleCount;
+  const visibleDebtors = isExpanded ? data : data.slice(0, initialVisibleCount);
+  const hiddenCount = data.length - initialVisibleCount;
+
   return (
     <Card className="border-0 shadow-md" id="debtors">
       <CardHeader>
@@ -99,7 +112,7 @@ export function TopDebtorsCard({ data, loading = false }: TopDebtorsCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {data.map((debtor, index) => {
+          {visibleDebtors.map((debtor, index) => {
             const overdueInfo = getDaysOverdueLabel(debtor.days_overdue);
             
             return (
@@ -160,10 +173,33 @@ export function TopDebtorsCard({ data, loading = false }: TopDebtorsCardProps) {
             );
           })}
         </div>
+
+        {/* Expand/Collapse Button */}
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-primary hover:text-primary/80 hover:bg-primary/5"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-2" />
+                  Λιγότερα
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  Περισσότερα ({hiddenCount} ακόμα)
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export default TopDebtorsCard;
-

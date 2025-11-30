@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -11,13 +11,16 @@ import {
   Building2,
   Clock,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { PendingTask } from '@/hooks/useOfficeDashboard';
 
 interface PendingTasksListProps {
   data?: PendingTask[];
   loading?: boolean;
+  initialVisibleCount?: number;
 }
 
 const getStatusConfig = (status: string) => {
@@ -47,8 +50,13 @@ const getPriorityConfig = (priority: string) => {
   }
 };
 
-export function PendingTasksList({ data, loading = false }: PendingTasksListProps) {
+export function PendingTasksList({ 
+  data, 
+  loading = false,
+  initialVisibleCount = 3
+}: PendingTasksListProps) {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (loading) {
     return (
@@ -61,7 +69,7 @@ export function PendingTasksList({ data, loading = false }: PendingTasksListProp
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
@@ -92,6 +100,11 @@ export function PendingTasksList({ data, loading = false }: PendingTasksListProp
     );
   }
 
+  // Determine visible tasks
+  const hasMore = data.length > initialVisibleCount;
+  const visibleTasks = isExpanded ? data : data.slice(0, initialVisibleCount);
+  const hiddenCount = data.length - initialVisibleCount;
+
   return (
     <Card className="border-0 shadow-md">
       <CardHeader>
@@ -111,7 +124,7 @@ export function PendingTasksList({ data, loading = false }: PendingTasksListProp
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {data.map((task) => {
+          {visibleTasks.map((task) => {
             const statusConfig = getStatusConfig(task.status);
             const priorityConfig = getPriorityConfig(task.priority);
             
@@ -160,10 +173,33 @@ export function PendingTasksList({ data, loading = false }: PendingTasksListProp
             );
           })}
         </div>
+
+        {/* Expand/Collapse Button */}
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-primary hover:text-primary/80 hover:bg-primary/5"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-2" />
+                  Λιγότερα
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  Περισσότερα ({hiddenCount} ακόμα)
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export default PendingTasksList;
-
