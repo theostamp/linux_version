@@ -1,11 +1,20 @@
 """
 Office Finance API Views
+
+Αυτές οι views είναι διαθέσιμες ΜΟΝΟ για το προσωπικό του γραφείου διαχείρισης:
+- manager: Διαχειριστής γραφείου
+- staff: Υπάλληλος γραφείου  
+- superuser: Διαχειριστής συστήματος
+
+ΔΕΝ είναι διαθέσιμες σε:
+- resident: Ένοικος
+- internal_manager: Εσωτερικός διαχειριστής πολυκατοικίας
 """
 
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -30,13 +39,40 @@ from .services import office_finance_service
 logger = logging.getLogger(__name__)
 
 
+class IsOfficeStaff(BasePermission):
+    """
+    Permission class που επιτρέπει πρόσβαση μόνο σε:
+    - manager (διαχειριστής γραφείου)
+    - staff (υπάλληλος γραφείου)
+    - superuser (διαχειριστής συστήματος)
+    """
+    ALLOWED_ROLES = ['manager', 'staff', 'superuser']
+    
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        user = request.user
+        
+        # Superusers always have access
+        if user.is_superuser:
+            return True
+        
+        # Check role attribute
+        if hasattr(user, 'role') and user.role in self.ALLOWED_ROLES:
+            return True
+        
+        return False
+
+
 class OfficeExpenseCategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet για κατηγορίες εξόδων γραφείου.
+    Διαθέσιμο μόνο σε: manager, staff, superuser
     """
     queryset = OfficeExpenseCategory.objects.filter(is_active=True)
     serializer_class = OfficeExpenseCategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -54,10 +90,11 @@ class OfficeExpenseCategoryViewSet(viewsets.ModelViewSet):
 class OfficeIncomeCategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet για κατηγορίες εσόδων γραφείου.
+    Διαθέσιμο μόνο σε: manager, staff, superuser
     """
     queryset = OfficeIncomeCategory.objects.filter(is_active=True)
     serializer_class = OfficeIncomeCategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -74,10 +111,11 @@ class OfficeIncomeCategoryViewSet(viewsets.ModelViewSet):
 class OfficeExpenseViewSet(viewsets.ModelViewSet):
     """
     ViewSet για έξοδα γραφείου.
+    Διαθέσιμο μόνο σε: manager, staff, superuser
     """
     queryset = OfficeExpense.objects.select_related('category', 'created_by')
     serializer_class = OfficeExpenseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['category', 'is_paid', 'recurrence', 'payment_method']
     search_fields = ['title', 'description', 'supplier_name']
@@ -120,10 +158,11 @@ class OfficeExpenseViewSet(viewsets.ModelViewSet):
 class OfficeIncomeViewSet(viewsets.ModelViewSet):
     """
     ViewSet για έσοδα γραφείου.
+    Διαθέσιμο μόνο σε: manager, staff, superuser
     """
     queryset = OfficeIncome.objects.select_related('category', 'building', 'created_by')
     serializer_class = OfficeIncomeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['category', 'building', 'status', 'recurrence']
     search_fields = ['title', 'description', 'client_name']
@@ -188,21 +227,12 @@ class OfficeFinanceDashboardView(APIView):
     GET /api/office-finance/dashboard/
     
     Επιστρέφει όλα τα δεδομένα για το dashboard οικονομικών γραφείου.
+    Διαθέσιμο μόνο σε: manager, staff, superuser
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     
     def get(self, request):
         try:
-            # Έλεγχος ρόλου
-            user = request.user
-            allowed_roles = ['manager', 'staff', 'superuser']
-            
-            if not hasattr(user, 'role') or user.role not in allowed_roles:
-                return Response(
-                    {'error': 'Δεν έχετε δικαίωμα πρόσβασης'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
             data = office_finance_service.get_dashboard_data()
             return Response(data, status=status.HTTP_200_OK)
             
@@ -219,8 +249,9 @@ class OfficeFinanceYearlySummaryView(APIView):
     GET /api/office-finance/yearly-summary/
     
     Επιστρέφει ετήσια σύνοψη.
+    Διαθέσιμο μόνο σε: manager, staff, superuser
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     
     def get(self, request):
         try:
@@ -242,15 +273,17 @@ class InitializeDefaultCategoriesView(APIView):
     POST /api/office-finance/init-categories/
     
     Δημιουργεί τις προκαθορισμένες κατηγορίες.
+    Διαθέσιμο μόνο σε: manager, superuser (όχι staff)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOfficeStaff]
     
     def post(self, request):
         try:
+            # Επιπλέον έλεγχος - μόνο manager/superuser μπορούν να αρχικοποιήσουν
             user = request.user
-            if not hasattr(user, 'role') or user.role not in ['manager', 'superuser']:
+            if not user.is_superuser and getattr(user, 'role', None) != 'manager':
                 return Response(
-                    {'error': 'Δεν έχετε δικαίωμα'},
+                    {'error': 'Μόνο διαχειριστές μπορούν να αρχικοποιήσουν κατηγορίες'},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
