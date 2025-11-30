@@ -775,11 +775,15 @@ def accept_invitation_view(request):
         print(f">>> ACCEPT_INVITATION: Validated password length: {len(password) if password else 0}")
         
         try:
+            # Pass request.tenant to handle kiosk registrations where invited_by has no tenant
+            current_tenant = getattr(request, 'tenant', None)
+            
             user = InvitationService.accept_invitation(
                 token=serializer.validated_data['token'],
                 password=password,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
+                tenant=current_tenant
             )
             
             # Δημιουργία JWT tokens

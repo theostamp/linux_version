@@ -904,7 +904,7 @@ class InvitationService:
             raise ValueError("Αποτυχία αποστολής email.")
     
     @staticmethod
-    def accept_invitation(token, password, first_name=None, last_name=None):
+    def accept_invitation(token, password, first_name=None, last_name=None, tenant=None):
         """
         Αποδοχή πρόσκλησης και δημιουργία χρήστη
         
@@ -913,6 +913,7 @@ class InvitationService:
             password: User password
             first_name: Optional first name (overrides invitation first_name, useful for kiosk registrations)
             last_name: Optional last name (overrides invitation last_name, useful for kiosk registrations)
+            tenant: Optional tenant to assign to user (from request.tenant, used when invited_by has no tenant)
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -954,10 +955,21 @@ class InvitationService:
         logger.info(f"[INVITATION] User created: {user.email}, ID: {user.id}")
         logger.info(f"[INVITATION] Password verification after creation: {password_check}")
         
-        # Ορισμός tenant από τον χρήστη που έστειλε την πρόσκληση
+        # Ορισμός tenant - προτεραιότητα: invited_by.tenant → passed tenant
+        user_tenant = None
         if invitation.invited_by and hasattr(invitation.invited_by, 'tenant') and invitation.invited_by.tenant:
-            user.tenant = invitation.invited_by.tenant
+            user_tenant = invitation.invited_by.tenant
+            logger.info(f"[INVITATION] Using tenant from invited_by: {user_tenant.schema_name}")
+        elif tenant:
+            user_tenant = tenant
+            logger.info(f"[INVITATION] Using passed tenant: {user_tenant.schema_name}")
+        
+        if user_tenant:
+            user.tenant = user_tenant
             user.save(update_fields=['tenant'])
+            logger.info(f"[INVITATION] Assigned tenant {user_tenant.schema_name} to user {user.email}")
+        else:
+            logger.warning(f"[INVITATION] No tenant found for user {user.email} - BuildingMembership may not be created!")
         
         # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
