@@ -54,9 +54,9 @@ export function RecentTransactions({
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-primary/20 p-2.5 rounded-lg">
+          <div className="bg-primary/10 p-2.5 rounded-lg">
             <Clock className="w-5 h-5 text-primary" />
           </div>
           <div>
@@ -102,11 +102,11 @@ export function RecentTransactions({
   const transactions = getFilteredTransactions();
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+    <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/20 p-2.5 rounded-lg">
+          <div className="bg-primary/10 p-2.5 rounded-lg">
             <Clock className="w-5 h-5 text-primary" />
           </div>
           <div>
@@ -120,21 +120,21 @@ export function RecentTransactions({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg mb-4">
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-lg mb-4">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
               activeTab === tab.id
-                ? 'bg-secondary text-secondary-foreground'
+                ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
-                activeTab === tab.id ? 'bg-primary/20 text-primary' : 'bg-muted'
+                activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-muted'
               }`}>
                 {tab.count}
               </span>
@@ -164,17 +164,17 @@ export function RecentTransactions({
                 {/* Icon */}
                 <div className={`p-2.5 rounded-full ${
                   isPending 
-                    ? 'bg-primary/20' 
+                    ? 'bg-primary/10' 
                     : isIncome 
-                      ? 'bg-success/20' 
-                      : 'bg-destructive/20'
+                      ? 'bg-teal-500/10' 
+                      : 'bg-rose-500/10'
                 }`}>
                   {isPending ? (
                     <Clock className="w-4 h-4 text-primary" />
                   ) : isIncome ? (
-                    <ArrowDownLeft className="w-4 h-4 text-success" />
+                    <ArrowDownLeft className="w-4 h-4 text-teal-600" />
                   ) : (
-                    <ArrowUpRight className="w-4 h-4 text-destructive" />
+                    <ArrowUpRight className="w-4 h-4 text-rose-600" />
                   )}
                 </div>
 
@@ -187,9 +187,9 @@ export function RecentTransactions({
                     {!isPending && 'status' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
                         transaction.status === 'received' 
-                          ? 'bg-success/20 text-success'
+                          ? 'bg-teal-500/10 text-teal-600'
                           : transaction.status === 'pending'
-                            ? 'bg-primary/20 text-primary'
+                            ? 'bg-primary/10 text-primary'
                             : 'bg-muted text-muted-foreground'
                       }`}>
                         {transaction.status === 'received' ? 'Εισπράχθηκε' : 
@@ -199,8 +199,8 @@ export function RecentTransactions({
                     {isExpense && 'is_paid' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
                         transaction.is_paid 
-                          ? 'bg-success/20 text-success'
-                          : 'bg-primary/20 text-primary'
+                          ? 'bg-teal-500/10 text-teal-600'
+                          : 'bg-amber-500/10 text-amber-600'
                       }`}>
                         {transaction.is_paid ? 'Πληρώθηκε' : 'Απλήρωτο'}
                       </span>
@@ -236,8 +236,8 @@ export function RecentTransactions({
                     isPending 
                       ? 'text-primary' 
                       : isIncome 
-                        ? 'text-success' 
-                        : 'text-destructive'
+                        ? 'text-teal-600' 
+                        : 'text-rose-600'
                   }`}>
                     {isPending || isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </span>
@@ -247,7 +247,7 @@ export function RecentTransactions({
                 {isPending && onMarkReceived && (
                   <button
                     onClick={() => onMarkReceived(transaction.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-success/20 text-success hover:bg-success/30 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 transition-all"
                     title="Σημείωση ως εισπραχθέν"
                   >
                     <CheckCircle2 className="w-4 h-4" />

@@ -44,7 +44,7 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-card/50 rounded-xl p-6 animate-pulse border border-border">
+          <div key={i} className="bg-card rounded-xl p-6 animate-pulse border border-secondary shadow-sm">
             <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
             <div className="h-8 bg-muted rounded w-3/4"></div>
           </div>
@@ -68,27 +68,27 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Income Card */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-success/20 to-success/5 backdrop-blur-sm p-6">
-        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-success/10 blur-2xl" />
+      <div className="relative overflow-hidden rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-6 shadow-sm">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-teal-100/50 blur-2xl" />
         <div className="relative">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-sm text-muted-foreground">Έσοδα Μήνα</p>
-              <p className="text-xs text-muted-foreground/70">{getMonthName(currentMonth.month)}</p>
+              <p className="text-sm text-slate-600">Έσοδα Μήνα</p>
+              <p className="text-xs text-slate-500">{getMonthName(currentMonth.month)}</p>
             </div>
-            <div className="bg-success/20 p-2.5 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-success" />
+            <div className="bg-teal-100 p-2.5 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-teal-600" />
             </div>
           </div>
           <div className="mb-2">
-            <span className="text-2xl font-bold text-foreground">
+            <span className="text-2xl font-bold text-slate-900">
               {formatCurrency(totalIncome)}
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {incomeChange && (
               <div className={`flex items-center gap-1 text-xs ${
-                incomeChange.isPositive ? 'text-success' : 'text-destructive'
+                incomeChange.isPositive ? 'text-teal-600' : 'text-rose-600'
               }`}>
                 {incomeChange.isPositive ? (
                   <ArrowUpRight className="w-3 h-3" />
@@ -96,11 +96,11 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
                   <ArrowDownRight className="w-3 h-3" />
                 )}
                 <span>{incomeChange.value.toFixed(1)}%</span>
-                <span className="text-muted-foreground/70">vs προηγ.</span>
+                <span className="text-slate-500">vs προηγ.</span>
               </div>
             )}
             {currentMonth.income.pending > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-slate-500">
                 {formatCurrency(currentMonth.income.pending)} εκκρεμεί
               </span>
             )}
@@ -109,27 +109,27 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
       </div>
 
       {/* Expenses Card */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-destructive/20 to-destructive/5 backdrop-blur-sm p-6">
-        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-destructive/10 blur-2xl" />
+      <div className="relative overflow-hidden rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 shadow-sm">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-rose-100/50 blur-2xl" />
         <div className="relative">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-sm text-muted-foreground">Έξοδα Μήνα</p>
-              <p className="text-xs text-muted-foreground/70">{getMonthName(currentMonth.month)}</p>
+              <p className="text-sm text-slate-600">Έξοδα Μήνα</p>
+              <p className="text-xs text-slate-500">{getMonthName(currentMonth.month)}</p>
             </div>
-            <div className="bg-destructive/20 p-2.5 rounded-lg">
-              <TrendingDown className="w-5 h-5 text-destructive" />
+            <div className="bg-rose-100 p-2.5 rounded-lg">
+              <TrendingDown className="w-5 h-5 text-rose-600" />
             </div>
           </div>
           <div className="mb-2">
-            <span className="text-2xl font-bold text-foreground">
+            <span className="text-2xl font-bold text-slate-900">
               {formatCurrency(totalExpenses)}
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {expenseChange && (
               <div className={`flex items-center gap-1 text-xs ${
-                !expenseChange.isPositive ? 'text-success' : 'text-destructive'
+                !expenseChange.isPositive ? 'text-teal-600' : 'text-rose-600'
               }`}>
                 {!expenseChange.isPositive ? (
                   <ArrowUpRight className="w-3 h-3" />
@@ -137,11 +137,11 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
                   <ArrowDownRight className="w-3 h-3" />
                 )}
                 <span>{expenseChange.value.toFixed(1)}%</span>
-                <span className="text-muted-foreground/70">vs προηγ.</span>
+                <span className="text-slate-500">vs προηγ.</span>
               </div>
             )}
             {currentMonth.expenses.unpaid > 0 && (
-              <span className="text-xs text-destructive/80">
+              <span className="text-xs text-amber-600">
                 +{formatCurrency(currentMonth.expenses.unpaid)} απλήρωτα
               </span>
             )}
@@ -150,27 +150,27 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
       </div>
 
       {/* Net Result Card */}
-      <div className={`relative overflow-hidden rounded-xl border border-border bg-gradient-to-br ${
+      <div className={`relative overflow-hidden rounded-xl border ${
         currentMonth.net_result >= 0 
-          ? 'from-primary/20 to-primary/5' 
-          : 'from-destructive/20 to-destructive/5'
-      } backdrop-blur-sm p-6`}>
+          ? 'border-primary/30 bg-gradient-to-br from-indigo-50 to-white' 
+          : 'border-rose-200 bg-gradient-to-br from-rose-50 to-white'
+      } p-6 shadow-sm`}>
         <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full ${
-          currentMonth.net_result >= 0 ? 'bg-primary/10' : 'bg-destructive/10'
+          currentMonth.net_result >= 0 ? 'bg-indigo-100/50' : 'bg-rose-100/50'
         } blur-2xl`} />
         <div className="relative">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-sm text-muted-foreground">Καθαρό Αποτέλεσμα</p>
-              <p className="text-xs text-muted-foreground/70">{getMonthName(currentMonth.month)}</p>
+              <p className="text-sm text-slate-600">Καθαρό Αποτέλεσμα</p>
+              <p className="text-xs text-slate-500">{getMonthName(currentMonth.month)}</p>
             </div>
-            <div className={`${currentMonth.net_result >= 0 ? 'bg-primary/20' : 'bg-destructive/20'} p-2.5 rounded-lg`}>
-              <Wallet className={`w-5 h-5 ${currentMonth.net_result >= 0 ? 'text-primary' : 'text-destructive'}`} />
+            <div className={`${currentMonth.net_result >= 0 ? 'bg-indigo-100' : 'bg-rose-100'} p-2.5 rounded-lg`}>
+              <Wallet className={`w-5 h-5 ${currentMonth.net_result >= 0 ? 'text-primary' : 'text-rose-600'}`} />
             </div>
           </div>
           <div className="mb-2">
             <span className={`text-2xl font-bold ${
-              currentMonth.net_result >= 0 ? 'text-foreground' : 'text-destructive'
+              currentMonth.net_result >= 0 ? 'text-slate-900' : 'text-rose-600'
             }`}>
               {formatCurrency(currentMonth.net_result)}
             </span>
@@ -179,25 +179,25 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
       </div>
 
       {/* Pending Income Card */}
-      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm p-6">
-        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
+      <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-sm">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50 blur-2xl" />
         <div className="relative">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-sm text-muted-foreground">Εκκρεμή Έσοδα</p>
-              <p className="text-xs text-muted-foreground/70">Αναμένεται είσπραξη</p>
+              <p className="text-sm text-slate-600">Εκκρεμή Έσοδα</p>
+              <p className="text-xs text-slate-500">Αναμένεται είσπραξη</p>
             </div>
-            <div className="bg-primary/20 p-2.5 rounded-lg">
+            <div className="bg-indigo-100 p-2.5 rounded-lg">
               <Clock className="w-5 h-5 text-primary" />
             </div>
           </div>
           <div className="mb-2">
-            <span className="text-2xl font-bold text-foreground">
+            <span className="text-2xl font-bold text-slate-900">
               {formatCurrency(currentMonth.income.pending)}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-slate-500">
               {currentMonth.income.count} εγγραφ{currentMonth.income.count === 1 ? 'ή' : 'ές'}
             </span>
           </div>

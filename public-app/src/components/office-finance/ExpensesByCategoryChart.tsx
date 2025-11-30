@@ -18,50 +18,50 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Using semantic colors from design system
+// Using semantic colors
 const CATEGORY_COLORS: Record<string, string> = {
   platform: 'bg-primary',
   staff: 'bg-indigo-500',
   utilities: 'bg-amber-500',
   equipment: 'bg-purple-500',
-  professional: 'bg-success',
+  professional: 'bg-teal-500',
   marketing: 'bg-pink-500',
-  rent: 'bg-secondary',
-  insurance: 'bg-destructive',
+  rent: 'bg-slate-500',
+  insurance: 'bg-rose-500',
   taxes: 'bg-orange-500',
   fixed: 'bg-primary',
   operational: 'bg-cyan-500',
   collaborators: 'bg-violet-500',
   suppliers: 'bg-amber-500',
   taxes_legal: 'bg-orange-500',
-  other: 'bg-muted-foreground',
+  other: 'bg-slate-400',
 };
 
 const CATEGORY_BG_COLORS: Record<string, string> = {
-  platform: 'bg-primary/20',
-  staff: 'bg-indigo-500/20',
-  utilities: 'bg-amber-500/20',
-  equipment: 'bg-purple-500/20',
-  professional: 'bg-success/20',
-  marketing: 'bg-pink-500/20',
-  rent: 'bg-secondary/20',
-  insurance: 'bg-destructive/20',
-  taxes: 'bg-orange-500/20',
-  fixed: 'bg-primary/20',
-  operational: 'bg-cyan-500/20',
-  collaborators: 'bg-violet-500/20',
-  suppliers: 'bg-amber-500/20',
-  taxes_legal: 'bg-orange-500/20',
-  other: 'bg-muted/20',
+  platform: 'bg-primary/10',
+  staff: 'bg-indigo-500/10',
+  utilities: 'bg-amber-500/10',
+  equipment: 'bg-purple-500/10',
+  professional: 'bg-teal-500/10',
+  marketing: 'bg-pink-500/10',
+  rent: 'bg-slate-500/10',
+  insurance: 'bg-rose-500/10',
+  taxes: 'bg-orange-500/10',
+  fixed: 'bg-primary/10',
+  operational: 'bg-cyan-500/10',
+  collaborators: 'bg-violet-500/10',
+  suppliers: 'bg-amber-500/10',
+  taxes_legal: 'bg-orange-500/10',
+  other: 'bg-slate-400/10',
 };
 
 export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryChartProps) {
   if (isLoading) {
     return (
-      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-destructive/20 p-2.5 rounded-lg">
-            <PieChart className="w-5 h-5 text-destructive" />
+          <div className="bg-rose-500/10 p-2.5 rounded-lg">
+            <PieChart className="w-5 h-5 text-rose-600" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">Έξοδα ανά Κατηγορία</h3>
@@ -85,10 +85,10 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-destructive/20 p-2.5 rounded-lg">
-            <PieChart className="w-5 h-5 text-destructive" />
+          <div className="bg-rose-500/10 p-2.5 rounded-lg">
+            <PieChart className="w-5 h-5 text-rose-600" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">Έξοδα ανά Κατηγορία</h3>
@@ -110,11 +110,11 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
   const sortedData = [...data].sort((a, b) => b.total - a.total);
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+    <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-destructive/20 p-2.5 rounded-lg">
-            <PieChart className="w-5 h-5 text-destructive" />
+          <div className="bg-rose-500/10 p-2.5 rounded-lg">
+            <PieChart className="w-5 h-5 text-rose-600" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">Έξοδα ανά Κατηγορία</h3>
@@ -123,44 +123,7 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Σύνολο</p>
-          <p className="text-lg font-bold text-destructive">{formatCurrency(totalExpenses)}</p>
-        </div>
-      </div>
-
-      {/* Donut Chart Visualization */}
-      <div className="flex items-center justify-center mb-6">
-        <div className="relative w-40 h-40">
-          <svg viewBox="0 0 100 100" className="transform -rotate-90">
-            {sortedData.reduce((acc, category) => {
-              const percentage = (category.total / totalExpenses) * 100;
-              const previousPercentage = acc.offset;
-              const colorClass = CATEGORY_COLORS[category.category_type] || 'bg-muted-foreground';
-              const strokeColor = colorClass.replace('bg-', 'stroke-').replace('-500', '-400');
-              
-              acc.elements.push(
-                <circle
-                  key={category.category_id}
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  className={strokeColor}
-                  strokeWidth="12"
-                  strokeDasharray={`${percentage * 2.51} ${251 - percentage * 2.51}`}
-                  strokeDashoffset={`${-previousPercentage * 2.51}`}
-                  style={{ transition: 'stroke-dasharray 0.5s ease' }}
-                />
-              );
-              acc.offset += percentage;
-              return acc;
-            }, { elements: [] as React.ReactNode[], offset: 0 }).elements}
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-foreground">
-              {sortedData.length}
-            </span>
-            <span className="text-xs text-muted-foreground">κατηγορίες</span>
-          </div>
+          <p className="text-lg font-bold text-rose-600">{formatCurrency(totalExpenses)}</p>
         </div>
       </div>
 
@@ -168,13 +131,13 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
       <div className="space-y-3 max-h-[300px] overflow-y-auto">
         {sortedData.map((category) => {
           const percentage = (category.total / totalExpenses) * 100;
-          const colorClass = CATEGORY_COLORS[category.category_type] || 'bg-muted-foreground';
-          const bgColorClass = CATEGORY_BG_COLORS[category.category_type] || 'bg-muted/20';
+          const colorClass = CATEGORY_COLORS[category.category_type] || 'bg-slate-400';
+          const bgColorClass = CATEGORY_BG_COLORS[category.category_type] || 'bg-slate-400/10';
 
           return (
             <div
               key={category.category_id}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <div className={`${bgColorClass} p-2 rounded-lg`}>
                 <div className={`w-3 h-3 rounded-full ${colorClass}`} />
@@ -189,7 +152,7 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <div className="flex-1 h-1.5 bg-muted/50 rounded-full overflow-hidden mr-3">
+                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden mr-3">
                     <div
                       className={`h-full ${colorClass} rounded-full transition-all duration-500`}
                       style={{ width: `${percentage}%` }}
@@ -205,12 +168,12 @@ export function ExpensesByCategoryChart({ data, isLoading }: ExpensesByCategoryC
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border">
+      <div className="mt-4 pt-4 border-t border-secondary">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
             {data.reduce((sum, d) => sum + d.count, 0)} συναλλαγές
           </span>
-          <div className="flex items-center gap-1 text-destructive">
+          <div className="flex items-center gap-1 text-rose-600">
             <TrendingDown className="w-4 h-4" />
             <span>Μέσο έξοδο: {formatCurrency(totalExpenses / data.reduce((sum, d) => sum + d.count, 0))}</span>
           </div>

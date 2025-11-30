@@ -41,10 +41,10 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="bg-primary/20 p-2.5 rounded-lg">
+            <div className="bg-primary/10 p-2.5 rounded-lg">
               <BarChart3 className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -67,9 +67,9 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
 
   if (!data) {
     return (
-      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-primary/20 p-2.5 rounded-lg">
+          <div className="bg-primary/10 p-2.5 rounded-lg">
             <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
@@ -87,11 +87,11 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
   );
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+    <div className="bg-card rounded-xl border border-secondary p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/20 p-2.5 rounded-lg">
+          <div className="bg-primary/10 p-2.5 rounded-lg">
             <BarChart3 className="w-5 h-5 text-primary" />
           </div>
           <div>
@@ -123,17 +123,17 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-success/10 rounded-lg p-3 border border-success/20">
-          <p className="text-xs text-success/80 mb-1">Συνολικά Έσοδα</p>
-          <p className="text-lg font-bold text-success">{formatCurrency(data.total_income)}</p>
+        <div className="bg-teal-500/10 rounded-lg p-3 border border-teal-500/20">
+          <p className="text-xs text-teal-700 mb-1">Συνολικά Έσοδα</p>
+          <p className="text-lg font-bold text-teal-600">{formatCurrency(data.total_income)}</p>
         </div>
-        <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
-          <p className="text-xs text-destructive/80 mb-1">Συνολικά Έξοδα</p>
-          <p className="text-lg font-bold text-destructive">{formatCurrency(data.total_expenses)}</p>
+        <div className="bg-rose-500/10 rounded-lg p-3 border border-rose-500/20">
+          <p className="text-xs text-rose-700 mb-1">Συνολικά Έξοδα</p>
+          <p className="text-lg font-bold text-rose-600">{formatCurrency(data.total_expenses)}</p>
         </div>
-        <div className={`${data.net_result >= 0 ? 'bg-primary/10 border-primary/20' : 'bg-destructive/10 border-destructive/20'} rounded-lg p-3 border`}>
-          <p className={`text-xs ${data.net_result >= 0 ? 'text-primary/80' : 'text-destructive/80'} mb-1`}>Καθαρό Αποτέλεσμα</p>
-          <p className={`text-lg font-bold ${data.net_result >= 0 ? 'text-primary' : 'text-destructive'}`}>
+        <div className={`${data.net_result >= 0 ? 'bg-primary/10 border-primary/20' : 'bg-rose-500/10 border-rose-500/20'} rounded-lg p-3 border`}>
+          <p className={`text-xs ${data.net_result >= 0 ? 'text-primary' : 'text-rose-700'} mb-1`}>Καθαρό Αποτέλεσμα</p>
+          <p className={`text-lg font-bold ${data.net_result >= 0 ? 'text-primary' : 'text-rose-600'}`}>
             {formatCurrency(data.net_result)}
           </p>
         </div>
@@ -166,22 +166,22 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
               >
                 {/* Tooltip */}
                 {isHovered && !isFuture && (
-                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-popover border border-border rounded-lg p-2 shadow-xl z-10 min-w-[120px]">
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-card border border-secondary rounded-lg p-2 shadow-lg z-10 min-w-[120px]">
                     <p className="text-xs font-medium text-foreground mb-1">{MONTH_NAMES[index]} {data.year}</p>
                     <div className="flex items-center gap-2 text-xs">
-                      <div className="w-2 h-2 rounded-full bg-success" />
+                      <div className="w-2 h-2 rounded-full bg-teal-500" />
                       <span className="text-muted-foreground">Έσοδα:</span>
-                      <span className="text-success font-medium">{formatCurrency(month.income)}</span>
+                      <span className="text-teal-600 font-medium">{formatCurrency(month.income)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
-                      <div className="w-2 h-2 rounded-full bg-destructive" />
+                      <div className="w-2 h-2 rounded-full bg-rose-500" />
                       <span className="text-muted-foreground">Έξοδα:</span>
-                      <span className="text-destructive font-medium">{formatCurrency(month.expenses)}</span>
+                      <span className="text-rose-600 font-medium">{formatCurrency(month.expenses)}</span>
                     </div>
-                    <div className="border-t border-border mt-1 pt-1">
+                    <div className="border-t border-secondary mt-1 pt-1">
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-muted-foreground">Καθαρά:</span>
-                        <span className={`font-medium ${month.net >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                        <span className={`font-medium ${month.net >= 0 ? 'text-primary' : 'text-rose-600'}`}>
                           {formatCurrency(month.net)}
                         </span>
                       </div>
@@ -196,12 +196,12 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
                 >
                   {/* Income bar */}
                   <div
-                    className={`flex-1 bg-success rounded-t transition-all duration-300 ${isHovered ? 'bg-success/80' : ''}`}
+                    className={`flex-1 bg-teal-500 rounded-t transition-all duration-300 ${isHovered ? 'bg-teal-400' : ''}`}
                     style={{ height: `${incomeHeight}%`, minHeight: month.income > 0 ? '2px' : '0' }}
                   />
                   {/* Expense bar */}
                   <div
-                    className={`flex-1 bg-destructive rounded-t transition-all duration-300 ${isHovered ? 'bg-destructive/80' : ''}`}
+                    className={`flex-1 bg-rose-500 rounded-t transition-all duration-300 ${isHovered ? 'bg-rose-400' : ''}`}
                     style={{ height: `${expenseHeight}%`, minHeight: month.expenses > 0 ? '2px' : '0' }}
                   />
                 </div>
@@ -217,13 +217,13 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border">
+      <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-secondary">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-success" />
+          <div className="w-3 h-3 rounded bg-teal-500" />
           <span className="text-sm text-muted-foreground">Έσοδα</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-destructive" />
+          <div className="w-3 h-3 rounded bg-rose-500" />
           <span className="text-sm text-muted-foreground">Έξοδα</span>
         </div>
       </div>
