@@ -2,13 +2,15 @@
 
 import { useState, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { FileSpreadsheet, Upload, Send, Eye, X } from 'lucide-react';
+import { FileSpreadsheet, Upload, Send, Eye, X, FileText, Zap, CheckCircle2, Info } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { notificationsApi } from '@/lib/api/notifications';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -22,6 +24,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Alert,
+  AlertDescription,
+} from '@/components/ui/alert';
 import { toast } from 'sonner';
 import RecipientSelector from '../shared/RecipientSelector';
 import { 
@@ -53,6 +59,10 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
   const [sendToAll, setSendToAll] = useState(true);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  
+  // ✅ ΝΕΑ: Επιλογές για personalized notifications
+  const [includeNotification, setIncludeNotification] = useState(true);
+  const [attachmentMode, setAttachmentMode] = useState<'auto' | 'manual' | 'none'>('manual');
 
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
@@ -87,9 +97,28 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!buildingId) throw new Error('Επιλέξτε πολυκατοικία');
-      if (!attachment) throw new Error('Επισυνάψτε το φύλλο κοινοχρήστων');
+      if (attachmentMode === 'manual' && !attachment) {
+        throw new Error('Επισυνάψτε το φύλλο κοινοχρήστων');
+      }
 
       const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+      // Αν έχουμε personalized notification, χρησιμοποιούμε το νέο endpoint
+      if (includeNotification) {
+        return notificationsApi.sendPersonalizedCommonExpenses({
+          building_id: buildingId,
+          month: monthStr,
+          include_sheet: attachmentMode !== 'none',
+          include_notification: true,
+          custom_message: extraMessage || undefined,
+          attachment: attachmentMode === 'manual' ? attachment : undefined,
+          apartment_ids: sendToAll ? undefined : selectedIds,
+        });
+      }
+      
+      // Fallback στο παλιό endpoint για απλή αποστολή
+      if (!attachment) throw new Error('Επισυνάψτε το φύλλο κοινοχρήστων');
+      
       const subject = `Κοινόχρηστα ${MONTHS_GENITIVE[month]} ${year} - ${buildingData.name}`;
 
       return notificationsApi.sendCommonExpenses({
@@ -101,8 +130,12 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
         send_to_all: sendToAll,
       });
     },
-    onSuccess: () => {
-      toast.success('Τα κοινόχρηστα στάλθηκαν επιτυχώς');
+    onSuccess: (data: any) => {
+      if (data?.sent_count !== undefined) {
+        toast.success(`Στάλθηκαν ${data.sent_count} ειδοποιήσεις επιτυχώς`);
+      } else {
+        toast.success('Τα κοινόχρηστα στάλθηκαν επιτυχώς');
+      }
       onSuccess();
     },
     onError: (error: any) => {
@@ -206,46 +239,139 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
             </div>
           </div>
 
-          {/* Upload Αρχείου */}
-          <div className="space-y-2">
-            <Label>Φύλλο Κοινοχρήστων</Label>
-            <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-              {attachment ? (
-                <div className="flex items-center justify-center gap-3">
-                  <FileSpreadsheet className="h-8 w-8 text-blue-600" />
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">{attachment.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(attachment.size / 1024).toFixed(1)} KB
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setAttachment(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+          {/* ✅ ΝΕΟ: Επιλογή Ειδοποιητηρίου */}
+          <div className="space-y-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-blue-100">
+                  <FileText className="h-5 w-5 text-blue-600" />
                 </div>
-              ) : (
-                <label className="cursor-pointer">
-                  <Upload className="h-10 w-10 text-gray-400 mx-auto" />
-                  <p className="mt-2 text-sm text-gray-600">
-                    Κάντε κλικ για επιλογή αρχείου
+                <div>
+                  <Label className="text-blue-900 font-medium">Προσωποποιημένο Ειδοποιητήριο</Label>
+                  <p className="text-xs text-blue-700">
+                    Κάθε ένοικος λαμβάνει τα δικά του ποσά & ανάλυση
                   </p>
-                  <p className="text-xs text-gray-400">
-                    JPG, PNG ή PDF έως 10MB
-                  </p>
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
-              )}
+                </div>
+              </div>
+              <Switch
+                checked={includeNotification}
+                onCheckedChange={setIncludeNotification}
+              />
             </div>
+            
+            {includeNotification && (
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800 text-sm">
+                  <strong>Τι θα λάβει κάθε ένοικος:</strong>
+                  <ul className="mt-1 list-disc list-inside">
+                    <li>Προηγούμενο υπόλοιπο</li>
+                    <li>Κοινόχρηστα τρέχοντος μήνα</li>
+                    <li>Ανάλυση δαπανών (ένοικος/ιδιοκτήτης)</li>
+                    <li>Συνολικό πληρωτέο ποσό</li>
+                    <li>Τραπεζικά στοιχεία πληρωμής</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          {/* Επιλογή τρόπου επισύναψης */}
+          <div className="space-y-3">
+            <Label>Φύλλο Κοινοχρήστων</Label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setAttachmentMode('manual')}
+                className={`p-3 rounded-lg border-2 transition-all text-center ${
+                  attachmentMode === 'manual' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-slate-200 hover:border-blue-300'
+                }`}
+              >
+                <Upload className="h-5 w-5 mx-auto text-blue-600 mb-1" />
+                <span className="text-sm font-medium">Χειροκίνητα</span>
+                <p className="text-xs text-gray-500">Επιλογή αρχείου</p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAttachmentMode('auto')}
+                className={`p-3 rounded-lg border-2 transition-all text-center ${
+                  attachmentMode === 'auto' 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-slate-200 hover:border-green-300'
+                }`}
+              >
+                <Zap className="h-5 w-5 mx-auto text-green-600 mb-1" />
+                <span className="text-sm font-medium">Αυτόματα</span>
+                <p className="text-xs text-gray-500">Από το σύστημα</p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAttachmentMode('none')}
+                className={`p-3 rounded-lg border-2 transition-all text-center ${
+                  attachmentMode === 'none' 
+                    ? 'border-gray-500 bg-gray-50' 
+                    : 'border-slate-200 hover:border-gray-300'
+                }`}
+              >
+                <X className="h-5 w-5 mx-auto text-gray-600 mb-1" />
+                <span className="text-sm font-medium">Χωρίς</span>
+                <p className="text-xs text-gray-500">Μόνο email</p>
+              </button>
+            </div>
+            
+            {attachmentMode === 'auto' && (
+              <Alert className="bg-amber-50 border-amber-200">
+                <Info className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 text-sm">
+                  Θα επισυναφθεί αυτόματα το φύλλο κοινοχρήστων που έχει καταχωρηθεί 
+                  στο σύστημα για τον επιλεγμένο μήνα (αν υπάρχει).
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {attachmentMode === 'manual' && (
+              <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                {attachment ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <FileSpreadsheet className="h-8 w-8 text-blue-600" />
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">{attachment.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(attachment.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAttachment(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer">
+                    <Upload className="h-10 w-10 text-gray-400 mx-auto" />
+                    <p className="mt-2 text-sm text-gray-600">
+                      Κάντε κλικ για επιλογή αρχείου
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      JPG, PNG ή PDF έως 10MB
+                    </p>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Επιπλέον Μήνυμα */}
@@ -284,14 +410,18 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
               </Button>
               <Button
                 onClick={() => sendMutation.mutate()}
-                disabled={sendMutation.isPending || !buildingId || !attachment}
+                disabled={
+                  sendMutation.isPending || 
+                  !buildingId || 
+                  (attachmentMode === 'manual' && !attachment)
+                }
               >
                 {sendMutation.isPending ? (
                   'Αποστολή...'
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Αποστολή
+                    {includeNotification ? 'Αποστολή Ειδοποιητηρίων' : 'Αποστολή'}
                   </>
                 )}
               </Button>

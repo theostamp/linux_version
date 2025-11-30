@@ -402,6 +402,101 @@ class NotificationViewSet(viewsets.ModelViewSet):
             'attachment_url': notification.attachment.url if notification.attachment else None,
         }, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['post'])
+    def send_personalized_common_expenses(self, request):
+        """
+        Send personalized common expense notifications with auto-attached sheet.
+        
+        Each apartment receives:
+        - The common expense sheet (JPG) - auto-attached from existing data or uploaded
+        - A personalized payment notification (Ειδοποιητήριο) with their specific amounts
+        
+        POST /api/notifications/send_personalized_common_expenses/
+        Body (JSON or multipart/form-data):
+            - building_id: Building ID (required)
+            - month: Month string in YYYY-MM format (required, e.g., "2025-01")
+            - include_sheet: Boolean - attach common expense sheet (default: true)
+            - include_notification: Boolean - include personalized Ειδοποιητήριο (default: true)
+            - custom_message: Optional custom message to prepend
+            - attachment: Optional custom JPG file (overrides auto-attach)
+            - apartment_ids: Optional list of specific apartment IDs (default: all)
+        """
+        from datetime import datetime
+        from .common_expense_service import CommonExpenseNotificationService
+        
+        building_id = request.data.get('building_id')
+        month_str = request.data.get('month')
+        include_sheet = request.data.get('include_sheet', True)
+        include_notification = request.data.get('include_notification', True)
+        custom_message = request.data.get('custom_message', '')
+        apartment_ids = request.data.get('apartment_ids')
+        custom_attachment = request.FILES.get('attachment')
+        
+        # Validate required fields
+        if not building_id:
+            return Response(
+                {'error': 'building_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not month_str:
+            return Response(
+                {'error': 'month is required (format: YYYY-MM)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Parse month
+        try:
+            month = datetime.strptime(month_str, '%Y-%m').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Handle boolean conversion from form data
+        if isinstance(include_sheet, str):
+            include_sheet = include_sheet.lower() in ('true', '1', 'yes')
+        if isinstance(include_notification, str):
+            include_notification = include_notification.lower() in ('true', '1', 'yes')
+        
+        # Handle apartment_ids if string
+        if isinstance(apartment_ids, str) and apartment_ids:
+            try:
+                apartment_ids = [int(x.strip()) for x in apartment_ids.split(',')]
+            except ValueError:
+                apartment_ids = None
+        
+        # Save custom attachment if provided
+        custom_attachment_path = None
+        if custom_attachment:
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            
+            path = f'common_expenses/{building_id}/{month_str}/{custom_attachment.name}'
+            custom_attachment_path = default_storage.save(path, ContentFile(custom_attachment.read()))
+        
+        # Send notifications
+        results = CommonExpenseNotificationService.send_common_expense_notifications(
+            building_id=int(building_id),
+            month=month,
+            apartment_ids=apartment_ids,
+            include_sheet=include_sheet,
+            include_notification=include_notification,
+            custom_attachment=custom_attachment_path,
+            custom_message=custom_message,
+            sender_user=request.user
+        )
+        
+        return Response({
+            'success': results['success'],
+            'sent_count': results['sent_count'],
+            'failed_count': results['failed_count'],
+            'sheet_attached': results.get('sheet_attached', False),
+            'notification_included': results.get('notification_included', False),
+            'details': results['details']
+        }, status=status.HTTP_200_OK if results['success'] else status.HTTP_207_MULTI_STATUS)
+
 
 class NotificationRecipientViewSet(viewsets.ReadOnlyModelViewSet):
     """
