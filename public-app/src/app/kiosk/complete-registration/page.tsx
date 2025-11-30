@@ -125,12 +125,12 @@ function CompleteRegistrationContent() {
         setSubmitStatus('success');
         setSubmitMessage('Η εγγραφή σας ολοκληρώθηκε επιτυχώς!');
         
-        // Store tokens if provided
-        if (data.access) {
-          localStorage.setItem('access_token', data.access);
+        // Store tokens if provided (backend returns them under 'tokens' key)
+        if (data.tokens?.access) {
+          localStorage.setItem('access_token', data.tokens.access);
         }
-        if (data.refresh) {
-          localStorage.setItem('refresh_token', data.refresh);
+        if (data.tokens?.refresh) {
+          localStorage.setItem('refresh_token', data.tokens.refresh);
         }
         
         // Redirect to dashboard after 2 seconds
