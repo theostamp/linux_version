@@ -169,7 +169,30 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             ip = request.META.get('REMOTE_ADDR')
         return ip
 
+class StaffPermissionsSerializer(serializers.Serializer):
+    """Serializer for staff permissions (read-only for frontend)"""
+    job_title = serializers.CharField(read_only=True)
+    can_view_financials = serializers.BooleanField(read_only=True)
+    can_access_office_finance = serializers.BooleanField(read_only=True)
+    can_record_payments = serializers.BooleanField(read_only=True)
+    can_create_expenses = serializers.BooleanField(read_only=True)
+    can_edit_expenses = serializers.BooleanField(read_only=True)
+    can_create_announcements = serializers.BooleanField(read_only=True)
+    can_send_notifications = serializers.BooleanField(read_only=True)
+    can_manage_requests = serializers.BooleanField(read_only=True)
+    can_manage_maintenance = serializers.BooleanField(read_only=True)
+    can_view_apartments = serializers.BooleanField(read_only=True)
+    can_edit_apartments = serializers.BooleanField(read_only=True)
+    can_view_residents = serializers.BooleanField(read_only=True)
+    can_invite_residents = serializers.BooleanField(read_only=True)
+    can_upload_documents = serializers.BooleanField(read_only=True)
+    can_delete_documents = serializers.BooleanField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
+    staff_permissions = serializers.SerializerMethodField()
+    
     class Meta:
         model = CustomUser
         fields = [
@@ -181,6 +204,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active', 
             'is_staff',
             'is_superuser',
+            'staff_permissions',  # Νέο πεδίο
             'office_name',
             'office_phone',
             'office_address',
@@ -191,7 +215,21 @@ class UserSerializer(serializers.ModelSerializer):
             'office_bank_beneficiary',
             'tenant'
         ]
-        read_only_fields = ['id', 'is_staff', 'is_superuser']
+        read_only_fields = ['id', 'is_staff', 'is_superuser', 'staff_permissions']
+    
+    def get_staff_permissions(self, obj):
+        """Return staff permissions if user is staff"""
+        if obj.role != 'staff':
+            return None
+        
+        try:
+            if hasattr(obj, 'staff_permissions'):
+                permissions = obj.staff_permissions
+                return StaffPermissionsSerializer(permissions).data
+        except Exception:
+            pass
+        
+        return None
 
 class OfficeDetailsSerializer(serializers.ModelSerializer):
     """

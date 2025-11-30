@@ -30,9 +30,14 @@ class OfficeStaffPermissions(models.Model):
     
     # Οικονομικά Permissions
     can_view_financials = models.BooleanField(
-        _('Προβολή Οικονομικών'),
+        _('Προβολή Οικονομικών Κτιρίων'),
         default=True,
-        help_text=_('Μπορεί να βλέπει οικονομικά στοιχεία')
+        help_text=_('Μπορεί να βλέπει οικονομικά στοιχεία κτιρίων')
+    )
+    can_access_office_finance = models.BooleanField(
+        _('Πρόσβαση σε Οικονομικά Γραφείου'),
+        default=False,
+        help_text=_('Μπορεί να βλέπει τα οικονομικά του γραφείου διαχείρισης (έσοδα/έξοδα γραφείου)')
     )
     can_record_payments = models.BooleanField(
         _('Καταχώρηση Πληρωμών'),

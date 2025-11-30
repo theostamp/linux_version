@@ -41,12 +41,18 @@ logger = logging.getLogger(__name__)
 
 class IsOfficeStaff(BasePermission):
     """
-    Permission class που επιτρέπει πρόσβαση μόνο σε:
-    - manager (διαχειριστής γραφείου)
-    - staff (υπάλληλος γραφείου)
-    - superuser (διαχειριστής συστήματος)
+    Permission class για πρόσβαση στα Οικονομικά Γραφείου.
+    
+    Επιτρέπει πρόσβαση σε:
+    - superuser (πάντα)
+    - manager (διαχειριστής γραφείου - πάντα)
+    - staff (υπάλληλος) ΜΟΝΟ αν έχει can_access_office_finance = True
+    
+    ΔΕΝ επιτρέπει πρόσβαση σε:
+    - resident (ένοικος)
+    - internal_manager (εσωτερικός διαχειριστής)
+    - staff χωρίς το αντίστοιχο permission
     """
-    ALLOWED_ROLES = ['manager', 'staff', 'superuser']
     
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -58,10 +64,23 @@ class IsOfficeStaff(BasePermission):
         if user.is_superuser:
             return True
         
-        # Check role attribute
-        if hasattr(user, 'role') and user.role in self.ALLOWED_ROLES:
+        # Get user role
+        role = getattr(user, 'role', None)
+        
+        # Managers always have access
+        if role == 'manager':
             return True
         
+        # Staff need to check permissions
+        if role == 'staff':
+            # Check if user has staff_permissions with can_access_office_finance
+            if hasattr(user, 'staff_permissions'):
+                permissions = user.staff_permissions
+                if permissions.is_active and permissions.can_access_office_finance:
+                    return True
+            return False
+        
+        # All other roles (resident, internal_manager, etc.) - no access
         return False
 
 

@@ -47,6 +47,8 @@ interface NavigationLink {
   icon: React.ReactNode;
   roles: string[];
   isBeta?: boolean;
+  // Staff permission required (for staff role only)
+  staffPermission?: 'can_access_office_finance' | 'can_view_financials' | 'can_manage_requests';
 }
 
 // Navigation group interface
@@ -124,6 +126,7 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Οικονομικά Γραφείου',
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        staffPermission: 'can_access_office_finance', // Staff needs this permission
       },
       {
         href: '/maintenance',
@@ -329,10 +332,31 @@ export default function CollapsibleSidebar() {
   // Determine user role
   const userRole = getEffectiveRole(user);
 
-  // Filter available groups and links based on user role
+  // Check if staff has a specific permission
+  const staffHasPermission = (permissionKey: NavigationLink['staffPermission']): boolean => {
+    if (!permissionKey) return true; // No permission required
+    if (!user || userRole !== 'staff') return true; // Only check for staff role
+    
+    const permissions = user.staff_permissions;
+    if (!permissions || !permissions.is_active) return false;
+    
+    return permissions[permissionKey] === true;
+  };
+
+  // Filter available groups and links based on user role AND staff permissions
   const availableGroups = navigationGroups.map(group => ({
     ...group,
-    links: group.links.filter(link => userRole && link.roles.includes(userRole))
+    links: group.links.filter(link => {
+      // First check role
+      if (!userRole || !link.roles.includes(userRole)) return false;
+      
+      // Then check staff permission if required
+      if (link.staffPermission && userRole === 'staff') {
+        return staffHasPermission(link.staffPermission);
+      }
+      
+      return true;
+    })
   })).filter(group => group.links.length > 0);
 
   const getColorScheme = (colorKey: keyof typeof designSystem.colors) => {
