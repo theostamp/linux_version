@@ -571,6 +571,212 @@ function ChannelConfigPanel() {
   );
 }
 
+// Event Auto-Notifications Panel
+function EventNotificationsPanel() {
+  const [settings, setSettings] = useState({
+    announcements: { enabled: true, channels: ['email'] as NotificationChannel[] },
+    polls: { enabled: true, channels: ['email'] as NotificationChannel[] },
+    requests: { enabled: false, channels: ['email'] as NotificationChannel[] },
+  });
+
+  const eventTypes = [
+    {
+      id: 'announcements',
+      name: 'Νέες Ανακοινώσεις',
+      description: 'Αυτόματη ειδοποίηση όταν δημιουργείται νέα ανακοίνωση',
+      icon: <Bell className="h-5 w-5" />,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50 border-blue-200',
+    },
+    {
+      id: 'polls',
+      name: 'Νέες Ψηφοφορίες',
+      description: 'Αυτόματη ειδοποίηση για νέες ψηφοφορίες/συνελεύσεις',
+      icon: <Bell className="h-5 w-5" />,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50 border-purple-200',
+    },
+    {
+      id: 'requests',
+      name: 'Νέα Αιτήματα',
+      description: 'Ειδοποίηση για νέα αιτήματα ενοίκων (μόνο διαχειριστές)',
+      icon: <Bell className="h-5 w-5" />,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50 border-green-200',
+    },
+  ];
+
+  const channels: { id: NotificationChannel; label: string; icon: React.ReactNode; enabled: boolean }[] = [
+    { id: 'email', label: 'Email', icon: <Mail className="h-4 w-4" />, enabled: true },
+    { id: 'sms', label: 'SMS', icon: <MessageSquare className="h-4 w-4" />, enabled: false },
+    { id: 'viber', label: 'Viber', icon: <Phone className="h-4 w-4" />, enabled: false },
+    { id: 'push', label: 'Push', icon: <Smartphone className="h-4 w-4" />, enabled: false },
+  ];
+
+  const toggleEventEnabled = (eventId: string) => {
+    setSettings(prev => ({
+      ...prev,
+      [eventId]: {
+        ...prev[eventId as keyof typeof prev],
+        enabled: !prev[eventId as keyof typeof prev].enabled,
+      },
+    }));
+  };
+
+  const toggleEventChannel = (eventId: string, channel: NotificationChannel) => {
+    setSettings(prev => {
+      const current = prev[eventId as keyof typeof prev];
+      const newChannels = current.channels.includes(channel)
+        ? current.channels.filter(c => c !== channel)
+        : [...current.channels, channel];
+      return {
+        ...prev,
+        [eventId]: { ...current, channels: newChannels },
+      };
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Αυτόματες Ειδοποιήσεις Συμβάντων</h2>
+          <p className="text-sm text-gray-500">
+            Αυτόματη ενημέρωση ενοίκων για νέα συμβάντα στο κτίριο
+          </p>
+        </div>
+      </div>
+
+      {/* Info Card */}
+      <Alert className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+        <Info className="h-4 w-4 text-indigo-600" />
+        <AlertTitle className="text-indigo-900">Πώς λειτουργεί</AlertTitle>
+        <AlertDescription className="text-indigo-700 mt-2">
+          <p>
+            Όταν δημιουργείται νέα ανακοίνωση, ψηφοφορία ή αίτημα, το σύστημα στέλνει 
+            <strong> αυτόματα </strong> ειδοποίηση στους ενοίκους μέσω των επιλεγμένων καναλιών.
+          </p>
+          <p className="mt-2 text-sm">
+            Το μήνυμα περιλαμβάνει: Τίτλο, σύντομη περιγραφή και πρόσκληση 
+            <em> "Δείτε λεπτομέρειες στην εφαρμογή σας"</em>
+          </p>
+        </AlertDescription>
+      </Alert>
+
+      {/* Event Types */}
+      <div className="space-y-4">
+        {eventTypes.map((event) => {
+          const eventSettings = settings[event.id as keyof typeof settings];
+          
+          return (
+            <Card 
+              key={event.id} 
+              className={cn(
+                'border-2 transition-all',
+                eventSettings.enabled ? event.bgColor : 'border-gray-200 bg-gray-50'
+              )}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className={cn(
+                      'p-2 rounded-full',
+                      eventSettings.enabled ? 'bg-white' : 'bg-gray-100',
+                      event.color
+                    )}>
+                      {event.icon}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{event.name}</span>
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            'text-xs',
+                            eventSettings.enabled 
+                              ? 'bg-green-100 text-green-700 border-green-200' 
+                              : 'bg-gray-100 text-gray-500 border-gray-200'
+                          )}
+                        >
+                          {eventSettings.enabled ? 'Ενεργό' : 'Ανενεργό'}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">{event.description}</p>
+                      
+                      {/* Channel Selection */}
+                      {eventSettings.enabled && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {channels.map((channel) => {
+                            const isSelected = eventSettings.channels.includes(channel.id);
+                            return (
+                              <button
+                                key={channel.id}
+                                onClick={() => channel.enabled && toggleEventChannel(event.id, channel.id)}
+                                disabled={!channel.enabled}
+                                className={cn(
+                                  'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all',
+                                  !channel.enabled && 'opacity-50 cursor-not-allowed',
+                                  isSelected && channel.enabled
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                )}
+                              >
+                                {channel.icon}
+                                {channel.label}
+                                {!channel.enabled && (
+                                  <span className="text-[10px] opacity-70">(σύντομα)</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <Switch
+                    checked={eventSettings.enabled}
+                    onCheckedChange={() => toggleEventEnabled(event.id)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Preview */}
+      <Card className="bg-slate-50 border-slate-200">
+        <CardHeader>
+          <CardTitle className="text-sm text-slate-700 flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Παράδειγμα Ειδοποίησης
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm space-y-2">
+          <div className="bg-white p-4 rounded-lg border border-slate-200">
+            <p className="font-semibold text-gray-900">📢 Νέα Ανακοίνωση: Εργασίες Συντήρησης Ανελκυστήρα</p>
+            <p className="text-gray-600 mt-2">
+              Ενημερώνουμε ότι θα πραγματοποιηθεί ετήσια συντήρηση του ανελκυστήρα...
+            </p>
+            <p className="text-blue-600 mt-3 font-medium">
+              👉 Δείτε λεπτομέρειες στην εφαρμογή σας
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <Button className="gap-2">
+          Αποθήκευση Ρυθμίσεων
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // Extended Settings Panel with Tabs
 export function ExtendedSettingsPanel() {
   const [activeTab, setActiveTab] = useState('automation');
@@ -578,10 +784,14 @@ export function ExtendedSettingsPanel() {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="automation" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Αυτοματισμοί
+          </TabsTrigger>
+          <TabsTrigger value="events" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Συμβάντα
           </TabsTrigger>
           <TabsTrigger value="channels" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -591,6 +801,10 @@ export function ExtendedSettingsPanel() {
 
         <TabsContent value="automation" className="mt-6">
           <SettingsPanel />
+        </TabsContent>
+
+        <TabsContent value="events" className="mt-6">
+          <EventNotificationsPanel />
         </TabsContent>
 
         <TabsContent value="channels" className="mt-6">
