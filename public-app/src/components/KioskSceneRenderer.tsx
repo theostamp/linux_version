@@ -7,6 +7,8 @@ import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
 import FinancialSceneCustom from '@/components/kiosk/scenes/FinancialSceneCustom';
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
 import LifestyleSceneCustom from '@/components/kiosk/scenes/LifestyleSceneCustom';
+import AmbientShowcaseScene from '@/components/kiosk/scenes/AmbientShowcaseScene';
+import { extractAmbientBrandingFromSettings } from '@/components/kiosk/scenes/branding';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface KioskSceneRendererProps {
@@ -20,6 +22,7 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   const fallbackScenes = [
     { name: 'Πρωινή Επισκόπηση', Component: MorningOverviewSceneCustom },
     { name: 'Lifestyle & Community', Component: LifestyleSceneCustom },
+    { name: 'Ambient Showcase', Component: AmbientShowcaseScene },
   ];
 
   // Auto-rotate fallback scenes every 30 seconds
@@ -84,6 +87,10 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     if (!scenes || scenes.length === 0) return null;
     return scenes[currentSceneIndex] || null;
   }, [scenes, currentSceneIndex]);
+  const ambientBrandingFromScene = useMemo(() => {
+    if (!currentScene?.settings) return null;
+    return extractAmbientBrandingFromSettings(currentScene.settings);
+  }, [currentScene?.settings]);
 
   // Auto-cycle through scenes
   useEffect(() => {
@@ -293,6 +300,37 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
 
   // Check if this is the Lifestyle & Community scene - use custom layout
   if (currentScene.name === 'Lifestyle & Community' || currentScene.name === 'Ζωή & Κοινότητα') {
+  // Check if this is the Ambient Showcase scene - use ambient layout
+  if (currentScene.name === 'Ambient Showcase' || currentScene.name === 'Ανάλαφρη Παρουσίαση') {
+    return (
+      <div
+        className={`transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <AmbientShowcaseScene
+          data={kioskData}
+          buildingId={effectiveBuildingId}
+          brandingConfig={ambientBrandingFromScene ?? undefined}
+        />
+
+        {scenes.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform">
+            <div className="flex gap-2">
+              {scenes.map((scene, index) => (
+                <div
+                  key={scene.id}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentSceneIndex ? 'w-10 bg-white' : 'w-2 bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
     return (
       <div
         className={`transition-opacity duration-300 ${

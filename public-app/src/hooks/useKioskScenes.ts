@@ -34,6 +34,7 @@ export interface KioskScene {
   isEnabled: boolean;
   activeStartTime: string | null;
   activeEndTime: string | null;
+  settings?: Record<string, unknown> | null;
   placements: WidgetPlacement[];
   createdAt: string;
   updatedAt: string;
