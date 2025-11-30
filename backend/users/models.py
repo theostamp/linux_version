@@ -389,6 +389,11 @@ class UserInvitation(models.Model):
         REGISTRATION = 'registration', _('Registration')
         BUILDING_ACCESS = 'building_access', _('Building Access')
         ROLE_ASSIGNMENT = 'role_assignment', _('Role Assignment')
+        KIOSK_REGISTRATION = 'kiosk_registration', _('Kiosk Registration')
+
+    class InvitationSource(models.TextChoices):
+        ADMIN = 'admin', _('Admin/Manager Invitation')
+        KIOSK = 'kiosk', _('Kiosk Self-Registration')
 
     # Βασικά στοιχεία
     email = models.EmailField(_('Email'), help_text=_('Email διεύθυνση του προσκεκλημένου'))
@@ -444,6 +449,22 @@ class UserInvitation(models.Model):
         blank=True,
         null=True,
         help_text=_('Ρόλος που θα ανατεθεί στον χρήστη')
+    )
+    
+    # Source of invitation
+    source = models.CharField(
+        _('Invitation Source'),
+        max_length=20,
+        choices=InvitationSource.choices,
+        default=InvitationSource.ADMIN,
+        help_text=_('Πηγή της πρόσκλησης (admin ή kiosk)')
+    )
+    
+    # For kiosk registrations - auto-approved flag
+    auto_approved = models.BooleanField(
+        _('Auto Approved'),
+        default=False,
+        help_text=_('Αν η πρόσκληση είναι αυτόματα εγκεκριμένη (για kiosk registrations)')
     )
     
     # Timestamps

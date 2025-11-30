@@ -577,6 +577,60 @@ def list_invitations_view(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_invitation_view(request):
+    """
+    GET /api/users/invitations/verify/?token=xxx
+    Verify invitation token and return invitation details (public endpoint)
+    Used by kiosk self-registration to validate tokens before showing the form
+    """
+    token = request.query_params.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token είναι υποχρεωτικό'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        invitation = UserInvitation.objects.get(token=token, status='pending')
+    except UserInvitation.DoesNotExist:
+        return Response({
+            'error': 'Μη έγκυρος ή ληγμένος σύνδεσμος'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    if invitation.is_expired:
+        invitation.expire()
+        return Response({
+            'error': 'Ο σύνδεσμος έχει λήξει'
+        }, status=status.HTTP_410_GONE)
+    
+    # Get building info if available
+    building_name = None
+    building_address = None
+    if invitation.building_id:
+        try:
+            from buildings.models import Building
+            building = Building.objects.get(id=invitation.building_id)
+            building_name = building.name
+            building_address = building.address
+        except:
+            pass
+    
+    return Response({
+        'email': invitation.email,
+        'first_name': invitation.first_name,
+        'last_name': invitation.last_name,
+        'building_id': invitation.building_id,
+        'building_name': building_name,
+        'building_address': building_address,
+        'assigned_role': invitation.assigned_role,
+        'expires_at': invitation.expires_at.isoformat(),
+        'source': getattr(invitation, 'source', 'admin'),
+        'auto_approved': getattr(invitation, 'auto_approved', False)
+    })
+
+
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -716,12 +770,16 @@ def accept_invitation_view(request):
     serializer = InvitationAcceptanceSerializer(data=request.data)
     if serializer.is_valid():
         password = serializer.validated_data['password']
+        first_name = serializer.validated_data.get('first_name', '')
+        last_name = serializer.validated_data.get('last_name', '')
         print(f">>> ACCEPT_INVITATION: Validated password length: {len(password) if password else 0}")
         
         try:
             user = InvitationService.accept_invitation(
                 token=serializer.validated_data['token'],
-                password=password
+                password=password,
+                first_name=first_name,
+                last_name=last_name
             )
             
             # Δημιουργία JWT tokens

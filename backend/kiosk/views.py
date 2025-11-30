@@ -522,6 +522,203 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
             'scene': serializer.data,
             'message': 'Default scene created successfully'
         }, status=status.HTTP_201_CREATED)
+
+
+# ============================================================================
+# KIOSK RESIDENT REGISTRATION
+# ============================================================================
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from users.models import UserInvitation, CustomUser
+from users.services import EmailService
+import logging
+import base64
+
+kiosk_logger = logging.getLogger(__name__)
+
+
+def validate_kiosk_token(building_id: str, token: str) -> bool:
+    """
+    Validate the kiosk token.
+    The token is a base64 encoded string containing building_id and timestamp.
+    For security, we only verify that the building_id matches.
+    """
+    try:
+        # Decode the token
+        decoded = base64.b64decode(token).decode('utf-8')
+        # Token format: "building_id-timestamp"
+        parts = decoded.split('-')
+        if len(parts) >= 1:
+            token_building_id = parts[0]
+            return str(building_id) == token_building_id
+    except Exception as e:
+        kiosk_logger.warning(f"Invalid kiosk token: {e}")
+    return False
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def kiosk_register(request):
+    """
+    Kiosk resident self-registration endpoint.
+    
+    Allows a resident to register themselves by scanning the QR code
+    displayed on the building's kiosk. The registration is auto-approved
+    since physical presence at the kiosk implies legitimate access.
+    
+    Flow:
+    1. User scans QR code on kiosk
+    2. User enters their email on the kiosk connect page
+    3. This endpoint creates an auto-approved invitation
+    4. User receives email with registration link
+    5. User completes registration (sets password)
+    6. User is automatically added as resident to the building
+    """
+    email = request.data.get('email', '').strip().lower()
+    building_id = request.data.get('building_id')
+    token = request.data.get('token', '')
+    
+    # Validation
+    if not email:
+        return Response(
+            {'error': 'Το email είναι υποχρεωτικό'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not building_id:
+        return Response(
+            {'error': 'Μη έγκυρο αίτημα - λείπει το building_id'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validate the kiosk token
+    if not validate_kiosk_token(building_id, token):
+        return Response(
+            {'error': 'Μη έγκυρο token. Παρακαλώ σαρώστε ξανά το QR code.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Check if building exists
+    try:
+        building = Building.objects.get(id=building_id)
+    except Building.DoesNotExist:
+        return Response(
+            {'error': 'Το κτίριο δεν βρέθηκε'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Check if user already exists
+    existing_user = CustomUser.objects.filter(email=email).first()
+    if existing_user:
+        # User exists - send login link instead
+        kiosk_logger.info(f"User {email} already exists, sending login link")
+        try:
+            # Send login reminder email
+            EmailService.send_login_reminder_email(existing_user, building)
+            return Response({
+                'message': 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για οδηγίες σύνδεσης.',
+                'status': 'existing_user'
+            })
+        except Exception as e:
+            kiosk_logger.error(f"Error sending login reminder: {e}")
+            return Response({
+                'message': 'Έχετε ήδη λογαριασμό. Χρησιμοποιήστε την επιλογή "Ξέχασα τον κωδικό μου" για να συνδεθείτε.',
+                'status': 'existing_user'
+            })
+    
+    # Check for pending invitation
+    pending_invitation = UserInvitation.objects.filter(
+        email=email,
+        building_id=building_id,
+        status=UserInvitation.InvitationStatus.PENDING
+    ).first()
+    
+    if pending_invitation:
+        # Resend the invitation email
+        kiosk_logger.info(f"Pending invitation exists for {email}, resending")
+        try:
+            EmailService.send_kiosk_registration_email(pending_invitation, building)
+            return Response({
+                'message': 'Έχετε ήδη αίτημα εγγραφής. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+                'status': 'resent'
+            })
+        except Exception as e:
+            kiosk_logger.error(f"Error resending invitation: {e}")
+            return Response(
+                {'error': 'Σφάλμα κατά την αποστολή email. Παρακαλώ δοκιμάστε ξανά.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    # Get building manager as the "invited_by" user
+    # Fall back to any staff/superuser if no manager exists
+    invited_by = None
+    
+    # Try to get the building's internal manager first
+    if hasattr(building, 'internal_manager') and building.internal_manager:
+        invited_by = building.internal_manager
+    
+    # If no internal manager, try to get the first staff user
+    if not invited_by:
+        invited_by = CustomUser.objects.filter(
+            is_staff=True, 
+            is_active=True
+        ).first()
+    
+    # If still no user, create as system user (for kiosk registrations)
+    if not invited_by:
+        invited_by = CustomUser.objects.filter(
+            is_superuser=True, 
+            is_active=True
+        ).first()
+    
+    if not invited_by:
+        kiosk_logger.error("No staff/superuser found for kiosk registration")
+        return Response(
+            {'error': 'Σφάλμα ρύθμισης συστήματος. Παρακαλώ επικοινωνήστε με τη διαχείριση.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    # Create auto-approved invitation
+    try:
+        invitation = UserInvitation.objects.create(
+            email=email,
+            first_name='',  # Will be filled during registration
+            last_name='',
+            invitation_type=UserInvitation.InvitationType.KIOSK_REGISTRATION,
+            building_id=building_id,
+            assigned_role='resident',
+            source=UserInvitation.InvitationSource.KIOSK,
+            auto_approved=True,
+            invited_by=invited_by,
+            expires_at=timezone.now() + timezone.timedelta(days=7)
+        )
+        
+        kiosk_logger.info(f"Created kiosk registration invitation for {email} in building {building.name}")
+        
+        # Send registration email
+        try:
+            EmailService.send_kiosk_registration_email(invitation, building)
+        except Exception as e:
+            kiosk_logger.error(f"Error sending kiosk registration email: {e}")
+            # Delete the invitation if email fails
+            invitation.delete()
+            return Response(
+                {'error': 'Σφάλμα κατά την αποστολή email. Παρακαλώ δοκιμάστε ξανά.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': 'Επιτυχία! Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+            'status': 'created'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        kiosk_logger.error(f"Error creating kiosk registration: {e}")
+        return Response(
+            {'error': 'Σφάλμα κατά τη δημιουργία εγγραφής. Παρακαλώ δοκιμάστε ξανά.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
     
     @action(detail=False, methods=['get'])
     def check_scenes_exist(self, request):
@@ -719,3 +916,200 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
             'scene': serializer.data,
             'message': 'Default scene created successfully'
         }, status=status.HTTP_201_CREATED)
+
+
+# ============================================================================
+# KIOSK RESIDENT REGISTRATION
+# ============================================================================
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from users.models import UserInvitation, CustomUser
+from users.services import EmailService
+import logging
+import base64
+
+kiosk_logger = logging.getLogger(__name__)
+
+
+def validate_kiosk_token(building_id: str, token: str) -> bool:
+    """
+    Validate the kiosk token.
+    The token is a base64 encoded string containing building_id and timestamp.
+    For security, we only verify that the building_id matches.
+    """
+    try:
+        # Decode the token
+        decoded = base64.b64decode(token).decode('utf-8')
+        # Token format: "building_id-timestamp"
+        parts = decoded.split('-')
+        if len(parts) >= 1:
+            token_building_id = parts[0]
+            return str(building_id) == token_building_id
+    except Exception as e:
+        kiosk_logger.warning(f"Invalid kiosk token: {e}")
+    return False
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def kiosk_register(request):
+    """
+    Kiosk resident self-registration endpoint.
+    
+    Allows a resident to register themselves by scanning the QR code
+    displayed on the building's kiosk. The registration is auto-approved
+    since physical presence at the kiosk implies legitimate access.
+    
+    Flow:
+    1. User scans QR code on kiosk
+    2. User enters their email on the kiosk connect page
+    3. This endpoint creates an auto-approved invitation
+    4. User receives email with registration link
+    5. User completes registration (sets password)
+    6. User is automatically added as resident to the building
+    """
+    email = request.data.get('email', '').strip().lower()
+    building_id = request.data.get('building_id')
+    token = request.data.get('token', '')
+    
+    # Validation
+    if not email:
+        return Response(
+            {'error': 'Το email είναι υποχρεωτικό'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not building_id:
+        return Response(
+            {'error': 'Μη έγκυρο αίτημα - λείπει το building_id'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validate the kiosk token
+    if not validate_kiosk_token(building_id, token):
+        return Response(
+            {'error': 'Μη έγκυρο token. Παρακαλώ σαρώστε ξανά το QR code.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Check if building exists
+    try:
+        building = Building.objects.get(id=building_id)
+    except Building.DoesNotExist:
+        return Response(
+            {'error': 'Το κτίριο δεν βρέθηκε'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Check if user already exists
+    existing_user = CustomUser.objects.filter(email=email).first()
+    if existing_user:
+        # User exists - send login link instead
+        kiosk_logger.info(f"User {email} already exists, sending login link")
+        try:
+            # Send login reminder email
+            EmailService.send_login_reminder_email(existing_user, building)
+            return Response({
+                'message': 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για οδηγίες σύνδεσης.',
+                'status': 'existing_user'
+            })
+        except Exception as e:
+            kiosk_logger.error(f"Error sending login reminder: {e}")
+            return Response({
+                'message': 'Έχετε ήδη λογαριασμό. Χρησιμοποιήστε την επιλογή "Ξέχασα τον κωδικό μου" για να συνδεθείτε.',
+                'status': 'existing_user'
+            })
+    
+    # Check for pending invitation
+    pending_invitation = UserInvitation.objects.filter(
+        email=email,
+        building_id=building_id,
+        status=UserInvitation.InvitationStatus.PENDING
+    ).first()
+    
+    if pending_invitation:
+        # Resend the invitation email
+        kiosk_logger.info(f"Pending invitation exists for {email}, resending")
+        try:
+            EmailService.send_kiosk_registration_email(pending_invitation, building)
+            return Response({
+                'message': 'Έχετε ήδη αίτημα εγγραφής. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+                'status': 'resent'
+            })
+        except Exception as e:
+            kiosk_logger.error(f"Error resending invitation: {e}")
+            return Response(
+                {'error': 'Σφάλμα κατά την αποστολή email. Παρακαλώ δοκιμάστε ξανά.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    # Get building manager as the "invited_by" user
+    # Fall back to any staff/superuser if no manager exists
+    invited_by = None
+    
+    # Try to get the building's internal manager first
+    if hasattr(building, 'internal_manager') and building.internal_manager:
+        invited_by = building.internal_manager
+    
+    # If no internal manager, try to get the first staff user
+    if not invited_by:
+        invited_by = CustomUser.objects.filter(
+            is_staff=True, 
+            is_active=True
+        ).first()
+    
+    # If still no user, create as system user (for kiosk registrations)
+    if not invited_by:
+        invited_by = CustomUser.objects.filter(
+            is_superuser=True, 
+            is_active=True
+        ).first()
+    
+    if not invited_by:
+        kiosk_logger.error("No staff/superuser found for kiosk registration")
+        return Response(
+            {'error': 'Σφάλμα ρύθμισης συστήματος. Παρακαλώ επικοινωνήστε με τη διαχείριση.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    # Create auto-approved invitation
+    try:
+        invitation = UserInvitation.objects.create(
+            email=email,
+            first_name='',  # Will be filled during registration
+            last_name='',
+            invitation_type=UserInvitation.InvitationType.KIOSK_REGISTRATION,
+            building_id=building_id,
+            assigned_role='resident',
+            source=UserInvitation.InvitationSource.KIOSK,
+            auto_approved=True,
+            invited_by=invited_by,
+            expires_at=timezone.now() + timezone.timedelta(days=7)
+        )
+        
+        kiosk_logger.info(f"Created kiosk registration invitation for {email} in building {building.name}")
+        
+        # Send registration email
+        try:
+            EmailService.send_kiosk_registration_email(invitation, building)
+        except Exception as e:
+            kiosk_logger.error(f"Error sending kiosk registration email: {e}")
+            # Delete the invitation if email fails
+            invitation.delete()
+            return Response(
+                {'error': 'Σφάλμα κατά την αποστολή email. Παρακαλώ δοκιμάστε ξανά.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': 'Επιτυχία! Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+            'status': 'created'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        kiosk_logger.error(f"Error creating kiosk registration: {e}")
+        return Response(
+            {'error': 'Σφάλμα κατά τη δημιουργία εγγραφής. Παρακαλώ δοκιμάστε ξανά.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

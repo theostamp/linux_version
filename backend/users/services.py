@@ -547,6 +547,194 @@ class EmailService:
             logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
             return False
 
+    @staticmethod
+    def send_kiosk_registration_email(invitation, building):
+        """
+        Send email for kiosk self-registration.
+        This is for users who scanned the QR code on the building kiosk.
+        """
+        from django.db import connection
+        
+        # Get tenant subdomain for the invitation URL
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the registration URL
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            registration_url = f"https://{tenant_subdomain}.newconcierge.app/kiosk/complete-registration?token={invitation.token}"
+        else:
+            registration_url = f"{base_url}/kiosk/complete-registration?token={invitation.token}"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ολοκληρώστε την εγγραφή σας - {building.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Καλώς ήρθατε στο {building.name}!</h2>
+                
+                <p>Σκανάρατε το QR code στο kiosk του κτιρίου και είστε ένα βήμα μακριά από την πλήρη πρόσβαση.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+                    <p style="margin: 0;"><strong>Email:</strong> {invitation.email}</p>
+                    <p style="margin: 0;"><strong>Κτίριο:</strong> {building.name}</p>
+                    {f'<p style="margin: 0;"><strong>Διεύθυνση:</strong> {building.address}</p>' if building.address else ''}
+                </div>
+                
+                <p style="text-align: center;">
+                    <a href="{registration_url}" 
+                       style="background: #4CAF50; color: white; padding: 15px 30px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-size: 16px; font-weight: bold;">
+                        Ολοκλήρωση Εγγραφής
+                    </a>
+                </p>
+                
+                <p style="color: #666; font-size: 14px; text-align: center;">
+                    Αυτός ο σύνδεσμος είναι έγκυρος για 7 ημέρες.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Καλώς ήρθατε στο {building.name}!
+
+Σκανάρατε το QR code στο kiosk του κτιρίου. Για να ολοκληρώσετε την εγγραφή σας, κάντε κλικ στον παρακάτω σύνδεσμο:
+
+{registration_url}
+
+Email: {invitation.email}
+Κτίριο: {building.name}
+
+Αυτός ο σύνδεσμος είναι έγκυρος για 7 ημέρες.
+
+Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[invitation.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent kiosk registration email to {invitation.email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send kiosk registration email to {invitation.email}: {e}")
+            return False
+
+    @staticmethod
+    def send_login_reminder_email(user, building):
+        """
+        Send login reminder email for existing users who tried to register via kiosk.
+        """
+        from django.db import connection
+        
+        # Get tenant subdomain for the login URL
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the login URL
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            login_url = f"https://{tenant_subdomain}.newconcierge.app/login"
+            reset_url = f"https://{tenant_subdomain}.newconcierge.app/forgot-password"
+        else:
+            login_url = f"{base_url}/login"
+            reset_url = f"{base_url}/forgot-password"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Έχετε ήδη λογαριασμό - {building.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Γεια σας {user.first_name or ''}!</h2>
+                
+                <p>Προσπαθήσατε να εγγραφείτε μέσω του kiosk στο <strong>{building.name}</strong>, αλλά έχετε ήδη λογαριασμό με το email <strong>{user.email}</strong>.</p>
+                
+                <p style="text-align: center;">
+                    <a href="{login_url}" 
+                       style="background: #2196F3; color: white; padding: 15px 30px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-size: 16px; font-weight: bold; margin: 10px;">
+                        Σύνδεση
+                    </a>
+                </p>
+                
+                <p style="text-align: center; color: #666;">
+                    Ξεχάσατε τον κωδικό σας? 
+                    <a href="{reset_url}" style="color: #2196F3;">Επαναφορά κωδικού</a>
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Γεια σας {user.first_name or ''}!
+
+Προσπαθήσατε να εγγραφείτε μέσω του kiosk στο {building.name}, αλλά έχετε ήδη λογαριασμό με το email {user.email}.
+
+Για σύνδεση: {login_url}
+Ξεχάσατε τον κωδικό; {reset_url}
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent login reminder email to {user.email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send login reminder email to {user.email}: {e}")
+            return False
+
 
 class InvitationService:
     """
@@ -608,9 +796,15 @@ class InvitationService:
             raise ValueError("Αποτυχία αποστολής email.")
     
     @staticmethod
-    def accept_invitation(token, password):
+    def accept_invitation(token, password, first_name=None, last_name=None):
         """
         Αποδοχή πρόσκλησης και δημιουργία χρήστη
+        
+        Args:
+            token: Invitation token
+            password: User password
+            first_name: Optional first name (overrides invitation first_name, useful for kiosk registrations)
+            last_name: Optional last name (overrides invitation last_name, useful for kiosk registrations)
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -629,12 +823,17 @@ class InvitationService:
         
         logger.info(f"[INVITATION] Found invitation for email: {invitation.email}")
         
+        # Use provided first_name/last_name or fall back to invitation values
+        # This is particularly useful for kiosk registrations where name is entered during completion
+        final_first_name = first_name if first_name else invitation.first_name
+        final_last_name = last_name if last_name else invitation.last_name
+        
         # Δημιουργία χρήστη - ΣΗΜΑΝΤΙΚΟ: is_superuser και is_staff πρέπει να είναι False
         # για όλους τους χρήστες που δημιουργούνται μέσω πρόσκλησης
         user = User.objects.create_user(
             email=invitation.email,
-            first_name=invitation.first_name,
-            last_name=invitation.last_name,
+            first_name=final_first_name,
+            last_name=final_last_name,
             password=password,
             is_active=True,
             is_staff=False,  # Explicit: δεν είναι staff

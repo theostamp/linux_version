@@ -460,11 +460,15 @@ class InvitationAcceptanceSerializer(serializers.Serializer):
     """
     token = serializers.UUIDField()
     password = serializers.CharField(write_only=True, validators=[validate_password])
-    password_confirm = serializers.CharField(write_only=True)
+    password_confirm = serializers.CharField(write_only=True, required=False)
+    # Optional fields for kiosk self-registration
+    first_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
     
     def validate_password_confirm(self, value):
         password = self.initial_data.get('password')
-        if password and value != password:
+        # Password confirm is now optional (for kiosk registrations that handle it client-side)
+        if value and password and value != password:
             raise serializers.ValidationError("Οι κωδικοί δεν ταιριάζουν.")
         return value
 
