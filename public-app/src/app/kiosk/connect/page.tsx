@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, Phone, Home } from 'lucide-react';
+// Note: Home icon kept for success message section
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
