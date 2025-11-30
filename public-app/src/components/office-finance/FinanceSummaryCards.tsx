@@ -44,145 +44,167 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-slate-800/50 rounded-xl p-6 animate-pulse">
-            <div className="h-4 bg-slate-700 rounded w-1/2 mb-4"></div>
-            <div className="h-8 bg-slate-700 rounded w-3/4"></div>
+          <div key={i} className="bg-card/50 rounded-xl p-6 animate-pulse border border-border">
+            <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
+            <div className="h-8 bg-muted rounded w-3/4"></div>
           </div>
         ))}
       </div>
     );
   }
 
+  // Use total expenses/income, not just paid/received
+  const totalExpenses = currentMonth.expenses.total;
+  const totalIncome = currentMonth.income.total;
+  
   const incomeChange = previousMonth 
-    ? calculateChange(currentMonth.income.received, previousMonth.income)
+    ? calculateChange(totalIncome, previousMonth.income)
     : null;
   
   const expenseChange = previousMonth
-    ? calculateChange(currentMonth.expenses.paid, previousMonth.expenses)
+    ? calculateChange(totalExpenses, previousMonth.expenses)
     : null;
-
-  const cards = [
-    {
-      title: 'Έσοδα Μήνα',
-      subtitle: getMonthName(currentMonth.month),
-      value: currentMonth.income.received,
-      subValue: currentMonth.income.pending > 0 
-        ? `+${formatCurrency(currentMonth.income.pending)} εκκρεμεί`
-        : null,
-      icon: TrendingUp,
-      color: 'emerald',
-      bgGradient: 'from-emerald-500/20 to-emerald-600/5',
-      iconBg: 'bg-emerald-500/20',
-      iconColor: 'text-emerald-400',
-      change: incomeChange,
-    },
-    {
-      title: 'Έξοδα Μήνα',
-      subtitle: getMonthName(currentMonth.month),
-      value: currentMonth.expenses.paid,
-      subValue: currentMonth.expenses.unpaid > 0
-        ? `+${formatCurrency(currentMonth.expenses.unpaid)} απλήρωτα`
-        : null,
-      icon: TrendingDown,
-      color: 'rose',
-      bgGradient: 'from-rose-500/20 to-rose-600/5',
-      iconBg: 'bg-rose-500/20',
-      iconColor: 'text-rose-400',
-      change: expenseChange,
-      invertChange: true, // For expenses, less is better
-    },
-    {
-      title: 'Καθαρό Αποτέλεσμα',
-      subtitle: getMonthName(currentMonth.month),
-      value: currentMonth.net_result,
-      icon: Wallet,
-      color: currentMonth.net_result >= 0 ? 'blue' : 'amber',
-      bgGradient: currentMonth.net_result >= 0 
-        ? 'from-blue-500/20 to-blue-600/5'
-        : 'from-amber-500/20 to-amber-600/5',
-      iconBg: currentMonth.net_result >= 0 ? 'bg-blue-500/20' : 'bg-amber-500/20',
-      iconColor: currentMonth.net_result >= 0 ? 'text-blue-400' : 'text-amber-400',
-    },
-    {
-      title: 'Εκκρεμή Έσοδα',
-      subtitle: 'Αναμένεται είσπραξη',
-      value: currentMonth.income.pending,
-      icon: Clock,
-      color: 'violet',
-      bgGradient: 'from-violet-500/20 to-violet-600/5',
-      iconBg: 'bg-violet-500/20',
-      iconColor: 'text-violet-400',
-      count: currentMonth.income.count,
-    },
-  ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card, index) => {
-        const Icon = card.icon;
-        
-        return (
-          <div
-            key={index}
-            className={`relative overflow-hidden rounded-xl border border-slate-700/50 bg-gradient-to-br ${card.bgGradient} backdrop-blur-sm p-6`}
-          >
-            {/* Background decoration */}
-            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/5 blur-2xl" />
-            
-            <div className="relative">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-sm text-slate-400">{card.title}</p>
-                  <p className="text-xs text-slate-500">{card.subtitle}</p>
-                </div>
-                <div className={`${card.iconBg} p-2.5 rounded-lg`}>
-                  <Icon className={`w-5 h-5 ${card.iconColor}`} />
-                </div>
-              </div>
-
-              {/* Value */}
-              <div className="mb-2">
-                <span className={`text-2xl font-bold ${
-                  card.value >= 0 ? 'text-white' : 'text-rose-400'
-                }`}>
-                  {formatCurrency(card.value)}
-                </span>
-              </div>
-
-              {/* Sub value or change indicator */}
-              <div className="flex items-center gap-2">
-                {card.change && (
-                  <div className={`flex items-center gap-1 text-xs ${
-                    (card.invertChange ? !card.change.isPositive : card.change.isPositive)
-                      ? 'text-emerald-400'
-                      : 'text-rose-400'
-                  }`}>
-                    {(card.invertChange ? !card.change.isPositive : card.change.isPositive) ? (
-                      <ArrowUpRight className="w-3 h-3" />
-                    ) : (
-                      <ArrowDownRight className="w-3 h-3" />
-                    )}
-                    <span>{card.change.value.toFixed(1)}%</span>
-                    <span className="text-slate-500">vs προηγ.</span>
-                  </div>
-                )}
-                {card.subValue && (
-                  <span className="text-xs text-slate-400">{card.subValue}</span>
-                )}
-                {card.count !== undefined && (
-                  <span className="text-xs text-slate-500">
-                    {card.count} εγγραφ{card.count === 1 ? 'ή' : 'ές'}
-                  </span>
-                )}
-              </div>
+      {/* Income Card */}
+      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-success/20 to-success/5 backdrop-blur-sm p-6">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-success/10 blur-2xl" />
+        <div className="relative">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Έσοδα Μήνα</p>
+              <p className="text-xs text-muted-foreground/70">{getMonthName(currentMonth.month)}</p>
+            </div>
+            <div className="bg-success/20 p-2.5 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-success" />
             </div>
           </div>
-        );
-      })}
+          <div className="mb-2">
+            <span className="text-2xl font-bold text-foreground">
+              {formatCurrency(totalIncome)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {incomeChange && (
+              <div className={`flex items-center gap-1 text-xs ${
+                incomeChange.isPositive ? 'text-success' : 'text-destructive'
+              }`}>
+                {incomeChange.isPositive ? (
+                  <ArrowUpRight className="w-3 h-3" />
+                ) : (
+                  <ArrowDownRight className="w-3 h-3" />
+                )}
+                <span>{incomeChange.value.toFixed(1)}%</span>
+                <span className="text-muted-foreground/70">vs προηγ.</span>
+              </div>
+            )}
+            {currentMonth.income.pending > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {formatCurrency(currentMonth.income.pending)} εκκρεμεί
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Expenses Card */}
+      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-destructive/20 to-destructive/5 backdrop-blur-sm p-6">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-destructive/10 blur-2xl" />
+        <div className="relative">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Έξοδα Μήνα</p>
+              <p className="text-xs text-muted-foreground/70">{getMonthName(currentMonth.month)}</p>
+            </div>
+            <div className="bg-destructive/20 p-2.5 rounded-lg">
+              <TrendingDown className="w-5 h-5 text-destructive" />
+            </div>
+          </div>
+          <div className="mb-2">
+            <span className="text-2xl font-bold text-foreground">
+              {formatCurrency(totalExpenses)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {expenseChange && (
+              <div className={`flex items-center gap-1 text-xs ${
+                !expenseChange.isPositive ? 'text-success' : 'text-destructive'
+              }`}>
+                {!expenseChange.isPositive ? (
+                  <ArrowUpRight className="w-3 h-3" />
+                ) : (
+                  <ArrowDownRight className="w-3 h-3" />
+                )}
+                <span>{expenseChange.value.toFixed(1)}%</span>
+                <span className="text-muted-foreground/70">vs προηγ.</span>
+              </div>
+            )}
+            {currentMonth.expenses.unpaid > 0 && (
+              <span className="text-xs text-destructive/80">
+                +{formatCurrency(currentMonth.expenses.unpaid)} απλήρωτα
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Net Result Card */}
+      <div className={`relative overflow-hidden rounded-xl border border-border bg-gradient-to-br ${
+        currentMonth.net_result >= 0 
+          ? 'from-primary/20 to-primary/5' 
+          : 'from-destructive/20 to-destructive/5'
+      } backdrop-blur-sm p-6`}>
+        <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full ${
+          currentMonth.net_result >= 0 ? 'bg-primary/10' : 'bg-destructive/10'
+        } blur-2xl`} />
+        <div className="relative">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Καθαρό Αποτέλεσμα</p>
+              <p className="text-xs text-muted-foreground/70">{getMonthName(currentMonth.month)}</p>
+            </div>
+            <div className={`${currentMonth.net_result >= 0 ? 'bg-primary/20' : 'bg-destructive/20'} p-2.5 rounded-lg`}>
+              <Wallet className={`w-5 h-5 ${currentMonth.net_result >= 0 ? 'text-primary' : 'text-destructive'}`} />
+            </div>
+          </div>
+          <div className="mb-2">
+            <span className={`text-2xl font-bold ${
+              currentMonth.net_result >= 0 ? 'text-foreground' : 'text-destructive'
+            }`}>
+              {formatCurrency(currentMonth.net_result)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pending Income Card */}
+      <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm p-6">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
+        <div className="relative">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Εκκρεμή Έσοδα</p>
+              <p className="text-xs text-muted-foreground/70">Αναμένεται είσπραξη</p>
+            </div>
+            <div className="bg-primary/20 p-2.5 rounded-lg">
+              <Clock className="w-5 h-5 text-primary" />
+            </div>
+          </div>
+          <div className="mb-2">
+            <span className="text-2xl font-bold text-foreground">
+              {formatCurrency(currentMonth.income.pending)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {currentMonth.income.count} εγγραφ{currentMonth.income.count === 1 ? 'ή' : 'ές'}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default FinanceSummaryCards;
-

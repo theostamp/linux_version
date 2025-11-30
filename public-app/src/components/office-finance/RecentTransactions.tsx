@@ -54,25 +54,25 @@ export function RecentTransactions({
 
   if (isLoading) {
     return (
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
+      <div className="bg-card/50 rounded-xl border border-border p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-violet-500/20 p-2.5 rounded-lg">
-            <Clock className="w-5 h-5 text-violet-400" />
+          <div className="bg-primary/20 p-2.5 rounded-lg">
+            <Clock className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Πρόσφατες Κινήσεις</h3>
-            <p className="text-sm text-slate-400">Τελευταίες συναλλαγές</p>
+            <h3 className="text-lg font-semibold text-foreground">Πρόσφατες Κινήσεις</h3>
+            <p className="text-sm text-muted-foreground">Τελευταίες συναλλαγές</p>
           </div>
         </div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse flex items-center gap-4 p-3 rounded-lg bg-slate-700/30">
-              <div className="w-10 h-10 bg-slate-700 rounded-full"></div>
+            <div key={i} className="animate-pulse flex items-center gap-4 p-3 rounded-lg bg-muted/30">
+              <div className="w-10 h-10 bg-muted rounded-full"></div>
               <div className="flex-1">
-                <div className="h-4 bg-slate-700 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-slate-700 rounded w-1/3"></div>
+                <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/3"></div>
               </div>
-              <div className="h-5 bg-slate-700 rounded w-20"></div>
+              <div className="h-5 bg-muted rounded w-20"></div>
             </div>
           ))}
         </div>
@@ -102,39 +102,39 @@ export function RecentTransactions({
   const transactions = getFilteredTransactions();
 
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
+    <div className="bg-card/50 rounded-xl border border-border p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="bg-violet-500/20 p-2.5 rounded-lg">
-            <Clock className="w-5 h-5 text-violet-400" />
+          <div className="bg-primary/20 p-2.5 rounded-lg">
+            <Clock className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Πρόσφατες Κινήσεις</h3>
-            <p className="text-sm text-slate-400">Τελευταίες συναλλαγές</p>
+            <h3 className="text-lg font-semibold text-foreground">Πρόσφατες Κινήσεις</h3>
+            <p className="text-sm text-muted-foreground">Τελευταίες συναλλαγές</p>
           </div>
         </div>
-        <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+        <button className="text-sm text-primary hover:text-primary/80 transition-colors">
           Προβολή όλων
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-slate-700/30 rounded-lg mb-4">
+      <div className="flex gap-1 p-1 bg-muted/30 rounded-lg mb-4">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
               activeTab === tab.id
-                ? 'bg-slate-600 text-white'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-secondary text-secondary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
-                activeTab === tab.id ? 'bg-slate-500' : 'bg-slate-700'
+                activeTab === tab.id ? 'bg-primary/20 text-primary' : 'bg-muted'
               }`}>
                 {tab.count}
               </span>
@@ -147,8 +147,8 @@ export function RecentTransactions({
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
         {transactions.length === 0 ? (
           <div className="text-center py-8">
-            <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">Δεν υπάρχουν κινήσεις</p>
+            <Clock className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-muted-foreground">Δεν υπάρχουν κινήσεις</p>
           </div>
         ) : (
           transactions.map((transaction) => {
@@ -159,38 +159,38 @@ export function RecentTransactions({
             return (
               <div
                 key={`${transaction.type}-${transaction.id}`}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-700/30 transition-colors group"
+                className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/30 transition-colors group"
               >
                 {/* Icon */}
                 <div className={`p-2.5 rounded-full ${
                   isPending 
-                    ? 'bg-amber-500/20' 
+                    ? 'bg-primary/20' 
                     : isIncome 
-                      ? 'bg-emerald-500/20' 
-                      : 'bg-rose-500/20'
+                      ? 'bg-success/20' 
+                      : 'bg-destructive/20'
                 }`}>
                   {isPending ? (
-                    <Clock className="w-4 h-4 text-amber-400" />
+                    <Clock className="w-4 h-4 text-primary" />
                   ) : isIncome ? (
-                    <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
+                    <ArrowDownLeft className="w-4 h-4 text-success" />
                   ) : (
-                    <ArrowUpRight className="w-4 h-4 text-rose-400" />
+                    <ArrowUpRight className="w-4 h-4 text-destructive" />
                   )}
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white truncate">
+                    <span className="text-sm font-medium text-foreground truncate">
                       {transaction.title}
                     </span>
                     {!isPending && 'status' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
                         transaction.status === 'received' 
-                          ? 'bg-emerald-500/20 text-emerald-400'
+                          ? 'bg-success/20 text-success'
                           : transaction.status === 'pending'
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-500/20 text-slate-400'
+                            ? 'bg-primary/20 text-primary'
+                            : 'bg-muted text-muted-foreground'
                       }`}>
                         {transaction.status === 'received' ? 'Εισπράχθηκε' : 
                          transaction.status === 'pending' ? 'Εκκρεμεί' : transaction.status}
@@ -199,29 +199,29 @@ export function RecentTransactions({
                     {isExpense && 'is_paid' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
                         transaction.is_paid 
-                          ? 'bg-emerald-500/20 text-emerald-400'
-                          : 'bg-amber-500/20 text-amber-400'
+                          ? 'bg-success/20 text-success'
+                          : 'bg-primary/20 text-primary'
                       }`}>
                         {transaction.is_paid ? 'Πληρώθηκε' : 'Απλήρωτο'}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       {formatDate(transaction.date)}
                     </span>
                     {transaction.category_name && (
                       <>
-                        <span className="text-slate-600">•</span>
-                        <span className="text-xs text-slate-500 truncate">
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="text-xs text-muted-foreground truncate">
                           {transaction.category_name}
                         </span>
                       </>
                     )}
                     {'building_name' in transaction && transaction.building_name && (
                       <>
-                        <span className="text-slate-600">•</span>
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Building2 className="w-3 h-3" />
                           {transaction.building_name}
                         </span>
@@ -234,10 +234,10 @@ export function RecentTransactions({
                 <div className="text-right">
                   <span className={`text-sm font-semibold ${
                     isPending 
-                      ? 'text-amber-400' 
+                      ? 'text-primary' 
                       : isIncome 
-                        ? 'text-emerald-400' 
-                        : 'text-rose-400'
+                        ? 'text-success' 
+                        : 'text-destructive'
                   }`}>
                     {isPending || isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </span>
@@ -247,7 +247,7 @@ export function RecentTransactions({
                 {isPending && onMarkReceived && (
                   <button
                     onClick={() => onMarkReceived(transaction.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-success/20 text-success hover:bg-success/30 transition-all"
                     title="Σημείωση ως εισπραχθέν"
                   >
                     <CheckCircle2 className="w-4 h-4" />
@@ -263,4 +263,3 @@ export function RecentTransactions({
 }
 
 export default RecentTransactions;
-

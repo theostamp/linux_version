@@ -19,11 +19,11 @@ function formatCurrency(value: number): string {
 }
 
 const COLORS = [
-  'bg-emerald-500',
-  'bg-blue-500',
-  'bg-violet-500',
+  'bg-success',
+  'bg-primary',
+  'bg-accent-foreground',
   'bg-amber-500',
-  'bg-rose-500',
+  'bg-destructive',
   'bg-cyan-500',
   'bg-pink-500',
   'bg-indigo-500',
@@ -32,21 +32,21 @@ const COLORS = [
 export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChartProps) {
   if (isLoading) {
     return (
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
+      <div className="bg-card/50 rounded-xl border border-border p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-emerald-500/20 p-2.5 rounded-lg">
-            <Building2 className="w-5 h-5 text-emerald-400" />
+          <div className="bg-success/20 p-2.5 rounded-lg">
+            <Building2 className="w-5 h-5 text-success" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Έσοδα ανά Κτίριο</h3>
-            <p className="text-sm text-slate-400">Τρέχων μήνας</p>
+            <h3 className="text-lg font-semibold text-foreground">Έσοδα ανά Κτίριο</h3>
+            <p className="text-sm text-muted-foreground">Τρέχων μήνας</p>
           </div>
         </div>
         <div className="space-y-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-slate-700 rounded w-1/3 mb-2"></div>
-              <div className="h-6 bg-slate-700 rounded w-full"></div>
+              <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
+              <div className="h-6 bg-muted rounded w-full"></div>
             </div>
           ))}
         </div>
@@ -56,20 +56,20 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
+      <div className="bg-card/50 rounded-xl border border-border p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-emerald-500/20 p-2.5 rounded-lg">
-            <Building2 className="w-5 h-5 text-emerald-400" />
+          <div className="bg-success/20 p-2.5 rounded-lg">
+            <Building2 className="w-5 h-5 text-success" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Έσοδα ανά Κτίριο</h3>
-            <p className="text-sm text-slate-400">Τρέχων μήνας</p>
+            <h3 className="text-lg font-semibold text-foreground">Έσοδα ανά Κτίριο</h3>
+            <p className="text-sm text-muted-foreground">Τρέχων μήνας</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Building2 className="w-12 h-12 text-slate-600 mb-3" />
-          <p className="text-slate-400">Δεν υπάρχουν έσοδα από κτίρια</p>
-          <p className="text-sm text-slate-500">για αυτόν τον μήνα</p>
+          <Building2 className="w-12 h-12 text-muted-foreground/50 mb-3" />
+          <p className="text-muted-foreground">Δεν υπάρχουν έσοδα από κτίρια</p>
+          <p className="text-sm text-muted-foreground/70">για αυτόν τον μήνα</p>
         </div>
       </div>
     );
@@ -79,20 +79,20 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
   const totalIncome = data.reduce((sum, d) => sum + d.total, 0);
 
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6">
+    <div className="bg-card/50 rounded-xl border border-border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-emerald-500/20 p-2.5 rounded-lg">
-            <Building2 className="w-5 h-5 text-emerald-400" />
+          <div className="bg-success/20 p-2.5 rounded-lg">
+            <Building2 className="w-5 h-5 text-success" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Έσοδα ανά Κτίριο</h3>
-            <p className="text-sm text-slate-400">Τρέχων μήνας</p>
+            <h3 className="text-lg font-semibold text-foreground">Έσοδα ανά Κτίριο</h3>
+            <p className="text-sm text-muted-foreground">Τρέχων μήνας</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-sm text-slate-400">Σύνολο</p>
-          <p className="text-lg font-bold text-emerald-400">{formatCurrency(totalIncome)}</p>
+          <p className="text-sm text-muted-foreground">Σύνολο</p>
+          <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
         </div>
       </div>
 
@@ -107,21 +107,21 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${colorClass}`} />
-                  <span className="text-sm font-medium text-white truncate max-w-[200px]">
+                  <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
                     {building.building_name}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {sharePercentage.toFixed(1)}%
                   </span>
-                  <span className="text-sm font-semibold text-white">
+                  <span className="text-sm font-semibold text-foreground">
                     {formatCurrency(building.total)}
                   </span>
                 </div>
               </div>
               
-              <div className="relative h-2 bg-slate-700/50 rounded-full overflow-hidden">
+              <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden">
                 <div
                   className={`absolute inset-y-0 left-0 ${colorClass} rounded-full transition-all duration-500 ease-out`}
                   style={{ width: `${percentage}%` }}
@@ -129,7 +129,7 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
               </div>
               
               {building.building_address && (
-                <p className="text-xs text-slate-500 mt-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs text-muted-foreground mt-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
                   {building.building_address}
                 </p>
               )}
@@ -139,12 +139,12 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
       </div>
 
       {data.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-slate-700/50">
+        <div className="mt-6 pt-4 border-t border-border">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">
+            <span className="text-muted-foreground">
               {data.length} κτίρι{data.length === 1 ? 'ο' : 'α'} με έσοδα
             </span>
-            <div className="flex items-center gap-1 text-emerald-400">
+            <div className="flex items-center gap-1 text-success">
               <TrendingUp className="w-4 h-4" />
               <span>Μέσος όρος: {formatCurrency(totalIncome / data.length)}</span>
             </div>
@@ -156,4 +156,3 @@ export function IncomeByBuildingChart({ data, isLoading }: IncomeByBuildingChart
 }
 
 export default IncomeByBuildingChart;
-
