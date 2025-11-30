@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, Phone } from 'lucide-react';
+import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, Phone, Home } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -149,7 +149,19 @@ function KioskConnectContent() {
                 <Check className="w-8 h-8 text-green-400" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Επιτυχία!</h3>
-              <p className="text-white/80 leading-relaxed">{message}</p>
+              <p className="text-white/80 leading-relaxed mb-4">{message}</p>
+              
+              {/* Info about next steps */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
+                <div className="flex items-center justify-center gap-2 text-blue-300 mb-2">
+                  <Home className="w-5 h-5" />
+                  <span className="font-medium">Επόμενο βήμα</span>
+                </div>
+                <p className="text-sm text-white/70">
+                  Ελέγξτε το email σας και ακολουθήστε τον σύνδεσμο για να ολοκληρώσετε την εγγραφή.
+                  Μετά θα μπορείτε να δείτε το διαμέρισμά σας!
+                </p>
+              </div>
             </div>
           )}
 

@@ -2,7 +2,8 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Building2, Lock, User, ArrowRight, Check, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Building2, Lock, User, ArrowRight, Check, AlertCircle, Loader2, Eye, EyeOff, Home, LayoutDashboard } from 'lucide-react';
+import Link from 'next/link';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -132,11 +133,7 @@ function CompleteRegistrationContent() {
         if (data.tokens?.refresh) {
           localStorage.setItem('refresh_token', data.tokens.refresh);
         }
-        
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
+        // No auto-redirect - let user choose where to go
       } else {
         setSubmitStatus('error');
         setSubmitMessage(data.error || 'Σφάλμα κατά την εγγραφή. Παρακαλώ δοκιμάστε ξανά.');
@@ -187,9 +184,30 @@ function CompleteRegistrationContent() {
             <Check className="w-10 h-10 text-green-400" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">Καλώς ήρθατε!</h2>
-          <p className="text-green-200 mb-4">{submitMessage}</p>
-          <p className="text-white/60 text-sm">Ανακατεύθυνση στην εφαρμογή...</p>
-          <Loader2 className="w-6 h-6 text-green-400 animate-spin mx-auto mt-4" />
+          <p className="text-green-200 mb-6">{submitMessage}</p>
+          
+          {/* Navigation buttons */}
+          <div className="space-y-3">
+            <Link 
+              href="/my-apartment"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <Home className="w-5 h-5" />
+              <span>Δείτε το Διαμέρισμά σας</span>
+            </Link>
+            
+            <Link 
+              href="/dashboard"
+              className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3"
+            >
+              <LayoutDashboard className="w-5 h-5" />
+              <span>Πίνακας Ελέγχου</span>
+            </Link>
+          </div>
+          
+          <p className="text-white/40 text-xs mt-6">
+            Μπορείτε να αποκτήσετε πρόσβαση σε όλες τις υπηρεσίες του κτιρίου σας.
+          </p>
         </div>
       </div>
     );
