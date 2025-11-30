@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, User, Home } from 'lucide-react';
+import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, Phone } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -13,8 +13,7 @@ function KioskConnectContent() {
   const token = searchParams?.get('token');
 
   const [email, setEmail] = useState('');
-  const [apartmentNumber, setApartmentNumber] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -49,21 +48,15 @@ function KioskConnectContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!phone) {
+      setStatus('error');
+      setMessage('Παρακαλώ συμπληρώστε το τηλέφωνό σας');
+      return;
+    }
+
     if (!email || !buildingId || !token) {
       setStatus('error');
       setMessage('Παρακαλώ συμπληρώστε το email σας');
-      return;
-    }
-
-    if (!apartmentNumber) {
-      setStatus('error');
-      setMessage('Παρακαλώ συμπληρώστε τον αριθμό διαμερίσματος');
-      return;
-    }
-
-    if (!fullName) {
-      setStatus('error');
-      setMessage('Παρακαλώ συμπληρώστε το ονοματεπώνυμό σας');
       return;
     }
 
@@ -81,8 +74,7 @@ function KioskConnectContent() {
           email,
           building_id: buildingId,
           token,
-          apartment_number: apartmentNumber,
-          full_name: fullName
+          phone
         }),
       });
 
@@ -93,8 +85,7 @@ function KioskConnectContent() {
         setMessage(data.message || 'Ελέγξτε το email σας για να συνεχίσετε!');
         // Clear form
         setEmail('');
-        setApartmentNumber('');
-        setFullName('');
+        setPhone('');
       } else {
         setStatus('error');
         setMessage(data.error || 'Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.');
@@ -166,46 +157,26 @@ function KioskConnectContent() {
           {status !== 'success' && (
             <form onSubmit={handleSubmit} className="space-y-5">
 
-              {/* Apartment Number Input */}
+              {/* Phone Input */}
               <div>
-                <label htmlFor="apartmentNumber" className="block text-sm font-medium text-white/80 mb-2">
-                  Αριθμός Διαμερίσματος *
+                <label htmlFor="phone" className="block text-sm font-medium text-white/80 mb-2">
+                  Τηλέφωνο *
                 </label>
                 <div className="relative">
-                  <Home className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
                   <input
-                    id="apartmentNumber"
-                    type="text"
-                    value={apartmentNumber}
-                    onChange={(e) => setApartmentNumber(e.target.value)}
-                    placeholder="π.χ. Α1, 3Β, 12"
-                    required
-                    disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* Full Name Input */}
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-white/80 mb-2">
-                  Ονοματεπώνυμο *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
-                  <input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Όπως είναι καταχωρημένο στο κτίριο"
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="69xxxxxxxx"
                     required
                     disabled={isLoading}
                     className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <p className="text-xs text-white/40 mt-1">
-                  Το όνομα του ιδιοκτήτη ή του ενοίκου
+                  Το τηλέφωνο που είναι καταχωρημένο στο κτίριο
                 </p>
               </div>
 
@@ -240,13 +211,13 @@ function KioskConnectContent() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading || !email || !apartmentNumber || !fullName}
+                disabled={isLoading || !email || !phone}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-purple-600"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Έλεγχος στοιχείων...</span>
+                    <span>Αναζήτηση τηλεφώνου...</span>
                   </>
                 ) : (
                   <>
@@ -259,7 +230,9 @@ function KioskConnectContent() {
               {/* Info Text */}
               <div className="text-center">
                 <p className="text-xs text-white/50 leading-relaxed">
-                  Θα επιβεβαιωθούν τα στοιχεία σας και θα λάβετε email για ολοκλήρωση.
+                  Θα αναζητηθεί το τηλέφωνό σας στα στοιχεία του κτιρίου.
+                  <br />
+                  Αν βρεθεί, θα λάβετε email για ολοκλήρωση εγγραφής.
                 </p>
               </div>
             </form>

@@ -644,9 +644,118 @@ def names_match(input_name: str, stored_name: str, threshold: float = 0.7) -> bo
     return False
 
 
+def normalize_phone(phone: str) -> str:
+    """
+    Normalize phone number for comparison.
+    Removes spaces, dashes, dots, parentheses and leading country codes.
+    """
+    if not phone:
+        return ''
+    
+    # Remove common separators
+    phone = re.sub(r'[\s\-\.\(\)]+', '', phone)
+    
+    # Remove leading + and country code (30 for Greece)
+    if phone.startswith('+30'):
+        phone = phone[3:]
+    elif phone.startswith('0030'):
+        phone = phone[4:]
+    elif phone.startswith('30') and len(phone) > 10:
+        phone = phone[2:]
+    
+    # Remove leading zero if present (Greek mobile numbers)
+    if phone.startswith('0') and len(phone) == 11:
+        phone = phone[1:]
+    
+    return phone
+
+
+def verify_by_phone(building_id: int, phone: str) -> dict:
+    """
+    Verify a person by their phone number.
+    Searches all apartments in the building for matching owner_phone or tenant_phone.
+    
+    Returns:
+        dict with keys:
+        - 'verified': bool - True if phone matches owner or tenant
+        - 'apartment': Apartment object or None
+        - 'match_type': 'owner' | 'tenant' | None
+        - 'owner_name': str - Name of the matched owner/tenant
+        - 'error': str or None
+    """
+    if not phone:
+        return {
+            'verified': False,
+            'apartment': None,
+            'match_type': None,
+            'owner_name': None,
+            'error': 'Το τηλέφωνο είναι υποχρεωτικό'
+        }
+    
+    normalized_input = normalize_phone(phone)
+    
+    if len(normalized_input) < 10:
+        return {
+            'verified': False,
+            'apartment': None,
+            'match_type': None,
+            'owner_name': None,
+            'error': 'Παρακαλώ εισάγετε έγκυρο αριθμό τηλεφώνου (10 ψηφία)'
+        }
+    
+    try:
+        # Get all apartments for this building
+        apartments = Apartment.objects.filter(building_id=building_id)
+        
+        for apartment in apartments:
+            # Check owner phone
+            if apartment.owner_phone:
+                normalized_owner = normalize_phone(apartment.owner_phone)
+                if normalized_owner == normalized_input:
+                    return {
+                        'verified': True,
+                        'apartment': apartment,
+                        'match_type': 'owner',
+                        'owner_name': apartment.owner_name or '',
+                        'error': None
+                    }
+            
+            # Check tenant phone (if rented)
+            if apartment.is_rented and apartment.tenant_phone:
+                normalized_tenant = normalize_phone(apartment.tenant_phone)
+                if normalized_tenant == normalized_input:
+                    return {
+                        'verified': True,
+                        'apartment': apartment,
+                        'match_type': 'tenant',
+                        'owner_name': apartment.tenant_name or '',
+                        'error': None
+                    }
+        
+        # Phone not found
+        return {
+            'verified': False,
+            'apartment': None,
+            'match_type': None,
+            'owner_name': None,
+            'error': 'Το τηλέφωνο δεν βρέθηκε στα καταχωρημένα στοιχεία του κτιρίου. Παρακαλώ επικοινωνήστε με τη διαχείριση.'
+        }
+        
+    except Exception as e:
+        kiosk_logger.error(f"Error verifying by phone: {e}")
+        return {
+            'verified': False,
+            'apartment': None,
+            'match_type': None,
+            'owner_name': None,
+            'error': 'Σφάλμα κατά τον έλεγχο του τηλεφώνου'
+        }
+
+
 def verify_apartment_resident(building_id: int, apartment_number: str, full_name: str) -> dict:
     """
     Verify if a person is the owner or tenant of an apartment.
+    (Legacy function - kept for backwards compatibility)
     
     Returns:
         dict with keys:
@@ -748,12 +857,12 @@ def kiosk_register(request):
     
     Allows a resident to register themselves by scanning the QR code
     displayed on the building's kiosk. The registration is auto-approved
-    when the provided name matches the registered owner or tenant.
+    when the provided phone matches the registered owner or tenant phone.
     
     Flow:
     1. User scans QR code on kiosk
-    2. User enters: email, apartment number, full name
-    3. Backend verifies name against apartment's owner/tenant
+    2. User enters: email + phone number
+    3. Backend verifies phone against building's owner/tenant phones
     4. If match → auto-approved invitation is created
     5. User receives email with registration link
     6. User completes registration (sets password)
@@ -762,8 +871,7 @@ def kiosk_register(request):
     email = request.data.get('email', '').strip().lower()
     building_id = request.data.get('building_id')
     token = request.data.get('token', '')
-    apartment_number = request.data.get('apartment_number', '').strip()
-    full_name = request.data.get('full_name', '').strip()
+    phone = request.data.get('phone', '').strip()
     
     # Validation
     if not email:
@@ -778,15 +886,9 @@ def kiosk_register(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    if not apartment_number:
+    if not phone:
         return Response(
-            {'error': 'Ο αριθμός διαμερίσματος είναι υποχρεωτικός'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    if not full_name:
-        return Response(
-            {'error': 'Το ονοματεπώνυμο είναι υποχρεωτικό'},
+            {'error': 'Το τηλέφωνο είναι υποχρεωτικό'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -806,11 +908,11 @@ def kiosk_register(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Verify apartment and name match
-    verification = verify_apartment_resident(building_id, apartment_number, full_name)
+    # Verify phone number against building apartments
+    verification = verify_by_phone(building_id, phone)
     
     if not verification['verified']:
-        kiosk_logger.warning(f"Apartment verification failed for {email}: {verification['error']}")
+        kiosk_logger.warning(f"Phone verification failed for {email}: {verification['error']}")
         return Response(
             {'error': verification['error']},
             status=status.HTTP_400_BAD_REQUEST
@@ -818,8 +920,9 @@ def kiosk_register(request):
     
     apartment = verification['apartment']
     match_type = verification['match_type']  # 'owner' or 'tenant'
+    owner_name = verification['owner_name']  # Name from matched record
     
-    kiosk_logger.info(f"Apartment verified: {email} is {match_type} of apartment {apartment_number}")
+    kiosk_logger.info(f"Phone verified: {email} is {match_type} of apartment {apartment.number}")
     
     # Check if there are already registered users for this apartment (Option C)
     from buildings.models import BuildingMembership
@@ -830,7 +933,7 @@ def kiosk_register(request):
     
     has_existing_apartment_users = existing_apartment_users.exists()
     if has_existing_apartment_users:
-        kiosk_logger.info(f"Apartment {apartment_number} already has {existing_apartment_users.count()} registered user(s)")
+        kiosk_logger.info(f"Apartment {apartment.number} already has {existing_apartment_users.count()} registered user(s)")
     
     # Check if user already exists
     existing_user = CustomUser.objects.filter(email=email).first()
@@ -908,8 +1011,8 @@ def kiosk_register(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    # Parse full_name into first_name and last_name
-    name_parts = full_name.split()
+    # Parse owner_name into first_name and last_name
+    name_parts = owner_name.split() if owner_name else []
     first_name = name_parts[0] if name_parts else ''
     last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
     
@@ -929,7 +1032,7 @@ def kiosk_register(request):
             expires_at=timezone.now() + timezone.timedelta(days=7)
         )
         
-        kiosk_logger.info(f"Created kiosk registration invitation for {email} ({match_type}) in apt {apartment_number}")
+        kiosk_logger.info(f"Created kiosk registration invitation for {email} ({match_type}) in apt {apartment.number}")
         
         # Send registration email
         try:
@@ -946,7 +1049,7 @@ def kiosk_register(request):
         # Notify admin if apartment already has registered users (Option C)
         if has_existing_apartment_users:
             existing_names = [m.resident.get_full_name() or m.resident.email for m in existing_apartment_users]
-            kiosk_logger.info(f"Notifying admin about new registration for apartment {apartment_number} with existing users: {existing_names}")
+            kiosk_logger.info(f"Notifying admin about new registration for apartment {apartment.number} with existing users: {existing_names}")
             try:
                 EmailService.send_new_apartment_user_notification(
                     invitation=invitation,
@@ -960,9 +1063,9 @@ def kiosk_register(request):
                 # Don't fail the registration, just log the error
         
         return Response({
-            'message': f'Επιτυχία! Επιβεβαιώθηκε η ταυτότητά σας για το διαμέρισμα {apartment_number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+            'message': f'Επιτυχία! Βρέθηκε το τηλέφωνό σας στο διαμέρισμα {apartment.number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
             'status': 'created',
-            'apartment': apartment_number,
+            'apartment': apartment.number,
             'match_type': match_type
         }, status=status.HTTP_201_CREATED)
         
