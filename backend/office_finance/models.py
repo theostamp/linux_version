@@ -16,29 +16,73 @@ class OfficeExpenseCategory(models.Model):
     Προκαθορισμένες + δυνατότητα προσθήκης custom.
     """
     
-    # Προκαθορισμένες κατηγορίες
-    CATEGORY_TYPES = [
-        ('platform', 'Πλατφόρμα & Λογισμικό'),
+    # Γενικές κατηγορίες εξόδων (για ομαδοποίηση)
+    GROUP_TYPES = [
+        ('fixed', 'Πάγια Έξοδα'),
+        ('operational', 'Λειτουργικά Έξοδα'),
+        ('collaborators', 'Συνεργάτες & Εξωτερικοί'),
+        ('suppliers', 'Προμηθευτές'),
         ('staff', 'Προσωπικό'),
-        ('utilities', 'Λειτουργικά Έξοδα'),
-        ('equipment', 'Εξοπλισμός'),
-        ('professional', 'Επαγγελματικές Υπηρεσίες'),
-        ('marketing', 'Marketing & Διαφήμιση'),
+        ('taxes_legal', 'Φόροι & Νομικά'),
+        ('other', 'Λοιπά'),
+    ]
+    
+    # Προκαθορισμένες υπο-κατηγορίες
+    CATEGORY_TYPES = [
+        # Πάγια Έξοδα
         ('rent', 'Ενοίκιο Γραφείου'),
+        ('common_charges', 'Κοινόχρηστα Γραφείου'),
         ('insurance', 'Ασφάλειες'),
+        ('equipment_depreciation', 'Αποσβέσεις Εξοπλισμού'),
+        # Λειτουργικά Έξοδα
+        ('utilities', 'Πάγιοι Λογαριασμοί (ΔΕΗ/Νερό/Τηλ)'),
+        ('office_supplies', 'Γραφική Ύλη & Αναλώσιμα'),
+        ('platform', 'Πλατφόρμα & Λογισμικό'),
+        ('equipment', 'Εξοπλισμός'),
+        ('maintenance', 'Συντήρηση & Επισκευές'),
+        ('transport', 'Μετακινήσεις & Καύσιμα'),
+        # Συνεργάτες & Εξωτερικοί
+        ('accountant', 'Λογιστής'),
+        ('lawyer', 'Δικηγόρος'),
+        ('technical_consultant', 'Τεχνικός Σύμβουλος'),
+        ('external_services', 'Εξωτερικές Υπηρεσίες'),
+        # Προμηθευτές
+        ('supplier_materials', 'Υλικά & Προμήθειες'),
+        ('supplier_services', 'Υπηρεσίες Προμηθευτών'),
+        ('subcontractors', 'Υπεργολάβοι'),
+        # Προσωπικό
+        ('salaries', 'Μισθοδοσία'),
+        ('social_security', 'Ασφαλιστικές Εισφορές'),
+        ('benefits', 'Παροχές Προσωπικού'),
+        # Φόροι & Νομικά
         ('taxes', 'Φόροι & Τέλη'),
+        ('legal_fees', 'Νομικά Έξοδα'),
+        ('fines', 'Πρόστιμα'),
+        # Marketing
+        ('marketing', 'Marketing & Διαφήμιση'),
+        ('events', 'Εκδηλώσεις'),
+        # Λοιπά
+        ('bank_fees', 'Τραπεζικά Έξοδα'),
         ('other', 'Λοιπά Έξοδα'),
     ]
     
     name = models.CharField(max_length=100, verbose_name="Όνομα Κατηγορίας")
+    group_type = models.CharField(
+        max_length=20,
+        choices=GROUP_TYPES,
+        default='other',
+        verbose_name="Ομάδα Κατηγορίας"
+    )
     category_type = models.CharField(
-        max_length=20, 
+        max_length=30, 
         choices=CATEGORY_TYPES, 
         default='other',
         verbose_name="Τύπος Κατηγορίας"
     )
     icon = models.CharField(max_length=50, blank=True, verbose_name="Εικονίδιο")
     color = models.CharField(max_length=20, default='slate', verbose_name="Χρώμα")
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    display_order = models.PositiveIntegerField(default=0, verbose_name="Σειρά Εμφάνισης")
     is_active = models.BooleanField(default=True, verbose_name="Ενεργή")
     is_system = models.BooleanField(default=False, verbose_name="Κατηγορία Συστήματος")
     
@@ -48,7 +92,7 @@ class OfficeExpenseCategory(models.Model):
     class Meta:
         verbose_name = "Κατηγορία Εξόδων Γραφείου"
         verbose_name_plural = "Κατηγορίες Εξόδων Γραφείου"
-        ordering = ['category_type', 'name']
+        ordering = ['group_type', 'display_order', 'name']
     
     def __str__(self):
         return f"{self.name} ({self.get_category_type_display()})"
@@ -57,25 +101,65 @@ class OfficeExpenseCategory(models.Model):
 class OfficeIncomeCategory(models.Model):
     """
     Κατηγορίες εσόδων γραφείου.
+    Σύνδεση με δαπάνες διαχείρισης κτιρίων.
     """
     
-    CATEGORY_TYPES = [
-        ('management_fee', 'Αμοιβές Διαχείρισης'),
-        ('extra_services', 'Έκτακτες Υπηρεσίες'),
+    # Γενικές κατηγορίες εσόδων (για ομαδοποίηση)
+    GROUP_TYPES = [
+        ('building_fees', 'Αμοιβές Κτιρίων'),
+        ('services', 'Υπηρεσίες'),
         ('commissions', 'Προμήθειες'),
-        ('consulting', 'Συμβουλευτικές Υπηρεσίες'),
+        ('other', 'Λοιπά'),
+    ]
+    
+    CATEGORY_TYPES = [
+        # Αμοιβές Κτιρίων (συνδέονται με δαπάνες διαχείρισης)
+        ('management_fee_monthly', 'Αμοιβή Διαχείρισης (Μηνιαία)'),
+        ('management_fee_annual', 'Αμοιβή Διαχείρισης (Ετήσια)'),
+        ('special_assembly_fee', 'Αμοιβή Έκτακτης Γ.Σ.'),
+        ('audit_fee', 'Αμοιβή Ελέγχου/Απολογισμού'),
+        # Υπηρεσίες
+        ('certificate_issue', 'Έκδοση Πιστοποιητικών'),
+        ('assembly_attendance', 'Παράσταση σε Γ.Σ.'),
+        ('technical_advice', 'Τεχνική Συμβουλή'),
+        ('mediation', 'Διαμεσολάβηση'),
+        ('document_preparation', 'Σύνταξη Εγγράφων'),
+        ('project_supervision', 'Επίβλεψη Έργων'),
+        # Προμήθειες
+        ('contractor_commission', 'Προμήθεια Συνεργείου'),
+        ('supplier_commission', 'Προμήθεια Προμηθευτή'),
+        ('insurance_commission', 'Προμήθεια Ασφάλειας'),
+        # Λοιπά
+        ('interest_income', 'Τόκοι Καταθέσεων'),
+        ('late_payment_fees', 'Προσαυξήσεις Καθυστέρησης'),
         ('other', 'Λοιπά Έσοδα'),
     ]
     
     name = models.CharField(max_length=100, verbose_name="Όνομα Κατηγορίας")
+    group_type = models.CharField(
+        max_length=20,
+        choices=GROUP_TYPES,
+        default='other',
+        verbose_name="Ομάδα Κατηγορίας"
+    )
     category_type = models.CharField(
-        max_length=20, 
+        max_length=30, 
         choices=CATEGORY_TYPES, 
         default='other',
         verbose_name="Τύπος Κατηγορίας"
     )
     icon = models.CharField(max_length=50, blank=True, verbose_name="Εικονίδιο")
     color = models.CharField(max_length=20, default='emerald', verbose_name="Χρώμα")
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    display_order = models.PositiveIntegerField(default=0, verbose_name="Σειρά Εμφάνισης")
+    
+    # Σύνδεση με δαπάνες διαχείρισης (για αυτόματη καταγραφή)
+    links_to_management_expense = models.BooleanField(
+        default=False,
+        verbose_name="Συνδέεται με Δαπάνες Διαχείρισης",
+        help_text="Αν ενεργοποιηθεί, τα έσοδα αυτής της κατηγορίας θα αντιστοιχούν στις δαπάνες διαχείρισης κτιρίων"
+    )
+    
     is_active = models.BooleanField(default=True, verbose_name="Ενεργή")
     is_system = models.BooleanField(default=False, verbose_name="Κατηγορία Συστήματος")
     
@@ -85,7 +169,7 @@ class OfficeIncomeCategory(models.Model):
     class Meta:
         verbose_name = "Κατηγορία Εσόδων Γραφείου"
         verbose_name_plural = "Κατηγορίες Εσόδων Γραφείου"
-        ordering = ['category_type', 'name']
+        ordering = ['group_type', 'display_order', 'name']
     
     def __str__(self):
         return f"{self.name} ({self.get_category_type_display()})"

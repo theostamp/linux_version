@@ -13,6 +13,10 @@ from .models import (
 
 
 class OfficeExpenseCategorySerializer(serializers.ModelSerializer):
+    group_type_display = serializers.CharField(
+        source='get_group_type_display', 
+        read_only=True
+    )
     category_type_display = serializers.CharField(
         source='get_category_type_display', 
         read_only=True
@@ -21,13 +25,20 @@ class OfficeExpenseCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = OfficeExpenseCategory
         fields = [
-            'id', 'name', 'category_type', 'category_type_display',
-            'icon', 'color', 'is_active', 'is_system'
+            'id', 'name', 
+            'group_type', 'group_type_display',
+            'category_type', 'category_type_display',
+            'icon', 'color', 'description', 'display_order',
+            'is_active', 'is_system'
         ]
         read_only_fields = ['is_system']
 
 
 class OfficeIncomeCategorySerializer(serializers.ModelSerializer):
+    group_type_display = serializers.CharField(
+        source='get_group_type_display', 
+        read_only=True
+    )
     category_type_display = serializers.CharField(
         source='get_category_type_display', 
         read_only=True
@@ -36,8 +47,12 @@ class OfficeIncomeCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = OfficeIncomeCategory
         fields = [
-            'id', 'name', 'category_type', 'category_type_display',
-            'icon', 'color', 'is_active', 'is_system'
+            'id', 'name', 
+            'group_type', 'group_type_display',
+            'category_type', 'category_type_display',
+            'icon', 'color', 'description', 'display_order',
+            'links_to_management_expense',
+            'is_active', 'is_system'
         ]
         read_only_fields = ['is_system']
 

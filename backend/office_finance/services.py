@@ -370,62 +370,117 @@ class OfficeFinanceService:
     @staticmethod
     def create_default_categories():
         """
-        Δημιουργεί τις προκαθορισμένες κατηγορίες.
+        Δημιουργεί τις προκαθορισμένες κατηγορίες εσόδων και εξόδων.
+        Οργανωμένες ανά ομάδα για εύκολη επιλογή.
         """
-        # Κατηγορίες Εξόδων
+        # ═══════════════════════════════════════════════════════════════
+        # ΚΑΤΗΓΟΡΙΕΣ ΕΞΟΔΩΝ
+        # ═══════════════════════════════════════════════════════════════
         expense_categories = [
-            {'name': 'Συνδρομή Digital Concierge', 'category_type': 'platform', 'icon': 'Monitor', 'color': 'blue'},
-            {'name': 'Hosting & Domains', 'category_type': 'platform', 'icon': 'Cloud', 'color': 'blue'},
-            {'name': 'Μισθοδοσία', 'category_type': 'staff', 'icon': 'Users', 'color': 'indigo'},
-            {'name': 'Ασφαλιστικές Εισφορές', 'category_type': 'staff', 'icon': 'Shield', 'color': 'indigo'},
-            {'name': 'ΔΕΗ Γραφείου', 'category_type': 'utilities', 'icon': 'Zap', 'color': 'amber'},
-            {'name': 'Τηλεφωνία & Internet', 'category_type': 'utilities', 'icon': 'Phone', 'color': 'amber'},
-            {'name': 'Νερό Γραφείου', 'category_type': 'utilities', 'icon': 'Droplet', 'color': 'amber'},
-            {'name': 'Ενοίκιο Γραφείου', 'category_type': 'rent', 'icon': 'Building', 'color': 'slate'},
-            {'name': 'Κοινόχρηστα Γραφείου', 'category_type': 'rent', 'icon': 'Building2', 'color': 'slate'},
-            {'name': 'Εξοπλισμός Γραφείου', 'category_type': 'equipment', 'icon': 'Laptop', 'color': 'purple'},
-            {'name': 'Γραφική Ύλη', 'category_type': 'equipment', 'icon': 'Pencil', 'color': 'purple'},
-            {'name': 'Λογιστής', 'category_type': 'professional', 'icon': 'Calculator', 'color': 'emerald'},
-            {'name': 'Δικηγόρος', 'category_type': 'professional', 'icon': 'Scale', 'color': 'emerald'},
-            {'name': 'Ασφάλεια Επαγγελματικής Ευθύνης', 'category_type': 'insurance', 'icon': 'Shield', 'color': 'red'},
-            {'name': 'Διαφήμιση', 'category_type': 'marketing', 'icon': 'Megaphone', 'color': 'pink'},
-            {'name': 'Φόροι & Τέλη', 'category_type': 'taxes', 'icon': 'Receipt', 'color': 'orange'},
+            # ─── ΠΑΓΙΑ ΕΞΟΔΑ ───
+            {'name': 'Ενοίκιο Γραφείου', 'group_type': 'fixed', 'category_type': 'rent', 'icon': 'Building', 'color': 'slate', 'order': 1},
+            {'name': 'Κοινόχρηστα Γραφείου', 'group_type': 'fixed', 'category_type': 'common_charges', 'icon': 'Building2', 'color': 'slate', 'order': 2},
+            {'name': 'Ασφάλεια Επαγγελματικής Ευθύνης', 'group_type': 'fixed', 'category_type': 'insurance', 'icon': 'Shield', 'color': 'red', 'order': 3},
+            {'name': 'Ασφάλεια Γραφείου', 'group_type': 'fixed', 'category_type': 'insurance', 'icon': 'ShieldCheck', 'color': 'red', 'order': 4},
+            
+            # ─── ΛΕΙΤΟΥΡΓΙΚΑ ΕΞΟΔΑ ───
+            {'name': 'ΔΕΗ Γραφείου', 'group_type': 'operational', 'category_type': 'utilities', 'icon': 'Zap', 'color': 'amber', 'order': 1},
+            {'name': 'Νερό Γραφείου', 'group_type': 'operational', 'category_type': 'utilities', 'icon': 'Droplet', 'color': 'cyan', 'order': 2},
+            {'name': 'Τηλεφωνία & Internet', 'group_type': 'operational', 'category_type': 'utilities', 'icon': 'Phone', 'color': 'blue', 'order': 3},
+            {'name': 'Γραφική Ύλη & Αναλώσιμα', 'group_type': 'operational', 'category_type': 'office_supplies', 'icon': 'Pencil', 'color': 'purple', 'order': 4},
+            {'name': 'Συνδρομή Digital Concierge', 'group_type': 'operational', 'category_type': 'platform', 'icon': 'Monitor', 'color': 'indigo', 'order': 5},
+            {'name': 'Λογισμικό & Εφαρμογές', 'group_type': 'operational', 'category_type': 'platform', 'icon': 'Cloud', 'color': 'indigo', 'order': 6},
+            {'name': 'Hosting & Domains', 'group_type': 'operational', 'category_type': 'platform', 'icon': 'Server', 'color': 'indigo', 'order': 7},
+            {'name': 'Εξοπλισμός Γραφείου', 'group_type': 'operational', 'category_type': 'equipment', 'icon': 'Laptop', 'color': 'violet', 'order': 8},
+            {'name': 'Συντήρηση & Επισκευές', 'group_type': 'operational', 'category_type': 'maintenance', 'icon': 'Wrench', 'color': 'orange', 'order': 9},
+            {'name': 'Μετακινήσεις & Καύσιμα', 'group_type': 'operational', 'category_type': 'transport', 'icon': 'Car', 'color': 'emerald', 'order': 10},
+            
+            # ─── ΣΥΝΕΡΓΑΤΕΣ & ΕΞΩΤΕΡΙΚΟΙ ───
+            {'name': 'Λογιστής', 'group_type': 'collaborators', 'category_type': 'accountant', 'icon': 'Calculator', 'color': 'emerald', 'order': 1},
+            {'name': 'Δικηγόρος', 'group_type': 'collaborators', 'category_type': 'lawyer', 'icon': 'Scale', 'color': 'emerald', 'order': 2},
+            {'name': 'Τεχνικός Σύμβουλος', 'group_type': 'collaborators', 'category_type': 'technical_consultant', 'icon': 'HardHat', 'color': 'amber', 'order': 3},
+            {'name': 'Μηχανικός', 'group_type': 'collaborators', 'category_type': 'external_services', 'icon': 'Compass', 'color': 'blue', 'order': 4},
+            {'name': 'Εξωτερικές Υπηρεσίες', 'group_type': 'collaborators', 'category_type': 'external_services', 'icon': 'Briefcase', 'color': 'slate', 'order': 5},
+            
+            # ─── ΠΡΟΜΗΘΕΥΤΕΣ ───
+            {'name': 'Υλικά & Προμήθειες', 'group_type': 'suppliers', 'category_type': 'supplier_materials', 'icon': 'Package', 'color': 'rose', 'order': 1},
+            {'name': 'Υπηρεσίες Προμηθευτών', 'group_type': 'suppliers', 'category_type': 'supplier_services', 'icon': 'Truck', 'color': 'rose', 'order': 2},
+            {'name': 'Υπεργολάβοι', 'group_type': 'suppliers', 'category_type': 'subcontractors', 'icon': 'Users', 'color': 'rose', 'order': 3},
+            
+            # ─── ΠΡΟΣΩΠΙΚΟ ───
+            {'name': 'Μισθοδοσία', 'group_type': 'staff', 'category_type': 'salaries', 'icon': 'UserCheck', 'color': 'blue', 'order': 1},
+            {'name': 'Ασφαλιστικές Εισφορές', 'group_type': 'staff', 'category_type': 'social_security', 'icon': 'Shield', 'color': 'blue', 'order': 2},
+            {'name': 'Παροχές Προσωπικού', 'group_type': 'staff', 'category_type': 'benefits', 'icon': 'Gift', 'color': 'blue', 'order': 3},
+            
+            # ─── ΦΟΡΟΙ & ΝΟΜΙΚΑ ───
+            {'name': 'Φόροι & Τέλη', 'group_type': 'taxes_legal', 'category_type': 'taxes', 'icon': 'Receipt', 'color': 'orange', 'order': 1},
+            {'name': 'Νομικά Έξοδα', 'group_type': 'taxes_legal', 'category_type': 'legal_fees', 'icon': 'Gavel', 'color': 'orange', 'order': 2},
+            {'name': 'Πρόστιμα', 'group_type': 'taxes_legal', 'category_type': 'fines', 'icon': 'AlertTriangle', 'color': 'red', 'order': 3},
+            
+            # ─── ΛΟΙΠΑ ───
+            {'name': 'Διαφήμιση & Marketing', 'group_type': 'other', 'category_type': 'marketing', 'icon': 'Megaphone', 'color': 'pink', 'order': 1},
+            {'name': 'Εκδηλώσεις', 'group_type': 'other', 'category_type': 'events', 'icon': 'Calendar', 'color': 'pink', 'order': 2},
+            {'name': 'Τραπεζικά Έξοδα', 'group_type': 'other', 'category_type': 'bank_fees', 'icon': 'CreditCard', 'color': 'slate', 'order': 3},
+            {'name': 'Λοιπά Έξοδα', 'group_type': 'other', 'category_type': 'other', 'icon': 'MoreHorizontal', 'color': 'slate', 'order': 99},
         ]
         
         for cat_data in expense_categories:
-            OfficeExpenseCategory.objects.get_or_create(
+            OfficeExpenseCategory.objects.update_or_create(
                 name=cat_data['name'],
                 defaults={
+                    'group_type': cat_data['group_type'],
                     'category_type': cat_data['category_type'],
                     'icon': cat_data['icon'],
                     'color': cat_data['color'],
+                    'display_order': cat_data['order'],
                     'is_system': True,
                 }
             )
         
-        # Κατηγορίες Εσόδων
+        # ═══════════════════════════════════════════════════════════════
+        # ΚΑΤΗΓΟΡΙΕΣ ΕΣΟΔΩΝ
+        # ═══════════════════════════════════════════════════════════════
         income_categories = [
-            {'name': 'Αμοιβή Διαχείρισης (Μηνιαία)', 'category_type': 'management_fee', 'icon': 'Euro', 'color': 'emerald'},
-            {'name': 'Αμοιβή Διαχείρισης (Ετήσια)', 'category_type': 'management_fee', 'icon': 'Euro', 'color': 'emerald'},
-            {'name': 'Έκδοση Πιστοποιητικών', 'category_type': 'extra_services', 'icon': 'FileCheck', 'color': 'blue'},
-            {'name': 'Παράσταση σε Γ.Σ.', 'category_type': 'extra_services', 'icon': 'Users', 'color': 'blue'},
-            {'name': 'Τεχνική Συμβουλή', 'category_type': 'consulting', 'icon': 'Lightbulb', 'color': 'amber'},
-            {'name': 'Προμήθεια Συνεργείου', 'category_type': 'commissions', 'icon': 'Percent', 'color': 'purple'},
-            {'name': 'Λοιπά Έσοδα', 'category_type': 'other', 'icon': 'Plus', 'color': 'slate'},
+            # ─── ΑΜΟΙΒΕΣ ΚΤΙΡΙΩΝ (συνδέονται με δαπάνες διαχείρισης) ───
+            {'name': 'Αμοιβή Διαχείρισης (Μηνιαία)', 'group_type': 'building_fees', 'category_type': 'management_fee_monthly', 'icon': 'Euro', 'color': 'emerald', 'order': 1, 'links_to_management': True},
+            {'name': 'Αμοιβή Διαχείρισης (Ετήσια)', 'group_type': 'building_fees', 'category_type': 'management_fee_annual', 'icon': 'Euro', 'color': 'emerald', 'order': 2, 'links_to_management': True},
+            {'name': 'Αμοιβή Έκτακτης Γ.Σ.', 'group_type': 'building_fees', 'category_type': 'special_assembly_fee', 'icon': 'Users', 'color': 'emerald', 'order': 3, 'links_to_management': True},
+            {'name': 'Αμοιβή Ελέγχου/Απολογισμού', 'group_type': 'building_fees', 'category_type': 'audit_fee', 'icon': 'ClipboardCheck', 'color': 'emerald', 'order': 4, 'links_to_management': True},
+            
+            # ─── ΥΠΗΡΕΣΙΕΣ ───
+            {'name': 'Έκδοση Πιστοποιητικών', 'group_type': 'services', 'category_type': 'certificate_issue', 'icon': 'FileCheck', 'color': 'blue', 'order': 1, 'links_to_management': False},
+            {'name': 'Παράσταση σε Γ.Σ.', 'group_type': 'services', 'category_type': 'assembly_attendance', 'icon': 'Users', 'color': 'blue', 'order': 2, 'links_to_management': False},
+            {'name': 'Τεχνική Συμβουλή', 'group_type': 'services', 'category_type': 'technical_advice', 'icon': 'Lightbulb', 'color': 'amber', 'order': 3, 'links_to_management': False},
+            {'name': 'Διαμεσολάβηση', 'group_type': 'services', 'category_type': 'mediation', 'icon': 'Handshake', 'color': 'blue', 'order': 4, 'links_to_management': False},
+            {'name': 'Σύνταξη Εγγράφων', 'group_type': 'services', 'category_type': 'document_preparation', 'icon': 'FileText', 'color': 'blue', 'order': 5, 'links_to_management': False},
+            {'name': 'Επίβλεψη Έργων', 'group_type': 'services', 'category_type': 'project_supervision', 'icon': 'Eye', 'color': 'violet', 'order': 6, 'links_to_management': False},
+            
+            # ─── ΠΡΟΜΗΘΕΙΕΣ ───
+            {'name': 'Προμήθεια Συνεργείου', 'group_type': 'commissions', 'category_type': 'contractor_commission', 'icon': 'Percent', 'color': 'purple', 'order': 1, 'links_to_management': False},
+            {'name': 'Προμήθεια Προμηθευτή', 'group_type': 'commissions', 'category_type': 'supplier_commission', 'icon': 'Percent', 'color': 'purple', 'order': 2, 'links_to_management': False},
+            {'name': 'Προμήθεια Ασφάλειας', 'group_type': 'commissions', 'category_type': 'insurance_commission', 'icon': 'Percent', 'color': 'purple', 'order': 3, 'links_to_management': False},
+            
+            # ─── ΛΟΙΠΑ ───
+            {'name': 'Τόκοι Καταθέσεων', 'group_type': 'other', 'category_type': 'interest_income', 'icon': 'TrendingUp', 'color': 'emerald', 'order': 1, 'links_to_management': False},
+            {'name': 'Προσαυξήσεις Καθυστέρησης', 'group_type': 'other', 'category_type': 'late_payment_fees', 'icon': 'Clock', 'color': 'orange', 'order': 2, 'links_to_management': False},
+            {'name': 'Λοιπά Έσοδα', 'group_type': 'other', 'category_type': 'other', 'icon': 'Plus', 'color': 'slate', 'order': 99, 'links_to_management': False},
         ]
         
         for cat_data in income_categories:
-            OfficeIncomeCategory.objects.get_or_create(
+            OfficeIncomeCategory.objects.update_or_create(
                 name=cat_data['name'],
                 defaults={
+                    'group_type': cat_data['group_type'],
                     'category_type': cat_data['category_type'],
                     'icon': cat_data['icon'],
                     'color': cat_data['color'],
+                    'display_order': cat_data['order'],
+                    'links_to_management_expense': cat_data['links_to_management'],
                     'is_system': True,
                 }
             )
         
-        logger.info("Default office finance categories created")
+        logger.info("Default office finance categories created/updated")
 
 
 # Global service instance
