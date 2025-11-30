@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, User, Home } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,8 @@ function KioskConnectContent() {
   const token = searchParams?.get('token');
 
   const [email, setEmail] = useState('');
+  const [apartmentNumber, setApartmentNumber] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -53,6 +55,18 @@ function KioskConnectContent() {
       return;
     }
 
+    if (!apartmentNumber) {
+      setStatus('error');
+      setMessage('Παρακαλώ συμπληρώστε τον αριθμό διαμερίσματος');
+      return;
+    }
+
+    if (!fullName) {
+      setStatus('error');
+      setMessage('Παρακαλώ συμπληρώστε το ονοματεπώνυμό σας');
+      return;
+    }
+
     setIsLoading(true);
     setStatus('idle');
     setMessage('');
@@ -66,7 +80,9 @@ function KioskConnectContent() {
         body: JSON.stringify({
           email,
           building_id: buildingId,
-          token
+          token,
+          apartment_number: apartmentNumber,
+          full_name: fullName
         }),
       });
 
@@ -75,7 +91,10 @@ function KioskConnectContent() {
       if (response.ok) {
         setStatus('success');
         setMessage(data.message || 'Ελέγξτε το email σας για να συνεχίσετε!');
-        setEmail(''); // Clear form
+        // Clear form
+        setEmail('');
+        setApartmentNumber('');
+        setFullName('');
       } else {
         setStatus('error');
         setMessage(data.error || 'Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.');
@@ -145,12 +164,55 @@ function KioskConnectContent() {
 
           {/* Form State */}
           {status !== 'success' && (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Apartment Number Input */}
+              <div>
+                <label htmlFor="apartmentNumber" className="block text-sm font-medium text-white/80 mb-2">
+                  Αριθμός Διαμερίσματος *
+                </label>
+                <div className="relative">
+                  <Home className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <input
+                    id="apartmentNumber"
+                    type="text"
+                    value={apartmentNumber}
+                    onChange={(e) => setApartmentNumber(e.target.value)}
+                    placeholder="π.χ. Α1, 3Β, 12"
+                    required
+                    disabled={isLoading}
+                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Full Name Input */}
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-white/80 mb-2">
+                  Ονοματεπώνυμο *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Όπως είναι καταχωρημένο στο κτίριο"
+                    required
+                    disabled={isLoading}
+                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-xs text-white/40 mt-1">
+                  Το όνομα του ιδιοκτήτη ή του ενοίκου
+                </p>
+              </div>
 
               {/* Email Input */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
-                  Email
+                  Email *
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
@@ -178,17 +240,17 @@ function KioskConnectContent() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading || !email}
+                disabled={isLoading || !email || !apartmentNumber || !fullName}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-purple-600"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Επεξεργασία...</span>
+                    <span>Έλεγχος στοιχείων...</span>
                   </>
                 ) : (
                   <>
-                    <span>Συνέχεια</span>
+                    <span>Εγγραφή</span>
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -197,9 +259,7 @@ function KioskConnectContent() {
               {/* Info Text */}
               <div className="text-center">
                 <p className="text-xs text-white/50 leading-relaxed">
-                  Θα λάβετε email με οδηγίες για σύνδεση ή εγγραφή.
-                  <br />
-                  Αν δεν το βλέπετε, ελέγξτε το spam folder.
+                  Θα επιβεβαιωθούν τα στοιχεία σας και θα λάβετε email για ολοκλήρωση.
                 </p>
               </div>
             </form>

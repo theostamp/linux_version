@@ -532,10 +532,193 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from users.models import UserInvitation, CustomUser
 from users.services import EmailService
+from apartments.models import Apartment
 import logging
 import base64
+import unicodedata
+import re
 
 kiosk_logger = logging.getLogger(__name__)
+
+
+def normalize_greek_name(name: str) -> str:
+    """
+    Normalize Greek name for fuzzy matching.
+    - Remove accents/diacritics
+    - Convert to uppercase
+    - Remove extra spaces
+    - Handle common Greek name variations
+    """
+    if not name:
+        return ''
+    
+    # Convert to uppercase
+    name = name.upper()
+    
+    # Remove accents (tonos) - NFD decomposition separates base char from accent
+    name = unicodedata.normalize('NFD', name)
+    name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
+    
+    # Remove extra whitespace
+    name = ' '.join(name.split())
+    
+    return name
+
+
+def names_match(input_name: str, stored_name: str, threshold: float = 0.7) -> bool:
+    """
+    Check if two Greek names match with fuzzy logic.
+    
+    Handles:
+    - Case insensitivity (ΓΙΩΡΓΟΣ = γιώργος)
+    - Accent insensitivity (Γιώργος = Γιωργος)
+    - Common name variations (Γεώργιος = Γιώργος)
+    - First name only matching (Γιώργος Παπαδόπουλος matches if user enters just Γιώργος)
+    - Partial matching (Γιωργ matches Γιώργος)
+    
+    Returns True if names match within threshold.
+    """
+    if not input_name or not stored_name:
+        return False
+    
+    # Normalize both names
+    input_norm = normalize_greek_name(input_name)
+    stored_norm = normalize_greek_name(stored_name)
+    
+    # Exact match after normalization
+    if input_norm == stored_norm:
+        return True
+    
+    # Split into words (first name, last name)
+    input_parts = input_norm.split()
+    stored_parts = stored_norm.split()
+    
+    # Check if any input word matches any stored word (for first name or last name match)
+    for input_part in input_parts:
+        for stored_part in stored_parts:
+            # Exact word match
+            if input_part == stored_part:
+                return True
+            # Partial match (input is contained in stored or vice versa) - min 3 chars
+            if len(input_part) >= 3 and (input_part in stored_part or stored_part in input_part):
+                return True
+    
+    # Check common Greek name variations
+    greek_name_variants = {
+        'ΓΕΩΡΓΙΟΣ': ['ΓΙΩΡΓΟΣ', 'ΓΙΩΡΓΗΣ', 'ΓΚΕΟΡΓΚ'],
+        'ΓΙΩΡΓΟΣ': ['ΓΕΩΡΓΙΟΣ', 'ΓΙΩΡΓΗΣ'],
+        'ΚΩΝΣΤΑΝΤΙΝΟΣ': ['ΚΩΣΤΑΣ', 'ΝΤΙΝΟΣ', 'ΚΩΣΤΑΝΤΙΝΟΣ'],
+        'ΚΩΣΤΑΣ': ['ΚΩΝΣΤΑΝΤΙΝΟΣ'],
+        'ΔΗΜΗΤΡΙΟΣ': ['ΔΗΜΗΤΡΗΣ', 'ΜΗΤΣΟΣ', 'ΤΑΚΗΣ'],
+        'ΔΗΜΗΤΡΗΣ': ['ΔΗΜΗΤΡΙΟΣ'],
+        'ΝΙΚΟΛΑΟΣ': ['ΝΙΚΟΣ', 'ΝΙΚΟΛΑΣ'],
+        'ΝΙΚΟΣ': ['ΝΙΚΟΛΑΟΣ'],
+        'ΙΩΑΝΝΗΣ': ['ΓΙΑΝΝΗΣ', 'ΓΙΑΝΝΑΚΗΣ'],
+        'ΓΙΑΝΝΗΣ': ['ΙΩΑΝΝΗΣ'],
+        'ΑΙΚΑΤΕΡΙΝΗ': ['ΚΑΤΕΡΙΝΑ', 'ΚΑΙΤΗ', 'ΚΑΤΙΑ'],
+        'ΚΑΤΕΡΙΝΑ': ['ΑΙΚΑΤΕΡΙΝΗ'],
+        'ΕΛΕΝΗ': ['ΛΕΝΑ', 'ΕΛΕΝΙΤΣΑ'],
+        'ΜΑΡΙΑ': ['ΜΑΙΡΗ', 'ΜΑΡΙΓΟΥΛΑ'],
+        'ΑΝΑΣΤΑΣΙΟΣ': ['ΤΑΣΟΣ', 'ΑΝΑΣΤΑΣΗΣ'],
+        'ΑΝΑΣΤΑΣΙΑ': ['ΝΑΤΑΣΑ', 'ΤΑΣΙΑ'],
+        'ΕΥΑΓΓΕΛΟΣ': ['ΒΑΓΓΕΛΗΣ', 'ΑΓΓΕΛΟΣ'],
+        'ΘΕΟΔΩΡΟΣ': ['ΘΟΔΩΡΗΣ', 'ΘΟΔΩΡΑΚΗΣ'],
+        'ΘΟΔΩΡΗΣ': ['ΘΕΟΔΩΡΟΣ'],
+        'ΠΑΝΑΓΙΩΤΗΣ': ['ΠΑΝΟΣ', 'ΠΑΝΑΓΟΣ', 'ΤΑΚΗΣ'],
+        'ΣΤΑΜΑΤΙΟΣ': ['ΣΤΑΜΑΤΗΣ', 'ΣΤΑΜΟΣ'],
+        'ΣΤΑΜΑΤΗΣ': ['ΣΤΑΜΑΤΙΟΣ'],
+    }
+    
+    # Check for variant matches
+    for input_part in input_parts:
+        for stored_part in stored_parts:
+            # Check if input is a variant of stored
+            if input_part in greek_name_variants:
+                if stored_part in greek_name_variants[input_part]:
+                    return True
+            # Check if stored is a variant of input
+            if stored_part in greek_name_variants:
+                if input_part in greek_name_variants[stored_part]:
+                    return True
+    
+    return False
+
+
+def verify_apartment_resident(building_id: int, apartment_number: str, full_name: str) -> dict:
+    """
+    Verify if a person is the owner or tenant of an apartment.
+    
+    Returns:
+        dict with keys:
+        - 'verified': bool - True if name matches owner or tenant
+        - 'apartment': Apartment object or None
+        - 'match_type': 'owner' | 'tenant' | None
+        - 'error': str or None
+    """
+    try:
+        apartment = Apartment.objects.filter(
+            building_id=building_id,
+            number__iexact=apartment_number.strip()
+        ).first()
+        
+        if not apartment:
+            # Try with normalized number (remove spaces, convert to uppercase)
+            normalized_number = apartment_number.strip().upper().replace(' ', '')
+            apartment = Apartment.objects.filter(
+                building_id=building_id
+            ).extra(
+                where=["UPPER(REPLACE(number, ' ', '')) = %s"],
+                params=[normalized_number]
+            ).first()
+        
+        if not apartment:
+            return {
+                'verified': False,
+                'apartment': None,
+                'match_type': None,
+                'error': f'Το διαμέρισμα "{apartment_number}" δεν βρέθηκε στο κτίριο'
+            }
+        
+        # Check owner name
+        if apartment.owner_name and names_match(full_name, apartment.owner_name):
+            return {
+                'verified': True,
+                'apartment': apartment,
+                'match_type': 'owner',
+                'error': None
+            }
+        
+        # Check tenant name (if rented)
+        if apartment.is_rented and apartment.tenant_name and names_match(full_name, apartment.tenant_name):
+            return {
+                'verified': True,
+                'apartment': apartment,
+                'match_type': 'tenant',
+                'error': None
+            }
+        
+        # Name doesn't match - provide helpful message
+        registered_names = []
+        if apartment.owner_name:
+            registered_names.append(f"Ιδιοκτήτης: {apartment.owner_name}")
+        if apartment.is_rented and apartment.tenant_name:
+            registered_names.append(f"Ένοικος: {apartment.tenant_name}")
+        
+        return {
+            'verified': False,
+            'apartment': apartment,
+            'match_type': None,
+            'error': f'Το όνομα "{full_name}" δεν ταιριάζει με τα καταχωρημένα στοιχεία του διαμερίσματος {apartment_number}'
+        }
+        
+    except Exception as e:
+        kiosk_logger.error(f"Error verifying apartment resident: {e}")
+        return {
+            'verified': False,
+            'apartment': None,
+            'match_type': None,
+            'error': 'Σφάλμα κατά τον έλεγχο του διαμερίσματος'
+        }
 
 
 def validate_kiosk_token(building_id: str, token: str) -> bool:
@@ -565,19 +748,22 @@ def kiosk_register(request):
     
     Allows a resident to register themselves by scanning the QR code
     displayed on the building's kiosk. The registration is auto-approved
-    since physical presence at the kiosk implies legitimate access.
+    when the provided name matches the registered owner or tenant.
     
     Flow:
     1. User scans QR code on kiosk
-    2. User enters their email on the kiosk connect page
-    3. This endpoint creates an auto-approved invitation
-    4. User receives email with registration link
-    5. User completes registration (sets password)
-    6. User is automatically added as resident to the building
+    2. User enters: email, apartment number, full name
+    3. Backend verifies name against apartment's owner/tenant
+    4. If match → auto-approved invitation is created
+    5. User receives email with registration link
+    6. User completes registration (sets password)
+    7. User is automatically linked to their apartment
     """
     email = request.data.get('email', '').strip().lower()
     building_id = request.data.get('building_id')
     token = request.data.get('token', '')
+    apartment_number = request.data.get('apartment_number', '').strip()
+    full_name = request.data.get('full_name', '').strip()
     
     # Validation
     if not email:
@@ -589,6 +775,18 @@ def kiosk_register(request):
     if not building_id:
         return Response(
             {'error': 'Μη έγκυρο αίτημα - λείπει το building_id'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not apartment_number:
+        return Response(
+            {'error': 'Ο αριθμός διαμερίσματος είναι υποχρεωτικός'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not full_name:
+        return Response(
+            {'error': 'Το ονοματεπώνυμο είναι υποχρεωτικό'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -607,6 +805,32 @@ def kiosk_register(request):
             {'error': 'Το κτίριο δεν βρέθηκε'},
             status=status.HTTP_404_NOT_FOUND
         )
+    
+    # Verify apartment and name match
+    verification = verify_apartment_resident(building_id, apartment_number, full_name)
+    
+    if not verification['verified']:
+        kiosk_logger.warning(f"Apartment verification failed for {email}: {verification['error']}")
+        return Response(
+            {'error': verification['error']},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    apartment = verification['apartment']
+    match_type = verification['match_type']  # 'owner' or 'tenant'
+    
+    kiosk_logger.info(f"Apartment verified: {email} is {match_type} of apartment {apartment_number}")
+    
+    # Check if there are already registered users for this apartment (Option C)
+    from buildings.models import BuildingMembership
+    existing_apartment_users = BuildingMembership.objects.filter(
+        building_id=building_id,
+        apartment=apartment.number
+    ).select_related('resident')
+    
+    has_existing_apartment_users = existing_apartment_users.exists()
+    if has_existing_apartment_users:
+        kiosk_logger.info(f"Apartment {apartment_number} already has {existing_apartment_users.count()} registered user(s)")
     
     # Check if user already exists
     existing_user = CustomUser.objects.filter(email=email).first()
@@ -635,10 +859,15 @@ def kiosk_register(request):
     ).first()
     
     if pending_invitation:
+        # Update apartment_id if not set
+        if not pending_invitation.apartment_id:
+            pending_invitation.apartment_id = apartment.id
+            pending_invitation.save(update_fields=['apartment_id'])
+        
         # Resend the invitation email
         kiosk_logger.info(f"Pending invitation exists for {email}, resending")
         try:
-            EmailService.send_kiosk_registration_email(pending_invitation, building)
+            EmailService.send_kiosk_registration_email(pending_invitation, building, apartment)
             return Response({
                 'message': 'Έχετε ήδη αίτημα εγγραφής. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
                 'status': 'resent'
@@ -679,14 +908,20 @@ def kiosk_register(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    # Create auto-approved invitation
+    # Parse full_name into first_name and last_name
+    name_parts = full_name.split()
+    first_name = name_parts[0] if name_parts else ''
+    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+    
+    # Create auto-approved invitation (verified by apartment matching)
     try:
         invitation = UserInvitation.objects.create(
             email=email,
-            first_name='',  # Will be filled during registration
-            last_name='',
+            first_name=first_name,
+            last_name=last_name,
             invitation_type=UserInvitation.InvitationType.KIOSK_REGISTRATION,
             building_id=building_id,
+            apartment_id=apartment.id,  # Link to verified apartment
             assigned_role='resident',
             source=UserInvitation.InvitationSource.KIOSK,
             auto_approved=True,
@@ -694,11 +929,11 @@ def kiosk_register(request):
             expires_at=timezone.now() + timezone.timedelta(days=7)
         )
         
-        kiosk_logger.info(f"Created kiosk registration invitation for {email} in building {building.name}")
+        kiosk_logger.info(f"Created kiosk registration invitation for {email} ({match_type}) in apt {apartment_number}")
         
         # Send registration email
         try:
-            EmailService.send_kiosk_registration_email(invitation, building)
+            EmailService.send_kiosk_registration_email(invitation, building, apartment)
         except Exception as e:
             kiosk_logger.error(f"Error sending kiosk registration email: {e}")
             # Delete the invitation if email fails
@@ -708,9 +943,27 @@ def kiosk_register(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+        # Notify admin if apartment already has registered users (Option C)
+        if has_existing_apartment_users:
+            existing_names = [m.resident.get_full_name() or m.resident.email for m in existing_apartment_users]
+            kiosk_logger.info(f"Notifying admin about new registration for apartment {apartment_number} with existing users: {existing_names}")
+            try:
+                EmailService.send_new_apartment_user_notification(
+                    invitation=invitation,
+                    building=building,
+                    apartment=apartment,
+                    existing_users=list(existing_apartment_users),
+                    manager=invited_by
+                )
+            except Exception as e:
+                kiosk_logger.error(f"Error sending admin notification: {e}")
+                # Don't fail the registration, just log the error
+        
         return Response({
-            'message': 'Επιτυχία! Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
-            'status': 'created'
+            'message': f'Επιτυχία! Επιβεβαιώθηκε η ταυτότητά σας για το διαμέρισμα {apartment_number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+            'status': 'created',
+            'apartment': apartment_number,
+            'match_type': match_type
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:

@@ -548,7 +548,7 @@ class EmailService:
             return False
 
     @staticmethod
-    def send_kiosk_registration_email(invitation, building):
+    def send_kiosk_registration_email(invitation, building, apartment=None):
         """
         Send email for kiosk self-registration.
         This is for users who scanned the QR code on the building kiosk.
@@ -570,6 +570,11 @@ class EmailService:
         else:
             registration_url = f"{base_url}/kiosk/complete-registration?token={invitation.token}"
         
+        # Get apartment info
+        apartment_info = ''
+        if apartment:
+            apartment_info = f'<p style="margin: 0;"><strong>Διαμέρισμα:</strong> {apartment.number}</p>'
+        
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ολοκληρώστε την εγγραφή σας - {building.name}"
         
         html_content = f"""
@@ -587,6 +592,7 @@ class EmailService:
                 <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
                     <p style="margin: 0;"><strong>Email:</strong> {invitation.email}</p>
                     <p style="margin: 0;"><strong>Κτίριο:</strong> {building.name}</p>
+                    {apartment_info}
                     {f'<p style="margin: 0;"><strong>Διεύθυνση:</strong> {building.address}</p>' if building.address else ''}
                 </div>
                 
@@ -733,6 +739,108 @@ Email: {invitation.email}
             return True
         except Exception as e:
             logger.error(f"Failed to send login reminder email to {user.email}: {e}")
+            return False
+
+    @staticmethod
+    def send_new_apartment_user_notification(invitation, building, apartment, existing_users, manager):
+        """
+        Notify admin when a new user registers for an apartment that already has registered users.
+        This allows the admin to be aware of and potentially review the registration.
+        """
+        if not manager or not manager.email:
+            logger.warning("No manager email available for apartment user notification")
+            return False
+        
+        # Build list of existing users
+        existing_users_html = ""
+        existing_users_text = ""
+        for membership in existing_users:
+            user = membership.resident
+            user_name = user.get_full_name() or user.email
+            existing_users_html += f'<li>{user_name} ({user.email})</li>'
+            existing_users_text += f"- {user_name} ({user.email})\n"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Νέα εγγραφή - Διαμέρισμα {apartment.number} ({building.name})"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🔔 Ειδοποίηση Διαχειριστή</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Νέα εγγραφή χρήστη</h2>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff9800;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>Σημείωση:</strong> Αυτό το διαμέρισμα έχει ήδη εγγεγραμμένους χρήστες.
+                    </p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
+                    <h3 style="margin-top: 0; color: #1e3a5f;">Νέος χρήστης:</h3>
+                    <p style="margin: 5px 0;"><strong>Όνομα:</strong> {invitation.first_name} {invitation.last_name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> {invitation.email}</p>
+                    <p style="margin: 5px 0;"><strong>Διαμέρισμα:</strong> {apartment.number}</p>
+                    <p style="margin: 5px 0;"><strong>Κτίριο:</strong> {building.name}</p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+                    <h3 style="margin-top: 0; color: #1e3a5f;">Υπάρχοντες χρήστες στο διαμέρισμα:</h3>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        {existing_users_html}
+                    </ul>
+                </div>
+                
+                <p style="color: #666; font-size: 14px;">
+                    Η εγγραφή θα ολοκληρωθεί κανονικά. Αυτή η ειδοποίηση είναι μόνο για ενημέρωσή σας.
+                    Αν χρειάζεται κάποια ενέργεια, μπορείτε να διαχειριστείτε τους χρήστες από τον πίνακα ελέγχου.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αυτό είναι αυτόματο μήνυμα από το σύστημα New Concierge.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Νέα εγγραφή χρήστη στο διαμέρισμα {apartment.number}
+
+ΣΗΜΕΙΩΣΗ: Αυτό το διαμέρισμα έχει ήδη εγγεγραμμένους χρήστες.
+
+Νέος χρήστης:
+- Όνομα: {invitation.first_name} {invitation.last_name}
+- Email: {invitation.email}
+- Διαμέρισμα: {apartment.number}
+- Κτίριο: {building.name}
+
+Υπάρχοντες χρήστες:
+{existing_users_text}
+
+Η εγγραφή θα ολοκληρωθεί κανονικά. Αυτή η ειδοποίηση είναι μόνο για ενημέρωσή σας.
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[manager.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent new apartment user notification to {manager.email} for apartment {apartment.number}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send new apartment user notification: {e}")
             return False
 
 
