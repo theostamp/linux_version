@@ -924,6 +924,36 @@ def kiosk_register(request):
     
     kiosk_logger.info(f"Phone verified: {email} is {match_type} of apartment {apartment.number}")
     
+    # Auto-register email if not already set (Option A)
+    # Phone is the "truth evidence" - if it matches, we trust the user
+    email_updated = False
+    if match_type == 'owner':
+        if not apartment.owner_email:
+            apartment.owner_email = email
+            apartment.save(update_fields=['owner_email'])
+            email_updated = True
+            kiosk_logger.info(f"Auto-registered owner email {email} for apartment {apartment.number}")
+        elif apartment.owner_email.lower() != email.lower():
+            # Different email provided - update it (Option A: allow change)
+            old_email = apartment.owner_email
+            apartment.owner_email = email
+            apartment.save(update_fields=['owner_email'])
+            email_updated = True
+            kiosk_logger.info(f"Updated owner email from {old_email} to {email} for apartment {apartment.number}")
+    elif match_type == 'tenant':
+        if not apartment.tenant_email:
+            apartment.tenant_email = email
+            apartment.save(update_fields=['tenant_email'])
+            email_updated = True
+            kiosk_logger.info(f"Auto-registered tenant email {email} for apartment {apartment.number}")
+        elif apartment.tenant_email.lower() != email.lower():
+            # Different email provided - update it (Option A: allow change)
+            old_email = apartment.tenant_email
+            apartment.tenant_email = email
+            apartment.save(update_fields=['tenant_email'])
+            email_updated = True
+            kiosk_logger.info(f"Updated tenant email from {old_email} to {email} for apartment {apartment.number}")
+    
     # Check if there are already registered users for this apartment (Option C)
     from buildings.models import BuildingMembership
     existing_apartment_users = BuildingMembership.objects.filter(
