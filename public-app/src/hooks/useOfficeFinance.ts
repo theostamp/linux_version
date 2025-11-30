@@ -10,10 +10,14 @@ import { api } from '@/lib/api';
 export interface ExpenseCategory {
   id: number;
   name: string;
+  group_type: string;
+  group_type_display: string;
   category_type: string;
   category_type_display: string;
   icon: string;
   color: string;
+  description: string;
+  display_order: number;
   is_active: boolean;
   is_system: boolean;
 }
@@ -21,13 +25,36 @@ export interface ExpenseCategory {
 export interface IncomeCategory {
   id: number;
   name: string;
+  group_type: string;
+  group_type_display: string;
   category_type: string;
   category_type_display: string;
   icon: string;
   color: string;
+  description: string;
+  display_order: number;
+  links_to_management_expense: boolean;
   is_active: boolean;
   is_system: boolean;
 }
+
+// Group types for display
+export const EXPENSE_GROUP_LABELS: Record<string, string> = {
+  fixed: 'Πάγια Έξοδα',
+  operational: 'Λειτουργικά Έξοδα',
+  collaborators: 'Συνεργάτες & Εξωτερικοί',
+  suppliers: 'Προμηθευτές',
+  staff: 'Προσωπικό',
+  taxes_legal: 'Φόροι & Νομικά',
+  other: 'Λοιπά',
+};
+
+export const INCOME_GROUP_LABELS: Record<string, string> = {
+  building_fees: 'Αμοιβές Κτιρίων',
+  services: 'Υπηρεσίες',
+  commissions: 'Προμήθειες',
+  other: 'Λοιπά',
+};
 
 export interface OfficeExpense {
   id: number;
