@@ -155,7 +155,7 @@ h1, h2, h3, h4 {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-play), var(--font-geist-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
