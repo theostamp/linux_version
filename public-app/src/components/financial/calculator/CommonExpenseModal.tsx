@@ -161,7 +161,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      <div key={expenseSheetMonth} className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
+      <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
         {/* ✅ ΝΕΟ: Screen Header - Οριζόντια Διάταξη */}
         <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b-2 border-blue-300 p-4 no-print">
             <div className="flex items-center justify-between mb-3">

@@ -678,17 +678,19 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* Payment Notification Modal */}
-      <PaymentNotificationModal
-        isOpen={showPaymentNotificationModal}
-        onClose={handlePaymentNotificationClose}
-        apartment={selectedApartment as any}
-        onPaymentClick={() => {
-          if (selectedApartment) {
-            handlePayment(selectedApartment);
-          }
-        }}
-      />
+      {/* Payment Notification Modal - Only rendered when open */}
+      {showPaymentNotificationModal && (
+        <PaymentNotificationModal
+          isOpen={showPaymentNotificationModal}
+          onClose={handlePaymentNotificationClose}
+          apartment={selectedApartment as any}
+          onPaymentClick={() => {
+            if (selectedApartment) {
+              handlePayment(selectedApartment);
+            }
+          }}
+        />
+      )}
 
       {/* Payment Form Modal */}
       {showPaymentModal && (

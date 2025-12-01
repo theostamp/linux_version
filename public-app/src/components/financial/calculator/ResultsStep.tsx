@@ -1460,11 +1460,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
 
 
-      {/* Common Expense Modal */}
-      <CommonExpenseModal
-        key={`expense-modal-${JSON.stringify(state.shares).substring(0, 10)}-${state.totalExpenses}`}
-        isOpen={showCommonExpenseModal}
-        onClose={() => setShowCommonExpenseModal(false)}
+      {/* Common Expense Modal - Only rendered when open */}
+      {showCommonExpenseModal && (
+        <CommonExpenseModal
+          isOpen={showCommonExpenseModal}
+          onClose={() => setShowCommonExpenseModal(false)}
         state={state}
         buildingId={buildingId}
         buildingName={buildingData?.name || "Άγνωστο Κτίριο"}
@@ -1481,7 +1481,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         managementOfficePhone={user?.office_phone || ""}
         managementOfficeAddress={user?.office_address || ""}
         managementOfficeLogo={user?.office_logo || ""}
-      />
+        />
+      )}
     </div>
   );
 };
