@@ -6,6 +6,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
+import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
 import { User, Building as BuildingIcon, Settings, Calendar, Shield } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
 import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAccess, getEffectiveRole } from '@/lib/roleUtils';
@@ -133,6 +134,15 @@ export default function GlobalHeader() {
 
               {/* Right Section - Actions and User Info */}
               <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Todo Reminders Dropdown - Bell Icon */}
+              <TodoReminderDropdown 
+                className="hidden sm:flex"
+                onOpenCalendar={() => {
+                  const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
+                  window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                }}
+              />
+
               {/* Calendar Button */}
               <button
                 onClick={() => {
@@ -166,6 +176,14 @@ export default function GlobalHeader() {
                   <Settings className="w-4 h-4" />
                 </button>
               )}
+
+              {/* Todo Reminders - Mobile */}
+              <TodoReminderDropdown 
+                className="sm:hidden"
+                onOpenCalendar={() => {
+                  window.location.href = '/calendar';
+                }}
+              />
 
               {/* User Info Card */}
               {user && (
