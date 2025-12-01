@@ -33,12 +33,16 @@ import {
   useInitializeCategories,
   useCreateExpense,
   useCreateIncome,
+  useUpdateExpense,
+  useUpdateIncome,
   useExpenseCategories,
   useIncomeCategories,
   EXPENSE_GROUP_LABELS,
   INCOME_GROUP_LABELS,
   type ExpenseCategory,
-  type IncomeCategory
+  type IncomeCategory,
+  type OfficeExpense,
+  type OfficeIncome
 } from '@/hooks/useOfficeFinance';
 import { useBuildings } from '@/hooks/useBuildings';
 
@@ -194,8 +198,12 @@ function OfficeFinanceContent() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showEditIncomeModal, setShowEditIncomeModal] = useState(false);
+  const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+  const [editingIncomeId, setEditingIncomeId] = useState<number | null>(null);
   
-  // Form states
+  // Form states for create
   const [incomeForm, setIncomeForm] = useState({
     title: '',
     amount: '',
@@ -212,6 +220,26 @@ function OfficeFinanceContent() {
     category: '',
     description: '',
     is_paid: true,
+  });
+
+  // Form states for edit
+  const [editIncomeForm, setEditIncomeForm] = useState({
+    title: '',
+    amount: '',
+    date: '',
+    category: '',
+    building: '',
+    description: '',
+    status: 'pending',
+  });
+  
+  const [editExpenseForm, setEditExpenseForm] = useState({
+    title: '',
+    amount: '',
+    date: '',
+    category: '',
+    description: '',
+    is_paid: false,
   });
   
   const { 
@@ -232,6 +260,8 @@ function OfficeFinanceContent() {
   const initCategoriesMutation = useInitializeCategories();
   const createExpenseMutation = useCreateExpense();
   const createIncomeMutation = useCreateIncome();
+  const updateExpenseMutation = useUpdateExpense();
+  const updateIncomeMutation = useUpdateIncome();
   
   // Categories & Buildings for dropdowns
   const { data: expenseCategories } = useExpenseCategories();
@@ -259,13 +289,101 @@ function OfficeFinanceContent() {
   };
 
   const handleEditExpense = (id: number) => {
-    // TODO: Implement edit modal for expenses
-    toast.info(`Επεξεργασία εξόδου #${id} - Σύντομα διαθέσιμο`);
+    // Find expense from recent expenses or unpaid expenses
+    const expense = dashboardData?.recent_expenses?.find(e => e.id === id) 
+      || dashboardData?.unpaid_expenses?.find(e => e.id === id);
+    
+    if (expense) {
+      setEditingExpenseId(id);
+      setEditExpenseForm({
+        title: expense.title,
+        amount: expense.amount.toString(),
+        date: expense.date,
+        category: '', // Will need to fetch full expense for category
+        description: '',
+        is_paid: expense.is_paid,
+      });
+      setShowEditExpenseModal(true);
+    } else {
+      toast.error('Δεν βρέθηκε το έξοδο');
+    }
   };
 
   const handleEditIncome = (id: number) => {
-    // TODO: Implement edit modal for incomes
-    toast.info(`Επεξεργασία εσόδου #${id} - Σύντομα διαθέσιμο`);
+    // Find income from recent incomes or pending incomes
+    const income = dashboardData?.recent_incomes?.find(i => i.id === id)
+      || dashboardData?.pending_incomes?.find(i => i.id === id);
+    
+    if (income) {
+      setEditingIncomeId(id);
+      setEditIncomeForm({
+        title: income.title,
+        amount: income.amount.toString(),
+        date: income.date,
+        category: '',
+        building: '',
+        description: '',
+        status: 'status' in income ? income.status : 'pending',
+      });
+      setShowEditIncomeModal(true);
+    } else {
+      toast.error('Δεν βρέθηκε το έσοδο');
+    }
+  };
+
+  const handleUpdateExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpenseId || !editExpenseForm.title || !editExpenseForm.amount) {
+      toast.error('Συμπληρώστε τα υποχρεωτικά πεδία');
+      return;
+    }
+    try {
+      await updateExpenseMutation.mutateAsync({
+        id: editingExpenseId,
+        data: {
+          title: editExpenseForm.title,
+          amount: parseFloat(editExpenseForm.amount),
+          date: editExpenseForm.date,
+          category: editExpenseForm.category ? parseInt(editExpenseForm.category) : undefined,
+          description: editExpenseForm.description,
+          is_paid: editExpenseForm.is_paid,
+        },
+      });
+      toast.success('Το έξοδο ενημερώθηκε επιτυχώς');
+      setShowEditExpenseModal(false);
+      setEditingExpenseId(null);
+    } catch (error) {
+      console.error('Failed to update expense:', error);
+      toast.error('Αποτυχία ενημέρωσης εξόδου');
+    }
+  };
+
+  const handleUpdateIncome = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingIncomeId || !editIncomeForm.title || !editIncomeForm.amount) {
+      toast.error('Συμπληρώστε τα υποχρεωτικά πεδία');
+      return;
+    }
+    try {
+      await updateIncomeMutation.mutateAsync({
+        id: editingIncomeId,
+        data: {
+          title: editIncomeForm.title,
+          amount: parseFloat(editIncomeForm.amount),
+          date: editIncomeForm.date,
+          category: editIncomeForm.category ? parseInt(editIncomeForm.category) : undefined,
+          building: editIncomeForm.building ? parseInt(editIncomeForm.building) : undefined,
+          description: editIncomeForm.description,
+          status: editIncomeForm.status as 'pending' | 'received',
+        },
+      });
+      toast.success('Το έσοδο ενημερώθηκε επιτυχώς');
+      setShowEditIncomeModal(false);
+      setEditingIncomeId(null);
+    } catch (error) {
+      console.error('Failed to update income:', error);
+      toast.error('Αποτυχία ενημέρωσης εσόδου');
+    }
   };
 
   const handleInitCategories = async () => {
@@ -723,6 +841,259 @@ function OfficeFinanceContent() {
               className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 font-medium shadow-lg shadow-rose-600/20"
             >
               {createExpenseMutation.isPending ? 'Αποθήκευση...' : 'Αποθήκευση'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Income Modal */}
+      <Modal 
+        isOpen={showEditIncomeModal} 
+        onClose={() => {
+          setShowEditIncomeModal(false);
+          setEditingIncomeId(null);
+        }} 
+        title="Επεξεργασία Εσόδου" 
+        variant="success"
+      >
+        <form onSubmit={handleUpdateIncome} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <FileText className="w-4 h-4 inline mr-1.5 text-emerald-600" />
+              Τίτλος *
+            </label>
+            <input
+              type="text"
+              value={editIncomeForm.title}
+              onChange={(e) => setEditIncomeForm(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+              placeholder="π.χ. Αμοιβή διαχείρισης Ιανουαρίου"
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Euro className="w-4 h-4 inline mr-1.5 text-emerald-600" />
+                Ποσό (€) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={editIncomeForm.amount}
+                onChange={(e) => setEditIncomeForm(prev => ({ ...prev, amount: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                placeholder="0.00"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Calendar className="w-4 h-4 inline mr-1.5 text-emerald-600" />
+                Ημερομηνία
+              </label>
+              <input
+                type="date"
+                value={editIncomeForm.date}
+                onChange={(e) => setEditIncomeForm(prev => ({ ...prev, date: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Tag className="w-4 h-4 inline mr-1.5 text-emerald-600" />
+                Κατηγορία
+              </label>
+              <GroupedCategorySelect
+                value={editIncomeForm.category}
+                onChange={(value) => setEditIncomeForm(prev => ({ ...prev, category: value }))}
+                categories={incomeCategories}
+                groupLabels={INCOME_GROUP_LABELS}
+                placeholder="-- Επιλέξτε κατηγορία --"
+                className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-slate-700 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-emerald-500/30 focus:!border-emerald-500 !shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Building2 className="w-4 h-4 inline mr-1.5 text-emerald-600" />
+                Κτίριο
+              </label>
+              <select
+                value={editIncomeForm.building}
+                onChange={(e) => setEditIncomeForm(prev => ({ ...prev, building: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+              >
+                <option value="">-- Επιλέξτε --</option>
+                {buildings?.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
+            <input
+              type="checkbox"
+              id="edit_income_status"
+              checked={editIncomeForm.status === 'received'}
+              onChange={(e) => setEditIncomeForm(prev => ({ ...prev, status: e.target.checked ? 'received' : 'pending' }))}
+              className="w-5 h-5 rounded-lg border-2 border-teal-300 bg-white dark:bg-slate-800 text-teal-600 focus:ring-teal-500/50 cursor-pointer"
+            />
+            <label htmlFor="edit_income_status" className="text-sm font-medium text-teal-800 dark:text-teal-200 cursor-pointer">
+              Έχει εισπραχθεί
+            </label>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
+            <textarea
+              value={editIncomeForm.description}
+              onChange={(e) => setEditIncomeForm(prev => ({ ...prev, description: e.target.value }))}
+              rows={2}
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm resize-none"
+              placeholder="Προαιρετική περιγραφή..."
+            />
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditIncomeModal(false);
+                setEditingIncomeId(null);
+              }}
+              className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
+            >
+              Ακύρωση
+            </button>
+            <button
+              type="submit"
+              disabled={updateIncomeMutation.isPending}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 font-medium shadow-lg shadow-emerald-600/20"
+            >
+              {updateIncomeMutation.isPending ? 'Ενημέρωση...' : 'Ενημέρωση'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Expense Modal */}
+      <Modal 
+        isOpen={showEditExpenseModal} 
+        onClose={() => {
+          setShowEditExpenseModal(false);
+          setEditingExpenseId(null);
+        }} 
+        title="Επεξεργασία Εξόδου" 
+        variant="danger"
+      >
+        <form onSubmit={handleUpdateExpense} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <FileText className="w-4 h-4 inline mr-1.5 text-rose-600" />
+              Τίτλος *
+            </label>
+            <input
+              type="text"
+              value={editExpenseForm.title}
+              onChange={(e) => setEditExpenseForm(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+              placeholder="π.χ. Λογαριασμός ΔΕΗ"
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Euro className="w-4 h-4 inline mr-1.5 text-rose-600" />
+                Ποσό (€) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={editExpenseForm.amount}
+                onChange={(e) => setEditExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+                placeholder="0.00"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Calendar className="w-4 h-4 inline mr-1.5 text-rose-600" />
+                Ημερομηνία
+              </label>
+              <input
+                type="date"
+                value={editExpenseForm.date}
+                onChange={(e) => setEditExpenseForm(prev => ({ ...prev, date: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <Tag className="w-4 h-4 inline mr-1.5 text-rose-600" />
+              Κατηγορία
+            </label>
+            <GroupedCategorySelect
+              value={editExpenseForm.category}
+              onChange={(value) => setEditExpenseForm(prev => ({ ...prev, category: value }))}
+              categories={expenseCategories}
+              groupLabels={EXPENSE_GROUP_LABELS}
+              placeholder="-- Επιλέξτε κατηγορία --"
+              className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-slate-700 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-rose-500/30 focus:!border-rose-500 !shadow-sm"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
+            <textarea
+              value={editExpenseForm.description}
+              onChange={(e) => setEditExpenseForm(prev => ({ ...prev, description: e.target.value }))}
+              rows={2}
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm resize-none"
+              placeholder="Προαιρετική περιγραφή..."
+            />
+          </div>
+          
+          <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+            <input
+              type="checkbox"
+              id="edit_is_paid"
+              checked={editExpenseForm.is_paid}
+              onChange={(e) => setEditExpenseForm(prev => ({ ...prev, is_paid: e.target.checked }))}
+              className="w-5 h-5 rounded-lg border-2 border-amber-300 bg-white dark:bg-slate-800 text-amber-600 focus:ring-amber-500/50 cursor-pointer"
+            />
+            <label htmlFor="edit_is_paid" className="text-sm font-medium text-amber-800 dark:text-amber-200 cursor-pointer">
+              Έχει πληρωθεί
+            </label>
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditExpenseModal(false);
+                setEditingExpenseId(null);
+              }}
+              className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
+            >
+              Ακύρωση
+            </button>
+            <button
+              type="submit"
+              disabled={updateExpenseMutation.isPending}
+              className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 font-medium shadow-lg shadow-rose-600/20"
+            >
+              {updateExpenseMutation.isPending ? 'Ενημέρωση...' : 'Ενημέρωση'}
             </button>
           </div>
         </form>
