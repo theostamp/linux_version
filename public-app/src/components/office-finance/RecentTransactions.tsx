@@ -8,7 +8,10 @@ import {
   CheckCircle2, 
   Building2,
   CreditCard,
-  Pencil
+  Pencil,
+  Trash2,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import type { RecentExpense, RecentIncome, PendingIncome, UnpaidExpense } from '@/hooks/useOfficeFinance';
 
@@ -22,6 +25,79 @@ interface RecentTransactionsProps {
   onMarkPaid?: (id: number) => void;
   onEditExpense?: (id: number) => void;
   onEditIncome?: (id: number) => void;
+  onDeleteExpense?: (id: number) => void;
+  onDeleteIncome?: (id: number) => void;
+}
+
+// Confirmation Dialog Component
+function DeleteConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  amount,
+  type
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  amount: number;
+  type: 'expense' | 'income';
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in zoom-in-95 duration-200">
+        {/* Icon */}
+        <div className="flex justify-center mb-4">
+          <div className="p-3 rounded-full bg-rose-100 dark:bg-rose-900/30">
+            <AlertTriangle className="w-8 h-8 text-rose-600" />
+          </div>
+        </div>
+        
+        {/* Title */}
+        <h3 className="text-lg font-semibold text-center text-slate-900 dark:text-slate-100 mb-2">
+          Διαγραφή {type === 'expense' ? 'Εξόδου' : 'Εσόδου'}
+        </h3>
+        
+        {/* Message */}
+        <p className="text-center text-slate-600 dark:text-slate-400 mb-2">
+          Είστε σίγουροι ότι θέλετε να διαγράψετε:
+        </p>
+        <div className="text-center p-3 bg-slate-100 dark:bg-slate-800 rounded-lg mb-4">
+          <p className="font-medium text-slate-900 dark:text-slate-100">{title}</p>
+          <p className={`text-lg font-bold ${type === 'expense' ? 'text-rose-600' : 'text-teal-600'}`}>
+            {type === 'expense' ? '-' : '+'}{new Intl.NumberFormat('el-GR', {
+              style: 'currency',
+              currency: 'EUR',
+            }).format(amount)}
+          </p>
+        </div>
+        <p className="text-center text-sm text-rose-600 dark:text-rose-400 mb-6">
+          Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
+        </p>
+        
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors font-medium"
+          >
+            Ακύρωση
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2.5 text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors font-medium shadow-lg shadow-rose-600/20"
+          >
+            Διαγραφή
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function formatCurrency(value: number): string {
@@ -51,9 +127,33 @@ export function RecentTransactions({
   onMarkReceived,
   onMarkPaid,
   onEditExpense,
-  onEditIncome
+  onEditIncome,
+  onDeleteExpense,
+  onDeleteIncome
 }: RecentTransactionsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    id: number;
+    title: string;
+    amount: number;
+    type: 'expense' | 'income';
+  } | null>(null);
+
+  const handleDeleteClick = (id: number, title: string, amount: number, type: 'expense' | 'income') => {
+    setDeleteDialog({ isOpen: true, id, title, amount, type });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteDialog) return;
+    
+    if (deleteDialog.type === 'expense') {
+      onDeleteExpense?.(deleteDialog.id);
+    } else {
+      onDeleteIncome?.(deleteDialog.id);
+    }
+    setDeleteDialog(null);
+  };
 
   const tabs: { id: TabType; label: string; count?: number }[] = [
     { id: 'all', label: 'Όλα' },
@@ -330,12 +430,44 @@ export function RecentTransactions({
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
                   )}
+
+                  {/* Delete button */}
+                  {(isExpense || isUnpaid) && onDeleteExpense && (
+                    <button
+                      onClick={() => handleDeleteClick(transaction.id, transaction.title, transaction.amount, 'expense')}
+                      className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-200 dark:hover:bg-rose-900/50 hover:text-rose-600 transition-all"
+                      title="Διαγραφή"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {(isIncome || isPending) && onDeleteIncome && (
+                    <button
+                      onClick={() => handleDeleteClick(transaction.id, transaction.title, transaction.amount, 'income')}
+                      className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-200 dark:hover:bg-rose-900/50 hover:text-rose-600 transition-all"
+                      title="Διαγραφή"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialog && (
+        <DeleteConfirmDialog
+          isOpen={deleteDialog.isOpen}
+          onClose={() => setDeleteDialog(null)}
+          onConfirm={handleConfirmDelete}
+          title={deleteDialog.title}
+          amount={deleteDialog.amount}
+          type={deleteDialog.type}
+        />
+      )}
     </div>
   );
 }

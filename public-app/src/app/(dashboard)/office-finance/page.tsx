@@ -35,6 +35,8 @@ import {
   useCreateIncome,
   useUpdateExpense,
   useUpdateIncome,
+  useDeleteExpense,
+  useDeleteIncome,
   useExpenseCategories,
   useIncomeCategories,
   EXPENSE_GROUP_LABELS,
@@ -262,6 +264,8 @@ function OfficeFinanceContent() {
   const createIncomeMutation = useCreateIncome();
   const updateExpenseMutation = useUpdateExpense();
   const updateIncomeMutation = useUpdateIncome();
+  const deleteExpenseMutation = useDeleteExpense();
+  const deleteIncomeMutation = useDeleteIncome();
   
   // Categories & Buildings for dropdowns
   const { data: expenseCategories } = useExpenseCategories();
@@ -383,6 +387,26 @@ function OfficeFinanceContent() {
     } catch (error) {
       console.error('Failed to update income:', error);
       toast.error('Αποτυχία ενημέρωσης εσόδου');
+    }
+  };
+
+  const handleDeleteExpense = async (id: number) => {
+    try {
+      await deleteExpenseMutation.mutateAsync(id);
+      toast.success('Το έξοδο διαγράφηκε επιτυχώς');
+    } catch (error) {
+      console.error('Failed to delete expense:', error);
+      toast.error('Αποτυχία διαγραφής εξόδου');
+    }
+  };
+
+  const handleDeleteIncome = async (id: number) => {
+    try {
+      await deleteIncomeMutation.mutateAsync(id);
+      toast.success('Το έσοδο διαγράφηκε επιτυχώς');
+    } catch (error) {
+      console.error('Failed to delete income:', error);
+      toast.error('Αποτυχία διαγραφής εσόδου');
     }
   };
 
@@ -591,6 +615,8 @@ function OfficeFinanceContent() {
         onMarkPaid={handleMarkPaid}
         onEditExpense={handleEditExpense}
         onEditIncome={handleEditIncome}
+        onDeleteExpense={handleDeleteExpense}
+        onDeleteIncome={handleDeleteIncome}
       />
 
       {/* Quick Stats Footer */}
