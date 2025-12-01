@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.db import models
+from django.db import models, connection
 
 from .models import KioskWidget, KioskDisplaySettings, KioskScene, WidgetPlacement
 from .serializers import (
@@ -968,17 +968,55 @@ def kiosk_register(request):
     # Check if user already exists
     existing_user = CustomUser.objects.filter(email=email).first()
     if existing_user:
-        # User exists - send login link instead
-        kiosk_logger.info(f"User {email} already exists, sending login link")
+        # User exists - ensure they have access to this building and apartment
+        kiosk_logger.info(f"User {email} already exists, ensuring building access")
+        
         try:
-            # Send login reminder email
-            EmailService.send_login_reminder_email(existing_user, building)
+            from django_tenants.utils import schema_context
+            from buildings.models import BuildingMembership
+            
+            # Get tenant from current connection or user
+            tenant = None
+            if hasattr(existing_user, 'tenant') and existing_user.tenant:
+                tenant = existing_user.tenant
+            elif hasattr(connection, 'tenant') and connection.tenant:
+                tenant = connection.tenant
+            
+            if tenant:
+                with schema_context(tenant.schema_name):
+                    # Check/Create BuildingMembership
+                    membership, created = BuildingMembership.objects.get_or_create(
+                        resident=existing_user,
+                        building=building,
+                        defaults={'role': 'resident'}
+                    )
+                    if created:
+                        kiosk_logger.info(f"Created BuildingMembership for {email} in building {building.name}")
+                    
+                    # Link user to apartment based on match_type
+                    if match_type == 'owner':
+                        if apartment.owner_user != existing_user:
+                            apartment.owner_user = existing_user
+                            apartment.save(update_fields=['owner_user'])
+                            kiosk_logger.info(f"Linked {email} as owner_user of apartment {apartment.number}")
+                    elif match_type == 'tenant':
+                        if apartment.tenant_user != existing_user:
+                            apartment.tenant_user = existing_user
+                            apartment.is_rented = True
+                            apartment.save(update_fields=['tenant_user', 'is_rented'])
+                            kiosk_logger.info(f"Linked {email} as tenant_user of apartment {apartment.number}")
+            else:
+                kiosk_logger.warning(f"No tenant found for user {email}, skipping building/apartment linking")
+            
+            # Send magic login email with direct link to my-apartment
+            EmailService.send_magic_login_email(existing_user, building, apartment)
             return Response({
-                'message': 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για οδηγίες σύνδεσης.',
-                'status': 'existing_user'
+                'message': 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για να μεταβείτε απευθείας στο διαμέρισμά σας.',
+                'status': 'existing_user',
+                'apartment': apartment.number
             })
         except Exception as e:
-            kiosk_logger.error(f"Error sending login reminder: {e}")
+            kiosk_logger.error(f"Error processing existing user: {e}")
             return Response({
                 'message': 'Έχετε ήδη λογαριασμό. Χρησιμοποιήστε την επιλογή "Ξέχασα τον κωδικό μου" για να συνδεθείτε.',
                 'status': 'existing_user'

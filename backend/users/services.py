@@ -742,6 +742,107 @@ Email: {invitation.email}
             return False
 
     @staticmethod
+    def send_magic_login_email(user, building, apartment=None):
+        """
+        Send magic login email that allows user to login directly and go to my-apartment.
+        Creates a one-time token for automatic authentication.
+        """
+        from django.db import connection
+        from rest_framework_simplejwt.tokens import RefreshToken
+        
+        # Create a refresh token for the user
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        
+        # Get tenant subdomain for the login URL
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the magic login URL
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            magic_url = f"https://{tenant_subdomain}.newconcierge.app/magic-login?token={access_token}"
+        else:
+            magic_url = f"{base_url}/magic-login?token={access_token}"
+        
+        apartment_info = f" στο διαμέρισμα <strong>{apartment.number}</strong>" if apartment else ""
+        apartment_info_text = f" στο διαμέρισμα {apartment.number}" if apartment else ""
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Σύνδεση - {building.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Καλωσήρθατε, {user.first_name or user.email}! 🎉</h2>
+                
+                <p>Έχετε ήδη λογαριασμό στο <strong>{building.name}</strong>{apartment_info}.</p>
+                
+                <p>Πατήστε το κουμπί παρακάτω για να συνδεθείτε αυτόματα και να δείτε το διαμέρισμά σας:</p>
+                
+                <p style="text-align: center;">
+                    <a href="{magic_url}" 
+                       style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+                              color: white; padding: 18px 40px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-size: 18px; font-weight: bold; margin: 15px 0;
+                              box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);">
+                        🏠 Δείτε το Διαμέρισμά σας
+                    </a>
+                </p>
+                
+                <p style="text-align: center; color: #888; font-size: 13px;">
+                    Αυτός ο σύνδεσμος λήγει σε 1 ώρα για λόγους ασφαλείας.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Καλωσήρθατε, {user.first_name or user.email}!
+
+Έχετε ήδη λογαριασμό στο {building.name}{apartment_info_text}.
+
+Πατήστε τον σύνδεσμο για να συνδεθείτε αυτόματα:
+{magic_url}
+
+Ο σύνδεσμος λήγει σε 1 ώρα για λόγους ασφαλείας.
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent magic login email to {user.email} for building {building.name}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send magic login email to {user.email}: {e}")
+            return False
+
+    @staticmethod
     def send_new_apartment_user_notification(invitation, building, apartment, existing_users, manager):
         """
         Notify admin when a new user registers for an apartment that already has registered users.
