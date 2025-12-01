@@ -1396,7 +1396,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <Button 
                 onClick={() => {
                   setIsActionsPopoverOpen(false);
-                  setShowCommonExpenseModal(true);
+                  // Small delay to ensure popover is fully closed before opening modal
+                  setTimeout(() => setShowCommonExpenseModal(true), 50);
                 }}
                 variant="ghost"
                 className="justify-start h-auto py-3 px-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 group"
