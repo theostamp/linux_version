@@ -172,6 +172,26 @@ class OfficeExpenseViewSet(viewsets.ModelViewSet):
             month=int(month) if month else None
         )
         return Response(data)
+    
+    @action(detail=False, methods=['get'])
+    def unpaid(self, request):
+        """Απλήρωτα έξοδα."""
+        data = office_finance_service.get_unpaid_expenses()
+        return Response(data)
+    
+    @action(detail=True, methods=['post'])
+    def mark_paid(self, request, pk=None):
+        """Σημείωση εξόδου ως πληρωμένο."""
+        from django.utils import timezone
+        
+        instance = self.get_object()
+        instance.is_paid = True
+        instance.paid_date = request.data.get('paid_date', timezone.now().date())
+        instance.payment_method = request.data.get('payment_method', 'bank_transfer')
+        instance.save()
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class OfficeIncomeViewSet(viewsets.ModelViewSet):

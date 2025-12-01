@@ -177,6 +177,15 @@ export interface PendingIncome {
   client_name: string;
 }
 
+export interface UnpaidExpense {
+  id: number;
+  title: string;
+  amount: number;
+  date: string;
+  category_name: string | null;
+  supplier_name: string;
+}
+
 export interface RecentExpense {
   id: number;
   title: string;
@@ -203,6 +212,7 @@ export interface OfficeFinanceDashboard {
   income_by_building: IncomeByBuilding[];
   expenses_by_category: ExpensesByCategory[];
   pending_incomes: PendingIncome[];
+  unpaid_expenses: UnpaidExpense[];
   recent_expenses: RecentExpense[];
   recent_incomes: RecentIncome[];
   generated_at: string;
@@ -403,6 +413,31 @@ export function useMarkIncomeReceived() {
     }) => {
       return await api.post(`/office-finance/incomes/${id}/mark_received/`, {
         received_date,
+        payment_method,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['office-finance'] });
+    },
+  });
+}
+
+// Mark Expense as Paid Mutation
+export function useMarkExpensePaid() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      paid_date, 
+      payment_method 
+    }: { 
+      id: number; 
+      paid_date?: string; 
+      payment_method?: string;
+    }) => {
+      return await api.post(`/office-finance/expenses/${id}/mark_paid/`, {
+        paid_date,
         payment_method,
       });
     },

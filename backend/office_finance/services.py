@@ -313,6 +313,27 @@ class OfficeFinanceService:
         ]
     
     @staticmethod
+    def get_unpaid_expenses() -> list:
+        """
+        Επιστρέφει απλήρωτα έξοδα.
+        """
+        queryset = OfficeExpense.objects.filter(
+            is_paid=False
+        ).select_related('category').order_by('date')[:20]
+        
+        return [
+            {
+                'id': item.id,
+                'title': item.title,
+                'amount': float(item.amount),
+                'date': item.date.isoformat(),
+                'category_name': item.category.name if item.category else None,
+                'supplier_name': item.supplier_name,
+            }
+            for item in queryset
+        ]
+    
+    @staticmethod
     def get_dashboard_data() -> dict:
         """
         Επιστρέφει όλα τα δεδομένα για το dashboard.
@@ -341,6 +362,7 @@ class OfficeFinanceService:
                 month=today.month
             ),
             'pending_incomes': OfficeFinanceService.get_pending_incomes(),
+            'unpaid_expenses': OfficeFinanceService.get_unpaid_expenses(),
             'recent_expenses': [
                 {
                     'id': e.id,

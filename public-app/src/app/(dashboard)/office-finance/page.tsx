@@ -29,6 +29,7 @@ import {
   useOfficeFinanceDashboard,
   useYearlySummary,
   useMarkIncomeReceived,
+  useMarkExpensePaid,
   useInitializeCategories,
   useCreateExpense,
   useCreateIncome,
@@ -191,6 +192,7 @@ function OfficeFinanceContent() {
   } = useYearlySummary(selectedYear);
   
   const markReceivedMutation = useMarkIncomeReceived();
+  const markPaidMutation = useMarkExpensePaid();
   const initCategoriesMutation = useInitializeCategories();
   const createExpenseMutation = useCreateExpense();
   const createIncomeMutation = useCreateIncome();
@@ -203,8 +205,20 @@ function OfficeFinanceContent() {
   const handleMarkReceived = async (id: number) => {
     try {
       await markReceivedMutation.mutateAsync({ id });
+      toast.success('Το έσοδο σημειώθηκε ως εισπραχθέν');
     } catch (error) {
       console.error('Failed to mark income as received:', error);
+      toast.error('Αποτυχία ενημέρωσης εσόδου');
+    }
+  };
+
+  const handleMarkPaid = async (id: number) => {
+    try {
+      await markPaidMutation.mutateAsync({ id });
+      toast.success('Το έξοδο σημειώθηκε ως πληρωμένο');
+    } catch (error) {
+      console.error('Failed to mark expense as paid:', error);
+      toast.error('Αποτυχία ενημέρωσης εξόδου');
     }
   };
 
@@ -407,13 +421,15 @@ function OfficeFinanceContent() {
         recentExpenses={dashboardData?.recent_expenses || null}
         recentIncomes={dashboardData?.recent_incomes || null}
         pendingIncomes={dashboardData?.pending_incomes || null}
+        unpaidExpenses={dashboardData?.unpaid_expenses || null}
         isLoading={isDashboardLoading}
         onMarkReceived={handleMarkReceived}
+        onMarkPaid={handleMarkPaid}
       />
 
       {/* Quick Stats Footer */}
       {dashboardData && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-card/50 rounded-xl border border-border">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-card/50 rounded-xl border border-border">
           <div className="text-center">
             <p className="text-2xl font-bold text-foreground">
               {dashboardData.income_by_building?.length || 0}
@@ -431,6 +447,12 @@ function OfficeFinanceContent() {
               {dashboardData.pending_incomes?.length || 0}
             </p>
             <p className="text-sm text-muted-foreground">Εκκρεμή έσοδα</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-amber-500">
+              {dashboardData.unpaid_expenses?.length || 0}
+            </p>
+            <p className="text-sm text-muted-foreground">Προς πληρωμή</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-success">

@@ -6,16 +6,19 @@ import {
   ArrowUpRight, 
   Clock, 
   CheckCircle2, 
-  Building2
+  Building2,
+  CreditCard
 } from 'lucide-react';
-import type { RecentExpense, RecentIncome, PendingIncome } from '@/hooks/useOfficeFinance';
+import type { RecentExpense, RecentIncome, PendingIncome, UnpaidExpense } from '@/hooks/useOfficeFinance';
 
 interface RecentTransactionsProps {
   recentExpenses: RecentExpense[] | null;
   recentIncomes: RecentIncome[] | null;
   pendingIncomes: PendingIncome[] | null;
+  unpaidExpenses: UnpaidExpense[] | null;
   isLoading?: boolean;
   onMarkReceived?: (id: number) => void;
+  onMarkPaid?: (id: number) => void;
 }
 
 function formatCurrency(value: number): string {
@@ -34,14 +37,16 @@ function formatDate(dateString: string): string {
   }).format(date);
 }
 
-type TabType = 'all' | 'incomes' | 'expenses' | 'pending';
+type TabType = 'all' | 'incomes' | 'expenses' | 'pending' | 'unpaid';
 
 export function RecentTransactions({ 
   recentExpenses, 
   recentIncomes, 
   pendingIncomes,
+  unpaidExpenses,
   isLoading,
-  onMarkReceived 
+  onMarkReceived,
+  onMarkPaid
 }: RecentTransactionsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
@@ -49,7 +54,8 @@ export function RecentTransactions({
     { id: 'all', label: 'Όλα' },
     { id: 'incomes', label: 'Έσοδα', count: recentIncomes?.length },
     { id: 'expenses', label: 'Έξοδα', count: recentExpenses?.length },
-    { id: 'pending', label: 'Εκκρεμή', count: pendingIncomes?.length },
+    { id: 'pending', label: 'Εκκρεμή Είσπραξη', count: pendingIncomes?.length },
+    { id: 'unpaid', label: 'Προς Πληρωμή', count: unpaidExpenses?.length },
   ];
 
   if (isLoading) {
@@ -94,6 +100,8 @@ export function RecentTransactions({
         return recentExpenses?.map(e => ({ ...e, type: 'expense' as const })) || [];
       case 'pending':
         return pendingIncomes?.map(p => ({ ...p, type: 'pending' as const })) || [];
+      case 'unpaid':
+        return unpaidExpenses?.map(u => ({ ...u, type: 'unpaid' as const })) || [];
       default:
         return allTransactions;
     }
@@ -155,6 +163,7 @@ export function RecentTransactions({
             const isIncome = transaction.type === 'income';
             const isExpense = transaction.type === 'expense';
             const isPending = transaction.type === 'pending';
+            const isUnpaid = transaction.type === 'unpaid';
 
             return (
               <div
@@ -165,12 +174,16 @@ export function RecentTransactions({
                 <div className={`p-2.5 rounded-full ${
                   isPending 
                     ? 'bg-primary/10' 
-                    : isIncome 
-                      ? 'bg-teal-500/10' 
-                      : 'bg-rose-500/10'
+                    : isUnpaid
+                      ? 'bg-amber-500/10'
+                      : isIncome 
+                        ? 'bg-teal-500/10' 
+                        : 'bg-rose-500/10'
                 }`}>
                   {isPending ? (
                     <Clock className="w-4 h-4 text-primary" />
+                  ) : isUnpaid ? (
+                    <CreditCard className="w-4 h-4 text-amber-600" />
                   ) : isIncome ? (
                     <ArrowDownLeft className="w-4 h-4 text-teal-600" />
                   ) : (
@@ -184,7 +197,7 @@ export function RecentTransactions({
                     <span className="text-sm font-medium text-foreground truncate">
                       {transaction.title}
                     </span>
-                    {!isPending && 'status' in transaction && (
+                    {!isPending && !isUnpaid && 'status' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
                         transaction.status === 'received' 
                           ? 'bg-teal-500/10 text-teal-600'
@@ -203,6 +216,11 @@ export function RecentTransactions({
                           : 'bg-amber-500/10 text-amber-600'
                       }`}>
                         {transaction.is_paid ? 'Πληρώθηκε' : 'Απλήρωτο'}
+                      </span>
+                    )}
+                    {isUnpaid && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600">
+                        Προς Πληρωμή
                       </span>
                     )}
                   </div>
@@ -227,6 +245,14 @@ export function RecentTransactions({
                         </span>
                       </>
                     )}
+                    {'supplier_name' in transaction && transaction.supplier_name && (
+                      <>
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {transaction.supplier_name}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -235,9 +261,11 @@ export function RecentTransactions({
                   <span className={`text-sm font-semibold ${
                     isPending 
                       ? 'text-primary' 
-                      : isIncome 
-                        ? 'text-teal-600' 
-                        : 'text-rose-600'
+                      : isUnpaid
+                        ? 'text-amber-600'
+                        : isIncome 
+                          ? 'text-teal-600' 
+                          : 'text-rose-600'
                   }`}>
                     {isPending || isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </span>
@@ -249,6 +277,15 @@ export function RecentTransactions({
                     onClick={() => onMarkReceived(transaction.id)}
                     className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 transition-all"
                     title="Σημείωση ως εισπραχθέν"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                )}
+                {isUnpaid && onMarkPaid && (
+                  <button
+                    onClick={() => onMarkPaid(transaction.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 transition-all"
+                    title="Σημείωση ως πληρωμένο"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                   </button>
