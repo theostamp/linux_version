@@ -6,14 +6,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-comp
 // your app's Firebase config object.
 // https://firebase.google.com/docs/web/setup#config-object
 const firebaseConfig = {
-  // These values are injected or hardcoded here because SW doesn't access .env.local directly usually
-  // For production, you might need a build step or hardcode/fetch config
-  apiKey: "REPLACE_WITH_YOUR_API_KEY",
-  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_SENDER_ID",
-  appId: "REPLACE_WITH_YOUR_APP_ID",
+  apiKey: "AIzaSyBfuDwTuh2laCsiJoQxmFAwK5QSHUDqZH8",
+  authDomain: "auth-django-414207.firebaseapp.com",
+  projectId: "auth-django-414207",
+  storageBucket: "auth-django-414207.firebasestorage.app",
+  messagingSenderId: "549447386263",
+  appId: "1:549447386263:web:c2bd717b34b3db074995d2",
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -31,4 +29,3 @@ messaging.onBackgroundMessage(function(payload) {
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
-
