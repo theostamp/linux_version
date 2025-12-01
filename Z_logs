@@ -1,27 +1,1519 @@
-﻿﻿[ReactQueryProvider] Setting up global refresh system
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [Global Refresh] Query client registered
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [Global Refresh] Initializing global refresh system
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Current pathname: /kiosk/complete-registration
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is Dashboard: false
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is Kiosk Mode: true
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is Info Screen: false
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is No Sidebar Route: false
-kiosk/complete-regis…af24-cfd4c4453ba8:1 [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) 
-kiosk/complete-regis…af24-cfd4c4453ba8:1 [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) 
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AuthContext] loadUserOnMount starting...
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 AuthContext: Fetching current user
-52e1bc43533497b6.js?…WBs57KSoPdjp7amTK:1 [API CALL] Attempting to fetch /api/users/me/
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AuthContext] Token check interval disabled to debug hanging issue
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Current pathname: /my-apartment
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is Dashboard: true
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is Kiosk Mode: false
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is Info Screen: false
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AppProviders] Is No Sidebar Route: false
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 AuthContext: Current user fetched successfully: thodoris_st@hotmail.com
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [BuildingContext] User has no tenant, stopping loading
-45c35efe3f457abe.js?…WBs57KSoPdjp7amTK:1 [AuthContext] Token check interval disabled to debug hanging issue
-api/financial/my-apartment:1 
- Failed to load resource: the server responded with a status of 404 ()
+﻿﻿2025-12-01T19:39:26.788672082Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:26.788678524Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.788684695Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:26.788692163Z [err]  DEBUG 2025-12-01 21:39:26,787 monthly_balance_service 18 139639473646464    🔧 Προγραμματισμένα έργα: €0.00
+2025-12-01T19:39:26.793116931Z [err]  INFO 2025-12-01 21:39:26,791 monthly_balance_service 18 139639473646464    ✅ Ενημερώθηκε υπάρχον record για 12/2025
+2025-12-01T19:39:26.820844183Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.820854123Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.820861915Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:39:26.820867501Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:39:26.834458612Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:39:26.834466785Z [inf]     Previous Balance: €170.04
+2025-12-01T19:39:26.834472382Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:39:26.834477346Z [inf]       - Resident: €23.60
+2025-12-01T19:39:26.834482359Z [inf]       - Owner: €78.00
+2025-12-01T19:39:26.834488045Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:39:26.834496729Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.834501939Z [inf]     Net Obligation: €271.64
+2025-12-01T19:39:26.844075940Z [inf]  📊 Apartment 1 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.844084944Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.844091162Z [inf]     Apartment ratio: 100/1000
+2025-12-01T19:39:26.844095452Z [inf]     Apartment previous_balance: €327.00
+2025-12-01T19:39:26.863236611Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.863247849Z [inf]     Net Obligation: €515.00
+2025-12-01T19:39:26.863268398Z [inf]  📊 Apartment 1 - 2025-12:
+2025-12-01T19:39:26.863273517Z [inf]     Previous Balance: €327.00
+2025-12-01T19:39:26.863278878Z [inf]     Current Month Expenses: €188.00
+2025-12-01T19:39:26.863286974Z [inf]       - Resident: €38.00
+2025-12-01T19:39:26.863294008Z [inf]       - Owner: €150.00
+2025-12-01T19:39:26.863299457Z [inf]     Reserve Fund Share: €50.00
+2025-12-01T19:39:26.865219884Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.865228922Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.865234551Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:39:26.865239737Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:39:26.876100929Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:39:26.876104869Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.876109599Z [inf]     Previous Balance: €192.93
+2025-12-01T19:39:26.876115464Z [inf]     Net Obligation: €307.13
+2025-12-01T19:39:26.876116798Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:39:26.876139003Z [inf]       - Resident: €25.70
+2025-12-01T19:39:26.876163601Z [inf]       - Owner: €88.50
+2025-12-01T19:39:26.876170232Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:39:26.883092653Z [inf]  📊 Apartment 10 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.883100753Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.883107985Z [inf]     Apartment ratio: 68/1000
+2025-12-01T19:39:26.883113947Z [inf]     Apartment previous_balance: €222.36
+2025-12-01T19:39:26.895007739Z [inf]  📊 Apartment 10 - 2025-12:
+2025-12-01T19:39:26.895018404Z [inf]     Previous Balance: €222.36
+2025-12-01T19:39:26.895024593Z [inf]     Current Month Expenses: €130.40
+2025-12-01T19:39:26.895030187Z [inf]       - Resident: €28.40
+2025-12-01T19:39:26.895035903Z [inf]       - Owner: €102.00
+2025-12-01T19:39:26.895041492Z [inf]     Reserve Fund Share: €34.00
+2025-12-01T19:39:26.895046709Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.895051098Z [inf]     Net Obligation: €352.76
+2025-12-01T19:39:26.903321793Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.903330434Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.903336866Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:39:26.903342811Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:39:26.920274205Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:39:26.920288285Z [inf]     Previous Balance: €245.25
+2025-12-01T19:39:26.920295617Z [inf]     Current Month Expenses: €143.00
+2025-12-01T19:39:26.920302390Z [inf]       - Resident: €30.50
+2025-12-01T19:39:26.920308789Z [inf]       - Owner: €112.50
+2025-12-01T19:39:26.920315199Z [inf]     Reserve Fund Share: €37.50
+2025-12-01T19:39:26.920322181Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.920329228Z [inf]     Net Obligation: €388.25
+2025-12-01T19:39:26.926203773Z [inf]  📊 Apartment 11 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.926218201Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.926224865Z [inf]     Apartment ratio: 63/1000
+2025-12-01T19:39:26.926231007Z [inf]     Apartment previous_balance: €206.01
+2025-12-01T19:39:26.941978733Z [inf]  📊 Apartment 11 - 2025-12:
+2025-12-01T19:39:26.941984160Z [inf]     Previous Balance: €206.01
+2025-12-01T19:39:26.941990438Z [inf]     Current Month Expenses: €121.40
+2025-12-01T19:39:26.941997376Z [inf]       - Resident: €26.90
+2025-12-01T19:39:26.942002403Z [inf]       - Owner: €94.50
+2025-12-01T19:39:26.942006930Z [inf]     Reserve Fund Share: €31.50
+2025-12-01T19:39:26.942011159Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.942015441Z [inf]     Net Obligation: €327.41
+2025-12-01T19:39:26.943443822Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.943455008Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.943461529Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:39:26.943467758Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:39:26.961607461Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:39:26.961613579Z [inf]     Previous Balance: €186.39
+2025-12-01T19:39:26.961619280Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:39:26.961624938Z [inf]       - Resident: €25.10
+2025-12-01T19:39:26.961630724Z [inf]       - Owner: €85.50
+2025-12-01T19:39:26.961636667Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:39:26.961642429Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.961648309Z [inf]     Net Obligation: €296.99
+2025-12-01T19:39:26.963324577Z [inf]  📊 Apartment 12 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:26.963329590Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:26.963333421Z [inf]     Apartment ratio: 49/1000
+2025-12-01T19:39:26.963337176Z [inf]     Apartment previous_balance: €160.23
+2025-12-01T19:39:26.978026520Z [inf]  📊 Apartment 12 - 2025-12:
+2025-12-01T19:39:26.978035965Z [inf]     Previous Balance: €160.23
+2025-12-01T19:39:26.978041207Z [inf]     Current Month Expenses: €96.20
+2025-12-01T19:39:26.978045880Z [inf]       - Resident: €22.70
+2025-12-01T19:39:26.978050583Z [inf]       - Owner: €73.50
+2025-12-01T19:39:26.978055512Z [inf]     Reserve Fund Share: €24.50
+2025-12-01T19:39:26.978060142Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:26.978064212Z [inf]     Net Obligation: €256.43
+2025-12-01T19:39:26.978068357Z [inf]  🔍 Monthly Activity Check for 2025-12:
+2025-12-01T19:39:26.978073425Z [inf]     📤 Has expenses: True
+2025-12-01T19:39:26.978077754Z [inf]     📥 Has payments: False
+2025-12-01T19:39:26.978081991Z [inf]     📋 Has issued expenses: True
+2025-12-01T19:39:26.978087969Z [inf]     ✅ Overall activity: True
+2025-12-01T19:39:26.978092274Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): current_reserve=-6430.00, total_obligations=21619.97
+2025-12-01T19:39:26.978097040Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): total_balance=-2540.00
+2025-12-01T19:39:26.986652368Z [inf]  ✅ Previous obligations for 2025-12: €3270.00
+2025-12-01T19:39:26.986658266Z [inf]     (από MonthlyBalance 11/2025 carry_forward)
+2025-12-01T19:39:26.986662554Z [inf]  🔧 TOTAL BALANCE: current_reserve=-6430.00 - current_obligations=5190.00 = -11620.00
+2025-12-01T19:39:26.986666701Z [inf]  🔧 CURRENT MONTH EXPENSES: 1920.00 = 5190.00 - 3270.00
+2025-12-01T19:39:26.999795183Z [inf]  🔍 calculate_advanced: Calculation successful, result keys: ['shares', 'expense_totals', 'expense_details', 'heating_costs', 'reserve_contribution', 'reserve_fund_goal', 'reserve_fund_duration', 'current_reserve', 'actual_reserve_collected', 'management_fee_per_apartment', 'total_apartments', 'calculation_date', 'reserve_fund_start_date', 'reserve_fund_target_date']
+2025-12-01T19:39:27.004561168Z [inf]  📊 Apartment 13 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.004569696Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.004576348Z [inf]     Apartment ratio: 69/1000
+2025-12-01T19:39:27.004582076Z [inf]     Apartment previous_balance: €225.63
+2025-12-01T19:39:27.004587446Z [inf]  100.64.0.5 - - [01/Dec/2025:21:39:26 +0200] "POST /api/financial/common-expenses/calculate_advanced/ HTTP/1.1" 200 12291 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:27.007849910Z [err]  DEBUG 2025-12-01 21:39:27,004 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:27.007858289Z [err]  DEBUG 2025-12-01 21:39:27,004 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:27.009680838Z [err]  INFO 2025-12-01 21:39:27,007 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:27.018445822Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-12-01T19:39:27.018456494Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-12-01T19:39:27.018463276Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.018469657Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-12-01T19:39:27.018475783Z [err]      response = self.handle_exception(exc)
+2025-12-01T19:39:27.018482772Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.018487493Z [err]  ERROR 2025-12-01 21:39:27,011 log 19 139639473646464 Internal Server Error: /api/todos/notifications/
+2025-12-01T19:39:27.018490297Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-12-01T19:39:27.018496044Z [err]  Traceback (most recent call last):
+2025-12-01T19:39:27.018497571Z [err]      self.raise_uncaught_exception(exc)
+2025-12-01T19:39:27.018501205Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-12-01T19:39:27.018505341Z [err]      response = get_response(request)
+2025-12-01T19:39:27.018514033Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.018518233Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-12-01T19:39:27.018522736Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-12-01T19:39:27.018526880Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.018531019Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-12-01T19:39:27.018536679Z [err]      return view_func(request, *args, **kwargs)
+2025-12-01T19:39:27.018549290Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.020481102Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-12-01T19:39:27.020486122Z [inf]     Current Month Expenses: €132.20
+2025-12-01T19:39:27.020488359Z [err]      raise exc
+2025-12-01T19:39:27.020493292Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-12-01T19:39:27.020495084Z [inf]       - Resident: €28.70
+2025-12-01T19:39:27.020498411Z [err]      response = handler(request, *args, **kwargs)
+2025-12-01T19:39:27.020502848Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.020508352Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/mixins.py", line 38, in list
+2025-12-01T19:39:27.020518289Z [err]      queryset = self.filter_queryset(self.get_queryset())
+2025-12-01T19:39:27.020527572Z [err]                                      ^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.020531765Z [err]    File "/app/todo_management/views.py", line 253, in get_queryset
+2025-12-01T19:39:27.020536277Z [err]      qs = filter_queryset_by_user_and_building(self.request, qs, model_field="todo__building")
+2025-12-01T19:39:27.020540133Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.020544217Z [err]  TypeError: filter_queryset_by_user_and_building() got an unexpected keyword argument 'model_field'
+2025-12-01T19:39:27.020548597Z [inf]  100.64.0.2 - - [01/Dec/2025:21:39:27 +0200] "GET /api/todos/notifications/?building=2 HTTP/1.1" 500 145 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:27.020552596Z [inf]  📊 Apartment 13 - 2025-12:
+2025-12-01T19:39:27.020557994Z [inf]     Previous Balance: €225.63
+2025-12-01T19:39:27.021917529Z [err]  DEBUG 2025-12-01 21:39:27,014 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:27.021920022Z [inf]       - Owner: €103.50
+2025-12-01T19:39:27.021925234Z [err]  INFO 2025-12-01 21:39:27,016 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:27.021931277Z [inf]     Reserve Fund Share: €34.50
+2025-12-01T19:39:27.021940160Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.021946889Z [inf]     Net Obligation: €357.83
+2025-12-01T19:39:27.021953671Z [err]  DEBUG 2025-12-01 21:39:27,014 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:27.024365864Z [err]      response = self.handle_exception(exc)
+2025-12-01T19:39:27.024374671Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.024379652Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-12-01T19:39:27.024384191Z [err]      self.raise_uncaught_exception(exc)
+2025-12-01T19:39:27.024463323Z [err]  ERROR 2025-12-01 21:39:27,020 log 19 139639473646464 Internal Server Error: /api/todos/notifications/
+2025-12-01T19:39:27.024467671Z [err]  Traceback (most recent call last):
+2025-12-01T19:39:27.024471695Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-12-01T19:39:27.024476200Z [err]      response = get_response(request)
+2025-12-01T19:39:27.024480722Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.024485280Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-12-01T19:39:27.024489225Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-12-01T19:39:27.024494096Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.024498331Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-12-01T19:39:27.024502741Z [err]      return view_func(request, *args, **kwargs)
+2025-12-01T19:39:27.024507562Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.024511951Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-12-01T19:39:27.024516307Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-12-01T19:39:27.024520499Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.024524384Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-12-01T19:39:27.026066384Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-12-01T19:39:27.026071576Z [err]      raise exc
+2025-12-01T19:39:27.026077222Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-12-01T19:39:27.026088134Z [err]      response = handler(request, *args, **kwargs)
+2025-12-01T19:39:27.026093323Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.026097909Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/mixins.py", line 38, in list
+2025-12-01T19:39:27.026103151Z [err]      queryset = self.filter_queryset(self.get_queryset())
+2025-12-01T19:39:27.026109950Z [err]                                      ^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.026115709Z [err]    File "/app/todo_management/views.py", line 253, in get_queryset
+2025-12-01T19:39:27.026120494Z [err]      qs = filter_queryset_by_user_and_building(self.request, qs, model_field="todo__building")
+2025-12-01T19:39:27.026130758Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:39:27.026135675Z [err]  TypeError: filter_queryset_by_user_and_building() got an unexpected keyword argument 'model_field'
+2025-12-01T19:39:27.026142244Z [inf]  100.64.0.4 - - [01/Dec/2025:21:39:27 +0200] "GET /api/todos/notifications/?is_read=false&building=2 HTTP/1.1" 500 145 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:27.051964140Z [inf]  📊 Apartment 14 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.051972187Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.051981368Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:27.051995799Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:27.071010511Z [inf]  📊 Apartment 14 - 2025-12:
+2025-12-01T19:39:27.071014326Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:27.071017895Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:27.071023612Z [inf]       - Resident: €27.50
+2025-12-01T19:39:27.071030672Z [inf]       - Owner: €97.50
+2025-12-01T19:39:27.071035897Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:27.071041083Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.071049974Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:27.609144053Z [inf]  📊 Apartment 15 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.609148161Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.609152609Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:27.609157218Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:27.612395893Z [inf]  📊 Apartment 15 - 2025-12:
+2025-12-01T19:39:27.612403079Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:39:27.612403827Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:27.612411776Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:27.612413991Z [inf]       - Resident: €25.70
+2025-12-01T19:39:27.612419635Z [inf]       - Resident: €27.50
+2025-12-01T19:39:27.612425330Z [inf]       - Owner: €97.50
+2025-12-01T19:39:27.612427687Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:27.612430938Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:27.612436387Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.612437094Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:27.612442991Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:27.612445327Z [inf]       - Resident: €27.50
+2025-12-01T19:39:27.612448560Z [inf]  📊 Apartment 2 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.612454660Z [inf]       - Owner: €97.50
+2025-12-01T19:39:27.612454818Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.612459979Z [inf]     Apartment ratio: 66/1000
+2025-12-01T19:39:27.612464345Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:27.612466157Z [inf]     Apartment previous_balance: €215.82
+2025-12-01T19:39:27.612471212Z [inf]  📊 Apartment 2 - 2025-12:
+2025-12-01T19:39:27.612473008Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.612477494Z [inf]     Previous Balance: €215.82
+2025-12-01T19:39:27.612483477Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:27.612483592Z [inf]     Current Month Expenses: €126.80
+2025-12-01T19:39:27.612492015Z [inf]       - Resident: €27.80
+2025-12-01T19:39:27.612492375Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.612496664Z [inf]       - Owner: €99.00
+2025-12-01T19:39:27.612500656Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.612503954Z [inf]     Reserve Fund Share: €33.00
+2025-12-01T19:39:27.612509503Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:39:27.612509617Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.612514501Z [inf]     Net Obligation: €342.62
+2025-12-01T19:39:27.612517781Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:39:27.612520356Z [inf]  📊 Apartment 3 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.612525757Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.612526227Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:39:27.612532866Z [inf]     Previous Balance: €170.04
+2025-12-01T19:39:27.612539497Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:39:27.612546360Z [inf]       - Resident: €23.60
+2025-12-01T19:39:27.612554555Z [inf]       - Owner: €78.00
+2025-12-01T19:39:27.612560970Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:39:27.612572941Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.612583682Z [inf]     Net Obligation: €271.64
+2025-12-01T19:39:27.612591040Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.612598311Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.612604476Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:39:27.612612924Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:39:27.612619603Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:39:27.612630153Z [inf]     Previous Balance: €192.93
+2025-12-01T19:39:27.612651711Z [inf]     Apartment ratio: 77/1000
+2025-12-01T19:39:27.612657127Z [inf]     Apartment previous_balance: €251.79
+2025-12-01T19:39:27.612662829Z [inf]  📊 Apartment 3 - 2025-12:
+2025-12-01T19:39:27.612668530Z [inf]     Previous Balance: €251.79
+2025-12-01T19:39:27.612675955Z [inf]     Current Month Expenses: €146.60
+2025-12-01T19:39:27.612726819Z [inf]       - Resident: €31.10
+2025-12-01T19:39:27.612732546Z [inf]       - Owner: €115.50
+2025-12-01T19:39:27.612738631Z [inf]     Reserve Fund Share: €38.50
+2025-12-01T19:39:27.612749794Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.612756097Z [inf]     Net Obligation: €398.39
+2025-12-01T19:39:27.612762373Z [inf]  📊 Apartment 4 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.612768748Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.612774580Z [inf]     Apartment ratio: 70/1000
+2025-12-01T19:39:27.612781616Z [inf]     Apartment previous_balance: €228.90
+2025-12-01T19:39:27.612787542Z [inf]  📊 Apartment 4 - 2025-12:
+2025-12-01T19:39:27.612793697Z [inf]     Previous Balance: €228.90
+2025-12-01T19:39:27.612799676Z [inf]     Current Month Expenses: €134.00
+2025-12-01T19:39:27.612805961Z [inf]       - Resident: €29.00
+2025-12-01T19:39:27.612812491Z [inf]       - Owner: €105.00
+2025-12-01T19:39:27.612818896Z [inf]     Reserve Fund Share: €35.00
+2025-12-01T19:39:27.612823578Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.612828045Z [inf]     Net Obligation: €362.90
+2025-12-01T19:39:27.612832475Z [inf]  📊 Apartment 5 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.612837946Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.612844653Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:27.612849957Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:27.612855770Z [inf]  📊 Apartment 5 - 2025-12:
+2025-12-01T19:39:27.613035120Z [inf]       - Owner: €88.50
+2025-12-01T19:39:27.613039472Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:39:27.613044731Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.613048658Z [inf]     Net Obligation: €307.13
+2025-12-01T19:39:27.613052760Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.613056678Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.613060775Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:39:27.613066945Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:39:27.613071276Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:39:27.613075358Z [inf]     Previous Balance: €245.25
+2025-12-01T19:39:27.613079100Z [inf]     Current Month Expenses: €143.00
+2025-12-01T19:39:27.613083756Z [inf]       - Resident: €30.50
+2025-12-01T19:39:27.613088015Z [inf]       - Owner: €112.50
+2025-12-01T19:39:27.613092147Z [inf]     Reserve Fund Share: €37.50
+2025-12-01T19:39:27.613096106Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.613099977Z [inf]     Net Obligation: €388.25
+2025-12-01T19:39:27.613103921Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:27.613107818Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:27.613112506Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:39:27.613116032Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:39:27.613119836Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:39:27.613124084Z [inf]     Previous Balance: €186.39
+2025-12-01T19:39:27.613128118Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:39:27.613132334Z [inf]       - Resident: €25.10
+2025-12-01T19:39:27.613136562Z [inf]       - Owner: €85.50
+2025-12-01T19:39:27.613140299Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:39:27.613144295Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:27.619648484Z [inf]     (από MonthlyBalance 11/2025 carry_forward)
+2025-12-01T19:39:27.619657692Z [inf]  🔧 TOTAL BALANCE: current_reserve=-6430.00 - current_obligations=5190.00 = -11620.00
+2025-12-01T19:39:27.619663591Z [inf]     Net Obligation: €296.99
+2025-12-01T19:39:27.619664275Z [inf]  🔧 CURRENT MONTH EXPENSES: 1920.00 = 5190.00 - 3270.00
+2025-12-01T19:39:27.619669905Z [inf]  🔍 calculate_advanced: Calculation successful, result keys: ['shares', 'expense_totals', 'expense_details', 'heating_costs', 'reserve_contribution', 'reserve_fund_goal', 'reserve_fund_duration', 'current_reserve', 'actual_reserve_collected', 'management_fee_per_apartment', 'total_apartments', 'calculation_date', 'reserve_fund_start_date', 'reserve_fund_target_date']
+2025-12-01T19:39:27.619671291Z [inf]  🔍 Monthly Activity Check for 2025-12:
+2025-12-01T19:39:27.619677655Z [inf]  100.64.0.6 - - [01/Dec/2025:21:39:27 +0200] "POST /api/financial/common-expenses/calculate_advanced/ HTTP/1.1" 200 12291 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:27.619679262Z [inf]     📤 Has expenses: True
+2025-12-01T19:39:27.619685474Z [inf]     📥 Has payments: False
+2025-12-01T19:39:27.619691114Z [inf]     📋 Has issued expenses: True
+2025-12-01T19:39:27.619696461Z [inf]     ✅ Overall activity: True
+2025-12-01T19:39:27.619701062Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): current_reserve=-6430.00, total_obligations=21619.97
+2025-12-01T19:39:27.619706449Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): total_balance=-2540.00
+2025-12-01T19:39:27.619711622Z [inf]  ✅ Previous obligations for 2025-12: €3270.00
+2025-12-01T19:39:30.945958238Z [err]  DEBUG 2025-12-01 21:39:30,945 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:30.945962685Z [err]  DEBUG 2025-12-01 21:39:30,945 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:30.953689731Z [err]  INFO 2025-12-01 21:39:30,948 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:30.956045268Z [err]  INFO 2025-12-01 21:39:30,954 monthly_balance_service 19 139639473646464 📊 Creating/updating MonthlyBalance for Βουλής 6 -Demo - 12/2025
+2025-12-01T19:39:30.960962315Z [err]  DEBUG 2025-12-01 21:39:30,957 monthly_balance_service 19 139639473646464    💸 Δαπάνες μήνα: €1300.00
+2025-12-01T19:39:30.960971884Z [err]  DEBUG 2025-12-01 21:39:30,959 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:30.960977780Z [err]  DEBUG 2025-12-01 21:39:30,959 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:30.963377375Z [err]  DEBUG 2025-12-01 21:39:30,960 monthly_balance_service 19 139639473646464    💰 Εισπράξεις μήνα: €0.00
+2025-12-01T19:39:30.963388119Z [err]  INFO 2025-12-01 21:39:30,962 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:30.963393857Z [err]  DEBUG 2025-12-01 21:39:30,962 monthly_balance_service 19 139639473646464    📊 Παλαιότερες οφειλές: €3270.00
+2025-12-01T19:39:30.971230293Z [inf]  🔍 BuildingViewSet.retrieve() called for building 2
+2025-12-01T19:39:30.971236745Z [err]  INFO 2025-12-01 21:39:30,965 views 18 139639473646464 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 822) in tenant: theo
+2025-12-01T19:39:30.971243336Z [err]  INFO 2025-12-01 21:39:30,966 views 18 139639473646464 User is superuser/staff. Returning all buildings.
+2025-12-01T19:39:30.971247491Z [err]  DEBUG 2025-12-01 21:39:30,967 monthly_balance_service 19 139639473646464    🏢 Διαχειριστικά έξοδα: €120.00
+2025-12-01T19:39:30.972639331Z [err]  DEBUG 2025-12-01 21:39:30,971 monthly_balance_service 19 139639473646464    🏦 Αποθεματικό: €500.00
+2025-12-01T19:39:30.980233572Z [err]  DEBUG 2025-12-01 21:39:30,974 monthly_balance_service 19 139639473646464    🔧 Προγραμματισμένα έργα: €0.00
+2025-12-01T19:39:30.980243281Z [err]  DEBUG 2025-12-01 21:39:30,974 monthly_balance_service 19 139639473646464    ⚖️ Καθαρό αποτέλεσμα: €-5190.00
+2025-12-01T19:39:30.980249852Z [err]  DEBUG 2025-12-01 21:39:30,974 monthly_balance_service 19 139639473646464    🔄 Carry Forward: €5190.00
+2025-12-01T19:39:30.980255625Z [inf]  🔍 BuildingViewSet.retrieve() response: {'id': 2, 'name': 'Βουλής 6 -Demo', 'address': 'Βουλής 6, Αθήνα 105 62, Ελλάδα', 'city': 'Αθήνα', 'postal_code': '10562', 'apartments_count': 15, 'internal_manager': {'id': 849, 'email': 'thodoris_st@hotmail.com', 'first_name': 'ΘΕΟΔΩΡΟΣ', 'last_name': 'Σταματιαδης', 'full_name': 'ΘΕΟΔΩΡΟΣ Σταματιαδης'}, 'internal_manager_can_record_payments': True, 'internal_manager_display_name': 'ΘΕΟΔΩΡΟΣ Σταματιαδης', 'internal_manager_name': '', 'internal_manager_phone': '', 'internal_manager_apartment': '1', 'internal_manager_collection_schedule': 'Κατόπιν συνεννόησης', 'management_office_name': 'Διαχείριση ΑΚΙΝΗΤΩΝ', 'management_office_phone': '21035552225', 'management_office_address': 'Λεωφόρος Συγγρού 343 Αθήνα', 'management_fee_per_apartment': '8.00', 'service_package': {'id': 1, 'name': 'Βασικό Πακέτο', 'description': 'Βασική διαχείριση κτιρίου με τις απαραίτητες υπηρεσίες', 'fee_per_apartment': '8.00', 'services_included': ['Διαχείριση κοινόχρηστων', 'Τήρηση λογαριασμών', 'Εξόφληση κοινόχρηστων', 'Συντήρηση κοινών χώρων'], 'services_list': 'Διαχείριση κοινόχρηστων, Τήρηση λογαριασμών, Εξόφληση κοινόχρηστων, Συντήρηση κοινών χώρων', 'total_cost_for_building': 0, 'is_active': True, 'created_at': '2025-12-01T12:41:42.302573+02:00', 'updated_at': '2025-12-01T12:41:42.302593+02:00'}, 'service_package_start_date': '2025-12-01', 'current_reserve': '-10510.00', 'heating_system': 'hour_meters', 'heating_fixed_percentage': 30, 'reserve_contribution_per_apartment': '0.00', 'reserve_fund_goal': '2000.00', 'reserve_fund_duration_months': 4, 'reserve_fund_start_date': '2025-11-01', 'reserve_fund_target_date': '2026-02-28', 'financial_system_start_date': '2025-11-01', 'street_view_image': '', 'latitude': '37.976875', 'longitude': '23.732708', 'manager': None, 'grace_day_of_month': 1, 'created_at': '2025-11-23T11:16:26.594924+02:00', 'updated_at': '2025-12-01T21:37:24.753906+02:00'}
+2025-12-01T19:39:30.981641851Z [inf]  🔍 Response street view image: 
+2025-12-01T19:39:30.981648443Z [err]  INFO 2025-12-01 21:39:30,978 monthly_balance_service 19 139639473646464    ✅ Ενημερώθηκε υπάρχον record για 12/2025
+2025-12-01T19:39:30.981654245Z [inf]  100.64.0.3 - - [01/Dec/2025:21:39:30 +0200] "GET /api/buildings/list/2/ HTTP/1.1" 200 2154 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:31.064924534Z [inf]     Net Obligation: €515.00
+2025-12-01T19:39:31.064982742Z [inf]  📊 Apartment 1 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.064989062Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.064997044Z [inf]     Apartment ratio: 100/1000
+2025-12-01T19:39:31.065001883Z [inf]     Apartment previous_balance: €327.00
+2025-12-01T19:39:31.065005985Z [inf]  📊 Apartment 1 - 2025-12:
+2025-12-01T19:39:31.065010308Z [inf]     Previous Balance: €327.00
+2025-12-01T19:39:31.065014902Z [inf]     Current Month Expenses: €188.00
+2025-12-01T19:39:31.065020310Z [inf]       - Resident: €38.00
+2025-12-01T19:39:31.065024427Z [inf]       - Owner: €150.00
+2025-12-01T19:39:31.065028657Z [inf]     Reserve Fund Share: €50.00
+2025-12-01T19:39:31.065034308Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.071473801Z [inf]  📊 Apartment 10 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.071480236Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.071485101Z [inf]     Apartment ratio: 68/1000
+2025-12-01T19:39:31.071489547Z [inf]     Apartment previous_balance: €222.36
+2025-12-01T19:39:31.088730942Z [inf]  📊 Apartment 10 - 2025-12:
+2025-12-01T19:39:31.088743128Z [inf]     Previous Balance: €222.36
+2025-12-01T19:39:31.088749550Z [inf]     Current Month Expenses: €130.40
+2025-12-01T19:39:31.088755355Z [inf]       - Resident: €28.40
+2025-12-01T19:39:31.088761331Z [inf]       - Owner: €102.00
+2025-12-01T19:39:31.088766946Z [inf]     Reserve Fund Share: €34.00
+2025-12-01T19:39:31.088773069Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.088778677Z [inf]     Net Obligation: €352.76
+2025-12-01T19:39:31.113449329Z [inf]  📊 Apartment 11 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.113457633Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.113464098Z [inf]     Apartment ratio: 63/1000
+2025-12-01T19:39:31.113469822Z [inf]     Apartment previous_balance: €206.01
+2025-12-01T19:39:31.129586904Z [inf]  📊 Apartment 11 - 2025-12:
+2025-12-01T19:39:31.129595711Z [inf]     Previous Balance: €206.01
+2025-12-01T19:39:31.129601248Z [inf]     Current Month Expenses: €121.40
+2025-12-01T19:39:31.129606189Z [inf]       - Resident: €26.90
+2025-12-01T19:39:31.129611094Z [inf]       - Owner: €94.50
+2025-12-01T19:39:31.129615695Z [inf]     Reserve Fund Share: €31.50
+2025-12-01T19:39:31.129620209Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.129624496Z [inf]     Net Obligation: €327.41
+2025-12-01T19:39:31.625396194Z [inf]  📊 Apartment 12 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.625399885Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.625403581Z [inf]     Apartment ratio: 49/1000
+2025-12-01T19:39:31.625407209Z [inf]     Apartment previous_balance: €160.23
+2025-12-01T19:39:31.625411014Z [inf]  📊 Apartment 12 - 2025-12:
+2025-12-01T19:39:31.625414413Z [inf]     Previous Balance: €160.23
+2025-12-01T19:39:31.625418054Z [inf]     Current Month Expenses: €96.20
+2025-12-01T19:39:31.625422303Z [inf]       - Resident: €22.70
+2025-12-01T19:39:31.625426004Z [inf]       - Owner: €73.50
+2025-12-01T19:39:31.625429542Z [inf]     Reserve Fund Share: €24.50
+2025-12-01T19:39:31.625433063Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.625438555Z [inf]     Net Obligation: €256.43
+2025-12-01T19:39:31.625442297Z [inf]  📊 Apartment 13 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.625445829Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.625449368Z [inf]     Apartment ratio: 69/1000
+2025-12-01T19:39:31.625453173Z [inf]     Apartment previous_balance: €225.63
+2025-12-01T19:39:31.625456906Z [inf]  📊 Apartment 13 - 2025-12:
+2025-12-01T19:39:31.625461218Z [inf]     Previous Balance: €225.63
+2025-12-01T19:39:31.625465050Z [inf]     Current Month Expenses: €132.20
+2025-12-01T19:39:31.625468695Z [inf]       - Resident: €28.70
+2025-12-01T19:39:31.625472257Z [inf]       - Owner: €103.50
+2025-12-01T19:39:31.625475757Z [inf]     Reserve Fund Share: €34.50
+2025-12-01T19:39:31.625479227Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.625482759Z [inf]     Net Obligation: €357.83
+2025-12-01T19:39:31.625489154Z [inf]  📊 Apartment 14 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.625492728Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.628461952Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:31.628462804Z [inf]  📊 Apartment 2 - 2025-12:
+2025-12-01T19:39:31.628471507Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:31.628477546Z [inf]  📊 Apartment 14 - 2025-12:
+2025-12-01T19:39:31.628480036Z [inf]  📊 Apartment 2 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.628485909Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:31.628489591Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:31.628492421Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.628495421Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:31.628498961Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:31.628499618Z [inf]     Apartment ratio: 66/1000
+2025-12-01T19:39:31.628505111Z [inf]  📊 Apartment 15 - 2025-12:
+2025-12-01T19:39:31.628506972Z [inf]       - Resident: €27.50
+2025-12-01T19:39:31.628514004Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:31.628515530Z [inf]     Apartment previous_balance: €215.82
+2025-12-01T19:39:31.628515676Z [inf]       - Owner: €97.50
+2025-12-01T19:39:31.628523327Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:31.628524047Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:31.628529048Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.628530689Z [inf]       - Resident: €27.50
+2025-12-01T19:39:31.628535500Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:31.628538418Z [inf]       - Owner: €97.50
+2025-12-01T19:39:31.628540917Z [inf]  📊 Apartment 15 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.628546115Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.628546509Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:31.628553028Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.628558792Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:31.630408316Z [inf]     Previous Balance: €215.82
+2025-12-01T19:39:31.630416092Z [inf]     Current Month Expenses: €126.80
+2025-12-01T19:39:31.630420755Z [inf]       - Resident: €27.80
+2025-12-01T19:39:31.630425408Z [inf]       - Owner: €99.00
+2025-12-01T19:39:31.630429811Z [inf]     Reserve Fund Share: €33.00
+2025-12-01T19:39:31.630434022Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.630437772Z [inf]     Net Obligation: €342.62
+2025-12-01T19:39:31.630442311Z [inf]  📊 Apartment 3 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.630446148Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.630450343Z [inf]     Apartment ratio: 77/1000
+2025-12-01T19:39:31.630454580Z [inf]     Apartment previous_balance: €251.79
+2025-12-01T19:39:31.630459710Z [inf]  📊 Apartment 3 - 2025-12:
+2025-12-01T19:39:31.630467138Z [inf]     Previous Balance: €251.79
+2025-12-01T19:39:31.630472164Z [inf]     Current Month Expenses: €146.60
+2025-12-01T19:39:31.630477057Z [inf]       - Resident: €31.10
+2025-12-01T19:39:31.630482494Z [inf]       - Owner: €115.50
+2025-12-01T19:39:31.630487796Z [inf]     Reserve Fund Share: €38.50
+2025-12-01T19:39:31.630492859Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.630497824Z [inf]     Net Obligation: €398.39
+2025-12-01T19:39:31.630503062Z [err]  DEBUG 2025-12-01 21:39:31,400 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:31.630507626Z [err]  DEBUG 2025-12-01 21:39:31,401 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:31.630512734Z [err]  INFO 2025-12-01 21:39:31,404 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:31.634043284Z [inf]     Apartment ratio: 100/1000
+2025-12-01T19:39:31.634051152Z [inf]     Apartment previous_balance: €327.00
+2025-12-01T19:39:31.634089403Z [inf]  📊 Apartment 4 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.634098624Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.634104097Z [inf]     Apartment ratio: 70/1000
+2025-12-01T19:39:31.634109824Z [inf]     Apartment previous_balance: €228.90
+2025-12-01T19:39:31.634115571Z [inf]  📊 Apartment 5 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.634116646Z [inf]  📊 Apartment 4 - 2025-12:
+2025-12-01T19:39:31.634121984Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.634124196Z [inf]     Previous Balance: €228.90
+2025-12-01T19:39:31.634127251Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:31.634132008Z [inf]     Current Month Expenses: €134.00
+2025-12-01T19:39:31.634134048Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:31.634139919Z [inf]  📊 Apartment 1 - 2025-12:
+2025-12-01T19:39:31.634140346Z [inf]       - Resident: €29.00
+2025-12-01T19:39:31.634145151Z [inf]     Previous Balance: €327.00
+2025-12-01T19:39:31.634147977Z [inf]       - Owner: €105.00
+2025-12-01T19:39:31.634150516Z [inf]     Current Month Expenses: €188.00
+2025-12-01T19:39:31.634155962Z [inf]     Reserve Fund Share: €35.00
+2025-12-01T19:39:31.634156451Z [inf]       - Resident: €38.00
+2025-12-01T19:39:31.634162001Z [inf]       - Owner: €150.00
+2025-12-01T19:39:31.634164328Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.634167106Z [inf]     Reserve Fund Share: €50.00
+2025-12-01T19:39:31.634171716Z [inf]     Net Obligation: €362.90
+2025-12-01T19:39:31.634177640Z [inf]  📊 Apartment 1 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.634183290Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.637154084Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.637162456Z [inf]     Net Obligation: €515.00
+2025-12-01T19:39:31.637168527Z [inf]  📊 Apartment 5 - 2025-12:
+2025-12-01T19:39:31.637174045Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:31.637179535Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:31.637184964Z [inf]       - Resident: €27.50
+2025-12-01T19:39:31.637191029Z [inf]       - Owner: €97.50
+2025-12-01T19:39:31.637197549Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:31.637203008Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.637212743Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:31.637221418Z [inf]  📊 Apartment 10 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.637226647Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.637231901Z [inf]     Apartment ratio: 68/1000
+2025-12-01T19:39:31.637237049Z [inf]     Apartment previous_balance: €222.36
+2025-12-01T19:39:31.637242084Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.637247516Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.637255043Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:39:31.637260799Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:39:31.637266333Z [inf]  📊 Apartment 10 - 2025-12:
+2025-12-01T19:39:31.637273537Z [inf]     Previous Balance: €222.36
+2025-12-01T19:39:31.637278970Z [inf]     Current Month Expenses: €130.40
+2025-12-01T19:39:31.637284830Z [inf]       - Resident: €28.40
+2025-12-01T19:39:31.637290000Z [inf]       - Owner: €102.00
+2025-12-01T19:39:31.637296304Z [inf]     Reserve Fund Share: €34.00
+2025-12-01T19:39:31.637301377Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.637306155Z [inf]     Net Obligation: €352.76
+2025-12-01T19:39:31.637312098Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:39:31.642199095Z [inf]     Reserve Fund Share: €31.50
+2025-12-01T19:39:31.642199340Z [inf]     Previous Balance: €170.04
+2025-12-01T19:39:31.642209170Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:39:31.642211505Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.642216336Z [inf]       - Resident: €23.60
+2025-12-01T19:39:31.642218269Z [inf]     Net Obligation: €327.41
+2025-12-01T19:39:31.642223280Z [inf]       - Owner: €78.00
+2025-12-01T19:39:31.642225035Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:39:31.642230243Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:39:31.642230285Z [inf]     Previous Balance: €192.93
+2025-12-01T19:39:31.642237376Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.642238015Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:39:31.642244410Z [inf]       - Resident: €25.70
+2025-12-01T19:39:31.642246492Z [inf]     Net Obligation: €271.64
+2025-12-01T19:39:31.642252354Z [inf]  📊 Apartment 11 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.642258782Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.642264247Z [inf]     Apartment ratio: 63/1000
+2025-12-01T19:39:31.642269463Z [inf]     Apartment previous_balance: €206.01
+2025-12-01T19:39:31.642274668Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.642279840Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.642284811Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:39:31.642289747Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:39:31.642296227Z [inf]  📊 Apartment 11 - 2025-12:
+2025-12-01T19:39:31.642301469Z [inf]     Previous Balance: €206.01
+2025-12-01T19:39:31.642307778Z [inf]     Current Month Expenses: €121.40
+2025-12-01T19:39:31.642313154Z [inf]       - Resident: €26.90
+2025-12-01T19:39:31.642318420Z [inf]       - Owner: €94.50
+2025-12-01T19:39:31.647536704Z [inf]       - Owner: €88.50
+2025-12-01T19:39:31.647545143Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:39:31.647551261Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.647557172Z [inf]     Net Obligation: €307.13
+2025-12-01T19:39:31.647562862Z [inf]  📊 Apartment 12 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.647569024Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.647574337Z [inf]     Apartment ratio: 49/1000
+2025-12-01T19:39:31.647579641Z [inf]     Apartment previous_balance: €160.23
+2025-12-01T19:39:31.647584914Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.647591425Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.647596732Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:39:31.647601812Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:39:31.647607060Z [inf]  📊 Apartment 12 - 2025-12:
+2025-12-01T19:39:31.647612904Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:39:31.647618672Z [inf]     Previous Balance: €160.23   Previous Balance: €245.25
+2025-12-01T19:39:31.647625579Z [inf]  
+2025-12-01T19:39:31.647631051Z [inf]     Current Month Expenses: €143.00   Current Month Expenses: €96.20
+2025-12-01T19:39:31.647636126Z [inf]  
+2025-12-01T19:39:31.647641408Z [inf]       - Resident: €30.50
+2025-12-01T19:39:31.647646922Z [inf]       - Resident: €22.70
+2025-12-01T19:39:31.647653081Z [inf]       - Owner: €112.50
+2025-12-01T19:39:31.647658162Z [inf]       - Owner: €73.50   Reserve Fund Share: €37.50
+2025-12-01T19:39:31.647664153Z [inf]  
+2025-12-01T19:39:31.647670748Z [inf]     Payments This Month: €0.00   Reserve Fund Share: €24.50
+2025-12-01T19:39:31.647675828Z [inf]  
+2025-12-01T19:39:31.647680996Z [inf]     Net Obligation: €388.25
+2025-12-01T19:39:31.647686279Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.651544266Z [inf]     Net Obligation: €256.43
+2025-12-01T19:39:31.651552445Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.651557969Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.651565708Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:39:31.651566099Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:39:31.651571028Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:39:31.651576501Z [inf]  📊 Apartment 13 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.651580485Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.651583604Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.651589312Z [inf]     Apartment ratio: 69/1000
+2025-12-01T19:39:31.651590012Z [inf]     Net Obligation: €296.99
+2025-12-01T19:39:31.651595825Z [inf]     Apartment previous_balance: €225.63
+2025-12-01T19:39:31.651598544Z [inf]  📊 Apartment 13 - 2025-12:
+2025-12-01T19:39:31.651601013Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:39:31.651606772Z [inf]     Previous Balance: €225.63
+2025-12-01T19:39:31.651607025Z [inf]     Previous Balance: €186.39
+2025-12-01T19:39:31.651614330Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:39:31.651616054Z [inf]     Current Month Expenses: €132.20
+2025-12-01T19:39:31.651619143Z [inf]       - Resident: €25.10
+2025-12-01T19:39:31.651625006Z [inf]       - Owner: €85.50
+2025-12-01T19:39:31.651625498Z [inf]       - Resident: €28.70
+2025-12-01T19:39:31.651633139Z [inf]       - Owner: €103.50
+2025-12-01T19:39:31.651640914Z [inf]     Reserve Fund Share: €34.50
+2025-12-01T19:39:31.651646954Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.651653724Z [inf]     Net Obligation: €357.83
+2025-12-01T19:39:31.654775995Z [inf]  🔍 Monthly Activity Check for 2025-12:
+2025-12-01T19:39:31.654782462Z [inf]     📤 Has expenses: True
+2025-12-01T19:39:31.654787162Z [inf]     📥 Has payments: False
+2025-12-01T19:39:31.654792117Z [inf]     📋 Has issued expenses: True
+2025-12-01T19:39:31.654795794Z [inf]     ✅ Overall activity: True
+2025-12-01T19:39:31.654800073Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): current_reserve=-6430.00, total_obligations=21619.97
+2025-12-01T19:39:31.654804858Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): total_balance=-2540.00
+2025-12-01T19:39:31.658226282Z [inf]  ✅ Previous obligations for 2025-12: €3270.00
+2025-12-01T19:39:31.658232883Z [inf]     (από MonthlyBalance 11/2025 carry_forward)
+2025-12-01T19:39:31.668496880Z [inf]  🔧 TOTAL BALANCE: current_reserve=-6430.00 - current_obligations=5190.00 = -11620.00
+2025-12-01T19:39:31.668506285Z [inf]  🔧 CURRENT MONTH EXPENSES: 1920.00 = 5190.00 - 3270.00
+2025-12-01T19:39:31.668512832Z [inf]  📊 Apartment 14 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.668519340Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.668525646Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:31.668533576Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:31.682902368Z [inf]  📊 Apartment 14 - 2025-12:
+2025-12-01T19:39:31.682908041Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:31.682914656Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:31.682920807Z [inf]       - Resident: €27.50
+2025-12-01T19:39:31.682926112Z [inf]       - Owner: €97.50
+2025-12-01T19:39:31.682931531Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:31.682936810Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.682943272Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:31.682948879Z [inf]  100.64.0.6 - - [01/Dec/2025:21:39:31 +0200] "GET /api/financial/dashboard/summary/?building_id=2&month=2025-12 HTTP/1.1" 200 11247 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:31.717770576Z [inf]  📊 Apartment 15 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.717776778Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.717782948Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:31.717789975Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:31.741584721Z [inf]  📊 Apartment 15 - 2025-12:
+2025-12-01T19:39:31.741593573Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:31.741599589Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:31.741606167Z [inf]       - Resident: €27.50
+2025-12-01T19:39:31.741612378Z [inf]       - Owner: €97.50
+2025-12-01T19:39:31.741618851Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:31.741625479Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.741631694Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:31.762570532Z [inf]  📊 Apartment 2 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.762575920Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.762580803Z [inf]     Apartment ratio: 66/1000
+2025-12-01T19:39:31.762587010Z [inf]     Apartment previous_balance: €215.82
+2025-12-01T19:39:31.779104594Z [inf]  📊 Apartment 2 - 2025-12:
+2025-12-01T19:39:31.779113800Z [inf]     Previous Balance: €215.82
+2025-12-01T19:39:31.779121297Z [inf]     Current Month Expenses: €126.80
+2025-12-01T19:39:31.779126342Z [inf]       - Resident: €27.80
+2025-12-01T19:39:31.779131296Z [inf]       - Owner: €99.00
+2025-12-01T19:39:31.779135446Z [inf]     Reserve Fund Share: €33.00
+2025-12-01T19:39:31.779139386Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.779143370Z [inf]     Net Obligation: €342.62
+2025-12-01T19:39:31.809944367Z [inf]  📊 Apartment 3 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.809950041Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.809955489Z [inf]     Apartment ratio: 77/1000
+2025-12-01T19:39:31.809960878Z [inf]     Apartment previous_balance: €251.79
+2025-12-01T19:39:31.815560173Z [inf]  📊 Apartment 3 - 2025-12:
+2025-12-01T19:39:31.815570206Z [inf]     Previous Balance: €251.79
+2025-12-01T19:39:31.815578228Z [inf]     Current Month Expenses: €146.60
+2025-12-01T19:39:31.815585314Z [inf]       - Resident: €31.10
+2025-12-01T19:39:31.815591847Z [inf]       - Owner: €115.50
+2025-12-01T19:39:31.815598487Z [inf]     Reserve Fund Share: €38.50
+2025-12-01T19:39:31.815604752Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.815611279Z [inf]     Net Obligation: €398.39
+2025-12-01T19:39:31.850435360Z [inf]  📊 Apartment 4 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.850442313Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.850448551Z [inf]     Apartment ratio: 70/1000
+2025-12-01T19:39:31.850453235Z [inf]     Apartment previous_balance: €228.90
+2025-12-01T19:39:31.859819395Z [inf]  📊 Apartment 4 - 2025-12:
+2025-12-01T19:39:31.859824662Z [inf]     Previous Balance: €228.90
+2025-12-01T19:39:31.859828914Z [inf]     Current Month Expenses: €134.00
+2025-12-01T19:39:31.859832675Z [inf]       - Resident: €29.00
+2025-12-01T19:39:31.859836784Z [inf]       - Owner: €105.00
+2025-12-01T19:39:31.859840548Z [inf]     Reserve Fund Share: €35.00
+2025-12-01T19:39:31.859846092Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.859851490Z [inf]     Net Obligation: €362.90
+2025-12-01T19:39:31.898389190Z [inf]  📊 Apartment 5 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.898398580Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.898408070Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:39:31.898412859Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:39:31.907930379Z [inf]  📊 Apartment 5 - 2025-12:
+2025-12-01T19:39:31.907941465Z [inf]     Previous Balance: €212.55
+2025-12-01T19:39:31.907949324Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:39:31.907955597Z [inf]       - Resident: €27.50
+2025-12-01T19:39:31.907975859Z [inf]       - Owner: €97.50
+2025-12-01T19:39:31.907982333Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:39:31.907987989Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.907993668Z [inf]     Net Obligation: €337.55
+2025-12-01T19:39:31.941465727Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.941473623Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.941479975Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:39:31.941486726Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:39:31.958340182Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:39:31.958353109Z [inf]     Previous Balance: €170.04
+2025-12-01T19:39:31.958360068Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:39:31.958366378Z [inf]       - Resident: €23.60
+2025-12-01T19:39:31.958373090Z [inf]       - Owner: €78.00
+2025-12-01T19:39:31.958378249Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:39:31.958382233Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:31.958386810Z [inf]     Net Obligation: €271.64
+2025-12-01T19:39:31.990002141Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:31.990009384Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:31.990013474Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:39:31.990017258Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:39:32.012568749Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:39:32.012576588Z [inf]     Previous Balance: €192.93
+2025-12-01T19:39:32.012581540Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:39:32.012585827Z [inf]       - Resident: €25.70
+2025-12-01T19:39:32.012590658Z [inf]       - Owner: €88.50
+2025-12-01T19:39:32.012595480Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:39:32.012603623Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:32.012608144Z [inf]     Net Obligation: €307.13
+2025-12-01T19:39:32.066361093Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:32.066369340Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:32.066377674Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:39:32.066384711Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:39:32.071529606Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:39:32.071553059Z [inf]     Previous Balance: €245.25
+2025-12-01T19:39:32.071559097Z [inf]     Current Month Expenses: €143.00
+2025-12-01T19:39:32.071646479Z [inf]       - Resident: €30.50
+2025-12-01T19:39:32.071652224Z [inf]       - Owner: €112.50
+2025-12-01T19:39:32.071672057Z [inf]     Reserve Fund Share: €37.50
+2025-12-01T19:39:32.071677643Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:32.071683641Z [inf]     Net Obligation: €388.25
+2025-12-01T19:39:32.119384221Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:39:32.119394510Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:39:32.119401425Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:39:32.119408650Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:39:32.126661743Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:39:32.126672743Z [inf]     Previous Balance: €186.39
+2025-12-01T19:39:32.126679850Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:39:32.126686573Z [inf]       - Resident: €25.10
+2025-12-01T19:39:32.126693206Z [inf]       - Owner: €85.50
+2025-12-01T19:39:32.126701881Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:39:32.126707977Z [inf]     Payments This Month: €0.00
+2025-12-01T19:39:32.126714200Z [inf]     Net Obligation: €296.99
+2025-12-01T19:39:32.737901370Z [inf]  100.64.0.4 - - [01/Dec/2025:21:39:32 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=2&month=2025-12 HTTP/1.1" 200 7999 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:35.613086550Z [err]  DEBUG 2025-12-01 21:39:35,297 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:35.613092246Z [err]  DEBUG 2025-12-01 21:39:35,297 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:35.613097406Z [err]  INFO 2025-12-01 21:39:35,301 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:35.613102917Z [err]  WARNING 2025-12-01 21:39:35,302 log 19 139639473646464 Unauthorized: /api/todos/notifications/
+2025-12-01T19:39:35.613108130Z [inf]  100.64.0.6 - - [01/Dec/2025:21:39:35 +0200] "GET /api/todos/notifications/?building=2 HTTP/1.1" 401 172 "https://theo.newconcierge.app/notifications" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:35.613116914Z [err]  DEBUG 2025-12-01 21:39:35,340 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:35.613122164Z [err]  DEBUG 2025-12-01 21:39:35,340 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:35.613127331Z [err]  INFO 2025-12-01 21:39:35,343 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:35.613133921Z [err]  WARNING 2025-12-01 21:39:35,344 log 19 139639473646464 Unauthorized: /api/todos/notifications/
+2025-12-01T19:39:35.613139548Z [inf]  100.64.0.4 - - [01/Dec/2025:21:39:35 +0200] "GET /api/todos/notifications/?is_read=false&building=2 HTTP/1.1" 401 172 "https://theo.newconcierge.app/notifications" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:36.001827864Z [err]  DEBUG 2025-12-01 21:39:35,975 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:36.001831926Z [err]  DEBUG 2025-12-01 21:39:35,975 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:36.001836655Z [err]  INFO 2025-12-01 21:39:35,978 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:36.001841108Z [err]  WARNING 2025-12-01 21:39:35,979 log 18 139639473646464 Unauthorized: /api/todos/notifications/
+2025-12-01T19:39:36.001845725Z [inf]  100.64.0.6 - - [01/Dec/2025:21:39:35 +0200] "GET /api/todos/notifications/?is_read=false&building=2 HTTP/1.1" 401 172 "https://theo.newconcierge.app/notifications" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:39:36.001849670Z [err]  DEBUG 2025-12-01 21:39:35,998 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:39:36.001853963Z [err]  DEBUG 2025-12-01 21:39:35,998 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:39:36.009827520Z [err]  INFO 2025-12-01 21:39:36,001 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:39:36.009835915Z [err]  WARNING 2025-12-01 21:39:36,004 log 18 139639473646464 Unauthorized: /api/todos/notifications/
+2025-12-01T19:39:36.009843812Z [inf]  100.64.0.5 - - [01/Dec/2025:21:39:36 +0200] "GET /api/todos/notifications/?building=2 HTTP/1.1" 401 172 "https://theo.newconcierge.app/notifications" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:06.007628846Z [err]  DEBUG 2025-12-01 21:39:56,158 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:06.007636531Z [err]  DEBUG 2025-12-01 21:39:56,158 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:06.007641107Z [err]  INFO 2025-12-01 21:39:56,161 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:06.007648178Z [err]  WARNING 2025-12-01 21:39:56,162 log 18 139639473646464 Unauthorized: /api/todos/notifications/
+2025-12-01T19:40:06.007654227Z [inf]  100.64.0.4 - - [01/Dec/2025:21:39:56 +0200] "GET /api/todos/notifications/?building=2 HTTP/1.1" 401 172 "https://theo.newconcierge.app/my-profile" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:06.007661054Z [err]  DEBUG 2025-12-01 21:39:56,171 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:06.007666773Z [err]  DEBUG 2025-12-01 21:39:56,171 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:06.007672021Z [err]  INFO 2025-12-01 21:39:56,174 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:06.007678083Z [err]  WARNING 2025-12-01 21:39:56,175 log 18 139639473646464 Unauthorized: /api/todos/notifications/
+2025-12-01T19:40:06.007683258Z [inf]  100.64.0.2 - - [01/Dec/2025:21:39:56 +0200] "GET /api/todos/notifications/?is_read=false&building=2 HTTP/1.1" 401 172 "https://theo.newconcierge.app/my-profile" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:13.783363297Z [err]  INFO 2025-12-01 21:40:13,723 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:13.783382949Z [inf]  100.64.0.4 - - [01/Dec/2025:21:40:13 +0200] "GET /api/users/me/ HTTP/1.1" 200 552 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:13.783449402Z [err]  DEBUG 2025-12-01 21:40:13,720 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:13.783455517Z [err]  DEBUG 2025-12-01 21:40:13,720 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.046815182Z [err]  DEBUG 2025-12-01 21:40:14,698 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.046821244Z [err]  DEBUG 2025-12-01 21:40:14,698 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.046825652Z [err]  INFO 2025-12-01 21:40:14,701 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.046830604Z [err]  ERROR 2025-12-01 21:40:14,707 log 18 139639473646464 Internal Server Error: /api/todos/notifications/
+2025-12-01T19:40:15.046834919Z [err]  Traceback (most recent call last):
+2025-12-01T19:40:15.046839660Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-12-01T19:40:15.046843835Z [err]      response = get_response(request)
+2025-12-01T19:40:15.046849012Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.046855086Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-12-01T19:40:15.046863130Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-12-01T19:40:15.046867400Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.046871800Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-12-01T19:40:15.046876054Z [err]      return view_func(request, *args, **kwargs)
+2025-12-01T19:40:15.046881815Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.046887514Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-12-01T19:40:15.049629950Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-12-01T19:40:15.049637090Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.049642343Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-12-01T19:40:15.049648155Z [err]      response = self.handle_exception(exc)
+2025-12-01T19:40:15.049653501Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.049659331Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-12-01T19:40:15.049671184Z [err]      self.raise_uncaught_exception(exc)
+2025-12-01T19:40:15.049677309Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-12-01T19:40:15.049683140Z [err]      raise exc
+2025-12-01T19:40:15.049689819Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-12-01T19:40:15.049696687Z [err]      response = handler(request, *args, **kwargs)
+2025-12-01T19:40:15.049702688Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.049708141Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/mixins.py", line 38, in list
+2025-12-01T19:40:15.049715269Z [err]      queryset = self.filter_queryset(self.get_queryset())
+2025-12-01T19:40:15.049721124Z [err]                                      ^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.049726671Z [err]    File "/app/todo_management/views.py", line 253, in get_queryset
+2025-12-01T19:40:15.049732762Z [err]      qs = filter_queryset_by_user_and_building(self.request, qs, model_field="todo__building")
+2025-12-01T19:40:15.049738511Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.049746457Z [err]  TypeError: filter_queryset_by_user_and_building() got an unexpected keyword argument 'model_field'
+2025-12-01T19:40:15.050483157Z [inf]  100.64.0.4 - - [01/Dec/2025:21:40:14 +0200] "GET /api/todos/notifications/?is_read=false HTTP/1.1" 500 145 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.050488781Z [err]  DEBUG 2025-12-01 21:40:14,724 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.050501328Z [err]  DEBUG 2025-12-01 21:40:14,725 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.050518869Z [err]  INFO 2025-12-01 21:40:14,728 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.050524836Z [inf]  🔍 BuildingViewSet.list() called
+2025-12-01T19:40:15.050530596Z [err]  INFO 2025-12-01 21:40:14,735 views 18 139639473646464 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 822) in tenant: theo
+2025-12-01T19:40:15.050537071Z [err]  INFO 2025-12-01 21:40:14,735 views 18 139639473646464 User is superuser/staff. Returning all buildings.
+2025-12-01T19:40:15.050543273Z [inf]  🔍 BuildingViewSet.list() response count: 2
+2025-12-01T19:40:15.050549082Z [inf]  🔍 First building street view image: 
+2025-12-01T19:40:15.050555069Z [inf]  100.64.0.4 - - [01/Dec/2025:21:40:14 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 3506 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.050560290Z [err]  DEBUG 2025-12-01 21:40:14,772 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.051986666Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.051990926Z [err]  ERROR 2025-12-01 21:40:14,782 log 18 139639473646464 Internal Server Error: /api/todos/notifications/
+2025-12-01T19:40:15.051997393Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-12-01T19:40:15.052002867Z [err]  Traceback (most recent call last):
+2025-12-01T19:40:15.052006531Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-12-01T19:40:15.052011825Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-12-01T19:40:15.052015663Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.052021001Z [err]      response = get_response(request)
+2025-12-01T19:40:15.052024844Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-12-01T19:40:15.052040104Z [err]  DEBUG 2025-12-01 21:40:14,772 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.052045009Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-12-01T19:40:15.052045544Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.052055893Z [err]  INFO 2025-12-01 21:40:14,776 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.052056801Z [err]      return view_func(request, *args, **kwargs)
+2025-12-01T19:40:15.052057343Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-12-01T19:40:15.052066007Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-12-01T19:40:15.052072337Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.054050704Z [err]      response = self.handle_exception(exc)
+2025-12-01T19:40:15.054063456Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.054063487Z [err]                                      ^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.054068900Z [err]      raise exc
+2025-12-01T19:40:15.054076378Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-12-01T19:40:15.054079524Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-12-01T19:40:15.054081417Z [err]    File "/app/todo_management/views.py", line 253, in get_queryset
+2025-12-01T19:40:15.054087762Z [err]      self.raise_uncaught_exception(exc)
+2025-12-01T19:40:15.054089706Z [err]      response = handler(request, *args, **kwargs)
+2025-12-01T19:40:15.054096219Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.054098501Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-12-01T19:40:15.054101862Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/mixins.py", line 38, in list
+2025-12-01T19:40:15.054107554Z [err]      queryset = self.filter_queryset(self.get_queryset())
+2025-12-01T19:40:15.054112177Z [err]      qs = filter_queryset_by_user_and_building(self.request, qs, model_field="todo__building")
+2025-12-01T19:40:15.054120783Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.054127733Z [err]  TypeError: filter_queryset_by_user_and_building() got an unexpected keyword argument 'model_field'
+2025-12-01T19:40:15.054143274Z [inf]  100.64.0.9 - - [01/Dec/2025:21:40:14 +0200] "GET /api/todos/notifications/ HTTP/1.1" 500 145 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.900146328Z [err]  DEBUG 2025-12-01 21:40:15,559 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.900150392Z [err]  DEBUG 2025-12-01 21:40:15,559 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.900154309Z [err]  INFO 2025-12-01 21:40:15,562 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.900158488Z [err]  ERROR 2025-12-01 21:40:15,567 log 18 139639473646464 Internal Server Error: /api/todos/notifications/
+2025-12-01T19:40:15.900163516Z [err]  Traceback (most recent call last):
+2025-12-01T19:40:15.900167418Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2025-12-01T19:40:15.900171946Z [err]      response = get_response(request)
+2025-12-01T19:40:15.900178735Z [err]                 ^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.900182916Z [err]    File "/usr/local/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+2025-12-01T19:40:15.900186958Z [err]      response = wrapped_callback(request, *callback_args, **callback_kwargs)
+2025-12-01T19:40:15.900190801Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.900194577Z [err]    File "/usr/local/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+2025-12-01T19:40:15.900198348Z [err]      return view_func(request, *args, **kwargs)
+2025-12-01T19:40:15.900202250Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.900207493Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/viewsets.py", line 125, in view
+2025-12-01T19:40:15.902443801Z [err]      return self.dispatch(request, *args, **kwargs)
+2025-12-01T19:40:15.902448075Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.902452376Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 515, in dispatch
+2025-12-01T19:40:15.902456632Z [err]      response = self.handle_exception(exc)
+2025-12-01T19:40:15.902460968Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.902465368Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 475, in handle_exception
+2025-12-01T19:40:15.902470497Z [err]      self.raise_uncaught_exception(exc)
+2025-12-01T19:40:15.902475521Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+2025-12-01T19:40:15.902480503Z [err]      raise exc
+2025-12-01T19:40:15.902484914Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+2025-12-01T19:40:15.902488777Z [err]      response = handler(request, *args, **kwargs)
+2025-12-01T19:40:15.902494847Z [err]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.902499378Z [err]    File "/usr/local/lib/python3.12/site-packages/rest_framework/mixins.py", line 38, in list
+2025-12-01T19:40:15.902503746Z [err]      queryset = self.filter_queryset(self.get_queryset())
+2025-12-01T19:40:15.902507687Z [err]                                      ^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.902512116Z [err]    File "/app/todo_management/views.py", line 253, in get_queryset
+2025-12-01T19:40:15.902516262Z [err]      qs = filter_queryset_by_user_and_building(self.request, qs, model_field="todo__building")
+2025-12-01T19:40:15.902522663Z [err]           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-12-01T19:40:15.902526946Z [err]  TypeError: filter_queryset_by_user_and_building() got an unexpected keyword argument 'model_field'
+2025-12-01T19:40:15.903509740Z [err]  INFO 2025-12-01 21:40:15,593 monthly_balance_service 18 139639473646464 📊 Creating/updating MonthlyBalance for Βουλής 6 -Demo - 12/2025
+2025-12-01T19:40:15.903547119Z [inf]  100.64.0.9 - - [01/Dec/2025:21:40:15 +0200] "GET /api/todos/notifications/?is_read=false&building=2 HTTP/1.1" 500 145 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.903552990Z [err]  DEBUG 2025-12-01 21:40:15,571 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.903558199Z [err]  DEBUG 2025-12-01 21:40:15,571 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.903563762Z [err]  INFO 2025-12-01 21:40:15,575 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.903568531Z [err]  DEBUG 2025-12-01 21:40:15,581 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.903572566Z [err]  DEBUG 2025-12-01 21:40:15,582 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.903576666Z [err]  INFO 2025-12-01 21:40:15,586 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.903580531Z [inf]  100.64.0.4 - - [01/Dec/2025:21:40:15 +0200] "GET /api/financial/payments/?building_id=2 HTTP/1.1" 200 52 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.905470016Z [err]  DEBUG 2025-12-01 21:40:15,593 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.905476181Z [err]  DEBUG 2025-12-01 21:40:15,593 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.905481274Z [err]  INFO 2025-12-01 21:40:15,596 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.905485886Z [err]  DEBUG 2025-12-01 21:40:15,596 monthly_balance_service 18 139639473646464    💸 Δαπάνες μήνα: €1300.00
+2025-12-01T19:40:15.905489895Z [err]  DEBUG 2025-12-01 21:40:15,599 monthly_balance_service 18 139639473646464    💰 Εισπράξεις μήνα: €0.00
+2025-12-01T19:40:15.905494510Z [inf]  🔍 BuildingViewSet.retrieve() called for building 2
+2025-12-01T19:40:15.905499593Z [err]  INFO 2025-12-01 21:40:15,600 views 19 139639473646464 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 822) in tenant: theo
+2025-12-01T19:40:15.905504132Z [err]  INFO 2025-12-01 21:40:15,600 views 19 139639473646464 User is superuser/staff. Returning all buildings.
+2025-12-01T19:40:15.905508194Z [err]  DEBUG 2025-12-01 21:40:15,602 monthly_balance_service 18 139639473646464    📊 Παλαιότερες οφειλές: €3270.00
+2025-12-01T19:40:15.905513122Z [err]  DEBUG 2025-12-01 21:40:15,607 monthly_balance_service 18 139639473646464    🏢 Διαχειριστικά έξοδα: €120.00
+2025-12-01T19:40:15.905517930Z [inf]  🔍 BuildingViewSet.retrieve() response: {'id': 2, 'name': 'Βουλής 6 -Demo', 'address': 'Βουλής 6, Αθήνα 105 62, Ελλάδα', 'city': 'Αθήνα', 'postal_code': '10562', 'apartments_count': 15, 'internal_manager': {'id': 849, 'email': 'thodoris_st@hotmail.com', 'first_name': 'ΘΕΟΔΩΡΟΣ', 'last_name': 'Σταματιαδης', 'full_name': 'ΘΕΟΔΩΡΟΣ Σταματιαδης'}, 'internal_manager_can_record_payments': True, 'internal_manager_display_name': 'ΘΕΟΔΩΡΟΣ Σταματιαδης', 'internal_manager_name': '', 'internal_manager_phone': '', 'internal_manager_apartment': '1', 'internal_manager_collection_schedule': 'Κατόπιν συνεννόησης', 'management_office_name': 'Διαχείριση ΑΚΙΝΗΤΩΝ', 'management_office_phone': '21035552225', 'management_office_address': 'Λεωφόρος Συγγρού 343 Αθήνα', 'management_fee_per_apartment': '8.00', 'service_package': {'id': 1, 'name': 'Βασικό Πακέτο', 'description': 'Βασική διαχείριση κτιρίου με τις απαραίτητες υπηρεσίες', 'fee_per_apartment': '8.00', 'services_included': ['Διαχείριση κοινόχρηστων', 'Τήρηση λογαριασμών', 'Εξόφληση κοινόχρηστων', 'Συντήρηση κοινών χώρων'], 'services_list': 'Διαχείριση κοινόχρηστων, Τήρηση λογαριασμών, Εξόφληση κοινόχρηστων, Συντήρηση κοινών χώρων', 'total_cost_for_building': 0, 'is_active': True, 'created_at': '2025-12-01T12:41:42.302573+02:00', 'updated_at': '2025-12-01T12:41:42.302593+02:00'}, 'service_package_start_date': '2025-12-01', 'current_reserve': '-10510.00', 'heating_system': 'hour_meters', 'heating_fixed_percentage': 30, 'reserve_contribution_per_apartment': '0.00', 'reserve_fund_goal': '2000.00', 'reserve_fund_duration_months': 4, 'reserve_fund_start_date': '2025-11-01', 'reserve_fund_target_date': '2026-02-28', 'financial_system_start_date': '2025-11-01', 'street_view_image': '', 'latitude': '37.976875', 'longitude': '23.732708', 'manager': None, 'grace_day_of_month': 1, 'created_at': '2025-11-23T11:16:26.594924+02:00', 'updated_at': '2025-12-01T21:37:24.753906+02:00'}
+2025-12-01T19:40:15.907967336Z [inf]  🔍 Response street view image: 
+2025-12-01T19:40:15.907975908Z [err]  DEBUG 2025-12-01 21:40:15,612 monthly_balance_service 18 139639473646464    🏦 Αποθεματικό: €500.00
+2025-12-01T19:40:15.907981412Z [inf]  100.64.0.2 - - [01/Dec/2025:21:40:15 +0200] "GET /api/buildings/list/2/ HTTP/1.1" 200 2154 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.907986770Z [err]  DEBUG 2025-12-01 21:40:15,615 monthly_balance_service 18 139639473646464    🔧 Προγραμματισμένα έργα: €0.00
+2025-12-01T19:40:15.907993050Z [err]  DEBUG 2025-12-01 21:40:15,615 monthly_balance_service 18 139639473646464    ⚖️ Καθαρό αποτέλεσμα: €-5190.00
+2025-12-01T19:40:15.907998658Z [err]  DEBUG 2025-12-01 21:40:15,615 monthly_balance_service 18 139639473646464    🔄 Carry Forward: €5190.00
+2025-12-01T19:40:15.908007498Z [err]  INFO 2025-12-01 21:40:15,621 monthly_balance_service 18 139639473646464    ✅ Ενημερώθηκε υπάρχον record για 12/2025
+2025-12-01T19:40:15.908012774Z [err]  DEBUG 2025-12-01 21:40:15,664 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:15.908017923Z [err]  DEBUG 2025-12-01 21:40:15,664 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:15.908023144Z [err]  INFO 2025-12-01 21:40:15,666 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:15.908027932Z [inf]  📊 Apartment 1 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:15.908032986Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:15.909564955Z [inf]     Apartment ratio: 100/1000
+2025-12-01T19:40:15.909571815Z [inf]     Apartment previous_balance: €327.00
+2025-12-01T19:40:15.909576957Z [inf]  100.64.0.3 - - [01/Dec/2025:21:40:15 +0200] "GET /api/apartments/?building=2 HTTP/1.1" 200 10681 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:15.909582824Z [inf]  📊 Apartment 1 - 2025-12:
+2025-12-01T19:40:15.909585355Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:15.909589964Z [inf]     Previous Balance: €327.00
+2025-12-01T19:40:15.909594589Z [inf]     Net Obligation: €515.00
+2025-12-01T19:40:15.909597233Z [inf]     Current Month Expenses: €188.00
+2025-12-01T19:40:15.909603554Z [inf]       - Resident: €38.00
+2025-12-01T19:40:15.909608953Z [inf]       - Owner: €150.00
+2025-12-01T19:40:15.909615111Z [inf]     Reserve Fund Share: €50.00
+2025-12-01T19:40:15.909631030Z [inf]  📊 Apartment 10 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:15.909635811Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:15.909640298Z [inf]     Apartment ratio: 68/1000
+2025-12-01T19:40:15.909644849Z [inf]     Apartment previous_balance: €222.36
+2025-12-01T19:40:15.909649252Z [inf]  📊 Apartment 10 - 2025-12:
+2025-12-01T19:40:15.909653824Z [inf]     Previous Balance: €222.36
+2025-12-01T19:40:15.909658403Z [inf]     Current Month Expenses: €130.40
+2025-12-01T19:40:15.909667762Z [inf]       - Resident: €28.40
+2025-12-01T19:40:15.909711853Z [inf]       - Owner: €102.00
+2025-12-01T19:40:15.909716910Z [inf]     Reserve Fund Share: €34.00
+2025-12-01T19:40:15.909726370Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:15.909730809Z [inf]     Net Obligation: €352.76
+2025-12-01T19:40:15.909736295Z [inf]  📊 Apartment 11 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:15.912504545Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:15.912513564Z [inf]     Apartment ratio: 63/1000
+2025-12-01T19:40:15.912521424Z [inf]     Apartment previous_balance: €206.01
+2025-12-01T19:40:15.912526568Z [inf]  📊 Apartment 11 - 2025-12:
+2025-12-01T19:40:15.912533066Z [inf]     Previous Balance: €206.01
+2025-12-01T19:40:15.912539459Z [inf]     Current Month Expenses: €121.40
+2025-12-01T19:40:15.912544680Z [inf]       - Resident: €26.90
+2025-12-01T19:40:15.912549866Z [inf]       - Owner: €94.50
+2025-12-01T19:40:15.912555171Z [inf]     Reserve Fund Share: €31.50
+2025-12-01T19:40:15.912562930Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:15.912573479Z [inf]     Net Obligation: €327.41
+2025-12-01T19:40:15.912583388Z [inf]  📊 Apartment 12 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:15.912590275Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:15.912595617Z [inf]     Apartment ratio: 49/1000
+2025-12-01T19:40:15.912600545Z [inf]     Apartment previous_balance: €160.23
+2025-12-01T19:40:15.912606124Z [inf]  📊 Apartment 12 - 2025-12:
+2025-12-01T19:40:15.912612076Z [inf]     Previous Balance: €160.23
+2025-12-01T19:40:15.912618025Z [inf]     Current Month Expenses: €96.20
+2025-12-01T19:40:15.912623442Z [inf]       - Resident: €22.70
+2025-12-01T19:40:15.912628938Z [inf]       - Owner: €73.50
+2025-12-01T19:40:15.912634215Z [inf]     Reserve Fund Share: €24.50
+2025-12-01T19:40:15.912639113Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:15.912644240Z [inf]     Net Obligation: €256.43
+2025-12-01T19:40:15.928291119Z [inf]  📊 Apartment 13 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:15.928300402Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:15.928307522Z [inf]     Apartment ratio: 69/1000
+2025-12-01T19:40:15.928315567Z [inf]     Apartment previous_balance: €225.63
+2025-12-01T19:40:15.959918036Z [inf]  📊 Apartment 13 - 2025-12:
+2025-12-01T19:40:15.959924863Z [inf]     Previous Balance: €225.63
+2025-12-01T19:40:15.959929385Z [inf]     Current Month Expenses: €132.20
+2025-12-01T19:40:15.959933928Z [inf]       - Resident: €28.70
+2025-12-01T19:40:15.959949491Z [inf]       - Owner: €103.50
+2025-12-01T19:40:15.959953975Z [inf]     Reserve Fund Share: €34.50
+2025-12-01T19:40:15.959958272Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:15.959962076Z [inf]     Net Obligation: €357.83
+2025-12-01T19:40:15.987443944Z [inf]  📊 Apartment 14 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:15.987451300Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:15.987455711Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:15.987459565Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:16.002496162Z [inf]  📊 Apartment 14 - 2025-12:
+2025-12-01T19:40:16.002505707Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:16.002511818Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:16.002517517Z [inf]       - Resident: €27.50
+2025-12-01T19:40:16.002522342Z [inf]       - Owner: €97.50
+2025-12-01T19:40:16.002530323Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:16.002536293Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.002541845Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:16.040022758Z [inf]  📊 Apartment 15 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.040026564Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.040030309Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:16.040034254Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:16.061503667Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:16.061516511Z [inf]       - Resident: €27.50
+2025-12-01T19:40:16.061524519Z [inf]       - Owner: €97.50
+2025-12-01T19:40:16.061532409Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:16.061538998Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.061546207Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:16.061607497Z [inf]  📊 Apartment 15 - 2025-12:
+2025-12-01T19:40:16.061612179Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:16.093346890Z [inf]  📊 Apartment 2 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.093354481Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.093414084Z [inf]     Apartment ratio: 66/1000
+2025-12-01T19:40:16.093420367Z [inf]     Apartment previous_balance: €215.82
+2025-12-01T19:40:16.108233371Z [inf]  📊 Apartment 2 - 2025-12:
+2025-12-01T19:40:16.108239777Z [inf]     Previous Balance: €215.82
+2025-12-01T19:40:16.108244713Z [inf]     Current Month Expenses: €126.80
+2025-12-01T19:40:16.108249316Z [inf]       - Resident: €27.80
+2025-12-01T19:40:16.108253362Z [inf]       - Owner: €99.00
+2025-12-01T19:40:16.108258891Z [inf]     Reserve Fund Share: €33.00
+2025-12-01T19:40:16.108263896Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.108268404Z [inf]     Net Obligation: €342.62
+2025-12-01T19:40:16.145432439Z [inf]  📊 Apartment 3 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.145437958Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.145442962Z [inf]     Apartment ratio: 77/1000
+2025-12-01T19:40:16.145448145Z [inf]     Apartment previous_balance: €251.79
+2025-12-01T19:40:16.158364885Z [inf]  📊 Apartment 3 - 2025-12:
+2025-12-01T19:40:16.158372338Z [inf]     Previous Balance: €251.79
+2025-12-01T19:40:16.158377725Z [inf]     Current Month Expenses: €146.60
+2025-12-01T19:40:16.158384401Z [inf]       - Resident: €31.10
+2025-12-01T19:40:16.158391621Z [inf]       - Owner: €115.50
+2025-12-01T19:40:16.158397273Z [inf]     Reserve Fund Share: €38.50
+2025-12-01T19:40:16.158403512Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.158410012Z [inf]     Net Obligation: €398.39
+2025-12-01T19:40:16.189970458Z [inf]  📊 Apartment 4 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.189975293Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.189980893Z [inf]     Apartment ratio: 70/1000
+2025-12-01T19:40:16.189987641Z [inf]     Apartment previous_balance: €228.90
+2025-12-01T19:40:16.208695558Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.208706577Z [inf]     Net Obligation: €362.90
+2025-12-01T19:40:16.208812323Z [inf]  📊 Apartment 4 - 2025-12:
+2025-12-01T19:40:16.208816094Z [inf]     Previous Balance: €228.90
+2025-12-01T19:40:16.208820635Z [inf]     Current Month Expenses: €134.00
+2025-12-01T19:40:16.208825995Z [inf]       - Resident: €29.00
+2025-12-01T19:40:16.208829744Z [inf]       - Owner: €105.00
+2025-12-01T19:40:16.208834017Z [inf]     Reserve Fund Share: €35.00
+2025-12-01T19:40:16.236236391Z [inf]  📊 Apartment 5 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.236242925Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.236252423Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:16.236367017Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:16.247776947Z [inf]  📊 Apartment 5 - 2025-12:
+2025-12-01T19:40:16.247783641Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:16.247789385Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:16.247798427Z [inf]       - Resident: €27.50
+2025-12-01T19:40:16.247803826Z [inf]       - Owner: €97.50
+2025-12-01T19:40:16.247810050Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:16.247816756Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.247822642Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:16.284197072Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.284208900Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.284217773Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:40:16.284226494Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:40:16.294640359Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:40:16.294646953Z [inf]     Previous Balance: €170.04
+2025-12-01T19:40:16.294651331Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:40:16.294655612Z [inf]       - Resident: €23.60
+2025-12-01T19:40:16.294659766Z [inf]       - Owner: €78.00
+2025-12-01T19:40:16.294666160Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:40:16.294670478Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.294674707Z [inf]     Net Obligation: €271.64
+2025-12-01T19:40:16.333027322Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.333031451Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.333035420Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:40:16.333039630Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:40:16.341277559Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:40:16.341288856Z [inf]     Previous Balance: €192.93
+2025-12-01T19:40:16.341295314Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:40:16.341301687Z [inf]       - Resident: €25.70
+2025-12-01T19:40:16.341307782Z [inf]       - Owner: €88.50
+2025-12-01T19:40:16.341314903Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:40:16.341323076Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.341328023Z [inf]     Net Obligation: €307.13
+2025-12-01T19:40:16.379718044Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.379722261Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.379726560Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:40:16.379732247Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:40:16.389444743Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:40:16.389451437Z [inf]     Previous Balance: €245.25
+2025-12-01T19:40:16.389457914Z [inf]     Current Month Expenses: €143.00
+2025-12-01T19:40:16.389465736Z [inf]       - Resident: €30.50
+2025-12-01T19:40:16.389472668Z [inf]       - Owner: €112.50
+2025-12-01T19:40:16.389479924Z [inf]     Reserve Fund Share: €37.50
+2025-12-01T19:40:16.389487489Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.389494204Z [inf]     Net Obligation: €388.25
+2025-12-01T19:40:16.426233717Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.426242482Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.426248475Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:40:16.426254888Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:40:16.436089742Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:40:16.436100789Z [inf]     Previous Balance: €186.39
+2025-12-01T19:40:16.436108360Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:40:16.436114239Z [inf]       - Resident: €25.10
+2025-12-01T19:40:16.436120270Z [inf]       - Owner: €85.50
+2025-12-01T19:40:16.436128401Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:40:16.436133701Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.436139188Z [inf]     Net Obligation: €296.99
+2025-12-01T19:40:16.910913390Z [err]  DEBUG 2025-12-01 21:40:16,610 monthly_balance_service 18 139639473646464    🏦 Αποθεματικό: €500.00
+2025-12-01T19:40:16.910924202Z [err]  INFO 2025-12-01 21:40:16,611 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:16.910931368Z [err]  DEBUG 2025-12-01 21:40:16,613 monthly_balance_service 18 139639473646464    🔧 Προγραμματισμένα έργα: €0.00
+2025-12-01T19:40:16.910938525Z [err]  DEBUG 2025-12-01 21:40:16,613 monthly_balance_service 18 139639473646464    ⚖️ Καθαρό αποτέλεσμα: €-5190.00
+2025-12-01T19:40:16.910948554Z [err]  DEBUG 2025-12-01 21:40:16,606 monthly_balance_service 18 139639473646464    🏢 Διαχειριστικά έξοδα: €120.00
+2025-12-01T19:40:16.910959275Z [err]  DEBUG 2025-12-01 21:40:16,613 monthly_balance_service 18 139639473646464    🔄 Carry Forward: €5190.00
+2025-12-01T19:40:16.910969836Z [err]  DEBUG 2025-12-01 21:40:16,608 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:16.910970975Z [err]  INFO 2025-12-01 21:40:16,591 monthly_balance_service 18 139639473646464 📊 Creating/updating MonthlyBalance for Βουλής 6 -Demo - 12/2025
+2025-12-01T19:40:16.910975768Z [err]  DEBUG 2025-12-01 21:40:16,608 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:16.910977344Z [inf]  🔍 Monthly Activity Check for 2025-12:
+2025-12-01T19:40:16.910982803Z [inf]     📤 Has expenses: True
+2025-12-01T19:40:16.910983152Z [err]  DEBUG 2025-12-01 21:40:16,595 monthly_balance_service 18 139639473646464    💸 Δαπάνες μήνα: €1300.00
+2025-12-01T19:40:16.910990816Z [inf]     📥 Has payments: False
+2025-12-01T19:40:16.910991900Z [err]  DEBUG 2025-12-01 21:40:16,598 monthly_balance_service 18 139639473646464    💰 Εισπράξεις μήνα: €0.00
+2025-12-01T19:40:16.910996679Z [inf]     📋 Has issued expenses: True
+2025-12-01T19:40:16.911000759Z [err]  DEBUG 2025-12-01 21:40:16,600 monthly_balance_service 18 139639473646464    📊 Παλαιότερες οφειλές: €3270.00
+2025-12-01T19:40:16.911002164Z [inf]     ✅ Overall activity: True
+2025-12-01T19:40:16.911006573Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): current_reserve=-6430.00, total_obligations=21619.97
+2025-12-01T19:40:16.911011041Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): total_balance=-2540.00
+2025-12-01T19:40:16.911017310Z [inf]  ✅ Previous obligations for 2025-12: €3270.00
+2025-12-01T19:40:16.911023199Z [inf]     (από MonthlyBalance 11/2025 carry_forward)
+2025-12-01T19:40:16.911030988Z [inf]  🔧 TOTAL BALANCE: current_reserve=-6430.00 - current_obligations=5190.00 = -11620.00
+2025-12-01T19:40:16.911037788Z [inf]  🔧 CURRENT MONTH EXPENSES: 1920.00 = 5190.00 - 3270.00
+2025-12-01T19:40:16.911043395Z [inf]  100.64.0.9 - - [01/Dec/2025:21:40:16 +0200] "GET /api/financial/dashboard/summary/?building_id=2&month=2025-12 HTTP/1.1" 200 11247 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:16.911049108Z [err]  DEBUG 2025-12-01 21:40:16,578 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:16.911054839Z [err]  DEBUG 2025-12-01 21:40:16,578 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:16.911060689Z [err]  INFO 2025-12-01 21:40:16,582 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:16.913301093Z [err]  INFO 2025-12-01 21:40:16,616 monthly_balance_service 18 139639473646464    ℹ️  Υπάρχον record δεν τροποποιήθηκε για 12/2025
+2025-12-01T19:40:16.913305550Z [inf]  100.64.0.8 - - [01/Dec/2025:21:40:16 +0200] "GET /api/financial/payments/?building_id=2&month=2025-12 HTTP/1.1" 200 52 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:16.913342610Z [err]  DEBUG 2025-12-01 21:40:16,873 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:16.913349230Z [err]  DEBUG 2025-12-01 21:40:16,873 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:16.913456211Z [err]  INFO 2025-12-01 21:40:16,876 middleware 19 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:16.919949069Z [inf]  📊 Apartment 1 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.919957435Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.919962647Z [inf]     Apartment ratio: 100/1000
+2025-12-01T19:40:16.919979642Z [inf]     Apartment previous_balance: €327.00
+2025-12-01T19:40:16.930250120Z [inf]       - Owner: €150.00
+2025-12-01T19:40:16.930257065Z [inf]     Reserve Fund Share: €50.00
+2025-12-01T19:40:16.930262209Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.930266982Z [inf]     Net Obligation: €515.00
+2025-12-01T19:40:16.930287820Z [inf]     Previous Balance: €327.00
+2025-12-01T19:40:16.930289781Z [inf]  📊 Apartment 1 - 2025-12:
+2025-12-01T19:40:16.930297128Z [inf]     Current Month Expenses: €188.00
+2025-12-01T19:40:16.930304183Z [inf]       - Resident: €38.00
+2025-12-01T19:40:16.972155647Z [inf]  📊 Apartment 10 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:16.972161252Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:16.972165804Z [inf]     Apartment ratio: 68/1000
+2025-12-01T19:40:16.972170683Z [inf]     Apartment previous_balance: €222.36
+2025-12-01T19:40:16.989585437Z [inf]       - Resident: €28.40
+2025-12-01T19:40:16.989596098Z [inf]       - Owner: €102.00
+2025-12-01T19:40:16.989603219Z [inf]     Reserve Fund Share: €34.00
+2025-12-01T19:40:16.989610338Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:16.989618092Z [inf]     Net Obligation: €352.76
+2025-12-01T19:40:16.989648809Z [inf]  📊 Apartment 10 - 2025-12:
+2025-12-01T19:40:16.989655120Z [inf]     Previous Balance: €222.36
+2025-12-01T19:40:16.989661139Z [inf]     Current Month Expenses: €130.40
+2025-12-01T19:40:17.022787001Z [inf]  📊 Apartment 11 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.022796867Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.022805289Z [inf]     Apartment ratio: 63/1000
+2025-12-01T19:40:17.022811406Z [inf]     Apartment previous_balance: €206.01
+2025-12-01T19:40:17.035040808Z [inf]     Reserve Fund Share: €31.50
+2025-12-01T19:40:17.035051126Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.035056730Z [inf]     Net Obligation: €327.41
+2025-12-01T19:40:17.035094062Z [inf]  📊 Apartment 11 - 2025-12:
+2025-12-01T19:40:17.035099587Z [inf]     Previous Balance: €206.01
+2025-12-01T19:40:17.035104149Z [inf]     Current Month Expenses: €121.40
+2025-12-01T19:40:17.035108103Z [inf]       - Resident: €26.90
+2025-12-01T19:40:17.035112109Z [inf]       - Owner: €94.50
+2025-12-01T19:40:17.076294935Z [inf]  📊 Apartment 12 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.076303677Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.076310229Z [inf]     Apartment ratio: 49/1000
+2025-12-01T19:40:17.076316300Z [inf]     Apartment previous_balance: €160.23
+2025-12-01T19:40:17.085693151Z [inf]  📊 Apartment 12 - 2025-12:
+2025-12-01T19:40:17.085705722Z [inf]     Previous Balance: €160.23
+2025-12-01T19:40:17.085713073Z [inf]     Current Month Expenses: €96.20
+2025-12-01T19:40:17.085724742Z [inf]       - Resident: €22.70
+2025-12-01T19:40:17.085731869Z [inf]       - Owner: €73.50
+2025-12-01T19:40:17.085738937Z [inf]     Reserve Fund Share: €24.50
+2025-12-01T19:40:17.085746072Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.085752681Z [inf]     Net Obligation: €256.43
+2025-12-01T19:40:17.124183779Z [inf]  📊 Apartment 13 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.124192056Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.124198453Z [inf]     Apartment ratio: 69/1000
+2025-12-01T19:40:17.124205628Z [inf]     Apartment previous_balance: €225.63
+2025-12-01T19:40:17.149099939Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.149111809Z [inf]     Net Obligation: €357.83
+2025-12-01T19:40:17.149152537Z [inf]  📊 Apartment 13 - 2025-12:
+2025-12-01T19:40:17.149165369Z [inf]     Previous Balance: €225.63
+2025-12-01T19:40:17.149175407Z [inf]     Current Month Expenses: €132.20
+2025-12-01T19:40:17.149184245Z [inf]       - Resident: €28.70
+2025-12-01T19:40:17.149190465Z [inf]       - Owner: €103.50
+2025-12-01T19:40:17.149196628Z [inf]     Reserve Fund Share: €34.50
+2025-12-01T19:40:17.196995386Z [inf]  📊 Apartment 14 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.197002058Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.197006176Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:17.197010254Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:17.208126535Z [inf]  📊 Apartment 14 - 2025-12:
+2025-12-01T19:40:17.208136956Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:17.208143781Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:17.208150547Z [inf]       - Resident: €27.50
+2025-12-01T19:40:17.208157393Z [inf]       - Owner: €97.50
+2025-12-01T19:40:17.208164274Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:17.208170546Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.208176484Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:17.236405122Z [inf]  ✅ FinancialDashboard: Συλλογή αποθεματικού (απόφαση ΓΣ)
+2025-12-01T19:40:17.236410140Z [inf]  🔍 FinancialDashboard (current): current_reserve=-10630.00, total_obligations=21619.97
+2025-12-01T19:40:17.236414712Z [inf]  🔍 FinancialDashboard (current): total_balance=-10630.00
+2025-12-01T19:40:17.239000454Z [inf]  🔧 TOTAL BALANCE: current_reserve=-10630.00 - current_obligations=5190.00 = -15820.00
+2025-12-01T19:40:17.239010894Z [inf]  🔧 CURRENT MONTH EXPENSES: 1920.00 = 5190.00 - 3270.00
+2025-12-01T19:40:17.241708598Z [inf]  📊 Apartment 15 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.241719649Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.241727079Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:17.241733254Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:17.257619243Z [inf]  100.64.0.4 - - [01/Dec/2025:21:40:17 +0200] "GET /api/financial/dashboard/summary/?building_id=2 HTTP/1.1" 200 11328 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:17.257627462Z [inf]  📊 Apartment 15 - 2025-12:
+2025-12-01T19:40:17.257633116Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:17.257638425Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:17.257644022Z [inf]       - Resident: €27.50
+2025-12-01T19:40:17.257649910Z [inf]       - Owner: €97.50
+2025-12-01T19:40:17.257654884Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:17.257660066Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.257665627Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:17.257671063Z [err]  DEBUG 2025-12-01 21:40:17,255 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:17.257676233Z [err]  DEBUG 2025-12-01 21:40:17,255 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:17.259046571Z [err]  INFO 2025-12-01 21:40:17,257 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:17.274929033Z [inf]  100.64.0.8 - - [01/Dec/2025:21:40:17 +0200] "GET /api/buildings/current-context/?building_id=2 HTTP/1.1" 200 1014 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:17.302975988Z [inf]  📊 Apartment 2 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.302987360Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.302994822Z [inf]     Apartment ratio: 66/1000
+2025-12-01T19:40:17.303001004Z [inf]     Apartment previous_balance: €215.82
+2025-12-01T19:40:17.314706868Z [inf]  📊 Apartment 2 - 2025-12:
+2025-12-01T19:40:17.314718227Z [inf]     Previous Balance: €215.82
+2025-12-01T19:40:17.314725325Z [inf]     Current Month Expenses: €126.80
+2025-12-01T19:40:17.314732190Z [inf]       - Resident: €27.80
+2025-12-01T19:40:17.314741547Z [inf]       - Owner: €99.00
+2025-12-01T19:40:17.314748281Z [inf]     Reserve Fund Share: €33.00
+2025-12-01T19:40:17.314755958Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.314763010Z [inf]     Net Obligation: €342.62
+2025-12-01T19:40:17.357921510Z [inf]  📊 Apartment 3 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.357927339Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.357933220Z [inf]     Apartment ratio: 77/1000
+2025-12-01T19:40:17.357939003Z [inf]     Apartment previous_balance: €251.79
+2025-12-01T19:40:17.365727267Z [inf]  📊 Apartment 3 - 2025-12:
+2025-12-01T19:40:17.365737294Z [inf]     Previous Balance: €251.79
+2025-12-01T19:40:17.365742214Z [inf]     Current Month Expenses: €146.60
+2025-12-01T19:40:17.365747153Z [inf]       - Resident: €31.10
+2025-12-01T19:40:17.365755672Z [inf]       - Owner: €115.50
+2025-12-01T19:40:17.365761002Z [inf]     Reserve Fund Share: €38.50
+2025-12-01T19:40:17.365765914Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.365771050Z [inf]     Net Obligation: €398.39
+2025-12-01T19:40:17.403913013Z [inf]  📊 Apartment 4 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.403919629Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.403926153Z [inf]     Apartment ratio: 70/1000
+2025-12-01T19:40:17.403931918Z [inf]     Apartment previous_balance: €228.90
+2025-12-01T19:40:17.420300972Z [inf]  📊 Apartment 4 - 2025-12:
+2025-12-01T19:40:17.420309421Z [inf]     Previous Balance: €228.90
+2025-12-01T19:40:17.420321803Z [inf]     Current Month Expenses: €134.00
+2025-12-01T19:40:17.420330684Z [inf]       - Resident: €29.00
+2025-12-01T19:40:17.420337265Z [inf]       - Owner: €105.00
+2025-12-01T19:40:17.420342119Z [inf]     Reserve Fund Share: €35.00
+2025-12-01T19:40:17.420349576Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.420354459Z [inf]     Net Obligation: €362.90
+2025-12-01T19:40:17.897532801Z [err]  DEBUG 2025-12-01 21:40:17,475 monthly_balance_service 18 139639473646464    🏦 Αποθεματικό: €500.00
+2025-12-01T19:40:17.897553759Z [err]  DEBUG 2025-12-01 21:40:17,478 monthly_balance_service 18 139639473646464    🔧 Προγραμματισμένα έργα: €0.00
+2025-12-01T19:40:17.897565678Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.897565944Z [err]  DEBUG 2025-12-01 21:40:17,478 monthly_balance_service 18 139639473646464    ⚖️ Καθαρό αποτέλεσμα: €-5190.00
+2025-12-01T19:40:17.897566210Z [inf]       - Owner: €78.00
+2025-12-01T19:40:17.897567302Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.897571265Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:40:17.897577610Z [err]  DEBUG 2025-12-01 21:40:17,478 monthly_balance_service 18 139639473646464    🔄 Carry Forward: €5190.00
+2025-12-01T19:40:17.897577770Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:40:17.897585260Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:40:17.897585636Z [inf]     Previous Balance: €170.04
+2025-12-01T19:40:17.897591521Z [err]  INFO 2025-12-01 21:40:17,482 monthly_balance_service 18 139639473646464    ✅ Ενημερώθηκε υπάρχον record για 12/2025
+2025-12-01T19:40:17.897599798Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:40:17.897600818Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.897605266Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:40:17.897612045Z [inf]       - Resident: €23.60
+2025-12-01T19:40:17.897796411Z [inf]  📊 Apartment 5 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.897801130Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.897805948Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:17.897810556Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:17.897814801Z [err]  DEBUG 2025-12-01 21:40:17,449 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-12-01T19:40:17.897819562Z [err]  DEBUG 2025-12-01 21:40:17,449 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-12-01T19:40:17.897823724Z [err]  INFO 2025-12-01 21:40:17,452 middleware 18 139639473646464 🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-12-01T19:40:17.897828446Z [inf]  📊 Apartment 5 - 2025-12:
+2025-12-01T19:40:17.897835352Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:17.897840422Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:17.897845678Z [inf]       - Resident: €27.50
+2025-12-01T19:40:17.897849917Z [inf]       - Owner: €97.50
+2025-12-01T19:40:17.897854492Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:17.897859101Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.897864318Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:17.897869385Z [err]  INFO 2025-12-01 21:40:17,458 monthly_balance_service 18 139639473646464 📊 Creating/updating MonthlyBalance for Βουλής 6 -Demo - 12/2025
+2025-12-01T19:40:17.897874266Z [err]  DEBUG 2025-12-01 21:40:17,461 monthly_balance_service 18 139639473646464    💸 Δαπάνες μήνα: €1300.00
+2025-12-01T19:40:17.897879422Z [err]  DEBUG 2025-12-01 21:40:17,464 monthly_balance_service 18 139639473646464    💰 Εισπράξεις μήνα: €0.00
+2025-12-01T19:40:17.897936297Z [err]  DEBUG 2025-12-01 21:40:17,466 monthly_balance_service 18 139639473646464    📊 Παλαιότερες οφειλές: €3270.00
+2025-12-01T19:40:17.897941797Z [err]  DEBUG 2025-12-01 21:40:17,471 monthly_balance_service 18 139639473646464    🏢 Διαχειριστικά έξοδα: €120.00
+2025-12-01T19:40:17.898850602Z [inf]     Net Obligation: €271.64
+2025-12-01T19:40:17.898860436Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.898868745Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.898878124Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:40:17.898886676Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:40:17.898894039Z [inf]  📊 Apartment 1 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.898901872Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.898908708Z [inf]     Apartment ratio: 100/1000
+2025-12-01T19:40:17.898915439Z [inf]     Apartment previous_balance: €327.00
+2025-12-01T19:40:17.898926746Z [inf]  📊 Apartment 1 - 2025-12:
+2025-12-01T19:40:17.898934598Z [inf]     Previous Balance: €327.00
+2025-12-01T19:40:17.898945047Z [inf]     Current Month Expenses: €188.00
+2025-12-01T19:40:17.898952898Z [inf]       - Resident: €38.00
+2025-12-01T19:40:17.898959840Z [inf]       - Owner: €150.00
+2025-12-01T19:40:17.898965560Z [inf]     Reserve Fund Share: €50.00
+2025-12-01T19:40:17.898972696Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.898981462Z [inf]     Net Obligation: €515.00
+2025-12-01T19:40:17.898990118Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:40:17.898996774Z [inf]     Previous Balance: €192.93
+2025-12-01T19:40:17.899003444Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:40:17.899009597Z [inf]       - Resident: €25.70
+2025-12-01T19:40:17.899016225Z [inf]       - Owner: €88.50
+2025-12-01T19:40:17.899022506Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:40:17.899028586Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.899034417Z [inf]     Net Obligation: €307.13
+2025-12-01T19:40:17.899040549Z [inf]  📊 Apartment 10 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.901390390Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.901396676Z [inf]     Apartment ratio: 68/1000
+2025-12-01T19:40:17.901403013Z [inf]     Apartment previous_balance: €222.36
+2025-12-01T19:40:17.901407694Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:40:17.901408715Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.901421307Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.901423226Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.901428871Z [inf]     Current Month Expenses: €130.40
+2025-12-01T19:40:17.901432741Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:40:17.901433121Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:40:17.901441911Z [inf]     Net Obligation: €388.25
+2025-12-01T19:40:17.901445624Z [inf]       - Resident: €28.40
+2025-12-01T19:40:17.901446835Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:40:17.901452074Z [inf]       - Resident: €30.50
+2025-12-01T19:40:17.901453965Z [inf]  📊 Apartment 10 - 2025-12:
+2025-12-01T19:40:17.901463108Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.901467660Z [inf]     Previous Balance: €222.36
+2025-12-01T19:40:17.901470626Z [inf]       - Owner: €112.50
+2025-12-01T19:40:17.901477002Z [inf]       - Owner: €102.00
+2025-12-01T19:40:17.901481762Z [inf]     Reserve Fund Share: €37.50
+2025-12-01T19:40:17.901487904Z [inf]     Reserve Fund Share: €34.00
+2025-12-01T19:40:17.901493734Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.901499537Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.901505897Z [inf]     Net Obligation: €352.76
+2025-12-01T19:40:17.901513230Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:40:17.901520082Z [inf]     Previous Balance: €245.25
+2025-12-01T19:40:17.901527677Z [inf]     Current Month Expenses: €143.00
+2025-12-01T19:40:17.903258966Z [inf]  📊 Apartment 11 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.903267097Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.903273506Z [inf]     Apartment ratio: 63/1000
+2025-12-01T19:40:17.903279076Z [inf]     Apartment previous_balance: €206.01
+2025-12-01T19:40:17.903284447Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:40:17.903290520Z [inf]     Previous Balance: €186.39
+2025-12-01T19:40:17.903296313Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:40:17.903301677Z [inf]       - Resident: €25.10
+2025-12-01T19:40:17.903306953Z [inf]       - Owner: €85.50
+2025-12-01T19:40:17.903314346Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:40:17.903320188Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.903325942Z [inf]     Net Obligation: €296.99
+2025-12-01T19:40:17.903331619Z [inf]  📊 Apartment 11 - 2025-12:
+2025-12-01T19:40:17.903361352Z [inf]     Previous Balance: €206.01
+2025-12-01T19:40:17.903367788Z [inf]     Current Month Expenses: €121.40
+2025-12-01T19:40:17.903373154Z [inf]       - Resident: €26.90
+2025-12-01T19:40:17.903378922Z [inf]       - Owner: €94.50
+2025-12-01T19:40:17.903384621Z [inf]     Reserve Fund Share: €31.50
+2025-12-01T19:40:17.903393881Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.903401897Z [inf]     Net Obligation: €327.41
+2025-12-01T19:40:17.903408366Z [inf]  100.64.0.8 - - [01/Dec/2025:21:40:17 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=2&month=2025-12 HTTP/1.1" 200 7999 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-12-01T19:40:17.903415498Z [inf]  📊 Apartment 12 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.904884661Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.904893031Z [inf]     Apartment ratio: 49/1000
+2025-12-01T19:40:17.904898549Z [inf]     Apartment previous_balance: €160.23
+2025-12-01T19:40:17.904903731Z [inf]  📊 Apartment 12 - 2025-12:
+2025-12-01T19:40:17.904910699Z [inf]     Previous Balance: €160.23
+2025-12-01T19:40:17.904916114Z [inf]     Current Month Expenses: €96.20
+2025-12-01T19:40:17.904922805Z [inf]       - Resident: €22.70
+2025-12-01T19:40:17.904927748Z [inf]       - Owner: €73.50
+2025-12-01T19:40:17.904932371Z [inf]     Reserve Fund Share: €24.50
+2025-12-01T19:40:17.904937201Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.904941825Z [inf]     Net Obligation: €256.43
+2025-12-01T19:40:17.904947943Z [inf]  📊 Apartment 13 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.904952686Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.904959630Z [inf]     Apartment ratio: 69/1000
+2025-12-01T19:40:17.904964624Z [inf]     Apartment previous_balance: €225.63
+2025-12-01T19:40:17.904969691Z [inf]  📊 Apartment 13 - 2025-12:
+2025-12-01T19:40:17.904974730Z [inf]     Previous Balance: €225.63
+2025-12-01T19:40:17.904979607Z [inf]     Current Month Expenses: €132.20
+2025-12-01T19:40:17.904984123Z [inf]       - Resident: €28.70
+2025-12-01T19:40:17.904989199Z [inf]       - Owner: €103.50
+2025-12-01T19:40:17.904993809Z [inf]     Reserve Fund Share: €34.50
+2025-12-01T19:40:17.904998269Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.905003678Z [inf]     Net Obligation: €357.83
+2025-12-01T19:40:17.905008568Z [inf]  📊 Apartment 14 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.905014359Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.905019096Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:17.905023536Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:17.906558751Z [inf]  📊 Apartment 14 - 2025-12:
+2025-12-01T19:40:17.906568131Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:17.906574417Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:17.906584244Z [inf]       - Resident: €27.50
+2025-12-01T19:40:17.906590066Z [inf]       - Owner: €97.50
+2025-12-01T19:40:17.906604186Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.906615008Z [inf]     Apartment ratio: 66/1000
+2025-12-01T19:40:17.906615538Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:17.906616069Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:17.906623029Z [inf]     Apartment previous_balance: €215.82
+2025-12-01T19:40:17.906626615Z [inf]       - Owner: €97.50
+2025-12-01T19:40:17.906626846Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.906633094Z [inf]  📊 Apartment 15 - 2025-12:
+2025-12-01T19:40:17.906639174Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:17.906639438Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:17.906649045Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.906649253Z [inf]  📊 Apartment 15 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.906654827Z [inf]       - Resident: €27.50
+2025-12-01T19:40:17.906655364Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:17.906661407Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.906674299Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:17.906674435Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:17.906686923Z [inf]  📊 Apartment 2 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.906791802Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:17.908285566Z [inf]  📊 Apartment 2 - 2025-12:
+2025-12-01T19:40:17.908293275Z [inf]     Previous Balance: €215.82
+2025-12-01T19:40:17.908299846Z [inf]     Current Month Expenses: €126.80
+2025-12-01T19:40:17.908305976Z [inf]       - Resident: €27.80
+2025-12-01T19:40:17.908312837Z [inf]       - Owner: €99.00
+2025-12-01T19:40:17.908318775Z [inf]     Reserve Fund Share: €33.00
+2025-12-01T19:40:17.908324580Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.908331317Z [inf]     Net Obligation: €342.62
+2025-12-01T19:40:17.944340126Z [inf]  📊 Apartment 3 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.944346435Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.944350529Z [inf]     Apartment ratio: 77/1000
+2025-12-01T19:40:17.944354503Z [inf]     Apartment previous_balance: €251.79
+2025-12-01T19:40:17.959869956Z [inf]  📊 Apartment 3 - 2025-12:
+2025-12-01T19:40:17.959877542Z [inf]     Previous Balance: €251.79
+2025-12-01T19:40:17.959882870Z [inf]     Current Month Expenses: €146.60
+2025-12-01T19:40:17.959888583Z [inf]       - Resident: €31.10
+2025-12-01T19:40:17.959894855Z [inf]       - Owner: €115.50
+2025-12-01T19:40:17.959900770Z [inf]     Reserve Fund Share: €38.50
+2025-12-01T19:40:17.959906242Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:17.959910306Z [inf]     Net Obligation: €398.39
+2025-12-01T19:40:17.994954838Z [inf]  📊 Apartment 4 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:17.994961119Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:17.994967772Z [inf]     Apartment ratio: 70/1000
+2025-12-01T19:40:17.994972633Z [inf]     Apartment previous_balance: €228.90
+2025-12-01T19:40:18.023230298Z [inf]  📊 Apartment 4 - 2025-12:
+2025-12-01T19:40:18.023237662Z [inf]     Previous Balance: €228.90
+2025-12-01T19:40:18.023244012Z [inf]     Current Month Expenses: €134.00
+2025-12-01T19:40:18.023250137Z [inf]       - Resident: €29.00
+2025-12-01T19:40:18.023259829Z [inf]       - Owner: €105.00
+2025-12-01T19:40:18.023267985Z [inf]     Reserve Fund Share: €35.00
+2025-12-01T19:40:18.023273288Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:18.023278836Z [inf]     Net Obligation: €362.90
+2025-12-01T19:40:18.063240485Z [inf]  📊 Apartment 5 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:18.063256363Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:18.063295924Z [inf]     Apartment ratio: 65/1000
+2025-12-01T19:40:18.063303821Z [inf]     Apartment previous_balance: €212.55
+2025-12-01T19:40:18.082239986Z [inf]  📊 Apartment 5 - 2025-12:
+2025-12-01T19:40:18.082243954Z [inf]     Previous Balance: €212.55
+2025-12-01T19:40:18.082248542Z [inf]     Current Month Expenses: €125.00
+2025-12-01T19:40:18.082253806Z [inf]       - Resident: €27.50
+2025-12-01T19:40:18.082257941Z [inf]       - Owner: €97.50
+2025-12-01T19:40:18.082262449Z [inf]     Reserve Fund Share: €32.50
+2025-12-01T19:40:18.082266788Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:18.082270475Z [inf]     Net Obligation: €337.55
+2025-12-01T19:40:18.118149399Z [inf]  📊 Apartment 6 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:18.118157492Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:18.118162791Z [inf]     Apartment ratio: 52/1000
+2025-12-01T19:40:18.118168108Z [inf]     Apartment previous_balance: €170.04
+2025-12-01T19:40:18.139689389Z [inf]  📊 Apartment 6 - 2025-12:
+2025-12-01T19:40:18.139701614Z [inf]     Previous Balance: €170.04
+2025-12-01T19:40:18.139708462Z [inf]     Current Month Expenses: €101.60
+2025-12-01T19:40:18.139713632Z [inf]       - Resident: €23.60
+2025-12-01T19:40:18.139718767Z [inf]       - Owner: €78.00
+2025-12-01T19:40:18.139724049Z [inf]     Reserve Fund Share: €26.00
+2025-12-01T19:40:18.139730814Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:18.139736699Z [inf]     Net Obligation: €271.64
+2025-12-01T19:40:18.178629759Z [inf]  📊 Apartment 7 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:18.178634031Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:18.178640547Z [inf]     Apartment ratio: 59/1000
+2025-12-01T19:40:18.178645721Z [inf]     Apartment previous_balance: €192.93
+2025-12-01T19:40:18.209002719Z [inf]  📊 Apartment 7 - 2025-12:
+2025-12-01T19:40:18.209010188Z [inf]     Previous Balance: €192.93
+2025-12-01T19:40:18.209016650Z [inf]     Current Month Expenses: €114.20
+2025-12-01T19:40:18.209023387Z [inf]       - Resident: €25.70
+2025-12-01T19:40:18.209029209Z [inf]       - Owner: €88.50
+2025-12-01T19:40:18.209038447Z [inf]     Reserve Fund Share: €29.50
+2025-12-01T19:40:18.209045278Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:18.209053127Z [inf]     Net Obligation: €307.13
+2025-12-01T19:40:18.238439162Z [inf]  📊 Apartment 8 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:18.238445321Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:18.238451421Z [inf]     Apartment ratio: 75/1000
+2025-12-01T19:40:18.238464197Z [inf]     Apartment previous_balance: €245.25
+2025-12-01T19:40:18.254284007Z [inf]  📊 Apartment 8 - 2025-12:
+2025-12-01T19:40:18.254290823Z [inf]     Previous Balance: €245.25
+2025-12-01T19:40:18.254295660Z [inf]     Current Month Expenses: €143.00
+2025-12-01T19:40:18.254300465Z [inf]       - Resident: €30.50
+2025-12-01T19:40:18.254304848Z [inf]       - Owner: €112.50
+2025-12-01T19:40:18.254309237Z [inf]     Reserve Fund Share: €37.50
+2025-12-01T19:40:18.254313700Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:18.254317758Z [inf]     Net Obligation: €388.25
+2025-12-01T19:40:18.289806218Z [inf]  📊 Apartment 9 - Previous balance from MonthlyBalance:
+2025-12-01T19:40:18.289814420Z [inf]     Total carry_forward (11/2025): €3270.00
+2025-12-01T19:40:18.289821017Z [inf]     Apartment ratio: 57/1000
+2025-12-01T19:40:18.289826528Z [inf]     Apartment previous_balance: €186.39
+2025-12-01T19:40:18.296815291Z [inf]  📊 Apartment 9 - 2025-12:
+2025-12-01T19:40:18.296824103Z [inf]     Previous Balance: €186.39
+2025-12-01T19:40:18.296828807Z [inf]     Current Month Expenses: €110.60
+2025-12-01T19:40:18.296833149Z [inf]       - Resident: €25.10
+2025-12-01T19:40:18.296838246Z [inf]       - Owner: €85.50
+2025-12-01T19:40:18.296842476Z [inf]     Reserve Fund Share: €28.50
+2025-12-01T19:40:18.296847512Z [inf]     Payments This Month: €0.00
+2025-12-01T19:40:18.296852000Z [inf]     Net Obligation: €296.99
+2025-12-01T19:40:18.325293315Z [inf]     ✅ Overall activity: True
+2025-12-01T19:40:18.325302879Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): current_reserve=-6430.00, total_obligations=21619.97
+2025-12-01T19:40:18.325310685Z [inf]  🔍 FinancialDashboard (snapshot_2025-12): total_balance=-2540.00
+2025-12-01T19:40:18.325359173Z [inf]  🔍 Monthly Activity Check for 2025-12:
+2025-12-01T19:40:18.325366155Z [inf]     📤 Has expenses: True
+2025-12-01T19:40:18.325374005Z [inf]     📥 Has payments: False
+2025-12-01T19:40:18.325382008Z [inf]     📋 Has issued expenses: True
+2025-12-01T19:40:18.326164018Z [inf]  ✅ Previous obligations for 2025-12: €3270.00
+2025-12-01T19:40:18.326168727Z [inf]     (από MonthlyBalance 11/2025 carry_forward)
+2025-12-01T19:40:18.329620636Z [inf]  🔧 TOTAL BALANCE: current_reserve=-6430.00 - current_obligations=5190.00 = -11620.00
+2025-12-01T19:40:18.329648868Z [inf]  🔧 CURRENT MONTH EXPENSES: 1920.00 = 5190.00 - 3270.00
+2025-12-01T19:40:18.348754515Z [inf]  100.64.0.4 - - [01/Dec/2025:21:40:18 +0200] "GET /api/financial/dashboard/summary/?building_id=2&month=2025-12 HTTP/1.1" 200 11247 "https://theo.newconcierge.app/financial?building=2&tab=calculator&month=2025-12" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
 
 
- 
+
+{"timestamp":"2025-12-01T19:40:15.610Z","level":"error","message":"[tenantProxy:todos-notifications] Upstream error response","error":"undefined","method":"GET","path":"/api/todos/notifications","targetUrl":"https://linuxversion-production.up.railway.app/api/todos/notifications/?is_read=false&building=2","status":500,"statusText":"Internal Server Error","durationMs":173,"errorBody":"\n<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>Server Error (500)</title>\n</head>\n<body>\n  <h1>Server Error (500)</h1><p></p>\n</body>\n</html>\n","errorBodyLength":145}
+
+{"timestamp":"2025-12-01T19:39:36.046Z","level":"error","message":"[tenantProxy:todos-notifications] Upstream error response","error":"undefined","method":"GET","path":"/api/todos/notifications","targetUrl":"https://linuxversion-production.up.railway.app/api/todos/notifications/?building=2","status":401,"statusText":"Unauthorized","durationMs":193,"errorBody":"{\"detail\":\"Given token not valid for any token type\",\"code\":\"token_not_valid\",\"messages\":[{\"token_class\":\"AccessToken\",\"token_type\":\"access\",\"message\":\"Token is expired\"}]}","errorBodyLength":172}
