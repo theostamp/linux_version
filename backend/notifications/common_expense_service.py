@@ -5,6 +5,7 @@ This service handles:
 1. Auto-attaching the common expense sheet (JPG) for the building/month
 2. Generating personalized payment notifications (Ειδοποιητήριο) for each apartment
 3. Sending emails with both the sheet and personalized data
+4. Sending Push Notifications to users
 """
 
 import logging
@@ -16,6 +17,8 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+
+from .push_service import PushNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -376,7 +379,7 @@ class CommonExpenseNotificationService:
         if apartment_ids:
             apartments_query = apartments_query.filter(id__in=apartment_ids)
         
-        apartments = apartments_query.select_related('owner', 'building').prefetch_related('residents')
+        apartments = apartments_query.select_related('owner_user', 'tenant_user', 'building')
         
         month_display = month.strftime('%B %Y')
         
@@ -384,21 +387,12 @@ class CommonExpenseNotificationService:
             try:
                 # Get recipient email
                 recipient_email = None
-                if hasattr(apartment, 'residents') and apartment.residents.exists():
-                    # Get primary resident's email
-                    resident = apartment.residents.first()
-                    if resident and resident.email:
-                        recipient_email = resident.email
-                elif apartment.owner and apartment.owner.email:
-                    recipient_email = apartment.owner.email
-                
-                if not recipient_email:
-                    results['details'].append({
-                        'apartment': apartment.number,
-                        'status': 'skipped',
-                        'reason': 'No email address'
-                    })
-                    continue
+                if apartment.tenant_email:
+                    recipient_email = apartment.tenant_email
+                elif apartment.owner_email:
+                    recipient_email = apartment.owner_email
+                elif apartment.owner_user:
+                    recipient_email = apartment.owner_user.email
                 
                 # Get apartment payment data
                 apartment_data = {}
@@ -406,6 +400,38 @@ class CommonExpenseNotificationService:
                     apartment_data = CommonExpenseNotificationService.get_apartment_payment_data(
                         building_id, apartment.id, month
                     )
+                
+                # Send Push Notification
+                push_user = None
+                if apartment.owner_user:
+                    push_user = apartment.owner_user
+                elif apartment.tenant_user:
+                    push_user = apartment.tenant_user
+                
+                if push_user:
+                    try:
+                        amount_str = f"{apartment_data.get('net_obligation', 0):.2f}€"
+                        PushNotificationService.send_to_user(
+                            user=push_user,
+                            title=f"Κοινόχρηστα {month_display}",
+                            body=f"Εκδόθηκαν τα κοινόχρηστα για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                            data={
+                                'type': 'bill', 
+                                'month': month.strftime('%Y-%m'), 
+                                'building_id': str(building_id),
+                                'apartment_id': str(apartment.id)
+                            }
+                        )
+                    except Exception as push_error:
+                        logger.error(f"Failed to send push to user {push_user.id}: {push_error}")
+
+                if not recipient_email:
+                    results['details'].append({
+                        'apartment': apartment.number,
+                        'status': 'skipped',
+                        'reason': 'No email address'
+                    })
+                    continue
                 
                 # Generate email content
                 subject = f"Κοινόχρηστα {month_display} - {building.name} - Διαμ. {apartment.number}"
@@ -488,4 +514,3 @@ class CommonExpenseNotificationService:
         
         results['success'] = results['failed_count'] == 0
         return results
-

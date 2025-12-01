@@ -774,3 +774,8 @@ GOOGLE_CALENDAR_AUTO_SHARE = os.getenv('GOOGLE_CALENDAR_AUTO_SHARE', 'True') == 
 MICROSOFT_CLIENT_ID = os.getenv('MICROSOFT_CLIENT_ID', '')
 MICROSOFT_CLIENT_SECRET = os.getenv('MICROSOFT_CLIENT_SECRET', '')
 MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:18000/api/auth/callback/')
+
+# ----------------------------------------
+# 🔔 Firebase Push Notifications
+# ----------------------------------------
+FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', BASE_DIR / 'credentials' / 'serviceAccountKey.json')

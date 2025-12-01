@@ -22,7 +22,8 @@ from .models import (
     Notification,
     NotificationRecipient,
     MonthlyNotificationTask,
-    NotificationEvent
+    NotificationEvent,
+    UserDeviceToken,
 )
 from .serializers import (
     NotificationTemplateSerializer,
@@ -39,6 +40,7 @@ from .serializers import (
     NotificationEventSerializer,
     DigestPreviewSerializer,
     SendDigestSerializer,
+    UserDeviceTokenSerializer,
 )
 from .services import (
     NotificationService,
@@ -984,3 +986,36 @@ class NotificationEventViewSet(viewsets.ReadOnlyModelViewSet):
                 'message': 'No pending events to send',
                 'notification_id': None,
             }, status=status.HTTP_200_OK)
+
+
+class DeviceTokenViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing user device tokens.
+    
+    list: Get all active tokens for current user
+    create: Register new device token
+    deactivate: Deactivate a specific token
+    """
+    serializer_class = UserDeviceTokenSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return UserDeviceToken.objects.filter(user=self.request.user, is_active=True)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        
+    @action(detail=False, methods=['post'])
+    def deactivate(self, request):
+        """
+        Deactivate a specific token.
+        
+        POST /api/notifications/devices/deactivate/
+        Body: { "token": "..." }
+        """
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        UserDeviceToken.objects.filter(token=token, user=request.user).update(is_active=False)
+        return Response({'status': 'deactivated'})

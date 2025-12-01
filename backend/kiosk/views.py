@@ -674,19 +674,22 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
     """
     Verify a person by their phone number.
     Searches all apartments in the building for matching owner_phone or tenant_phone.
+    Now returns ALL matching apartments (for owners with multiple properties).
     
     Returns:
         dict with keys:
         - 'verified': bool - True if phone matches owner or tenant
-        - 'apartment': Apartment object or None
-        - 'match_type': 'owner' | 'tenant' | None
-        - 'owner_name': str - Name of the matched owner/tenant
+        - 'apartment': Apartment object or None (primary/first match)
+        - 'apartments': list of dicts with all matching apartments
+        - 'match_type': 'owner' | 'tenant' | None (for primary)
+        - 'owner_name': str - Name of the matched owner/tenant (for primary)
         - 'error': str or None
     """
     if not phone:
         return {
             'verified': False,
             'apartment': None,
+            'apartments': [],
             'match_type': None,
             'owner_name': None,
             'error': 'Το τηλέφωνο είναι υποχρεωτικό'
@@ -698,6 +701,7 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
         return {
             'verified': False,
             'apartment': None,
+            'apartments': [],
             'match_type': None,
             'owner_name': None,
             'error': 'Παρακαλώ εισάγετε έγκυρο αριθμό τηλεφώνου (10 ψηφία)'
@@ -707,35 +711,51 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
         # Get all apartments for this building
         apartments = Apartment.objects.filter(building_id=building_id)
         
+        # Collect ALL matching apartments
+        matches = []
+        
         for apartment in apartments:
             # Check owner phone
             if apartment.owner_phone:
                 normalized_owner = normalize_phone(apartment.owner_phone)
                 if normalized_owner == normalized_input:
-                    return {
-                        'verified': True,
+                    matches.append({
                         'apartment': apartment,
                         'match_type': 'owner',
-                        'owner_name': apartment.owner_name or '',
-                        'error': None
-                    }
+                        'name': apartment.owner_name or ''
+                    })
+                    continue  # Don't check tenant if owner matches
             
             # Check tenant phone (if rented)
             if apartment.is_rented and apartment.tenant_phone:
                 normalized_tenant = normalize_phone(apartment.tenant_phone)
                 if normalized_tenant == normalized_input:
-                    return {
-                        'verified': True,
+                    matches.append({
                         'apartment': apartment,
                         'match_type': 'tenant',
-                        'owner_name': apartment.tenant_name or '',
-                        'error': None
-                    }
+                        'name': apartment.tenant_name or ''
+                    })
+        
+        if matches:
+            # Return first match as primary, but include all matches
+            primary = matches[0]
+            apartment_numbers = ', '.join([m['apartment'].number for m in matches])
+            kiosk_logger.info(f"Phone {phone} matched {len(matches)} apartment(s): {apartment_numbers}")
+            
+            return {
+                'verified': True,
+                'apartment': primary['apartment'],
+                'apartments': matches,  # All matching apartments
+                'match_type': primary['match_type'],
+                'owner_name': primary['name'],
+                'error': None
+            }
         
         # Phone not found
         return {
             'verified': False,
             'apartment': None,
+            'apartments': [],
             'match_type': None,
             'owner_name': None,
             'error': 'Το τηλέφωνο δεν βρέθηκε στα καταχωρημένα στοιχεία του κτιρίου. Παρακαλώ επικοινωνήστε με τη διαχείριση.'
@@ -746,6 +766,7 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
         return {
             'verified': False,
             'apartment': None,
+            'apartments': [],
             'match_type': None,
             'owner_name': None,
             'error': 'Σφάλμα κατά τον έλεγχο του τηλεφώνου'
@@ -918,41 +939,50 @@ def kiosk_register(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    apartment = verification['apartment']
+    # Get all matching apartments (owner might have multiple properties)
+    all_matches = verification.get('apartments', [])
+    apartment = verification['apartment']  # Primary apartment
     match_type = verification['match_type']  # 'owner' or 'tenant'
     owner_name = verification['owner_name']  # Name from matched record
     
-    kiosk_logger.info(f"Phone verified: {email} is {match_type} of apartment {apartment.number}")
+    # Log all matched apartments
+    if len(all_matches) > 1:
+        apt_numbers = ', '.join([m['apartment'].number for m in all_matches])
+        kiosk_logger.info(f"Phone verified: {email} owns/rents {len(all_matches)} apartments: {apt_numbers}")
+    else:
+        kiosk_logger.info(f"Phone verified: {email} is {match_type} of apartment {apartment.number}")
     
-    # Auto-register email if not already set (Option A)
+    # Auto-register email for ALL matching apartments
     # Phone is the "truth evidence" - if it matches, we trust the user
     email_updated = False
-    if match_type == 'owner':
-        if not apartment.owner_email:
-            apartment.owner_email = email
-            apartment.save(update_fields=['owner_email'])
-            email_updated = True
-            kiosk_logger.info(f"Auto-registered owner email {email} for apartment {apartment.number}")
-        elif apartment.owner_email.lower() != email.lower():
-            # Different email provided - update it (Option A: allow change)
-            old_email = apartment.owner_email
-            apartment.owner_email = email
-            apartment.save(update_fields=['owner_email'])
-            email_updated = True
-            kiosk_logger.info(f"Updated owner email from {old_email} to {email} for apartment {apartment.number}")
-    elif match_type == 'tenant':
-        if not apartment.tenant_email:
-            apartment.tenant_email = email
-            apartment.save(update_fields=['tenant_email'])
-            email_updated = True
-            kiosk_logger.info(f"Auto-registered tenant email {email} for apartment {apartment.number}")
-        elif apartment.tenant_email.lower() != email.lower():
-            # Different email provided - update it (Option A: allow change)
-            old_email = apartment.tenant_email
-            apartment.tenant_email = email
-            apartment.save(update_fields=['tenant_email'])
-            email_updated = True
-            kiosk_logger.info(f"Updated tenant email from {old_email} to {email} for apartment {apartment.number}")
+    for match in all_matches:
+        apt = match['apartment']
+        apt_match_type = match['match_type']
+        
+        if apt_match_type == 'owner':
+            if not apt.owner_email:
+                apt.owner_email = email
+                apt.save(update_fields=['owner_email'])
+                email_updated = True
+                kiosk_logger.info(f"Auto-registered owner email {email} for apartment {apt.number}")
+            elif apt.owner_email.lower() != email.lower():
+                old_email = apt.owner_email
+                apt.owner_email = email
+                apt.save(update_fields=['owner_email'])
+                email_updated = True
+                kiosk_logger.info(f"Updated owner email from {old_email} to {email} for apartment {apt.number}")
+        elif apt_match_type == 'tenant':
+            if not apt.tenant_email:
+                apt.tenant_email = email
+                apt.save(update_fields=['tenant_email'])
+                email_updated = True
+                kiosk_logger.info(f"Auto-registered tenant email {email} for apartment {apt.number}")
+            elif apt.tenant_email.lower() != email.lower():
+                old_email = apt.tenant_email
+                apt.tenant_email = email
+                apt.save(update_fields=['tenant_email'])
+                email_updated = True
+                kiosk_logger.info(f"Updated tenant email from {old_email} to {email} for apartment {apt.number}")
     
     # Check if there are already registered users for this apartment (Option C)
     from buildings.models import BuildingMembership
@@ -968,8 +998,8 @@ def kiosk_register(request):
     # Check if user already exists
     existing_user = CustomUser.objects.filter(email=email).first()
     if existing_user:
-        # User exists - ensure they have access to this building and apartment
-        kiosk_logger.info(f"User {email} already exists, ensuring building access")
+        # User exists - ensure they have access to this building and ALL their apartments
+        kiosk_logger.info(f"User {email} already exists, ensuring building access for {len(all_matches)} apartment(s)")
         
         try:
             from django_tenants.utils import schema_context
@@ -993,27 +1023,44 @@ def kiosk_register(request):
                     if created:
                         kiosk_logger.info(f"Created BuildingMembership for {email} in building {building.name}")
                     
-                    # Link user to apartment based on match_type
-                    if match_type == 'owner':
-                        if apartment.owner_user != existing_user:
-                            apartment.owner_user = existing_user
-                            apartment.save(update_fields=['owner_user'])
-                            kiosk_logger.info(f"Linked {email} as owner_user of apartment {apartment.number}")
-                    elif match_type == 'tenant':
-                        if apartment.tenant_user != existing_user:
-                            apartment.tenant_user = existing_user
-                            apartment.is_rented = True
-                            apartment.save(update_fields=['tenant_user', 'is_rented'])
-                            kiosk_logger.info(f"Linked {email} as tenant_user of apartment {apartment.number}")
+                    # Link user to ALL matching apartments
+                    linked_apartments = []
+                    for match in all_matches:
+                        apt = match['apartment']
+                        apt_match_type = match['match_type']
+                        
+                        if apt_match_type == 'owner':
+                            if apt.owner_user != existing_user:
+                                apt.owner_user = existing_user
+                                apt.save(update_fields=['owner_user'])
+                                kiosk_logger.info(f"Linked {email} as owner_user of apartment {apt.number}")
+                            linked_apartments.append(apt.number)
+                        elif apt_match_type == 'tenant':
+                            if apt.tenant_user != existing_user:
+                                apt.tenant_user = existing_user
+                                apt.is_rented = True
+                                apt.save(update_fields=['tenant_user', 'is_rented'])
+                                kiosk_logger.info(f"Linked {email} as tenant_user of apartment {apt.number}")
+                            linked_apartments.append(apt.number)
             else:
                 kiosk_logger.warning(f"No tenant found for user {email}, skipping building/apartment linking")
+                linked_apartments = [apartment.number]
             
             # Send magic login email with direct link to my-apartment
             EmailService.send_magic_login_email(existing_user, building, apartment)
+            
+            # Build response message based on number of apartments
+            if len(all_matches) > 1:
+                apt_list = ', '.join([m['apartment'].number for m in all_matches])
+                message = f'Έχετε ήδη λογαριασμό! Συνδεθήκατε με {len(all_matches)} διαμερίσματα ({apt_list}). Ελέγξτε το email σας.'
+            else:
+                message = 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για να μεταβείτε απευθείας στο διαμέρισμά σας.'
+            
             return Response({
-                'message': 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για να μεταβείτε απευθείας στο διαμέρισμά σας.',
+                'message': message,
                 'status': 'existing_user',
-                'apartment': apartment.number
+                'apartment': apartment.number,
+                'apartments': [m['apartment'].number for m in all_matches]
             })
         except Exception as e:
             kiosk_logger.error(f"Error processing existing user: {e}")
@@ -1130,10 +1177,19 @@ def kiosk_register(request):
                 kiosk_logger.error(f"Error sending admin notification: {e}")
                 # Don't fail the registration, just log the error
         
+        # Build response message based on number of apartments
+        all_apt_numbers = [m['apartment'].number for m in all_matches]
+        if len(all_matches) > 1:
+            apt_list = ', '.join(all_apt_numbers)
+            message = f'Επιτυχία! Βρέθηκαν {len(all_matches)} διαμερίσματα ({apt_list}) με το τηλέφωνό σας. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.'
+        else:
+            message = f'Επιτυχία! Βρέθηκε το τηλέφωνό σας στο διαμέρισμα {apartment.number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.'
+        
         return Response({
-            'message': f'Επιτυχία! Βρέθηκε το τηλέφωνό σας στο διαμέρισμα {apartment.number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.',
+            'message': message,
             'status': 'created',
             'apartment': apartment.number,
+            'apartments': all_apt_numbers,
             'match_type': match_type
         }, status=status.HTTP_201_CREATED)
         

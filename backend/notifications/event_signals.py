@@ -113,7 +113,7 @@ class EventNotificationService:
                 created_by=announcement.created_by if hasattr(announcement, 'created_by') else None,
                 subject=subject,
                 body=body,
-                notification_type='email',  # Primary channel
+                notification_type='all',  # Send to all channels (email, push, etc.)
                 priority='normal',
             )
             

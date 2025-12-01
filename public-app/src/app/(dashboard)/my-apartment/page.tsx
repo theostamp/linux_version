@@ -247,25 +247,81 @@ function MyApartmentContent() {
         <StatusBadge status={apartment.summary.status} />
       </div>
       
-      {/* Multiple apartments selector */}
+      {/* Multiple apartments overview */}
       {data.apartments_count > 1 && (
-        <Card>
-          <CardContent className="py-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-muted-foreground">Διαμερίσματα:</span>
-              {data.apartments.map((apt, index) => (
-                <Button
-                  key={apt.id}
-                  variant={index === selectedApartmentIndex ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedApartmentIndex(index)}
-                >
-                  Δ.{apt.number}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          {/* Summary for ALL apartments */}
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-blue-600" />
+                Συνολική Εποπτεία ({data.apartments_count} Διαμερίσματα)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-4">
+                {/* Total Balance */}
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <p className="text-xs text-muted-foreground">Συνολική Οφειλή</p>
+                  <p className={`text-xl font-bold ${
+                    data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0) > 0 
+                      ? 'text-destructive' 
+                      : 'text-green-600'
+                  }`}>
+                    {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0))}
+                  </p>
+                </div>
+                
+                {/* Total Paid */}
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <p className="text-xs text-muted-foreground">Συνολικές Πληρωμές</p>
+                  <p className="text-xl font-bold text-green-600">
+                    {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.summary.total_paid, 0))}
+                  </p>
+                </div>
+                
+                {/* Total Expenses */}
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <p className="text-xs text-muted-foreground">Συνολικές Δαπάνες</p>
+                  <p className="text-xl font-bold">
+                    {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.summary.total_expenses, 0))}
+                  </p>
+                </div>
+                
+                {/* Apartments with Debt */}
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <p className="text-xs text-muted-foreground">Με Οφειλή</p>
+                  <p className="text-xl font-bold">
+                    {data.apartments.filter(apt => apt.current_balance > 0).length} / {data.apartments_count}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Apartments list with quick info */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {data.apartments.map((apt, index) => (
+                  <Button
+                    key={apt.id}
+                    variant={index === selectedApartmentIndex ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedApartmentIndex(index)}
+                    className="flex items-center gap-2"
+                  >
+                    <span>Δ.{apt.number}</span>
+                    {apt.current_balance > 0 && (
+                      <Badge variant="destructive" className="text-xs px-1">
+                        {formatCurrency(apt.current_balance)}
+                      </Badge>
+                    )}
+                    {apt.current_balance <= 0 && (
+                      <CheckCircle2 className="w-3 h-3 text-green-500" />
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
       
       {/* Summary Cards */}

@@ -1126,30 +1126,60 @@ class InvitationService:
                             building.save(update_fields=['internal_manager'])
                             logger.info(f"Set {user.email} as internal manager of {building.name}")
                         
-                        # ΝΕΟ: Σύνδεση χρήστη με διαμέρισμα αν υπάρχει apartment_id
-                        if invitation.apartment_id:
+                        # ΝΕΟ: Σύνδεση χρήστη με ΟΛΑ τα διαμερίσματα που έχουν το email του
+                        # (Υποστήριξη για ιδιοκτήτες με πολλά διαμερίσματα)
+                        user_email_lower = user.email.lower()
+                        
+                        # Βρες ΟΛΑ τα διαμερίσματα στο building που ανήκουν στον χρήστη
+                        from django.db.models import Q
+                        matching_apartments = Apartment.objects.filter(
+                            building=building
+                        ).filter(
+                            Q(owner_email__iexact=user_email_lower) | 
+                            Q(tenant_email__iexact=user_email_lower)
+                        )
+                        
+                        linked_count = 0
+                        for apartment in matching_apartments:
+                            try:
+                                # Προσδιόρισε αν είναι owner ή tenant
+                                is_owner = apartment.owner_email and apartment.owner_email.lower() == user_email_lower
+                                is_tenant = apartment.tenant_email and apartment.tenant_email.lower() == user_email_lower
+                                
+                                if is_owner:
+                                    if apartment.owner_user != user:
+                                        apartment.owner_user = user
+                                        apartment.save(update_fields=['owner_user'])
+                                        logger.info(f"✅ Set owner_user for apartment {apartment.number} to user {user.email}")
+                                        linked_count += 1
+                                elif is_tenant:
+                                    if apartment.tenant_user != user:
+                                        apartment.tenant_user = user
+                                        apartment.is_rented = True
+                                        apartment.save(update_fields=['tenant_user', 'is_rented'])
+                                        logger.info(f"✅ Set tenant_user for apartment {apartment.number} to user {user.email}")
+                                        linked_count += 1
+                                        
+                            except Exception as e:
+                                logger.error(f"❌ Failed to link user to apartment {apartment.number}: {e}")
+                        
+                        if linked_count > 0:
+                            logger.info(f"✅ Linked user {user.email} to {linked_count} apartment(s) in building {building.name}")
+                        elif invitation.apartment_id:
+                            # Fallback: Αν δεν βρέθηκαν με email, χρησιμοποίησε το apartment_id από την πρόσκληση
                             try:
                                 apartment = Apartment.objects.get(id=invitation.apartment_id)
                                 role = (invitation.assigned_role or '').lower()
                                 
-                                # Καθορισμός του τύπου σύνδεσης βάσει ρόλου
-                                if role in ['resident', 'ένοικος', 'tenant', '']:
-                                    # Ένοικος - θέτουμε tenant_user
-                                    apartment.tenant_user = user
-                                    apartment.is_rented = True
-                                    apartment.save(update_fields=['tenant_user', 'is_rented'])
-                                    logger.info(f"✅ Set tenant_user for apartment {apartment.number} to user {user.email}")
-                                elif role in ['owner', 'ιδιοκτήτης']:
-                                    # Ιδιοκτήτης - θέτουμε owner_user
+                                if role in ['owner', 'ιδιοκτήτης']:
                                     apartment.owner_user = user
                                     apartment.save(update_fields=['owner_user'])
-                                    logger.info(f"✅ Set owner_user for apartment {apartment.number} to user {user.email}")
+                                    logger.info(f"✅ Set owner_user for apartment {apartment.number} (fallback)")
                                 else:
-                                    # Default: θεωρούμε ένοικο για άλλους ρόλους (π.χ. internal_manager)
                                     apartment.tenant_user = user
                                     apartment.is_rented = True
                                     apartment.save(update_fields=['tenant_user', 'is_rented'])
-                                    logger.info(f"✅ Set tenant_user (default) for apartment {apartment.number} to user {user.email}")
+                                    logger.info(f"✅ Set tenant_user for apartment {apartment.number} (fallback)")
                                     
                             except Apartment.DoesNotExist:
                                 logger.error(f"❌ Apartment with ID {invitation.apartment_id} not found")
