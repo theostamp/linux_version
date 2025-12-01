@@ -207,16 +207,38 @@ def login_view(request):
     }, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH', 'PUT'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def me_view(request):
     """
     GET /api/users/me/
     Επιστρέφει τα στοιχεία του authenticated χρήστη.
+    
+    PATCH/PUT /api/users/me/
+    Ενημερώνει τα στοιχεία του authenticated χρήστη.
     """
     user = request.user
     role = getattr(user, "role", None)
+
+    # Handle PATCH/PUT requests for profile updates
+    if request.method in ['PATCH', 'PUT']:
+        # Allowed fields for update
+        allowed_fields = [
+            'first_name', 'last_name', 
+            'office_name', 'office_phone', 'office_address',
+            'office_bank_name', 'office_bank_account', 
+            'office_bank_iban', 'office_bank_beneficiary'
+        ]
+        
+        updated_fields = []
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(user, field, request.data[field])
+                updated_fields.append(field)
+        
+        if updated_fields:
+            user.save(update_fields=updated_fields)
 
     tenant_data = None
     if hasattr(user, 'tenant') and user.tenant:
