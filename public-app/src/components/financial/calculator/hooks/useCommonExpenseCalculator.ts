@@ -81,18 +81,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     });
   }, [monthlyExpenses, selectedMonth]);
 
-  // Force refresh when selectedMonth changes
-  useEffect(() => {
-    console.log('🔄 useCommonExpenseCalculator: useEffect triggered with selectedMonth:', selectedMonth);
-    if (selectedMonth && forceRefresh) {
-      console.log('🔄 useCommonExpenseCalculator: Month changed, forcing refresh:', selectedMonth);
-      // Use setTimeout to ensure state is updated before refresh
-      setTimeout(() => {
-        console.log('🔄 useCommonExpenseCalculator: Executing forceRefresh...');
-        forceRefresh();
-      }, 0);
-    }
-  }, [selectedMonth, forceRefresh]);
+  // Note: useMonthRefresh (below) already handles refresh when selectedMonth changes
+  // Removed duplicate useEffect to prevent double API calls and race conditions
 
   // Debug: Log when aptWithFinancial changes
   useEffect(() => {

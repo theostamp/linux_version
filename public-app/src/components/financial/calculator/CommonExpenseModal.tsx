@@ -144,17 +144,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     }
   }, [props.buildingId]);
 
-  // Debug: Log when expenseSheetMonth changes
-  React.useEffect(() => {
-    console.log('🔄 CommonExpenseModal: expenseSheetMonth changed:', expenseSheetMonth);
-  }, [expenseSheetMonth]);
-
-  // Force refresh when month changes
-  React.useEffect(() => {
-    if (expenseSheetMonth) {
-      console.log('🔄 Month changed, forcing refresh:', expenseSheetMonth);
-    }
-  }, [expenseSheetMonth]);
+  // Note: Month change handling is done by useMonthRefresh in useCommonExpenseCalculator
+  // Removed debug useEffects that were causing unnecessary logs
 
   if (!isOpen) return null;
 
