@@ -122,13 +122,6 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'internal_manager', 'staff', 'superuser'],
       },
       {
-        href: '/office-finance',
-        label: 'Οικονομικά Γραφείου',
-        icon: <CreditCard className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        staffPermission: 'can_access_office_finance', // Staff needs this permission
-      },
-      {
         href: '/maintenance',
         label: 'Υπηρεσίες',
         icon: <Wrench className="w-5 h-5" />,
@@ -158,12 +151,6 @@ const navigationGroups: NavigationGroup[] = [
         href: '/buildings',
         label: 'Κτίρια',
         icon: <Building2 className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/office-staff',
-        label: 'Υπάλληλοι',
-        icon: <UserCheck className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
       },
       {
@@ -232,10 +219,23 @@ const navigationGroups: NavigationGroup[] = [
     ]
   },
   {
-    id: 'personal',
-    title: 'Προσωπικά',
+    id: 'office',
+    title: 'Γραφείο Διαχείρισης',
     colorKey: 'purple',
     links: [
+      {
+        href: '/office-staff',
+        label: 'Υπάλληλοι',
+        icon: <UserCheck className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/office-finance',
+        label: 'Οικονομικά Γραφείου',
+        icon: <CreditCard className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        staffPermission: 'can_access_office_finance', // Staff needs this permission
+      },
       {
         href: '/my-profile',
         label: 'Προφίλ',
