@@ -7,7 +7,8 @@ import {
   Clock, 
   CheckCircle2, 
   Building2,
-  CreditCard
+  CreditCard,
+  Pencil
 } from 'lucide-react';
 import type { RecentExpense, RecentIncome, PendingIncome, UnpaidExpense } from '@/hooks/useOfficeFinance';
 
@@ -19,6 +20,8 @@ interface RecentTransactionsProps {
   isLoading?: boolean;
   onMarkReceived?: (id: number) => void;
   onMarkPaid?: (id: number) => void;
+  onEditExpense?: (id: number) => void;
+  onEditIncome?: (id: number) => void;
 }
 
 function formatCurrency(value: number): string {
@@ -46,7 +49,9 @@ export function RecentTransactions({
   unpaidExpenses,
   isLoading,
   onMarkReceived,
-  onMarkPaid
+  onMarkPaid,
+  onEditExpense,
+  onEditIncome
 }: RecentTransactionsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
@@ -257,7 +262,7 @@ export function RecentTransactions({
                 </div>
 
                 {/* Amount */}
-                <div className="text-right">
+                <div className="text-right mr-2">
                   <span className={`text-sm font-semibold ${
                     isPending 
                       ? 'text-primary' 
@@ -272,24 +277,60 @@ export function RecentTransactions({
                 </div>
 
                 {/* Actions */}
-                {isPending && onMarkReceived && (
-                  <button
-                    onClick={() => onMarkReceived(transaction.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 transition-all"
-                    title="Σημείωση ως εισπραχθέν"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                  </button>
-                )}
-                {isUnpaid && onMarkPaid && (
-                  <button
-                    onClick={() => onMarkPaid(transaction.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 transition-all"
-                    title="Σημείωση ως πληρωμένο"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                  </button>
-                )}
+                <div className="flex items-center gap-1">
+                  {/* Edit button - always visible for expenses and incomes */}
+                  {(isExpense || isUnpaid) && onEditExpense && (
+                    <button
+                      onClick={() => onEditExpense(transaction.id)}
+                      className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-300 transition-all"
+                      title="Επεξεργασία"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                  {(isIncome || isPending) && onEditIncome && (
+                    <button
+                      onClick={() => onEditIncome(transaction.id)}
+                      className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-300 transition-all"
+                      title="Επεξεργασία"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                  
+                  {/* Mark as received - for pending incomes */}
+                  {isPending && onMarkReceived && (
+                    <button
+                      onClick={() => onMarkReceived(transaction.id)}
+                      className="p-1.5 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all"
+                      title="Σημείωση ως εισπραχθέν"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  
+                  {/* Mark as paid - for unpaid expenses */}
+                  {isUnpaid && onMarkPaid && (
+                    <button
+                      onClick={() => onMarkPaid(transaction.id)}
+                      className="p-1.5 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all"
+                      title="Σημείωση ως πληρωμένο"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  
+                  {/* Mark as paid - for expenses in the expenses tab that are not paid */}
+                  {isExpense && 'is_paid' in transaction && !transaction.is_paid && onMarkPaid && (
+                    <button
+                      onClick={() => onMarkPaid(transaction.id)}
+                      className="p-1.5 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all"
+                      title="Σημείωση ως πληρωμένο"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })

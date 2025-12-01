@@ -69,7 +69,7 @@ function groupCategories<T extends { group_type: string }>(
   return orderedGroups;
 }
 
-// Simple Modal Component - Using CSS variables for theming
+// Enhanced Modal Component with glassmorphism design
 function Modal({ 
   isOpen, 
   onClose, 
@@ -85,30 +85,66 @@ function Modal({
 }) {
   if (!isOpen) return null;
   
-  const headerColors = {
-    default: 'border-border',
-    success: 'border-emerald-500/30',
-    danger: 'border-rose-500/30'
+  const headerStyles = {
+    default: 'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-800/80',
+    success: 'border-emerald-200/50 dark:border-emerald-700/50 bg-emerald-50/80 dark:bg-emerald-900/30',
+    danger: 'border-rose-200/50 dark:border-rose-700/50 bg-rose-50/80 dark:bg-rose-900/30'
   };
   
   const titleColors = {
-    default: 'text-foreground',
-    success: 'text-emerald-400',
-    danger: 'text-rose-400'
+    default: 'text-slate-800 dark:text-slate-100',
+    success: 'text-emerald-700 dark:text-emerald-300',
+    danger: 'text-rose-700 dark:text-rose-300'
+  };
+
+  const iconColors = {
+    default: 'text-slate-500 dark:text-slate-400',
+    success: 'text-emerald-500 dark:text-emerald-400',
+    danger: 'text-rose-500 dark:text-rose-400'
   };
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto border border-border">
-        <div className={`flex items-center justify-between p-4 border-b ${headerColors[variant]}`}>
-          <h2 className={`text-xl font-semibold ${titleColors[variant]}`}>{title}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg transition-colors">
-            <X className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
-        <div className="p-4">
-          {children}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop with blur */}
+      <div 
+        className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-opacity" 
+        onClick={onClose} 
+      />
+      
+      {/* Modal container */}
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-black/40 animate-in fade-in zoom-in-95 duration-200">
+        {/* Glass effect background */}
+        <div className="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl" />
+        
+        {/* Content */}
+        <div className="relative">
+          {/* Header */}
+          <div className={`flex items-center justify-between px-6 py-4 border-b ${headerStyles[variant]}`}>
+            <div className="flex items-center gap-3">
+              {variant === 'success' && (
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/50">
+                  <TrendingUp className={`w-5 h-5 ${iconColors[variant]}`} />
+                </div>
+              )}
+              {variant === 'danger' && (
+                <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/50">
+                  <TrendingDown className={`w-5 h-5 ${iconColors[variant]}`} />
+                </div>
+              )}
+              <h2 className={`text-xl font-semibold ${titleColors[variant]}`}>{title}</h2>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            </button>
+          </div>
+          
+          {/* Body */}
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] bg-white/50 dark:bg-slate-900/50">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -220,6 +256,16 @@ function OfficeFinanceContent() {
       console.error('Failed to mark expense as paid:', error);
       toast.error('Αποτυχία ενημέρωσης εξόδου');
     }
+  };
+
+  const handleEditExpense = (id: number) => {
+    // TODO: Implement edit modal for expenses
+    toast.info(`Επεξεργασία εξόδου #${id} - Σύντομα διαθέσιμο`);
+  };
+
+  const handleEditIncome = (id: number) => {
+    // TODO: Implement edit modal for incomes
+    toast.info(`Επεξεργασία εσόδου #${id} - Σύντομα διαθέσιμο`);
   };
 
   const handleInitCategories = async () => {
@@ -425,6 +471,8 @@ function OfficeFinanceContent() {
         isLoading={isDashboardLoading}
         onMarkReceived={handleMarkReceived}
         onMarkPaid={handleMarkPaid}
+        onEditExpense={handleEditExpense}
+        onEditIncome={handleEditIncome}
       />
 
       {/* Quick Stats Footer */}
@@ -465,17 +513,17 @@ function OfficeFinanceContent() {
 
       {/* Income Modal */}
       <Modal isOpen={showIncomeModal} onClose={() => setShowIncomeModal(false)} title="Νέο Έσοδο" variant="success">
-        <form onSubmit={handleCreateIncome} className="space-y-4">
+        <form onSubmit={handleCreateIncome} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              <FileText className="w-4 h-4 inline mr-1" />
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <FileText className="w-4 h-4 inline mr-1.5 text-emerald-600" />
               Τίτλος *
             </label>
             <input
               type="text"
               value={incomeForm.title}
               onChange={(e) => setIncomeForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-success/50 focus:border-success transition-colors"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               placeholder="π.χ. Αμοιβή διαχείρισης Ιανουαρίου"
               required
             />
@@ -483,8 +531,8 @@ function OfficeFinanceContent() {
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                <Euro className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Euro className="w-4 h-4 inline mr-1.5 text-emerald-600" />
                 Ποσό (€) *
               </label>
               <input
@@ -492,29 +540,29 @@ function OfficeFinanceContent() {
                 step="0.01"
                 value={incomeForm.amount}
                 onChange={(e) => setIncomeForm(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-success/50 focus:border-success transition-colors"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
                 placeholder="0.00"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                <Calendar className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Calendar className="w-4 h-4 inline mr-1.5 text-emerald-600" />
                 Ημερομηνία
               </label>
               <input
                 type="date"
                 value={incomeForm.date}
                 onChange={(e) => setIncomeForm(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:ring-2 focus:ring-success/50 focus:border-success transition-colors"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               />
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                <Tag className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Tag className="w-4 h-4 inline mr-1.5 text-emerald-600" />
                 Κατηγορία
               </label>
               <GroupedCategorySelect
@@ -523,18 +571,18 @@ function OfficeFinanceContent() {
                 categories={incomeCategories}
                 groupLabels={INCOME_GROUP_LABELS}
                 placeholder="-- Επιλέξτε κατηγορία --"
-                className="focus:ring-success/50 focus:border-success"
+                className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-slate-700 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-emerald-500/30 focus:!border-emerald-500 !shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                <Building2 className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Building2 className="w-4 h-4 inline mr-1.5 text-emerald-600" />
                 Κτίριο
               </label>
               <select
                 value={incomeForm.building}
                 onChange={(e) => setIncomeForm(prev => ({ ...prev, building: e.target.value }))}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:ring-2 focus:ring-success/50 focus:border-success transition-colors"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               >
                 <option value="">-- Επιλέξτε --</option>
                 {buildings?.map(b => (
@@ -545,28 +593,28 @@ function OfficeFinanceContent() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">Περιγραφή</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
             <textarea
               value={incomeForm.description}
               onChange={(e) => setIncomeForm(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-success/50 focus:border-success transition-colors"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm resize-none"
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
           
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setShowIncomeModal(false)}
-              className="px-4 py-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+              className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
             >
               Ακύρωση
             </button>
             <button
               type="submit"
               disabled={createIncomeMutation.isPending}
-              className="px-4 py-2 bg-success hover:bg-success/90 text-success-foreground rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 font-medium shadow-lg shadow-emerald-600/20"
             >
               {createIncomeMutation.isPending ? 'Αποθήκευση...' : 'Αποθήκευση'}
             </button>
@@ -576,17 +624,17 @@ function OfficeFinanceContent() {
 
       {/* Expense Modal */}
       <Modal isOpen={showExpenseModal} onClose={() => setShowExpenseModal(false)} title="Νέο Έξοδο" variant="danger">
-        <form onSubmit={handleCreateExpense} className="space-y-4">
+        <form onSubmit={handleCreateExpense} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              <FileText className="w-4 h-4 inline mr-1" />
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <FileText className="w-4 h-4 inline mr-1.5 text-rose-600" />
               Τίτλος *
             </label>
             <input
               type="text"
               value={expenseForm.title}
               onChange={(e) => setExpenseForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-destructive/50 focus:border-destructive transition-colors"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
               placeholder="π.χ. Λογαριασμός ΔΕΗ"
               required
             />
@@ -594,8 +642,8 @@ function OfficeFinanceContent() {
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                <Euro className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Euro className="w-4 h-4 inline mr-1.5 text-rose-600" />
                 Ποσό (€) *
               </label>
               <input
@@ -603,28 +651,28 @@ function OfficeFinanceContent() {
                 step="0.01"
                 value={expenseForm.amount}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-destructive/50 focus:border-destructive transition-colors"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
                 placeholder="0.00"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                <Calendar className="w-4 h-4 inline mr-1" />
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <Calendar className="w-4 h-4 inline mr-1.5 text-rose-600" />
                 Ημερομηνία
               </label>
               <input
                 type="date"
                 value={expenseForm.date}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:ring-2 focus:ring-destructive/50 focus:border-destructive transition-colors"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
               />
             </div>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              <Tag className="w-4 h-4 inline mr-1" />
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <Tag className="w-4 h-4 inline mr-1.5 text-rose-600" />
               Κατηγορία
             </label>
             <GroupedCategorySelect
@@ -633,44 +681,46 @@ function OfficeFinanceContent() {
               categories={expenseCategories}
               groupLabels={EXPENSE_GROUP_LABELS}
               placeholder="-- Επιλέξτε κατηγορία --"
-              className="focus:ring-destructive/50 focus:border-destructive"
+              className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-slate-700 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-rose-500/30 focus:!border-rose-500 !shadow-sm"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">Περιγραφή</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
             <textarea
               value={expenseForm.description}
               onChange={(e) => setExpenseForm(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-destructive/50 focus:border-destructive transition-colors"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm resize-none"
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
             <input
               type="checkbox"
               id="is_paid"
               checked={expenseForm.is_paid}
               onChange={(e) => setExpenseForm(prev => ({ ...prev, is_paid: e.target.checked }))}
-              className="w-4 h-4 rounded border-border bg-muted text-destructive focus:ring-destructive/50"
+              className="w-5 h-5 rounded-lg border-2 border-amber-300 bg-white dark:bg-slate-800 text-amber-600 focus:ring-amber-500/50 cursor-pointer"
             />
-            <label htmlFor="is_paid" className="text-sm text-muted-foreground">Έχει πληρωθεί</label>
+            <label htmlFor="is_paid" className="text-sm font-medium text-amber-800 dark:text-amber-200 cursor-pointer">
+              Έχει πληρωθεί
+            </label>
           </div>
           
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setShowExpenseModal(false)}
-              className="px-4 py-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+              className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
             >
               Ακύρωση
             </button>
             <button
               type="submit"
               disabled={createExpenseMutation.isPending}
-              className="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 font-medium shadow-lg shadow-rose-600/20"
             >
               {createExpenseMutation.isPending ? 'Αποθήκευση...' : 'Αποθήκευση'}
             </button>

@@ -85,6 +85,19 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
               {formatCurrency(totalIncome)}
             </span>
           </div>
+          {/* Progress bar for received vs pending */}
+          <div className="mb-3">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-teal-600 font-medium">Εισπράχθηκαν: {formatCurrency(currentMonth.income.received)}</span>
+              <span className="text-amber-600 font-medium">Εκκρεμούν: {formatCurrency(currentMonth.income.pending)}</span>
+            </div>
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-500"
+                style={{ width: totalIncome > 0 ? `${(currentMonth.income.received / totalIncome) * 100}%` : '0%' }}
+              />
+            </div>
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             {incomeChange && (
               <div className={`flex items-center gap-1 text-xs ${
@@ -98,11 +111,6 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
                 <span>{incomeChange.value.toFixed(1)}%</span>
                 <span className="text-slate-500">vs προηγ.</span>
               </div>
-            )}
-            {currentMonth.income.pending > 0 && (
-              <span className="text-xs text-slate-500">
-                {formatCurrency(currentMonth.income.pending)} εκκρεμεί
-              </span>
             )}
           </div>
         </div>
@@ -126,6 +134,19 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
               {formatCurrency(totalExpenses)}
             </span>
           </div>
+          {/* Progress bar for paid vs unpaid */}
+          <div className="mb-3">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-rose-600 font-medium">Πληρώθηκαν: {formatCurrency(currentMonth.expenses.paid)}</span>
+              <span className="text-amber-600 font-medium">Απλήρωτα: {formatCurrency(currentMonth.expenses.unpaid)}</span>
+            </div>
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-full transition-all duration-500"
+                style={{ width: totalExpenses > 0 ? `${(currentMonth.expenses.paid / totalExpenses) * 100}%` : '0%' }}
+              />
+            </div>
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             {expenseChange && (
               <div className={`flex items-center gap-1 text-xs ${
@@ -139,11 +160,6 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
                 <span>{expenseChange.value.toFixed(1)}%</span>
                 <span className="text-slate-500">vs προηγ.</span>
               </div>
-            )}
-            {currentMonth.expenses.unpaid > 0 && (
-              <span className="text-xs text-amber-600">
-                +{formatCurrency(currentMonth.expenses.unpaid)} απλήρωτα
-              </span>
             )}
           </div>
         </div>
@@ -178,28 +194,40 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
         </div>
       </div>
 
-      {/* Pending Income Card */}
-      <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-sm">
-        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-indigo-100/50 blur-2xl" />
+      {/* Pending/Unpaid Card */}
+      <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-6 shadow-sm">
+        <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-amber-100/50 blur-2xl" />
         <div className="relative">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-sm text-slate-600">Εκκρεμή Έσοδα</p>
-              <p className="text-xs text-slate-500">Αναμένεται είσπραξη</p>
+              <p className="text-sm text-slate-600">Εκκρεμότητες</p>
+              <p className="text-xs text-slate-500">Προς διεκπεραίωση</p>
             </div>
-            <div className="bg-indigo-100 p-2.5 rounded-lg">
-              <Clock className="w-5 h-5 text-primary" />
+            <div className="bg-amber-100 p-2.5 rounded-lg">
+              <Clock className="w-5 h-5 text-amber-600" />
             </div>
           </div>
-          <div className="mb-2">
-            <span className="text-2xl font-bold text-slate-900">
-              {formatCurrency(currentMonth.income.pending)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">
-              {currentMonth.income.count} εγγραφ{currentMonth.income.count === 1 ? 'ή' : 'ές'}
-            </span>
+          <div className="space-y-2">
+            {/* Pending Income */}
+            <div className="flex items-center justify-between p-2 bg-teal-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-teal-600" />
+                <span className="text-xs text-teal-700 font-medium">Προς είσπραξη</span>
+              </div>
+              <span className="text-sm font-bold text-teal-600">
+                {formatCurrency(currentMonth.income.pending)}
+              </span>
+            </div>
+            {/* Unpaid Expenses */}
+            <div className="flex items-center justify-between p-2 bg-rose-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-rose-600" />
+                <span className="text-xs text-rose-700 font-medium">Προς πληρωμή</span>
+              </div>
+              <span className="text-sm font-bold text-rose-600">
+                {formatCurrency(currentMonth.expenses.unpaid)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
