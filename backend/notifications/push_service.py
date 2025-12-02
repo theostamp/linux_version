@@ -96,3 +96,4 @@ class PushNotificationService:
             return PushNotificationService.send_multicast(tokens, title, body, data)
         return None
 
+
