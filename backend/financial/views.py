@@ -3959,12 +3959,26 @@ def my_apartment_data(request):
                 period__start_date__gte=start_date
             ).select_related('period').order_by('-period__start_date')
             
+            # Χρεώσεις από transactions (project installments, expenses κλπ)
+            # Αυτά περιλαμβάνουν δόσεις έργων που δεν έχουν ApartmentShare
+            charge_transactions = Transaction.objects.filter(
+                apartment=apartment,
+                date__gte=start_date,
+                type__in=['expense_created', 'installment_charge', 'charge', 'expense']
+            ).order_by('-date')
+            
             # Υπολογισμός τρέχουσας οφειλής
             current_balance = float(apartment.current_balance or 0)
             
-            # Σύνοψη
+            # Σύνοψη - υπολογισμός χρεώσεων από transactions (πιο ακριβές)
             total_paid = sum(float(p.amount) for p in payments)
-            total_expenses = sum(float(es.total_amount) for es in expense_shares)
+            # Υπολογισμός total_expenses από transactions αντί για ApartmentShare
+            total_expenses_from_transactions = sum(
+                float(t.amount) for t in charge_transactions
+            )
+            # Συνδυάζουμε: ApartmentShare + transactions που δεν έχουν αντίστοιχο ApartmentShare
+            total_expenses_from_shares = sum(float(es.total_amount) for es in expense_shares)
+            total_expenses = max(total_expenses_from_transactions, total_expenses_from_shares)
             
             apartment_data = {
                 'id': apartment.id,
@@ -3995,16 +4009,32 @@ def my_apartment_data(request):
                     for p in payments
                 ],
                 'expense_history': [
-                    {
-                        'id': es.id,
-                        'date': es.period.start_date.isoformat() if es.period.start_date else None,
-                        'title': es.period.period_name,
-                        'category': 'common_expenses',
-                        'total_amount': float(es.total_amount),
-                        'your_share': float(es.total_amount),
-                        'payer_responsibility': 'owner',  # Default
-                    }
-                    for es in expense_shares
+                    # Χρεώσεις από transactions (project installments, expenses κλπ)
+                    *[
+                        {
+                            'id': t.id,
+                            'date': t.date.isoformat() if t.date else None,
+                            'title': t.description or 'Χρέωση',
+                            'category': 'project' if 'Δόση' in (t.description or '') or 'Προκαταβολή' in (t.description or '') else 'expense',
+                            'total_amount': float(t.amount),
+                            'your_share': float(t.amount),
+                            'payer_responsibility': 'owner',
+                        }
+                        for t in charge_transactions
+                    ],
+                    # Χρεώσεις από ApartmentShare (κοινόχρηστα)
+                    *[
+                        {
+                            'id': es.id + 100000,  # Offset για αποφυγή σύγκρουσης ID
+                            'date': es.period.start_date.isoformat() if es.period.start_date else None,
+                            'title': es.period.period_name,
+                            'category': 'common_expenses',
+                            'total_amount': float(es.total_amount),
+                            'your_share': float(es.total_amount),
+                            'payer_responsibility': 'owner',
+                        }
+                        for es in expense_shares
+                    ],
                 ],
                 'transaction_history': [
                     {

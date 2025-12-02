@@ -252,6 +252,55 @@ def me_view(request):
             'is_active': tenant.is_active,
         }
 
+    # Get office settings - fallback to tenant admin/manager if user doesn't have their own
+    office_name = user.office_name
+    office_phone = user.office_phone
+    office_address = user.office_address
+    office_logo_url = user.office_logo.url if user.office_logo else None
+    office_bank_name = user.office_bank_name
+    office_bank_account = user.office_bank_account
+    office_bank_iban = user.office_bank_iban
+    office_bank_beneficiary = user.office_bank_beneficiary
+    
+    # If user doesn't have office settings, try to get from tenant admin/manager
+    # This allows internal_managers and residents to see the tenant's office branding
+    if not office_logo_url or not office_name:
+        try:
+            from users.models import CustomUser
+            # Find the tenant admin or manager who has office settings
+            tenant_admin = CustomUser.objects.filter(
+                tenant=user.tenant,
+                role__in=['admin', 'manager'],
+                office_logo__isnull=False
+            ).exclude(office_logo='').first()
+            
+            if not tenant_admin:
+                # Fallback: find any user with office_logo in the tenant
+                tenant_admin = CustomUser.objects.filter(
+                    tenant=user.tenant,
+                    office_logo__isnull=False
+                ).exclude(office_logo='').first()
+            
+            if tenant_admin:
+                if not office_logo_url and tenant_admin.office_logo:
+                    office_logo_url = tenant_admin.office_logo.url
+                if not office_name and tenant_admin.office_name:
+                    office_name = tenant_admin.office_name
+                if not office_phone and tenant_admin.office_phone:
+                    office_phone = tenant_admin.office_phone
+                if not office_address and tenant_admin.office_address:
+                    office_address = tenant_admin.office_address
+                if not office_bank_name and tenant_admin.office_bank_name:
+                    office_bank_name = tenant_admin.office_bank_name
+                if not office_bank_account and tenant_admin.office_bank_account:
+                    office_bank_account = tenant_admin.office_bank_account
+                if not office_bank_iban and tenant_admin.office_bank_iban:
+                    office_bank_iban = tenant_admin.office_bank_iban
+                if not office_bank_beneficiary and tenant_admin.office_bank_beneficiary:
+                    office_bank_beneficiary = tenant_admin.office_bank_beneficiary
+        except Exception:
+            pass  # Keep user's own settings if lookup fails
+
     return Response({
         'id': user.id,
         'email': user.email,
@@ -260,14 +309,14 @@ def me_view(request):
         'is_staff': user.is_staff,
         'is_superuser': user.is_superuser,
         'role': role,
-        'office_name': user.office_name,
-        'office_phone': user.office_phone,
-        'office_address': user.office_address,
-        'office_logo': user.office_logo.url if user.office_logo else None,
-        'office_bank_name': user.office_bank_name,
-        'office_bank_account': user.office_bank_account,
-        'office_bank_iban': user.office_bank_iban,
-        'office_bank_beneficiary': user.office_bank_beneficiary,
+        'office_name': office_name,
+        'office_phone': office_phone,
+        'office_address': office_address,
+        'office_logo': office_logo_url,
+        'office_bank_name': office_bank_name,
+        'office_bank_account': office_bank_account,
+        'office_bank_iban': office_bank_iban,
+        'office_bank_beneficiary': office_bank_beneficiary,
         'tenant': tenant_data,
     }, status=status.HTTP_200_OK)
 
