@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/components/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { 
   AlertTriangle, 
