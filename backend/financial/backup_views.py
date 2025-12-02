@@ -5,6 +5,8 @@ Provides endpoints for:
 - Exporting database data to JSON format
 - Importing/restoring data from JSON backup
 - Selective backup (specific buildings, date ranges)
+- Server-side backup storage with history
+- Multiple storage location support (local, server, cloud)
 
 Security:
 - Admin-only access
@@ -14,9 +16,12 @@ Security:
 
 import json
 import logging
+import os
+import uuid
 from datetime import datetime, date
 from decimal import Decimal
 from django.http import HttpResponse
+from django.conf import settings
 from django.db import transaction as db_transaction
 from django.db import models
 from rest_framework import status
@@ -31,7 +36,73 @@ from .models import (
     ExpensePeriod, MonthlyBalance, FinancialReceipt
 )
 
+# Backup storage directory
+BACKUP_DIR = os.path.join(settings.BASE_DIR, 'backups')
+
 logger = logging.getLogger(__name__)
+
+
+def _ensure_backup_dir():
+    """Ensure backup directory exists"""
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+    return BACKUP_DIR
+
+
+def _save_backup_to_server(backup_data, filename, user):
+    """Save backup to server storage"""
+    _ensure_backup_dir()
+    
+    filepath = os.path.join(BACKUP_DIR, filename)
+    
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(backup_data, f, cls=DecimalEncoder, indent=2, ensure_ascii=False)
+    
+    file_size = os.path.getsize(filepath)
+    
+    logger.info(f"[BACKUP] Saved to server: {filename} ({file_size} bytes)")
+    
+    return Response({
+        'status': 'success',
+        'message': f'✅ Backup αποθηκεύτηκε στον server: {filename}',
+        'backup_id': backup_data['meta']['backup_id'],
+        'filename': filename,
+        'size_bytes': file_size,
+        'storage': 'server'
+    })
+
+
+def _get_server_backups():
+    """Get list of backups stored on server"""
+    _ensure_backup_dir()
+    
+    backups = []
+    for filename in os.listdir(BACKUP_DIR):
+        if filename.endswith('.json'):
+            filepath = os.path.join(BACKUP_DIR, filename)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    meta = data.get('meta', {})
+                    
+                    backups.append({
+                        'id': meta.get('backup_id', filename.replace('.json', '')),
+                        'filename': filename,
+                        'created_at': meta.get('created_at'),
+                        'created_by': meta.get('created_by'),
+                        'backup_type': meta.get('backup_type', 'unknown'),
+                        'size_kb': round(os.path.getsize(filepath) / 1024, 1),
+                        'storage': 'server',
+                        'can_restore': True,
+                        'statistics': meta.get('statistics', {})
+                    })
+            except Exception as e:
+                logger.warning(f"[BACKUP] Error reading {filename}: {e}")
+    
+    # Sort by created_at descending
+    backups.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    return backups
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -119,8 +190,9 @@ def backup_database(request):
         include_transactions = request.data.get('include_transactions', True)
         date_from = request.data.get('date_from')
         date_to = request.data.get('date_to')
+        storage = request.data.get('storage', 'local')  # local, server, google_drive, etc.
         
-        logger.info(f"[BACKUP] User {user.email} starting {backup_type} backup")
+        logger.info(f"[BACKUP] User {user.email} starting {backup_type} backup (storage: {storage})")
         
         # Build backup data
         backup_data = {
@@ -167,24 +239,37 @@ def backup_database(request):
         
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"backup_{backup_type}_{timestamp}.json"
+        backup_id = str(uuid.uuid4())[:8]
+        filename = f"backup_{backup_type}_{timestamp}_{backup_id}.json"
         
         # Add statistics to meta
         backup_data['meta']['statistics'] = {
             key: len(value) if isinstance(value, list) else 0
             for key, value in backup_data['data'].items()
         }
+        backup_data['meta']['backup_id'] = backup_id
+        backup_data['meta']['storage'] = storage
         
         logger.info(f"[BACKUP] Completed: {backup_data['meta']['statistics']}")
         
-        # Return as downloadable file
-        response = HttpResponse(
-            json.dumps(backup_data, cls=DecimalEncoder, indent=2, ensure_ascii=False),
-            content_type='application/json'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
-        return response
+        # Handle different storage locations
+        if storage == 'server':
+            # Save to server
+            return _save_backup_to_server(backup_data, filename, user)
+        elif storage in ['google_drive', 'dropbox', 'onedrive']:
+            # Cloud storage - not yet implemented
+            return Response({
+                'status': 'error',
+                'error': f'Cloud storage ({storage}) δεν είναι ακόμα διαθέσιμο'
+            }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        else:
+            # Default: local download
+            response = HttpResponse(
+                json.dumps(backup_data, cls=DecimalEncoder, indent=2, ensure_ascii=False),
+                content_type='application/json'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
         
     except Exception as e:
         logger.error(f"[BACKUP] Error: {e}", exc_info=True)
@@ -614,4 +699,110 @@ def _execute_replace_restore(backup_data, user):
         result['created'] = merge_result['created']
     
     return result
+
+
+# ============================================
+# Backup History Endpoints
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def backup_history(request):
+    """
+    📜 Get backup history from server storage
+    
+    Returns list of backups stored on the server
+    """
+    user = request.user
+    
+    # Security check
+    if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
+        return Response({
+            'error': 'Δεν έχετε δικαιώματα. Απαιτείται ρόλος Admin.',
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        backups = _get_server_backups()
+        
+        return Response({
+            'status': 'success',
+            'backups': backups,
+            'total_count': len(backups),
+            'storage_location': BACKUP_DIR
+        })
+    except Exception as e:
+        logger.error(f"[BACKUP] Error getting history: {e}", exc_info=True)
+        return Response({
+            'status': 'error',
+            'error': f'Σφάλμα: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def backup_detail(request, backup_id):
+    """
+    📦 Get or delete a specific backup
+    
+    GET: Download backup data (for restore)
+    DELETE: Remove backup from server
+    """
+    user = request.user
+    
+    # Security check
+    if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
+        return Response({
+            'error': 'Δεν έχετε δικαιώματα. Απαιτείται ρόλος Admin.',
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    # Find backup file
+    _ensure_backup_dir()
+    backup_file = None
+    
+    for filename in os.listdir(BACKUP_DIR):
+        if filename.endswith('.json') and backup_id in filename:
+            backup_file = filename
+            break
+    
+    if not backup_file:
+        return Response({
+            'status': 'error',
+            'error': 'Backup δεν βρέθηκε'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    filepath = os.path.join(BACKUP_DIR, backup_file)
+    
+    if request.method == 'GET':
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                backup_data = json.load(f)
+            
+            return Response({
+                'status': 'success',
+                'backup_id': backup_id,
+                'filename': backup_file,
+                'backup_data': backup_data
+            })
+        except Exception as e:
+            logger.error(f"[BACKUP] Error reading backup {backup_id}: {e}")
+            return Response({
+                'status': 'error',
+                'error': f'Σφάλμα ανάγνωσης: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    elif request.method == 'DELETE':
+        try:
+            os.remove(filepath)
+            logger.info(f"[BACKUP] Deleted backup {backup_file} by {user.email}")
+            
+            return Response({
+                'status': 'success',
+                'message': f'Το backup {backup_file} διαγράφηκε'
+            })
+        except Exception as e:
+            logger.error(f"[BACKUP] Error deleting backup {backup_id}: {e}")
+            return Response({
+                'status': 'error',
+                'error': f'Σφάλμα διαγραφής: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

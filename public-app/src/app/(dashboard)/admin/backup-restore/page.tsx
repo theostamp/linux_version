@@ -18,7 +18,13 @@ import {
   AlertTriangle,
   HardDrive,
   RefreshCw,
-  Eye
+  Eye,
+  Cloud,
+  Laptop,
+  Server,
+  History,
+  Trash2,
+  Clock
 } from 'lucide-react';
 
 interface BackupType {
@@ -41,6 +47,69 @@ interface RestoreMode {
   danger_level: string;
 }
 
+interface StorageLocation {
+  id: 'local' | 'server' | 'google_drive' | 'dropbox' | 'onedrive';
+  name: string;
+  icon: React.ReactNode;
+  description: string;
+  available: boolean;
+  configured?: boolean;
+}
+
+interface BackupHistory {
+  id: string;
+  filename: string;
+  created_at: string;
+  backup_type: string;
+  size_kb: number;
+  storage: string;
+  can_restore: boolean;
+}
+
+// Storage locations configuration
+const STORAGE_LOCATIONS: StorageLocation[] = [
+  {
+    id: 'local',
+    name: 'Τοπική Αποθήκευση',
+    icon: <Laptop className="w-6 h-6" />,
+    description: 'Λήψη αρχείου στον υπολογιστή σας',
+    available: true,
+    configured: true
+  },
+  {
+    id: 'server',
+    name: 'Server',
+    icon: <Server className="w-6 h-6" />,
+    description: 'Αποθήκευση στον server της εφαρμογής',
+    available: true,
+    configured: true
+  },
+  {
+    id: 'google_drive',
+    name: 'Google Drive',
+    icon: <Cloud className="w-6 h-6 text-blue-500" />,
+    description: 'Αποθήκευση στο Google Drive σας',
+    available: true,
+    configured: false
+  },
+  {
+    id: 'dropbox',
+    name: 'Dropbox',
+    icon: <Cloud className="w-6 h-6 text-blue-600" />,
+    description: 'Αποθήκευση στο Dropbox σας',
+    available: true,
+    configured: false
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    icon: <Cloud className="w-6 h-6 text-sky-500" />,
+    description: 'Αποθήκευση στο OneDrive σας',
+    available: true,
+    configured: false
+  }
+];
+
 export default function BackupRestorePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -55,6 +124,12 @@ export default function BackupRestorePage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isBackingUp, setIsBackingUp] = useState(false);
+  
+  // Storage selection
+  const [selectedStorage, setSelectedStorage] = useState<StorageLocation['id']>('local');
+  const [backupHistory, setBackupHistory] = useState<BackupHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [restoreSource, setRestoreSource] = useState<'file' | 'server'>('file');
   
   // Restore state
   const [restoreModes, setRestoreModes] = useState<RestoreMode[]>([]);
@@ -84,7 +159,27 @@ export default function BackupRestorePage() {
   useEffect(() => {
     loadBackupOptions();
     loadRestoreOptions();
+    loadBackupHistory();
   }, []);
+  
+  const loadBackupHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const response = await fetch('/api/financial/admin/backup/history/', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (data.backups) {
+        setBackupHistory(data.backups);
+      }
+    } catch (err) {
+      console.error('Error loading backup history:', err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const loadBackupOptions = async () => {
     try {
@@ -121,7 +216,7 @@ export default function BackupRestorePage() {
     }
   };
 
-  // Handle backup download
+  // Handle backup
   const handleBackup = async () => {
     setIsBackingUp(true);
     setError(null);
@@ -139,28 +234,43 @@ export default function BackupRestorePage() {
           building_ids: selectedBuildings.length > 0 ? selectedBuildings : undefined,
           include_transactions: includeTransactions,
           date_from: dateFrom || undefined,
-          date_to: dateTo || undefined
+          date_to: dateTo || undefined,
+          storage: selectedStorage
         })
       });
       
       if (response.ok) {
-        // Download the file
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const contentDisposition = response.headers.get('Content-Disposition');
-        const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || 'backup.json';
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const contentType = response.headers.get('Content-Type');
         
-        setResult({
-          status: 'success',
-          message: `✅ Backup ολοκληρώθηκε! Αρχείο: ${filename}`
-        });
+        // For local storage, download the file
+        if (selectedStorage === 'local' || contentType?.includes('application/json') && !contentType?.includes('charset')) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          const contentDisposition = response.headers.get('Content-Disposition');
+          const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || 'backup.json';
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          
+          setResult({
+            status: 'success',
+            message: `✅ Backup ολοκληρώθηκε! Αρχείο: ${filename}`
+          });
+        } else {
+          // For server/cloud storage
+          const data = await response.json();
+          setResult({
+            status: 'success',
+            message: data.message || '✅ Backup αποθηκεύτηκε επιτυχώς!',
+            data: data
+          });
+          // Refresh history
+          loadBackupHistory();
+        }
       } else {
         const data = await response.json();
         setError(data.error || 'Σφάλμα κατά το backup');
@@ -169,6 +279,60 @@ export default function BackupRestorePage() {
       setError('Σφάλμα σύνδεσης με τον server');
     } finally {
       setIsBackingUp(false);
+    }
+  };
+  
+  // Handle restore from server backup
+  const handleRestoreFromServer = async (backupId: string) => {
+    setIsRestoring(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/financial/admin/backup/history/${backupId}/`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      const data = await response.json();
+      
+      if (data.backup_data) {
+        setBackupData(data.backup_data);
+        setRestoreSource('server');
+        setActiveTab('restore');
+        // Auto-preview
+        handlePreview();
+      } else {
+        setError('Δεν βρέθηκε το backup');
+      }
+    } catch (err) {
+      setError('Σφάλμα φόρτωσης backup');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+  
+  // Handle delete server backup
+  const handleDeleteBackup = async (backupId: string) => {
+    if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το backup;')) return;
+    
+    try {
+      const response = await fetch(`/api/financial/admin/backup/history/${backupId}/`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        loadBackupHistory();
+        setResult({
+          status: 'success',
+          message: '✅ Το backup διαγράφηκε'
+        });
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Σφάλμα διαγραφής');
+      }
+    } catch (err) {
+      setError('Σφάλμα σύνδεσης');
     }
   };
 
@@ -380,6 +544,63 @@ export default function BackupRestorePage() {
       {/* BACKUP TAB */}
       {activeTab === 'backup' && (
         <div className="space-y-6">
+          {/* Storage Location Selection */}
+          <div className="bg-white border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+              <h3 className="font-semibold text-gray-800">📍 Τοποθεσία Αποθήκευσης</h3>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {STORAGE_LOCATIONS.map((storage) => (
+                  <div
+                    key={storage.id}
+                    className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all text-center ${
+                      selectedStorage === storage.id 
+                        ? 'border-blue-500 bg-blue-50 shadow-md' 
+                        : storage.configured 
+                          ? 'hover:border-gray-300 hover:shadow-sm' 
+                          : 'opacity-60 cursor-not-allowed'
+                    }`}
+                    onClick={() => storage.configured && setSelectedStorage(storage.id)}
+                  >
+                    <div className="flex justify-center mb-2">
+                      {storage.icon}
+                    </div>
+                    <div className="font-medium text-sm">{storage.name}</div>
+                    <div className="text-xs text-gray-500 mt-1">{storage.description}</div>
+                    
+                    {!storage.configured && (
+                      <div className="absolute top-2 right-2">
+                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                          Soon
+                        </span>
+                      </div>
+                    )}
+                    
+                    {selectedStorage === storage.id && (
+                      <div className="absolute top-2 left-2">
+                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Cloud setup hint */}
+              {(selectedStorage === 'google_drive' || selectedStorage === 'dropbox' || selectedStorage === 'onedrive') && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                  <div className="flex items-center gap-2 text-yellow-800">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>
+                      Η σύνδεση με cloud υπηρεσίες θα είναι διαθέσιμη σύντομα.
+                      Προς το παρόν, χρησιμοποιήστε Τοπική Αποθήκευση ή Server.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
           {/* Backup Type Selection */}
           <div className="bg-white border rounded-xl overflow-hidden">
             <div className="px-4 py-3 bg-blue-50 border-b">
@@ -496,7 +717,7 @@ export default function BackupRestorePage() {
           {/* Backup Button */}
           <button
             onClick={handleBackup}
-            disabled={isBackingUp}
+            disabled={isBackingUp || !STORAGE_LOCATIONS.find(s => s.id === selectedStorage)?.configured}
             className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 font-medium text-lg shadow-lg"
           >
             {isBackingUp ? (
@@ -506,11 +727,64 @@ export default function BackupRestorePage() {
               </>
             ) : (
               <>
-                <Download className="w-6 h-6" />
-                📥 Λήψη Backup
+                {selectedStorage === 'local' ? <Download className="w-6 h-6" /> : <Cloud className="w-6 h-6" />}
+                {selectedStorage === 'local' ? '📥 Λήψη Backup' : '☁️ Αποθήκευση Backup'}
               </>
             )}
           </button>
+          
+          {/* Backup History (Server) */}
+          {backupHistory.length > 0 && (
+            <div className="bg-white border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  Ιστορικό Backup (Server)
+                </h3>
+                <button 
+                  onClick={loadBackupHistory}
+                  disabled={isLoadingHistory}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoadingHistory ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+              <div className="divide-y max-h-64 overflow-y-auto">
+                {backupHistory.map((backup) => (
+                  <div key={backup.id} className="p-3 flex items-center justify-between hover:bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <FileJson className="w-8 h-8 text-blue-500" />
+                      <div>
+                        <p className="font-medium text-sm">{backup.filename}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-2">
+                          <Clock className="w-3 h-3" />
+                          {new Date(backup.created_at).toLocaleString('el-GR')}
+                          <span className="bg-gray-100 px-2 py-0.5 rounded">{backup.backup_type}</span>
+                          <span>{backup.size_kb} KB</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleRestoreFromServer(backup.id)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                        title="Επαναφορά"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBackup(backup.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Διαγραφή"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -534,41 +808,138 @@ export default function BackupRestorePage() {
             </div>
           </div>
 
-          {/* File Upload */}
+          {/* Restore Source Selection */}
           <div className="bg-white border rounded-xl overflow-hidden">
             <div className="px-4 py-3 bg-orange-50 border-b">
-              <h3 className="font-semibold text-orange-800">📁 Επιλογή Αρχείου Backup</h3>
+              <h3 className="font-semibold text-orange-800">📍 Πηγή Επαναφοράς</h3>
             </div>
-            <div className="p-6">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
-              >
-                {selectedFile ? (
-                  <div>
-                    <FileJson className="w-12 h-12 text-orange-600 mx-auto mb-2" />
-                    <p className="font-medium">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(selectedFile.size / 1024).toFixed(1)} KB
-                    </p>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    restoreSource === 'file' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'hover:border-gray-300'
+                  }`}
+                  onClick={() => setRestoreSource('file')}
+                >
+                  <div className="flex items-center gap-3">
+                    <Laptop className="w-6 h-6 text-orange-600" />
+                    <div>
+                      <div className="font-medium">Τοπικό Αρχείο</div>
+                      <div className="text-sm text-gray-500">Ανεβάστε αρχείο από τον υπολογιστή</div>
+                    </div>
                   </div>
-                ) : (
-                  <div>
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">Κάντε κλικ ή σύρετε το αρχείο backup (.json)</p>
+                </div>
+                <div
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    restoreSource === 'server' 
+                      ? 'border-orange-500 bg-orange-50' 
+                      : 'hover:border-gray-300'
+                  }`}
+                  onClick={() => setRestoreSource('server')}
+                >
+                  <div className="flex items-center gap-3">
+                    <Server className="w-6 h-6 text-orange-600" />
+                    <div>
+                      <div className="font-medium">Server Backup</div>
+                      <div className="text-sm text-gray-500">Επιλέξτε από αποθηκευμένα backups</div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
+          
+          {/* File Upload (when source is file) */}
+          {restoreSource === 'file' && (
+            <div className="bg-white border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b">
+                <h3 className="font-semibold">📁 Επιλογή Αρχείου Backup</h3>
+              </div>
+              <div className="p-6">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
+                >
+                  {selectedFile ? (
+                    <div>
+                      <FileJson className="w-12 h-12 text-orange-600 mx-auto mb-2" />
+                      <p className="font-medium">{selectedFile.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(selectedFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600">Κάντε κλικ ή σύρετε το αρχείο backup (.json)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Server Backups List (when source is server) */}
+          {restoreSource === 'server' && (
+            <div className="bg-white border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
+                <h3 className="font-semibold">🗄️ Διαθέσιμα Backups</h3>
+                <button 
+                  onClick={loadBackupHistory}
+                  disabled={isLoadingHistory}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoadingHistory ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+              <div className="divide-y max-h-80 overflow-y-auto">
+                {isLoadingHistory ? (
+                  <div className="p-8 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
+                  </div>
+                ) : backupHistory.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <Server className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>Δεν υπάρχουν αποθηκευμένα backups</p>
+                    <p className="text-sm">Δημιουργήστε ένα backup με αποθήκευση στον Server</p>
+                  </div>
+                ) : (
+                  backupHistory.map((backup) => (
+                    <div 
+                      key={backup.id} 
+                      className="p-4 flex items-center justify-between hover:bg-orange-50 cursor-pointer"
+                      onClick={() => handleRestoreFromServer(backup.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileJson className="w-10 h-10 text-orange-500" />
+                        <div>
+                          <p className="font-medium">{backup.filename}</p>
+                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <Clock className="w-3 h-3" />
+                            {new Date(backup.created_at).toLocaleString('el-GR')}
+                            <span className="bg-gray-100 px-2 py-0.5 rounded">{backup.backup_type}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-orange-600">
+                        <RefreshCw className="w-5 h-5" />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Backup Info */}
           {backupData && (
