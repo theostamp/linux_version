@@ -172,8 +172,9 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
     // Reset debouncing timer to allow immediate refresh
     lastRequestTimeRef.current = 0;
     
-    // Clear apartments to show loading state
-    setApartments([]);
+    // NOTE: Don't clear apartments here - keep showing old data while loading new data
+    // This prevents flickering where the UI briefly shows empty state
+    // The loading indicator (isLoading) can be used to show a subtle refresh indicator
     
     // Trigger immediate load
     await loadApartments();

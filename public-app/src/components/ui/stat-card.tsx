@@ -63,8 +63,8 @@ export function StatCard({
   );
 
   const cardClasses = cn(
-    "p-4 rounded-xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:shadow-md",
-    href && "cursor-pointer hover:border-slate-300",
+    "p-4 rounded-xl border border-slate-200/50 bg-white shadow-sm transition-all duration-200 hover:shadow-md",
+    href && "cursor-pointer hover:border-slate-300/50",
     className
   );
 

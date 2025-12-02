@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AddressAutocomplete from './AddressAutocomplete';
 import StreetViewImage from './StreetViewImage';
-import type { Building, BuildingPayload, BuildingResident } from '@/lib/api';
-import { createBuilding, updateBuilding, fetchBuildingResidents, fetchApartments } from '@/lib/api';
+import type { Building, BuildingPayload, BuildingResident, User } from '@/lib/api';
+import { createBuilding, updateBuilding, fetchBuildingResidents, fetchApartments, fetchUsers } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -120,17 +120,25 @@ export default function CreateBuildingForm({
   const [showResidentsDropdown, setShowResidentsDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // State για τη λίστα χρηστών (για επιλογή internal manager)
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [showUsersDropdown, setShowUsersDropdown] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const usersDropdownRef = useRef<HTMLDivElement>(null);
+
   // State για τη λίστα διαμερισμάτων
   const [apartments, setApartments] = useState<ApartmentOption[]>([]);
   const [loadingApartments, setLoadingApartments] = useState(false);
   const [showApartmentsDropdown, setShowApartmentsDropdown] = useState(false);
   const apartmentDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Φόρτωση ενοίκων και διαμερισμάτων του κτιρίου
+  // Φόρτωση ενοίκων, διαμερισμάτων και χρηστών του κτιρίου
   useEffect(() => {
     if (buildingId) {
       loadBuildingResidents();
       loadBuildingApartments();
+      loadAllUsers(); // Φόρτωση χρηστών για επιλογή internal manager
     }
   }, [buildingId]);
 
@@ -142,6 +150,9 @@ export default function CreateBuildingForm({
       }
       if (apartmentDropdownRef.current && !apartmentDropdownRef.current.contains(event.target as Node)) {
         setShowApartmentsDropdown(false);
+      }
+      if (usersDropdownRef.current && !usersDropdownRef.current.contains(event.target as Node)) {
+        setShowUsersDropdown(false);
       }
     };
 
@@ -165,6 +176,37 @@ export default function CreateBuildingForm({
       setLoadingResidents(false);
     }
   };
+
+  // Φόρτωση χρηστών για επιλογή internal manager
+  const loadAllUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const users = await fetchUsers();
+      setAllUsers(users);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Επιλογή χρήστη ως internal manager
+  const handleUserSelect = (selectedUser: User) => {
+    setFormData(prev => ({
+      ...prev,
+      internal_manager_id: selectedUser.id,
+      internal_manager_name: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email,
+    }));
+    setShowUsersDropdown(false);
+    setUserSearchTerm('');
+    toast.success(`✅ Ο χρήστης ${selectedUser.email} ορίστηκε ως εσωτερικός διαχειριστής`);
+  };
+
+  // Φιλτραρισμένη λίστα χρηστών βάσει αναζήτησης
+  const filteredUsers = allUsers.filter(u => 
+    u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    `${u.first_name} ${u.last_name}`.toLowerCase().includes(userSearchTerm.toLowerCase())
+  );
 
   const loadBuildingApartments = async () => {
     if (!buildingId) return;
@@ -773,6 +815,105 @@ export default function CreateBuildingForm({
           </div>
         )}
 
+        {/* Αναζήτηση χρήστη με email για σύνδεση ως internal_manager */}
+        {buildingId && (
+          <div className={`rounded-xl p-4 mb-4 transition-all ${
+            formData.internal_manager_id 
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400' 
+              : 'bg-amber-50 border-2 border-amber-200'
+          }`}>
+            <div className="flex items-start space-x-2 mb-3">
+              <div className={`p-1.5 rounded-lg ${formData.internal_manager_id ? 'bg-green-500' : 'bg-amber-500'}`}>
+                <Users className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className={`text-sm font-semibold ${formData.internal_manager_id ? 'text-green-800' : 'text-amber-800'}`}>
+                  {formData.internal_manager_id 
+                    ? '✅ Χρήστης συνδεδεμένος ως Εσωτερικός Διαχειριστής' 
+                    : '⚠️ Αναζήτηση χρήστη με email (για σύνδεση ρόλου)'}
+                </p>
+                <p className={`text-xs mt-1 ${formData.internal_manager_id ? 'text-green-600' : 'text-amber-700'}`}>
+                  {formData.internal_manager_id 
+                    ? 'Ο χρήστης θα αποκτήσει αυτόματα ρόλο Εσωτερικού Διαχειριστή μετά την αποθήκευση.'
+                    : 'Για να λειτουργήσει σωστά ο ρόλος, πρέπει να επιλέξετε χρήστη από τη λίστα.'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="relative" ref={usersDropdownRef}>
+              <Input
+                type="text"
+                value={userSearchTerm}
+                onChange={(e) => {
+                  setUserSearchTerm(e.target.value);
+                  if (e.target.value.length > 0 && !showUsersDropdown) {
+                    setShowUsersDropdown(true);
+                    if (allUsers.length === 0) loadAllUsers();
+                  }
+                }}
+                onFocus={() => {
+                  if (allUsers.length === 0) loadAllUsers();
+                  setShowUsersDropdown(true);
+                }}
+                placeholder="Αναζήτηση χρήστη με email..."
+                className={`bg-white ${formData.internal_manager_id ? 'border-green-300' : 'border-amber-300'}`}
+              />
+              
+              {showUsersDropdown && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {loadingUsers ? (
+                    <div className="px-3 py-4 text-center text-gray-500">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                      Φόρτωση χρηστών...
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="px-3 py-4 text-center text-gray-500">
+                      {userSearchTerm ? 'Δεν βρέθηκαν χρήστες' : 'Πληκτρολογήστε για αναζήτηση'}
+                    </div>
+                  ) : (
+                    filteredUsers.slice(0, 10).map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => handleUserSelect(u)}
+                        className={`w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                          formData.internal_manager_id === u.id ? 'bg-green-50' : ''
+                        }`}
+                      >
+                        <div className="font-medium text-gray-900">
+                          {u.first_name} {u.last_name}
+                          {formData.internal_manager_id === u.id && (
+                            <span className="ml-2 text-green-600 text-xs">✓ Επιλεγμένος</span>
+                          )}
+                        </div>
+                        <div className="text-sm text-primary">{u.email}</div>
+                        <div className="text-xs text-gray-500">
+                          Ρόλος: {u.role || 'resident'}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {formData.internal_manager_id && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-green-700">
+                  ID χρήστη: {formData.internal_manager_id}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, internal_manager_id: null }))}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Αφαίρεση σύνδεσης
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative" ref={dropdownRef}>
             <Label htmlFor="internal_manager_name">Όνομα Διαχειριστή</Label>
@@ -930,25 +1071,67 @@ export default function CreateBuildingForm({
 
         {/* Toggle για δικαίωμα καταχώρησης πληρωμών */}
         {(formData.internal_manager_id || formData.internal_manager_name) && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start space-x-2">
-                <CreditCard className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className={`rounded-xl p-5 mt-4 transition-all duration-300 ${
+            formData.internal_manager_can_record_payments 
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 shadow-lg shadow-green-100' 
+              : 'bg-slate-50 border-2 border-slate-200'
+          }`}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start space-x-3">
+                <div className={`p-2 rounded-lg transition-colors ${
+                  formData.internal_manager_can_record_payments 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-slate-300 text-slate-600'
+                }`}>
+                  <CreditCard className="w-5 h-5" />
+                </div>
                 <div>
-                  <p className="text-sm text-amber-800 font-medium">Δικαίωμα Καταχώρησης Πληρωμών</p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.
+                  <p className={`font-semibold ${
+                    formData.internal_manager_can_record_payments 
+                      ? 'text-green-800' 
+                      : 'text-slate-700'
+                  }`}>
+                    Δικαίωμα Καταχώρησης Πληρωμών
+                  </p>
+                  <p className={`text-sm mt-1 ${
+                    formData.internal_manager_can_record_payments 
+                      ? 'text-green-600' 
+                      : 'text-slate-500'
+                  }`}>
+                    {formData.internal_manager_can_record_payments 
+                      ? '✅ Ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές κοινοχρήστων.'
+                      : 'Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.'
+                    }
                   </p>
                 </div>
               </div>
-              <Switch
-                checked={formData.internal_manager_can_record_payments || false}
-                onCheckedChange={(checked) => 
-                  setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
-                }
-                disabled={loading}
-              />
+              <div className={`transition-all duration-300 ${
+                formData.internal_manager_can_record_payments 
+                  ? 'scale-110' 
+                  : 'scale-100'
+              }`}>
+                <Switch
+                  checked={formData.internal_manager_can_record_payments || false}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
+                  }
+                  disabled={loading}
+                  className={`${
+                    formData.internal_manager_can_record_payments 
+                      ? 'data-[state=checked]:bg-green-500' 
+                      : ''
+                  }`}
+                />
+              </div>
             </div>
+            {formData.internal_manager_can_record_payments && (
+              <div className="mt-3 pt-3 border-t border-green-200">
+                <p className="text-xs text-green-700 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Ενεργό - Ο διαχειριστής μπορεί να εισπράττει και να καταγράφει πληρωμές
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

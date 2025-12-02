@@ -215,6 +215,77 @@ class BuildingSerializer(serializers.ModelSerializer):
         print("✅ BuildingSerializer.validate() completed successfully")
         return data
 
+    def update(self, instance, validated_data):
+        """
+        Override update method to handle internal_manager role assignment.
+        Όταν ορίζεται νέος internal_manager, ενημερώνεται αυτόματα ο ρόλος του χρήστη.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Ελέγχουμε αν αλλάζει ο internal_manager
+        new_internal_manager = validated_data.get('internal_manager')
+        old_internal_manager = instance.internal_manager
+        
+        # Αν αλλάζει ο internal_manager
+        if 'internal_manager' in validated_data:
+            # Αφαίρεση ρόλου από τον προηγούμενο internal_manager (αν υπήρχε)
+            if old_internal_manager and old_internal_manager != new_internal_manager:
+                # Αν ο παλιός internal_manager δεν είναι internal_manager σε άλλο κτίριο,
+                # επαναφέρουμε τον ρόλο του σε 'resident'
+                from buildings.models import Building
+                other_buildings = Building.objects.filter(internal_manager=old_internal_manager).exclude(id=instance.id)
+                if not other_buildings.exists():
+                    if old_internal_manager.role == 'internal_manager':
+                        old_internal_manager.role = 'resident'
+                        old_internal_manager.save(update_fields=['role'])
+                        logger.info(f"Removed internal_manager role from user {old_internal_manager.email}")
+            
+            # Ανάθεση ρόλου στον νέο internal_manager
+            if new_internal_manager:
+                # Αλλαγή ρόλου σε internal_manager
+                if new_internal_manager.role != 'internal_manager':
+                    new_internal_manager.role = 'internal_manager'
+                
+                # Αντιγραφή στοιχείων γραφείου από τον manager του κτιρίου
+                # ώστε ο internal_manager να βλέπει σωστά το logo και τα στοιχεία
+                manager = instance.manager
+                if manager:
+                    update_fields = ['role']
+                    if manager.office_name and not new_internal_manager.office_name:
+                        new_internal_manager.office_name = manager.office_name
+                        update_fields.append('office_name')
+                    if manager.office_phone and not new_internal_manager.office_phone:
+                        new_internal_manager.office_phone = manager.office_phone
+                        update_fields.append('office_phone')
+                    if manager.office_address and not new_internal_manager.office_address:
+                        new_internal_manager.office_address = manager.office_address
+                        update_fields.append('office_address')
+                    if manager.office_logo and not new_internal_manager.office_logo:
+                        new_internal_manager.office_logo = manager.office_logo
+                        update_fields.append('office_logo')
+                    new_internal_manager.save(update_fields=update_fields)
+                    logger.info(f"Assigned internal_manager role to user {new_internal_manager.email} with office details")
+                else:
+                    new_internal_manager.save(update_fields=['role'])
+                    logger.info(f"Assigned internal_manager role to user {new_internal_manager.email}")
+                
+                # Δημιουργία BuildingMembership αν δεν υπάρχει
+                from buildings.models import BuildingMembership
+                membership, created = BuildingMembership.objects.get_or_create(
+                    resident=new_internal_manager,
+                    building=instance,
+                    defaults={'role': 'internal_manager'}
+                )
+                if not created and membership.role != 'internal_manager':
+                    membership.role = 'internal_manager'
+                    membership.save(update_fields=['role'])
+                    logger.info(f"Updated BuildingMembership role to internal_manager for user {new_internal_manager.email}")
+                elif created:
+                    logger.info(f"Created BuildingMembership for internal_manager {new_internal_manager.email}")
+        
+        return super().update(instance, validated_data)
+
 
 # ========================================================================
 # BuildingContext Serializers - For New Unified Building Context System

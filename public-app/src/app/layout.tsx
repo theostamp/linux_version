@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Ubuntu_Condensed } from "next/font/google";
+import { Geist, Geist_Mono, Play } from "next/font/google";
 import "./globals.css";
 import AppProviders from "@/components/AppProviders";
 import GoogleMapsScript from "@/components/GoogleMapsScript";
@@ -15,10 +14,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const ubuntuCondensed = Ubuntu_Condensed({
-  variable: "--font-ubuntu-condensed",
+const play = Play({
+  variable: "--font-play",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -50,9 +49,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${ubuntuCondensed.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} ${play.variable} antialiased`}>
         <GoogleMapsScript apiKey={googleMapsApiKey} />
         <AppProviders>{children}</AppProviders>
       </body>

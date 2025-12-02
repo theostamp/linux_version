@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import type { Announcement } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
+import { useAuth } from '@/components/contexts/AuthContext';
 import AnnouncementCard from '@/components/AnnouncementCard';
 import AnnouncementSkeleton from '@/components/AnnouncementSkeleton';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -16,9 +17,14 @@ import Link from 'next/link';
 import { Plus, Building2, Megaphone } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { hasInternalManagerAccess } from '@/lib/roleUtils';
 
 function AnnouncementsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
+  const { user } = useAuth();
+  
+  // Έλεγχος αν ο χρήστης μπορεί να δημιουργήσει ανακοινώσεις
+  const canCreateAnnouncement = hasInternalManagerAccess(user);
 
   // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
   const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
@@ -42,14 +48,16 @@ function AnnouncementsPageContent() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
-          <Button asChild>
-            <Link href="/announcements/new">
-              {selectedBuilding 
-                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
-                : "Νέα Ανακοίνωση"
-              }
-            </Link>
-          </Button>
+          {canCreateAnnouncement && (
+            <Button asChild>
+              <Link href="/announcements/new">
+                {selectedBuilding 
+                  ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                  : "Νέα Ανακοίνωση"
+                }
+              </Link>
+            </Button>
+          )}
         </div>
         <BuildingFilterIndicator className="mb-4" />
         {[...Array(3)].map((_, i) => (
@@ -64,14 +72,16 @@ function AnnouncementsPageContent() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
-          <Button asChild>
-            <Link href="/announcements/new">
-              {selectedBuilding 
-                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
-                : "Νέα Ανακοίνωση"
-              }
-            </Link>
-          </Button>
+          {canCreateAnnouncement && (
+            <Button asChild>
+              <Link href="/announcements/new">
+                {selectedBuilding 
+                  ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                  : "Νέα Ανακοίνωση"
+                }
+              </Link>
+            </Button>
+          )}
         </div>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης ανακοινώσεων. Παρακαλώ δοκιμάστε ξανά αργότερα." />
@@ -84,14 +94,16 @@ function AnnouncementsPageContent() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
-          <Button asChild>
-            <Link href="/announcements/new">
-              {selectedBuilding 
-                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
-                : "Νέα Ανακοίνωση"
-              }
-            </Link>
-          </Button>
+          {canCreateAnnouncement && (
+            <Button asChild>
+              <Link href="/announcements/new">
+                {selectedBuilding 
+                  ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                  : "Νέα Ανακοίνωση"
+                }
+              </Link>
+            </Button>
+          )}
         </div>
         <BuildingFilterIndicator className="mb-4" />
         <p className="text-muted-foreground text-center">
@@ -114,20 +126,22 @@ function AnnouncementsPageContent() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">📢 Ανακοινώσεις</h1>
           <p className="text-muted-foreground mt-1">Ενημερώσεις και νέα για το κτίριο</p>
         </div>
-        <div className="flex gap-3">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/announcements/new-assembly">
-              <Building2 className="w-4 h-4 mr-2" />
-              Νέα Συνέλευση
-            </Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/announcements/new">
-              <Plus className="w-4 h-4 mr-2" />
-              {selectedBuilding ? "Νέα Ανακοίνωση" : "Νέα Ανακοίνωση"}
-            </Link>
-          </Button>
-        </div>
+        {canCreateAnnouncement && (
+          <div className="flex gap-3">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/announcements/new-assembly">
+                <Building2 className="w-4 h-4 mr-2" />
+                Νέα Συνέλευση
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/announcements/new">
+                <Plus className="w-4 h-4 mr-2" />
+                {selectedBuilding ? "Νέα Ανακοίνωση" : "Νέα Ανακοίνωση"}
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
       
       <BuildingFilterIndicator className="mb-2" />
@@ -136,9 +150,11 @@ function AnnouncementsPageContent() {
         <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           <Megaphone className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
           <p className="font-medium mb-4">Δεν υπάρχουν ενεργές ανακοινώσεις.</p>
-          <Button asChild>
-            <Link href="/announcements/new">Δημιουργία πρώτης ανακοίνωσης</Link>
-          </Button>
+          {canCreateAnnouncement && (
+            <Button asChild>
+              <Link href="/announcements/new">Δημιουργία πρώτης ανακοίνωσης</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">

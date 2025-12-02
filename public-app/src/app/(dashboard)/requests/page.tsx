@@ -9,7 +9,7 @@ import type { UserRequest } from '@/types/userRequests';
 import Link from 'next/link';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
-import { Plus, Wrench } from 'lucide-react';
+import { Plus, Wrench, SlidersHorizontal, MapPin } from 'lucide-react';
 import { deleteUserRequest } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/typ
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 function RequestsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
@@ -36,7 +37,7 @@ function RequestsPageContent() {
   const [categoryFilter, setCategoryFilter] = useState('');
 
   const buildingId = selectedBuilding?.id ?? null;
-  const canDelete = user?.is_superuser || user?.is_staff;
+  const canDelete = hasOfficeAdminAccess(user);
   const canCreateRequest = true;
 
   const {

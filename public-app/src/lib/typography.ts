@@ -11,13 +11,13 @@
 
 // 🎯 Core Typography Scale
 export const typography = {
-  // Headings - Main content hierarchy (Ubuntu Condensed)
-  pageTitle: 'text-3xl font-bold tracking-tight text-foreground font-[var(--font-ubuntu-condensed)]',
-  sectionHeader: 'text-2xl font-semibold tracking-tight text-foreground font-[var(--font-ubuntu-condensed)]',
-  subsectionHeader: 'text-xl font-semibold text-foreground font-[var(--font-ubuntu-condensed)]',
-  cardTitle: 'text-lg font-semibold text-foreground font-[var(--font-ubuntu-condensed)]',
-  modalTitle: 'text-lg font-semibold text-foreground font-[var(--font-ubuntu-condensed)]',
-  smallHeader: 'text-base font-medium text-foreground font-[var(--font-ubuntu-condensed)]',
+  // Headings - Main content hierarchy (Play)
+  pageTitle: 'text-3xl font-bold tracking-tight text-foreground font-[var(--font-play)]',
+  sectionHeader: 'text-2xl font-semibold tracking-tight text-foreground font-[var(--font-play)]',
+  subsectionHeader: 'text-xl font-semibold text-foreground font-[var(--font-play)]',
+  cardTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
+  modalTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
+  smallHeader: 'text-base font-medium text-foreground font-[var(--font-play)]',
 
   // Body Text
   bodyLarge: 'text-lg text-muted-foreground leading-relaxed',

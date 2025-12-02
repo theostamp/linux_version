@@ -6,64 +6,21 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
-import { User, Building as BuildingIcon, Settings, Calendar } from 'lucide-react';
+import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
+import { User, Building as BuildingIcon, Settings, Calendar, Shield } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
-
-// Helper function to get user role label
-const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string; profile?: { role?: string } } | null): string => {
-  if (!user) return 'Χρήστης';
-
-  if (user.is_superuser) return 'Ultra Admin';
-  if (user.is_staff) return 'Διαχειριστής';
-
-  if (user.role) {
-    switch (user.role.toLowerCase()) {
-      case 'admin':
-      case 'manager':
-        return 'Διαχειριστής';
-      case 'internal_manager':
-        return 'Εσωτερικός Διαχειριστής';
-      case 'owner':
-        return 'Ιδιοκτήτης';
-      case 'tenant':
-      case 'resident':
-        return 'Ένοικος';
-      default:
-        return user.role;
-    }
-  }
-
-  if (user.profile?.role) {
-    switch (user.profile.role) {
-      case 'superuser':
-        return 'Ultra Admin';
-      case 'manager':
-        return 'Διαχειριστής';
-      case 'internal_manager':
-        return 'Εσωτερικός Διαχειριστής';
-      case 'resident':
-        return 'Κάτοικος';
-      default:
-        return user.profile.role;
-    }
-  }
-
-  return 'Χρήστης';
-};
-
-// Helper function to check if user is admin-level (can see building selector)
-const isAdminLevel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string; profile?: { role?: string } } | null): boolean => {
-  if (!user) return false;
-  if (user.is_superuser || user.is_staff) return true;
-  
-  const role = user.role || user.profile?.role;
-  // Only 'manager' (Office Manager) is admin-level
-  return role === 'manager';
-};
+import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAccess, getEffectiveRole } from '@/lib/roleUtils';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding } = useBuilding();
+  const isAdminLevel = hasOfficeAdminAccess(user);
+  const isResidentUser = isResident(user);
+  const isInternalManager = getEffectiveRole(user) === 'internal_manager';
+  const roleLabel = getRoleLabel(user);
+  // Show office details for admins AND internal managers
+  const showOfficeDetails = isAdminLevel || isInternalManager;
+
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
@@ -113,6 +70,8 @@ export default function GlobalHeader() {
 
               {/* Center Section - Office Details spread across width */}
               <div className="min-w-0">
+                {showOfficeDetails ? (
+                  <>
                 {/* Desktop: Grid Layout for even spacing */}
                 <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                   {/* Office Name and Address */}
@@ -141,8 +100,8 @@ export default function GlobalHeader() {
                     )}
                   </div>
 
-                  {/* Building Selector - ADMIN-ONLY (Office Manager, Staff, Superuser) */}
-                  {isAdminLevel(user) && (
+                      {/* Building Selector - ADMIN-ONLY */}
+                      {isAdminLevel && (
                     <div className="hidden lg:flex items-center gap-2 min-w-0">
                       <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
                       <BuildingSelectorButton
@@ -160,10 +119,30 @@ export default function GlobalHeader() {
                     {user?.office_name?.substring(0, 15) || 'ΓΔ'}
                   </h1>
                 </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col justify-center min-w-0">
+                    <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
+                      {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
+                    </h1>
+                    <p className="text-xs text-muted-foreground leading-tight truncate">
+                      {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Right Section - Actions and User Info */}
               <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Todo Reminders Dropdown - Bell Icon */}
+              <TodoReminderDropdown 
+                className="hidden sm:flex"
+                onOpenCalendar={() => {
+                  const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
+                  window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                }}
+              />
+
               {/* Calendar Button */}
               <button
                 onClick={() => {
@@ -177,7 +156,7 @@ export default function GlobalHeader() {
               </button>
 
               {/* Settings Button - Desktop - ADMIN-ONLY */}
-              {isAdminLevel(user) && (
+              {isAdminLevel && (
                 <button
                   onClick={handleSettingsModalOpen}
                   className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
@@ -188,7 +167,7 @@ export default function GlobalHeader() {
               )}
 
               {/* Settings Button - Mobile - ADMIN-ONLY */}
-              {isAdminLevel(user) && (
+              {isAdminLevel && (
                 <button
                   onClick={() => setIsSettingsModalOpen(true)}
                   className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
@@ -198,28 +177,58 @@ export default function GlobalHeader() {
                 </button>
               )}
 
+              {/* Todo Reminders - Mobile */}
+              <TodoReminderDropdown 
+                className="sm:hidden"
+                onOpenCalendar={() => {
+                  window.location.href = '/calendar';
+                }}
+              />
+
               {/* User Info Card */}
               {user && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-muted rounded-md shadow-sm">
-                  <div className="w-8 h-8 bg-muted-foreground rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-white" />
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-md shadow-sm ${
+                  isInternalManager ? 'bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-500/30' : 'bg-muted'
+                }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isInternalManager ? 'bg-amber-500' : 'bg-muted-foreground'
+                  }`}>
+                    {isInternalManager ? (
+                      <Shield className="w-4 h-4 text-white" />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <div className="hidden sm:block">
-                    <p className="text-sm font-medium text-foreground leading-tight">
-                      {user.first_name || user.last_name
-                        ? `${user.first_name} ${user.last_name}`.trim()
-                        : user.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">
-                      {getUserRoleLabel(user)}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground leading-tight">
+                        {user.first_name || user.last_name
+                          ? `${user.first_name} ${user.last_name}`.trim()
+                          : user.email}
+                      </p>
+                      {isInternalManager && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-amber-500 text-white rounded">
+                          Διαχειριστής
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs leading-tight mt-0.5 ${
+                      isInternalManager ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'
+                    }`}>
+                      {roleLabel}
                     </p>
                   </div>
                   <div className="sm:hidden">
-                    <p className="text-xs font-medium text-foreground leading-tight">
-                      {user.first_name || user.last_name
-                        ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
-                        : user.email.split('@')[0]}
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-medium text-foreground leading-tight">
+                        {user.first_name || user.last_name
+                          ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
+                          : user.email.split('@')[0]}
+                      </p>
+                      {isInternalManager && (
+                        <Shield className="w-3 h-3 text-amber-600" />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

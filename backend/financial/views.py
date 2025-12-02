@@ -2071,7 +2071,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 else:
                     # User is a resident - get buildings via BuildingMembership
                     from buildings.models import BuildingMembership
-                    buildings = Building.objects.filter(buildingmembership__resident=user).distinct()
+                    # Use 'memberships' related_name instead of default 'buildingmembership'
+                    buildings = Building.objects.filter(memberships__resident=user).distinct()
             
             buildings = buildings.distinct()
             
@@ -3848,3 +3849,226 @@ class MonthlyBalanceViewSet(viewsets.ModelViewSet):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# =============================================================================
+# My Apartment Endpoint - Για ενοίκους
+# =============================================================================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_apartment_data(request):
+    """
+    GET /api/financial/my-apartment/
+    
+    Επιστρέφει τα οικονομικά δεδομένα του διαμερίσματος του τρέχοντος χρήστη.
+    Ο χρήστης πρέπει να είναι ιδιοκτήτης ή ένοικος του διαμερίσματος.
+    
+    Query Parameters:
+        - month: Optional, format 'YYYY-MM' για συγκεκριμένο μήνα
+        - months_back: Optional, αριθμός μηνών ιστορικού (default: 12)
+    
+    Returns:
+        - apartment: Στοιχεία διαμερίσματος
+        - building: Στοιχεία κτιρίου
+        - current_balance: Τρέχουσα οφειλή
+        - payment_history: Ιστορικό πληρωμών
+        - transaction_history: Ιστορικό κινήσεων
+        - summary: Σύνοψη οικονομικών
+    """
+    import logging
+    from datetime import date, timedelta
+    from buildings.models import BuildingMembership
+    from apartments.models import Apartment
+    
+    logger = logging.getLogger(__name__)
+    user = request.user
+    
+    month = request.query_params.get('month')
+    months_back = int(request.query_params.get('months_back', 12))
+    
+    logger.info(f"[my_apartment_data] Request from user: {user.email}")
+    
+    try:
+        # Βρες τα διαμερίσματα του χρήστη μέσω BuildingMembership
+        memberships = BuildingMembership.objects.filter(resident=user).select_related('building')
+        
+        if not memberships.exists():
+            # Fallback: Ψάξε αν ο χρήστης είναι owner ή tenant σε κάποιο διαμέρισμα
+            apartments = Apartment.objects.filter(
+                models.Q(owner_user=user) | models.Q(tenant_user=user)
+            ).select_related('building')
+            
+            if not apartments.exists():
+                return Response({
+                    'error': 'Δεν βρέθηκε διαμέρισμα για αυτόν τον χρήστη',
+                    'apartments': [],
+                    'has_apartment': False
+                }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # Βρες τα διαμερίσματα από τα memberships
+            building_ids = memberships.values_list('building_id', flat=True)
+            apartments = Apartment.objects.filter(
+                building_id__in=building_ids
+            ).filter(
+                models.Q(owner_user=user) | models.Q(tenant_user=user)
+            ).select_related('building')
+            
+            # Αν δεν βρέθηκε με owner/tenant, πάρε όλα τα διαμερίσματα του κτιρίου
+            # (για περιπτώσεις που ο χρήστης δεν έχει συνδεθεί με συγκεκριμένο διαμέρισμα)
+            if not apartments.exists():
+                # Επέστρεψε το πρώτο κτίριο του membership χωρίς διαμέρισμα
+                first_membership = memberships.first()
+                return Response({
+                    'has_apartment': False,
+                    'building': {
+                        'id': first_membership.building.id,
+                        'name': first_membership.building.name,
+                        'address': first_membership.building.address,
+                    },
+                    'message': 'Δεν έχετε συνδεθεί με συγκεκριμένο διαμέρισμα. Επικοινωνήστε με τον διαχειριστή.',
+                    'apartments': []
+                })
+        
+        # Επεξεργασία δεδομένων για κάθε διαμέρισμα
+        apartments_data = []
+        
+        for apartment in apartments:
+            building = apartment.building
+            
+            # Λήψη οικονομικών δεδομένων
+            service = FinancialDashboardService(building_id=building.id)
+            
+            # Πληρωμές του διαμερίσματος
+            payments = Payment.objects.filter(
+                apartment=apartment
+            ).order_by('-date')[:months_back * 3]  # Περισσότερες πληρωμές για ιστορικό
+            
+            # Κινήσεις (expenses) του διαμερίσματος
+            today = date.today()
+            start_date = today - timedelta(days=30 * months_back)
+            
+            transactions = Transaction.objects.filter(
+                apartment=apartment,
+                date__gte=start_date
+            ).order_by('-date')
+            
+            # Δαπάνες (expenses) που αφορούν το διαμέρισμα
+            expense_shares = ApartmentShare.objects.filter(
+                apartment=apartment,
+                period__start_date__gte=start_date
+            ).select_related('period').order_by('-period__start_date')
+            
+            # Χρεώσεις από transactions (project installments, expenses κλπ)
+            # Αυτά περιλαμβάνουν δόσεις έργων που δεν έχουν ApartmentShare
+            charge_transactions = Transaction.objects.filter(
+                apartment=apartment,
+                date__gte=start_date,
+                type__in=['expense_created', 'installment_charge', 'charge', 'expense']
+            ).order_by('-date')
+            
+            # Υπολογισμός τρέχουσας οφειλής
+            current_balance = float(apartment.current_balance or 0)
+            
+            # Σύνοψη - υπολογισμός χρεώσεων από transactions (πιο ακριβές)
+            total_paid = sum(float(p.amount) for p in payments)
+            # Υπολογισμός total_expenses από transactions αντί για ApartmentShare
+            total_expenses_from_transactions = sum(
+                float(t.amount) for t in charge_transactions
+            )
+            # Συνδυάζουμε: ApartmentShare + transactions που δεν έχουν αντίστοιχο ApartmentShare
+            total_expenses_from_shares = sum(float(es.total_amount) for es in expense_shares)
+            total_expenses = max(total_expenses_from_transactions, total_expenses_from_shares)
+            
+            apartment_data = {
+                'id': apartment.id,
+                'number': apartment.number,
+                'floor': apartment.floor,
+                'owner_name': apartment.owner_name,
+                'owner_email': apartment.owner_email,
+                'tenant_name': apartment.tenant_name,
+                'tenant_email': apartment.tenant_email,
+                'is_rented': apartment.is_rented,
+                'square_meters': apartment.square_meters,
+                'participation_mills': apartment.participation_mills,
+                'current_balance': current_balance,
+                'building': {
+                    'id': building.id,
+                    'name': building.name,
+                    'address': building.address,
+                },
+                'payment_history': [
+                    {
+                        'id': p.id,
+                        'date': p.date.isoformat() if p.date else None,
+                        'amount': float(p.amount),
+                        'payment_method': p.method,
+                        'notes': p.notes,
+                        'receipt_number': p.reference_number,
+                    }
+                    for p in payments
+                ],
+                'expense_history': [
+                    # Χρεώσεις από transactions (project installments, expenses κλπ)
+                    *[
+                        {
+                            'id': t.id,
+                            'date': t.date.isoformat() if t.date else None,
+                            'title': t.description or 'Χρέωση',
+                            'category': 'project' if 'Δόση' in (t.description or '') or 'Προκαταβολή' in (t.description or '') else 'expense',
+                            'total_amount': float(t.amount),
+                            'your_share': float(t.amount),
+                            'payer_responsibility': 'owner',
+                        }
+                        for t in charge_transactions
+                    ],
+                    # Χρεώσεις από ApartmentShare (κοινόχρηστα)
+                    *[
+                        {
+                            'id': es.id + 100000,  # Offset για αποφυγή σύγκρουσης ID
+                            'date': es.period.start_date.isoformat() if es.period.start_date else None,
+                            'title': es.period.period_name,
+                            'category': 'common_expenses',
+                            'total_amount': float(es.total_amount),
+                            'your_share': float(es.total_amount),
+                            'payer_responsibility': 'owner',
+                        }
+                        for es in expense_shares
+                    ],
+                ],
+                'transaction_history': [
+                    {
+                        'id': t.id,
+                        'date': t.date.isoformat() if t.date else None,
+                        'type': t.type,
+                        'amount': float(t.amount),
+                        'description': t.description,
+                        'balance_after': float(t.balance_after) if t.balance_after else None,
+                    }
+                    for t in transactions
+                ],
+                'summary': {
+                    'current_balance': current_balance,
+                    'total_paid': total_paid,
+                    'total_expenses': total_expenses,
+                    'status': 'Οφειλή' if current_balance > 0 else ('Πιστωτικό' if current_balance < 0 else 'Εξοφλημένο'),
+                }
+            }
+            
+            apartments_data.append(apartment_data)
+        
+        return Response({
+            'has_apartment': True,
+            'apartments': apartments_data,
+            'apartments_count': len(apartments_data),
+            'user': {
+                'email': user.email,
+                'name': f"{user.first_name} {user.last_name}".strip() or user.email,
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"[my_apartment_data] Error: {e}", exc_info=True)
+        return Response({
+            'error': f'Σφάλμα κατά την ανάκτηση δεδομένων: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

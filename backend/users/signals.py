@@ -1,14 +1,57 @@
 # backend/users/signals.py
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.db import transaction
 import time
+import logging
 
 from .models import CustomUser
 from tenants.models import Client, Domain
 from django_tenants.utils import get_public_schema_name
+
+logger = logging.getLogger(__name__)
+
+
+@receiver(pre_save, sender=CustomUser)
+def enforce_resident_permissions(sender, instance, **kwargs):
+    """
+    Διασφαλίζει ότι οι residents δεν έχουν ποτέ is_staff ή is_superuser.
+    Αυτό προστατεύει από λάθος τροποποιήσεις μέσω admin ή scripts.
+    
+    Επίσης διασφαλίζει ότι όλοι οι νέοι χρήστες που δημιουργούνται μέσω
+    πρόσκλησης δεν είναι staff/superuser (εκτός αν ρητά ορίζεται).
+    """
+    # Προστασία για residents
+    if instance.role == 'resident':
+        if instance.is_staff or instance.is_superuser:
+            logger.warning(
+                f"⚠️ Resident {instance.email} had is_staff={instance.is_staff}, "
+                f"is_superuser={instance.is_superuser}. Resetting to False."
+            )
+            instance.is_staff = False
+            instance.is_superuser = False
+    
+    # Επιπλέον προστασία: Νέοι χρήστες χωρίς ρόλο δεν πρέπει να είναι staff/superuser
+    # (εκτός αν δημιουργούνται μέσω create_superuser)
+    if instance.pk is None:  # Νέος χρήστης
+        # Αν δεν έχει ρόλο manager/admin, δεν πρέπει να είναι staff/superuser
+        if instance.role not in ['manager', 'admin', 'office_manager']:
+            # Μην αλλάζεις αν ρητά δημιουργείται ως superuser (from create_superuser)
+            # Ελέγχουμε με try/except γιατί μπορεί να είναι νέο instance
+            try:
+                if not getattr(instance, '_creating_superuser', False):
+                    if instance.is_staff or instance.is_superuser:
+                        logger.warning(
+                            f"⚠️ New user {instance.email} with role={instance.role} had "
+                            f"is_staff={instance.is_staff}, is_superuser={instance.is_superuser}. "
+                            f"Resetting to False."
+                        )
+                        instance.is_staff = False
+                        instance.is_superuser = False
+            except Exception:
+                pass
 
 
 @receiver(post_save, sender=CustomUser)

@@ -71,8 +71,8 @@ def login_view(request):
     # Force public schema for authentication - users are stored in public schema
     public_schema = get_public_schema_name()
     
-    email = request.data.get('email')
-    password = request.data.get('password')
+    email = request.data.get('email', '').strip()
+    password = request.data.get('password', '')
 
     print(f">>> Ελήφθησαν στοιχεία login: email={email}, password={'****' if password else None}")
 
@@ -98,6 +98,16 @@ def login_view(request):
         if user is None:
             try:
                 existing_user = user_model.objects.get(email=email)
+                
+                # DEBUG: Log user status
+                print(f">>> DEBUG: User found but auth failed:")
+                print(f">>>   is_active: {existing_user.is_active}")
+                print(f">>>   is_staff: {existing_user.is_staff}")
+                print(f">>>   is_superuser: {existing_user.is_superuser}")
+                print(f">>>   email_verified: {existing_user.email_verified}")
+                print(f">>>   role: {existing_user.role}")
+                print(f">>>   password check: {existing_user.check_password(password)}")
+                
                 # Check why authentication failed
                 if not existing_user.is_active:
                     if not existing_user.email_verified:
@@ -111,6 +121,13 @@ def login_view(request):
                             status=status.HTTP_401_UNAUTHORIZED
                         )
                 else:
+                    # Check for unverified staff/superuser (blocked by EmailBackend)
+                    if (existing_user.is_staff or existing_user.is_superuser) and not existing_user.email_verified:
+                        return Response(
+                            {'error': 'Για λόγους ασφαλείας, οι διαχειριστές πρέπει να επιβεβαιώσουν το email τους πριν τη σύνδεση. Ελέγξτε το inbox σας.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+
                     # User exists and is active but password is wrong
                     return Response(
                         {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
@@ -165,15 +182,21 @@ def login_view(request):
     print(f">>> DEBUG: user_data keys = {list(user_data.keys())}")
     print(f">>> DEBUG: user_data['role'] = {repr(user_data.get('role'))}")
 
-    # Determine redirect path based on tenant existence
-    redirect_path = '/dashboard'  # Default
+    # Determine redirect path based on tenant existence and role
+    redirect_path = '/dashboard'  # Default for managers/admins
     tenant_url = None
     if not hasattr(user, 'tenant') or user.tenant is None:
         redirect_path = '/plans'
         print(f">>> DEBUG: User has no tenant, redirecting to /plans")
     else:
         tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
-        print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
+        # Residents go to /my-apartment, managers/admins go to /dashboard
+        user_role = getattr(user, 'role', None)
+        if user_role == 'resident':
+            redirect_path = '/my-apartment'
+            print(f">>> DEBUG: User is resident, redirecting to /my-apartment")
+        else:
+            print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, role: {user_role}, redirecting to /dashboard")
 
     return Response({
         'access': access,
@@ -184,16 +207,38 @@ def login_view(request):
     }, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH', 'PUT'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def me_view(request):
     """
     GET /api/users/me/
     Επιστρέφει τα στοιχεία του authenticated χρήστη.
+    
+    PATCH/PUT /api/users/me/
+    Ενημερώνει τα στοιχεία του authenticated χρήστη.
     """
     user = request.user
     role = getattr(user, "role", None)
+
+    # Handle PATCH/PUT requests for profile updates
+    if request.method in ['PATCH', 'PUT']:
+        # Allowed fields for update
+        allowed_fields = [
+            'first_name', 'last_name', 
+            'office_name', 'office_phone', 'office_address',
+            'office_bank_name', 'office_bank_account', 
+            'office_bank_iban', 'office_bank_beneficiary'
+        ]
+        
+        updated_fields = []
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(user, field, request.data[field])
+                updated_fields.append(field)
+        
+        if updated_fields:
+            user.save(update_fields=updated_fields)
 
     tenant_data = None
     if hasattr(user, 'tenant') and user.tenant:
@@ -207,6 +252,55 @@ def me_view(request):
             'is_active': tenant.is_active,
         }
 
+    # Get office settings - fallback to tenant admin/manager if user doesn't have their own
+    office_name = user.office_name
+    office_phone = user.office_phone
+    office_address = user.office_address
+    office_logo_url = user.office_logo.url if user.office_logo else None
+    office_bank_name = user.office_bank_name
+    office_bank_account = user.office_bank_account
+    office_bank_iban = user.office_bank_iban
+    office_bank_beneficiary = user.office_bank_beneficiary
+    
+    # If user doesn't have office settings, try to get from tenant admin/manager
+    # This allows internal_managers and residents to see the tenant's office branding
+    if not office_logo_url or not office_name:
+        try:
+            from users.models import CustomUser
+            # Find the tenant admin or manager who has office settings
+            tenant_admin = CustomUser.objects.filter(
+                tenant=user.tenant,
+                role__in=['admin', 'manager'],
+                office_logo__isnull=False
+            ).exclude(office_logo='').first()
+            
+            if not tenant_admin:
+                # Fallback: find any user with office_logo in the tenant
+                tenant_admin = CustomUser.objects.filter(
+                    tenant=user.tenant,
+                    office_logo__isnull=False
+                ).exclude(office_logo='').first()
+            
+            if tenant_admin:
+                if not office_logo_url and tenant_admin.office_logo:
+                    office_logo_url = tenant_admin.office_logo.url
+                if not office_name and tenant_admin.office_name:
+                    office_name = tenant_admin.office_name
+                if not office_phone and tenant_admin.office_phone:
+                    office_phone = tenant_admin.office_phone
+                if not office_address and tenant_admin.office_address:
+                    office_address = tenant_admin.office_address
+                if not office_bank_name and tenant_admin.office_bank_name:
+                    office_bank_name = tenant_admin.office_bank_name
+                if not office_bank_account and tenant_admin.office_bank_account:
+                    office_bank_account = tenant_admin.office_bank_account
+                if not office_bank_iban and tenant_admin.office_bank_iban:
+                    office_bank_iban = tenant_admin.office_bank_iban
+                if not office_bank_beneficiary and tenant_admin.office_bank_beneficiary:
+                    office_bank_beneficiary = tenant_admin.office_bank_beneficiary
+        except Exception:
+            pass  # Keep user's own settings if lookup fails
+
     return Response({
         'id': user.id,
         'email': user.email,
@@ -215,14 +309,14 @@ def me_view(request):
         'is_staff': user.is_staff,
         'is_superuser': user.is_superuser,
         'role': role,
-        'office_name': user.office_name,
-        'office_phone': user.office_phone,
-        'office_address': user.office_address,
-        'office_logo': user.office_logo.url if user.office_logo else None,
-        'office_bank_name': user.office_bank_name,
-        'office_bank_account': user.office_bank_account,
-        'office_bank_iban': user.office_bank_iban,
-        'office_bank_beneficiary': user.office_bank_beneficiary,
+        'office_name': office_name,
+        'office_phone': office_phone,
+        'office_address': office_address,
+        'office_logo': office_logo_url,
+        'office_bank_name': office_bank_name,
+        'office_bank_account': office_bank_account,
+        'office_bank_iban': office_bank_iban,
+        'office_bank_beneficiary': office_bank_beneficiary,
         'tenant': tenant_data,
     }, status=status.HTTP_200_OK)
 
@@ -327,6 +421,44 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        DELETE /api/users/<id>/
+        Διαγραφή χρήστη - μόνο residents και staff μπορούν να διαγραφούν.
+        Admins και managers δεν μπορούν να διαγραφούν.
+        """
+        from core.permissions import IsManagerOrSuperuser
+        
+        # Έλεγχος αν ο χρήστης έχει δικαίωμα διαγραφής (πρέπει να είναι manager ή superuser)
+        if not IsManagerOrSuperuser().has_permission(request, self):
+            return Response({
+                'error': 'Μόνο οι διαχειριστές μπορούν να διαγράφουν χρήστες.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        user_to_delete = self.get_object()
+        user_role = getattr(user_to_delete, 'role', None)
+        
+        # Ρόλοι που επιτρέπεται να διαγραφούν
+        deletable_roles = ['resident', 'staff', 'internal_manager', None, '']
+        
+        # Προστασία: Δεν επιτρέπεται η διαγραφή του εαυτού σου
+        if user_to_delete.id == request.user.id:
+            return Response({
+                'error': 'Δεν μπορείτε να διαγράψετε τον εαυτό σας.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Επιτρέπεται διαγραφή μόνο αν ο ρόλος είναι στη λίστα deletable_roles
+        if user_role not in deletable_roles:
+            return Response({
+                'error': f'Δεν επιτρέπεται η διαγραφή χρήστη με ρόλο "{user_role}".'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Αν ο χρήστης έχει κατά λάθος is_superuser=True αλλά είναι resident/staff,
+        # προχωράμε με τη διαγραφή (data cleanup)
+        # Σημείωση: Πραγματικοί superusers δεν θα έχουν role='resident'
+        
+        return super().destroy(request, *args, **kwargs)
 
 
 # ===== AUTHENTICATION ENDPOINTS =====
@@ -516,6 +648,60 @@ def list_invitations_view(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_invitation_view(request):
+    """
+    GET /api/users/invitations/verify/?token=xxx
+    Verify invitation token and return invitation details (public endpoint)
+    Used by kiosk self-registration to validate tokens before showing the form
+    """
+    token = request.query_params.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token είναι υποχρεωτικό'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        invitation = UserInvitation.objects.get(token=token, status='pending')
+    except UserInvitation.DoesNotExist:
+        return Response({
+            'error': 'Μη έγκυρος ή ληγμένος σύνδεσμος'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    if invitation.is_expired:
+        invitation.expire()
+        return Response({
+            'error': 'Ο σύνδεσμος έχει λήξει'
+        }, status=status.HTTP_410_GONE)
+    
+    # Get building info if available
+    building_name = None
+    building_address = None
+    if invitation.building_id:
+        try:
+            from buildings.models import Building
+            building = Building.objects.get(id=invitation.building_id)
+            building_name = building.name
+            building_address = building.address
+        except:
+            pass
+    
+    return Response({
+        'email': invitation.email,
+        'first_name': invitation.first_name,
+        'last_name': invitation.last_name,
+        'building_id': invitation.building_id,
+        'building_name': building_name,
+        'building_address': building_address,
+        'assigned_role': invitation.assigned_role,
+        'expires_at': invitation.expires_at.isoformat(),
+        'source': getattr(invitation, 'source', 'admin'),
+        'auto_approved': getattr(invitation, 'auto_approved', False)
+    })
+
+
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -610,6 +796,38 @@ def resend_invitation_view(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def delete_invitation_view(request, pk):
+    """
+    DELETE /api/users/invitations/<id>/
+    Διαγραφή πρόσκλησης (μόνο για Managers ή Superusers)
+    """
+    from core.permissions import IsManagerOrSuperuser
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManagerOrSuperuser().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να διαγράφουν προσκλήσεις.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        invitation = UserInvitation.objects.get(
+            id=pk,
+            invited_by=request.user
+        )
+        
+        invitation.delete()
+        return Response({'message': 'Η πρόσκληση διαγράφηκε επιτυχώς'}, status=status.HTTP_200_OK)
+        
+    except UserInvitation.DoesNotExist:
+        return Response({
+            'error': 'Η πρόσκληση δεν βρέθηκε'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def accept_invitation_view(request):
@@ -617,12 +835,26 @@ def accept_invitation_view(request):
     POST /api/users/accept-invitation/
     Αποδοχή πρόσκλησης και δημιουργία λογαριασμού
     """
+    print(f">>> ACCEPT_INVITATION: Request data keys: {list(request.data.keys())}")
+    print(f">>> ACCEPT_INVITATION: Password provided: {'password' in request.data}")
+    
     serializer = InvitationAcceptanceSerializer(data=request.data)
     if serializer.is_valid():
+        password = serializer.validated_data['password']
+        first_name = serializer.validated_data.get('first_name', '')
+        last_name = serializer.validated_data.get('last_name', '')
+        print(f">>> ACCEPT_INVITATION: Validated password length: {len(password) if password else 0}")
+        
         try:
+            # Pass request.tenant to handle kiosk registrations where invited_by has no tenant
+            current_tenant = getattr(request, 'tenant', None)
+            
             user = InvitationService.accept_invitation(
                 token=serializer.validated_data['token'],
-                password=serializer.validated_data['password']
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                tenant=current_tenant
             )
             
             # Δημιουργία JWT tokens
@@ -750,19 +982,4 @@ def user_profile_view(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet για user data
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-    
-    @action(detail=False, methods=['get'])
-    def me(self, request):
-        """
-        GET /api/users/me/
-        Επιστρέφει τα στοιχεία του τρέχοντος χρήστη
-        """
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+# UserViewSet is defined above (line ~321) - removed duplicate definition

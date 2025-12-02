@@ -49,6 +49,7 @@ import { StatisticsSection } from './StatisticsSection';
 import { HeatingAnalysisModal } from './HeatingAnalysisModal';
 import { getPeriodInfo, getPreviousMonthName } from './utils/periodHelpers';
 import { formatAmount } from './utils/formatters';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 const printStyles = `
   @media print {
@@ -144,24 +145,16 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     }
   }, [props.buildingId]);
 
-  // Debug: Log when expenseSheetMonth changes
-  React.useEffect(() => {
-    console.log('🔄 CommonExpenseModal: expenseSheetMonth changed:', expenseSheetMonth);
-  }, [expenseSheetMonth]);
-
-  // Force refresh when month changes
-  React.useEffect(() => {
-    if (expenseSheetMonth) {
-      console.log('🔄 Month changed, forcing refresh:', expenseSheetMonth);
-    }
-  }, [expenseSheetMonth]);
+  // Note: Month change handling is done by useMonthRefresh in useCommonExpenseCalculator
+  // Removed debug useEffects that were causing unnecessary logs
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <ModalPortal>
+    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      <div key={expenseSheetMonth} className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
+      <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
         {/* ✅ ΝΕΟ: Screen Header - Οριζόντια Διάταξη */}
         <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b-2 border-blue-300 p-4 no-print">
             <div className="flex items-center justify-between mb-3">
@@ -363,5 +356,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
         buildingHeatingFixedPercentage={buildingData?.heating_fixed_percentage}
       />
     </div>
+    </ModalPortal>
   );
 };

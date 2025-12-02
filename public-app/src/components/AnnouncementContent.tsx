@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Calendar, Clock, MapPin, Video, Users, Euro } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface AnnouncementContentProps {
   title: string;
@@ -17,12 +18,109 @@ export default function AnnouncementContent({ title, description, startDate, end
   const isAssemblyAnnouncement = title.toLowerCase().includes('συνέλευση') || title.toLowerCase().includes('assembly');
   
   if (!isAssemblyAnnouncement) {
-    // Κανονική ανακοίνωση
-    return (
-      <div className="prose max-w-none">
-        <p className="whitespace-pre-wrap">{description}</p>
-      </div>
-    );
+    const renderInlineText = (text: string) => {
+      const segments = text.split(/(\*\*[^*]+\*\*)/g);
+      return segments.map((segment, index) => {
+        if (segment.startsWith('**') && segment.endsWith('**')) {
+          return (
+            <strong key={index} className="font-semibold">
+              {segment.slice(2, -2).trim()}
+            </strong>
+          );
+        }
+        return <span key={index}>{segment}</span>;
+      });
+    };
+
+    const renderStandardContent = (text: string): ReactNode[] => {
+      const lines = text.split('\n');
+      const elements: ReactNode[] = [];
+      let paragraph: string[] = [];
+      let listItems: string[] = [];
+
+      const flushParagraph = () => {
+        if (!paragraph.length) return;
+        const content = paragraph.join(' ').trim();
+        if (content) {
+          elements.push(
+            <p key={`paragraph-${elements.length}`} className="leading-relaxed text-muted-foreground">
+              {renderInlineText(content)}
+            </p>
+          );
+        }
+        paragraph = [];
+      };
+
+      const flushList = () => {
+        if (!listItems.length) return;
+        elements.push(
+          <ul key={`list-${elements.length}`} className="list-disc space-y-1 pl-5 text-muted-foreground">
+            {listItems.map((item, idx) => (
+              <li key={idx}>{renderInlineText(item)}</li>
+            ))}
+          </ul>
+        );
+        listItems = [];
+      };
+
+      const pushHeading = (content: string, level: 'h2' | 'h3' | 'h4') => {
+        const HeadingTag = level;
+        elements.push(
+          <HeadingTag key={`heading-${elements.length}`} className="font-condensed font-semibold text-foreground mt-6 first:mt-0">
+            {content.trim()}
+          </HeadingTag>
+        );
+      };
+
+      for (const rawLine of lines) {
+        const line = rawLine.trimEnd();
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          flushParagraph();
+          flushList();
+          continue;
+        }
+
+        const headingMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
+        const boldHeadingMatch = trimmed.match(/^\*\*(.+?)\*\*:?$/);
+        const listMatch = trimmed.match(/^[-•▪]\s+(.*)$/);
+
+        if (headingMatch) {
+          flushParagraph();
+          flushList();
+          const level = headingMatch[1].length === 1 ? 'h2' : headingMatch[1].length === 2 ? 'h3' : 'h4';
+          pushHeading(headingMatch[2], level);
+          continue;
+        }
+
+        if (boldHeadingMatch && boldHeadingMatch[1].length <= 80) {
+          flushParagraph();
+          flushList();
+          pushHeading(boldHeadingMatch[1], 'h3');
+          continue;
+        }
+
+        if (listMatch) {
+          flushParagraph();
+          listItems.push(listMatch[1]);
+          continue;
+        }
+
+        if (listItems.length) {
+          flushList();
+        }
+
+        paragraph.push(line.trim());
+      }
+
+      flushParagraph();
+      flushList();
+
+      return elements;
+    };
+
+    return <div className="space-y-4">{renderStandardContent(description)}</div>;
   }
 
   // Ειδική μορφοποίηση για ανακοίνωση συνέλευσης

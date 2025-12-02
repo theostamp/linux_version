@@ -109,6 +109,12 @@ urlpatterns = [
     # Office Staff Management
     path('api/office/', include('office_staff.urls')),
 
+    # Office Analytics (Command Center for Management Offices)
+    path('api/office-analytics/', include('office_analytics.urls')),
+
+    # Office Finance (Income/Expense Management for the Office)
+    path('api/office-finance/', include('office_finance.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

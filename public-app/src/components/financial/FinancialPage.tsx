@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid'; // Import BentoGrid
 import { 
   CommonExpenseCalculatorNew, 
@@ -33,10 +33,12 @@ import {
   TrendingUp,
   X
 } from 'lucide-react';
-import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
+import type { LucideIcon } from 'lucide-react';
+import { useFinancialPermissions, type FinancialPermission } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchApartments, ApartmentList, api, invalidateApiCache } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
@@ -46,6 +48,141 @@ import { useQueryClient } from '@tanstack/react-query';
 interface FinancialPageProps {
   buildingId: number;
 }
+
+type FinancialTabKey = 'calculator' | 'balances' | 'expenses' | 'meters' | 'history' | 'charts';
+
+interface FinancialTabTheme {
+  cardActive: string;
+  cardHover?: string;
+  iconActive: string;
+  iconHover: string;
+  labelActive: string;
+  labelHover?: string;
+  descriptionActive?: string;
+}
+
+interface FinancialTabDefinition {
+  value: FinancialTabKey;
+  permission: FinancialPermission;
+  label: string;
+  mobileLabel?: string;
+  description: string;
+  icon: LucideIcon;
+  theme: FinancialTabTheme;
+}
+
+const DESKTOP_TAB_BASE_CLASSES =
+  'group flex flex-col items-center p-2.5 rounded-lg border border-slate-200/50 bg-white text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white';
+const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-slate-200/50';
+const MOBILE_TAB_BASE_CLASSES =
+  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200/50 bg-white text-sm text-slate-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white';
+const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-slate-200/50';
+const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-white';
+const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
+const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
+const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
+const MOBILE_LABEL_BASE_CLASSES = 'font-medium text-xs whitespace-nowrap transition-colors duration-200';
+const DESCRIPTION_BASE_CLASSES = 'text-[10px] text-muted-foreground text-center mt-0.5 transition-colors duration-200';
+
+const FINANCIAL_TABS: FinancialTabDefinition[] = [
+  {
+    value: 'calculator',
+    permission: 'financial_write',
+    label: 'Κοινόχρηστα',
+    mobileLabel: 'Κοινοχρήστων',
+    description: 'Υπολογισμός & Έκδοση',
+    icon: Calculator,
+    theme: {
+      cardActive: 'bg-blue-50 ring-blue-200',
+      cardHover: 'hover:ring-blue-200/60 hover:bg-blue-50/40',
+      iconActive: 'bg-blue-100 text-blue-600',
+      iconHover: 'group-hover:bg-blue-100 group-hover:text-blue-600',
+      labelActive: 'text-blue-700',
+      labelHover: 'group-hover:text-blue-600',
+      descriptionActive: 'text-blue-600/80',
+    },
+  },
+  {
+    value: 'balances',
+    permission: 'financial_read',
+    label: 'Εισπράξεις',
+    description: 'Κατάσταση Διαμερισμάτων',
+    icon: DollarSign,
+    theme: {
+      cardActive: 'bg-emerald-50 ring-emerald-200',
+      cardHover: 'hover:ring-emerald-200/60 hover:bg-emerald-50/40',
+      iconActive: 'bg-emerald-100 text-emerald-600',
+      iconHover: 'group-hover:bg-emerald-100 group-hover:text-emerald-600',
+      labelActive: 'text-emerald-700',
+      labelHover: 'group-hover:text-emerald-600',
+      descriptionActive: 'text-emerald-600/80',
+    },
+  },
+  {
+    value: 'expenses',
+    permission: 'expense_manage',
+    label: 'Δαπάνες',
+    description: 'Διαχείριση Εξόδων',
+    icon: Plus,
+    theme: {
+      cardActive: 'bg-green-50 ring-green-200',
+      cardHover: 'hover:ring-green-200/60 hover:bg-green-50/40',
+      iconActive: 'bg-green-100 text-green-600',
+      iconHover: 'group-hover:bg-green-100 group-hover:text-green-600',
+      labelActive: 'text-green-700',
+      labelHover: 'group-hover:text-green-600',
+      descriptionActive: 'text-green-600/80',
+    },
+  },
+  {
+    value: 'meters',
+    permission: 'financial_write',
+    label: 'Μετρητές',
+    description: 'Καταγραφή Μετρήσεων',
+    icon: TrendingUp,
+    theme: {
+      cardActive: 'bg-orange-50 ring-orange-200',
+      cardHover: 'hover:ring-orange-200/60 hover:bg-orange-50/40',
+      iconActive: 'bg-orange-100 text-orange-600',
+      iconHover: 'group-hover:bg-orange-100 group-hover:text-orange-600',
+      labelActive: 'text-orange-700',
+      labelHover: 'group-hover:text-orange-600',
+      descriptionActive: 'text-orange-600/80',
+    },
+  },
+  {
+    value: 'history',
+    permission: 'financial_read',
+    label: 'Ιστορικό',
+    description: 'Αρχείο Συναλλαγών',
+    icon: History,
+    theme: {
+      cardActive: 'bg-indigo-50 ring-indigo-200',
+      cardHover: 'hover:ring-indigo-200/60 hover:bg-indigo-50/40',
+      iconActive: 'bg-indigo-100 text-indigo-600',
+      iconHover: 'group-hover:bg-indigo-100 group-hover:text-indigo-600',
+      labelActive: 'text-indigo-700',
+      labelHover: 'group-hover:text-indigo-600',
+      descriptionActive: 'text-indigo-600/80',
+    },
+  },
+  {
+    value: 'charts',
+    permission: 'financial_read',
+    label: 'Γραφήματα',
+    description: 'Οπτικοποίηση Δεδομένων',
+    icon: PieChart,
+    theme: {
+      cardActive: 'bg-purple-50 ring-purple-200',
+      cardHover: 'hover:ring-purple-200/60 hover:bg-purple-50/40',
+      iconActive: 'bg-purple-100 text-purple-600',
+      iconHover: 'group-hover:bg-purple-100 group-hover:text-purple-600',
+      labelActive: 'text-purple-700',
+      labelHover: 'group-hover:text-purple-600',
+      descriptionActive: 'text-purple-600/80',
+    },
+  },
+];
 
 export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const searchParams = useSearchParams();
@@ -448,11 +585,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </div>
         
         {/* Context Banner - Building & Month */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-primary/5 rounded-lg shadow-md">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-50 rounded-lg shadow-md">
           {/* Building Info */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-md shadow-sm">
-              <Building2 className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-indigo-100 rounded-md shadow-sm">
+              <Building2 className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
               <p className="text-lg font-bold text-blue-700 font-condensed">
@@ -463,7 +600,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           
           {/* Month Selector */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-md shadow-sm">
+            <div className="p-2 bg-indigo-100 rounded-md shadow-sm">
               <Calendar className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
@@ -480,7 +617,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   }}
                   variant="outline"
                   size="sm"
-                  className="bg-card hover:bg-primary/10 border-0 shadow-sm text-primary hover:text-primary/80 transition-colors rounded-md"
+                  className="bg-white hover:bg-indigo-50 border-0 shadow-sm text-indigo-600 hover:text-indigo-700 transition-colors rounded-md"
                 >
                   Τρέχων
                 </Button>
@@ -537,315 +674,154 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
                 {/* Navigation Tabs - Modern Style */}
                 <div className="w-full sticky top-[10px] z-10 pb-4 bg-background/80 backdrop-blur-sm pt-2 -mt-2">
-          {/* Mobile: Scrollable horizontal menu */}
-          <div className="block lg:hidden">
-            <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
-              <ConditionalRender permission="financial_write">
-                <button
-                  onClick={() => handleTabChange('calculator')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
-                    activeTab === 'calculator'
-                      ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-lg'
-                      : 'bg-background border-slate-200/60 text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
-                  }`}
-                >
-                  <Calculator className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Κοινοχρήστων</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('balances')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
-                    activeTab === 'balances'
-                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700 shadow-lg'
-                      : 'bg-background border-slate-200/60 text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
-                  }`}
-                >
-                  <DollarSign className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Εισπράξεις</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="expense_manage">
-                <button
-                  onClick={() => handleTabChange('expenses')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
-                    activeTab === 'expenses'
-                      ? 'bg-green-100 border-green-300 text-green-700 shadow-lg'
-                      : 'bg-background border-slate-200/60 text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
-                  }`}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Δαπάνες</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_write">
-                <button
-                  onClick={() => handleTabChange('meters')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
-                    activeTab === 'meters'
-                      ? 'bg-orange-100 border-orange-300 text-orange-700 shadow-lg'
-                      : 'bg-background border-slate-200/60 text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
-                  }`}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Μετρητές</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('history')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
-                    activeTab === 'history'
-                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-lg'
-                      : 'bg-background border-slate-200/60 text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
-                  }`}
-                >
-                  <History className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Ιστορικό</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('charts')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-md border-0 transition-all duration-200 shadow-md ${
-                    activeTab === 'charts'
-                      ? 'bg-purple-100 border-purple-300 text-purple-700 shadow-lg'
-                      : 'bg-background border-slate-200/60 text-muted-foreground hover:bg-accent hover:border-primary/20 hover:shadow-lg'
-                  }`}
-                >
-                  <PieChart className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Γραφήματα</span>
-                </button>
-              </ConditionalRender>
-            </div>
-          </div>
+                  {/* Mobile: Scrollable horizontal menu */}
+                  <div className="block lg:hidden">
+                    <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
+                      {FINANCIAL_TABS.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.value;
 
-          {/* Desktop: Card Grid Layout */}
-          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-6 gap-3">
-            <ConditionalRender permission="financial_write">
-              <button
-                onClick={() => handleTabChange('calculator')}
-                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
-                  activeTab === 'calculator'
-                    ? 'bg-blue-50 border-blue-200 shadow-lg'
-                    : 'bg-background border-slate-200/60 hover:border-primary/30 hover:bg-primary/5'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'calculator' 
-                    ? 'bg-blue-100 text-blue-600' 
-                    : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                }`}>
-                  <Calculator className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'calculator' ? 'text-blue-700' : 'text-foreground'
-                }`}>
-                  Κοινόχρηστα
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Υπολογισμός & Έκδοση
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('balances')}
-                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
-                  activeTab === 'balances'
-                    ? 'bg-emerald-50 border-emerald-200 shadow-lg'
-                    : 'bg-card shadow-sm hover:shadow-md hover:bg-emerald-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'balances'
-                    ? 'bg-emerald-100 text-emerald-600'
-                    : 'bg-muted text-muted-foreground group-hover:bg-emerald-100 group-hover:text-emerald-600'
-                }`}>
-                  <DollarSign className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'balances' ? 'text-emerald-700' : 'text-foreground'
-                }`}>
-                  Εισπράξεις
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Κατάσταση Διαμερισμάτων
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="expense_manage">
-              <button
-                onClick={() => handleTabChange('expenses')}
-                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
-                  activeTab === 'expenses'
-                    ? 'bg-green-50 border-green-200 shadow-lg'
-                    : 'bg-card shadow-sm hover:shadow-md hover:bg-green-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'expenses'
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-muted text-muted-foreground group-hover:bg-green-100 group-hover:text-green-600'
-                }`}>
-                  <Plus className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'expenses' ? 'text-green-700' : 'text-foreground'
-                }`}>
-                  Δαπάνες
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Διαχείριση Εξόδων
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="financial_write">
-              <button
-                onClick={() => handleTabChange('meters')}
-                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
-                  activeTab === 'meters'
-                    ? 'bg-orange-50 border-orange-200 shadow-lg'
-                    : 'bg-white border-gray-200 hover:border-orange-200 hover:bg-orange-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'meters'
-                    ? 'bg-orange-100 text-orange-600'
-                    : 'bg-muted text-muted-foreground group-hover:bg-orange-100 group-hover:text-orange-600'
-                }`}>
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'meters' ? 'text-orange-700' : 'text-foreground'
-                }`}>
-                  Μετρητές
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Καταγραφή Μετρήσεων
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('history')}
-                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
-                  activeTab === 'history'
-                    ? 'bg-indigo-50 border-indigo-200 shadow-lg'
-                    : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'history'
-                    ? 'bg-indigo-100 text-indigo-600'
-                    : 'bg-muted text-muted-foreground group-hover:bg-indigo-100 group-hover:text-indigo-600'
-                }`}>
-                  <History className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'history' ? 'text-indigo-700' : 'text-foreground'
-                }`}>
-                  Ιστορικό
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Αρχείο Συναλλαγών
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('charts')}
-                className={`group flex flex-col items-center p-4 rounded-lg border-0 transition-all duration-200 shadow-md hover:shadow-lg ${
-                  activeTab === 'charts'
-                    ? 'bg-purple-50 border-purple-200 shadow-lg'
-                    : 'bg-white border-gray-200 hover:border-purple-200 hover:bg-purple-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'charts'
-                    ? 'bg-purple-100 text-purple-600'
-                    : 'bg-muted text-muted-foreground group-hover:bg-purple-100 group-hover:text-purple-600'
-                }`}>
-                  <PieChart className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'charts' ? 'text-purple-700' : 'text-foreground'
-                }`}>
-                  Γραφήματα
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Οπτικοποίηση Δεδομένων
-                </p>
-              </button>
-            </ConditionalRender>
-          </div>
-        </div>
-        
+                        return (
+                          <ConditionalRender key={tab.value} permission={tab.permission}>
+                            <button
+                              onClick={() => handleTabChange(tab.value)}
+                              className={cn(
+                                MOBILE_TAB_BASE_CLASSES,
+                                isActive
+                                  ? [TAB_ACTIVE_SHARED_CLASSES, tab.theme.cardActive]
+                                  : [MOBILE_TAB_INACTIVE_CLASSES, tab.theme.cardHover]
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  MOBILE_ICON_BASE_CLASSES,
+                                  tab.theme.iconHover,
+                                  isActive && tab.theme.iconActive
+                                )}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <span
+                                className={cn(
+                                  MOBILE_LABEL_BASE_CLASSES,
+                                  isActive ? tab.theme.labelActive : 'text-slate-900',
+                                  tab.theme.labelHover
+                                )}
+                              >
+                                {tab.mobileLabel ?? tab.label}
+                              </span>
+                            </button>
+                          </ConditionalRender>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-        
-        
-        <TabsContent value="calculator" className="space-y-4" data-tab="calculator">
-          <ProtectedFinancialRoute requiredPermission="financial_write">
-            <CommonExpenseCalculatorNew 
-              buildingId={activeBuildingId} 
-              selectedMonth={selectedMonth} 
-              reserveFundMonthlyAmount={reserveFundMonthlyAmount}
-            />
-          </ProtectedFinancialRoute>
-        </TabsContent>
-        
-        <TabsContent value="expenses" className="space-y-4" data-tab="expenses">
-          <ProtectedFinancialRoute requiredPermission="expense_manage">
-            <ExpenseList 
-              ref={expenseListRef}
-              selectedMonth={selectedMonth}
-              onMonthChange={handleMonthChange}
-              onExpenseSelect={(expense) => {
-                console.log('Selected expense:', expense);
-                // Here you could open an expense detail modal or navigate to expense details
-              }}
-              showActions={true}
-              onAddExpense={expenseModal.openModal}
-            />
-          </ProtectedFinancialRoute>
-        </TabsContent>
-        
+                  {/* Desktop: Card Grid Layout */}
+                  <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                    {FINANCIAL_TABS.map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tab.value;
 
-        
-        <TabsContent value="meters" className="space-y-4" data-tab="meters">
-          <ProtectedFinancialRoute requiredPermission="financial_write">
-            <div className="space-y-6">
-              <MeterReadingList buildingId={activeBuildingId} selectedMonth={selectedMonth} />
-              <BulkImportWizard />
-            </div>
-          </ProtectedFinancialRoute>
-        </TabsContent>
-        
-        <TabsContent value="charts" className="space-y-4" data-tab="charts">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <ChartsContainer selectedMonth={selectedMonth} />
-          </ProtectedFinancialRoute>
-        </TabsContent>
-        
-        <TabsContent value="history" className="space-y-4" data-tab="history">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <TransactionHistory limit={20} selectedMonth={selectedMonth} />
-          </ProtectedFinancialRoute>
-        </TabsContent>
-        
+                      return (
+                        <ConditionalRender key={tab.value} permission={tab.permission}>
+                          <button
+                            onClick={() => handleTabChange(tab.value)}
+                            className={cn(
+                              DESKTOP_TAB_BASE_CLASSES,
+                              isActive
+                                ? [TAB_ACTIVE_SHARED_CLASSES, tab.theme.cardActive]
+                                : [DESKTOP_TAB_INACTIVE_CLASSES, tab.theme.cardHover]
+                            )}
+                          >
+                            <div
+                                              className={cn(
+                                                DESKTOP_ICON_BASE_CLASSES,
+                                                tab.theme.iconHover,
+                                                isActive && tab.theme.iconActive
+                                              )}
+                                            >
+                                              <Icon className="h-4 w-4" />
+                                            </div>
+                            <h3
+                              className={cn(
+                                DESKTOP_LABEL_BASE_CLASSES,
+                                isActive ? tab.theme.labelActive : 'text-slate-900',
+                                tab.theme.labelHover
+                              )}
+                            >
+                              {tab.label}
+                            </h3>
+                            <p
+                              className={cn(
+                                DESCRIPTION_BASE_CLASSES,
+                                isActive && tab.theme.descriptionActive
+                              )}
+                            >
+                              {tab.description}
+                            </p>
+                          </button>
+                        </ConditionalRender>
+                      );
+                    })}
+                  </div>
+                </div>
 
-        
-        <TabsContent value="balances" className="space-y-4" data-tab="balances">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <ApartmentBalancesTab 
-              buildingId={activeBuildingId} 
-              selectedMonth={selectedMonth}
-            />
-          </ProtectedFinancialRoute>
-        </TabsContent>
-        
-        
+                {/* Tab Contents */}
+                <TabsContent value="calculator" className="space-y-4" data-tab="calculator">
+                  <ProtectedFinancialRoute requiredPermission="financial_write">
+                    <CommonExpenseCalculatorNew 
+                      buildingId={activeBuildingId} 
+                      selectedMonth={selectedMonth} 
+                      reserveFundMonthlyAmount={reserveFundMonthlyAmount}
+                    />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="balances" className="space-y-4" data-tab="balances">
+                  <ProtectedFinancialRoute requiredPermission="financial_read">
+                    <ApartmentBalancesTab 
+                      buildingId={activeBuildingId} 
+                      selectedMonth={selectedMonth}
+                    />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="expenses" className="space-y-4" data-tab="expenses">
+                  <ProtectedFinancialRoute requiredPermission="expense_manage">
+                    <ExpenseList 
+                      ref={expenseListRef}
+                      selectedMonth={selectedMonth}
+                      onMonthChange={handleMonthChange}
+                      onExpenseSelect={(expense) => {
+                        console.log('Selected expense:', expense);
+                      }}
+                      showActions={true}
+                      onAddExpense={expenseModal.openModal}
+                    />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="meters" className="space-y-4" data-tab="meters">
+                  <ProtectedFinancialRoute requiredPermission="financial_write">
+                    <div className="space-y-6">
+                      <MeterReadingList buildingId={activeBuildingId} selectedMonth={selectedMonth} />
+                      <BulkImportWizard />
+                    </div>
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="history" className="space-y-4" data-tab="history">
+                  <ProtectedFinancialRoute requiredPermission="financial_read">
+                    <TransactionHistory limit={20} selectedMonth={selectedMonth} />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
+                
+                <TabsContent value="charts" className="space-y-4" data-tab="charts">
+                  <ProtectedFinancialRoute requiredPermission="financial_read">
+                    <ChartsContainer selectedMonth={selectedMonth} />
+                  </ProtectedFinancialRoute>
+                </TabsContent>
 
               </Tabs>
             </div>

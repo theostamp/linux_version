@@ -946,6 +946,11 @@ export type Announcement = {
   description: string;
   file: string | null;
   building?: number | null;
+  building_name?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_currently_active?: boolean;
+  status_display?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -998,9 +1003,19 @@ export type Vote = {
   title: string;
   description: string;
   building?: number | null;
+  building_name?: string | null;
+  start_date: string;
+  end_date: string;
+  is_active?: boolean;
+  status_display?: string | null;
+  is_urgent?: boolean;
+  days_remaining?: number | null;
+  total_votes?: number;
+  participation_percentage?: number | null;
+  min_participation?: number | null;
+  choices?: string[];
   created_at: string;
   updated_at: string;
-  choices?: string[];
 };
 
 export type VoteSubmission = {
@@ -1931,6 +1946,7 @@ export type CreateInvitationPayload = {
   last_name?: string;
   invitation_type?: 'registration' | 'building_access' | 'role_assignment';
   building_id?: number | null;
+  apartment_id?: number | null;
   assigned_role?: 'resident' | 'internal_manager' | 'manager' | 'staff' | null;
 };
 
@@ -1957,12 +1973,25 @@ export async function resendInvitation(payload: ResendInvitationPayload): Promis
   return await apiPost<{ message: string; invitation: UserInvitation }>('/users/invitations/resend/', payload);
 }
 
+export async function deleteInvitation(invitationId: string | number): Promise<void> {
+  await apiDelete(`/users/invitations/${invitationId}/`);
+}
+
 // ============================================================================
 // User Management API Functions
 // ============================================================================
 
 export async function fetchUsers(): Promise<User[]> {
-  return await apiGet<User[]>('/users/');
+  const response = await apiGet<User[] | { results: User[]; count?: number }>('/users/');
+  // Handle both array response and paginated response from DRF
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (response && typeof response === 'object' && 'results' in response) {
+    return response.results;
+  }
+  console.warn('[fetchUsers] Unexpected response format:', response);
+  return [];
 }
 
 export type UpdateUserPayload = {

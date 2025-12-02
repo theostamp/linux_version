@@ -155,7 +155,102 @@ h1, h2, h3, h4 {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-play), var(--font-geist-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   SHARED TABLE STYLES
+   ======================================== */
+
+/* Base table container */
+.table-container {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* Table element */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Table header */
+.data-table thead {
+  background-color: hsl(var(--muted) / 0.4);
+}
+
+.data-table thead th {
+  padding: 0.75rem 1.25rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
+}
+
+.data-table thead th:first-child {
+  border-top-left-radius: var(--radius-lg);
+}
+
+.data-table thead th:last-child {
+  border-top-right-radius: var(--radius-lg);
+}
+
+/* Table body */
+.data-table tbody {
+  background-color: hsl(var(--background));
+}
+
+.data-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Zebra stripes */
+.data-table tbody tr:nth-child(odd) {
+  background-color: hsl(var(--background));
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: hsl(var(--muted) / 0.25);
+}
+
+/* Hover state */
+.data-table tbody tr:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+/* Table cells */
+.data-table tbody td {
+  padding: 1rem 1.25rem;
+  vertical-align: top;
+  border-bottom: 1px solid hsl(var(--border) / 0.2);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table footer */
+.table-footer {
+  padding: 1rem 1.5rem;
+  background-color: hsl(var(--muted) / 0.2);
+  border-top: 1px solid hsl(var(--border) / 0.3);
+}
+
+/* Compact variant */
+.data-table--compact tbody td {
+  padding: 0.625rem 1rem;
+}
+
+.data-table--compact thead th {
+  padding: 0.5rem 1rem;
 }

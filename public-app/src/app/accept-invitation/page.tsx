@@ -109,9 +109,11 @@ function AcceptInvitationForm() {
 
       setSuccess(true);
       
-      // Redirect after 2 seconds
+      // Redirect after 2 seconds - residents go to my-apartment, others to dashboard
       setTimeout(() => {
-        router.push('/dashboard');
+        // Check if user data indicates they are a resident
+        const isResident = data.user?.role === 'resident';
+        router.push(isResident ? '/my-apartment' : '/dashboard');
       }, 2000);
       
     } catch (error) {

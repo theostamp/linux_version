@@ -112,11 +112,13 @@ function OAuthCallback() {
           }
         }
 
-        // For login flow, redirect to tenant or dashboard
+        // For login flow, redirect based on user role (from backend)
+        // Backend returns redirect_path: '/my-apartment' for residents, '/dashboard' for managers
+        const redirectPath = data.redirect_path || '/dashboard';
         if (data.tenant_url) {
-          window.location.href = `https://${data.tenant_url}/dashboard`;
+          window.location.href = `https://${data.tenant_url}${redirectPath}`;
         } else {
-          router.push(stateData.redirect || '/dashboard');
+          router.push(redirectPath);
         }
 
         setStatus('success');

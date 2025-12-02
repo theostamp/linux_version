@@ -676,3 +676,32 @@ const handleBuildingSelect = useCallback(
 
 **Next Step**: Θέλεις να προχωρήσουμε με implementation;
 
+---
+
+## ✨ Ambient Showcase Configuration (νέα σκηνή)
+
+- Η νέα σκηνή `Ambient Showcase` βρίσκεται στο [`public-app/src/components/kiosk/scenes/AmbientShowcaseScene.tsx`](public-app/src/components/kiosk/scenes/AmbientShowcaseScene.tsx) και χρησιμοποιεί ρυθμίσεις από το helper [`branding.ts`](public-app/src/components/kiosk/scenes/branding.ts).
+- Τα assets παρασκηνίου αποθηκεύονται στον φάκελο [`public-app/public/kiosk/assets`](public-app/public/kiosk/assets). Προστέθηκε το προεπιλεγμένο `ambient-default.png`, αλλά μπορείτε να ανεβάσετε δικές σας εικόνες/βίντεο (π.χ. `/kiosk/assets/lobby.mp4`).
+- Για να παραμετροποιηθεί η σκηνή μέσω backend, το κάθε `scene.settings` μπορεί να περιλαμβάνει πεδίο `ambientBranding` με το παρακάτω σχήμα:
+
+```json
+{
+  "ambientBranding": {
+    "background": {
+      "type": "video",
+      "src": "/kiosk/assets/lobby-loop.mp4",
+      "overlayColor": "rgba(5,10,32,0.55)"
+    },
+    "tagline": "Καλωσορίσατε στο Αtrium",
+    "subline": "Συνδεθείτε για ζωντανή ενημέρωση",
+    "cta": {
+      "label": "Ζήστε το demo",
+      "sublabel": "Σκανάρετε για πρόσβαση"
+    }
+  }
+}
+```
+
+- Το διακριτικό promotion card βρίσκεται στο [`AppSpotlightCard`](public-app/src/components/kiosk/widgets/AppSpotlightCard.tsx) και εμφανίζεται στην αριστερή sidebar, με δυναμικά δεδομένα (όνομα κτιρίου, CTA, QR).
+- Ο renderer ενημερώθηκε ώστε η σκηνή `Ambient Showcase` να λειτουργεί τόσο ως fallback όσο και ως κανονική σκηνή αν έρθει από API, άρα νέα backgrounds/κειμενικά στοιχεία μπορούν να αλλάζουν χωρίς κώδικα.
+

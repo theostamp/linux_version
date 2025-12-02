@@ -14,6 +14,7 @@ import logging
 from .email_templates import EmailTemplates
 from billing.models import UserSubscription
 from users.models import CustomUser
+from .push_service import PushNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -332,7 +333,7 @@ class NotificationService:
             subject: Notification subject
             body: Notification body
             sms_body: Optional SMS body
-            notification_type: Type of notification (email, sms, both)
+            notification_type: Type of notification (email, sms, both, push, all)
             priority: Priority level (low, normal, high, urgent)
             scheduled_at: Optional scheduled send time
             template: Optional template used
@@ -420,7 +421,7 @@ class NotificationService:
         for recipient in notification.recipients.all():
             try:
                 # Send email if notification type includes email
-                if notification.notification_type in ['email', 'both'] and recipient.email:
+                if notification.notification_type in ['email', 'both', 'all'] and recipient.email:
                     email_service.send_bulk_notification(
                         [recipient],  # Single recipient for now
                         notification.subject,
@@ -428,9 +429,28 @@ class NotificationService:
                     )
                 
                 # Send SMS if notification type includes SMS
-                if notification.notification_type in ['sms', 'both'] and recipient.phone:
+                if notification.notification_type in ['sms', 'both', 'all'] and recipient.phone:
                     # SMS sending would be implemented here
                     pass
+                
+                # Send Push Notification
+                if notification.notification_type in ['push', 'all']:
+                    user = None
+                    if recipient.apartment:
+                        # Try to resolve user from apartment
+                        # Assuming apartment has owner_user or tenant_user linked
+                        if hasattr(recipient.apartment, 'owner_user') and recipient.apartment.owner_user:
+                            user = recipient.apartment.owner_user
+                        elif hasattr(recipient.apartment, 'tenant_user') and recipient.apartment.tenant_user:
+                            user = recipient.apartment.tenant_user
+                    
+                    if user:
+                        PushNotificationService.send_to_user(
+                            user=user,
+                            title=notification.subject,
+                            body=notification.sms_body or notification.body[:150], # Use shorter body for push
+                            data={'notification_id': str(notification.id)}
+                        )
                 
                 recipient.mark_as_sent()
                 successful += 1

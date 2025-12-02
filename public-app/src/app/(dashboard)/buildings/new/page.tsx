@@ -9,6 +9,7 @@ import CreateBuildingForm from '@/components/buildings/CreateBuildingForm';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import type { Building } from '@/lib/api';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export default function NewBuildingPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function NewBuildingPage() {
     refreshBuildings,
   } = useBuilding();
 
-  const canManage = user?.is_superuser || user?.is_staff;
+  const canManage = hasOfficeAdminAccess(user);
   const isLoading = authLoading || buildingsLoading;
 
   const handleSuccess = (building: Building) => {

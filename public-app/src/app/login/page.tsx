@@ -5,11 +5,26 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getDefaultLandingPath, type RoleDescriptor } from '@/lib/roleUtils';
+
+// Καθορίζει τη σωστή landing page βάσει του ρόλου του χρήστη
+interface UserData extends RoleDescriptor {
+  is_superuser?: boolean;
+  is_staff?: boolean;
+  role?: string;
+}
+
+function getRedirectForRole(user: UserData | null, explicitRedirect?: string): string {
+  // Αν υπάρχει explicit redirect, χρησιμοποίησέ το
+  if (explicitRedirect) return explicitRedirect;
+  
+  return getDefaultLandingPath(user);
+}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const explicitRedirect = searchParams.get('redirect'); // null αν δεν υπάρχει
   
   const [formData, setFormData] = useState({
     email: '',
@@ -77,6 +92,7 @@ function LoginForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Tenant-Host': window.location.hostname, // Pass tenant hostname for multi-tenant support
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -99,11 +115,14 @@ function LoginForm() {
         localStorage.setItem('refresh_token', data.refresh);
       }
 
+      // Καθορισμός redirect URL βάσει ρόλου χρήστη
+      const targetRedirect = getRedirectForRole(data.user, explicitRedirect || undefined);
+      
       // Redirect to tenant domain or specified redirect
       if (data.tenant_url) {
-        window.location.href = `https://${data.tenant_url}${redirectTo}`;
+        window.location.href = `https://${data.tenant_url}${targetRedirect}`;
       } else {
-        router.push(redirectTo);
+        router.push(targetRedirect);
       }
       
     } catch (error) {
@@ -187,7 +206,7 @@ function LoginForm() {
     const redirectUri = `${window.location.origin}/auth/callback`;
     const state = JSON.stringify({ 
       provider: 'google',
-      redirect: redirectTo 
+      redirect: explicitRedirect || '/dashboard'  // Google OAuth χρειάζεται explicit redirect
     });
     const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
     

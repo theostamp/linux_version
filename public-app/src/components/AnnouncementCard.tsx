@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
 import { deleteAnnouncement } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -96,8 +97,8 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
     }
   };
 
-  // Show delete button only for superusers and managers
-  const canDelete = user?.is_superuser || user?.is_staff;
+  // Show delete button only for office-level admins
+  const canDelete = hasOfficeAdminAccess(user);
 
   return (
     <motion.div

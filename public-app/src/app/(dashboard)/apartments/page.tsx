@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send, Shield } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { fetchApartments, ApartmentList, resendInvitation } from '@/lib/api';
@@ -19,6 +19,7 @@ import SubscriptionGate from '@/components/SubscriptionGate';
 import EditTenantModal from '@/components/apartments/EditTenantModal';
 import EditOwnerModal from '@/components/apartments/EditOwnerModal';
 import { Button } from '@/components/ui/button';
+import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { StatCard } from '@/components/ui/stat-card';
 
 type OccupancyFilter = 'all' | 'owner' | 'tenant' | 'vacant';
@@ -67,6 +68,21 @@ const getStatusBadge = (apartment: ApartmentList) => {
   }
   return <Badge className="bg-primary/10 text-primary">{status}</Badge>;
 };
+
+// Check if apartment belongs to internal manager
+const isInternalManagerApartment = (apartment: ApartmentList, internalManagerApartment?: string): boolean => {
+  if (!internalManagerApartment) return false;
+  return apartment.number === internalManagerApartment || 
+         apartment.identifier === internalManagerApartment;
+};
+
+// Internal Manager Badge Component
+const InternalManagerBadge = () => (
+  <Badge className="bg-amber-500 text-white flex items-center gap-1">
+    <Shield className="w-3 h-3" />
+    Εσωτ. Διαχειριστής
+  </Badge>
+);
 
 // Component για email με ένδειξη καταχώρησης και resend
 const EmailWithStatus = ({ 
@@ -218,6 +234,9 @@ const ApartmentsPageContent = () => {
   const { user } = useAuth();
   const activeBuilding = selectedBuilding || currentBuilding;
   const buildingId = activeBuilding?.id;
+  
+  // Get internal manager apartment number from building
+  const internalManagerApartment = activeBuilding?.internal_manager_apartment;
 
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -233,7 +252,7 @@ const ApartmentsPageContent = () => {
   const [editOwnerModalOpen, setEditOwnerModalOpen] = useState(false);
   const [selectedApartment, setSelectedApartment] = useState<ApartmentList | null>(null);
 
-  const canManage = !!(user?.is_superuser || user?.is_staff);
+  const canManage = hasOfficeAdminAccess(user);
 
   const loadApartments = useCallback(async () => {
     if (!buildingId) return;
@@ -441,8 +460,8 @@ const ApartmentsPageContent = () => {
 
       <BuildingFilterIndicator />
 
-      {/* Bento Grid Layout */}
-      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
+      {/* Bento Grid Layout - Stats Only */}
+      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4 mb-8">
         
         {/* Stats Row */}
         <StatCard
@@ -473,12 +492,10 @@ const ApartmentsPageContent = () => {
           icon={<Grid className="w-5 h-5" />}
           color="default"
         />
+      </BentoGrid>
 
-        {/* Filters & Content */}
-        <BentoGridItem
-          className="md:col-span-4"
-          header={
-            <div className="space-y-6">
+      {/* Main Content Area - Filters & Table */}
+      <div className="space-y-6">
               {/* Filters Bar */}
               <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
                 <div className="flex flex-col gap-4">
@@ -613,54 +630,56 @@ const ApartmentsPageContent = () => {
               ) : (
                 <>
                   {viewMode === 'table' ? (
-                    <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+                    <div className="table-container">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[960px]">
-                          <thead className="bg-muted/50 border-b">
+                        <table className="data-table min-w-[960px]">
+                          <thead>
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Διαμέρισμα
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Ιδιοκτήτης
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Ένοικος / Χρήστης
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Στοιχεία
-                              </th>
-                              <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Ενέργειες
-                              </th>
+                              <th>Διαμέρισμα</th>
+                              <th>Ιδιοκτήτης</th>
+                              <th>Ένοικος / Χρήστης</th>
+                              <th>Στοιχεία</th>
+                              <th className="text-right">Ενέργειες</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-border bg-background">
+                          <tbody>
                             {paginatedApartments.map((apartment) => (
-                              <tr key={apartment.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4">
-                                  <div className="flex flex-col gap-1">
+                              <tr key={apartment.id}>
+                                <td>
+                                  <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-lg bg-primary/10 shadow-sm flex items-center justify-center">
-                                        <Home className="w-5 h-5 text-primary" />
+                                      <div className={cn(
+                                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                                        isInternalManagerApartment(apartment, internalManagerApartment) 
+                                          ? 'bg-amber-100 dark:bg-amber-500/20' 
+                                          : 'bg-primary/10'
+                                      )}>
+                                        {isInternalManagerApartment(apartment, internalManagerApartment) ? (
+                                          <Shield className="w-5 h-5 text-amber-600" />
+                                        ) : (
+                                          <Home className="w-5 h-5 text-primary" />
+                                        )}
                                       </div>
                                       <div>
-                                        <p className="text-base font-semibold text-foreground">{apartment.number}</p>
-                                        <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                                        <p className="text-base font-semibold text-foreground leading-tight">{apartment.number}</p>
+                                        <p className="text-xs text-muted-foreground">{apartment.identifier || '—'}</p>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-2">
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                      {isInternalManagerApartment(apartment, internalManagerApartment) && (
+                                        <InternalManagerBadge />
+                                      )}
                                       {getOccupancyBadge(apartment)}
                                       {getStatusBadge(apartment)}
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td>
                                   <div className="space-y-1">
-                                    <p className="text-sm font-medium text-foreground">{apartment.owner_name || '—'}</p>
-                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                    <p className="font-medium text-foreground">{apartment.owner_name || '—'}</p>
+                                    <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                                       {apartment.owner_phone && (
-                                        <a href={`tel:${apartment.owner_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+                                        <a href={`tel:${apartment.owner_phone}`} className="inline-flex items-center gap-1 text-primary hover:underline">
                                           <Phone className="w-3 h-3" />
                                           {apartment.owner_phone}
                                         </a>
@@ -677,14 +696,14 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td>
                                   <div className="space-y-1">
-                                    <p className="text-sm font-medium text-foreground">
+                                    <p className="font-medium text-foreground">
                                       {apartment.tenant_name || apartment.occupant_name || '—'}
                                     </p>
-                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                    <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                                       {apartment.tenant_phone && (
-                                        <a href={`tel:${apartment.tenant_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+                                        <a href={`tel:${apartment.tenant_phone}`} className="inline-flex items-center gap-1 text-primary hover:underline">
                                           <Phone className="w-3 h-3" />
                                           {apartment.tenant_phone}
                                         </a>
@@ -702,16 +721,16 @@ const ApartmentsPageContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
-                                  <div className="grid grid-cols-2 gap-3">
+                                <td>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Τ.μ.</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Τ.μ.</p>
                                       <p className="text-sm font-semibold text-foreground">
-                                        {typeof apartment.square_meters === 'number' ? `${apartment.square_meters} τ.μ.` : '—'}
+                                        {typeof apartment.square_meters === 'number' ? apartment.square_meters : '—'}
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Συμμετοχή</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Συμμετοχή</p>
                                       <p className="text-sm font-semibold text-foreground">
                                         {typeof apartment.participation_mills === 'number'
                                           ? `${apartment.participation_mills}‰`
@@ -719,20 +738,20 @@ const ApartmentsPageContent = () => {
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Όροφος</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Όροφος</p>
                                       <p className="text-sm font-semibold text-foreground">
                                         {apartment.floor !== undefined ? apartment.floor : '—'}
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-muted-foreground">Ενημέρωση</p>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Ενημέρωση</p>
                                       <p className="text-sm font-semibold text-foreground">
                                         {formatDate(apartment.updated_at)}
                                       </p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="text-right">
                                   <div className="flex items-center justify-end gap-2">
                                     {canManage && (
                                       <>
@@ -778,7 +797,7 @@ const ApartmentsPageContent = () => {
                           </tbody>
                         </table>
                       </div>
-                      <div className="border-t px-6 py-4 bg-muted/20">
+                      <div className="table-footer">
                         <Pagination
                           currentPage={currentPage}
                           totalPages={totalPages}
@@ -792,14 +811,32 @@ const ApartmentsPageContent = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {paginatedApartments.map((apartment) => (
-                        <div key={apartment.id} className="bg-card rounded-xl shadow-sm border p-5 space-y-4 hover:shadow-md transition-shadow">
+                        <div key={apartment.id} className={`bg-card rounded-xl shadow-sm border p-5 space-y-4 hover:shadow-md transition-shadow ${
+                          isInternalManagerApartment(apartment, internalManagerApartment) ? 'ring-2 ring-amber-500/50' : ''
+                        }`}>
                           <div className="flex items-start justify-between">
-                            <div>
-                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Διαμέρισμα</p>
-                              <p className="text-2xl font-bold text-foreground">{apartment.number}</p>
-                              <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-lg shadow-sm flex items-center justify-center ${
+                                isInternalManagerApartment(apartment, internalManagerApartment) 
+                                  ? 'bg-amber-500/10' 
+                                  : 'bg-primary/10'
+                              }`}>
+                                {isInternalManagerApartment(apartment, internalManagerApartment) ? (
+                                  <Shield className="w-6 h-6 text-amber-600" />
+                                ) : (
+                                  <Home className="w-6 h-6 text-primary" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">Διαμέρισμα</p>
+                                <p className="text-2xl font-bold text-foreground">{apartment.number}</p>
+                                <p className="text-sm text-muted-foreground">{apartment.identifier || '—'}</p>
+                              </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
+                              {isInternalManagerApartment(apartment, internalManagerApartment) && (
+                                <InternalManagerBadge />
+                              )}
                               {getOccupancyBadge(apartment)}
                               {getStatusBadge(apartment)}
                             </div>
@@ -898,9 +935,7 @@ const ApartmentsPageContent = () => {
                 </>
               )}
             </div>
-          }
-        />
-      </BentoGrid>
+
 
       {/* Edit Tenant Modal */}
       <EditTenantModal

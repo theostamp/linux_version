@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 // New simplified components
 import SendPanel from '@/components/notifications-v2/SendPanel';
 import HistoryPanel from '@/components/notifications-v2/HistoryPanel';
-import SettingsPanel from '@/components/notifications-v2/SettingsPanel';
+import { ExtendedSettingsPanel } from '@/components/notifications-v2/SettingsPanel';
 
 function NotificationsPageContent() {
   const [activeTab, setActiveTab] = useState('send');
@@ -61,7 +61,7 @@ function NotificationsPageContent() {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
-          <SettingsPanel />
+          <ExtendedSettingsPanel />
         </TabsContent>
       </Tabs>
     </div>

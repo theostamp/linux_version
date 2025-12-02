@@ -57,6 +57,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
   const [showCommonExpenseModal, setShowCommonExpenseModal] = useState(false);
   const [isDetailedResultsOpen, setIsDetailedResultsOpen] = useState(false);
+  const [isActionsPopoverOpen, setIsActionsPopoverOpen] = useState(false);
   const { issueCommonExpenses, calculateAdvancedShares, calculateShares } = useCommonExpenses();
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1367,7 +1368,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
       {/* Enhanced Floating Action Button using Popover */}
       <div className="flex justify-end mb-4">
-        <Popover>
+        <Popover open={isActionsPopoverOpen} onOpenChange={setIsActionsPopoverOpen}>
           <PopoverTrigger asChild>
             <Button 
               className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-lg hover:shadow-indigo-500/25 border-0 rounded-full px-6 py-6 h-auto transition-all duration-300 transform hover:-translate-y-1"
@@ -1393,7 +1394,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               </div>
               
               <Button 
-                onClick={() => setShowCommonExpenseModal(true)}
+                onClick={() => {
+                  setIsActionsPopoverOpen(false);
+                  // Small delay to ensure popover is fully closed before opening modal
+                  setTimeout(() => setShowCommonExpenseModal(true), 50);
+                }}
                 variant="ghost"
                 className="justify-start h-auto py-3 px-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 group"
               >
@@ -1407,7 +1412,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               </Button>
 
               <Button 
-                onClick={() => handleExport('pdf')}
+                onClick={() => {
+                  setIsActionsPopoverOpen(false);
+                  handleExport('pdf');
+                }}
                 variant="ghost"
                 className="justify-start h-auto py-3 px-3 hover:bg-rose-50 dark:hover:bg-rose-900/20 group"
               >
@@ -1421,7 +1429,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               </Button>
 
               <Button 
-                onClick={() => handleExport('excel')}
+                onClick={() => {
+                  setIsActionsPopoverOpen(false);
+                  handleExport('excel');
+                }}
                 variant="ghost"
                 className="justify-start h-auto py-3 px-3 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 group"
               >
@@ -1437,7 +1448,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <div className="my-1 border-t border-slate-200/50" />
 
               <Button 
-                onClick={handleIssue}
+                onClick={() => {
+                  setIsActionsPopoverOpen(false);
+                  handleIssue();
+                }}
                 disabled={state.isIssuing}
                 className="justify-center w-full bg-primary text-primary-foreground shadow-md hover:shadow-lg mt-1"
               >
@@ -1460,11 +1474,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
 
 
-      {/* Common Expense Modal */}
-      <CommonExpenseModal
-        key={`expense-modal-${JSON.stringify(state.shares).substring(0, 10)}-${state.totalExpenses}`}
-        isOpen={showCommonExpenseModal}
-        onClose={() => setShowCommonExpenseModal(false)}
+      {/* Common Expense Modal - Only rendered when open */}
+      {showCommonExpenseModal && (
+        <CommonExpenseModal
+          isOpen={showCommonExpenseModal}
+          onClose={() => setShowCommonExpenseModal(false)}
         state={state}
         buildingId={buildingId}
         buildingName={buildingData?.name || "Άγνωστο Κτίριο"}
@@ -1481,7 +1495,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         managementOfficePhone={user?.office_phone || ""}
         managementOfficeAddress={user?.office_address || ""}
         managementOfficeLogo={user?.office_logo || ""}
-      />
+        />
+      )}
     </div>
   );
 };

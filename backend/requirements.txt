@@ -79,3 +79,6 @@ google-cloud-documentai>=2.20.1
 # Celery for async task processing
 celery>=5.5.3
 flower>=2.0.1
+
+# Firebase Admin SDK
+firebase-admin>=6.2.0

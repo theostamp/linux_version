@@ -10,7 +10,9 @@ export type NotificationCategory =
   | 'emergency'
   | 'reminder';
 
-export type NotificationType = 'email' | 'sms' | 'both' | 'viber';
+export type NotificationType = 'email' | 'sms' | 'both' | 'viber' | 'push' | 'all';
+
+export type NotificationChannel = 'email' | 'sms' | 'viber' | 'push';
 
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -247,4 +249,84 @@ export interface SendDigestResponse {
   notification_id: number | null;
   subject?: string;
   recipients?: number;
+}
+
+// Device Token for Push Notifications
+export interface UserDeviceToken {
+  id: number;
+  token: string;
+  platform: 'android' | 'ios' | 'web';
+  device_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+}
+
+// Viber Subscription
+export interface UserViberSubscription {
+  id: number;
+  viber_user_id: string;
+  viber_name: string;
+  viber_avatar: string;
+  is_subscribed: boolean;
+  subscribed_at: string;
+  unsubscribed_at: string | null;
+  last_message_at: string | null;
+}
+
+// Notification Preferences
+export interface NotificationPreference {
+  id: number;
+  user: number;
+  building: number | null;
+  building_name: string | null;
+  category: string;
+  email_enabled: boolean;
+  sms_enabled: boolean;
+  viber_enabled: boolean;
+  push_enabled: boolean;
+  instant_notifications: boolean;
+  digest_only: boolean;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  enabled_channels: NotificationChannel[];
+  created_at: string;
+  updated_at: string;
+}
+
+// Channel Status
+export interface ChannelStatus {
+  channel: NotificationChannel;
+  enabled: boolean;
+  priority: number;
+  healthy: boolean;
+  status: 'healthy' | 'unhealthy' | 'disabled';
+  provider?: string;
+}
+
+// Multi-Channel Notification Request
+export interface MultiChannelNotificationRequest {
+  building_id: number;
+  subject: string;
+  message: string;
+  sms_message?: string;
+  push_title?: string;
+  push_data?: Record<string, string>;
+  channels: NotificationChannel[];
+  apartment_ids?: number[];
+  send_to_all?: boolean;
+  priority?: NotificationPriority;
+  use_fallbacks?: boolean;
+  respect_preferences?: boolean;
+}
+
+// Multi-Channel Delivery Result
+export interface DeliveryResult {
+  recipient_id: string;
+  successful_channels: NotificationChannel[];
+  failed_channels: Record<NotificationChannel, string>;
+  skipped_channels: NotificationChannel[];
+  any_success: boolean;
+  all_failed: boolean;
 }

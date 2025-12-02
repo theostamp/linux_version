@@ -250,7 +250,7 @@ class TodoNotificationViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         # Limit to current user by default
         qs = qs.filter(user=self.request.user)
-        qs = filter_queryset_by_user_and_building(self.request, qs, model_field="todo__building")
+        qs = filter_queryset_by_user_and_building(self.request, qs, building_field="todo__building")
 
         is_read_param = self.request.query_params.get("is_read")
         if is_read_param in {"0", "false", "False"}:

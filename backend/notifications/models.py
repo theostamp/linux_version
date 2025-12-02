@@ -147,6 +147,9 @@ class Notification(models.Model):
         ('email', 'Email'),
         ('sms', 'SMS'),
         ('both', 'Email & SMS'),
+        ('viber', 'Viber'),
+        ('push', 'Push Notification'),
+        ('all', 'Όλα τα κανάλια'),
     ]
 
     PRIORITY_CHOICES = [
@@ -665,3 +668,259 @@ class NotificationRecipient(models.Model):
         if not self.clicked_at:
             self.clicked_at = timezone.now()
             self.save(update_fields=['clicked_at'])
+
+
+class UserDeviceToken(models.Model):
+    """
+    Stores device tokens for push notifications (FCM).
+    Each user can have multiple devices.
+    """
+    
+    PLATFORM_CHOICES = [
+        ('android', 'Android'),
+        ('ios', 'iOS'),
+        ('web', 'Web Browser'),
+    ]
+    
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='device_tokens'
+    )
+    token = models.TextField(
+        unique=True,
+        help_text="FCM device token"
+    )
+    platform = models.CharField(
+        max_length=20,
+        choices=PLATFORM_CHOICES,
+        default='android'
+    )
+    device_name = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="User-friendly device name"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Token is valid and should receive notifications"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this token was used to send notification"
+    )
+    
+    class Meta:
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['token']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.platform} ({self.device_name or 'Unknown'})"
+    
+    def mark_used(self):
+        """Mark token as recently used."""
+        self.last_used_at = timezone.now()
+        self.save(update_fields=['last_used_at'])
+    
+    def deactivate(self):
+        """Deactivate token (e.g., when FCM returns unregistered error)."""
+        self.is_active = False
+        self.save(update_fields=['is_active'])
+
+
+class UserViberSubscription(models.Model):
+    """
+    Stores Viber subscription info for users who opted in.
+    Viber user ID is obtained when user starts conversation with bot.
+    """
+    
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='viber_subscription'
+    )
+    viber_user_id = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Viber user ID from webhook"
+    )
+    viber_name = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="User's Viber display name"
+    )
+    viber_avatar = models.URLField(
+        blank=True,
+        help_text="User's Viber avatar URL"
+    )
+    is_subscribed = models.BooleanField(
+        default=True,
+        help_text="User has not unsubscribed"
+    )
+    
+    # Metadata
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+    last_message_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Viber Subscription"
+        verbose_name_plural = "Viber Subscriptions"
+    
+    def __str__(self):
+        return f"{self.user.email} - Viber: {self.viber_name or self.viber_user_id}"
+    
+    def unsubscribe(self):
+        """Mark user as unsubscribed from Viber."""
+        self.is_subscribed = False
+        self.unsubscribed_at = timezone.now()
+        self.save(update_fields=['is_subscribed', 'unsubscribed_at'])
+    
+    def resubscribe(self):
+        """Mark user as resubscribed to Viber."""
+        self.is_subscribed = True
+        self.unsubscribed_at = None
+        self.save(update_fields=['is_subscribed', 'unsubscribed_at'])
+
+
+class NotificationPreference(models.Model):
+    """
+    User preferences for notification channels.
+    Allows users to opt-in/out of specific channels per category.
+    """
+    
+    CHANNEL_CHOICES = [
+        ('email', 'Email'),
+        ('sms', 'SMS'),
+        ('viber', 'Viber'),
+        ('push', 'Push Notification'),
+    ]
+    
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='notification_preferences'
+    )
+    
+    # Can be building-specific or global (null = global)
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='user_notification_preferences'
+    )
+    
+    # Category preferences (references NotificationTemplate.CATEGORY_CHOICES)
+    category = models.CharField(
+        max_length=50,
+        default='all',
+        help_text="'all' or specific category like 'announcement', 'payment', etc."
+    )
+    
+    # Channel preferences
+    email_enabled = models.BooleanField(default=True)
+    sms_enabled = models.BooleanField(default=False)
+    viber_enabled = models.BooleanField(default=True)
+    push_enabled = models.BooleanField(default=True)
+    
+    # Timing preferences
+    instant_notifications = models.BooleanField(
+        default=True,
+        help_text="Receive notifications immediately"
+    )
+    digest_only = models.BooleanField(
+        default=False,
+        help_text="Only receive in daily/weekly digest"
+    )
+    quiet_hours_start = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Don't send between this time..."
+    )
+    quiet_hours_end = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="...and this time"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['user', 'building', 'category']
+        indexes = [
+            models.Index(fields=['user', 'building']),
+            models.Index(fields=['user', 'category']),
+        ]
+    
+    def __str__(self):
+        building_name = self.building.name if self.building else "Γενικές"
+        return f"{self.user.email} - {building_name} - {self.category}"
+    
+    def get_enabled_channels(self):
+        """Get list of enabled channels for this preference."""
+        channels = []
+        if self.email_enabled:
+            channels.append('email')
+        if self.sms_enabled:
+            channels.append('sms')
+        if self.viber_enabled:
+            channels.append('viber')
+        if self.push_enabled:
+            channels.append('push')
+        return channels
+    
+    @classmethod
+    def get_user_preferences(cls, user, building=None, category=None):
+        """
+        Get effective notification preferences for a user.
+        
+        Priority: Building+Category specific > Building specific > Category specific > Global
+        """
+        # Try to find most specific preference
+        queryset = cls.objects.filter(user=user)
+        
+        if building and category:
+            pref = queryset.filter(building=building, category=category).first()
+            if pref:
+                return pref
+        
+        if building:
+            pref = queryset.filter(building=building, category='all').first()
+            if pref:
+                return pref
+        
+        if category:
+            pref = queryset.filter(building__isnull=True, category=category).first()
+            if pref:
+                return pref
+        
+        # Fall back to global preference
+        return queryset.filter(building__isnull=True, category='all').first()
+    
+    @classmethod
+    def get_or_create_default(cls, user, building=None, category='all'):
+        """Get or create a preference with default values."""
+        pref, created = cls.objects.get_or_create(
+            user=user,
+            building=building,
+            category=category,
+            defaults={
+                'email_enabled': True,
+                'sms_enabled': False,
+                'viber_enabled': True,
+                'push_enabled': True,
+                'instant_notifications': True,
+                'digest_only': False,
+            }
+        )
+        return pref

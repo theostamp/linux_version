@@ -1,0 +1,29 @@
+<svg width="3840" height="2160" viewBox="0 0 3840 2160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sunset-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#190f2f"/>
+      <stop offset="35%" stop-color="#301446"/>
+      <stop offset="70%" stop-color="#521b52"/>
+      <stop offset="100%" stop-color="#7a2c4c"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="70%" cy="20%" r="35%">
+      <stop offset="0%" stop-color="#ffed9f" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#ff9147" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffd4b8" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ffd4b8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffd4b8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#sunset-bg)"/>
+  <circle cx="2800" cy="500" r="900" fill="url(#sun)"/>
+  <path d="M0 1300 C 500 1100, 900 1500, 1500 1300 C 2100 1100, 2600 1500, 3200 1350 C 3600 1250, 3840 1350, 3840 1350 L 3840 2160 L 0 2160 Z" fill="#ff8a80" opacity="0.18"/>
+  <path d="M0 1550 C 700 1450, 1300 1650, 1900 1500 C 2600 1325, 3200 1580, 3840 1460 L 3840 2160 L 0 2160 Z" fill="#ffa97a" opacity="0.2"/>
+  <rect y="1600" width="3840" height="200" fill="url(#mist)" opacity="0.4"/>
+  <rect y="1800" width="3840" height="220" fill="url(#mist)" opacity="0.35"/>
+  <rect y="2000" width="3840" height="160" fill="#000000" opacity="0.25"/>
+</svg>
+
+

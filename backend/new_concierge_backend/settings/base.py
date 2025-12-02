@@ -105,6 +105,12 @@ TENANT_APPS = [
 
     # 📬 Notifications System
     'notifications',
+    
+    # 📊 Office Analytics (Command Center for Management Offices)
+    'office_analytics',
+    
+    # 💼 Office Finance (Income/Expense Management for the Office)
+    'office_finance',
 ]
 
 
@@ -401,7 +407,7 @@ CORS_ALLOW_HEADERS = get_list_env(
     "CORS_ALLOW_HEADERS",
     "accept,accept-encoding,authorization,content-type,dnt,origin,"
     "user-agent,x-csrftoken,x-requested-with,x-xsrf-token,"
-    "x-toast-suppress,x-toast-success,x-toast-error"
+    "x-toast-suppress,x-toast-success,x-toast-error,x-tenant-host"
 )
 
 CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]

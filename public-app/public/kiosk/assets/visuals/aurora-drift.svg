@@ -1,0 +1,40 @@
+<svg width="3840" height="2160" viewBox="0 0 3840 2160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aurora-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#050617"/>
+      <stop offset="40%" stop-color="#0b1432"/>
+      <stop offset="100%" stop-color="#1e0f46"/>
+    </linearGradient>
+    <linearGradient id="aurora-ribbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3effd8" stop-opacity="0.55"/>
+      <stop offset="50%" stop-color="#6b73ff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ff8ce0" stop-opacity="0.45"/>
+    </linearGradient>
+    <linearGradient id="aurora-ribbon-2" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#80ffd3" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#7bd3ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.3"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="20%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#8bfff1" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#aurora-bg)"/>
+  <circle cx="600" cy="300" r="800" fill="url(#glow)"/>
+  <path d="M-100 1200 C 400 1000, 900 1600, 1500 1400 C 2100 1200, 2500 1700, 3200 1500 C 3600 1380, 4000 1600, 4200 1400 L 4200 2200 L -100 2200 Z" fill="url(#aurora-ribbon)" opacity="0.7"/>
+  <path d="M-200 1500 C 300 1300, 900 2000, 1400 1850 C 2000 1650, 2500 2150, 3100 1950 C 3600 1780, 4100 2100, 4300 1900 L 4300 2300 L -200 2300 Z" fill="url(#aurora-ribbon-2)" opacity="0.5"/>
+  <g opacity="0.25">
+    <circle cx="800" cy="400" r="3" fill="#ffffff"/>
+    <circle cx="1200" cy="600" r="2" fill="#c8e5ff"/>
+    <circle cx="2000" cy="300" r="3" fill="#ffffff"/>
+    <circle cx="2600" cy="700" r="2" fill="#c8e5ff"/>
+    <circle cx="3200" cy="500" r="3" fill="#ffffff"/>
+    <circle cx="3600" cy="900" r="2" fill="#c8e5ff"/>
+    <circle cx="1800" cy="900" r="2" fill="#c8e5ff"/>
+    <circle cx="900" cy="950" r="2" fill="#c8e5ff"/>
+    <circle cx="400" cy="700" r="2" fill="#c8e5ff"/>
+  </g>
+</svg>
+
+

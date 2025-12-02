@@ -170,6 +170,12 @@ TENANT_APPS = [
 
     # 📬 Notifications System
     'notifications',
+    
+    # 📊 Office Analytics (Command Center for Management Offices)
+    'office_analytics',
+    
+    # 💼 Office Finance (Income/Expense Management for the Office)
+    'office_finance',
 ]
 
 
@@ -473,7 +479,7 @@ CORS_ALLOW_HEADERS = get_list_env(
     "CORS_ALLOW_HEADERS",
     "accept,accept-encoding,authorization,content-type,dnt,origin,"
     "user-agent,x-csrftoken,x-requested-with,x-xsrf-token,"
-    "x-toast-suppress,x-toast-success,x-toast-error"
+    "x-toast-suppress,x-toast-success,x-toast-error,x-tenant-host"
 )
 
 CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -768,3 +774,8 @@ GOOGLE_CALENDAR_AUTO_SHARE = os.getenv('GOOGLE_CALENDAR_AUTO_SHARE', 'True') == 
 MICROSOFT_CLIENT_ID = os.getenv('MICROSOFT_CLIENT_ID', '')
 MICROSOFT_CLIENT_SECRET = os.getenv('MICROSOFT_CLIENT_SECRET', '')
 MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:18000/api/auth/callback/')
+
+# ----------------------------------------
+# 🔔 Firebase Push Notifications
+# ----------------------------------------
+FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', BASE_DIR / 'credentials' / 'serviceAccountKey.json')

@@ -1,11 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { listInvitations, UserInvitation } from '@/lib/api';
+import { listInvitations, deleteInvitation, UserInvitation } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { Mail, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Mail, Clock, CheckCircle, XCircle, AlertCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -37,6 +38,19 @@ export default function InvitationsList() {
     queryFn: listInvitations,
   });
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την πρόσκληση;')) return;
+    
+    try {
+      await deleteInvitation(id);
+      toast.success('Η πρόσκληση διαγράφηκε');
+      refetch();
+    } catch (error) {
+      console.error('Error deleting invitation:', error);
+      toast.error('Σφάλμα κατά τη διαγραφή');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -49,7 +63,7 @@ export default function InvitationsList() {
   if (error) {
     return (
       <div className="p-4 bg-destructive/10 border-0 rounded-none shadow-sm">
-        <p className="text-destructive">Σφάλμα φόρτωσης προσκλήσεων προσκλήσεων</p>
+        <p className="text-destructive">Σφάλμα φόρτωσης προσκλήσεων</p>
         <Button onClick={() => refetch()} variant="outline" size="sm" className="mt-2">
           Δοκιμή Ξανά
         </Button>
@@ -79,6 +93,7 @@ export default function InvitationsList() {
               <TableHead>Κατάσταση</TableHead>
               <TableHead>Ημερομηνία</TableHead>
               <TableHead>Λήξη</TableHead>
+              <TableHead className="text-right">Ενέργειες</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -126,6 +141,17 @@ export default function InvitationsList() {
                     <span className={isExpired ? 'text-destructive' : 'text-muted-foreground'}>
                       {format(new Date(invitation.expires_at), 'dd/MM/yyyy HH:mm', { locale: el })}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(invitation.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      title="Διαγραφή πρόσκλησης"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               );

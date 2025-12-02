@@ -22,7 +22,8 @@ from .models import (
     Notification,
     NotificationRecipient,
     MonthlyNotificationTask,
-    NotificationEvent
+    NotificationEvent,
+    UserDeviceToken,
 )
 from .serializers import (
     NotificationTemplateSerializer,
@@ -39,6 +40,7 @@ from .serializers import (
     NotificationEventSerializer,
     DigestPreviewSerializer,
     SendDigestSerializer,
+    UserDeviceTokenSerializer,
 )
 from .services import (
     NotificationService,
@@ -402,6 +404,101 @@ class NotificationViewSet(viewsets.ModelViewSet):
             'attachment_url': notification.attachment.url if notification.attachment else None,
         }, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['post'])
+    def send_personalized_common_expenses(self, request):
+        """
+        Send personalized common expense notifications with auto-attached sheet.
+        
+        Each apartment receives:
+        - The common expense sheet (JPG) - auto-attached from existing data or uploaded
+        - A personalized payment notification (Ειδοποιητήριο) with their specific amounts
+        
+        POST /api/notifications/send_personalized_common_expenses/
+        Body (JSON or multipart/form-data):
+            - building_id: Building ID (required)
+            - month: Month string in YYYY-MM format (required, e.g., "2025-01")
+            - include_sheet: Boolean - attach common expense sheet (default: true)
+            - include_notification: Boolean - include personalized Ειδοποιητήριο (default: true)
+            - custom_message: Optional custom message to prepend
+            - attachment: Optional custom JPG file (overrides auto-attach)
+            - apartment_ids: Optional list of specific apartment IDs (default: all)
+        """
+        from datetime import datetime
+        from .common_expense_service import CommonExpenseNotificationService
+        
+        building_id = request.data.get('building_id')
+        month_str = request.data.get('month')
+        include_sheet = request.data.get('include_sheet', True)
+        include_notification = request.data.get('include_notification', True)
+        custom_message = request.data.get('custom_message', '')
+        apartment_ids = request.data.get('apartment_ids')
+        custom_attachment = request.FILES.get('attachment')
+        
+        # Validate required fields
+        if not building_id:
+            return Response(
+                {'error': 'building_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not month_str:
+            return Response(
+                {'error': 'month is required (format: YYYY-MM)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Parse month
+        try:
+            month = datetime.strptime(month_str, '%Y-%m').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Handle boolean conversion from form data
+        if isinstance(include_sheet, str):
+            include_sheet = include_sheet.lower() in ('true', '1', 'yes')
+        if isinstance(include_notification, str):
+            include_notification = include_notification.lower() in ('true', '1', 'yes')
+        
+        # Handle apartment_ids if string
+        if isinstance(apartment_ids, str) and apartment_ids:
+            try:
+                apartment_ids = [int(x.strip()) for x in apartment_ids.split(',')]
+            except ValueError:
+                apartment_ids = None
+        
+        # Save custom attachment if provided
+        custom_attachment_path = None
+        if custom_attachment:
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            
+            path = f'common_expenses/{building_id}/{month_str}/{custom_attachment.name}'
+            custom_attachment_path = default_storage.save(path, ContentFile(custom_attachment.read()))
+        
+        # Send notifications
+        results = CommonExpenseNotificationService.send_common_expense_notifications(
+            building_id=int(building_id),
+            month=month,
+            apartment_ids=apartment_ids,
+            include_sheet=include_sheet,
+            include_notification=include_notification,
+            custom_attachment=custom_attachment_path,
+            custom_message=custom_message,
+            sender_user=request.user
+        )
+        
+        return Response({
+            'success': results['success'],
+            'sent_count': results['sent_count'],
+            'failed_count': results['failed_count'],
+            'sheet_attached': results.get('sheet_attached', False),
+            'notification_included': results.get('notification_included', False),
+            'details': results['details']
+        }, status=status.HTTP_200_OK if results['success'] else status.HTTP_207_MULTI_STATUS)
+
 
 class NotificationRecipientViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -575,7 +672,7 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             "building": 1,  // or null for all buildings
             "day_of_month": 1,
             "time_to_send": "09:00",
-            "template": 1,
+            "template": 1,  // optional - auto-selects based on task_type if 0 or not provided
             "auto_send_enabled": false,
             "period_month": "2025-11-01"  // optional
         }
@@ -591,11 +688,55 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
             from buildings.models import Building
             building = get_object_or_404(Building, id=data['building'])
         
-        # Get template
-        template = get_object_or_404(
-            NotificationTemplate,
-            id=data['template']
-        )
+        # Get template - auto-select based on task_type if not provided or if 0
+        template_id = data.get('template')
+        if not template_id or template_id == 0:
+            # Map task_type to template category
+            task_type = data['task_type']
+            category_map = {
+                'common_expense': 'payment',
+                'balance_reminder': 'payment',
+                'custom': 'announcement',
+            }
+            category = category_map.get(task_type, 'announcement')
+            
+            # Try to find an active template for this category
+            template = NotificationTemplate.objects.filter(
+                category=category,
+                is_active=True
+            ).first()
+            
+            # If no template found, create a default one
+            if not template:
+                if task_type == 'common_expense':
+                    template = NotificationTemplate.objects.create(
+                        name=f'Κοινόχρηστα Μήνα (Auto)',
+                        category='payment',
+                        subject='Κοινόχρηστα {{month}}',
+                        body='Αγαπητέ/ή {{resident_name}},\n\nΕπισυνάπτονται τα κοινόχρηστα του μήνα {{month}}.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        is_active=True
+                    )
+                elif task_type == 'balance_reminder':
+                    template = NotificationTemplate.objects.create(
+                        name=f'Υπενθύμιση Οφειλής (Auto)',
+                        category='payment',
+                        subject='Υπενθύμιση Οφειλής',
+                        body='Αγαπητέ/ή {{resident_name}},\n\nΣας υπενθυμίζουμε ότι υπάρχει εκκρεμές υπόλοιπο στον λογαριασμό σας.\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        is_active=True
+                    )
+                else:
+                    template = NotificationTemplate.objects.create(
+                        name=f'Γενική Ανακοίνωση (Auto)',
+                        category='announcement',
+                        subject='Ανακοίνωση',
+                        body='Αγαπητέ/ή {{resident_name}},\n\n{{message}}\n\nΜε εκτίμηση,\nΗ Διαχείριση',
+                        is_active=True
+                    )
+        else:
+            template = get_object_or_404(
+                NotificationTemplate,
+                id=template_id
+            )
         
         # Configure task
         task = MonthlyTaskService.configure_task(
@@ -845,3 +986,36 @@ class NotificationEventViewSet(viewsets.ReadOnlyModelViewSet):
                 'message': 'No pending events to send',
                 'notification_id': None,
             }, status=status.HTTP_200_OK)
+
+
+class DeviceTokenViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing user device tokens.
+    
+    list: Get all active tokens for current user
+    create: Register new device token
+    deactivate: Deactivate a specific token
+    """
+    serializer_class = UserDeviceTokenSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return UserDeviceToken.objects.filter(user=self.request.user, is_active=True)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        
+    @action(detail=False, methods=['post'])
+    def deactivate(self, request):
+        """
+        Deactivate a specific token.
+        
+        POST /api/notifications/devices/deactivate/
+        Body: { "token": "..." }
+        """
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        UserDeviceToken.objects.filter(token=token, user=request.user).update(is_active=False)
+        return Response({'status': 'deactivated'})

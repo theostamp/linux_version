@@ -1,0 +1,28 @@
+<svg width="3840" height="2160" viewBox="0 0 3840 2160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#02101f"/>
+      <stop offset="45%" stop-color="#032238"/>
+      <stop offset="100%" stop-color="#0c3a5f"/>
+    </linearGradient>
+    <linearGradient id="wave1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#66c6ff" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#4ed7c0" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="wave2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b5f4ff" stop-opacity="0.5"/>
+      <stop offset="80%" stop-color="#5b8dff" stop-opacity="0.05"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="50%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#7de5ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <circle cx="2800" cy="400" r="600" fill="url(#orb)"/>
+  <path d="M0 1400 C 800 1200, 1400 1450, 2200 1300 C 3000 1150, 3480 1350, 3840 1200 L 3840 2160 L 0 2160 Z" fill="url(#wave1)"/>
+  <path d="M0 1500 C 900 1600, 1500 1500, 2400 1650 C 3100 1775, 3700 1675, 3840 1750 L 3840 2160 L 0 2160 Z" fill="url(#wave2)"/>
+  <path d="M0 1680 C 960 1820, 1600 1780, 2600 1920 C 3200 2000, 3600 1940, 3840 2060 L 3840 2160 L 0 2160 Z" fill="#ffffff" opacity="0.05"/>
+</svg>
+
+

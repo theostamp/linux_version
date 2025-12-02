@@ -278,7 +278,8 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
         # Residents -> μόνο τα κτίρια στα οποία ανήκουν
         if BuildingMembership.objects.filter(resident=user).exists():
-            queryset = Building.objects.filter(buildingmembership__resident=user).order_by('id')
+            # Use 'memberships' related_name (not default 'buildingmembership')
+            queryset = Building.objects.filter(memberships__resident=user).order_by('id')
             building_ids = list(queryset.values_list('id', flat=True))
             logger.info(f"User is a resident. Found buildings by membership: {building_ids}")
             return queryset
@@ -752,3 +753,79 @@ def get_current_context_view(request):
     accessing it at the root level instead of /api/buildings/list/current-context/
     """
     return _get_current_context_logic(request)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_user_to_building(request):
+    """
+    POST /api/buildings/add-membership/
+    
+    Προσθέτει έναν υπάρχοντα χρήστη σε κτίριο (δημιουργεί BuildingMembership).
+    Μόνο για managers και superusers.
+    
+    Body:
+        {
+            "user_id": 123,
+            "building_id": 456,
+            "role": "resident"  // optional, default: "resident"
+        }
+    """
+    from core.permissions import IsManagerOrSuperuser
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManagerOrSuperuser().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να προσθέσουν χρήστες σε κτίρια.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    user_id = request.data.get('user_id')
+    building_id = request.data.get('building_id')
+    role = request.data.get('role', 'resident')
+    
+    if not user_id or not building_id:
+        return Response({
+            'error': 'Απαιτούνται user_id και building_id'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        building = Building.objects.get(id=building_id)
+        
+        # Έλεγχος αν υπάρχει ήδη membership
+        existing = BuildingMembership.objects.filter(resident=user, building=building).first()
+        if existing:
+            return Response({
+                'message': f'Ο χρήστης {user.email} είναι ήδη μέλος του κτιρίου {building.name}',
+                'membership_id': existing.id
+            }, status=status.HTTP_200_OK)
+        
+        # Δημιουργία membership
+        membership = BuildingMembership.objects.create(
+            resident=user,
+            building=building,
+            role=role
+        )
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"Created membership: user={user.email}, building={building.name}, role={role}")
+        
+        return Response({
+            'message': f'Ο χρήστης {user.email} προστέθηκε στο κτίριο {building.name}',
+            'membership_id': membership.id
+        }, status=status.HTTP_201_CREATED)
+        
+    except CustomUser.DoesNotExist:
+        return Response({
+            'error': f'Δεν βρέθηκε χρήστης με ID {user_id}'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Building.DoesNotExist:
+        return Response({
+            'error': f'Δεν βρέθηκε κτίριο με ID {building_id}'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error adding user to building: {e}", exc_info=True)
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

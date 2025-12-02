@@ -8,6 +8,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
+import { getEffectiveRole } from '@/lib/roleUtils';
 import { designSystem } from '@/lib/design-system';
 import {
   Home,
@@ -46,6 +47,8 @@ interface NavigationLink {
   icon: React.ReactNode;
   roles: string[];
   isBeta?: boolean;
+  // Staff permission required (for staff role only)
+  staffPermission?: 'can_access_office_finance' | 'can_view_financials' | 'can_manage_requests';
 }
 
 // Navigation group interface
@@ -67,25 +70,43 @@ const navigationGroups: NavigationGroup[] = [
         href: '/dashboard',
         label: 'Πίνακας Ελέγχου',
         icon: <Home className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/office-dashboard',
+        label: 'Κέντρο Ελέγχου',
+        icon: <Shield className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/my-apartment',
+        label: 'Το Διαμέρισμά μου',
+        icon: <Home className="w-5 h-5" />,
+        roles: ['resident', 'internal_manager'],
+      },
+      {
+        href: '/online-payments',
+        label: 'Πληρωμή Online',
+        icon: <CreditCard className="w-5 h-5" />,
+        roles: ['resident', 'internal_manager'],
       },
       {
         href: '/announcements',
         label: 'Ανακοινώσεις',
         icon: <Megaphone className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/votes',
         label: 'Ψηφοφορίες',
         icon: <CheckSquare className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/requests',
         label: 'Αιτήματα',
         icon: <ClipboardList className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
       },
     ]
   },
@@ -96,9 +117,9 @@ const navigationGroups: NavigationGroup[] = [
     links: [
       {
         href: '/financial',
-        label: 'Οικονομικά',
+        label: 'Οικονομικά Κτιρίων',
         icon: <Euro className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
+        roles: ['manager', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/maintenance',
@@ -133,16 +154,10 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
-        href: '/office-staff',
-        label: 'Υπάλληλοι',
-        icon: <UserCheck className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
         href: '/apartments',
         label: 'Διαμερίσματα',
         icon: <Building className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
+        roles: ['manager', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/map-visualization',
@@ -193,7 +208,7 @@ const navigationGroups: NavigationGroup[] = [
         href: '/chat',
         label: 'Chat',
         icon: <MessageCircle className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/notifications',
@@ -204,21 +219,34 @@ const navigationGroups: NavigationGroup[] = [
     ]
   },
   {
-    id: 'personal',
-    title: 'Προσωπικά',
+    id: 'office',
+    title: 'Γραφείο Διαχείρισης',
     colorKey: 'purple',
     links: [
+      {
+        href: '/office-staff',
+        label: 'Υπάλληλοι',
+        icon: <UserCheck className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/office-finance',
+        label: 'Οικονομικά Γραφείου',
+        icon: <CreditCard className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        staffPermission: 'can_access_office_finance', // Staff needs this permission
+      },
       {
         href: '/my-profile',
         label: 'Προφίλ',
         icon: <User className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
       },
       {
         href: '/my-subscription',
         label: 'Συνδρομή',
         icon: <CreditCard className="w-5 h-5" />,
-        roles: ['manager', 'resident', 'staff', 'superuser'],
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
       },
     ]
   },
@@ -302,19 +330,33 @@ export default function CollapsibleSidebar() {
   };
 
   // Determine user role
-  let userRole: 'superuser' | 'staff' | 'manager' | 'resident' | undefined;
-  if (user?.is_superuser) {
-    userRole = 'superuser';
-  } else if (user?.is_staff) {
-    userRole = 'staff';
-  } else {
-    userRole = user?.profile?.role as 'manager' | 'resident' | undefined;
-  }
+  const userRole = getEffectiveRole(user);
 
-  // Filter available groups and links based on user role
+  // Check if staff has a specific permission
+  const staffHasPermission = (permissionKey: NavigationLink['staffPermission']): boolean => {
+    if (!permissionKey) return true; // No permission required
+    if (!user || userRole !== 'staff') return true; // Only check for staff role
+    
+    const permissions = user.staff_permissions;
+    if (!permissions || !permissions.is_active) return false;
+    
+    return permissions[permissionKey] === true;
+  };
+
+  // Filter available groups and links based on user role AND staff permissions
   const availableGroups = navigationGroups.map(group => ({
     ...group,
-    links: group.links.filter(link => userRole && link.roles.includes(userRole))
+    links: group.links.filter(link => {
+      // First check role
+      if (!userRole || !link.roles.includes(userRole)) return false;
+      
+      // Then check staff permission if required
+      if (link.staffPermission && userRole === 'staff') {
+        return staffHasPermission(link.staffPermission);
+      }
+      
+      return true;
+    })
   })).filter(group => group.links.length > 0);
 
   const getColorScheme = (colorKey: keyof typeof designSystem.colors) => {
@@ -341,9 +383,10 @@ export default function CollapsibleSidebar() {
         </button>
 
         {/* Loading Sidebar */}
-        <aside 
-          className="hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
-          style={{ 
+        <aside
+          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
+          style={{
+            backgroundColor: '#FFFAF0',
             width: '80px',
           }}
         >
@@ -368,10 +411,11 @@ export default function CollapsibleSidebar() {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full bg-card shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
+          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
+          backgroundColor: '#FFFAF0',
           width: isExpanded ? '256px' : '80px',
           fontFamily: 'var(--font-sans)',
         }}
@@ -544,11 +588,12 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 bg-card shadow-xl border-r border-slate-200/60 flex flex-col z-50",
+          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-slate-200/60 flex flex-col z-50",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{
+          backgroundColor: '#FFFAF0',
           fontFamily: 'var(--font-sans)',
         }}
       >

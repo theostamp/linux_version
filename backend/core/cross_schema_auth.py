@@ -44,7 +44,13 @@ class CrossSchemaAuthBackend(ModelBackend):
             with schema_context(public_schema):
                 # Find user in public schema
                 user = User.objects.get(email__iexact=email)
-                
+
+                logger.info(
+                    f"Found user {email} in public schema: "
+                    f"role={user.role}, is_staff={user.is_staff}, "
+                    f"is_superuser={user.is_superuser}"
+                )
+
                 # Check password
                 if not user.check_password(password):
                     logger.warning(f"Invalid password for user {email} in tenant {current_schema}")
@@ -120,6 +126,21 @@ class CrossSchemaAuthBackend(ModelBackend):
         Create a user object that can be used in the tenant context.
         This is a pseudo-user object that represents the user in the tenant schema.
         """
+        # Determine is_staff based on user's role
+        # Only managers, office_staff, and admins should have is_staff=True
+        # Residents and internal_managers should NOT have is_staff
+        staff_roles = ['admin', 'manager', 'office_staff']
+        should_be_staff = public_user.role in staff_roles if public_user.role else False
+
+        # Use the actual role from public_user, don't override it
+        user_role = public_user.role if public_user.role else 'resident'
+
+        logger.info(
+            f"Creating tenant user object for {public_user.email}: "
+            f"role={user_role}, is_staff={should_be_staff}, "
+            f"is_superuser=False"
+        )
+
         # Create a new user object with the same data as the public user
         # but adapted for the tenant context
         tenant_user = User(
@@ -127,10 +148,10 @@ class CrossSchemaAuthBackend(ModelBackend):
             email=public_user.email,
             first_name=public_user.first_name,
             last_name=public_user.last_name,
-            is_staff=True,  # Tenant users are staff by default
+            is_staff=should_be_staff,  # Based on role, not hardcoded
             is_active=True,
             is_superuser=False,  # Never superuser in tenant context
-            role='manager',  # Default role for tenant users
+            role=user_role,  # Preserve the actual role from public schema
             office_name=public_user.office_name or f"{public_user.get_full_name()}'s Office",
             office_phone=public_user.office_phone,
             office_address=public_user.office_address,

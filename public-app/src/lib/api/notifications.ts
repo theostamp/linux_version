@@ -199,6 +199,59 @@ export const notificationsApi = {
     // The apiClient returns data directly
     return response;
   },
+
+  /**
+   * Send personalized common expense notifications
+   * Each apartment receives their own payment notification (Ειδοποιητήριο)
+   */
+  sendPersonalizedCommonExpenses: async (data: {
+    building_id: number;
+    month: string;
+    include_sheet?: boolean;
+    include_notification?: boolean;
+    custom_message?: string;
+    attachment?: File | null;
+    apartment_ids?: number[];
+  }) => {
+    const formData = new FormData();
+    formData.append('building_id', String(data.building_id));
+    formData.append('month', data.month);
+    formData.append('include_sheet', String(data.include_sheet ?? true));
+    formData.append('include_notification', String(data.include_notification ?? true));
+    
+    if (data.custom_message) {
+      formData.append('custom_message', data.custom_message);
+    }
+    
+    if (data.attachment) {
+      formData.append('attachment', data.attachment);
+    }
+    
+    if (data.apartment_ids && data.apartment_ids.length > 0) {
+      formData.append('apartment_ids', data.apartment_ids.join(','));
+    }
+
+    const response = await apiClient.post<{
+      success: boolean;
+      sent_count: number;
+      failed_count: number;
+      sheet_attached: boolean;
+      notification_included: boolean;
+      details: Array<{
+        apartment: string;
+        email?: string;
+        status: string;
+        amount?: number;
+        error?: string;
+        reason?: string;
+      }>;
+    }>(`${BASE_URL}/notifications/send_personalized_common_expenses/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response;
+  },
 };
 
 /**

@@ -263,14 +263,18 @@ def create_public_tenant():
             print(f"ℹ️ Υπάρχει ήδη Railway domain: {railway_domain}")
     
     # Δημιουργία Ultra-Superuser στο public schema
+    # ΣΗΜΑΝΤΙΚΟ: Χρησιμοποιούμε dedicated admin email για να μην γίνεται conflict
+    # με πραγματικούς χρήστες που προσκαλούνται ως ένοικοι
     print("\n👑 Δημιουργία Ultra-Superuser...")
     from users.models import CustomUser
     
+    ADMIN_EMAIL = 'admin@newconcierge.app'  # Dedicated admin email - NEVER use a real user email
+    
     ultra_user, created = CustomUser.objects.get_or_create(
-        email='thodoris_st@hotmail.com',
+        email=ADMIN_EMAIL,
         defaults={
-            'first_name': 'Theo',
-            'last_name': 'Ultra Admin',
+            'first_name': 'System',
+            'last_name': 'Administrator',
             'is_staff': True,
             'is_superuser': True,
             'is_active': True,
@@ -282,20 +286,18 @@ def create_public_tenant():
     if created:
         ultra_user.set_password('theo123!@#')
         ultra_user.save()
-        print("✅ Δημιουργήθηκε Ultra-Superuser: thodoris_st@hotmail.com")
+        print(f"✅ Δημιουργήθηκε Ultra-Superuser: {ADMIN_EMAIL}")
     else:
-        # Ενημέρωση password αν υπάρχει ήδη
+        # ΜΟΝΟ ενημέρωση password, ΟΧΙ αλλαγή δικαιωμάτων σε υπάρχοντες χρήστες
+        # Αυτό προστατεύει από conflict με χρήστες που προσκλήθηκαν ως ένοικοι
         ultra_user.set_password('theo123!@#')
-        ultra_user.is_superuser = True
-        ultra_user.is_staff = True
-        ultra_user.is_active = True
-        ultra_user.email_verified = True
-        ultra_user.save()
-        print("✅ Ενημερώθηκε Ultra-Superuser: thodoris_st@hotmail.com")
+        # Διατηρούμε τα υπάρχοντα δικαιώματα - δεν τα αλλάζουμε
+        ultra_user.save(update_fields=['password'])
+        print(f"✅ Ενημερώθηκε password για Ultra-Superuser: {ADMIN_EMAIL}")
 
     # Verify authentication works
     from django.contrib.auth import authenticate
-    test_auth = authenticate(username='thodoris_st@hotmail.com', password='theo123!@#')
+    test_auth = authenticate(username=ADMIN_EMAIL, password='theo123!@#')
     if test_auth:
         print("   ✅ Authentication verified - login will work!")
     else:
@@ -543,7 +545,7 @@ def create_demo_data(tenant_schema):
             if building.name == 'Αλκμάνος 22':
                 # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'thodoris_st@hotmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '6936868236', 'owner_email': '', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
                     {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
                     {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
@@ -551,7 +553,7 @@ def create_demo_data(tenant_schema):
                     {'number': 'Β3', 'floor': 1, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': 'giannis.m@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
                     {'number': 'Γ1', 'floor': 2, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': 'anna.pap@email.com', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': 'christos.g@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
                     {'number': 'Γ2', 'floor': 2, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': 'panagiotis.a@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 100, 'elevator_mills': 115},
-                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
+                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2109876543', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '6944567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
                     {'number': 'Δ1', 'floor': 3, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
                 ]
                 
@@ -877,7 +879,7 @@ def save_credentials():
 🏢 PUBLIC SCHEMA (localhost):
 -----------------------------
 👑 Ultra-Superuser (System Administrator):
-   Email: thodoris_st@hotmail.com
+   Email: admin@newconcierge.app
    Password: theo123!@#
    Permissions: Complete system management, all tenants and users
    Admin URL: http://localhost:8000/admin/
@@ -1018,7 +1020,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser (thodoris_st@hotmail.com):
+👑 Ultra-Superuser (admin@newconcierge.app):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1121,7 +1123,7 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    print("   Email: thodoris_st@hotmail.com")
+    print("   Email: admin@newconcierge.app")
     print("   Password: theo123!@#")
     print("   Permissions: Complete system management")
     

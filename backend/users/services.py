@@ -547,6 +547,403 @@ class EmailService:
             logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
             return False
 
+    @staticmethod
+    def send_kiosk_registration_email(invitation, building, apartment=None):
+        """
+        Send email for kiosk self-registration.
+        This is for users who scanned the QR code on the building kiosk.
+        """
+        from django.db import connection
+        
+        # Get tenant subdomain for the invitation URL
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the registration URL
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            registration_url = f"https://{tenant_subdomain}.newconcierge.app/kiosk/complete-registration?token={invitation.token}"
+        else:
+            registration_url = f"{base_url}/kiosk/complete-registration?token={invitation.token}"
+        
+        # Get apartment info
+        apartment_info = ''
+        if apartment:
+            apartment_info = f'<p style="margin: 0;"><strong>Διαμέρισμα:</strong> {apartment.number}</p>'
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ολοκληρώστε την εγγραφή σας - {building.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Καλώς ήρθατε στο {building.name}!</h2>
+                
+                <p>Σκανάρατε το QR code στο kiosk του κτιρίου και είστε ένα βήμα μακριά από την πλήρη πρόσβαση.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+                    <p style="margin: 0;"><strong>Email:</strong> {invitation.email}</p>
+                    <p style="margin: 0;"><strong>Κτίριο:</strong> {building.name}</p>
+                    {apartment_info}
+                    {f'<p style="margin: 0;"><strong>Διεύθυνση:</strong> {building.address}</p>' if building.address else ''}
+                </div>
+                
+                <p style="text-align: center;">
+                    <a href="{registration_url}" 
+                       style="background: #4CAF50; color: white; padding: 15px 30px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-size: 16px; font-weight: bold;">
+                        Ολοκλήρωση Εγγραφής
+                    </a>
+                </p>
+                
+                <p style="color: #666; font-size: 14px; text-align: center;">
+                    Αυτός ο σύνδεσμος είναι έγκυρος για 7 ημέρες.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Καλώς ήρθατε στο {building.name}!
+
+Σκανάρατε το QR code στο kiosk του κτιρίου. Για να ολοκληρώσετε την εγγραφή σας, κάντε κλικ στον παρακάτω σύνδεσμο:
+
+{registration_url}
+
+Email: {invitation.email}
+Κτίριο: {building.name}
+
+Αυτός ο σύνδεσμος είναι έγκυρος για 7 ημέρες.
+
+Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[invitation.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent kiosk registration email to {invitation.email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send kiosk registration email to {invitation.email}: {e}")
+            return False
+
+    @staticmethod
+    def send_login_reminder_email(user, building):
+        """
+        Send login reminder email for existing users who tried to register via kiosk.
+        """
+        from django.db import connection
+        
+        # Get tenant subdomain for the login URL
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the login URL
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            login_url = f"https://{tenant_subdomain}.newconcierge.app/login"
+            reset_url = f"https://{tenant_subdomain}.newconcierge.app/forgot-password"
+        else:
+            login_url = f"{base_url}/login"
+            reset_url = f"{base_url}/forgot-password"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Έχετε ήδη λογαριασμό - {building.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Γεια σας {user.first_name or ''}!</h2>
+                
+                <p>Προσπαθήσατε να εγγραφείτε μέσω του kiosk στο <strong>{building.name}</strong>, αλλά έχετε ήδη λογαριασμό με το email <strong>{user.email}</strong>.</p>
+                
+                <p style="text-align: center;">
+                    <a href="{login_url}" 
+                       style="background: #2196F3; color: white; padding: 15px 30px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-size: 16px; font-weight: bold; margin: 10px;">
+                        Σύνδεση
+                    </a>
+                </p>
+                
+                <p style="text-align: center; color: #666;">
+                    Ξεχάσατε τον κωδικό σας? 
+                    <a href="{reset_url}" style="color: #2196F3;">Επαναφορά κωδικού</a>
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Γεια σας {user.first_name or ''}!
+
+Προσπαθήσατε να εγγραφείτε μέσω του kiosk στο {building.name}, αλλά έχετε ήδη λογαριασμό με το email {user.email}.
+
+Για σύνδεση: {login_url}
+Ξεχάσατε τον κωδικό; {reset_url}
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent login reminder email to {user.email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send login reminder email to {user.email}: {e}")
+            return False
+
+    @staticmethod
+    def send_magic_login_email(user, building, apartment=None):
+        """
+        Send magic login email that allows user to login directly and go to my-apartment.
+        Creates a one-time token for automatic authentication.
+        """
+        from django.db import connection
+        from rest_framework_simplejwt.tokens import RefreshToken
+        
+        # Create a refresh token for the user
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        
+        # Get tenant subdomain for the login URL
+        tenant_subdomain = None
+        try:
+            if hasattr(connection, 'tenant') and connection.tenant:
+                tenant_subdomain = connection.tenant.subdomain
+        except:
+            pass
+        
+        # Build the magic login URL
+        base_url = settings.FRONTEND_URL.rstrip('/')
+        if tenant_subdomain and 'newconcierge.app' in base_url:
+            magic_url = f"https://{tenant_subdomain}.newconcierge.app/magic-login?token={access_token}"
+        else:
+            magic_url = f"{base_url}/magic-login?token={access_token}"
+        
+        apartment_info = f" στο διαμέρισμα <strong>{apartment.number}</strong>" if apartment else ""
+        apartment_info_text = f" στο διαμέρισμα {apartment.number}" if apartment else ""
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Σύνδεση - {building.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Καλωσήρθατε, {user.first_name or user.email}! 🎉</h2>
+                
+                <p>Έχετε ήδη λογαριασμό στο <strong>{building.name}</strong>{apartment_info}.</p>
+                
+                <p>Πατήστε το κουμπί παρακάτω για να συνδεθείτε αυτόματα και να δείτε το διαμέρισμά σας:</p>
+                
+                <p style="text-align: center;">
+                    <a href="{magic_url}" 
+                       style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+                              color: white; padding: 18px 40px; 
+                              text-decoration: none; border-radius: 8px; display: inline-block;
+                              font-size: 18px; font-weight: bold; margin: 15px 0;
+                              box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);">
+                        🏠 Δείτε το Διαμέρισμά σας
+                    </a>
+                </p>
+                
+                <p style="text-align: center; color: #888; font-size: 13px;">
+                    Αυτός ο σύνδεσμος λήγει σε 1 ώρα για λόγους ασφαλείας.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Καλωσήρθατε, {user.first_name or user.email}!
+
+Έχετε ήδη λογαριασμό στο {building.name}{apartment_info_text}.
+
+Πατήστε τον σύνδεσμο για να συνδεθείτε αυτόματα:
+{magic_url}
+
+Ο σύνδεσμος λήγει σε 1 ώρα για λόγους ασφαλείας.
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent magic login email to {user.email} for building {building.name}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send magic login email to {user.email}: {e}")
+            return False
+
+    @staticmethod
+    def send_new_apartment_user_notification(invitation, building, apartment, existing_users, manager):
+        """
+        Notify admin when a new user registers for an apartment that already has registered users.
+        This allows the admin to be aware of and potentially review the registration.
+        """
+        if not manager or not manager.email:
+            logger.warning("No manager email available for apartment user notification")
+            return False
+        
+        # Build list of existing users
+        existing_users_html = ""
+        existing_users_text = ""
+        for membership in existing_users:
+            user = membership.resident
+            user_name = user.get_full_name() or user.email
+            existing_users_html += f'<li>{user_name} ({user.email})</li>'
+            existing_users_text += f"- {user_name} ({user.email})\n"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Νέα εγγραφή - Διαμέρισμα {apartment.number} ({building.name})"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0;">🔔 Ειδοποίηση Διαχειριστή</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1e3a5f; margin-top: 0;">Νέα εγγραφή χρήστη</h2>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff9800;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>Σημείωση:</strong> Αυτό το διαμέρισμα έχει ήδη εγγεγραμμένους χρήστες.
+                    </p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
+                    <h3 style="margin-top: 0; color: #1e3a5f;">Νέος χρήστης:</h3>
+                    <p style="margin: 5px 0;"><strong>Όνομα:</strong> {invitation.first_name} {invitation.last_name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> {invitation.email}</p>
+                    <p style="margin: 5px 0;"><strong>Διαμέρισμα:</strong> {apartment.number}</p>
+                    <p style="margin: 5px 0;"><strong>Κτίριο:</strong> {building.name}</p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+                    <h3 style="margin-top: 0; color: #1e3a5f;">Υπάρχοντες χρήστες στο διαμέρισμα:</h3>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        {existing_users_html}
+                    </ul>
+                </div>
+                
+                <p style="color: #666; font-size: 14px;">
+                    Η εγγραφή θα ολοκληρωθεί κανονικά. Αυτή η ειδοποίηση είναι μόνο για ενημέρωσή σας.
+                    Αν χρειάζεται κάποια ενέργεια, μπορείτε να διαχειριστείτε τους χρήστες από τον πίνακα ελέγχου.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                
+                <p style="color: #888; font-size: 12px;">
+                    Αυτό είναι αυτόματο μήνυμα από το σύστημα New Concierge.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = f"""
+Νέα εγγραφή χρήστη στο διαμέρισμα {apartment.number}
+
+ΣΗΜΕΙΩΣΗ: Αυτό το διαμέρισμα έχει ήδη εγγεγραμμένους χρήστες.
+
+Νέος χρήστης:
+- Όνομα: {invitation.first_name} {invitation.last_name}
+- Email: {invitation.email}
+- Διαμέρισμα: {apartment.number}
+- Κτίριο: {building.name}
+
+Υπάρχοντες χρήστες:
+{existing_users_text}
+
+Η εγγραφή θα ολοκληρωθεί κανονικά. Αυτή η ειδοποίηση είναι μόνο για ενημέρωσή σας.
+
+Με εκτίμηση,
+Η ομάδα του New Concierge
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[manager.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            logger.info(f"Sent new apartment user notification to {manager.email} for apartment {apartment.number}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send new apartment user notification: {e}")
+            return False
+
 
 class InvitationService:
     """
@@ -555,21 +952,35 @@ class InvitationService:
     
     @staticmethod
     def create_invitation(invited_by, email, first_name="", last_name="", 
-                         invitation_type="registration", building=None, building_id=None, assigned_role=None):
+                         invitation_type="registration", building=None, building_id=None, 
+                         apartment_id=None, assigned_role=None):
         """
         Δημιουργία νέας πρόσκλησης
         
         Args:
             building: Building object (optional, legacy support)
             building_id: Building ID (optional, preferred)
+            apartment_id: Apartment ID for linking user to specific apartment
+            assigned_role: Role to assign to user (resident, internal_manager, etc.)
         """
         # Έλεγχος αν υπάρχει ήδη χρήστης με αυτό το email
-        if User.objects.filter(email=email).exists():
-            raise ValueError("Χρήστης με αυτό το email υπάρχει ήδη.")
+        existing_user = User.objects.filter(email=email).first()
+        if existing_user:
+            # Επιτρέπουμε επαναποστολή αν ο χρήστης δεν έχει επιβεβαιώσει το email ή δεν είναι ενεργός
+            email_verified = getattr(existing_user, 'email_verified', True)
+            is_active = getattr(existing_user, 'is_active', True)
+            
+            if email_verified and is_active:
+                raise ValueError("Χρήστης με αυτό το email υπάρχει ήδη και είναι ενεργός.")
+            
+            # Αν ο χρήστης δεν έχει επιβεβαιώσει ή δεν είναι ενεργός, διαγράφουμε τον χρήστη
+            # για να μπορέσει να ξαναγίνει η εγγραφή μέσω νέας πρόσκλησης
+            existing_user.delete()
         
-        # Έλεγχος για pending invitations
-        if UserInvitation.objects.filter(email=email, status='pending').exists():
-            raise ValueError("Υπάρχει ήδη ενεργή πρόσκληση για αυτό το email.")
+        # Έλεγχος για pending invitations - ακυρώνουμε τις παλιές
+        old_invitations = UserInvitation.objects.filter(email=email, status='pending')
+        if old_invitations.exists():
+            old_invitations.update(status='cancelled')
         
         # Determine building_id from either parameter
         final_building_id = building_id or (building.id if building else None)
@@ -582,6 +993,7 @@ class InvitationService:
             invitation_type=invitation_type,
             invited_by=invited_by,
             building_id=final_building_id,
+            apartment_id=apartment_id,
             assigned_role=assigned_role
         )
         
@@ -593,10 +1005,23 @@ class InvitationService:
             raise ValueError("Αποτυχία αποστολής email.")
     
     @staticmethod
-    def accept_invitation(token, password):
+    def accept_invitation(token, password, first_name=None, last_name=None, tenant=None):
         """
         Αποδοχή πρόσκλησης και δημιουργία χρήστη
+        
+        Args:
+            token: Invitation token
+            password: User password
+            first_name: Optional first name (overrides invitation first_name, useful for kiosk registrations)
+            last_name: Optional last name (overrides invitation last_name, useful for kiosk registrations)
+            tenant: Optional tenant to assign to user (from request.tenant, used when invited_by has no tenant)
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[INVITATION] Starting accept_invitation for token: {token}")
+        logger.info(f"[INVITATION] Password provided: {'Yes' if password else 'No'}, length: {len(password) if password else 0}")
+        
         try:
             invitation = UserInvitation.objects.get(token=token, status='pending')
         except UserInvitation.DoesNotExist:
@@ -606,15 +1031,46 @@ class InvitationService:
             invitation.expire()
             raise ValueError("Η πρόσκληση έχει λήξει.")
         
-        # Δημιουργία χρήστη
+        logger.info(f"[INVITATION] Found invitation for email: {invitation.email}")
+        
+        # Use provided first_name/last_name or fall back to invitation values
+        # This is particularly useful for kiosk registrations where name is entered during completion
+        final_first_name = first_name if first_name else invitation.first_name
+        final_last_name = last_name if last_name else invitation.last_name
+        
+        # Δημιουργία χρήστη - ΣΗΜΑΝΤΙΚΟ: is_superuser και is_staff πρέπει να είναι False
+        # για όλους τους χρήστες που δημιουργούνται μέσω πρόσκλησης
         user = User.objects.create_user(
             email=invitation.email,
-            first_name=invitation.first_name,
-            last_name=invitation.last_name,
+            first_name=final_first_name,
+            last_name=final_last_name,
             password=password,
             is_active=True,
+            is_staff=False,  # Explicit: δεν είναι staff
+            is_superuser=False,  # Explicit: δεν είναι superuser
             email_verified=True
         )
+        
+        # Verify password was set correctly
+        password_check = user.check_password(password)
+        logger.info(f"[INVITATION] User created: {user.email}, ID: {user.id}")
+        logger.info(f"[INVITATION] Password verification after creation: {password_check}")
+        
+        # Ορισμός tenant - προτεραιότητα: invited_by.tenant → passed tenant
+        user_tenant = None
+        if invitation.invited_by and hasattr(invitation.invited_by, 'tenant') and invitation.invited_by.tenant:
+            user_tenant = invitation.invited_by.tenant
+            logger.info(f"[INVITATION] Using tenant from invited_by: {user_tenant.schema_name}")
+        elif tenant:
+            user_tenant = tenant
+            logger.info(f"[INVITATION] Using passed tenant: {user_tenant.schema_name}")
+        
+        if user_tenant:
+            user.tenant = user_tenant
+            user.save(update_fields=['tenant'])
+            logger.info(f"[INVITATION] Assigned tenant {user_tenant.schema_name} to user {user.email}")
+        else:
+            logger.warning(f"[INVITATION] No tenant found for user {user.email} - BuildingMembership may not be created!")
         
         # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
@@ -629,37 +1085,131 @@ class InvitationService:
             except Group.DoesNotExist:
                 pass
         
-        # Δημιουργία building membership αν υπάρχει building
+        # Δημιουργία building membership και σύνδεση με apartment
         if invitation.building_id:
+            logger.info(f"Creating building membership for user {user.email} in building {invitation.building_id}")
+            
             try:
                 from buildings.models import Building, BuildingMembership
-                building = Building.objects.get(id=invitation.building_id)
+                from apartments.models import Apartment
+                from django_tenants.utils import schema_context
                 
-                # Χρήση assigned_role για building membership role (ή default 'resident')
-                membership_role = invitation.assigned_role or 'resident'
-                
-                BuildingMembership.objects.create(
-                    resident=user,
-                    building=building,
-                    role=membership_role
-                )
-                
-                # Αν ο ρόλος είναι internal_manager, ορίζουμε building.internal_manager
-                if invitation.assigned_role == 'internal_manager':
-                    building.internal_manager = user
-                    building.save(update_fields=['internal_manager'])
+                # Χρησιμοποιούμε schema_context για να διασφαλίσουμε ότι επιστρέφουμε στο αρχικό schema
+                if user.tenant:
+                    logger.info(f"Switching to tenant schema: {user.tenant.schema_name}")
+                    with schema_context(user.tenant.schema_name):
+                        building = Building.objects.get(id=invitation.building_id)
+                        logger.info(f"Found building: {building.name} (ID: {building.id})")
+                        
+                        # Χρήση assigned_role για building membership role (ή default 'resident')
+                        membership_role = invitation.assigned_role or 'resident'
+                        
+                        # Έλεγχος αν υπάρχει ήδη membership
+                        existing_membership = BuildingMembership.objects.filter(
+                            resident=user, 
+                            building=building
+                        ).first()
+                        
+                        if existing_membership:
+                            logger.info(f"Membership already exists for user {user.email} in building {building.name}")
+                        else:
+                            BuildingMembership.objects.create(
+                                resident=user,
+                                building=building,
+                                role=membership_role
+                            )
+                            logger.info(f"Created building membership: user={user.email}, building={building.name}, role={membership_role}")
+                        
+                        # Αν ο ρόλος είναι internal_manager, ορίζουμε building.internal_manager
+                        if invitation.assigned_role == 'internal_manager':
+                            building.internal_manager = user
+                            building.save(update_fields=['internal_manager'])
+                            logger.info(f"Set {user.email} as internal manager of {building.name}")
+                        
+                        # ΝΕΟ: Σύνδεση χρήστη με ΟΛΑ τα διαμερίσματα που έχουν το email του
+                        # (Υποστήριξη για ιδιοκτήτες με πολλά διαμερίσματα)
+                        user_email_lower = user.email.lower()
+                        
+                        # Βρες ΟΛΑ τα διαμερίσματα στο building που ανήκουν στον χρήστη
+                        from django.db.models import Q
+                        matching_apartments = Apartment.objects.filter(
+                            building=building
+                        ).filter(
+                            Q(owner_email__iexact=user_email_lower) | 
+                            Q(tenant_email__iexact=user_email_lower)
+                        )
+                        
+                        linked_count = 0
+                        for apartment in matching_apartments:
+                            try:
+                                # Προσδιόρισε αν είναι owner ή tenant
+                                is_owner = apartment.owner_email and apartment.owner_email.lower() == user_email_lower
+                                is_tenant = apartment.tenant_email and apartment.tenant_email.lower() == user_email_lower
+                                
+                                if is_owner:
+                                    if apartment.owner_user != user:
+                                        apartment.owner_user = user
+                                        apartment.save(update_fields=['owner_user'])
+                                        logger.info(f"✅ Set owner_user for apartment {apartment.number} to user {user.email}")
+                                        linked_count += 1
+                                elif is_tenant:
+                                    if apartment.tenant_user != user:
+                                        apartment.tenant_user = user
+                                        apartment.is_rented = True
+                                        apartment.save(update_fields=['tenant_user', 'is_rented'])
+                                        logger.info(f"✅ Set tenant_user for apartment {apartment.number} to user {user.email}")
+                                        linked_count += 1
+                                        
+                            except Exception as e:
+                                logger.error(f"❌ Failed to link user to apartment {apartment.number}: {e}")
+                        
+                        if linked_count > 0:
+                            logger.info(f"✅ Linked user {user.email} to {linked_count} apartment(s) in building {building.name}")
+                        elif invitation.apartment_id:
+                            # Fallback: Αν δεν βρέθηκαν με email, χρησιμοποίησε το apartment_id από την πρόσκληση
+                            try:
+                                apartment = Apartment.objects.get(id=invitation.apartment_id)
+                                role = (invitation.assigned_role or '').lower()
+                                
+                                if role in ['owner', 'ιδιοκτήτης']:
+                                    apartment.owner_user = user
+                                    apartment.save(update_fields=['owner_user'])
+                                    logger.info(f"✅ Set owner_user for apartment {apartment.number} (fallback)")
+                                else:
+                                    apartment.tenant_user = user
+                                    apartment.is_rented = True
+                                    apartment.save(update_fields=['tenant_user', 'is_rented'])
+                                    logger.info(f"✅ Set tenant_user for apartment {apartment.number} (fallback)")
+                                    
+                            except Apartment.DoesNotExist:
+                                logger.error(f"❌ Apartment with ID {invitation.apartment_id} not found")
+                            except Exception as e:
+                                logger.error(f"❌ Failed to link user to apartment: {e}", exc_info=True)
                     
+            except Building.DoesNotExist:
+                logger.error(f"Building with ID {invitation.building_id} not found in current tenant schema")
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to create building membership: {e}")
-                pass  # Building might not exist in current tenant
+                logger.error(f"Failed to create building membership: {e}", exc_info=True)
         
-        # Ενημέρωση invitation
+        # ΚΡΙΣΙΜΟ: Διασφάλιση ότι residents δεν έχουν admin permissions
+        # Αυτό προστατεύει από bugs ή data corruption που μπορεί να θέσουν λάθος flags
+        if invitation.assigned_role == 'resident' or not invitation.assigned_role:
+            user.refresh_from_db()
+            if user.is_staff or user.is_superuser:
+                logger.warning(f"⚠️ Correcting admin flags for resident {user.email}: is_staff={user.is_staff}, is_superuser={user.is_superuser}")
+                user.is_staff = False
+                user.is_superuser = False
+                user.save(update_fields=['is_staff', 'is_superuser'])
+                logger.info(f"✅ Admin flags corrected for {user.email}")
+        
+        # Ενημέρωση invitation (πρέπει να γίνει στο public schema)
         invitation.accept(user)
         
         # Αποστολή welcome email
         EmailService.send_welcome_email(user)
+        
+        logger.info(f"[INVITATION] Invitation accepted successfully for {user.email}")
+        logger.info(f"[INVITATION] Final user state: role={user.role}, is_staff={user.is_staff}, is_superuser={user.is_superuser}")
         
         return user
 

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon } from 'lucide-react';
+import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon, Bell } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { User } from '@/types/user';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { getEffectiveRole, getRoleLabel, hasOfficeAdminAccess } from '@/lib/roleUtils';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
@@ -50,6 +52,10 @@ export default function MyProfilePage() {
 
   const [formState, setFormState] = React.useState<ProfileFormState>(createFormState());
   const [initialState, setInitialState] = React.useState<ProfileFormState>(createFormState());
+  const roleLabel = getRoleLabel(user);
+  const normalizedRole = getEffectiveRole(user);
+  const isAdminRole = hasOfficeAdminAccess(user);
+  const { requestPermission, fcmToken, permission } = usePushNotifications();
 
   React.useEffect(() => {
     if (user) {
@@ -181,7 +187,7 @@ export default function MyProfilePage() {
                     <Label>Ρόλος</Label>
                     <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm h-10">
                       <Shield className="h-4 w-4 text-muted-foreground" />
-                      <span>{user.role || (user.is_superuser ? 'superuser' : user.is_staff ? 'manager' : 'tenant')}</span>
+                      <span>{roleLabel}</span>
                     </div>
                   </div>
                 </div>
@@ -220,10 +226,10 @@ export default function MyProfilePage() {
                 <div className="flex items-center justify-between rounded-lg border bg-card/50 px-4 py-3">
                   <div>
                     <p className="text-xs uppercase text-muted-foreground font-semibold">Κατάσταση</p>
-                    <p className="font-medium mt-1">{user.is_superuser ? 'Superuser' : user.is_staff ? 'Διαχειριστής' : 'Χρήστης'}</p>
+                    <p className="font-medium mt-1">{roleLabel}</p>
                   </div>
-                  <Badge variant={user.is_superuser ? 'default' : 'secondary'}>
-                    {user.is_superuser ? 'Superuser' : user.is_staff ? 'Manager' : 'Tenant'}
+                  <Badge variant={isAdminRole ? 'default' : 'secondary'}>
+                    {roleLabel}
                   </Badge>
                 </div>
                 <div className="space-y-1 rounded-lg border bg-card/50 px-4 py-3">
@@ -279,6 +285,44 @@ export default function MyProfilePage() {
                   <Label htmlFor="office_bank_beneficiary">Δικαιούχος</Label>
                   <Input id="office_bank_beneficiary" value={formState.office_bank_beneficiary} onChange={handleChange('office_bank_beneficiary')} />
                 </div>
+              </div>
+            }
+          />
+
+          {/* Notifications */}
+          <BentoGridItem
+            className="md:col-span-1"
+            title="Ειδοποιήσεις"
+            description="Ρυθμίσεις Push Notifications"
+            header={
+              <div className="space-y-4 mt-4 text-sm">
+                <p className="text-muted-foreground">
+                  Λάβετε ενημερώσεις για ανακοινώσεις και λογαριασμούς στο κινητό σας.
+                </p>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    <span>Push Notifications</span>
+                  </div>
+                  {fcmToken ? (
+                    <Badge variant="default" className="bg-green-600">Ενεργοποιημένες</Badge>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={requestPermission}
+                      disabled={permission === 'denied'}
+                    >
+                      {permission === 'denied' ? 'Μπλοκαρισμένες' : 'Ενεργοποίηση'}
+                    </Button>
+                  )}
+                </div>
+                {permission === 'denied' && (
+                  <p className="text-xs text-red-500 mt-2">
+                    Οι ειδοποιήσεις έχουν αποκλειστεί από τον browser. Παρακαλώ ενεργοποιήστε τις από τις ρυθμίσεις της σελίδας.
+                  </p>
+                )}
               </div>
             }
           />
