@@ -49,6 +49,7 @@ import { StatisticsSection } from './StatisticsSection';
 import { HeatingAnalysisModal } from './HeatingAnalysisModal';
 import { getPeriodInfo, getPreviousMonthName } from './utils/periodHelpers';
 import { formatAmount } from './utils/formatters';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 const printStyles = `
   @media print {
@@ -150,7 +151,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[120] p-4">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
       <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
         {/* ✅ ΝΕΟ: Screen Header - Οριζόντια Διάταξη */}
@@ -354,5 +356,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
         buildingHeatingFixedPercentage={buildingData?.heating_fixed_percentage}
       />
     </div>
+    </div>
+    </ModalPortal>
   );
 };

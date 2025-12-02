@@ -17,6 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 import { formatCurrency } from '@/lib/utils';
 
 interface ApartmentBalance {
@@ -171,10 +172,11 @@ export default function PaymentNotificationModal({
   if (!isOpen || !apartment) return null;
 
   return (
+    <ModalPortal>
     <>
       {/* Modal */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[120] p-4"
         onClick={onClose}
       >
         <div 
@@ -576,5 +578,6 @@ export default function PaymentNotificationModal({
         }
       `}</style>
     </>
+    </ModalPortal>
   );
 }
