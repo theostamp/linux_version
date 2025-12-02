@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Clock, Thermometer, Smartphone, QrCode, Building2, CloudSun, ChevronRight } from 'lucide-react';
+import { Clock, Thermometer, Smartphone, Building2, CloudSun, Check } from 'lucide-react';
 import type { KioskData } from '@/hooks/useKioskData';
 import QRCodeLib from 'qrcode';
 import {
   AmbientBrandingConfig,
-  AmbientBackgroundConfig,
   resolveAmbientBranding,
 } from '@/components/kiosk/scenes/branding';
 
@@ -16,38 +15,8 @@ interface AmbientShowcaseSceneProps {
   brandingConfig?: Partial<AmbientBrandingConfig>;
 }
 
-type VisualAsset = {
-  id: string;
-  title?: string;
-  src: string;
-  type: 'image' | 'video';
-  poster?: string;
-};
-
-// HD visual library - high quality images for ambient display
-const HD_VISUAL_LIBRARY: VisualAsset[] = [
-  {
-    id: 'city-aerial',
-    title: 'City View',
-    src: '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg',
-    type: 'image',
-  },
-  {
-    id: 'aurora',
-    src: '/kiosk/assets/visuals/aurora-drift.svg',
-    type: 'image',
-  },
-  {
-    id: 'sunset',
-    src: '/kiosk/assets/visuals/sunset-haze.svg',
-    type: 'image',
-  },
-  {
-    id: 'ocean',
-    src: '/kiosk/assets/visuals/calm-waves.svg',
-    type: 'image',
-  },
-];
+// Single HD image for ambient display
+const AMBIENT_IMAGE = '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg';
 
 const formatGreekDate = (date: Date) => ({
   day: date.toLocaleDateString('el-GR', { day: '2-digit' }),
@@ -81,7 +50,7 @@ const extractWeatherCondition = (data?: KioskData | null): string | null => {
 // Compact QR Code component for sidebar
 const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const QR_SIZE = 90;
+  const QR_SIZE = 100;
 
   useEffect(() => {
     if (canvasRef.current && buildingId) {
@@ -96,7 +65,7 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
           width: QR_SIZE,
           margin: 1,
           color: {
-            dark: '#1e293b',
+            dark: '#0f766e', // teal-700
             light: '#ffffff'
           },
           errorCorrectionLevel: 'M'
@@ -109,7 +78,7 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
   }, [buildingId]);
 
   return (
-    <div className="bg-white rounded-lg p-1.5 shadow-lg">
+    <div className="bg-white rounded-xl p-2 shadow-xl ring-2 ring-teal-400/30">
       <canvas
         ref={canvasRef}
         style={{ width: QR_SIZE, height: QR_SIZE, imageRendering: 'pixelated' }}
@@ -120,7 +89,6 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
 
 export default function AmbientShowcaseScene({ data, buildingId, brandingConfig }: AmbientShowcaseSceneProps) {
   const [now, setNow] = useState(new Date());
-  const [visualIndex, setVisualIndex] = useState(0);
 
   useEffect(() => {
     const timeInterval = setInterval(() => setNow(new Date()), 1000);
@@ -132,32 +100,9 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     [data, brandingConfig]
   );
 
-  const visualPlaylist = useMemo(() => {
-    const derived: VisualAsset[] = [];
-    if (branding.background?.src) {
-      derived.push({
-        id: 'branding-source',
-        src: branding.background.src,
-        type: branding.background.type === 'video' ? 'video' : 'image',
-        poster: branding.background.poster,
-      });
-    }
-    return [...derived, ...HD_VISUAL_LIBRARY];
-  }, [branding.background]);
+  // Use branding image if available, otherwise use the HD image
+  const backgroundImage = branding.background?.src || AMBIENT_IMAGE;
 
-  useEffect(() => {
-    setVisualIndex(0);
-  }, [visualPlaylist.length]);
-
-  useEffect(() => {
-    if (visualPlaylist.length <= 1) return;
-    const interval = setInterval(() => {
-      setVisualIndex((prev) => (prev + 1) % visualPlaylist.length);
-    }, 20000); // 20 seconds per visual
-    return () => clearInterval(interval);
-  }, [visualPlaylist.length]);
-
-  const currentVisual = visualPlaylist[visualIndex] ?? HD_VISUAL_LIBRARY[0];
   const dateInfo = formatGreekDate(now);
   const formattedTime = now.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
   const temperature = extractTemperature(data);
@@ -167,85 +112,76 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white">
-      {/* Full-screen Background Visual (80-85%) */}
+      {/* Full-screen Background Image */}
       <div className="absolute inset-0">
-        {visualPlaylist.map((visual, index) => (
-          <div
-            key={visual.id + index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === visualIndex ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            {visual.type === 'video' ? (
-              <video
-                className="h-full w-full object-cover"
-                autoPlay
-                loop
-                muted
-                playsInline
-                controls={false}
-                controlsList="nodownload nofullscreen noremoteplayback"
-                disablePictureInPicture
-                preload="auto"
-                poster={visual.poster}
-              >
-                <source src={visual.src} />
-              </video>
-            ) : (
-              <img src={visual.src} alt="" className="h-full w-full object-cover" />
-            )}
-          </div>
-        ))}
-        
-        {/* Subtle gradient overlay for sidebar readability */}
-        <div className="absolute inset-y-0 left-0 w-[22%] bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+        <img 
+          src={backgroundImage} 
+          alt="" 
+          className="h-full w-full object-cover"
+        />
+        {/* Gradient overlay for sidebar area */}
+        <div className="absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-teal-900/90 via-teal-800/70 to-transparent" />
       </div>
 
-      {/* Sidebar - 15-18% width */}
-      <aside className="absolute inset-y-0 left-0 w-[16%] min-w-[220px] max-w-[280px] flex flex-col bg-black/50 backdrop-blur-xl border-r border-white/10">
+      {/* Sidebar - Teal/Cyan theme with better visibility */}
+      <aside className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col bg-gradient-to-b from-teal-800/95 via-teal-900/95 to-cyan-900/95 backdrop-blur-xl border-r border-teal-400/20 shadow-2xl">
         
+        {/* Header with greeting */}
+        <div className="px-5 pt-6 pb-4 bg-gradient-to-b from-teal-700/50 to-transparent">
+          <p className="text-teal-200 text-lg font-medium tracking-wide">{greeting}</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            {data?.building_info?.name || 'Καλώς ήρθατε'}
+          </p>
+        </div>
+
         {/* Time & Date Section */}
-        <div className="px-4 py-5 border-b border-white/10">
-          <div className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.4em] text-white/60 mb-2">
-            <Clock className="h-2.5 w-2.5" />
-            {greeting}
+        <div className="px-5 py-5 border-b border-teal-400/20">
+          <div className="flex items-center gap-2 text-teal-300/80 text-[0.65rem] uppercase tracking-[0.3em] mb-3">
+            <Clock className="h-3.5 w-3.5" />
+            <span>Ώρα & Ημερομηνία</span>
           </div>
-          <p className="text-[1.8rem] font-light tabular-nums leading-none tracking-tight">{formattedTime}</p>
-          <div className="mt-2 text-[0.7rem] text-white/70">
-            <span className="font-medium">{dateInfo.weekday}</span>
-            <span className="mx-1.5 text-white/30">•</span>
+          <p className="text-[2.2rem] font-light tabular-nums leading-none text-white tracking-tight">
+            {formattedTime}
+          </p>
+          <div className="mt-3 flex items-center gap-2 text-sm text-teal-100/80">
+            <span className="font-medium capitalize">{dateInfo.weekday}</span>
+            <span className="text-teal-400/50">|</span>
             <span>{dateInfo.day} {dateInfo.month}</span>
           </div>
         </div>
 
         {/* Weather Section */}
-        <div className="px-4 py-4 border-b border-white/10">
-          <div className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.4em] text-white/60 mb-2">
-            <CloudSun className="h-2.5 w-2.5" />
-            Καιρός
+        <div className="px-5 py-5 border-b border-teal-400/20">
+          <div className="flex items-center gap-2 text-teal-300/80 text-[0.65rem] uppercase tracking-[0.3em] mb-3">
+            <CloudSun className="h-3.5 w-3.5" />
+            <span>Καιρός</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Thermometer className="h-4 w-4 text-white/70" />
-            <span className="text-xl font-light">
-              {temperature !== null ? `${temperature}°C` : '—°C'}
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-teal-700/40 rounded-lg">
+              <Thermometer className="h-5 w-5 text-teal-200" />
+            </div>
+            <div>
+              <span className="text-2xl font-light text-white">
+                {temperature !== null ? `${temperature}°C` : '—°C'}
+              </span>
+              {weatherCondition && (
+                <p className="text-sm text-teal-200/70 mt-0.5">{weatherCondition}</p>
+              )}
+            </div>
           </div>
-          {weatherCondition && (
-            <p className="text-[0.65rem] text-white/60 mt-1">{weatherCondition}</p>
-          )}
-          <p className="text-[0.6rem] text-white/50 mt-0.5">
-            {data?.building_info?.city || 'Αθήνα'}
+          <p className="text-xs text-teal-300/50 mt-2">
+            📍 {data?.building_info?.city || 'Αθήνα, Ελλάδα'}
           </p>
         </div>
 
         {/* Building Info */}
         {data?.building_info?.name && (
-          <div className="px-4 py-3 border-b border-white/10">
-            <div className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.4em] text-white/60 mb-1.5">
-              <Building2 className="h-2.5 w-2.5" />
-              Κτίριο
+          <div className="px-5 py-4 border-b border-teal-400/20">
+            <div className="flex items-center gap-2 text-teal-300/80 text-[0.65rem] uppercase tracking-[0.3em] mb-2">
+              <Building2 className="h-3.5 w-3.5" />
+              <span>Κτίριο</span>
             </div>
-            <p className="text-[0.7rem] font-medium text-white/90 leading-snug">
+            <p className="text-base font-medium text-white leading-snug">
               {data.building_info.name}
             </p>
           </div>
@@ -255,64 +191,49 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
         <div className="flex-1" />
 
         {/* App Promo Section */}
-        <div className="px-4 py-4 border-t border-white/10 bg-gradient-to-t from-indigo-950/40 to-transparent">
-          <div className="flex items-center gap-1.5 text-[0.5rem] uppercase tracking-[0.4em] text-white/60 mb-2">
-            <Smartphone className="h-2.5 w-2.5" />
-            Εφαρμογή
+        <div className="px-5 py-5 bg-gradient-to-t from-cyan-900/60 to-transparent border-t border-teal-400/20">
+          <div className="flex items-center gap-2 text-teal-300/80 text-[0.65rem] uppercase tracking-[0.3em] mb-4">
+            <Smartphone className="h-3.5 w-3.5" />
+            <span>Εφαρμογή</span>
           </div>
           
-          <div className="flex flex-col items-center gap-2">
+          {/* QR Code centered */}
+          <div className="flex flex-col items-center gap-3">
             <CompactQRCode buildingId={effectiveBuildingId} />
             <div className="text-center">
-              <p className="text-[0.6rem] font-medium text-white/90">New Concierge</p>
-              <p className="text-[0.5rem] text-white/50 mt-0.5">Σκανάρετε για σύνδεση</p>
+              <p className="text-sm font-semibold text-white">New Concierge</p>
+              <p className="text-xs text-teal-200/70 mt-1">Σκανάρετε για σύνδεση</p>
             </div>
           </div>
 
-          {/* App Features - compact */}
-          <div className="mt-3 space-y-1">
-            <div className="flex items-center gap-1 text-[0.5rem] text-white/60">
-              <ChevronRight className="h-2 w-2" />
-              <span>Ειδοποιήσεις σε πραγματικό χρόνο</span>
+          {/* App Features */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-teal-100/80">
+              <Check className="h-3.5 w-3.5 text-teal-400" />
+              <span>Ειδοποιήσεις real-time</span>
             </div>
-            <div className="flex items-center gap-1 text-[0.5rem] text-white/60">
-              <ChevronRight className="h-2 w-2" />
+            <div className="flex items-center gap-2 text-xs text-teal-100/80">
+              <Check className="h-3.5 w-3.5 text-teal-400" />
               <span>Πληρωμές κοινοχρήστων</span>
             </div>
-            <div className="flex items-center gap-1 text-[0.5rem] text-white/60">
-              <ChevronRight className="h-2 w-2" />
+            <div className="flex items-center gap-2 text-xs text-teal-100/80">
+              <Check className="h-3.5 w-3.5 text-teal-400" />
               <span>Αιτήματα συντήρησης</span>
             </div>
           </div>
         </div>
 
         {/* Branding Footer */}
-        <div className="px-4 py-2 border-t border-white/5 bg-black/30">
-          <p className="text-[0.45rem] text-white/40 text-center tracking-wide">
+        <div className="px-5 py-3 bg-teal-950/80 border-t border-teal-400/10">
+          <p className="text-[0.6rem] text-teal-300/50 text-center tracking-wider uppercase">
             Powered by New Concierge
           </p>
         </div>
       </aside>
 
-      {/* Visual indicators - bottom right */}
-      {visualPlaylist.length > 1 && (
-        <div className="absolute bottom-4 right-4 flex gap-1.5 z-10">
-          {visualPlaylist.map((_, index) => (
-            <div
-              key={index}
-              className={`h-1 rounded-full transition-all duration-500 ${
-                index === visualIndex 
-                  ? 'w-6 bg-white/80' 
-                  : 'w-1.5 bg-white/30'
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Copyright - subtle bottom center */}
-      <div className="absolute bottom-1.5 left-[16%] right-0 flex justify-center z-10">
-        <p className="text-[0.45rem] text-white/30 tracking-wide">
+      {/* Copyright - subtle bottom right */}
+      <div className="absolute bottom-2 right-4 z-10">
+        <p className="text-[0.55rem] text-white/40 tracking-wide">
           © {new Date().getFullYear()} New Concierge
         </p>
       </div>
