@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { apiGet, apiPost } from '@/lib/api';
 import { 
   AlertTriangle, 
   Database, 
@@ -92,20 +93,21 @@ export default function DatabaseCleanupPage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/financial/admin/database-cleanup/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
+      const data = await apiGet<{
+        status: string;
+        scan_results?: ScanResult;
+        available_operations?: CleanupOperation[];
+        error?: string;
+      }>('/financial/admin/database-cleanup/');
       
       if (data.status === 'preview') {
-        setScanResults(data.scan_results);
+        setScanResults(data.scan_results || null);
         setOperations(data.available_operations || []);
       } else if (data.error) {
         setError(data.error);
       }
     } catch (err) {
+      console.error('[DatabaseCleanup] Scan error:', err);
       setError('Σφάλμα σύνδεσης με τον server');
     } finally {
       setIsScanning(false);
@@ -120,20 +122,12 @@ export default function DatabaseCleanupPage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/financial/admin/database-cleanup/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          operation: selectedOperation,
-          confirm: 'CONFIRM_DELETE',
-          search_term: searchTerm || undefined
-        })
+      const data = await apiPost<CleanupResult>('/financial/admin/database-cleanup/', {
+        operation: selectedOperation,
+        confirm: 'CONFIRM_DELETE',
+        search_term: searchTerm || undefined
       });
       
-      const data = await response.json();
       setResult(data);
       
       if (data.status === 'success') {
@@ -145,6 +139,7 @@ export default function DatabaseCleanupPage() {
         await scanDatabase();
       }
     } catch (err) {
+      console.error('[DatabaseCleanup] Execute error:', err);
       setError('Σφάλμα κατά την εκτέλεση');
     } finally {
       setIsExecuting(false);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { apiGet, apiPost, apiDelete, getApiUrl } from '@/lib/api';
 import { 
   Download, 
   Upload, 
@@ -165,11 +166,7 @@ export default function BackupRestorePage() {
   const loadBackupHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      const response = await fetch('/api/financial/admin/backup/history/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const data = await apiGet<{ backups?: BackupHistory[] }>('/financial/admin/backup/history/');
       
       if (data.backups) {
         setBackupHistory(data.backups);
@@ -183,11 +180,7 @@ export default function BackupRestorePage() {
 
   const loadBackupOptions = async () => {
     try {
-      const response = await fetch('/api/financial/admin/backup/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const data = await apiGet<{ backup_types?: BackupType[]; available_buildings?: BuildingOption[] }>('/financial/admin/backup/');
       
       if (data.backup_types) {
         setBackupTypes(data.backup_types);
@@ -202,11 +195,7 @@ export default function BackupRestorePage() {
 
   const loadRestoreOptions = async () => {
     try {
-      const response = await fetch('/api/financial/admin/restore/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const data = await apiGet<{ restore_modes?: RestoreMode[] }>('/financial/admin/restore/');
       
       if (data.restore_modes) {
         setRestoreModes(data.restore_modes);
@@ -223,27 +212,27 @@ export default function BackupRestorePage() {
     setResult(null);
     
     try {
-      const response = await fetch('/api/financial/admin/backup/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          backup_type: selectedBackupType,
-          building_ids: selectedBuildings.length > 0 ? selectedBuildings : undefined,
-          include_transactions: includeTransactions,
-          date_from: dateFrom || undefined,
-          date_to: dateTo || undefined,
-          storage: selectedStorage
-        })
-      });
-      
-      if (response.ok) {
-        const contentType = response.headers.get('Content-Type');
+      // For local storage, we need raw fetch to handle blob download
+      if (selectedStorage === 'local') {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || localStorage.getItem('access_token') || localStorage.getItem('access') : null;
+        const response = await fetch(getApiUrl('/financial/admin/backup/'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            backup_type: selectedBackupType,
+            building_ids: selectedBuildings.length > 0 ? selectedBuildings : undefined,
+            include_transactions: includeTransactions,
+            date_from: dateFrom || undefined,
+            date_to: dateTo || undefined,
+            storage: selectedStorage
+          })
+        });
         
-        // For local storage, download the file
-        if (selectedStorage === 'local' || contentType?.includes('application/json') && !contentType?.includes('charset')) {
+        if (response.ok) {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -261,21 +250,30 @@ export default function BackupRestorePage() {
             message: `✅ Backup ολοκληρώθηκε! Αρχείο: ${filename}`
           });
         } else {
-          // For server/cloud storage
           const data = await response.json();
-          setResult({
-            status: 'success',
-            message: data.message || '✅ Backup αποθηκεύτηκε επιτυχώς!',
-            data: data
-          });
-          // Refresh history
-          loadBackupHistory();
+          setError(data.error || 'Σφάλμα κατά το backup');
         }
       } else {
-        const data = await response.json();
-        setError(data.error || 'Σφάλμα κατά το backup');
+        // For server/cloud storage, use apiPost
+        const data = await apiPost<{ message?: string; error?: string }>('/financial/admin/backup/', {
+          backup_type: selectedBackupType,
+          building_ids: selectedBuildings.length > 0 ? selectedBuildings : undefined,
+          include_transactions: includeTransactions,
+          date_from: dateFrom || undefined,
+          date_to: dateTo || undefined,
+          storage: selectedStorage
+        });
+        
+        setResult({
+          status: 'success',
+          message: data.message || '✅ Backup αποθηκεύτηκε επιτυχώς!',
+          data: data
+        });
+        // Refresh history
+        loadBackupHistory();
       }
     } catch (err) {
+      console.error('[Backup] Error:', err);
       setError('Σφάλμα σύνδεσης με τον server');
     } finally {
       setIsBackingUp(false);
@@ -288,12 +286,7 @@ export default function BackupRestorePage() {
     setError(null);
     
     try {
-      const response = await fetch(`/api/financial/admin/backup/history/${backupId}/`, {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
+      const data = await apiGet<{ backup_data?: unknown }>(`/financial/admin/backup/history/${backupId}/`);
       
       if (data.backup_data) {
         setBackupData(data.backup_data);
@@ -305,6 +298,7 @@ export default function BackupRestorePage() {
         setError('Δεν βρέθηκε το backup');
       }
     } catch (err) {
+      console.error('[Restore] Error loading backup:', err);
       setError('Σφάλμα φόρτωσης backup');
     } finally {
       setIsRestoring(false);
@@ -316,23 +310,15 @@ export default function BackupRestorePage() {
     if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το backup;')) return;
     
     try {
-      const response = await fetch(`/api/financial/admin/backup/history/${backupId}/`, {
-        method: 'DELETE',
-        credentials: 'include'
+      await apiDelete(`/financial/admin/backup/history/${backupId}/`);
+      loadBackupHistory();
+      setResult({
+        status: 'success',
+        message: '✅ Το backup διαγράφηκε'
       });
-      
-      if (response.ok) {
-        loadBackupHistory();
-        setResult({
-          status: 'success',
-          message: '✅ Το backup διαγράφηκε'
-        });
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Σφάλμα διαγραφής');
-      }
     } catch (err) {
-      setError('Σφάλμα σύνδεσης');
+      console.error('[Backup] Delete error:', err);
+      setError('Σφάλμα διαγραφής');
     }
   };
 
@@ -370,19 +356,10 @@ export default function BackupRestorePage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/financial/admin/restore/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          backup_data: backupData,
-          mode: 'preview'
-        })
+      const data = await apiPost<{ status?: string; error?: string }>('/financial/admin/restore/', {
+        backup_data: backupData,
+        mode: 'preview'
       });
-      
-      const data = await response.json();
       
       if (data.status === 'preview') {
         setRestorePreview(data);
@@ -390,6 +367,7 @@ export default function BackupRestorePage() {
         setError(data.error);
       }
     } catch (err) {
+      console.error('[Restore] Preview error:', err);
       setError('Σφάλμα κατά την προεπισκόπηση');
     } finally {
       setIsRestoring(false);
@@ -404,25 +382,16 @@ export default function BackupRestorePage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/financial/admin/restore/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          backup_data: backupData,
-          mode: selectedRestoreMode,
-          confirm: 'CONFIRM_RESTORE'
-        })
+      const data = await apiPost<{ status?: string; message?: string; error?: string; result?: unknown }>('/financial/admin/restore/', {
+        backup_data: backupData,
+        mode: selectedRestoreMode,
+        confirm: 'CONFIRM_RESTORE'
       });
-      
-      const data = await response.json();
       
       if (data.status === 'success') {
         setResult({
           status: 'success',
-          message: data.message,
+          message: data.message || 'Επαναφορά ολοκληρώθηκε',
           data: data.result
         });
         // Reset form
@@ -434,6 +403,7 @@ export default function BackupRestorePage() {
         setError(data.error || 'Σφάλμα κατά την επαναφορά');
       }
     } catch (err) {
+      console.error('[Restore] Execute error:', err);
       setError('Σφάλμα σύνδεσης με τον server');
     } finally {
       setIsRestoring(false);
