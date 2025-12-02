@@ -6,7 +6,7 @@ from .views import (
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
     SystemHealthCheckView, auto_fix_system_issues, financial_overview,
     FinancialReceiptViewSet, MonthlyBalanceViewSet, my_apartment_data,
-    cleanup_orphan_transactions
+    cleanup_orphan_transactions, database_cleanup
 )
 from .tests_views import (
     run_financial_tests, stop_financial_tests, get_tests_status,
@@ -51,6 +51,7 @@ urlpatterns = [
     # My Apartment endpoint για ενοίκους
     path('my-apartment/', my_apartment_data, name='my-apartment-data'),
     path('my-apartment', my_apartment_data, name='my-apartment-data-no-slash'),
-    # Admin cleanup endpoint για ορφανά transactions
+    # Admin cleanup endpoints
     path('admin/cleanup-orphan-transactions/', cleanup_orphan_transactions, name='cleanup-orphan-transactions'),
+    path('admin/database-cleanup/', database_cleanup, name='database-cleanup'),
 ] 

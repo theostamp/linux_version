@@ -269,20 +269,20 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  // Προσωρινά απενεργοποιημένο - Σύστημα & Ελέγχοι (Automated Tests Οικονομικού Πυρήνα)
-  // {
-  //   id: 'system',
-  //   title: 'Σύστημα',
-  //   colorKey: 'danger',
-  //   links: [
-  //     {
-  //       href: '/financial-tests',
-  //       label: 'Tests',
-  //       icon: <TestTube2 className="w-5 h-5" />,
-  //       roles: ['manager', 'staff', 'superuser'],
-  //     },
-  //   ]
-  // },
+  // Admin System Tools (only for superuser/admin)
+  {
+    id: 'system',
+    title: 'Σύστημα',
+    colorKey: 'danger',
+    links: [
+      {
+        href: '/admin/database-cleanup',
+        label: 'Εκκαθάριση DB',
+        icon: <TestTube2 className="w-5 h-5" />,
+        roles: ['superuser'], // Only superuser/admin
+      },
+    ]
+  },
 ];
 
 export default function CollapsibleSidebar() {
