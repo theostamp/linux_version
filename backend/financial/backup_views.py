@@ -33,7 +33,7 @@ from buildings.models import Building
 from apartments.models import Apartment
 from .models import (
     Expense, Payment, Transaction, ApartmentShare, 
-    ExpensePeriod, MonthlyBalance, FinancialReceipt
+    MonthlyBalance, FinancialReceipt
 )
 
 # Backup storage directory
