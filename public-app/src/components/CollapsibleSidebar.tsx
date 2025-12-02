@@ -276,6 +276,12 @@ const navigationGroups: NavigationGroup[] = [
     colorKey: 'danger',
     links: [
       {
+        href: '/admin/backup-restore',
+        label: 'Backup/Restore',
+        icon: <RefreshCw className="w-5 h-5" />,
+        roles: ['superuser'], // Only superuser/admin
+      },
+      {
         href: '/admin/database-cleanup',
         label: 'Εκκαθάριση DB',
         icon: <TestTube2 className="w-5 h-5" />,

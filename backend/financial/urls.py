@@ -8,6 +8,7 @@ from .views import (
     FinancialReceiptViewSet, MonthlyBalanceViewSet, my_apartment_data,
     cleanup_orphan_transactions, database_cleanup
 )
+from .backup_views import backup_database, restore_database
 from .tests_views import (
     run_financial_tests, stop_financial_tests, get_tests_status,
     get_test_coverage_info, clear_test_results
@@ -54,4 +55,7 @@ urlpatterns = [
     # Admin cleanup endpoints
     path('admin/cleanup-orphan-transactions/', cleanup_orphan_transactions, name='cleanup-orphan-transactions'),
     path('admin/database-cleanup/', database_cleanup, name='database-cleanup'),
+    # Backup & Restore endpoints
+    path('admin/backup/', backup_database, name='backup-database'),
+    path('admin/restore/', restore_database, name='restore-database'),
 ] 
