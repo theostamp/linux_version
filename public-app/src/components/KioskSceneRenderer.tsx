@@ -4,9 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useKioskScenes, KioskScene, WidgetPlacement } from '@/hooks/useKioskScenes';
 import { useKioskData } from '@/hooks/useKioskData';
 import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
-import FinancialSceneCustom from '@/components/kiosk/scenes/FinancialSceneCustom';
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
-import LifestyleSceneCustom from '@/components/kiosk/scenes/LifestyleSceneCustom';
 import AmbientShowcaseScene from '@/components/kiosk/scenes/AmbientShowcaseScene';
 import { extractAmbientBrandingFromSettings } from '@/components/kiosk/scenes/branding';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -21,7 +19,6 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   const [fallbackSceneIndex, setFallbackSceneIndex] = useState(0);
   const fallbackScenes = [
     { name: 'Πρωινή Επισκόπηση', Component: MorningOverviewSceneCustom },
-    { name: 'Lifestyle & Community', Component: LifestyleSceneCustom },
     { name: 'Ambient Showcase', Component: AmbientShowcaseScene },
   ];
 
@@ -264,42 +261,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     );
   }
 
-  // Check if this is the Financial scene - use custom layout
-  if (currentScene.name === 'Οικονομική Ενημέρωση') {
-    return (
-      <div
-        className={`transition-opacity duration-300 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}
-      >
-        <FinancialSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
-
-        {/* Scene indicator */}
-        {scenes.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
-            {scenes.map((scene, index) => (
-              <div
-                key={scene.id}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentSceneIndex
-                    ? 'w-8 bg-blue-400'
-                    : 'w-2 bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Scene name overlay */}
-        <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
-          <p className="text-white text-sm font-medium">{currentScene.name}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if this is the Lifestyle & Community scene - use custom layout
-  if (currentScene.name === 'Lifestyle & Community' || currentScene.name === 'Ζωή & Κοινότητα') {
   // Check if this is the Ambient Showcase scene - use ambient layout
   if (currentScene.name === 'Ambient Showcase' || currentScene.name === 'Ανάλαφρη Παρουσίαση') {
     return (
@@ -331,38 +292,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
       </div>
     );
   }
-    return (
-      <div
-        className={`transition-opacity duration-300 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}
-      >
-        <LifestyleSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
-
-        {/* Scene indicator */}
-        {scenes.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
-            {scenes.map((scene, index) => (
-              <div
-                key={scene.id}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentSceneIndex
-                    ? 'w-8 bg-pink-400'
-                    : 'w-2 bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Scene name overlay */}
-        <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
-          <p className="text-white text-sm font-medium">{currentScene.name}</p>
-        </div>
-      </div>
-    );
-  }
-
   // Calculate grid dimensions from placements
   const maxRow = Math.max(...currentScene.placements.map(p => p.gridRowEnd), 8);
   const maxCol = Math.max(...currentScene.placements.map(p => p.gridColEnd), 12);

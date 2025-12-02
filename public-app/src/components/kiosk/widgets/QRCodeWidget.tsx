@@ -5,6 +5,8 @@ import { BaseWidgetProps } from '@/types/kiosk';
 import { QrCode, Smartphone, Building2 } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 
+const QR_DIMENSION = 160;
+
 export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [qrUrl, setQrUrl] = useState<string>('');
@@ -32,8 +34,8 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
             canvasRef.current,
             url,
             {
-              width: 200,
-              margin: 2,
+              width: QR_DIMENSION,
+              margin: 1,
               color: {
                 dark: '#1e293b',  // slate-800
                 light: '#ffffff'
@@ -79,15 +81,15 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
   }
 
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center p-4">
+    <div className="h-full flex flex-col items-center justify-center text-center p-3">
 
       {/* QR Code */}
-      <div className="mb-4">
-        <div className="bg-white rounded-2xl p-4 shadow-2xl border-4 border-blue-400/30">
+      <div className="mb-4 w-full flex justify-center">
+        <div className="bg-white rounded-2xl p-3 shadow-2xl border-2 border-blue-400/30">
           <canvas
             ref={canvasRef}
-            className="block"
-            style={{ imageRendering: 'pixelated' }}
+            className="block mx-auto"
+            style={{ imageRendering: 'pixelated', width: QR_DIMENSION, height: QR_DIMENSION }}
           />
         </div>
       </div>
