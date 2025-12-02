@@ -52,12 +52,18 @@ urlpatterns = [
     # My Apartment endpoint για ενοίκους
     path('my-apartment/', my_apartment_data, name='my-apartment-data'),
     path('my-apartment', my_apartment_data, name='my-apartment-data-no-slash'),
-    # Admin cleanup endpoints
+    # Admin cleanup endpoints (with and without trailing slash)
     path('admin/cleanup-orphan-transactions/', cleanup_orphan_transactions, name='cleanup-orphan-transactions'),
+    path('admin/cleanup-orphan-transactions', cleanup_orphan_transactions, name='cleanup-orphan-transactions-no-slash'),
     path('admin/database-cleanup/', database_cleanup, name='database-cleanup'),
-    # Backup & Restore endpoints
+    path('admin/database-cleanup', database_cleanup, name='database-cleanup-no-slash'),
+    # Backup & Restore endpoints (with and without trailing slash)
     path('admin/backup/', backup_database, name='backup-database'),
+    path('admin/backup', backup_database, name='backup-database-no-slash'),
     path('admin/backup/history/', backup_history, name='backup-history'),
+    path('admin/backup/history', backup_history, name='backup-history-no-slash'),
     path('admin/backup/history/<str:backup_id>/', backup_detail, name='backup-detail'),
+    path('admin/backup/history/<str:backup_id>', backup_detail, name='backup-detail-no-slash'),
     path('admin/restore/', restore_database, name='restore-database'),
+    path('admin/restore', restore_database, name='restore-database-no-slash'),
 ] 
