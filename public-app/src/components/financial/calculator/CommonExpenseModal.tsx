@@ -356,7 +356,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
         buildingHeatingFixedPercentage={buildingData?.heating_fixed_percentage}
       />
     </div>
-    </div>
     </ModalPortal>
   );
 };
