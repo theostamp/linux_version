@@ -269,7 +269,7 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  // Admin System Tools (only for superuser/admin)
+  // Admin System Tools (for manager/admin/superuser)
   {
     id: 'system',
     title: 'Σύστημα',
@@ -279,13 +279,13 @@ const navigationGroups: NavigationGroup[] = [
         href: '/admin/backup-restore',
         label: 'Backup/Restore',
         icon: <RefreshCw className="w-5 h-5" />,
-        roles: ['superuser'], // Only superuser/admin
+        roles: ['manager', 'superuser'], // Admin (mapped to manager) and superuser
       },
       {
         href: '/admin/database-cleanup',
         label: 'Εκκαθάριση DB',
         icon: <TestTube2 className="w-5 h-5" />,
-        roles: ['superuser'], // Only superuser/admin
+        roles: ['manager', 'superuser'], // Admin (mapped to manager) and superuser
       },
     ]
   },
