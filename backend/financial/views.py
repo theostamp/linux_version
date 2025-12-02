@@ -4072,3 +4072,162 @@ def my_apartment_data(request):
         return Response({
             'error': f'Σφάλμα κατά την ανάκτηση δεδομένων: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# =============================================================================
+# Admin Cleanup Endpoint - Μόνο για διαχειριστές
+# =============================================================================
+
+@api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def cleanup_orphan_transactions(request):
+    """
+    Admin endpoint για διαχείριση ορφανών transactions.
+    
+    Τα "ορφανά" transactions είναι χρεώσεις που παρέμειναν μετά τη διαγραφή έργων.
+    
+    GET: Preview - Δείχνει τα ορφανά transactions χωρίς να τα διαγράψει
+    POST/DELETE: Execute - Διαγράφει τα ορφανά transactions και επανυπολογίζει balances
+    
+    Query Parameters:
+        - search: Optional, αναζήτηση στην περιγραφή (default: 'Στεγανοποίηση')
+        - building_id: Optional, φιλτράρισμα ανά κτίριο
+    
+    Permissions:
+        - Μόνο admin ή office_manager
+    """
+    import logging
+    from decimal import Decimal
+    from .balance_service import BalanceCalculationService
+    
+    logger = logging.getLogger(__name__)
+    user = request.user
+    
+    # ============================================
+    # SECURITY CHECK: Μόνο admin/manager
+    # ============================================
+    if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') in ['admin', 'office_manager']):
+        return Response({
+            'error': 'Δεν έχετε δικαιώματα πρόσβασης σε αυτή τη λειτουργία',
+            'required_role': 'admin or office_manager'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    # Parameters
+    search_term = request.query_params.get('search', 'Στεγανοποίηση')
+    building_id = request.query_params.get('building_id')
+    
+    try:
+        # ============================================
+        # FIND ORPHAN TRANSACTIONS
+        # ============================================
+        orphan_transactions = Transaction.objects.filter(
+            description__icontains=search_term
+        )
+        
+        if building_id:
+            orphan_transactions = orphan_transactions.filter(building_id=building_id)
+        
+        orphan_transactions = orphan_transactions.order_by('-date')
+        
+        # Collect data
+        transactions_data = []
+        affected_apartments = set()
+        total_amount = Decimal('0.00')
+        
+        for t in orphan_transactions:
+            transactions_data.append({
+                'id': t.id,
+                'date': t.date.isoformat() if t.date else None,
+                'description': t.description,
+                'amount': float(t.amount),
+                'apartment_number': t.apartment_number,
+                'apartment_id': t.apartment_id,
+                'building_id': t.building_id,
+                'building_name': t.building.name if t.building else None,
+                'type': t.type,
+            })
+            total_amount += t.amount
+            
+            if t.apartment:
+                affected_apartments.add(t.apartment)
+        
+        # Affected apartments info
+        apartments_info = []
+        for apt in affected_apartments:
+            apartments_info.append({
+                'id': apt.id,
+                'number': apt.number,
+                'building': apt.building.name if apt.building else None,
+                'current_balance': float(apt.current_balance or 0),
+            })
+        
+        # ============================================
+        # GET REQUEST: Preview only
+        # ============================================
+        if request.method == 'GET':
+            return Response({
+                'status': 'preview',
+                'message': 'Αυτά είναι τα transactions που θα διαγραφούν (dry-run)',
+                'search_term': search_term,
+                'transactions_count': len(transactions_data),
+                'total_amount': float(total_amount),
+                'transactions': transactions_data,
+                'affected_apartments': apartments_info,
+                'affected_apartments_count': len(apartments_info),
+                'instructions': 'Για να εκτελεστεί η διαγραφή, στείλτε POST ή DELETE request'
+            })
+        
+        # ============================================
+        # POST/DELETE REQUEST: Execute cleanup
+        # ============================================
+        if not orphan_transactions.exists():
+            return Response({
+                'status': 'success',
+                'message': 'Δεν βρέθηκαν ορφανά transactions για διαγραφή',
+                'deleted_count': 0,
+            })
+        
+        # Log the action
+        logger.warning(f"[CLEANUP] User {user.email} deleting {orphan_transactions.count()} orphan transactions (search: '{search_term}')")
+        
+        # Delete transactions
+        deleted_count = orphan_transactions.count()
+        orphan_transactions.delete()
+        
+        logger.info(f"[CLEANUP] Deleted {deleted_count} transactions")
+        
+        # Recalculate balances for affected apartments
+        balance_updates = []
+        for apt in affected_apartments:
+            old_balance = float(apt.current_balance or 0)
+            BalanceCalculationService.update_apartment_balance(apt, use_locking=False)
+            apt.refresh_from_db()
+            new_balance = float(apt.current_balance or 0)
+            
+            balance_updates.append({
+                'apartment_id': apt.id,
+                'apartment_number': apt.number,
+                'building': apt.building.name if apt.building else None,
+                'old_balance': old_balance,
+                'new_balance': new_balance,
+                'difference': new_balance - old_balance,
+            })
+            
+            logger.info(f"[CLEANUP] Updated balance for apartment {apt.number}: {old_balance}€ → {new_balance}€")
+        
+        return Response({
+            'status': 'success',
+            'message': f'Διαγράφηκαν {deleted_count} ορφανά transactions',
+            'search_term': search_term,
+            'deleted_count': deleted_count,
+            'total_amount_removed': float(total_amount),
+            'balance_updates': balance_updates,
+            'executed_by': user.email,
+        })
+        
+    except Exception as e:
+        logger.error(f"[CLEANUP] Error: {e}", exc_info=True)
+        return Response({
+            'status': 'error',
+            'error': f'Σφάλμα κατά το cleanup: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
