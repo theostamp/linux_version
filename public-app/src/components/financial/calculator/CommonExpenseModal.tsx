@@ -152,7 +152,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
 
   return (
     <ModalPortal>
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[120] p-4">
+    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
       <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
         {/* ✅ ΝΕΟ: Screen Header - Οριζόντια Διάταξη */}
