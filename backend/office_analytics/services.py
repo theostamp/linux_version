@@ -408,7 +408,7 @@ class OfficeAnalyticsService:
                     'type': 'critical',
                     'category': 'financial',
                     'message': f"Το κτίριο '{building.name}' έχει αρνητικό ταμείο ({building.total_balance:.2f}€)",
-                    'action_url': f"/buildings/{building.id}/financial",
+                    'action_url': f"/financial?building={building.id}",
                 })
             
             # Alert 2: Αιτήματα που εκκρεμούν πάνω από 7 ημέρες
