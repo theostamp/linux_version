@@ -38,7 +38,14 @@ import {
   User,
   CreditCard,
   ChevronRight,
+  Info,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Navigation link interface
 interface NavigationLink {
@@ -49,6 +56,8 @@ interface NavigationLink {
   isBeta?: boolean;
   // Staff permission required (for staff role only)
   staffPermission?: 'can_access_office_finance' | 'can_view_financials' | 'can_manage_requests';
+  // Tooltip description
+  tooltip?: string;
 }
 
 // Navigation group interface
@@ -71,42 +80,49 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Πίνακας Ελέγχου',
         icon: <Home className="w-5 h-5" />,
         roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Εδώ βλέπετε την συνολική εικόνα του κτιρίου που έχετε επιλέξει ή όλων των κτιρίων',
       },
       {
         href: '/office-dashboard',
         label: 'Κέντρο Ελέγχου',
         icon: <Shield className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Συγκεντρωτική εικόνα όλων των κτιρίων και οικονομικών στοιχείων του γραφείου',
       },
       {
         href: '/my-apartment',
         label: 'Το Διαμέρισμά μου',
         icon: <Home className="w-5 h-5" />,
         roles: ['resident', 'internal_manager'],
+        tooltip: 'Προβολή και διαχείριση των στοιχείων του διαμερίσματός σας',
       },
       {
         href: '/online-payments',
         label: 'Πληρωμή Online',
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['resident', 'internal_manager'],
+        tooltip: 'Πραγματοποιήστε πληρωμές για τα οφειλόμενα ποσά του διαμερίσματός σας',
       },
       {
         href: '/announcements',
         label: 'Ανακοινώσεις',
         icon: <Megaphone className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Δείτε και διαχειριστείτε τις ανακοινώσεις του κτιρίου',
       },
       {
         href: '/votes',
         label: 'Ψηφοφορίες',
         icon: <CheckSquare className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Δημιουργήστε και συμμετέχετε σε ψηφοφορίες για θέματα του κτιρίου',
       },
       {
         href: '/requests',
         label: 'Αιτήματα',
         icon: <ClipboardList className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Υποβάλετε και παρακολουθήστε αιτήματα για συντήρηση και επισκευές',
       },
     ]
   },
@@ -120,18 +136,21 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Οικονομικά Κτιρίων',
         icon: <Euro className="w-5 h-5" />,
         roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση εσόδων, εξόδων και οικονομικών στοιχείων των κτιρίων',
       },
       {
         href: '/maintenance',
         label: 'Υπηρεσίες',
         icon: <Wrench className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση υπηρεσιών συντήρησης και επισκευών',
       },
       {
         href: '/projects',
         label: 'Προσφορές',
         icon: <FileText className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση προσφορών και έργων',
       },
       {
         href: '/documents',
@@ -139,6 +158,7 @@ const navigationGroups: NavigationGroup[] = [
         icon: <FileText className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         isBeta: true,
+        tooltip: 'Διαχείριση παραστατικών και οικονομικών εγγράφων',
       },
     ]
   },
@@ -152,24 +172,28 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Κτίρια',
         icon: <Building2 className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση και προβολή όλων των κτιρίων',
       },
       {
         href: '/apartments',
         label: 'Διαμερίσματα',
         icon: <Building className="w-5 h-5" />,
         roles: ['manager', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση διαμερισμάτων και κατοίκων',
       },
       {
         href: '/map-visualization',
         label: 'Χάρτης',
         icon: <MapPin className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Οπτικοποίηση των κτιρίων σε χάρτη',
       },
       {
         href: '/data-migration',
         label: 'Μετανάστευση',
         icon: <RefreshCw className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Μεταφορά δεδομένων μεταξύ συστημάτων',
       },
     ]
   },
@@ -209,12 +233,14 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Chat',
         icon: <MessageCircle className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Συνομιλία με διαχειριστές και κατοίκους',
       },
       {
         href: '/notifications',
         label: 'Ειδοποιήσεις',
         icon: <Send className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Αποστολή και διαχείριση ειδοποιήσεων',
       },
     ]
   },
@@ -228,6 +254,7 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Υπάλληλοι',
         icon: <UserCheck className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση υπαλλήλων του γραφείου',
       },
       {
         href: '/office-finance',
@@ -235,18 +262,21 @@ const navigationGroups: NavigationGroup[] = [
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         staffPermission: 'can_access_office_finance', // Staff needs this permission
+        tooltip: 'Συνολική οικονομική εικόνα του γραφείου διαχείρισης',
       },
       {
         href: '/my-profile',
         label: 'Προφίλ',
         icon: <User className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση των προσωπικών σας στοιχείων',
       },
       {
         href: '/my-subscription',
         label: 'Συνδρομή',
         icon: <CreditCard className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Προβολή και διαχείριση της συνδρομής σας',
       },
     ]
   },
@@ -260,12 +290,14 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Διαχείριση',
         icon: <Settings className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Ρυθμίσεις και διαχείριση του Kiosk',
       },
       {
         href: '/kiosk',
         label: 'Display',
         icon: <Monitor className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Προβολή της οθόνης Kiosk',
       },
     ]
   },
@@ -280,12 +312,14 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Backup/Restore',
         icon: <RefreshCw className="w-5 h-5" />,
         roles: ['manager', 'superuser'], // Admin (mapped to manager) and superuser
+        tooltip: 'Δημιουργία αντιγράφων ασφαλείας και επαναφορά δεδομένων',
       },
       {
         href: '/admin/database-cleanup',
         label: 'Εκκαθάριση DB',
         icon: <TestTube2 className="w-5 h-5" />,
         roles: ['manager', 'superuser'], // Admin (mapped to manager) and superuser
+        tooltip: 'Εκκαθάριση και βελτιστοποίηση της βάσης δεδομένων',
       },
     ]
   },
@@ -403,7 +437,7 @@ export default function CollapsibleSidebar() {
   }
 
   return (
-    <>
+    <TooltipProvider>
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
@@ -490,70 +524,100 @@ export default function CollapsibleSidebar() {
                       (pathname && pathname.startsWith(link.href) && link.href !== '/dashboard');
                     
                     return (
-                      <button
-                        key={link.href}
-                        onClick={() => handleNavigation(link.href)}
-                        title={!isExpanded ? link.label : undefined}
-                        className={cn(
-                          'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
-                          isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
-                          isActive && 'shadow-md',
-                        )}
-                        style={{
-                          fontSize: designSystem.typography.fontSize.sm,
-                          color: isActive ? 'white' : colors.text,
-                          backgroundColor: isActive ? colors.active : 'transparent',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.backgroundColor = colors.hover;
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }
-                        }}
-                      >
-                        {/* Icon */}
-                        <span 
+                      <div key={link.href} className="relative group/item">
+                        <button
+                          onClick={() => handleNavigation(link.href)}
+                          title={!isExpanded ? link.label : undefined}
                           className={cn(
-                            'transition-colors duration-200 flex-shrink-0',
-                            isExpanded && 'mr-3'
+                            'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
+                            isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
+                            isActive && 'shadow-md',
                           )}
                           style={{
-                            color: isActive ? 'white' : colors.icon,
+                            fontSize: designSystem.typography.fontSize.sm,
+                            color: isActive ? 'white' : colors.text,
+                            backgroundColor: isActive ? colors.active : 'transparent',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.backgroundColor = colors.hover;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }
                           }}
                         >
-                          {link.icon}
-                        </span>
-                        
-                        {/* Label */}
-                        <span 
-                          className={cn(
-                            "transition-all duration-300 overflow-hidden whitespace-nowrap",
-                            isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                          )}
-                        >
-                          {link.label}
-                        </span>
-                        
-                        {/* Beta Badge */}
-                        {link.isBeta && isExpanded && (
+                          {/* Icon */}
                           <span 
-                            className="ml-auto px-2 py-0.5 rounded-full font-bold"
+                            className={cn(
+                              'transition-colors duration-200 flex-shrink-0',
+                              isExpanded && 'mr-3'
+                            )}
                             style={{
-                              fontSize: designSystem.typography.fontSize.xs,
-                              backgroundColor: isActive 
-                                ? 'rgba(255, 255, 255, 0.2)' 
-                                : colors.hover,
-                              color: isActive ? 'white' : colors.text,
+                              color: isActive ? 'white' : colors.icon,
                             }}
                           >
-                            BETA
+                            {link.icon}
                           </span>
-                        )}
-                      </button>
+                          
+                          {/* Label */}
+                          <span 
+                            className={cn(
+                              "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                              isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                            )}
+                          >
+                            {link.label}
+                          </span>
+                          
+                          {/* Info Icon with Tooltip */}
+                          {link.tooltip && isExpanded && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                  className="ml-auto p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0"
+                                  style={{
+                                    color: isActive ? 'rgba(255, 255, 255, 0.8)' : colors.icon,
+                                  }}
+                                >
+                                  <Info className="w-3.5 h-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent 
+                                side="right" 
+                                className="max-w-xs z-50"
+                                sideOffset={8}
+                              >
+                                <p className="text-xs leading-relaxed">{link.tooltip}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {/* Beta Badge */}
+                          {link.isBeta && isExpanded && (
+                            <span 
+                              className={cn(
+                                "px-2 py-0.5 rounded-full font-bold",
+                                link.tooltip ? "ml-2" : "ml-auto"
+                              )}
+                              style={{
+                                fontSize: designSystem.typography.fontSize.xs,
+                                backgroundColor: isActive 
+                                  ? 'rgba(255, 255, 255, 0.2)' 
+                                  : colors.hover,
+                                color: isActive ? 'white' : colors.text,
+                              }}
+                            >
+                              BETA
+                            </span>
+                          )}
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -657,21 +721,47 @@ export default function CollapsibleSidebar() {
                     const isActive = pathname === link.href;
                     
                     return (
-                      <button
-                        key={link.href}
-                        onClick={() => handleNavigation(link.href)}
-                        className="flex items-center w-full px-3 py-2.5 rounded-lg font-medium transition-all duration-200"
-                        style={{
-                          fontSize: designSystem.typography.fontSize.sm,
-                          color: isActive ? 'white' : colors.text,
-                          backgroundColor: isActive ? colors.active : 'transparent',
-                        }}
-                      >
-                        <span className="mr-3" style={{ color: isActive ? 'white' : colors.icon }}>
-                          {link.icon}
-                        </span>
-                        <span>{link.label}</span>
-                      </button>
+                      <div key={link.href} className="relative flex items-center">
+                        <button
+                          onClick={() => handleNavigation(link.href)}
+                          className="flex items-center flex-1 px-3 py-2.5 rounded-lg font-medium transition-all duration-200"
+                          style={{
+                            fontSize: designSystem.typography.fontSize.sm,
+                            color: isActive ? 'white' : colors.text,
+                            backgroundColor: isActive ? colors.active : 'transparent',
+                          }}
+                        >
+                          <span className="mr-3" style={{ color: isActive ? 'white' : colors.icon }}>
+                            {link.icon}
+                          </span>
+                          <span>{link.label}</span>
+                        </button>
+                        {/* Info Icon with Tooltip for Mobile */}
+                        {link.tooltip && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                className="p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0 ml-2"
+                                style={{
+                                  color: isActive ? 'rgba(255, 255, 255, 0.8)' : colors.icon,
+                                }}
+                              >
+                                <Info className="w-3.5 h-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="right" 
+                              className="max-w-xs z-[60]"
+                              sideOffset={8}
+                            >
+                              <p className="text-xs leading-relaxed">{link.tooltip}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -688,7 +778,7 @@ export default function CollapsibleSidebar() {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
-    </>
+    </TooltipProvider>
   );
 }
 

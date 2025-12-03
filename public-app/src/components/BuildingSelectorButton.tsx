@@ -82,7 +82,7 @@ export default function BuildingSelectorButton({
 
         {/* Hover Tooltip */}
         {showTooltip && (
-          <div className="absolute bottom-full left-0 mb-2 opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+          <div className="absolute top-full left-0 mt-2 opacity-100 transition-opacity duration-300 pointer-events-none z-10">
             <div className="bg-white dark:bg-popover text-popover-foreground text-xs rounded-md p-2 shadow-md border border-slate-200/60 max-w-xs">
               <div className="flex items-start gap-2">
                 <Info className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
@@ -94,7 +94,7 @@ export default function BuildingSelectorButton({
                 </div>
               </div>
               {/* Arrow */}
-              <div className="absolute top-full left-4 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-border"></div>
+              <div className="absolute bottom-full left-4 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-border"></div>
             </div>
           </div>
         )}
