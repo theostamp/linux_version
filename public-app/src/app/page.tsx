@@ -1,670 +1,1020 @@
+"use client";
+// Updated landing page v2.3 - Community & resident-centric messaging
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Bell,
-  Building,
-  CheckCircle,
-  CreditCard,
-  Megaphone,
-  Monitor,
-  PieChart,
-  QrCode,
-  Shield,
-  Smartphone,
-  Users,
-  Zap,
-} from "lucide-react";
-
-const featureGroups = [
-  {
-    title: "Λειτουργία & Οργάνωση",
-    description: "Ψηφιακός concierge για ομαλή, καθημερινή λειτουργία κτιρίων και συγκροτημάτων.",
-    icon: Building,
-    items: [
-      "Ψηφιακό προφίλ κτιρίου με όλους τους χώρους και τους χρήστες",
-      "Έξυπνος προγραμματισμός συντηρήσεων και εργασιών",
-      "Διαχείριση επισκεπτών, χώρων στάθμευσης και κοινοχρήστων",
-      "Αυτόματα logs ενεργειών για πλήρη ιχνηλασιμότητα",
-    ],
-  },
-  {
-    title: "Επικοινωνία & Info-Point",
-    description: "Κρίσιμες ενημερώσεις πάντα μπροστά σε κατοίκους και επισκέπτες.",
-    icon: Megaphone,
-    items: [
-      "Info-point οθόνες με real-time ανακοινώσεις & οδηγίες",
-      "Push/email/SMS ειδοποιήσεις με στοχευμένο κοινό",
-      "Ενιαίο board ανακοινώσεων με approvals πριν τη δημοσίευση",
-      "Πρότυπα για συχνές ενημερώσεις (ασφάλεια, προγραμματισμένες εργασίες)",
-    ],
-  },
-  {
-    title: "Οικονομικά & Πληρωμές",
-    description: "Από χρεώσεις μέχρι είσπραξη σε ένα βήμα, με πλήρη ορατότητα.",
-    icon: CreditCard,
-    items: [
-      "Αυτόματη κατανομή κοινοχρήστων ανά διαμέρισμα και έργο",
-      "Online πληρωμές και συμφωνία σε πραγματικό χρόνο",
-      "Ειδοποιήσεις καθυστερήσεων και ρυθμίσεις δόσεων",
-      "Εξαγωγές, αποδείξεις και οικονομικές αναφορές on-demand",
-    ],
-  },
-  {
-    title: "Ασφάλεια & Συμμόρφωση",
-    description: "Προστασία δεδομένων και σαφείς ρόλοι ώστε να κοιμάστε ήσυχοι.",
-    icon: Shield,
-    items: [
-      "Δικαιώματα ανά ρόλο (διαχειριστής, κάτοικος, συνεργείο)",
-      "GDPR-ready αποθήκευση και κρυπτογράφηση",
-      "Audit trail για κάθε κρίσιμη ενέργεια",
-      "Backups, high-availability και multi-tenant αρχιτεκτονική",
-    ],
-  },
-];
-
-const roleFlows = [
-  {
-    title: "Για Διαχειριστές",
-    icon: Users,
-    items: [
-      "Πίνακας εργασιών με ό,τι εκκρεμεί ανά ημέρα",
-      "Εγκρίσεις πληρωμών και αιτημάτων σε 2 κλικ",
-      "Συγκεντρωτικά reports για συνέλευση ή συμβούλιο",
-    ],
-  },
-  {
-    title: "Για Κατοίκους",
-    icon: Smartphone,
-    items: [
-      "Self-service portal για οφειλές, αιτήματα και κρατήσεις",
-      "Άμεση πρόσβαση σε οδηγούς ασφαλείας και κανονισμούς",
-      "Info-point & kiosk πρόσβαση χωρίς ανάγκη εκπαίδευσης",
-    ],
-  },
-  {
-    title: "Για Συνεργεία",
-    icon: Monitor,
-    items: [
-      "Αποστολή οδηγιών/εικόνων πριν την άφιξη",
-      "Check-in/check-out σε kiosk για διαφάνεια χρόνου",
-      "Καταγραφή υλικών και κόστους ανά εργασία",
-    ],
-  },
-];
+import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Users, Heart } from "lucide-react";
 
 const pricingPlans = [
   {
-    name: "Βασικό",
-    price: "€29",
-    description: "Για μικρά κτίρια που θέλουν οργάνωση χωρίς πολυπλοκότητα.",
-    highlights: ["Έως 20 διαμερίσματα", "Βασικά οικονομικά & ειδοποιήσεις", "Email υποστήριξη"],
-    href: "/signup?plan=basic",
-    accent: "border-slate-200",
-    popular: false,
+    id: "free",
+    name: "Free",
+    priceMonthly: "0€",
+    upfrontCost: null as string | null,
+    highlight: false,
+    badge: null as string | null,
+    target: "Για μικρές κοινότητες που θέλουν μια πρώτη γνωριμία",
+    features: [
+      "1 πολυκατοικία, έως 12 διαμερίσματα",
+      "Βασική διαχείριση κοινοχρήστων",
+      "Ενημέρωση όλων των ενοίκων",
+      "Βασικές ανακοινώσεις στην πλατφόρμα",
+    ],
   },
   {
-    name: "Επαγγελματικό",
-    price: "€59",
-    description: "Για κτίρια που χρειάζονται πλήρη εικόνα και αυτοματισμούς.",
-    highlights: [
-      "Έως 50 διαμερίσματα",
-      "Info-point & kiosk mode χωρίς επιπλέον χρέωση",
-      "Προηγμένα οικονομικά και αναφορές",
-      "Προτεραιότητα υποστήριξης",
+    id: "cloud",
+    name: "Concierge Cloud",
+    priceMonthly: "από 25€",
+    upfrontCost: null as string | null,
+    highlight: false,
+    badge: null as string | null,
+    target: "Κοινότητες που θέλουν πλήρη ψηφιακή συνεργασία",
+    features: [
+      "Πλήρης πλατφόρμα για όλους τους ενοίκους",
+      "Απεριόριστες ανακοινώσεις, αιτήματα και ψηφοφορίες",
+      "Πρόσβαση ενοίκων μέσω web / κινητού",
+      "Ιδανικό για δοκιμή πριν το Info Point",
     ],
-    href: "/signup?plan=professional",
-    accent: "border-teal-500 shadow-xl shadow-teal-100",
-    popular: true,
   },
   {
-    name: "Enterprise",
-    price: "Custom",
-    description: "Για μεγάλους ομίλους, mixed-use assets και ειδικές ροές.",
-    highlights: [
-      "Απεριόριστα διαμερίσματα και κτίρια",
-      "SSO, ιδιωτικά deployments, custom SLA",
-      "Πλήρης παραμετροποίηση ροών και ρόλων",
-      "Dedicated success manager",
+    id: "kiosk_all_in",
+    name: "Info Point – All In",
+    priceMonthly: "από 39€",
+    upfrontCost: null as string | null,
+    highlight: true,
+    badge: "Προτεινόμενο",
+    target: "Κοινότητες που θέλουν σημείο ενημέρωσης στην είσοδο",
+    features: [
+      "Οθόνη ενημέρωσης στην είσοδο της πολυκατοικίας",
+      "Εγκατάσταση & παραμετροποίηση για την κοινότητά σας",
+      "Πλήρης πρόσβαση στην πλατφόρμα για όλους",
+      "Σύνδεση στο internet περιλαμβάνεται",
+      "Υποστήριξη & ενημερώσεις",
     ],
-    href: "/signup?plan=enterprise",
-    accent: "border-slate-200",
-    popular: false,
+  },
+  {
+    id: "kiosk_upfront",
+    name: "Info Point – Office",
+    priceMonthly: "25€",
+    upfrontCost: "250€ εφάπαξ",
+    highlight: false,
+    badge: null as string | null,
+    target: "Γραφεία που διαχειρίζονται πολλές κοινότητες",
+    features: [
+      "Σημείο ενημέρωσης ανά πολυκατοικία",
+      "Χαμηλότερο μηνιαίο πάγιο",
+      "Ενοποιημένη διαχείριση κοινοτήτων",
+      "Υποστήριξη & αναβαθμίσεις",
+    ],
   },
 ];
 
-export default function Home() {
+const faqs = [
+  {
+    question: "Χρειάζεται να αλλάξουμε γραφείο διαχείρισης για να χρησιμοποιήσουμε την πλατφόρμα;",
+    answer:
+      "Όχι απαραίτητα. Το newconcierge.app μπορεί να το χρησιμοποιήσει είτε ο εσωτερικός διαχειριστής της πολυκατοικίας, είτε το γραφείο διαχείρισης με το οποίο συνεργάζεστε ήδη. Η κοινότητα αποφασίζει.",
+  },
+  {
+    question: "Χρειάζεται internet στην πολυκατοικία;",
+    answer:
+      "Όχι. Το σημείο ενημέρωσης (Info Point) συνοδεύεται από δική του σύνδεση, η οποία περιλαμβάνεται στο πακέτο. Η πολυκατοικία δεν χρειάζεται ξεχωριστή γραμμή internet.",
+  },
+  {
+    question: "Τι γίνεται αν υπάρξει πρόβλημα με την οθόνη;",
+    answer:
+      "Παρέχουμε υποστήριξη και αντικατάσταση βάσει του συμβολαίου. Ακόμη και αν υπάρξει θέμα, οι ένοικοι συνεχίζουν να ενημερώνονται κανονικά μέσω web και κινητού.",
+  },
+  {
+    question: "Τι γίνεται αν κάποιοι ένοικοι δεν θέλουν να χρησιμοποιούν εφαρμογές;",
+    answer:
+      "Γι' αυτό υπάρχει το σημείο ενημέρωσης στην είσοδο! Όλοι μπορούν να ενημερώνονται χωρίς login, χωρίς κινητό. Κανείς δεν μένει εκτός της κοινότητας.",
+  },
+  {
+    question: "Πώς βοηθάει στην καλύτερη συνεργασία των ενοίκων;",
+    answer:
+      "Με διαφάνεια στις αποφάσεις, ψηφοφορίες που καταγράφονται, κοινόχρηστα που βλέπουν όλοι. Λιγότερες παρεξηγήσεις, περισσότερη εμπιστοσύνη, καλύτερη κοινότητα.",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Μαρία Κ.",
+    role: "Διαχειρίστρια πολυκατοικίας",
+    location: "Γλυφάδα",
+    avatar: "ΜΚ",
+    rating: 5,
+    text: "Η κοινότητά μας άλλαξε εντελώς. Από τότε που βάλαμε το σημείο ενημέρωσης στην είσοδο, οι ένοικοι νιώθουν ότι συμμετέχουν. Σταμάτησαν οι φωνές, ξεκίνησε η συνεργασία.",
+  },
+  {
+    name: "Γιώργος Π.",
+    role: "Ιδιοκτήτης γραφείου διαχείρισης",
+    location: "Αθήνα",
+    avatar: "ΓΠ",
+    rating: 5,
+    text: "Διαχειριζόμαστε 35 κοινότητες. Με το newconcierge βλέπω όλα τα αιτήματα σε ένα dashboard. Οι ένοικοι είναι πιο ικανοποιημένοι γιατί νιώθουν ότι τους ακούμε.",
+  },
+  {
+    name: "Δημήτρης Α.",
+    role: "Πρόεδρος Δ.Σ. πολυκατοικίας",
+    location: "Θεσσαλονίκη",
+    avatar: "ΔΑ",
+    rating: 5,
+    text: "Οι ψηφοφορίες γίνονται πλέον με διαφάνεια. Κάθε ένοικος έχει φωνή, τα αποτελέσματα είναι ξεκάθαρα. Η κοινότητά μας λειτουργεί πιο ομαλά από ποτέ.",
+  },
+  {
+    name: "Ελένη Μ.",
+    role: "Ένοικος",
+    location: "Πειραιάς",
+    avatar: "ΕΜ",
+    rating: 5,
+    text: "Νιώθω ότι είμαι μέρος της κοινότητας. Βλέπω τι αποφασίστηκε, ψηφίζω για θέματα που με αφορούν, ενημερώνομαι χωρίς να κυνηγάω τον διαχειριστή. Επιτέλους!",
+  },
+];
+
+const stats = [
+  { value: "50+", label: "Κοινότητες" },
+  { value: "2.500+", label: "Ένοικοι" },
+  { value: "98%", label: "Ικανοποίηση" },
+];
+
+// Animation hook for scroll reveal
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, isVisible };
+}
+
+// Animated section wrapper
+function AnimatedSection({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const { ref, isVisible } = useScrollReveal();
+  
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-teal-100 pointer-events-none" />
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-sm">
-                <Building className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-widest text-slate-500">Building Concierge</p>
-                <p className="font-bold text-lg text-slate-900">New Concierge</p>
-              </div>
-            </div>
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-              <Link href="#features" className="text-slate-700 hover:text-slate-900">
-                Λειτουργίες
-              </Link>
-              <Link href="#info-point" className="text-slate-700 hover:text-slate-900">
-                Info-point & Kiosk
-              </Link>
-              <Link href="#pricing" className="text-slate-700 hover:text-slate-900">
-                Τιμές
-              </Link>
-              <Link
-                href="/login"
-                className="text-slate-700 hover:text-slate-900 px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50"
-              >
-                Σύνδεση
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-teal-950 text-white px-4 py-2 rounded-lg hover:bg-teal-900 shadow-sm"
-              >
-                Ξεκινήστε
-              </Link>
-            </nav>
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${className}`}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : "translateY(30px)",
+        transitionDelay: `${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="border-b border-slate-800 last:border-b-0">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-emerald-400"
+      >
+        <span className="text-sm font-medium text-slate-50 sm:text-base">{question}</span>
+        <ChevronDown
+          className={`ml-4 h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${
+          isOpen ? "grid-rows-[1fr] pb-5" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <p className="text-sm text-slate-400 sm:text-base">{answer}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestimonialCard({ testimonial, index }: { testimonial: typeof testimonials[0]; index: number }) {
+  return (
+    <AnimatedSection delay={index * 100}>
+      <div className="group h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+        <div className="mb-4 flex items-center gap-1">
+          {[...Array(testimonial.rating)].map((_, i) => (
+            <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+          ))}
+        </div>
+        <p className="mb-6 text-sm leading-relaxed text-slate-300">"{testimonial.text}"</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white">
+            {testimonial.avatar}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-50">{testimonial.name}</p>
+            <p className="text-xs text-slate-500">{testimonial.role} • {testimonial.location}</p>
           </div>
         </div>
+      </div>
+    </AnimatedSection>
+  );
+}
+
+export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-50">
+      {/* NAVIGATION */}
+      <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-xl">
+        <nav className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
+              <Building className="h-5 w-5 text-slate-950" />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-500">Ψηφιακός Θυρωρός</p>
+              <p className="text-lg font-bold text-slate-50">newconcierge.app</p>
+            </div>
+          </div>
+
+          {/* Desktop nav */}
+          <div className="hidden items-center gap-8 md:flex">
+            <a href="#how-it-works" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+              Πώς λειτουργεί
+            </a>
+            <a href="#features" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+              Λειτουργίες
+            </a>
+            <a href="#pricing" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+              Τιμές
+            </a>
+            <a href="#testimonials" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+              Κριτικές
+            </a>
+            <Link
+              href="/login"
+              className="rounded-full border border-slate-700 px-5 py-2 text-sm font-medium text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
+            >
+              Σύνδεση
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
+            >
+              Ξεκίνα δωρεάν
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 md:hidden"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </nav>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="border-t border-slate-800 bg-slate-950 px-4 py-4 md:hidden">
+            <div className="flex flex-col gap-4">
+              <a href="#how-it-works" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+                Πώς λειτουργεί
+              </a>
+              <a href="#features" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+                Λειτουργίες
+              </a>
+              <a href="#pricing" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+                Τιμές
+              </a>
+              <a href="#testimonials" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+                Κριτικές
+              </a>
+              <div className="flex gap-3 pt-2">
+                <Link href="/login" className="flex-1 rounded-full border border-slate-700 px-4 py-2 text-center text-sm text-slate-200">
+                  Σύνδεση
+                </Link>
+                <Link href="/signup" className="flex-1 rounded-full bg-emerald-500 px-4 py-2 text-center text-sm font-semibold text-slate-950">
+                  Ξεκίνα
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
-      <main className="relative">
-        <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950 text-white text-xs font-semibold">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Πλατφόρμα concierge νέας γενιάς
-              </div>
-              <div className="space-y-4">
-                <h1 className="text-3xl md:text-5xl font-extrabold leading-tight text-slate-900">
-                  Η επαγγελματική πλατφόρμα διαχείρισης κτιρίων με info-point & kiosk mode ενσωματωμένα.
-                </h1>
-                <p className="text-lg md:text-xl text-slate-600">
-                  Προσφέρουμε την εμπειρία που περιμένουν οι κάτοικοι, με την ακρίβεια που χρειάζεται ο
-                  διαχειριστής: επικοινωνία, οικονομικά και λειτουργίες σε μία ενιαία οθόνη.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="#info-point"
-                  className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 shadow-sm"
+      {/* HERO SECTION */}
+      <section
+        id="hero"
+        className="relative overflow-hidden border-b border-slate-800"
+      >
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-slate-950 to-slate-950" />
+        <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center md:py-24 lg:px-8">
+          {/* Left content */}
+          <div className="flex-1 space-y-6">
+            <AnimatedSection>
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                Με επίκεντρο τον ένοικο • Info Point
+              </span>
+            </AnimatedSection>
+            
+            <AnimatedSection delay={100}>
+              <h1 className="text-balance text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl xl:text-6xl">
+                Η πολυκατοικία σου γίνεται
+                <br />
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  κοινότητα.
+                </span>
+              </h1>
+            </AnimatedSection>
+            
+            <AnimatedSection delay={200}>
+              <p className="max-w-xl text-base text-slate-400 sm:text-lg">
+                Ένα σημείο ενημέρωσης με οθόνη στην είσοδο και μια πλατφόρμα για όλους τους ενοίκους.
+                Διαφάνεια, συνεργασία και ομαλή επικοινωνία – χωρίς χαρτιά, χωρίς εντάσεις.
+              </p>
+            </AnimatedSection>
+
+            <AnimatedSection delay={300}>
+              <ul className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
+                {[
+                  "Όλοι ενημερωμένοι, κανείς απ' έξω",
+                  "Ψηφοφορίες με διαφάνεια για όλους",
+                  "Ομαλή συνεργασία ενοίκων",
+                  "Κοινότητα, όχι απλά πολυκατοικία",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+                      ✓
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </AnimatedSection>
+
+            <AnimatedSection delay={400}>
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <a
+                  href="#cta"
+                  className="group inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-105"
                 >
-                  Δείτε το info-point
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold border border-slate-200 text-slate-900 hover:bg-white"
+                  Ζήτησε demo
+                  <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </a>
+                <a
+                  href="#pricing"
+                  className="rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
                 >
-                  Ξεκινήστε δωρεάν
-                </Link>
+                  Δες τα πακέτα τιμών
+                </a>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-2xl bg-white/80 border border-slate-100 p-4 shadow-sm">
-                  <p className="text-sm text-slate-500">Info-point ενημερώσεις</p>
-                  <p className="text-2xl font-bold text-slate-900">Live σε κοινόχρηστους χώρους</p>
-                </div>
-                <div className="rounded-2xl bg-white/80 border border-slate-100 p-4 shadow-sm">
-                  <p className="text-sm text-slate-500">Kiosk mode</p>
-                  <p className="text-2xl font-bold text-slate-900">Για tablets & οθόνες αφής</p>
-                </div>
-                <div className="rounded-2xl bg-white/80 border border-slate-100 p-4 shadow-sm">
-                  <p className="text-sm text-slate-500">Εφαρμογή κατοίκων</p>
-                  <p className="text-2xl font-bold text-slate-900">Απλή, χωρίς εκπαίδευση</p>
-                </div>
+            </AnimatedSection>
+            
+            {/* Stats counter */}
+            <AnimatedSection delay={500}>
+              <div className="flex flex-wrap items-center gap-6 border-t border-slate-800 pt-6">
+                {stats.map((stat, index) => (
+                  <div key={stat.label} className="flex items-center gap-3">
+                    {index > 0 && <div className="hidden h-8 w-px bg-slate-800 sm:block" />}
+                    <div>
+                      <p className="text-2xl font-bold text-emerald-400">{stat.value}</p>
+                      <p className="text-xs text-slate-500">{stat.label}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="relative">
-              <div className="absolute -inset-6 bg-gradient-to-br from-teal-100 via-white to-teal-200 rounded-3xl blur-3xl opacity-70" />
-              <div className="relative bg-white rounded-3xl border border-slate-100 shadow-xl p-8 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500">Κατάσταση κτιρίου</p>
-                    <p className="text-2xl font-bold text-slate-900">On track</p>
+            </AnimatedSection>
+          </div>
+
+          {/* Right side: Kiosk mockup placeholder */}
+          <AnimatedSection delay={300} className="flex-1">
+            <div className="relative mx-auto max-w-md">
+              <div className="aspect-[9/16] overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 p-1 shadow-2xl shadow-emerald-500/10 transition-transform duration-500 hover:scale-[1.02]">
+                <div className="flex h-full flex-col rounded-[20px] border border-slate-800 bg-slate-900">
+                  {/* Info Point header */}
+                  <div className="border-b border-slate-800 bg-slate-900/80 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
+                        <span className="text-xs font-medium text-slate-400">Σημείο Ενημέρωσης</span>
+                      </div>
+                      <span className="text-xs text-slate-500">12:45</span>
+                    </div>
                   </div>
-                  <Shield className="h-10 w-10 text-teal-600" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Αιτήματα</p>
-                    <p className="text-xl font-bold text-slate-900">12 ανοικτά</p>
-                    <p className="text-emerald-600 text-sm mt-1">7 σε εξέλιξη</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm text-slate-500">Οφειλές</p>
-                    <p className="text-xl font-bold text-slate-900">€2.430</p>
-                    <p className="text-emerald-600 text-sm mt-1">65% σε ρύθμιση</p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-slate-100 p-4 flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-teal-100 flex items-center justify-center">
-                    <Bell className="h-5 w-5 text-teal-700" />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-slate-900">Info-point σε λειτουργία</p>
-                    <p className="text-sm text-slate-600">
-                      Ενημερώσεις ασφάλειας, ανακοινώσεις συντήρησης και QR για γρήγορα αιτήματα ζωντανά.
-                    </p>
-                    <div className="flex items-center gap-2 text-sm text-emerald-600 font-semibold">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      Live σε 3 οθόνες εισόδου
+                  {/* Placeholder content */}
+                  <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                    <div className="rounded-full border border-dashed border-slate-700 p-4">
+                      <Users className="h-8 w-8 text-slate-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        Placeholder Media
+                      </p>
+                      <p className="max-w-[200px] text-xs text-slate-600">
+                        Εδώ θα μπει mockup από την οθόνη ενημέρωσης στην είσοδο
+                      </p>
+                    </div>
+                    <div className="mt-4 space-y-2 text-left">
+                      <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-800/50" />
+                      <div className="h-8 w-40 animate-pulse rounded-lg bg-slate-800/50" style={{ animationDelay: "150ms" }} />
+                      <div className="h-8 w-44 animate-pulse rounded-lg bg-slate-800/50" style={{ animationDelay: "300ms" }} />
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto space-y-10">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Λειτουργίες</p>
-              <div className="flex items-start justify-between gap-4">
-                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-                  Όλα ιεραρχημένα, όπως τα δουλεύετε κάθε μέρα.
-                </h2>
-                <Link
-                  href="/signup"
-                  className="hidden md:inline-flex items-center gap-2 text-teal-700 font-semibold hover:text-teal-800"
-                >
-                  Ζητήστε demo
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+              {/* Badge */}
+              <div className="absolute -right-2 -top-2 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/40">
+                Info Point
               </div>
-              <p className="text-lg text-slate-600 max-w-3xl">
-                Καλύπτουμε ολόκληρο τον κύκλο: οργάνωση, επικοινωνία, οικονομικά και συμμόρφωση, ώστε να μην
-                χρειάζονται πολλαπλά εργαλεία ή αυτοσχέδιες λύσεις.
+              {/* Glow effect */}
+              <div className="absolute -inset-4 -z-10 rounded-3xl bg-emerald-500/20 blur-2xl" />
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" className="border-b border-slate-800 bg-slate-950">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Απλή διαδικασία
+              </span>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+                Πώς λειτουργεί ο Ψηφιακός Θυρωρός
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+                Από την είσοδο της πολυκατοικίας μέχρι το κινητό του κάθε ενοίκου – σε τρία απλά βήματα.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-8">
-              {featureGroups.map((group) => (
-                <div
-                  key={group.title}
-                  className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:-translate-y-1 transition-transform duration-150"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-11 w-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
-                      <group.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">Ενότητα</p>
-                      <h3 className="text-xl font-bold text-slate-900">{group.title}</h3>
-                    </div>
+          </AnimatedSection>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              {
+                step: "1",
+                title: "Σημείο ενημέρωσης στην είσοδο",
+                description:
+                  "Αναλαμβάνουμε την τοποθέτηση του συστήματος ενημέρωσης και όλο τον απαραίτητο εξοπλισμό στην είσοδο της πολυκατοικίας. Ένα Info Point που ενημερώνει όλους τους ενοίκους – ακόμα κι αυτούς που δεν χρησιμοποιούν smartphones ή email.",
+                placeholder: "Οθόνη ενημέρωσης σε είσοδο πολυκατοικίας",
+              },
+              {
+                step: "2",
+                title: "Εύκολη διαχείριση",
+                description:
+                  "Ο διαχειριστής χρησιμοποιεί ένα απλό περιβάλλον για ανακοινώσεις, κοινόχρηστα και ψηφοφορίες. Η κοινότητα ενημερώνεται αυτόματα.",
+                placeholder: "Dashboard διαχείρισης κοινότητας",
+              },
+              {
+                step: "3",
+                title: "Κάθε ένοικος συμμετέχει",
+                description:
+                  "Στην οθόνη ή στο κινητό τους – κάθε ένοικος μένει ενήμερος και μπορεί να συμμετέχει στις αποφάσεις. Κοινότητα με διαφάνεια.",
+                placeholder: "Ένοικοι ενημερωμένοι παντού",
+              },
+            ].map((item, index) => (
+              <AnimatedSection key={item.step} delay={index * 150}>
+                <div className="group relative h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/50 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+                  <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition-transform group-hover:scale-110">
+                    {item.step}
                   </div>
-                  <p className="text-sm text-slate-600">{group.description}</p>
-                  <ul className="mt-4 space-y-3">
-                    {group.items.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                        <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mb-4 pt-2 text-lg font-semibold text-emerald-400">{item.title}</div>
+                  <p className="mb-4 text-sm text-slate-300">{item.description}</p>
+                  <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-4 text-center text-xs text-slate-500">
+                    {item.placeholder}
+                  </div>
                 </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* COMMUNITY FOCUS */}
+      <section id="kiosk-focus" className="border-b border-slate-800 bg-slate-900/30">
+        <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
+          <div className="flex-1 space-y-6">
+            <AnimatedSection>
+              <span className="inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Η φιλοσοφία μας
+              </span>
+            </AnimatedSection>
+            <AnimatedSection delay={100}>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+                Με επίκεντρο τον ένοικο
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={200}>
+              <p className="text-base text-slate-400">
+                Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Είναι ένα εργαλείο που ενώνει την κοινότητα.
+                Ένα σημείο ενημέρωσης στην είσοδο και μια πλατφόρμα που δίνει φωνή σε κάθε ένοικο.
+              </p>
+            </AnimatedSection>
+
+            <div className="space-y-4">
+              {[
+                {
+                  title: "Κάθε ένοικος μετράει",
+                  description:
+                    "Όλοι βλέπουν τις ανακοινώσεις, τα κοινόχρηστα, τις αποφάσεις. Κανείς δεν μένει απ' έξω – ούτε αυτοί που δεν έχουν smartphone.",
+                },
+                {
+                  title: "Ομαλή συνεργασία",
+                  description:
+                    "Οι ψηφοφορίες γίνονται με διαφάνεια, τα αποτελέσματα είναι ξεκάθαρα. Λιγότερες εντάσεις στις συνελεύσεις, περισσότερη εμπιστοσύνη.",
+                },
+                {
+                  title: "Κοινότητα με ταυτότητα",
+                  description:
+                    "Η πολυκατοικία αποκτά χαρακτήρα. Μια είσοδος που δείχνει σεβασμό στους ενοίκους, οργάνωση και σύγχρονη διαχείριση.",
+                },
+              ].map((item, index) => (
+                <AnimatedSection key={item.title} delay={300 + index * 100}>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900">
+                    <h3 className="mb-2 font-semibold text-emerald-400">{item.title}</h3>
+                    <p className="text-sm text-slate-400">{item.description}</p>
+                  </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
-        </section>
 
-        <section id="info-point" className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto space-y-8">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Info-point & Kiosk</p>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-                Πληροφορία στο προσκήνιο, είτε είστε στην είσοδο είτε σε tablet.
-              </h2>
-              <p className="text-lg text-slate-600 max-w-3xl">
-                Ζωντανές ανακοινώσεις σε οθόνες, QR για άμεση δράση και κλειδωμένο περιβάλλον για tablets &
-                συσκευές αφής. Ειδικά σχεδιασμένο για κοινόχρηστους χώρους.
-              </p>
-            </div>
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-900 via-slate-900 to-slate-800 text-white p-8 shadow-2xl">
-                <div className="absolute inset-0 opacity-40" />
-                <div className="relative space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold">
-                    <Monitor className="h-4 w-4" />
-                    Info-point
-                  </div>
-                  <h3 className="text-2xl font-bold">Ζωντανές οθόνες υποδοχής</h3>
-                  <p className="text-slate-100 text-sm">
-                    Ανακοινώσεις, οδηγίες ασφαλείας, κανονισμοί και ειδοποιήσεις συντήρησης πάντα ορατά.
+          {/* Placeholder media */}
+          <AnimatedSection delay={200} className="flex-1">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
+              <div className="aspect-video rounded-2xl border border-dashed border-slate-700 bg-slate-950 p-6">
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                  <span className="rounded-full border border-slate-700 px-4 py-1.5 text-[11px] uppercase tracking-wider text-slate-500">
+                    Placeholder
+                  </span>
+                  <p className="max-w-xs text-sm text-slate-500">
+                    Εδώ μπορεί να τοποθετηθεί screenshot από την οθόνη ενημέρωσης
+                    (π.χ. ανακοινώσεις, ψηφοφορία, αποτελέσματα).
                   </p>
-                  <ul className="space-y-3 text-sm text-slate-100">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5" />
-                      <span>Templates ανακοινώσεων με χρονοπρογραμματισμό</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5" />
-                      <span>Προβολή QR για αιτήματα service ή οδηγούς εκκένωσης</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5" />
-                      <span>Εναλλαγές περιεχομένου σε real-time χωρίς restart</span>
-                    </li>
-                  </ul>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-xs font-semibold">
-                      <Megaphone className="h-4 w-4" />
-                      Ανακοινώσεις
-                    </span>
-                    <span className="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-xs font-semibold">
-                      <QrCode className="h-4 w-4" />
-                      QR δράσης
-                    </span>
-                    <span className="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-xs font-semibold">
-                      <PieChart className="h-4 w-4" />
-                      KPIs κοινόχρηστων
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-8">
-                <div className="rounded-3xl bg-white border border-slate-100 shadow-lg p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
-                        <Smartphone className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500">Kiosk mode</p>
-                        <h3 className="text-xl font-bold text-slate-900">Κλειδωμένο, ασφαλές περιβάλλον</h3>
-                      </div>
-                    </div>
-                    <Shield className="h-6 w-6 text-slate-400" />
-                  </div>
-                  <ul className="space-y-3 text-sm text-slate-700">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />
-                      <span>Full-screen εμπειρία για tablets/οθόνες αφής χωρίς αποσπάσεις</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />
-                      <span>Role-based πρόσβαση σε πληροφορίες κατοίκων & επισκεπτών</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />
-                      <span>Auto-refresh περιεχομένου και offline fallback</span>
-                    </li>
-                  </ul>
-                  <div className="mt-4 grid sm:grid-cols-3 gap-2">
-                    <div className="rounded-xl bg-slate-50 p-3 text-center">
-                      <p className="text-xs text-slate-500">Τοποθεσίες</p>
-                      <p className="text-sm font-semibold text-slate-900">Είσοδοι, lobby, parking</p>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-3 text-center">
-                      <p className="text-xs text-slate-500">Σενάρια</p>
-                      <p className="text-sm font-semibold text-slate-900">Οδηγίες, alert, κανονισμοί</p>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 p-3 text-center">
-                      <p className="text-xs text-slate-500">Έλεγχος</p>
-                      <p className="text-sm font-semibold text-slate-900">Κεντρική διαχείριση</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-3xl border border-dashed border-slate-200 p-6 bg-white/70 flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-teal-950 text-white flex items-center justify-center">
-                      <Zap className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">Συντομεύσεις</p>
-                      <h4 className="text-lg font-bold text-slate-900">QR flows & άμεση δράση</h4>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-600">
-                    Αιτήματα συντήρησης, ενημέρωση για βλάβες, αναφορές συμβάντων ή πληρωμές με ένα scan.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
-                      <QrCode className="h-4 w-4" />
-                      Maintenance
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
-                      <CreditCard className="h-4 w-4" />
-                      Πληρωμές
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
-                      <Bell className="h-4 w-4" />
-                      Alerts
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </AnimatedSection>
+        </div>
+      </section>
 
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto space-y-8">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Ρόλοι & Ροές</p>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-                Έτοιμο για όλους: διαχειριστές, κατοίκους, συνεργεία.
+      {/* FEATURES */}
+      <section id="features" className="border-b border-slate-800 bg-slate-950">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Λειτουργίες
+              </span>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+                Εργαλεία για μια δυνατή κοινότητα
               </h2>
-              <p className="text-lg text-slate-600 max-w-3xl">
-                Καθένας βλέπει μόνο ό,τι χρειάζεται, με workflows που μειώνουν χρόνο και λάθη.
+              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+                Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να 
+                ενισχύουν τη συνεργασία και την επικοινωνία μεταξύ ενοίκων.
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {roleFlows.map((flow) => (
-                <div key={flow.title} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center">
-                      <flow.icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900">{flow.title}</h3>
-                  </div>
-                  <ul className="space-y-3 text-sm text-slate-700">
-                    {flow.items.map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+          </AnimatedSection>
 
-        <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto space-y-8">
-            <div className="space-y-3 text-center">
-              <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Τιμολόγηση</p>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">Απλή, διαφανής τιμή.</h2>
-              <p className="text-lg text-slate-600 max-w-3xl mx-auto">
-                Επιλέξτε πλάνο με βάση το μέγεθος και τις απαιτήσεις σας. Info-point και kiosk συμπεριλαμβάνονται από το
-                επαγγελματικό πλάνο και πάνω.
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                title: "Ενημέρωση για όλους",
+                description:
+                  "Ανακοινώσεις, εργασίες, ενημερώσεις. Εμφανίζονται στην οθόνη της εισόδου και στο κινητό κάθε ενοίκου. Κανείς δεν μένει απληροφόρητος.",
+              },
+              {
+                title: "Διαφάνεια στα οικονομικά",
+                description:
+                  "Κάθε ένοικος βλέπει τα κοινόχρηστά του, την ιστορία, την κατάσταση πληρωμών. Λιγότερες απορίες, περισσότερη εμπιστοσύνη.",
+              },
+              {
+                title: "Φωνή σε κάθε ένοικο",
+                description:
+                  "Αιτήματα, βλάβες, προτάσεις. Κάθε ένοικος μπορεί να εκφραστεί και να παρακολουθεί την εξέλιξη του αιτήματός του.",
+              },
+              {
+                title: "Δημοκρατικές αποφάσεις",
+                description:
+                  "Ψηφοφορίες με διαφάνεια. Κάθε διαμέρισμα έχει ψήφο, τα αποτελέσματα καταγράφονται, οι αποφάσεις είναι ξεκάθαρες για όλους.",
+              },
+              {
+                title: "Επικοινωνία χωρίς εντάσεις",
+                description:
+                  "Σχόλια, ειδοποιήσεις, ενημερώσεις. Η κοινότητα επικοινωνεί ομαλά, χωρίς παρεξηγήσεις και χωρίς ατέλειωτα τηλέφωνα.",
+              },
+              {
+                title: "Έτοιμοι για το μέλλον",
+                description:
+                  "Η πλατφόρμα υποστηρίζει ενσωμάτωση με μετρητές ενέργειας, αισθητήρες και άλλες τεχνολογίες. Η κοινότητα εξελίσσεται.",
+              },
+            ].map((feature, index) => (
+              <AnimatedSection key={feature.title} delay={index * 100}>
+                <div className="group h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+                  <h3 className="mb-3 text-lg font-semibold text-emerald-400">{feature.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-400">{feature.description}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section id="testimonials" className="border-b border-slate-800 bg-slate-900/30">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Κοινότητες που άλλαξαν
+              </span>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+                Τι λένε οι κοινότητές μας
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+                Ένοικοι, διαχειριστές και γραφεία μοιράζονται πώς άλλαξε η συνεργασία στην πολυκατοικία τους.
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {pricingPlans.map((plan) => (
+          </AnimatedSection>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {testimonials.map((testimonial, index) => (
+              <TestimonialCard key={testimonial.name} testimonial={testimonial} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="border-b border-slate-800 bg-slate-950">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Πακέτα
+              </span>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+                Πακέτα για κάθε κοινότητα
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+                Διάλεξε αυτό που ταιριάζει στην κοινότητά σου – με ή χωρίς σημείο ενημέρωσης.
+                <br />
+                <span className="text-xs text-slate-500">
+                  Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
+                </span>
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {pricingPlans.map((plan, index) => (
+              <AnimatedSection key={plan.id} delay={index * 100}>
                 <div
-                  key={plan.name}
-                  className={`bg-white rounded-2xl border ${plan.accent} p-6 shadow-sm relative overflow-hidden`}
+                  className={`relative flex h-full flex-col rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02] ${
+                    plan.highlight
+                      ? "border-emerald-500 bg-slate-900 shadow-xl shadow-emerald-500/20"
+                      : "border-slate-800 bg-slate-950/70 hover:border-slate-700"
+                  }`}
                 >
-                  {plan.popular ? (
-                    <div className="absolute right-4 top-4 px-3 py-1 rounded-full bg-teal-100 text-sky-800 text-xs font-semibold">
-                      Πιο δημοφιλές
+                  {plan.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-4 py-1 text-xs font-bold text-slate-950">
+                      {plan.badge}
                     </div>
-                  ) : null}
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-slate-500">{plan.description}</p>
-                    <h3 className="text-2xl font-bold text-slate-900">{plan.name}</h3>
+                  )}
+                  <div className={plan.badge ? "pt-2" : ""}>
+                    <h3 className="text-lg font-bold text-slate-50">{plan.name}</h3>
+                    <p className="mt-1 text-xs text-slate-500">{plan.target}</p>
                   </div>
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-4xl font-extrabold text-slate-900">{plan.price}</span>
-                    <span className="text-sm text-slate-500">{plan.price !== "Custom" ? "/μήνα" : "Κατόπιν ζήτησης"}</span>
+
+                  <div className="mt-5">
+                    <div className="text-2xl font-bold text-emerald-400">
+                      {plan.priceMonthly}
+                      <span className="ml-1 text-xs font-normal text-slate-500">/ μήνα / πολυκατοικία</span>
+                    </div>
+                    {plan.upfrontCost && (
+                      <div className="mt-1 text-xs text-slate-400">
+                        + {plan.upfrontCost} <span className="text-slate-500">hardware & setup</span>
+                      </div>
+                    )}
                   </div>
-                  <ul className="mt-6 space-y-3 text-sm text-slate-700">
-                    {plan.highlights.map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5" />
-                        <span>{item}</span>
+
+                  <ul className="mt-6 flex-1 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2 text-xs text-slate-300">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-400">
+                          ✓
+                        </span>
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
-                  <Link
-                    href={plan.href}
-                    className={`mt-6 block w-full text-center font-semibold px-4 py-3 rounded-lg ${
-                      plan.popular
-                        ? "bg-teal-600 text-white hover:bg-teal-700"
-                        : "border border-slate-200 text-slate-900 hover:bg-white"
+
+                  <a
+                    href="#cta"
+                    className={`mt-6 block w-full rounded-full py-2.5 text-center text-sm font-semibold transition-all duration-300 ${
+                      plan.highlight
+                        ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:scale-105"
+                        : "border border-slate-700 text-slate-200 hover:border-slate-500 hover:bg-slate-800"
                     }`}
                   >
-                    Ξεκινήστε
-                  </Link>
+                    Ζήτησε προσφορά
+                  </a>
                 </div>
-              ))}
-            </div>
+              </AnimatedSection>
+            ))}
           </div>
-        </section>
 
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto rounded-3xl bg-teal-950 text-white p-10 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-teal-700/30 via-teal-950 to-teal-950" />
-            <div className="relative grid lg:grid-cols-2 gap-8 items-center">
-              <div className="space-y-4">
-                <p className="text-sm font-semibold uppercase tracking-widest text-teal-200">Επόμενα βήματα</p>
-                <h2 className="text-3xl md:text-4xl font-extrabold">Έτοιμοι να περάσουμε σε παραγωγή;</h2>
-                <p className="text-lg text-slate-200">
-                  Στήνουμε info-point, kiosk και οικονομικές ροές σε μία εβδομάδα. Από εκεί και πέρα, η ομάδα σας
-                  κρατάει τα πάντα ενημερωμένα χωρίς έξτρα εργαλεία.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center justify-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-lg font-semibold hover:bg-slate-100"
-                  >
-                    Ξεκινήστε τώρα
-                    <Zap className="h-5 w-5" />
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold border border-white/30 text-white hover:bg-white/10"
-                  >
-                    Σύνδεση
-                  </Link>
-                </div>
-              </div>
-              <div className="relative">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-sm text-slate-200">Χρόνος ενεργοποίησης</p>
-                    <p className="text-2xl font-bold">1 εβδομάδα</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-sm text-slate-200">Support</p>
-                    <p className="text-2xl font-bold">Priority</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-sm text-slate-200">Info-point</p>
-                    <p className="text-2xl font-bold">Ready</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-sm text-slate-200">Kiosk mode</p>
-                    <p className="text-2xl font-bold">Locked</p>
-                  </div>
+          {/* Custom plan note */}
+          <AnimatedSection delay={400}>
+            <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
+              <h3 className="mb-2 text-lg font-semibold text-slate-50">Πολλές κοινότητες;</h3>
+              <p className="text-sm text-slate-400">
+                Για γραφεία που διαχειρίζονται 10+ κοινότητες ή έχουν ιδιαίτερες ανάγκες – επικοινωνήστε για custom λύση.
+              </p>
+              <a
+                href="#cta"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
+              >
+                Επικοινωνήστε μαζί μας
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* FOR MANAGERS */}
+      <section id="for-managers" className="border-b border-slate-800 bg-slate-900/30">
+        <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
+          <div className="flex-1 space-y-6">
+            <AnimatedSection>
+              <span className="inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Για επαγγελματίες
+              </span>
+            </AnimatedSection>
+            <AnimatedSection delay={100}>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+                Διαχειρίζεσαι πολλές κοινότητες;
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={200}>
+              <p className="text-base text-slate-400">
+                Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα και οι απορίες.
+                Με το newconcierge.app, κάθε κοινότητα ενημερώνεται αυτόματα – οι ένοικοι είναι ικανοποιημένοι 
+                κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
+              </p>
+            </AnimatedSection>
+
+            <AnimatedSection delay={300}>
+              <ul className="space-y-3 text-sm text-slate-300">
+                {[
+                  "Ενοποιημένη διαχείριση όλων των κοινοτήτων σου",
+                  "Ικανοποιημένοι ένοικοι = λιγότερα τηλέφωνα",
+                  "Διαφάνεια που χτίζει εμπιστοσύνη",
+                  "Custom αναφορές & στατιστικά ανά κοινότητα",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+                      ✓
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </AnimatedSection>
+          </div>
+
+          {/* Placeholder media */}
+          <AnimatedSection delay={200} className="flex-1">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
+              <div className="aspect-video rounded-2xl border border-dashed border-slate-700 bg-slate-950 p-6">
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                  <span className="rounded-full border border-slate-700 px-4 py-1.5 text-[11px] uppercase tracking-wider text-slate-500">
+                    Placeholder Dashboard
+                  </span>
+                  <p className="max-w-xs text-sm text-slate-500">
+                    Εδώ θα μπει screenshot από το dashboard με πολλαπλές κοινότητες.
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </AnimatedSection>
+        </div>
+      </section>
 
-      <footer className="bg-white border-t border-slate-100 py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="h-9 w-9 rounded-lg bg-teal-600 text-white flex items-center justify-center">
-                  <Building className="h-5 w-5" />
-                </div>
-                <span className="text-lg font-bold text-slate-900">New Concierge</span>
-              </div>
-              <p className="text-sm text-slate-600">
-                Ενοποιημένη πλατφόρμα concierge για σύγχρονα κτίρια με info-point και kiosk mode by design.
+      {/* FAQ */}
+      <section id="faq" className="border-b border-slate-800 bg-slate-950">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                Απορίες
+              </span>
+              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">Συχνές ερωτήσεις</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+                Μερικές από τις πιο συχνές απορίες για το πώς μπορεί η κοινότητά σας να ξεκινήσει.
               </p>
             </div>
+          </AnimatedSection>
+
+          <AnimatedSection delay={200}>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-6">
+              {faqs.map((item) => (
+                <FaqItem key={item.question} question={item.question} answer={item.answer} />
+              ))}
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section id="cta" className="bg-slate-950">
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <AnimatedSection>
+            <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/20 via-slate-900 to-slate-950 p-8 sm:p-10">
+              {/* Background glow */}
+              <div className="absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl" />
+
+              <div className="relative">
+                <h2 className="text-center text-2xl font-bold sm:text-3xl lg:text-4xl">
+                  Έτοιμοι να γίνετε κοινότητα;
+                </h2>
+                <p className="mx-auto mt-4 max-w-xl text-center text-base text-slate-300">
+                  Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών.
+                </p>
+
+                {/* Quick contact options */}
+                <div className="mt-6 flex flex-wrap justify-center gap-4">
+                  <a
+                    href="https://wa.me/306900000000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-medium text-emerald-300 transition-all hover:bg-emerald-500/20"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
+                  </a>
+                  <a
+                    href="tel:+302100000000"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800"
+                  >
+                    <Phone className="h-4 w-4" />
+                    210 000 0000
+                  </a>
+                </div>
+
+                <div className="mx-auto mt-6 max-w-lg">
+                  <p className="mb-4 text-center text-xs text-slate-500">Ή συμπλήρωσε τη φόρμα:</p>
+                  
+                  {/* Simplified contact form */}
+                  <form className="grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <input
+                        type="text"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        placeholder="Όνομα *"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="tel"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        placeholder="Τηλέφωνο *"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="email"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        placeholder="Email"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <select className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        <option value="">Είμαι...</option>
+                        <option value="internal">Εσωτερικός διαχειριστής</option>
+                        <option value="office">Γραφείο διαχείρισης</option>
+                        <option value="owner">Ιδιοκτήτης / εκπρόσωπος</option>
+                        <option value="other">Άλλο</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <button
+                        type="submit"
+                        className="group flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/40 hover:scale-[1.02]"
+                      >
+                        Θέλω να με καλέσετε
+                        <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </button>
+                    </div>
+                  </form>
+
+                  <p className="mt-4 text-center text-[11px] text-slate-500">
+                    Δεν στέλνουμε spam. Θα επικοινωνήσουμε μόνο για να συζητήσουμε τις ανάγκες σου.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-slate-800 bg-slate-950">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
+                  <Building className="h-5 w-5 text-slate-950" />
+                </div>
+                <span className="text-lg font-bold text-slate-50">newconcierge.app</span>
+              </div>
+              <p className="text-sm text-slate-500">
+                Μετατρέπουμε πολυκατοικίες σε κοινότητες. Με επίκεντρο τον ένοικο.
+              </p>
+              {/* Social proof in footer */}
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                ))}
+                <span className="ml-2 text-xs text-slate-500">4.9/5 από 50+ κοινότητες</span>
+              </div>
+            </div>
+
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Προϊόν</h3>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li>
-                  <Link href="#features" className="hover:text-slate-900">
-                    Λειτουργίες
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#info-point" className="hover:text-slate-900">
-                    Info-point & Kiosk
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#pricing" className="hover:text-slate-900">
-                    Τιμές
-                  </Link>
-                </li>
+              <h3 className="mb-4 text-sm font-semibold text-slate-50">Προϊόν</h3>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><a href="#how-it-works" className="transition-colors hover:text-emerald-400">Πώς λειτουργεί</a></li>
+                <li><a href="#features" className="transition-colors hover:text-emerald-400">Λειτουργίες</a></li>
+                <li><a href="#pricing" className="transition-colors hover:text-emerald-400">Τιμές</a></li>
+                <li><a href="#testimonials" className="transition-colors hover:text-emerald-400">Κριτικές</a></li>
               </ul>
             </div>
+
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Υποστήριξη</h3>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li>
-                  <a href="#" className="hover:text-slate-900">
-                    Τεκμηρίωση
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-slate-900">
-                    Κέντρο βοήθειας
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-slate-900">
-                    Επικοινωνία
-                  </a>
-                </li>
+              <h3 className="mb-4 text-sm font-semibold text-slate-50">Υποστήριξη</h3>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li><a href="#faq" className="transition-colors hover:text-emerald-400">Συχνές ερωτήσεις</a></li>
+                <li><a href="#cta" className="transition-colors hover:text-emerald-400">Επικοινωνία</a></li>
               </ul>
             </div>
+
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Νομικά</h3>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li>
-                  <a href="#" className="hover:text-slate-900">
-                    Πολιτική απορρήτου
-                  </a>
+              <h3 className="mb-4 text-sm font-semibold text-slate-50">Επικοινωνία</h3>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <a href="tel:+302100000000" className="transition-colors hover:text-emerald-400">210 000 0000</a>
                 </li>
-                <li>
-                  <a href="#" className="hover:text-slate-900">
-                    Όροι χρήσης
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-slate-900">
-                    Πολιτική cookies
-                  </a>
+                <li className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  <a href="https://wa.me/306900000000" className="transition-colors hover:text-emerald-400">WhatsApp</a>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-100 mt-8 pt-6 flex flex-col sm:flex-row justify-between text-sm text-slate-500">
-            <p>© 2025 New Concierge. Όλα τα δικαιώματα διατηρούνται.</p>
-            <p>Designed για οθόνες info-point & web.</p>
+
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-8 sm:flex-row">
+            <p className="text-sm text-slate-600">© 2025 newconcierge.app. Όλα τα δικαιώματα διατηρούνται.</p>
+            <div className="flex gap-4 text-xs text-slate-600">
+              <a href="#" className="transition-colors hover:text-emerald-400">Πολιτική απορρήτου</a>
+              <a href="#" className="transition-colors hover:text-emerald-400">Όροι χρήσης</a>
+            </div>
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }

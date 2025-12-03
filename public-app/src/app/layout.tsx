@@ -21,8 +21,16 @@ const play = Play({
 });
 
 export const metadata: Metadata = {
-  title: "New Concierge",
-  description: "Modern building management platform for residents and managers.",
+  title: "newconcierge.app | Ο Ψηφιακός Θυρωρός της Πολυκατοικίας σου",
+  description: "InfoPoint Kiosk στην είσοδο της πολυκατοικίας και πλατφόρμα cloud. Ανακοινώσεις, ψηφοφορίες, κοινόχρηστα και αιτήματα σε ένα μέρος. Για πολυκατοικίες και γραφεία διαχείρισης.",
+  keywords: ["ψηφιακός θυρωρός", "κοινόχρηστα", "πολυκατοικία", "διαχείριση κτιρίου", "InfoPoint Kiosk", "ανακοινώσεις πολυκατοικίας", "ψηφοφορίες πολυκατοικίας"],
+  authors: [{ name: "newconcierge.app" }],
+  openGraph: {
+    title: "newconcierge.app | Ο Ψηφιακός Θυρωρός της Πολυκατοικίας σου",
+    description: "InfoPoint Kiosk στην είσοδο και πλατφόρμα cloud. Ανακοινώσεις, ψηφοφορίες, κοινόχρηστα χωρίς χαρτιά.",
+    type: "website",
+    locale: "el_GR",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -37,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2563eb",
+  themeColor: "#10b981", // emerald-500 for the new design
 };
 
 export default function RootLayout({
