@@ -599,7 +599,9 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         from buildings.models import Building
         from apartments.models import Membership
         from django.contrib.auth import get_user_model
+        import logging
         
+        logger = logging.getLogger(__name__)
         User = get_user_model()
         
         building_id = request.query_params.get('building_id')
@@ -610,8 +612,9 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
             )
         
         try:
+            building_id = int(building_id)
             building = Building.objects.get(id=building_id)
-        except Building.DoesNotExist:
+        except (ValueError, Building.DoesNotExist):
             return Response(
                 {"error": "Το κτίριο δεν βρέθηκε"},
                 status=status.HTTP_404_NOT_FOUND
@@ -625,46 +628,64 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Get all users in building
-        manager_ids = list(building.managers.values_list('id', flat=True))
-        resident_ids = list(Membership.objects.filter(
-            building=building
-        ).values_list('user_id', flat=True))
-        
-        all_user_ids = list(set(manager_ids + resident_ids))
-        
-        # Get users with their online status
-        users_data = []
-        for user_id in all_user_ids:
-            try:
-                u = User.objects.get(id=user_id)
-                online_status = OnlineStatus.objects.filter(user=u).first()
-                
-                # Determine role
-                if u.id in manager_ids:
-                    role = 'manager'
-                else:
-                    role = 'resident'
-                
-                users_data.append({
-                    'id': u.id,
-                    'name': u.get_full_name() or u.email,
-                    'email': u.email,
-                    'role': role,
-                    'is_online': online_status.is_online if online_status else False,
-                    'last_activity': online_status.last_activity.isoformat() if online_status else None,
-                    'status_message': online_status.status_message if online_status else None,
-                })
-            except User.DoesNotExist:
-                continue
-        
-        # Sort: online users first, then by name
-        users_data.sort(key=lambda x: (not x['is_online'], x['name'].lower()))
-        
-        return Response({
-            "building_id": building_id,
-            "building_name": building.name,
-            "users": users_data,
-            "online_count": sum(1 for u in users_data if u['is_online']),
-            "total_count": len(users_data)
-        }) 
+        try:
+            # Get all users in building
+            manager_ids = list(building.managers.values_list('id', flat=True))
+            resident_ids = list(Membership.objects.filter(
+                building=building
+            ).values_list('user_id', flat=True))
+            
+            all_user_ids = list(set(manager_ids + resident_ids))
+            
+            # Get users with their online status
+            users_data = []
+            for user_id in all_user_ids:
+                try:
+                    u = User.objects.get(id=user_id)
+                    
+                    # Try to get online status, but don't fail if table doesn't exist
+                    try:
+                        online_status = OnlineStatus.objects.filter(user=u).first()
+                        is_online = online_status.is_online if online_status else False
+                        last_activity = online_status.last_activity.isoformat() if online_status and online_status.last_activity else None
+                        status_message = online_status.status_message if online_status else None
+                    except Exception:
+                        # OnlineStatus table might not exist yet
+                        is_online = False
+                        last_activity = None
+                        status_message = None
+                    
+                    # Determine role
+                    if u.id in manager_ids:
+                        role = 'manager'
+                    else:
+                        role = 'resident'
+                    
+                    users_data.append({
+                        'id': u.id,
+                        'name': u.get_full_name() or u.email,
+                        'email': u.email,
+                        'role': role,
+                        'is_online': is_online,
+                        'last_activity': last_activity,
+                        'status_message': status_message,
+                    })
+                except User.DoesNotExist:
+                    continue
+            
+            # Sort: online users first, then by name
+            users_data.sort(key=lambda x: (not x['is_online'], x['name'].lower()))
+            
+            return Response({
+                "building_id": building_id,
+                "building_name": building.name,
+                "users": users_data,
+                "online_count": sum(1 for u in users_data if u['is_online']),
+                "total_count": len(users_data)
+            })
+        except Exception as e:
+            logger.error(f"Error in building_users: {e}")
+            return Response(
+                {"error": f"Σφάλμα: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            ) 
