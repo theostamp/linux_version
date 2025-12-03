@@ -2130,12 +2130,15 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     
                     # Get apartment balances for this building
                     apt_balances = service.get_apartment_balances()
-                    negative_balances = sum(
+                    # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Θετικό balance = χρέος, αρνητικό = πίστωση
+                    # Σύμφωνα με BalanceCalculationService convention (line 69):
+                    # "(θετικό = χρέος, αρνητικό = πίστωση)"
+                    positive_balances = sum(
                         float(apt.get('current_balance', 0)) 
                         for apt in apt_balances 
-                        if float(apt.get('current_balance', 0)) < 0
+                        if float(apt.get('current_balance', 0)) > 0  # Θετικά = Οφειλές
                     )
-                    pending_obligations += abs(negative_balances)
+                    pending_obligations += positive_balances
                     
                     buildings_data.append({
                         'id': building.id,
@@ -2143,7 +2146,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'address': building.address,
                         'apartments_count': building.apartments.count(),
                         'balance': building_balance,
-                        'pending_obligations': abs(negative_balances),
+                        'pending_obligations': positive_balances,
                         'health_score': self._calculate_building_health(building, summary, apt_balances)
                     })
                     
