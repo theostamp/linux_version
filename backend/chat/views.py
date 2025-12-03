@@ -39,7 +39,9 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         return ChatRoomSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        # Actions accessible to all authenticated users (including residents)
+        user_actions = ['list', 'retrieve', 'get_or_create_for_building', 'join', 'leave', 'participants', 'notifications']
+        if self.action in user_actions:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
 
@@ -47,25 +49,40 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         Φιλτράρισμα chat rooms βάσει των κτιρίων που έχει πρόσβαση ο χρήστης.
         """
-        user = self.request.user
+        import logging
+        logger = logging.getLogger(__name__)
         
-        # Για superusers, επιστρέφει όλα τα chat rooms
-        if user.is_superuser:
-            return self.queryset
-        
-        # Για άλλους χρήστες, επιστρέφει μόνο τα chat rooms των κτιρίων τους
-        user_buildings = []
-        
-        # Κτίρια που διαχειρίζεται
-        managed_buildings = user.managed_buildings.all()
-        user_buildings.extend(managed_buildings)
-        
-        # Κτίρια που κατοικεί
-        resident_buildings = [m.building for m in user.memberships.all()]
-        user_buildings.extend(resident_buildings)
-        
-        building_ids = [b.id for b in user_buildings]
-        return self.queryset.filter(building_id__in=building_ids)
+        try:
+            user = self.request.user
+            
+            # Για superusers, επιστρέφει όλα τα chat rooms
+            if user.is_superuser:
+                return self.queryset
+            
+            # Για άλλους χρήστες, επιστρέφει μόνο τα chat rooms των κτιρίων τους
+            building_ids = []
+            
+            # Κτίρια που διαχειρίζεται
+            try:
+                managed_ids = list(user.managed_buildings.values_list('id', flat=True))
+                building_ids.extend(managed_ids)
+            except Exception as e:
+                logger.warning(f"Error getting managed buildings: {e}")
+            
+            # Κτίρια που κατοικεί
+            try:
+                resident_ids = list(user.memberships.values_list('building_id', flat=True))
+                building_ids.extend(resident_ids)
+            except Exception as e:
+                logger.warning(f"Error getting resident buildings: {e}")
+            
+            # Remove duplicates
+            building_ids = list(set(building_ids))
+            
+            return self.queryset.filter(building_id__in=building_ids)
+        except Exception as e:
+            logger.error(f"Error in ChatRoomViewSet.get_queryset: {e}")
+            return ChatRoom.objects.none()
 
     @action(detail=False, methods=['post'])
     def get_or_create_for_building(self, request):
