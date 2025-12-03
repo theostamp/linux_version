@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Sum
 
 from .models import ChatRoom, ChatMessage, ChatParticipant, ChatNotification
 from .serializers import (
@@ -59,6 +59,66 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         
         building_ids = [b.id for b in user_buildings]
         return self.queryset.filter(building_id__in=building_ids)
+
+    @action(detail=False, methods=['post'])
+    def get_or_create_for_building(self, request):
+        """
+        Επιστρέφει ή δημιουργεί chat room για ένα κτίριο.
+        """
+        from buildings.models import Building
+        
+        building_id = request.data.get('building_id')
+        if not building_id:
+            return Response(
+                {"error": "Απαιτείται building_id"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {"error": "Το κτίριο δεν βρέθηκε"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        user = request.user
+        
+        # Έλεγχος πρόσβασης
+        if not (user.is_manager_of(building) or user.is_resident_of(building) or user.is_superuser):
+            return Response(
+                {"error": "Δεν έχετε πρόσβαση σε αυτό το κτίριο"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Δημιουργία ή ανάκτηση chat room
+        chat_room, created = ChatRoom.objects.get_or_create(
+            building=building,
+            defaults={
+                'name': f'Chat - {building.name}',
+                'is_active': True
+            }
+        )
+        
+        # Δημιουργία participant αν δεν υπάρχει
+        participant, _ = ChatParticipant.objects.get_or_create(
+            chat_room=chat_room,
+            user=user,
+            defaults={'is_online': True}
+        )
+        
+        # Δημιουργία notification αν δεν υπάρχει
+        ChatNotification.objects.get_or_create(
+            chat_room=chat_room,
+            user=user,
+            defaults={'unread_count': 0}
+        )
+        
+        return Response({
+            "chat_room": ChatRoomSerializer(chat_room, context={'request': request}).data,
+            "created": created,
+            "message": "Chat room δημιουργήθηκε" if created else "Chat room ανακτήθηκε"
+        })
 
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
@@ -298,6 +358,6 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         total_unread = ChatNotification.objects.filter(
             chat_room__building_id__in=building_ids,
             user=user
-        ).aggregate(total=Count('unread_count'))['total'] or 0
+        ).aggregate(total=Sum('unread_count'))['total'] or 0
         
         return Response({"unread_count": total_unread}) 

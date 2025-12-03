@@ -10,6 +10,7 @@ import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
 import { getEffectiveRole } from '@/lib/roleUtils';
 import { designSystem } from '@/lib/design-system';
+import { ChatNotificationBadge } from '@/components/chat/ChatNotificationBadge';
 import {
   Home,
   Megaphone,
@@ -231,7 +232,7 @@ const navigationGroups: NavigationGroup[] = [
       {
         href: '/chat',
         label: 'Chat',
-        icon: <MessageCircle className="w-5 h-5" />,
+        icon: <ChatNotificationBadge showIcon iconClassName="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
         tooltip: 'Συνομιλία με διαχειριστές και κατοίκους',
       },
