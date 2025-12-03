@@ -197,4 +197,207 @@ class ChatNotification(models.Model):
         unique_together = ['user', 'chat_room']
 
     def __str__(self):
-        return f"{self.user.get_full_name()}: {self.unread_count} unread in {self.chat_room.building.name}" 
+        return f"{self.user.get_full_name()}: {self.unread_count} unread in {self.chat_room.building.name}"
+
+
+class DirectConversation(models.Model):
+    """
+    Ιδιωτική συνομιλία μεταξύ δύο χρηστών.
+    """
+    participant_one = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='conversations_as_one',
+        verbose_name=_("Συμμετέχων 1")
+    )
+    participant_two = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='conversations_as_two',
+        verbose_name=_("Συμμετέχων 2")
+    )
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.CASCADE,
+        related_name='direct_conversations',
+        verbose_name=_("Κτίριο"),
+        help_text=_("Κτίριο στο οποίο ξεκίνησε η συνομιλία (για context)")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Direct Conversation")
+        verbose_name_plural = _("Direct Conversations")
+        unique_together = ['participant_one', 'participant_two', 'building']
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"DM: {self.participant_one.get_full_name()} ↔ {self.participant_two.get_full_name()}"
+
+    @classmethod
+    def get_or_create_conversation(cls, user1, user2, building):
+        """
+        Βρίσκει ή δημιουργεί συνομιλία μεταξύ δύο χρηστών.
+        Εξασφαλίζει ότι η σειρά των χρηστών δεν δημιουργεί duplicates.
+        """
+        # Sort users by ID to ensure consistent ordering
+        if user1.id > user2.id:
+            user1, user2 = user2, user1
+        
+        conversation, created = cls.objects.get_or_create(
+            participant_one=user1,
+            participant_two=user2,
+            building=building
+        )
+        return conversation, created
+
+    def get_other_participant(self, user):
+        """Επιστρέφει τον άλλο συμμετέχοντα της συνομιλίας."""
+        if self.participant_one == user:
+            return self.participant_two
+        return self.participant_one
+
+    def has_participant(self, user):
+        """Ελέγχει αν ο χρήστης συμμετέχει στη συνομιλία."""
+        return self.participant_one == user or self.participant_two == user
+
+
+class DirectMessage(models.Model):
+    """
+    Ιδιωτικό μήνυμα μεταξύ δύο χρηστών.
+    """
+    MESSAGE_TYPES = [
+        ('text', _('Κείμενο')),
+        ('image', _('Εικόνα')),
+        ('file', _('Αρχείο')),
+    ]
+
+    conversation = models.ForeignKey(
+        DirectConversation,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        verbose_name=_("Συνομιλία")
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_direct_messages',
+        verbose_name=_("Αποστολέας")
+    )
+    message_type = models.CharField(
+        max_length=10,
+        choices=MESSAGE_TYPES,
+        default='text',
+        verbose_name=_("Τύπος Μηνύματος")
+    )
+    content = models.TextField(
+        verbose_name=_("Περιεχόμενο")
+    )
+    file_url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name=_("URL Αρχείου")
+    )
+    file_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name=_("Όνομα Αρχείου")
+    )
+    is_read = models.BooleanField(
+        default=False,
+        verbose_name=_("Διαβάστηκε")
+    )
+    read_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Ημερομηνία Ανάγνωσης")
+    )
+    is_edited = models.BooleanField(
+        default=False,
+        verbose_name=_("Επεξεργασμένο")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Direct Message")
+        verbose_name_plural = _("Direct Messages")
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"DM from {self.sender.get_full_name()}: {self.content[:30]}..."
+
+    @property
+    def recipient(self):
+        """Επιστρέφει τον παραλήπτη του μηνύματος."""
+        return self.conversation.get_other_participant(self.sender)
+
+    def mark_as_read(self):
+        """Σήμανση του μηνύματος ως διαβασμένο."""
+        if not self.is_read:
+            from django.utils import timezone
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=['is_read', 'read_at'])
+
+
+class OnlineStatus(models.Model):
+    """
+    Κατάσταση σύνδεσης χρήστη (global, όχι per-room).
+    """
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='online_status',
+        verbose_name=_("Χρήστης")
+    )
+    is_online = models.BooleanField(
+        default=False,
+        verbose_name=_("Συνδεδεμένος")
+    )
+    last_activity = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Τελευταία Δραστηριότητα")
+    )
+    status_message = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name=_("Μήνυμα Κατάστασης"),
+        help_text=_("Π.χ. 'Διαθέσιμος', 'Απασχολημένος', κλπ.")
+    )
+
+    class Meta:
+        verbose_name = _("Online Status")
+        verbose_name_plural = _("Online Statuses")
+
+    def __str__(self):
+        status = "Online" if self.is_online else "Offline"
+        return f"{self.user.get_full_name()}: {status}"
+
+    @classmethod
+    def get_online_users_for_building(cls, building):
+        """
+        Επιστρέφει τους online χρήστες για ένα κτίριο.
+        Περιλαμβάνει managers και residents.
+        """
+        from django.db.models import Q
+        from apartments.models import Membership
+        
+        # Get manager IDs
+        manager_ids = building.managers.values_list('id', flat=True)
+        
+        # Get resident IDs
+        resident_ids = Membership.objects.filter(
+            building=building
+        ).values_list('user_id', flat=True)
+        
+        # Combine and get online users
+        user_ids = list(manager_ids) + list(resident_ids)
+        
+        return cls.objects.filter(
+            user_id__in=user_ids,
+            is_online=True
+        ).select_related('user')

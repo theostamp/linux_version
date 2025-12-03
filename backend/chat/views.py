@@ -2,9 +2,12 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 
-from .models import ChatRoom, ChatMessage, ChatParticipant, ChatNotification
+from .models import (
+    ChatRoom, ChatMessage, ChatParticipant, ChatNotification,
+    DirectConversation, DirectMessage, OnlineStatus
+)
 from .serializers import (
     ChatRoomSerializer,
     ChatMessageSerializer,
@@ -13,7 +16,11 @@ from .serializers import (
     ChatNotificationSerializer,
     ChatRoomCreateSerializer,
     ChatMessageUpdateSerializer,
-    ChatMessageReadSerializer
+    ChatMessageReadSerializer,
+    DirectConversationSerializer,
+    DirectMessageSerializer,
+    OnlineStatusSerializer,
+    CreateDirectConversationSerializer
 )
 from core.permissions import IsManagerOrSuperuser
 
@@ -360,4 +367,304 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
             user=user
         ).aggregate(total=Sum('unread_count'))['total'] or 0
         
-        return Response({"unread_count": total_unread}) 
+        return Response({"unread_count": total_unread})
+
+
+# =============================================================================
+# DIRECT MESSAGING (Private Chat) ViewSets
+# =============================================================================
+
+class DirectConversationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση ιδιωτικών συνομιλιών (1-to-1 chat).
+    """
+    queryset = DirectConversation.objects.all()
+    serializer_class = DirectConversationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Επιστρέφει μόνο τις συνομιλίες του τρέχοντα χρήστη.
+        """
+        user = self.request.user
+        return DirectConversation.objects.filter(
+            Q(participant_one=user) | Q(participant_two=user)
+        ).select_related(
+            'participant_one', 'participant_two', 'building'
+        ).order_by('-updated_at')
+
+    @action(detail=False, methods=['post'])
+    def start_conversation(self, request):
+        """
+        Ξεκινάει ή επιστρέφει υπάρχουσα συνομιλία με έναν χρήστη.
+        """
+        serializer = CreateDirectConversationSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        recipient = serializer.validated_data['recipient']
+        building = serializer.validated_data['building']
+        initial_message = serializer.validated_data.get('initial_message', '')
+        
+        # Get or create conversation
+        conversation, created = DirectConversation.get_or_create_conversation(
+            request.user, recipient, building
+        )
+        
+        # Send initial message if provided
+        if initial_message and created:
+            DirectMessage.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                content=initial_message
+            )
+            # Update conversation timestamp
+            conversation.save()  # This triggers auto_now on updated_at
+        
+        return Response({
+            "conversation": DirectConversationSerializer(
+                conversation, 
+                context={'request': request}
+            ).data,
+            "created": created
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def messages(self, request, pk=None):
+        """
+        Λίστα μηνυμάτων μιας συνομιλίας.
+        """
+        conversation = self.get_object()
+        
+        # Check access
+        if not conversation.has_participant(request.user):
+            return Response(
+                {"error": "Δεν έχετε πρόσβαση σε αυτή τη συνομιλία"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get messages with pagination
+        page_size = int(request.query_params.get('page_size', 50))
+        page = int(request.query_params.get('page', 1))
+        offset = (page - 1) * page_size
+        
+        messages = conversation.messages.order_by('-created_at')[offset:offset + page_size]
+        
+        return Response({
+            "messages": DirectMessageSerializer(
+                reversed(list(messages)),  # Reverse to get chronological order
+                many=True,
+                context={'request': request}
+            ).data,
+            "total": conversation.messages.count()
+        })
+
+    @action(detail=True, methods=['post'])
+    def send_message(self, request, pk=None):
+        """
+        Αποστολή μηνύματος σε συνομιλία.
+        """
+        conversation = self.get_object()
+        
+        # Check access
+        if not conversation.has_participant(request.user):
+            return Response(
+                {"error": "Δεν έχετε πρόσβαση σε αυτή τη συνομιλία"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        content = request.data.get('content', '').strip()
+        if not content:
+            return Response(
+                {"error": "Το μήνυμα δεν μπορεί να είναι κενό"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        message = DirectMessage.objects.create(
+            conversation=conversation,
+            sender=request.user,
+            content=content,
+            message_type=request.data.get('message_type', 'text'),
+            file_url=request.data.get('file_url'),
+            file_name=request.data.get('file_name')
+        )
+        
+        # Update conversation timestamp
+        conversation.save()
+        
+        return Response(
+            DirectMessageSerializer(message, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        """
+        Σήμανση όλων των μηνυμάτων ως διαβασμένα.
+        """
+        conversation = self.get_object()
+        
+        # Check access
+        if not conversation.has_participant(request.user):
+            return Response(
+                {"error": "Δεν έχετε πρόσβαση σε αυτή τη συνομιλία"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Mark all unread messages from the other participant as read
+        unread_messages = conversation.messages.filter(
+            is_read=False
+        ).exclude(sender=request.user)
+        
+        count = unread_messages.update(is_read=True, read_at=timezone.now())
+        
+        return Response({
+            "message": f"{count} μηνύματα σημειώθηκαν ως διαβασμένα"
+        })
+
+
+class DirectMessageViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση ιδιωτικών μηνυμάτων.
+    """
+    queryset = DirectMessage.objects.all()
+    serializer_class = DirectMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Επιστρέφει μόνο τα μηνύματα σε συνομιλίες του τρέχοντα χρήστη.
+        """
+        user = self.request.user
+        return DirectMessage.objects.filter(
+            Q(conversation__participant_one=user) | 
+            Q(conversation__participant_two=user)
+        ).select_related('sender', 'conversation')
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        """
+        Συνολικός αριθμός μη διαβασμένων ιδιωτικών μηνυμάτων.
+        """
+        user = request.user
+        
+        count = DirectMessage.objects.filter(
+            Q(conversation__participant_one=user) | 
+            Q(conversation__participant_two=user),
+            is_read=False
+        ).exclude(sender=user).count()
+        
+        return Response({"unread_count": count})
+
+
+class OnlineStatusViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση κατάστασης σύνδεσης χρηστών.
+    """
+    queryset = OnlineStatus.objects.all()
+    serializer_class = OnlineStatusSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return OnlineStatus.objects.select_related('user').all()
+
+    @action(detail=False, methods=['post'])
+    def update_status(self, request):
+        """
+        Ενημέρωση κατάστασης σύνδεσης του τρέχοντα χρήστη.
+        """
+        user = request.user
+        is_online = request.data.get('is_online', True)
+        status_message = request.data.get('status_message', '')
+        
+        online_status, created = OnlineStatus.objects.update_or_create(
+            user=user,
+            defaults={
+                'is_online': is_online,
+                'status_message': status_message
+            }
+        )
+        
+        return Response(OnlineStatusSerializer(online_status).data)
+
+    @action(detail=False, methods=['get'])
+    def building_users(self, request):
+        """
+        Επιστρέφει όλους τους χρήστες ενός κτιρίου με την κατάσταση σύνδεσής τους.
+        """
+        from buildings.models import Building
+        from apartments.models import Membership
+        from django.contrib.auth import get_user_model
+        
+        User = get_user_model()
+        
+        building_id = request.query_params.get('building_id')
+        if not building_id:
+            return Response(
+                {"error": "Απαιτείται building_id"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {"error": "Το κτίριο δεν βρέθηκε"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check access
+        user = request.user
+        if not (user.is_manager_of(building) or user.is_resident_of(building) or user.is_superuser):
+            return Response(
+                {"error": "Δεν έχετε πρόσβαση σε αυτό το κτίριο"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get all users in building
+        manager_ids = list(building.managers.values_list('id', flat=True))
+        resident_ids = list(Membership.objects.filter(
+            building=building
+        ).values_list('user_id', flat=True))
+        
+        all_user_ids = list(set(manager_ids + resident_ids))
+        
+        # Get users with their online status
+        users_data = []
+        for user_id in all_user_ids:
+            try:
+                u = User.objects.get(id=user_id)
+                online_status = OnlineStatus.objects.filter(user=u).first()
+                
+                # Determine role
+                if u.id in manager_ids:
+                    role = 'manager'
+                else:
+                    role = 'resident'
+                
+                users_data.append({
+                    'id': u.id,
+                    'name': u.get_full_name() or u.email,
+                    'email': u.email,
+                    'role': role,
+                    'is_online': online_status.is_online if online_status else False,
+                    'last_activity': online_status.last_activity.isoformat() if online_status else None,
+                    'status_message': online_status.status_message if online_status else None,
+                })
+            except User.DoesNotExist:
+                continue
+        
+        # Sort: online users first, then by name
+        users_data.sort(key=lambda x: (not x['is_online'], x['name'].lower()))
+        
+        return Response({
+            "building_id": building_id,
+            "building_name": building.name,
+            "users": users_data,
+            "online_count": sum(1 for u in users_data if u['is_online']),
+            "total_count": len(users_data)
+        }) 

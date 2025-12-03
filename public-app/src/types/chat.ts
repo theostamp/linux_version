@@ -185,3 +185,108 @@ export type ChatActions = {
  */
 export type UseChatReturn = ChatState & ChatActions;
 
+// =============================================================================
+// DIRECT MESSAGING (Private Chat) Types
+// =============================================================================
+
+/**
+ * Online Status - Κατάσταση σύνδεσης χρήστη
+ */
+export type OnlineStatus = {
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  user_role: 'manager' | 'resident' | 'internal_manager' | 'superuser' | 'other';
+  is_online: boolean;
+  last_activity: string | null;
+  status_message: string | null;
+};
+
+/**
+ * Building User - Χρήστης κτιρίου με online status
+ */
+export type BuildingUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: 'manager' | 'resident';
+  is_online: boolean;
+  last_activity: string | null;
+  status_message: string | null;
+};
+
+/**
+ * Building Users Response
+ */
+export type BuildingUsersResponse = {
+  building_id: number;
+  building_name: string;
+  users: BuildingUser[];
+  online_count: number;
+  total_count: number;
+};
+
+/**
+ * Direct Conversation - Ιδιωτική συνομιλία
+ */
+export type DirectConversation = {
+  id: number;
+  other_participant: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  building_name: string;
+  last_message: {
+    id: number;
+    content: string;
+    sender_name: string;
+    created_at: string;
+    is_read: boolean;
+  } | null;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * Direct Message - Ιδιωτικό μήνυμα
+ */
+export type DirectMessage = {
+  id: number;
+  conversation: number;
+  sender_id: number;
+  sender_name: string;
+  sender_email: string;
+  recipient_id: number;
+  recipient_name: string;
+  message_type: 'text' | 'image' | 'file';
+  content: string;
+  file_url?: string | null;
+  file_name?: string | null;
+  is_read: boolean;
+  read_at: string | null;
+  is_edited: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * Create Direct Conversation Payload
+ */
+export type CreateDirectConversationPayload = {
+  recipient_id: number;
+  building_id: number;
+  initial_message?: string;
+};
+
+/**
+ * Send Direct Message Payload
+ */
+export type SendDirectMessagePayload = {
+  content: string;
+  message_type?: 'text' | 'image' | 'file';
+  file_url?: string;
+  file_name?: string;
+};
+

@@ -477,3 +477,248 @@ export function useChatUnreadCount() {
 
 export default useChat;
 
+// =============================================================================
+// DIRECT MESSAGING Hooks
+// =============================================================================
+
+import type {
+  DirectConversation,
+  DirectMessage,
+  BuildingUser,
+  BuildingUsersResponse,
+  CreateDirectConversationPayload,
+  SendDirectMessagePayload,
+} from '@/types/chat';
+
+/**
+ * Hook για λίστα online χρηστών ενός κτιρίου
+ */
+export function useBuildingUsers(buildingId: number | null) {
+  const [users, setUsers] = useState<BuildingUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [onlineCount, setOnlineCount] = useState(0);
+
+  const loadUsers = useCallback(async () => {
+    if (!buildingId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await apiGet<BuildingUsersResponse>(
+        '/chat/online/building_users/',
+        { building_id: buildingId }
+      );
+      setUsers(data.users || []);
+      setOnlineCount(data.online_count || 0);
+    } catch (err) {
+      console.error('[useBuildingUsers] Σφάλμα:', err);
+      setError('Αποτυχία φόρτωσης χρηστών');
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [buildingId]);
+
+  useEffect(() => {
+    loadUsers();
+    
+    // Poll every 30 seconds for online status updates
+    const interval = setInterval(loadUsers, 30000);
+    return () => clearInterval(interval);
+  }, [loadUsers]);
+
+  return {
+    users,
+    onlineUsers: users.filter(u => u.is_online),
+    offlineUsers: users.filter(u => !u.is_online),
+    onlineCount,
+    totalCount: users.length,
+    isLoading,
+    error,
+    refetch: loadUsers,
+  };
+}
+
+/**
+ * Hook για διαχείριση ιδιωτικών συνομιλιών
+ */
+export function useDirectConversations() {
+  const [conversations, setConversations] = useState<DirectConversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  const loadConversations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await apiGet<DirectConversation[] | { results: DirectConversation[] }>(
+        '/chat/direct/'
+      );
+      const convList = Array.isArray(data) ? data : data.results || [];
+      setConversations(convList);
+      
+      // Calculate total unread
+      const unread = convList.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+      setTotalUnread(unread);
+    } catch (err) {
+      console.error('[useDirectConversations] Σφάλμα:', err);
+      setError('Αποτυχία φόρτωσης συνομιλιών');
+      setConversations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadConversations();
+    
+    // Poll every 10 seconds for new messages
+    const interval = setInterval(loadConversations, 10000);
+    return () => clearInterval(interval);
+  }, [loadConversations]);
+
+  const startConversation = useCallback(async (payload: CreateDirectConversationPayload) => {
+    try {
+      const response = await apiPost<{ conversation: DirectConversation; created: boolean }>(
+        '/chat/direct/start_conversation/',
+        payload
+      );
+      
+      // Refresh conversations list
+      loadConversations();
+      
+      return response;
+    } catch (err) {
+      console.error('[useDirectConversations] Σφάλμα έναρξης συνομιλίας:', err);
+      throw err;
+    }
+  }, [loadConversations]);
+
+  return {
+    conversations,
+    totalUnread,
+    isLoading,
+    error,
+    startConversation,
+    refetch: loadConversations,
+  };
+}
+
+/**
+ * Hook για μια συγκεκριμένη ιδιωτική συνομιλία
+ */
+export function useDirectChat(conversationId: number | null) {
+  const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMessages = useCallback(async () => {
+    if (!conversationId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await apiGet<{ messages: DirectMessage[]; total: number }>(
+        `/chat/direct/${conversationId}/messages/`,
+        { page_size: 100 }
+      );
+      setMessages(data.messages || []);
+    } catch (err) {
+      console.error('[useDirectChat] Σφάλμα φόρτωσης μηνυμάτων:', err);
+      setError('Αποτυχία φόρτωσης μηνυμάτων');
+      setMessages([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    loadMessages();
+    
+    // Poll every 5 seconds for new messages
+    const interval = setInterval(loadMessages, 5000);
+    return () => clearInterval(interval);
+  }, [loadMessages]);
+
+  const sendMessage = useCallback(async (payload: SendDirectMessagePayload) => {
+    if (!conversationId) return;
+    
+    setIsSending(true);
+    setError(null);
+    
+    try {
+      const newMessage = await apiPost<DirectMessage>(
+        `/chat/direct/${conversationId}/send_message/`,
+        payload
+      );
+      
+      // Add message to list immediately
+      setMessages(prev => [...prev, newMessage]);
+      
+      return newMessage;
+    } catch (err) {
+      console.error('[useDirectChat] Σφάλμα αποστολής:', err);
+      setError('Αποτυχία αποστολής μηνύματος');
+      throw err;
+    } finally {
+      setIsSending(false);
+    }
+  }, [conversationId]);
+
+  const markAsRead = useCallback(async () => {
+    if (!conversationId) return;
+    
+    try {
+      await apiPost(`/chat/direct/${conversationId}/mark_as_read/`, {});
+    } catch (err) {
+      console.error('[useDirectChat] Σφάλμα mark as read:', err);
+    }
+  }, [conversationId]);
+
+  return {
+    messages,
+    isLoading,
+    isSending,
+    error,
+    sendMessage,
+    markAsRead,
+    refetch: loadMessages,
+  };
+}
+
+/**
+ * Hook για συνολικά μη διαβασμένα ιδιωτικά μηνύματα
+ */
+export function useDirectMessagesUnreadCount() {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadUnreadCount = useCallback(async () => {
+    try {
+      const data = await apiGet<{ unread_count: number }>('/chat/direct-messages/unread_count/');
+      setUnreadCount(data.unread_count || 0);
+    } catch (err) {
+      console.error('[useDirectMessagesUnreadCount] Σφάλμα:', err);
+      setUnreadCount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUnreadCount();
+    
+    // Poll every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [loadUnreadCount]);
+
+  return { unreadCount, isLoading, refetch: loadUnreadCount };
+}
+

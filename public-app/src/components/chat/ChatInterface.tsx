@@ -6,6 +6,7 @@ import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
 import {
   MessageCircle,
+  MessageSquare,
   Send,
   Users,
   Building2,
@@ -32,10 +33,15 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useChat, useChatRooms } from '@/hooks/useChat';
+import { useChat, useChatRooms, useDirectMessagesUnreadCount } from '@/hooks/useChat';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import type { ChatMessage, ChatRoom, ChatParticipant, SenderRole } from '@/types/chat';
+import { OnlineUsersList } from './OnlineUsersList';
+import { DirectChatPanel } from './DirectChatPanel';
+import type { ChatMessage, ChatRoom, ChatParticipant, SenderRole, BuildingUser } from '@/types/chat';
+
+// Tab types for the chat interface
+type ChatTab = 'group' | 'users' | 'direct';
 
 // Role labels and colors
 const roleConfig: Record<SenderRole, { label: string; color: string; icon: React.ReactNode }> = {
@@ -426,11 +432,16 @@ export default function ChatInterface() {
   const { user } = useAuth();
   const { currentBuilding, buildings } = useBuilding();
   const { rooms, isLoading: roomsLoading, refetch: refetchRooms } = useChatRooms();
+  const { unreadCount: directUnread } = useDirectMessagesUnreadCount();
   
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
   const [showRoomList, setShowRoomList] = useState(true);
+  
+  // Tab navigation for different chat modes
+  const [activeTab, setActiveTab] = useState<ChatTab>('group');
+  const [selectedUserForDM, setSelectedUserForDM] = useState<BuildingUser | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -438,6 +449,12 @@ export default function ChatInterface() {
   
   // Use building from context or selected
   const activeBuildingId = selectedBuildingId || currentBuilding?.id || null;
+
+  // Handle starting a DM from online users list
+  const handleStartDirectChat = (user: BuildingUser) => {
+    setSelectedUserForDM(user);
+    setActiveTab('direct');
+  };
   
   const {
     isConnected,
@@ -687,6 +704,108 @@ export default function ChatInterface() {
               </div>
             </div>
 
+            {/* Tab Navigation */}
+            <div className="flex items-center border-b border-slate-200 bg-white px-4">
+              <button
+                onClick={() => setActiveTab('group')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative',
+                  activeTab === 'group'
+                    ? 'text-primary'
+                    : 'text-slate-500 hover:text-slate-700'
+                )}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Ομαδικό Chat</span>
+                {activeTab === 'group' && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  />
+                )}
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('users')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative',
+                  activeTab === 'users'
+                    ? 'text-primary'
+                    : 'text-slate-500 hover:text-slate-700'
+                )}
+              >
+                <Users className="w-4 h-4" />
+                <span>Χρήστες</span>
+                {activeTab === 'users' && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  />
+                )}
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('direct')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative',
+                  activeTab === 'direct'
+                    ? 'text-primary'
+                    : 'text-slate-500 hover:text-slate-700'
+                )}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Ιδιωτικά</span>
+                {directUnread > 0 && (
+                  <span className="px-1.5 py-0.5 bg-red-500 text-white text-[10px] rounded-full min-w-[18px] text-center">
+                    {directUnread > 99 ? '99+' : directUnread}
+                  </span>
+                )}
+                {activeTab === 'direct' && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  />
+                )}
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <AnimatePresence mode="wait">
+              {activeTab === 'users' ? (
+                <motion.div
+                  key="users"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex-1 overflow-hidden"
+                >
+                  <OnlineUsersList
+                    buildingId={activeBuildingId}
+                    onStartChat={handleStartDirectChat}
+                  />
+                </motion.div>
+              ) : activeTab === 'direct' ? (
+                <motion.div
+                  key="direct"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex-1 overflow-hidden"
+                >
+                  <DirectChatPanel
+                    buildingId={activeBuildingId}
+                    selectedUser={selectedUserForDM}
+                    onBack={() => setSelectedUserForDM(null)}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="group"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex-1 flex flex-col overflow-hidden"
+                >
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50 to-white">
               {messages.length === 0 ? (
@@ -805,6 +924,9 @@ export default function ChatInterface() {
               isOpen={showParticipants}
               onClose={() => setShowParticipants(false)}
             />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         ) : (
           // No building selected

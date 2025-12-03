@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import ChatRoom, ChatMessage, ChatParticipant, ChatNotification
+from .models import (
+    ChatRoom, ChatMessage, ChatParticipant, ChatNotification,
+    DirectConversation, DirectMessage, OnlineStatus
+)
 from buildings.serializers import BuildingSerializer
 from users.serializers import UserSerializer
 
@@ -174,4 +177,183 @@ class ChatMessageReadSerializer(serializers.Serializer):
             
             return data
         except ChatRoom.DoesNotExist:
-            raise serializers.ValidationError("Το chat room δεν υπάρχει") 
+            raise serializers.ValidationError("Το chat room δεν υπάρχει")
+
+
+# =============================================================================
+# DIRECT MESSAGING (Private Chat) Serializers
+# =============================================================================
+
+class OnlineStatusSerializer(serializers.ModelSerializer):
+    """Serializer για OnlineStatus"""
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    user_role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OnlineStatus
+        fields = [
+            'user_id', 'user_name', 'user_email', 'user_role',
+            'is_online', 'last_activity', 'status_message'
+        ]
+        read_only_fields = ['user_id', 'user_name', 'user_email', 'last_activity']
+
+    def get_user_role(self, obj):
+        """Επιστρέφει τον ρόλο του χρήστη"""
+        user = obj.user
+        if user.is_superuser:
+            return 'superuser'
+        if hasattr(user, 'profile') and user.profile:
+            return user.profile.role
+        # Check groups
+        if user.groups.filter(name='managers').exists():
+            return 'manager'
+        return 'resident'
+
+
+class DirectMessageSerializer(serializers.ModelSerializer):
+    """Serializer για DirectMessage"""
+    sender_id = serializers.IntegerField(source='sender.id', read_only=True)
+    sender_name = serializers.CharField(source='sender.get_full_name', read_only=True)
+    sender_email = serializers.CharField(source='sender.email', read_only=True)
+    recipient_id = serializers.SerializerMethodField()
+    recipient_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DirectMessage
+        fields = [
+            'id', 'conversation', 'sender_id', 'sender_name', 'sender_email',
+            'recipient_id', 'recipient_name', 'message_type', 'content',
+            'file_url', 'file_name', 'is_read', 'read_at', 'is_edited',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'sender_id', 'sender_name', 'sender_email',
+            'recipient_id', 'recipient_name', 'is_read', 'read_at',
+            'created_at', 'updated_at'
+        ]
+
+    def get_recipient_id(self, obj):
+        recipient = obj.recipient
+        return recipient.id if recipient else None
+
+    def get_recipient_name(self, obj):
+        recipient = obj.recipient
+        return recipient.get_full_name() if recipient else None
+
+    def create(self, validated_data):
+        validated_data['sender'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class DirectConversationSerializer(serializers.ModelSerializer):
+    """Serializer για DirectConversation"""
+    other_participant = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
+    building_name = serializers.CharField(source='building.name', read_only=True)
+
+    class Meta:
+        model = DirectConversation
+        fields = [
+            'id', 'other_participant', 'building_name', 'last_message',
+            'unread_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_other_participant(self, obj):
+        """Επιστρέφει τον άλλο συμμετέχοντα της συνομιλίας."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            other = obj.get_other_participant(request.user)
+            return {
+                'id': other.id,
+                'name': other.get_full_name() or other.email,
+                'email': other.email,
+            }
+        return None
+
+    def get_last_message(self, obj):
+        """Επιστρέφει το τελευταίο μήνυμα της συνομιλίας."""
+        last = obj.messages.order_by('-created_at').first()
+        if last:
+            return {
+                'id': last.id,
+                'content': last.content[:50] + '...' if len(last.content) > 50 else last.content,
+                'sender_name': last.sender.get_full_name(),
+                'created_at': last.created_at.isoformat(),
+                'is_read': last.is_read,
+            }
+        return None
+
+    def get_unread_count(self, obj):
+        """Επιστρέφει τον αριθμό μη διαβασμένων μηνυμάτων."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
+        return 0
+
+
+class CreateDirectConversationSerializer(serializers.Serializer):
+    """Serializer για δημιουργία νέας συνομιλίας"""
+    recipient_id = serializers.IntegerField()
+    building_id = serializers.IntegerField()
+    initial_message = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        from django.contrib.auth import get_user_model
+        from buildings.models import Building
+        
+        User = get_user_model()
+        request = self.context.get('request')
+        
+        # Validate recipient
+        try:
+            recipient = User.objects.get(id=data['recipient_id'])
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"recipient_id": "Ο χρήστης δεν βρέθηκε"})
+        
+        # Validate building
+        try:
+            building = Building.objects.get(id=data['building_id'])
+        except Building.DoesNotExist:
+            raise serializers.ValidationError({"building_id": "Το κτίριο δεν βρέθηκε"})
+        
+        # Check if sender has access to building
+        sender = request.user
+        if not (sender.is_manager_of(building) or sender.is_resident_of(building) or sender.is_superuser):
+            raise serializers.ValidationError("Δεν έχετε πρόσβαση σε αυτό το κτίριο")
+        
+        # Check if recipient has access to building
+        if not (recipient.is_manager_of(building) or recipient.is_resident_of(building) or recipient.is_superuser):
+            raise serializers.ValidationError("Ο παραλήπτης δεν έχει πρόσβαση σε αυτό το κτίριο")
+        
+        # Can't message yourself
+        if sender.id == recipient.id:
+            raise serializers.ValidationError("Δεν μπορείτε να στείλετε μήνυμα στον εαυτό σας")
+        
+        data['recipient'] = recipient
+        data['building'] = building
+        return data
+
+
+class OnlineUsersListSerializer(serializers.Serializer):
+    """Serializer για λίστα online χρηστών ενός κτιρίου"""
+    building_id = serializers.IntegerField()
+
+    def validate_building_id(self, value):
+        from buildings.models import Building
+        
+        try:
+            building = Building.objects.get(id=value)
+            request = self.context.get('request')
+            user = request.user
+            
+            # Check access
+            if not (user.is_manager_of(building) or user.is_resident_of(building) or user.is_superuser):
+                raise serializers.ValidationError("Δεν έχετε πρόσβαση σε αυτό το κτίριο")
+            
+            return value
+        except Building.DoesNotExist:
+            raise serializers.ValidationError("Το κτίριο δεν βρέθηκε")
