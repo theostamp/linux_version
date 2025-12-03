@@ -466,10 +466,12 @@ class FinancialDashboardService:
                 exc_info=exc
             )
         
-        # Συνολικές οφειλές: αρνητικά υπόλοιπα + ανέκδοτες δαπάνες
+        # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
+        # αρνητικό = οφειλή, θετικό = πίστωση
+        # Συνολικές οφειλές: αρνητικά υπόλοιπα (χρέη)
         apartment_obligations = Decimal(str(sum(
             abs(apt.current_balance) for apt in apartments 
-            if apt.current_balance and apt.current_balance < 0
+            if apt.current_balance and apt.current_balance < 0  # Αρνητικά = Οφειλές
         )))
         
         # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδομένες

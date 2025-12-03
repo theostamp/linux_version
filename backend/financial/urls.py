@@ -5,8 +5,10 @@ from .views import (
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
     SystemHealthCheckView, auto_fix_system_issues, financial_overview,
-    FinancialReceiptViewSet, MonthlyBalanceViewSet, my_apartment_data
+    FinancialReceiptViewSet, MonthlyBalanceViewSet, my_apartment_data,
+    cleanup_orphan_transactions, database_cleanup
 )
+from .backup_views import backup_database, restore_database, backup_history, backup_detail
 from .tests_views import (
     run_financial_tests, stop_financial_tests, get_tests_status,
     get_test_coverage_info, clear_test_results
@@ -50,4 +52,18 @@ urlpatterns = [
     # My Apartment endpoint για ενοίκους
     path('my-apartment/', my_apartment_data, name='my-apartment-data'),
     path('my-apartment', my_apartment_data, name='my-apartment-data-no-slash'),
+    # Admin cleanup endpoints (with and without trailing slash)
+    path('admin/cleanup-orphan-transactions/', cleanup_orphan_transactions, name='cleanup-orphan-transactions'),
+    path('admin/cleanup-orphan-transactions', cleanup_orphan_transactions, name='cleanup-orphan-transactions-no-slash'),
+    path('admin/database-cleanup/', database_cleanup, name='database-cleanup'),
+    path('admin/database-cleanup', database_cleanup, name='database-cleanup-no-slash'),
+    # Backup & Restore endpoints (with and without trailing slash)
+    path('admin/backup/', backup_database, name='backup-database'),
+    path('admin/backup', backup_database, name='backup-database-no-slash'),
+    path('admin/backup/history/', backup_history, name='backup-history'),
+    path('admin/backup/history', backup_history, name='backup-history-no-slash'),
+    path('admin/backup/history/<str:backup_id>/', backup_detail, name='backup-detail'),
+    path('admin/backup/history/<str:backup_id>', backup_detail, name='backup-detail-no-slash'),
+    path('admin/restore/', restore_database, name='restore-database'),
+    path('admin/restore', restore_database, name='restore-database-no-slash'),
 ] 

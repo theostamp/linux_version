@@ -77,6 +77,9 @@ function OfficeDashboardContent() {
           <p className="text-muted-foreground mt-1">
             Συγκεντρωτική εικόνα όλων των κτιρίων και οικονομικών στοιχείων
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Εδώ βλέπετε την συνολική εικόνα όλων των κτιρίων που διαχειρίζεστε
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button 

@@ -201,6 +201,11 @@ function DashboardContent() {
           <p className="text-muted-foreground">
             {selectedBuilding ? selectedBuilding.address : 'Συγκεντρωτικά στοιχεία για όλα τα κτίρια'}
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {selectedBuilding 
+              ? 'Εδώ βλέπετε την συνολική εικόνα του κτιρίου που έχετε επιλέξει'
+              : 'Εδώ βλέπετε την συνολική εικόνα όλων των κτιρίων που διαχειρίζεστε'}
+          </p>
         </div>
         {/* Optional: Add Date Range Picker or other global actions here */}
       </div>

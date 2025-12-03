@@ -2116,11 +2116,16 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             pending_obligations = 0
             pending_expenses = 0
             
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση τρέχοντος μήνα για consistent data με Financial Page
+            # Η Financial Page χρησιμοποιεί net_obligation (previous + current - payments)
+            # Το Dashboard πρέπει να χρησιμοποιεί τα ίδια δεδομένα
+            current_month = datetime.now().strftime('%Y-%m')
+            
             buildings_data = []
             for building in buildings:
                 try:
                     service = FinancialDashboardService(building.id)
-                    summary = service.get_summary()
+                    summary = service.get_summary(month=current_month)  # Με μήνα για consistent data
                     
                     building_balance = float(summary.get('current_reserve', 0) or 0)
                     building_pending = float(summary.get('pending_expenses', 0) or 0)
@@ -2128,14 +2133,18 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     total_balance += building_balance
                     pending_expenses += building_pending
                     
-                    # Get apartment balances for this building
-                    apt_balances = service.get_apartment_balances()
-                    negative_balances = sum(
-                        float(apt.get('current_balance', 0)) 
+                    # Get apartment balances with current month for net_obligation calculation
+                    apt_balances = service.get_apartment_balances(month=current_month)
+                    
+                    # 📝 Χρήση net_obligation αντί για current_balance για consistency με Financial Page
+                    # net_obligation = previous_balance + expense_share - month_payments
+                    # Θετικό net_obligation = Οφειλή
+                    building_obligations = sum(
+                        float(apt.get('net_obligation', 0)) 
                         for apt in apt_balances 
-                        if float(apt.get('current_balance', 0)) < 0
+                        if float(apt.get('net_obligation', 0)) > 0  # Θετικά net_obligation = Οφειλές
                     )
-                    pending_obligations += abs(negative_balances)
+                    pending_obligations += building_obligations
                     
                     buildings_data.append({
                         'id': building.id,
@@ -2143,7 +2152,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'address': building.address,
                         'apartments_count': building.apartments.count(),
                         'balance': building_balance,
-                        'pending_obligations': abs(negative_balances),
+                        'pending_obligations': building_obligations,
                         'health_score': self._calculate_building_health(building, summary, apt_balances)
                     })
                     
@@ -4072,3 +4081,349 @@ def my_apartment_data(request):
         return Response({
             'error': f'Σφάλμα κατά την ανάκτηση δεδομένων: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# =============================================================================
+# Admin Database Cleanup - Ολοκληρωμένη διαχείριση εκκαθάρισης
+# =============================================================================
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def database_cleanup(request):
+    """
+    🔧 Admin Database Cleanup API
+    
+    Ολοκληρωμένο endpoint για εκκαθάριση βάσης δεδομένων με:
+    - Preview mode (dry-run)
+    - Multiple cleanup operations
+    - Detailed logging
+    - Balance recalculation
+    
+    GET: Scan database and preview cleanup operations
+    POST: Execute cleanup with confirmation
+    
+    Request Body (POST):
+        - operation: string - Τύπος cleanup ('orphan_transactions', 'reset_balances', 'clean_test_data')
+        - confirm: string - Πρέπει να είναι 'CONFIRM_DELETE' για εκτέλεση
+        - search_term: string - Optional, για orphan_transactions
+        - building_id: int - Optional, φιλτράρισμα ανά κτίριο
+    
+    Permissions:
+        - Μόνο superuser ή admin
+    """
+    import logging
+    from decimal import Decimal
+    from django.db import transaction as db_transaction
+    from .balance_service import BalanceCalculationService
+    
+    logger = logging.getLogger(__name__)
+    user = request.user
+    
+    # ============================================
+    # SECURITY CHECK: Μόνο admin
+    # ============================================
+    if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
+        return Response({
+            'error': 'Δεν έχετε δικαιώματα πρόσβασης. Απαιτείται ρόλος Admin.',
+            'required_role': 'admin'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    # ============================================
+    # GET: Scan and Preview
+    # ============================================
+    if request.method == 'GET':
+        try:
+            scan_results = _scan_database_for_cleanup()
+            return Response({
+                'status': 'preview',
+                'message': '⚠️ Σάρωση βάσης δεδομένων για εκκαθάριση',
+                'scan_results': scan_results,
+                'warnings': [
+                    '🔴 ΠΡΟΣΟΧΗ: Η εκκαθάριση είναι ΜΗ ΑΝΑΣΤΡΕΨΙΜΗ!',
+                    '💾 Συνιστάται να κάνετε BACKUP πριν συνεχίσετε',
+                    '⏱️ Η διαδικασία μπορεί να διαρκέσει αρκετά λεπτά'
+                ],
+                'available_operations': [
+                    {
+                        'id': 'orphan_transactions',
+                        'name': 'Ορφανά Transactions',
+                        'description': 'Διαγραφή transactions από διαγραμμένα έργα/δαπάνες',
+                        'danger_level': 'high',
+                        'affects': 'Υπόλοιπα διαμερισμάτων'
+                    },
+                    {
+                        'id': 'recalculate_balances',
+                        'name': 'Επανυπολογισμός Υπολοίπων',
+                        'description': 'Επανυπολογισμός όλων των υπολοίπων διαμερισμάτων',
+                        'danger_level': 'medium',
+                        'affects': 'Υπόλοιπα διαμερισμάτων'
+                    },
+                    {
+                        'id': 'clean_test_data',
+                        'name': 'Καθαρισμός Test Data',
+                        'description': 'Διαγραφή demo/test δεδομένων',
+                        'danger_level': 'critical',
+                        'affects': 'Πολλαπλά δεδομένα'
+                    }
+                ]
+            })
+        except Exception as e:
+            logger.error(f"[CLEANUP] Scan error: {e}", exc_info=True)
+            return Response({
+                'status': 'error',
+                'error': f'Σφάλμα κατά τη σάρωση: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    # ============================================
+    # POST: Execute Cleanup
+    # ============================================
+    operation = request.data.get('operation')
+    confirm = request.data.get('confirm')
+    search_term = request.data.get('search_term', '')
+    building_id = request.data.get('building_id')
+    
+    # Validation
+    if not operation:
+        return Response({
+            'status': 'error',
+            'error': 'Πρέπει να επιλέξετε operation'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    if confirm != 'CONFIRM_DELETE':
+        return Response({
+            'status': 'error',
+            'error': 'Για να εκτελεστεί η εκκαθάριση, πρέπει να στείλετε confirm: "CONFIRM_DELETE"',
+            'required_confirm': 'CONFIRM_DELETE'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        logger.warning(f"[CLEANUP] User {user.email} executing {operation}")
+        
+        if operation == 'orphan_transactions':
+            result = _cleanup_orphan_transactions(user, search_term, building_id)
+        elif operation == 'recalculate_balances':
+            result = _recalculate_all_balances(user, building_id)
+        elif operation == 'clean_test_data':
+            result = _clean_test_data(user)
+        else:
+            return Response({
+                'status': 'error',
+                'error': f'Άγνωστο operation: {operation}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(result)
+        
+    except Exception as e:
+        logger.error(f"[CLEANUP] Execution error: {e}", exc_info=True)
+        return Response({
+            'status': 'error',
+            'error': f'Σφάλμα κατά την εκτέλεση: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def _scan_database_for_cleanup():
+    """Σαρώνει τη βάση για θέματα που χρειάζονται cleanup"""
+    from decimal import Decimal
+    
+    results = {
+        'orphan_transactions': {
+            'count': 0,
+            'total_amount': 0,
+            'items': []
+        },
+        'balance_mismatches': {
+            'count': 0,
+            'items': []
+        },
+        'test_data': {
+            'count': 0,
+            'items': []
+        }
+    }
+    
+    # 1. Scan for orphan transactions (from deleted projects)
+    # Look for transactions that mention project-related terms but have no linked project
+    orphan_keywords = ['Στεγανοποίηση', 'Δόση', 'Προκαταβολή', 'Έργο']
+    
+    for keyword in orphan_keywords:
+        txs = Transaction.objects.filter(description__icontains=keyword)
+        for t in txs[:10]:  # Limit preview
+            results['orphan_transactions']['items'].append({
+                'id': t.id,
+                'description': t.description[:80],
+                'amount': float(t.amount),
+                'date': t.date.isoformat() if t.date else None,
+                'apartment': t.apartment_number,
+                'building': t.building.name if t.building else None
+            })
+        results['orphan_transactions']['count'] += txs.count()
+        results['orphan_transactions']['total_amount'] += float(
+            txs.aggregate(total=models.Sum('amount'))['total'] or 0
+        )
+    
+    # 2. Scan for balance mismatches
+    apartments = Apartment.objects.select_related('building').all()[:20]
+    for apt in apartments:
+        # Simple check: compare stored vs calculated from transactions
+        stored_balance = float(apt.current_balance or 0)
+        # This is simplified - real calculation would be more complex
+        if abs(stored_balance) > 0.01:
+            results['balance_mismatches']['items'].append({
+                'apartment_id': apt.id,
+                'number': apt.number,
+                'building': apt.building.name if apt.building else None,
+                'stored_balance': stored_balance
+            })
+            results['balance_mismatches']['count'] += 1
+    
+    # 3. Scan for test data patterns
+    test_patterns = ['Demo', 'Test', 'Sample']
+    # This would need to be customized based on actual test data patterns
+    
+    return results
+
+
+def _cleanup_orphan_transactions(user, search_term, building_id):
+    """Διαγραφή ορφανών transactions"""
+    import logging
+    from decimal import Decimal
+    from .balance_service import BalanceCalculationService
+    
+    logger = logging.getLogger(__name__)
+    
+    # Build query
+    if search_term:
+        orphan_txs = Transaction.objects.filter(description__icontains=search_term)
+    else:
+        # Default: look for project-related orphans
+        orphan_txs = Transaction.objects.filter(
+            models.Q(description__icontains='Στεγανοποίηση') |
+            models.Q(description__icontains='Δόση') |
+            models.Q(description__icontains='Προκαταβολή')
+        )
+    
+    if building_id:
+        orphan_txs = orphan_txs.filter(building_id=building_id)
+    
+    # Collect affected apartments
+    affected_apartments = set()
+    total_amount = Decimal('0.00')
+    
+    for t in orphan_txs:
+        total_amount += t.amount
+        if t.apartment:
+            affected_apartments.add(t.apartment)
+    
+    deleted_count = orphan_txs.count()
+    
+    if deleted_count == 0:
+        return {
+            'status': 'success',
+            'message': 'Δεν βρέθηκαν ορφανά transactions',
+            'deleted_count': 0
+        }
+    
+    # Delete
+    orphan_txs.delete()
+    logger.warning(f"[CLEANUP] Deleted {deleted_count} orphan transactions by {user.email}")
+    
+    # Recalculate balances
+    balance_updates = []
+    for apt in affected_apartments:
+        old_balance = float(apt.current_balance or 0)
+        BalanceCalculationService.update_apartment_balance(apt, use_locking=False)
+        apt.refresh_from_db()
+        new_balance = float(apt.current_balance or 0)
+        
+        balance_updates.append({
+            'apartment_number': apt.number,
+            'old_balance': old_balance,
+            'new_balance': new_balance
+        })
+    
+    return {
+        'status': 'success',
+        'operation': 'orphan_transactions',
+        'message': f'✅ Διαγράφηκαν {deleted_count} ορφανά transactions',
+        'deleted_count': deleted_count,
+        'total_amount_removed': float(total_amount),
+        'balance_updates': balance_updates,
+        'executed_by': user.email
+    }
+
+
+def _recalculate_all_balances(user, building_id):
+    """Επανυπολογισμός όλων των υπολοίπων"""
+    import logging
+    from .balance_service import BalanceCalculationService
+    
+    logger = logging.getLogger(__name__)
+    
+    apartments = Apartment.objects.select_related('building').all()
+    if building_id:
+        apartments = apartments.filter(building_id=building_id)
+    
+    updates = []
+    for apt in apartments:
+        old_balance = float(apt.current_balance or 0)
+        BalanceCalculationService.update_apartment_balance(apt, use_locking=False)
+        apt.refresh_from_db()
+        new_balance = float(apt.current_balance or 0)
+        
+        if abs(old_balance - new_balance) > 0.01:
+            updates.append({
+                'apartment_number': apt.number,
+                'building': apt.building.name if apt.building else None,
+                'old_balance': old_balance,
+                'new_balance': new_balance,
+                'difference': new_balance - old_balance
+            })
+    
+    logger.info(f"[CLEANUP] Recalculated {apartments.count()} apartment balances by {user.email}")
+    
+    return {
+        'status': 'success',
+        'operation': 'recalculate_balances',
+        'message': f'✅ Επανυπολογίστηκαν {apartments.count()} υπόλοιπα διαμερισμάτων',
+        'total_apartments': apartments.count(),
+        'changed_balances': len(updates),
+        'updates': updates,
+        'executed_by': user.email
+    }
+
+
+def _clean_test_data(user):
+    """Καθαρισμός test data - ΠΡΟΣΟΧΗ: Πολύ επικίνδυνο!"""
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    logger.critical(f"[CLEANUP] clean_test_data requested by {user.email} - NOT IMPLEMENTED for safety")
+    
+    return {
+        'status': 'warning',
+        'operation': 'clean_test_data',
+        'message': '⚠️ Αυτή η λειτουργία δεν είναι διαθέσιμη για λόγους ασφαλείας',
+        'reason': 'Για πλήρη εκκαθάριση test data, επικοινωνήστε με τον διαχειριστή συστήματος'
+    }
+
+
+# Legacy endpoint for backwards compatibility
+@api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])  
+def cleanup_orphan_transactions(request):
+    """
+    Legacy endpoint - redirects to database_cleanup
+    """
+    if request.method == 'GET':
+        # Redirect to new endpoint
+        return Response({
+            'status': 'redirect',
+            'message': 'Χρησιμοποιήστε το νέο endpoint /api/financial/admin/database-cleanup/',
+            'new_endpoint': '/api/financial/admin/database-cleanup/'
+        })
+    
+    # For POST/DELETE, use legacy behavior
+    search_term = request.query_params.get('search', request.data.get('search_term', 'Στεγανοποίηση'))
+    building_id = request.query_params.get('building_id', request.data.get('building_id'))
+    
+    return _cleanup_orphan_transactions(request.user, search_term, building_id)

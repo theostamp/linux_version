@@ -5,7 +5,7 @@ import { BaseWidgetProps } from '@/types/kiosk';
 import { QrCode, Smartphone, Building2 } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 
-const QR_DIMENSION = 160;
+const QR_DIMENSION = 120;
 
 export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

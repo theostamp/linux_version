@@ -38,7 +38,7 @@ export interface AmbientBrandingConfig {
 export const defaultAmbientBranding: AmbientBrandingConfig = {
   background: {
     type: 'image',
-    src: '/kiosk/assets/ambient-default.png',
+    src: '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg',
     overlayColor: 'rgba(8, 5, 20, 0.5)',
     blur: 8,
   },

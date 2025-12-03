@@ -180,7 +180,8 @@ def public_info(request, building_id=None):
                         
                         for balance in apartment_balances:
                             # Οφειλή = negative current_balance (ή negative net_obligation)
-                            # Χρησιμοποιούμε το absolute value για να δείξουμε το ποσό οφειλής
+                            # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
+                            # αρνητικό = οφειλή, θετικό = πίστωση
                             current_balance = balance.get('current_balance') or 0
                             net_obligation = balance.get('net_obligation') or 0
                             
