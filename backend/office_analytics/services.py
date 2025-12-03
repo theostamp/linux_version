@@ -52,9 +52,23 @@ class OfficeAnalyticsService:
             current_month = timezone.now().month
             current_year = timezone.now().year
             
-            # Συνολικές οφειλές από όλα τα διαμερίσματα
+            # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Θετικό balance = χρέος, αρνητικό = πίστωση
+            # Σύμφωνα με BalanceCalculationService convention (balance_service.py)
+            from django.db.models import Case, When, F
+            
+            # Συνολικό balance (μπορεί να είναι θετικό ή αρνητικό)
             apartments_data = Apartment.objects.aggregate(
                 total_balance=Coalesce(Sum('current_balance'), Decimal('0.00')),
+                # Συνολικές οφειλές = μόνο θετικά balances (χρέη)
+                total_positive_balance=Coalesce(
+                    Sum(
+                        Case(
+                            When(current_balance__gt=0, then=F('current_balance')),
+                            default=Decimal('0.00')
+                        )
+                    ),
+                    Decimal('0.00')
+                ),
             )
             
             # Συνολικό αποθεματικό από MonthlyBalance
@@ -80,8 +94,8 @@ class OfficeAnalyticsService:
                 total=Coalesce(Sum('amount'), Decimal('0.00'))
             )['total']
             
-            # Collection rate υπολογισμός
-            total_obligations = abs(apartments_data['total_balance']) if apartments_data['total_balance'] else Decimal('0.00')
+            # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση μόνο θετικών balances (οφειλών)
+            total_obligations = apartments_data['total_positive_balance'] or Decimal('0.00')
             collection_rate = 0.0
             if total_obligations > 0:
                 collection_rate = min(100.0, float(payments_this_month / total_obligations * 100))
@@ -131,11 +145,25 @@ class OfficeAnalyticsService:
                 apartments = Apartment.objects.filter(building=building)
                 apartments_count = apartments.count()
                 
+                # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Θετικό balance = χρέος, αρνητικό = πίστωση
+                from django.db.models import Case, When, F
+                
                 # Υπολογισμός υπολοίπων
                 balance_data = apartments.aggregate(
-                    total_balance=Coalesce(Sum('current_balance'), Decimal('0.00'))
+                    total_balance=Coalesce(Sum('current_balance'), Decimal('0.00')),
+                    # Συνολικές οφειλές = μόνο θετικά balances (χρέη)
+                    total_positive_balance=Coalesce(
+                        Sum(
+                            Case(
+                                When(current_balance__gt=0, then=F('current_balance')),
+                                default=Decimal('0.00')
+                            )
+                        ),
+                        Decimal('0.00')
+                    ),
                 )
                 total_balance = balance_data['total_balance'] or Decimal('0.00')
+                total_positive_balance = balance_data['total_positive_balance'] or Decimal('0.00')
                 
                 # Αποθεματικό από MonthlyBalance
                 current_month = timezone.now().month
@@ -155,16 +183,16 @@ class OfficeAnalyticsService:
                     date__gte=month_start
                 ).aggregate(total=Coalesce(Sum('amount'), Decimal('0.00')))['total']
                 
-                # Υπολογισμός κατάστασης
-                total_obligations = abs(total_balance) if total_balance < 0 else Decimal('0.00')
+                # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση μόνο θετικών balances (οφειλών)
+                total_obligations = total_positive_balance
                 collection_rate = 0.0
                 if total_obligations > 0:
                     collection_rate = min(100.0, float(payments / total_obligations * 100))
                 
-                # Καθορισμός status
-                if total_balance < -1000:  # Πάνω από 1000€ χρέος
+                # ✅ ΔΙΟΡΘΩΣΗ: Καθορισμός status με σωστή λογική (θετικό = χρέος)
+                if total_positive_balance > 1000:  # Πάνω από 1000€ χρέος
                     status = 'critical'
-                elif total_balance < -200:  # Πάνω από 200€ χρέος
+                elif total_positive_balance > 200:  # Πάνω από 200€ χρέος
                     status = 'warning'
                 else:
                     status = 'healthy'
@@ -211,10 +239,11 @@ class OfficeAnalyticsService:
             }]
         """
         try:
-            # Διαμερίσματα με αρνητικό υπόλοιπο (χρέος)
+            # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Θετικό balance = χρέος, αρνητικό = πίστωση
+            # Διαμερίσματα με θετικό υπόλοιπο (χρέος)
             debtors = Apartment.objects.filter(
-                current_balance__lt=0
-            ).select_related('building').order_by('current_balance')[:limit]
+                current_balance__gt=0  # Θετικά balances = οφειλές
+            ).select_related('building').order_by('-current_balance')[:limit]  # Descending για μεγαλύτερες οφειλές πρώτα
             
             result = []
             for apt in debtors:
