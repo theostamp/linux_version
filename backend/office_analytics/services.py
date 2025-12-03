@@ -52,24 +52,38 @@ class OfficeAnalyticsService:
             current_month = timezone.now().month
             current_year = timezone.now().year
             
-            # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
-            # αρνητικό = οφειλή, θετικό = πίστωση (αντίθετο από BalanceCalculationService docs)
-            from django.db.models import Case, When, F
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση net_obligation για consistent data με Financial Page
+            # net_obligation = previous_balance + expenses - payments (για τον μήνα)
+            from financial.services import FinancialDashboardService
             
-            # Συνολικό balance (μπορεί να είναι θετικό ή αρνητικό)
-            apartments_data = Apartment.objects.aggregate(
-                total_balance=Coalesce(Sum('current_balance'), Decimal('0.00')),
-                # Συνολικές οφειλές = αρνητικά balances (χρέη στο υπάρχον σύστημα)
-                total_negative_balance=Coalesce(
-                    Sum(
-                        Case(
-                            When(current_balance__lt=0, then=F('current_balance')),
-                            default=Decimal('0.00')
-                        )
-                    ),
-                    Decimal('0.00')
-                ),
-            )
+            # Τρέχων μήνας σε format YYYY-MM
+            current_month_str = f"{current_year}-{current_month:02d}"
+            
+            # Υπολογισμός συνολικών οφειλών από όλα τα κτίρια
+            total_obligations = Decimal('0.00')
+            total_balance_calculated = Decimal('0.00')
+            
+            for building in buildings:
+                try:
+                    service = FinancialDashboardService(building.id)
+                    apt_balances = service.get_apartment_balances(month=current_month_str)
+                    
+                    # Άθροισμα net_obligation (θετικό = οφειλή)
+                    building_obligations = sum(
+                        Decimal(str(apt.get('net_obligation', 0)))
+                        for apt in apt_balances
+                        if apt.get('net_obligation', 0) > 0
+                    )
+                    total_obligations += building_obligations
+                    
+                    # Υπολογισμός total balance (για reference)
+                    building_balance = sum(
+                        Decimal(str(apt.get('net_obligation', 0)))
+                        for apt in apt_balances
+                    )
+                    total_balance_calculated += building_balance
+                except Exception as e:
+                    logger.warning(f"Error calculating obligations for building {building.id}: {e}")
             
             # Συνολικό αποθεματικό από MonthlyBalance
             reserve_data = MonthlyBalance.objects.filter(
@@ -93,9 +107,6 @@ class OfficeAnalyticsService:
             ).aggregate(
                 total=Coalesce(Sum('amount'), Decimal('0.00'))
             )['total']
-            
-            # Χρήση αρνητικών balances (οφειλών στο υπάρχον σύστημα)
-            total_obligations = abs(apartments_data['total_negative_balance'] or Decimal('0.00'))
             collection_rate = 0.0
             if total_obligations > 0:
                 collection_rate = min(100.0, float(payments_this_month / total_obligations * 100))
@@ -103,7 +114,7 @@ class OfficeAnalyticsService:
             return {
                 'total_buildings': total_buildings,
                 'total_apartments': total_apartments,
-                'total_balance': float(apartments_data['total_balance'] or 0),
+                'total_balance': float(total_balance_calculated),
                 'total_obligations': float(total_obligations),
                 'total_reserve': float(reserve_data['total_reserve'] or 0),
                 'payments_this_month': float(payments_this_month),
@@ -138,37 +149,41 @@ class OfficeAnalyticsService:
             }]
         """
         try:
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση net_obligation για consistent data με Financial Page
+            from financial.services import FinancialDashboardService
+            
             buildings = Building.objects.all()
             result = []
+            
+            current_month = timezone.now().month
+            current_year = timezone.now().year
+            current_month_str = f"{current_year}-{current_month:02d}"
             
             for building in buildings:
                 apartments = Apartment.objects.filter(building=building)
                 apartments_count = apartments.count()
                 
-                # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
-                # αρνητικό = οφειλή, θετικό = πίστωση
-                from django.db.models import Case, When, F
-                
-                # Υπολογισμός υπολοίπων
-                balance_data = apartments.aggregate(
-                    total_balance=Coalesce(Sum('current_balance'), Decimal('0.00')),
-                    # Συνολικές οφειλές = αρνητικά balances (χρέη στο υπάρχον σύστημα)
-                    total_negative_balance=Coalesce(
-                        Sum(
-                            Case(
-                                When(current_balance__lt=0, then=F('current_balance')),
-                                default=Decimal('0.00')
-                            )
-                        ),
-                        Decimal('0.00')
-                    ),
-                )
-                total_balance = balance_data['total_balance'] or Decimal('0.00')
-                total_negative_balance = balance_data['total_negative_balance'] or Decimal('0.00')
+                # Χρήση FinancialDashboardService για consistent υπολογισμούς
+                try:
+                    service = FinancialDashboardService(building.id)
+                    apt_balances = service.get_apartment_balances(month=current_month_str)
+                    
+                    # Υπολογισμός total_balance και total_obligations από net_obligation
+                    total_balance = sum(
+                        Decimal(str(apt.get('net_obligation', 0)))
+                        for apt in apt_balances
+                    )
+                    total_obligations = sum(
+                        Decimal(str(apt.get('net_obligation', 0)))
+                        for apt in apt_balances
+                        if apt.get('net_obligation', 0) > 0  # Θετικά = Οφειλές
+                    )
+                except Exception as e:
+                    logger.warning(f"Error getting apartment balances for building {building.id}: {e}")
+                    total_balance = Decimal('0.00')
+                    total_obligations = Decimal('0.00')
                 
                 # Αποθεματικό από MonthlyBalance
-                current_month = timezone.now().month
-                current_year = timezone.now().year
                 monthly_balance = MonthlyBalance.objects.filter(
                     building=building,
                     year=current_year,
@@ -184,16 +199,14 @@ class OfficeAnalyticsService:
                     date__gte=month_start
                 ).aggregate(total=Coalesce(Sum('amount'), Decimal('0.00')))['total']
                 
-                # Χρήση αρνητικών balances (οφειλών στο υπάρχον σύστημα)
-                total_obligations = abs(total_negative_balance)
                 collection_rate = 0.0
                 if total_obligations > 0:
                     collection_rate = min(100.0, float(payments / total_obligations * 100))
                 
-                # Καθορισμός status (αρνητικό balance = χρέος στο υπάρχον σύστημα)
-                if total_negative_balance < -1000:  # Πάνω από 1000€ χρέος
+                # Καθορισμός status (θετικό net_obligation = χρέος)
+                if total_obligations > 1000:  # Πάνω από 1000€ χρέος
                     status = 'critical'
-                elif total_negative_balance < -200:  # Πάνω από 200€ χρέος
+                elif total_obligations > 200:  # Πάνω από 200€ χρέος
                     status = 'warning'
                 else:
                     status = 'healthy'
@@ -240,42 +253,55 @@ class OfficeAnalyticsService:
             }]
         """
         try:
-            # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
-            # αρνητικό = οφειλή, θετικό = πίστωση
-            # Διαμερίσματα με αρνητικό υπόλοιπο (χρέος)
-            debtors = Apartment.objects.filter(
-                current_balance__lt=0  # Αρνητικά balances = οφειλές
-            ).select_related('building').order_by('current_balance')[:limit]  # Ascending για πιο αρνητικά (μεγαλύτερες οφειλές) πρώτα
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση net_obligation για consistent data με Financial Page
+            from financial.services import FinancialDashboardService
             
-            result = []
-            for apt in debtors:
-                # Τελευταία πληρωμή
-                last_payment = Payment.objects.filter(
-                    apartment=apt
-                ).order_by('-date').first()
-                
-                last_payment_date = last_payment.date if last_payment else None
-                
-                # Υπολογισμός ημερών καθυστέρησης
-                days_overdue = 0
-                if last_payment_date:
-                    days_overdue = (timezone.now().date() - last_payment_date).days
-                else:
-                    # Αν δεν υπάρχει πληρωμή, υπολογίζουμε από την ημερομηνία δημιουργίας
-                    days_overdue = (timezone.now().date() - apt.created_at.date()).days if hasattr(apt, 'created_at') else 0
-                
-                result.append({
-                    'apartment_id': apt.id,
-                    'apartment_number': apt.number,
-                    'building_name': apt.building.name,
-                    'building_id': apt.building.id,
-                    'owner_name': apt.owner_name or 'Άγνωστος',
-                    'balance': float(abs(apt.current_balance)),  # abs() για θετική εμφάνιση οφειλής
-                    'last_payment_date': last_payment_date.isoformat() if last_payment_date else None,
-                    'days_overdue': days_overdue,
-                })
+            current_month = timezone.now().month
+            current_year = timezone.now().year
+            current_month_str = f"{current_year}-{current_month:02d}"
             
-            return result
+            # Συλλογή όλων των διαμερισμάτων με οφειλές
+            all_debtors = []
+            
+            for building in Building.objects.all():
+                try:
+                    service = FinancialDashboardService(building.id)
+                    apt_balances = service.get_apartment_balances(month=current_month_str)
+                    
+                    for apt_data in apt_balances:
+                        net_obligation = float(apt_data.get('net_obligation', 0))
+                        if net_obligation > 0:  # Θετικό net_obligation = Οφειλή
+                            # Τελευταία πληρωμή
+                            apt = Apartment.objects.get(id=apt_data['apartment_id'])
+                            last_payment = Payment.objects.filter(
+                                apartment=apt
+                            ).order_by('-date').first()
+                            
+                            last_payment_date = last_payment.date if last_payment else None
+                            
+                            # Υπολογισμός ημερών καθυστέρησης
+                            days_overdue = 0
+                            if last_payment_date:
+                                days_overdue = (timezone.now().date() - last_payment_date).days
+                            else:
+                                days_overdue = (timezone.now().date() - apt.created_at.date()).days if hasattr(apt, 'created_at') else 0
+                            
+                            all_debtors.append({
+                                'apartment_id': apt.id,
+                                'apartment_number': apt.number,
+                                'building_name': building.name,
+                                'building_id': building.id,
+                                'owner_name': apt.owner_name or 'Άγνωστος',
+                                'balance': net_obligation,
+                                'last_payment_date': last_payment_date.isoformat() if last_payment_date else None,
+                                'days_overdue': days_overdue,
+                            })
+                except Exception as e:
+                    logger.warning(f"Error getting debtors for building {building.id}: {e}")
+            
+            # Ταξινόμηση κατά φθίνουσα σειρά οφειλής και περιορισμός στα top N
+            all_debtors.sort(key=lambda x: x['balance'], reverse=True)
+            return all_debtors[:limit]
         except Exception as e:
             logger.error(f"Error in get_top_debtors: {e}")
             return []
