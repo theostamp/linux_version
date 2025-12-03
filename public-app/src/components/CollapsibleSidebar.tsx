@@ -590,7 +590,7 @@ export default function CollapsibleSidebar() {
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="right" 
-                                className="max-w-xs z-50"
+                                className="max-w-xs z-50 bg-white text-gray-900 border-gray-200 shadow-lg"
                                 sideOffset={8}
                               >
                                 <p className="text-xs leading-relaxed">{link.tooltip}</p>
@@ -754,7 +754,7 @@ export default function CollapsibleSidebar() {
                             </TooltipTrigger>
                             <TooltipContent 
                               side="right" 
-                              className="max-w-xs z-[60]"
+                              className="max-w-xs z-[60] bg-white text-gray-900 border-gray-200 shadow-lg"
                               sideOffset={8}
                             >
                               <p className="text-xs leading-relaxed">{link.tooltip}</p>

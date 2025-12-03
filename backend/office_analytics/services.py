@@ -488,4 +488,3 @@ class OfficeAnalyticsService:
 
 # Global service instance
 office_analytics_service = OfficeAnalyticsService()
-
