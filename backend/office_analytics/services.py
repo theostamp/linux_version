@@ -419,23 +419,37 @@ class OfficeAnalyticsService:
             }]
         """
         try:
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση net_obligation για consistent data με Financial Page
+            from financial.services import FinancialDashboardService
+            
             alerts = []
             
-            # Alert 1: Κτίρια με αρνητικό ταμείο
-            critical_buildings = Building.objects.annotate(
-                total_balance=Coalesce(
-                    Sum('apartments__current_balance'),
-                    Decimal('0.00')
-                )
-            ).filter(total_balance__lt=-500)
+            current_month = timezone.now().month
+            current_year = timezone.now().year
+            current_month_str = f"{current_year}-{current_month:02d}"
             
-            for building in critical_buildings:
-                alerts.append({
-                    'type': 'critical',
-                    'category': 'financial',
-                    'message': f"Το κτίριο '{building.name}' έχει αρνητικό ταμείο ({building.total_balance:.2f}€)",
-                    'action_url': f"/financial?building={building.id}",
-                })
+            # Alert 1: Κτίρια με σημαντικές οφειλές (>500€ net_obligation)
+            for building in Building.objects.all():
+                try:
+                    service = FinancialDashboardService(building.id)
+                    apt_balances = service.get_apartment_balances(month=current_month_str)
+                    
+                    # Υπολογισμός συνολικών οφειλών με net_obligation
+                    total_obligations = sum(
+                        float(apt.get('net_obligation', 0))
+                        for apt in apt_balances
+                        if apt.get('net_obligation', 0) > 0
+                    )
+                    
+                    if total_obligations > 500:
+                        alerts.append({
+                            'type': 'critical',
+                            'category': 'financial',
+                            'message': f"Το κτίριο '{building.name}' έχει οφειλές {total_obligations:.2f}€",
+                            'action_url': f"/financial?building={building.id}",
+                        })
+                except Exception as e:
+                    logger.warning(f"Error calculating alerts for building {building.id}: {e}")
             
             # Alert 2: Αιτήματα που εκκρεμούν πάνω από 7 ημέρες
             week_ago = timezone.now() - timedelta(days=7)
@@ -452,10 +466,19 @@ class OfficeAnalyticsService:
                     'action_url': "/requests",
                 })
             
-            # Alert 3: Διαμερίσματα με μεγάλες οφειλές (>500€)
-            high_debt_count = Apartment.objects.filter(
-                current_balance__lt=-500
-            ).count()
+            # Alert 3: Διαμερίσματα με μεγάλες οφειλές (>500€ net_obligation)
+            high_debt_count = 0
+            for building in Building.objects.all():
+                try:
+                    service = FinancialDashboardService(building.id)
+                    apt_balances = service.get_apartment_balances(month=current_month_str)
+                    
+                    high_debt_count += sum(
+                        1 for apt in apt_balances
+                        if apt.get('net_obligation', 0) > 500
+                    )
+                except Exception as e:
+                    logger.warning(f"Error counting high debt apartments for building {building.id}: {e}")
             
             if high_debt_count > 0:
                 alerts.append({
