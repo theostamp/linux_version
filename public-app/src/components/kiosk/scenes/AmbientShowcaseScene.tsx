@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Clock, Thermometer, Smartphone, Building2, CloudSun, Check } from 'lucide-react';
 import type { KioskData } from '@/hooks/useKioskData';
+import { useKioskWeather, type KioskWeatherData } from '@/hooks/useKioskWeather';
 import QRCodeLib from 'qrcode';
 import {
   AmbientBrandingConfig,
@@ -15,8 +16,17 @@ interface AmbientShowcaseSceneProps {
   brandingConfig?: Partial<AmbientBrandingConfig>;
 }
 
-// Single HD image for ambient display
-const AMBIENT_IMAGE = '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg';
+// Available ambient images - will be randomly selected
+const AMBIENT_IMAGES = [
+  '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg',
+  '/kiosk/assets/visuals/kiosk1.jpg',
+  // SVG files are also available but we'll focus on JPG for now
+];
+
+// Function to get a random image from the available images
+const getRandomAmbientImage = (): string => {
+  return AMBIENT_IMAGES[Math.floor(Math.random() * AMBIENT_IMAGES.length)];
+};
 
 const formatGreekDate = (date: Date) => ({
   day: date.toLocaleDateString('el-GR', { day: '2-digit' }),
@@ -25,26 +35,16 @@ const formatGreekDate = (date: Date) => ({
   year: date.getFullYear(),
 });
 
-const extractTemperature = (data?: KioskData | null): number | null => {
-  const weather = (data as any)?.weather;
-  const candidates = [
-    weather?.current?.temperature,
-    weather?.current?.temp,
-    weather?.current?.temp_c,
-    weather?.temperature,
-    weather?.temp,
-  ].filter((value) => typeof value === 'number');
-
-  if (candidates.length) {
-    return Math.round(candidates[0] as number);
+// Weather extraction functions - now using the weather hook data
+const extractTemperature = (weatherData: KioskWeatherData | null): number | null => {
+  if (weatherData?.current?.temperature !== undefined) {
+    return Math.round(weatherData.current.temperature);
   }
-
   return null;
 };
 
-const extractWeatherCondition = (data?: KioskData | null): string | null => {
-  const weather = (data as any)?.weather;
-  return weather?.current?.condition?.text || weather?.condition || null;
+const extractWeatherCondition = (weatherData: KioskWeatherData | null): string | null => {
+  return weatherData?.current?.condition || null;
 };
 
 // Compact QR Code component for sidebar
@@ -89,6 +89,10 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
 
 export default function AmbientShowcaseScene({ data, buildingId, brandingConfig }: AmbientShowcaseSceneProps) {
   const [now, setNow] = useState(new Date());
+  const [randomImage] = useState(() => getRandomAmbientImage()); // Random image selected once on mount
+  
+  // Fetch weather data
+  const { weather: weatherData } = useKioskWeather(300000); // Refresh every 5 minutes
 
   useEffect(() => {
     const timeInterval = setInterval(() => setNow(new Date()), 1000);
@@ -100,13 +104,13 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     [data, brandingConfig]
   );
 
-  // Use branding image if available, otherwise use the HD image
-  const backgroundImage = branding.background?.src || AMBIENT_IMAGE;
+  // Use branding image if available, otherwise use random ambient image
+  const backgroundImage = branding.background?.src || randomImage;
 
   const dateInfo = formatGreekDate(now);
   const formattedTime = now.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
-  const temperature = extractTemperature(data);
-  const weatherCondition = extractWeatherCondition(data);
+  const temperature = extractTemperature(weatherData);
+  const weatherCondition = extractWeatherCondition(weatherData);
   const greeting = now.getHours() < 12 ? 'Καλημέρα' : now.getHours() < 18 ? 'Καλή συνέχεια' : 'Καλησπέρα';
   const effectiveBuildingId = buildingId ?? data?.building_info?.id;
 
