@@ -31,6 +31,8 @@ export function useChat(buildingId: number | null): UseChatReturn {
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const typingTimeoutRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingMode = useRef(false);
 
   /**
    * Φόρτωση αρχικών μηνυμάτων από REST API
@@ -106,27 +108,44 @@ export function useChat(buildingId: number | null): UseChatReturn {
     setError(null);
     
     try {
-      // Determine WebSocket URL
-      const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
+      // Get WebSocket URL from environment or use Railway backend directly
+      // Note: Vercel doesn't support WebSocket, so we connect directly to Railway backend
+      let wsUrl: string;
       
-      // Get the WebSocket host from environment or construct from current location
-      let wsHost: string;
       if (typeof window !== 'undefined') {
-        // Production: use current host with backend port or specific backend URL
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_WS_URL;
-        if (backendUrl) {
-          wsHost = backendUrl;
+        const backendWsUrl = process.env.NEXT_PUBLIC_BACKEND_WS_URL;
+        
+        if (backendWsUrl) {
+          // Use explicit WebSocket URL from environment
+          wsUrl = `${backendWsUrl}/ws/chat/${buildingId}/`;
+        } else if (process.env.NODE_ENV === 'development') {
+          // Development: use local backend
+          wsUrl = `ws://localhost:18000/ws/chat/${buildingId}/`;
         } else {
-          // Default: assume backend is on port 18000 locally or same host in production
-          const host = window.location.hostname;
-          const port = process.env.NODE_ENV === 'development' ? ':18000' : '';
-          wsHost = `${host}${port}`;
+          // Production: WebSocket not available through Vercel
+          // Skip WebSocket connection and rely on REST API polling
+          console.log('[useChat] WebSocket δεν είναι διαθέσιμο σε production (Vercel). Χρήση REST API polling.');
+          setIsConnecting(false);
+          setIsConnected(true); // Consider "connected" for UI purposes
+          isPollingMode.current = true;
+          
+          // Load messages via REST API
+          loadMessages();
+          
+          // Start polling every 5 seconds
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+          }
+          pollingIntervalRef.current = setInterval(() => {
+            loadMessages();
+          }, 5000);
+          
+          return;
         }
       } else {
-        wsHost = 'localhost:18000';
+        wsUrl = `ws://localhost:18000/ws/chat/${buildingId}/`;
       }
       
-      const wsUrl = `${protocol}://${wsHost}/ws/chat/${buildingId}/`;
       console.log('[useChat] Σύνδεση στο WebSocket:', wsUrl);
       
       const ws = new WebSocket(wsUrl);
@@ -265,6 +284,13 @@ export function useChat(buildingId: number | null): UseChatReturn {
       reconnectTimeoutRef.current = null;
     }
     
+    // Clear polling interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    isPollingMode.current = false;
+    
     if (wsRef.current) {
       wsRef.current.close(1000, 'User disconnected');
       wsRef.current = null;
@@ -284,24 +310,20 @@ export function useChat(buildingId: number | null): UseChatReturn {
   const sendMessage = useCallback((content: string, messageType: ChatMessageType = 'text') => {
     if (!content.trim()) return;
     
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const outgoingMessage: WebSocketOutgoingMessage = {
-        type: 'message',
-        message: content.trim(),
-        message_type: messageType,
-      };
-      wsRef.current.send(JSON.stringify(outgoingMessage));
-    } else {
-      // Fallback: Αποστολή μέσω REST API
-      console.log('[useChat] WebSocket δεν είναι συνδεδεμένο, χρήση REST API');
+    // In polling mode or when WebSocket is not open, use REST API
+    if (isPollingMode.current || wsRef.current?.readyState !== WebSocket.OPEN) {
+      // Send via REST API
+      console.log('[useChat] Αποστολή μέσω REST API');
       (async () => {
         try {
-          const rooms = await apiGet<ChatRoom[]>('/chat/rooms/', { building: buildingId });
-          const room = rooms.find(r => r.building.id === buildingId);
+          // First, ensure we have a chat room
+          const response = await apiPost<{ chat_room: ChatRoom }>('/chat/rooms/get_or_create_for_building/', {
+            building_id: buildingId,
+          });
           
-          if (room) {
+          if (response.chat_room) {
             await apiPost('/chat/messages/', {
-              chat_room: room.id,
+              chat_room: response.chat_room.id,
               content: content.trim(),
               message_type: messageType,
             });
@@ -313,6 +335,14 @@ export function useChat(buildingId: number | null): UseChatReturn {
           setError('Αποτυχία αποστολής μηνύματος');
         }
       })();
+    } else {
+      // Send via WebSocket
+      const outgoingMessage: WebSocketOutgoingMessage = {
+        type: 'message',
+        message: content.trim(),
+        message_type: messageType,
+      };
+      wsRef.current.send(JSON.stringify(outgoingMessage));
     }
   }, [buildingId, loadMessages]);
 
