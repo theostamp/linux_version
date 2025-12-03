@@ -466,12 +466,12 @@ class FinancialDashboardService:
                 exc_info=exc
             )
         
-        # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Θετικό balance = χρέος, αρνητικό = πίστωση
-        # Σύμφωνα με BalanceCalculationService convention (balance_service.py line 228-229)
-        # Συνολικές οφειλές: θετικά υπόλοιπα (χρέη)
+        # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
+        # αρνητικό = οφειλή, θετικό = πίστωση
+        # Συνολικές οφειλές: αρνητικά υπόλοιπα (χρέη)
         apartment_obligations = Decimal(str(sum(
-            apt.current_balance for apt in apartments 
-            if apt.current_balance and apt.current_balance > 0  # Θετικά = Οφειλές
+            abs(apt.current_balance) for apt in apartments 
+            if apt.current_balance and apt.current_balance < 0  # Αρνητικά = Οφειλές
         )))
         
         # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδομένες

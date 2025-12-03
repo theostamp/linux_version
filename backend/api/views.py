@@ -180,13 +180,13 @@ def public_info(request, building_id=None):
                         
                         for balance in apartment_balances:
                             # Οφειλή = negative current_balance (ή negative net_obligation)
-                            # ✅ ΔΙΟΡΘΩΣΗ 2025-12-03: Θετικό balance = χρέος, αρνητικό = πίστωση
-                            # Σύμφωνα με BalanceCalculationService convention (balance_service.py)
+                            # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
+                            # αρνητικό = οφειλή, θετικό = πίστωση
                             current_balance = balance.get('current_balance') or 0
                             net_obligation = balance.get('net_obligation') or 0
                             
-                            # Αν το balance είναι θετικό, είναι οφειλή
-                            debt_amount = float(current_balance) if current_balance > 0 else 0.0
+                            # Αν το balance είναι αρνητικό, είναι οφειλή
+                            debt_amount = abs(float(current_balance)) if current_balance < 0 else 0.0
                             total_obligations_amount += debt_amount
                             
                             apartment_balances_payload.append({
