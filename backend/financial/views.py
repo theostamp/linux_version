@@ -2116,11 +2116,16 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             pending_obligations = 0
             pending_expenses = 0
             
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση τρέχοντος μήνα για consistent data με Financial Page
+            # Η Financial Page χρησιμοποιεί net_obligation (previous + current - payments)
+            # Το Dashboard πρέπει να χρησιμοποιεί τα ίδια δεδομένα
+            current_month = datetime.now().strftime('%Y-%m')
+            
             buildings_data = []
             for building in buildings:
                 try:
                     service = FinancialDashboardService(building.id)
-                    summary = service.get_summary()
+                    summary = service.get_summary(month=current_month)  # Με μήνα για consistent data
                     
                     building_balance = float(summary.get('current_reserve', 0) or 0)
                     building_pending = float(summary.get('pending_expenses', 0) or 0)
@@ -2128,16 +2133,18 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     total_balance += building_balance
                     pending_expenses += building_pending
                     
-                    # Get apartment balances for this building
-                    apt_balances = service.get_apartment_balances()
-                    # 📝 ΣΗΜΕΙΩΣΗ: Τα current_balance στη βάση χρησιμοποιούν convention:
-                    # αρνητικό = οφειλή, θετικό = πίστωση
-                    negative_balances = sum(
-                        float(apt.get('current_balance', 0)) 
+                    # Get apartment balances with current month for net_obligation calculation
+                    apt_balances = service.get_apartment_balances(month=current_month)
+                    
+                    # 📝 Χρήση net_obligation αντί για current_balance για consistency με Financial Page
+                    # net_obligation = previous_balance + expense_share - month_payments
+                    # Θετικό net_obligation = Οφειλή
+                    building_obligations = sum(
+                        float(apt.get('net_obligation', 0)) 
                         for apt in apt_balances 
-                        if float(apt.get('current_balance', 0)) < 0  # Αρνητικά = Οφειλές
+                        if float(apt.get('net_obligation', 0)) > 0  # Θετικά net_obligation = Οφειλές
                     )
-                    pending_obligations += abs(negative_balances)
+                    pending_obligations += building_obligations
                     
                     buildings_data.append({
                         'id': building.id,
@@ -2145,7 +2152,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'address': building.address,
                         'apartments_count': building.apartments.count(),
                         'balance': building_balance,
-                        'pending_obligations': abs(negative_balances),
+                        'pending_obligations': building_obligations,
                         'health_score': self._calculate_building_health(building, summary, apt_balances)
                     })
                     
