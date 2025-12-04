@@ -57,8 +57,9 @@ const HEATING_FUEL_KEYWORDS = [
   'φυσικο αεριο',
   'αέριο',
   'αεριο',
-  'aerio',
+  'natural gas',
   'gas',
+  'aerio',
   'μαζούτ',
   'mazout',
 ];
@@ -75,6 +76,18 @@ const HEATING_GENERAL_KEYWORDS = [
   'burner',
   'λέβητα',
   'λεβητα',
+];
+
+const HEATING_CATEGORY_KEYWORDS = [
+  'heating',
+  'fuel',
+  'gas',
+  'therm',
+  'radiator',
+  'boiler',
+  'burner',
+  'natural_gas',
+  'energy_gas',
 ];
 
 const normalizeText = (value?: string | null) => (value || '').toLowerCase();
@@ -95,20 +108,33 @@ const analyzeHeatingExpense = (expense: Expense): HeatingExpenseAnalysis => {
   const titleLower = normalizeText(expense.title);
   const descLower = normalizeText(expense.description);
   const categoryLower = normalizeText(expense.category);
+  const categoryDisplayLower = normalizeText(expense.category_display);
+  const expenseTypeLower = normalizeText(expense.expense_type);
+  const supplierLower = normalizeText(expense.supplier_name);
   const distributionType = expense.distribution_type || '';
 
   const isHeatingCategory = !!expense.category && (
     categoryLower === 'heating' ||
-    categoryLower.startsWith('heating_')
+    categoryLower.startsWith('heating_') ||
+    HEATING_CATEGORY_KEYWORDS.some(keyword => categoryLower.includes(keyword)) ||
+    HEATING_CATEGORY_KEYWORDS.some(keyword => categoryDisplayLower.includes(keyword))
   );
 
   const hasFuelKeyword =
     containsKeyword(titleLower, HEATING_FUEL_KEYWORDS) ||
-    containsKeyword(descLower, HEATING_FUEL_KEYWORDS);
+    containsKeyword(descLower, HEATING_FUEL_KEYWORDS) ||
+    containsKeyword(supplierLower, HEATING_FUEL_KEYWORDS);
 
   const hasGeneralKeyword =
     containsKeyword(titleLower, HEATING_GENERAL_KEYWORDS) ||
-    containsKeyword(descLower, HEATING_GENERAL_KEYWORDS);
+    containsKeyword(descLower, HEATING_GENERAL_KEYWORDS) ||
+    containsKeyword(supplierLower, HEATING_GENERAL_KEYWORDS);
+
+  const hasExpenseTypeHint = containsKeyword(expenseTypeLower, [
+    ...HEATING_CATEGORY_KEYWORDS,
+    ...HEATING_GENERAL_KEYWORDS,
+    ...HEATING_FUEL_KEYWORDS,
+  ]);
 
   const hasDistributionHint = (
     distributionType === 'by_meters' ||
@@ -121,6 +147,7 @@ const analyzeHeatingExpense = (expense: Expense): HeatingExpenseAnalysis => {
     isHeatingCategory ||
     hasFuelKeyword ||
     hasDistributionHint ||
+    hasExpenseTypeHint ||
     (!isExcludedCategory && hasGeneralKeyword);
 
   return {
