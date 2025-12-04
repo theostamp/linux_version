@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Building } from '@/lib/api';
@@ -23,6 +23,10 @@ export default function EditBuildingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Use ref to track if we've already loaded data for this ID
+  const loadedIdRef = useRef<number | null>(null);
+  const loadingRef = useRef(false);
 
   // Check if the ID in URL matches available buildings
   useEffect(() => {
@@ -45,34 +49,47 @@ export default function EditBuildingPage() {
     }
   }, [id, buildings, selectedBuilding, buildingsLoading, router]);
 
+  // Load building data - only depends on id
   useEffect(() => {
+    // Skip if already loading or already loaded this ID
+    if (loadingRef.current) return;
+    if (loadedIdRef.current === id && initialData) return;
+
     async function load() {
+      loadingRef.current = true;
       try {
         setLoading(true);
-        const data = await fetchBuilding(id);
-        setInitialData(data);
         setError(null);
+        
+        console.log(`[EditBuilding] Fetching building ${id}...`);
+        const data = await fetchBuilding(id);
+        console.log(`[EditBuilding] Fetched building:`, data);
+        
+        setInitialData(data);
+        loadedIdRef.current = id;
       } catch (err: unknown) {
-        const error = err as { message?: string };
-        console.error('Error loading building:', err);
-        
-        // If building not found and we have buildings loaded, redirect to first available
-        if (buildings.length > 0 && !buildingsLoading) {
-          const targetBuilding = selectedBuilding || buildings[0];
-          if (targetBuilding && targetBuilding.id !== id) {
-            console.log(`[EditBuilding] Building ${id} not found. Redirecting to building ${targetBuilding.id}`);
-            router.replace(`/buildings/${targetBuilding.id}/edit`);
-            return;
-          }
-        }
-        
-        setError(error.message || 'Αποτυχία φόρτωσης δεδομένων κτιρίου');
+        const apiError = err as { message?: string };
+        console.error('[EditBuilding] Error loading building:', err);
+        setError(apiError.message || 'Αποτυχία φόρτωσης δεδομένων κτιρίου');
       } finally {
         setLoading(false);
+        loadingRef.current = false;
       }
     }
+    
     load();
-  }, [id, buildings, selectedBuilding, buildingsLoading, router]);
+  }, [id]); // Only re-run when id changes
+
+  // Handle redirect on error after buildings are loaded
+  useEffect(() => {
+    if (error && !buildingsLoading && buildings.length > 0) {
+      const targetBuilding = selectedBuilding || buildings[0];
+      if (targetBuilding && targetBuilding.id !== id) {
+        console.log(`[EditBuilding] Building ${id} not found. Redirecting to building ${targetBuilding.id}`);
+        router.replace(`/buildings/${targetBuilding.id}/edit`);
+      }
+    }
+  }, [error, buildings, selectedBuilding, buildingsLoading, id, router]);
 
   const handleDelete = async () => {
     if (!initialData) return;
@@ -191,6 +208,7 @@ export default function EditBuildingPage() {
         <div className="p-6">
           {initialData ? (
             <CreateBuildingForm
+              key={`building-form-${id}`}
               initialData={initialData}
               buildingId={id}
               submitText="Ενημέρωση Κτιρίου"
@@ -216,4 +234,3 @@ export default function EditBuildingPage() {
     </div>
   );
 }
-
