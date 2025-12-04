@@ -127,6 +127,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     getTotalPreviousBalance,
     getFinalTotalExpenses
   } = useCommonExpenseCalculator({ ...props, selectedMonth: expenseSheetMonth });
+  const resolvedBuildingName = buildingData?.name || buildingName || 'Άγνωστο Κτίριο';
+  const resolvedBuildingAddress = buildingData?.address || props.buildingAddress || '';
+  const resolvedBuildingCity = buildingData?.city || props.buildingCity || '';
+  const resolvedBuildingPostalCode = buildingData?.postal_code || props.buildingPostalCode || '';
+  const resolvedManagerName = props.managerName || buildingData?.internal_manager_name || 'Μη καταχωρημένος';
+  const resolvedManagerPhone = props.managerPhone || buildingData?.internal_manager_phone || '';
+  const resolvedManagerSchedule = props.managerCollectionSchedule || buildingData?.internal_manager_collection_schedule || '';
 
   // Load building data
   React.useEffect(() => {
@@ -154,9 +161,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     <ModalPortal>
     <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
+      <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content shadow-2xl">
         {/* ✅ ΝΕΟ: Screen Header - Οριζόντια Διάταξη */}
-        <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b-2 border-blue-300 p-4 no-print">
+        <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-50 to-blue-100 border-b-2 border-blue-300 p-4 no-print shadow-md">
             <div className="flex items-center justify-between mb-3">
                 {/* Αριστερά: Logo + Γραφείο */}
                 <div className="flex items-center gap-3">
@@ -174,11 +181,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     </div>
                   ) : null;
                 })()}
-                <div>
+                <div className="space-y-1">
                       <h2 className="text-base font-bold text-blue-900">
                     {managementOfficeName || 'Γραφείο Διαχείρισης'}
                   </h2>
-                      <div className="flex gap-3 text-xs text-blue-700">
+                      <div className="flex flex-col text-xs text-blue-700">
                   {managementOfficePhone && (
                           <span>📞 {managementOfficePhone}</span>
                   )}
@@ -198,6 +205,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 mt-1 text-sm">
                       {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : getPeriodInfo(state)}
                     </Badge>
+                    <p className="text-xs text-blue-600 mt-1">
+                      {resolvedBuildingName}
+                    </p>
                 </div>
                 
                 {/* Δεξιά: Μήνας + Εξαγωγή + Close */}
@@ -234,7 +244,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </div>
             
             {/* Δεύτερη γραμμή: Ημερομηνία Λήξης */}
-            <div className="flex items-center justify-center gap-2 pt-2 border-t border-blue-200">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-2 pt-2 border-t border-blue-200 text-xs text-blue-800">
                 <span className="text-xs font-medium text-blue-700">Πληρωτέο έως:</span>
                 <span className="text-sm font-bold text-red-600">
                     10/{(() => {
@@ -242,6 +252,20 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                                     return String(date.getMonth() + 2).padStart(2, '0');
                                 })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
                 </span>
+                <span className="hidden md:inline text-slate-400">•</span>
+                <span className="flex items-center gap-1">
+                  👤 {resolvedManagerName}
+                </span>
+                {resolvedManagerPhone && (
+                  <span className="flex items-center gap-1">
+                    📞 {resolvedManagerPhone}
+                  </span>
+                )}
+                {resolvedManagerSchedule && (
+                  <span className="flex items-center gap-1">
+                    🕘 {resolvedManagerSchedule}
+                  </span>
+                )}
                             </div>
                         </div>
 
@@ -301,7 +325,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 relative z-10">
           <Tabs defaultValue="traditional" className="w-full">
             <TabsList className="grid w-full grid-cols-4 print:hidden">
               <TabsTrigger value="traditional"><Receipt className="h-4 w-4 mr-2" />Παραδοσιακή Προβολή</TabsTrigger>
@@ -311,15 +335,38 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </TabsList>
 
             <TabsContent value="traditional">
-              <TraditionalViewTab {...props} {...{ state, buildingId, selectedMonth: expenseSheetMonth, aptWithFinancial, expenseBreakdown, managementFeeInfo, reserveFundInfo, totalExpenses, perApartmentAmounts, validateData, validationResult, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses }} />
+              <TraditionalViewTab
+                {...props}
+                state={state}
+                buildingId={buildingId}
+                selectedMonth={expenseSheetMonth}
+                buildingName={resolvedBuildingName}
+                buildingAddress={resolvedBuildingAddress}
+                buildingCity={resolvedBuildingCity}
+                buildingPostalCode={resolvedBuildingPostalCode}
+                managerName={resolvedManagerName}
+                managerPhone={resolvedManagerPhone}
+                managerCollectionSchedule={resolvedManagerSchedule}
+                aptWithFinancial={aptWithFinancial}
+                expenseBreakdown={expenseBreakdown}
+                managementFeeInfo={managementFeeInfo}
+                reserveFundInfo={reserveFundInfo}
+                totalExpenses={totalExpenses}
+                perApartmentAmounts={perApartmentAmounts}
+                validateData={validateData}
+                validationResult={validationResult}
+                getGroupedExpenses={getGroupedExpenses}
+                getTotalPreviousBalance={getTotalPreviousBalance}
+                getFinalTotalExpenses={getFinalTotalExpenses}
+              />
             </TabsContent>
 
             <TabsContent value="analysis">
-              <ExpenseBreakdownSection state={state} buildingName={buildingName} apartmentsCount={Object.keys(state.shares).length} onViewDetails={() => {}} />
+              <ExpenseBreakdownSection state={state} buildingName={resolvedBuildingName} apartmentsCount={Object.keys(state.shares).length} onViewDetails={() => {}} />
             </TabsContent>
 
             <TabsContent value="statistics">
-              <StatisticsSection state={state} buildingName={buildingName} apartmentsCount={Object.keys(state.shares).length} expenseBreakdown={expenseBreakdown} reserveFundInfo={reserveFundInfo} managementFeeInfo={managementFeeInfo} aptWithFinancial={aptWithFinancial} />
+              <StatisticsSection state={state} buildingName={resolvedBuildingName} apartmentsCount={Object.keys(state.shares).length} expenseBreakdown={expenseBreakdown} reserveFundInfo={reserveFundInfo} managementFeeInfo={managementFeeInfo} aptWithFinancial={aptWithFinancial} />
             </TabsContent>
 
             <TabsContent value="export">
@@ -331,7 +378,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     isSaving={isSaving}
                     isSending={isSending}
                     setShowHeatingModal={setShowHeatingModal}
-                    buildingName={buildingName}
+                    buildingName={resolvedBuildingName}
                     periodInfo={getPeriodInfo(state)}
                     apartmentsCount={Object.keys(state.shares).length}
                     totalExpenses={totalExpenses}

@@ -16,6 +16,9 @@ interface ApartmentExpenseTableProps {
   showOwnerExpenses: boolean;
 }
 
+const numericCellClasses = "text-center text-sm font-semibold text-gray-800 tabular-nums";
+const mutedNumericCellClasses = "text-center text-sm text-gray-600 tabular-nums";
+
 export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
   shares,
   aptWithFinancial,
@@ -99,28 +102,40 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
 
             return (
               <TableRow key={share.apartment_id}>
-                <TableCell>{share.identifier || share.apartment_number}</TableCell>
-                <TableCell>{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
-                <TableCell>{formatAmount(previousBalance)}€</TableCell>
+                <TableCell className="text-center text-xs font-semibold text-gray-700">
+                  {share.identifier || share.apartment_number}
+                </TableCell>
+                <TableCell className="text-left text-xs font-semibold text-gray-700">
+                  {share.owner_name || 'Μη καταχωρημένος'}
+                </TableCell>
+                <TableCell className={mutedNumericCellClasses}>{formatAmount(previousBalance)}€</TableCell>
                 {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells για χιλιοστά + ΔΙΑΧΕΙΡΙΣΗ */}
                 {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ: Κ/ΧΡΗΣΤΑ ΧΩΡΙΣ αποθεματικό */}
-                <TableCell>{formatAmount(commonAmountWithoutReserve)}</TableCell>
-                <TableCell>{formatAmount(elevatorAmount)}</TableCell>
-                <TableCell>{formatAmount(heatingAmount)}</TableCell>
+                <TableCell className={numericCellClasses}>{formatAmount(commonAmountWithoutReserve)}€</TableCell>
+                <TableCell className={numericCellClasses}>{formatAmount(elevatorAmount)}€</TableCell>
+                <TableCell className={numericCellClasses}>{formatAmount(heatingAmount)}€</TableCell>
                 {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells (ΕΡΓΑ χωρίς αποθεματικό + ΑΠΟΘΕΜΑΤΙΚΟ) */}
-                <TableCell className="font-semibold">{ownerExpensesOnlyProjects > 0 ? formatAmount(ownerExpensesOnlyProjects) + '€' : '-'}</TableCell>
-                <TableCell>{apartmentReserveFund > 0 ? formatAmount(apartmentReserveFund) + '€' : '-'}</TableCell>
+                <TableCell className={numericCellClasses}>
+                  {ownerExpensesOnlyProjects > 0 ? `${formatAmount(ownerExpensesOnlyProjects)}€` : '-'}
+                </TableCell>
+                <TableCell className={numericCellClasses}>
+                  {apartmentReserveFund > 0 ? `${formatAmount(apartmentReserveFund)}€` : '-'}
+                </TableCell>
                 {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Bold με € */}
-                <TableCell className="font-bold">{formatAmount(finalTotalWithFees)}€</TableCell>
+                <TableCell className="text-center font-black text-gray-900 tabular-nums">
+                  {formatAmount(finalTotalWithFees)}€
+                </TableCell>
               </TableRow>
             );
           })}
           <TableRow className="bg-gray-100 font-bold">
-            <TableCell colSpan={2}>ΣΥΝΟΛΑ</TableCell>
-            <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
+            <TableCell colSpan={2} className="text-left text-sm">ΣΥΝΟΛΑ</TableCell>
+            <TableCell className={numericCellClasses}>
+              {formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€
+            </TableCell>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells χιλιοστών */}
             {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ από resident_expenses (ΔΕΝ περιλαμβάνει owner expenses) */}
-            <TableCell>{formatAmount(
+            <TableCell className={numericCellClasses}>{`${formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
                 const residentExpensesTotal = Math.max(0, toNumber((apartmentData as any)?.resident_expenses || 0));
@@ -128,22 +143,22 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 // ΔΕΝ πρέπει να το αφαιρέσουμε ξανά!
                 return sum + residentExpensesTotal;
               }, 0)
-            )}€</TableCell>
-            <TableCell>{formatAmount(
+            )}€`}</TableCell>
+            <TableCell className={numericCellClasses}>{`${formatAmount(
               sharesArray.reduce((sum, share) => {
                 const breakdown = share.breakdown || {};
                 return sum + toNumber(breakdown.elevator_expenses || 0);
               }, 0)
-            )}</TableCell>
-            <TableCell>{formatAmount(
+            )}€`}</TableCell>
+            <TableCell className={numericCellClasses}>{`${formatAmount(
               sharesArray.reduce((sum, share) => {
                 const breakdown = share.breakdown || {};
                 return sum + toNumber(breakdown.heating_expenses || 0);
               }, 0)
-            )}</TableCell>
+            )}€`}</TableCell>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Cell ΔΙΑΧΕΙΡΙΣΗ (περιλαμβάνεται στο Κ/ΧΡΗΣΤΑ) */}
             {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells (ΕΡΓΑ χωρίς αποθεματικό + ΑΠΟΘΕΜΑΤΙΚΟ) */}
-            <TableCell className="font-semibold">{formatAmount(
+            <TableCell className={numericCellClasses}>{`${formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
@@ -156,10 +171,10 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                 return sum + ownerExpensesOnlyProjects;
               }, 0)
-            )}€</TableCell>
-            <TableCell className="font-semibold">{formatAmount(reserveFundInfo.monthlyAmount)}€</TableCell>
+            )}€`}</TableCell>
+            <TableCell className={numericCellClasses}>{`${formatAmount(reserveFundInfo.monthlyAmount)}€`}</TableCell>
             {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Περιλαμβάνει ΟΛΑ (+ αποθεματικό για συνολικό χρέος) */}
-            <TableCell>{formatAmount(
+            <TableCell className="text-center font-black text-gray-900 tabular-nums">{`${formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
@@ -179,7 +194,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 // ✅ ΤΕΛΙΚΟ: Προσθέτουμε και το apartmentReserveFund για συνολικό χρέος
                 return sum + commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
               }, 0)
-            )}€</TableCell>
+            )}€`}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

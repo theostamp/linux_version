@@ -62,6 +62,11 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     getFinalTotalExpenses
   } = props;
 
+  const resolvedBuildingName = buildingName || 'Άγνωστο Κτίριο';
+  const resolvedManagerName = managerName || 'Μη καταχωρημένος';
+  const resolvedManagerPhone = managerPhone || 'Δεν έχει οριστεί τηλέφωνο';
+  const resolvedManagerSchedule = managerCollectionSchedule || 'Δεν έχει οριστεί ωράριο';
+
   // Φέρνουμε τα μηνιαία έξοδα από το API
   const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
 
@@ -95,14 +100,16 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
         <div className="space-y-3">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-blue-700" /><h3 className="font-bold text-blue-800 text-sm">ΠΟΛΥΚΑΤΟΙΚΙΑ</h3></div>
-                <p className="text-sm font-semibold text-blue-900">{buildingName}</p>
+                <p className="text-sm font-semibold text-blue-900">{resolvedBuildingName}</p>
                 {(buildingAddress || buildingCity || buildingPostalCode) && <p className="text-xs text-blue-700">{buildingAddress}{buildingCity && `, ${buildingCity}`}{buildingPostalCode && ` ${buildingPostalCode}`}</p>}
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-2"><User className="h-4 w-4 text-purple-700" /><h3 className="font-bold text-purple-800 text-sm">ΔΙΑΧΕΙΡΙΣΤΗΣ</h3></div>
-                <p className="text-sm font-semibold text-purple-900">{managerName}{managerApartment && ` (Διαμ. ${managerApartment})`}</p>
-                <p className="text-xs text-purple-700">{managerPhone}</p>
-                <p className="text-xs text-purple-700">{managerCollectionSchedule}</p>
+                <p className="text-sm font-semibold text-purple-900">
+                  {resolvedManagerName}{managerApartment && ` (Διαμ. ${managerApartment})`}
+                </p>
+                <p className="text-xs text-purple-700">{resolvedManagerPhone}</p>
+                <p className="text-xs text-purple-700">{resolvedManagerSchedule}</p>
             </div>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Card "ΛΗΞΗ ΠΛΗΡΩΜΗΣ" για εξοικονόμηση χώρου */}
             {/* ✅ ΑΛΛΑΓΗ: Τραπεζικά Στοιχεία - Μόνο για Εκτύπωση */}
