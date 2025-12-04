@@ -28,6 +28,7 @@ import { PaymentForm } from './PaymentForm';
 import PaymentNotificationModal from './PaymentNotificationModal';
 import { PaymentHistoryModal, PaymentHistoryItem } from './PaymentHistoryModal';
 import { TransactionHistoryModal } from './TransactionHistoryModal';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 import { 
   validateFinancialDataMonth, 
   getValidationMessage, 
@@ -694,57 +695,60 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 
       {/* Payment Form Modal */}
       {showPaymentModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={handlePaymentCancel}
-        >
+        <ModalPortal>
           <div 
-            className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
+            onClick={handlePaymentCancel}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Εισπράξη Πληρωμής</h2>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handlePaymentCancel}
-              >
-                ✕
-              </Button>
+            <div 
+              className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Εισπράξη Πληρωμής</h2>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handlePaymentCancel}
+                >
+                  ✕
+                </Button>
+              </div>
+              <PaymentForm 
+                onSuccess={handlePaymentSuccess}
+                onCancel={handlePaymentCancel}
+                apartments={apartmentBalances.map(apt => ({
+                  id: apt.apartment_id,
+                  number: apt.apartment_number,
+                  owner_name: apt.owner_name,
+                  tenant_name: '',
+                  occupant_name: apt.owner_name,
+                  is_rented: false,
+                  participation_mills: apt.participation_mills
+                }))}
+                initialData={paymentModalData || {
+                  apartment_id: 0,
+                  common_expense_amount: 0,
+                  previous_obligations_amount: 0,
+                  reserve_fund_amount: 0,
+                }}
+              />
             </div>
-            <PaymentForm 
-              onSuccess={handlePaymentSuccess}
-              onCancel={handlePaymentCancel}
-              apartments={apartmentBalances.map(apt => ({
-                id: apt.apartment_id,
-                number: apt.apartment_number,
-                owner_name: apt.owner_name,
-                tenant_name: '',
-                occupant_name: apt.owner_name,
-                is_rented: false,
-                participation_mills: apt.participation_mills
-              }))}
-              initialData={paymentModalData || {
-                apartment_id: 0,
-                common_expense_amount: 0,
-                previous_obligations_amount: 0,
-                reserve_fund_amount: 0,
-              }}
-            />
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && apartmentToDelete && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={cancelDeletePayments}
-        >
+        <ModalPortal>
           <div 
-            className="bg-white rounded-lg max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
+            onClick={cancelDeletePayments}
           >
+            <div 
+              className="bg-white rounded-lg max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-red-600" />
@@ -831,7 +835,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               </Button>
             </div>
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* Payment History Modal */}
