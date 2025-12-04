@@ -51,14 +51,24 @@ export default function BuildingSelector({
   };
 
   // Φιλτράρισμα κτιρίων βάσει του search term
+  // Αποκλείουμε το currentBuilding (όχι selectedBuilding) γιατί εμφανίζεται ξεχωριστά στην ενότητα "Τρέχον κτίριο"
   useEffect(() => {
-    // Αποκλείουμε το selectedBuilding από τη λίστα για να μην εμφανίζεται δύο φορές
-    const buildingsToFilter = selectedBuilding 
-      ? buildings.filter(b => b.id !== selectedBuilding.id)
+    // Skip filtering if buildings haven't loaded yet or are still loading
+    if (buildings.length === 0 || isLoading) {
+      setFilteredBuildings([]);
+      return;
+    }
+    
+    // Αποκλείουμε το currentBuilding από τη λίστα "Άλλα κτίρια" γιατί εμφανίζεται ξεχωριστά
+    const buildingsToFilter = currentBuilding 
+      ? buildings.filter(b => b.id !== currentBuilding.id)
       : buildings;
     
     if (!searchTerm.trim()) {
-      console.log('[BuildingSelector] Filtered buildings (no search):', buildingsToFilter.length, 'out of', buildings.length);
+      // Only log when buildings are actually loaded
+      if (buildings.length > 0) {
+        console.log('[BuildingSelector] Filtered buildings (no search):', buildingsToFilter.length, 'out of', buildings.length);
+      }
       setFilteredBuildings(buildingsToFilter);
     } else {
       const filtered = buildingsToFilter.filter(building =>
@@ -69,7 +79,7 @@ export default function BuildingSelector({
       console.log('[BuildingSelector] Filtered buildings (with search):', filtered.length, 'out of', buildingsToFilter.length);
       setFilteredBuildings(filtered);
     }
-  }, [searchTerm, buildings, currentBuilding]);
+  }, [searchTerm, buildings, currentBuilding, isLoading]);
 
   // Κλείσιμο modal με ESC
   useEffect(() => {

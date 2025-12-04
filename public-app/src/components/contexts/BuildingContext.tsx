@@ -152,7 +152,10 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
   // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
   const loadBuildings = useCallback(async () => {
-    if (authLoading || !user || isLoadingBuildings || hasInitialized) return;
+    // Enhanced guard clause: prevent duplicate calls
+    if (authLoading || !user || isLoadingBuildings || hasInitialized) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -224,7 +227,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       setIsLoadingBuildings(false);
     }
-  }, [authLoading, user, isLoadingBuildings, buildings.length, hasInitialized]);
+  }, [authLoading, user, isLoadingBuildings, hasInitialized]);
 
   // Refresh buildings function
   const refreshBuildings = useCallback(async () => {
@@ -361,13 +364,34 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [setSelectedBuilding]);
 
-  // Load buildings on mount - only once when auth is ready and user is authenticated AND has a tenant
+  // Unified effect: Load buildings on mount - only once when auth is ready and user is authenticated AND has a tenant
+  // This replaces the previous two separate useEffect hooks to prevent duplicate loading
   useEffect(() => {
-    // Only load buildings when auth is not loading, user is authenticated, and has a tenant
-    if (!authLoading && user && user.tenant) {
+    // If auth is ready and no user, stop loading
+    if (!authLoading && !user) {
+      setIsLoading(false);
+      setIsLoadingBuildings(false);
+      return;
+    }
+    
+    // If auth is ready and user exists but no tenant, stop loading (user might not have tenant yet)
+    if (!authLoading && user && !user.tenant) {
+      console.log('[BuildingContext] User has no tenant, stopping loading');
+      setIsLoading(false);
+      setIsLoadingBuildings(false);
+      return;
+    }
+    
+    // Only load buildings when:
+    // 1. Auth is not loading
+    // 2. User is authenticated
+    // 3. User has a tenant
+    // 4. Buildings are not currently loading
+    // 5. Buildings haven't been initialized yet
+    if (!authLoading && user && user.tenant && !isLoadingBuildings && !hasInitialized) {
       loadBuildings();
     }
-  }, [authLoading, user, loadBuildings]);
+  }, [authLoading, user, isLoadingBuildings, hasInitialized, loadBuildings]);
 
   // Keep currentBuilding in sync with selectedBuilding
   // Only update if selectedBuilding changes, don't override if it's null (user might want to see "all buildings")
@@ -410,30 +434,6 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       console.log(`[BuildingContext] ✓ Queries invalidated for building ${selectedBuilding.id}`);
     }
   }, [selectedBuilding?.id, queryClient]);
-
-  useEffect(() => {
-    // If auth is ready and no user, stop loading
-    if (!authLoading && !user) {
-      setIsLoading(false);
-      setIsLoadingBuildings(false);
-      return;
-    }
-    
-    // If auth is ready and user exists but no tenant, stop loading (user might not have tenant yet)
-    if (!authLoading && user && !user.tenant) {
-      console.log('[BuildingContext] User has no tenant, stopping loading');
-      setIsLoading(false);
-      setIsLoadingBuildings(false);
-      return;
-    }
-    
-    // If auth is ready, user exists, has tenant, but buildings haven't loaded yet and not currently loading
-    // This handles the case where loadBuildings() didn't run for some reason
-    if (!authLoading && user && user.tenant && !isLoadingBuildings && !hasInitialized && buildings.length === 0) {
-      console.log('[BuildingContext] User has tenant but buildings not loaded, attempting to load...');
-      loadBuildings();
-    }
-  }, [authLoading, user, isLoadingBuildings, hasInitialized, buildings.length, loadBuildings]);
 
   useEffect(() => {
     // Μόνο αν υπάρχει σοβαρό error (όχι απλά empty buildings list) κάνουμε redirect

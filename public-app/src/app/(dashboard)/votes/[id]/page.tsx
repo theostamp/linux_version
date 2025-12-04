@@ -21,7 +21,7 @@ export default function VoteDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const voteId = Number(id);
-  const { currentBuilding, buildings } = useBuilding();
+  const { buildings, isLoading: buildingsLoading } = useBuilding();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -56,21 +56,40 @@ export default function VoteDetailPage() {
   };
 
   if (error) return <ErrorMessage message="Αποτυχία φόρτωσης ψηφοφορίας." />;
-  if (loadingVote || !vote) return <p className="p-6">Φόρτωση...</p>;
+  if (loadingVote || !vote || buildingsLoading) return <p className="p-6">Φόρτωση...</p>;
 
+  // Έλεγχος πρόσβασης: Ο χρήστης έχει πρόσβαση αν:
+  // 1. Η ψηφοφορία είναι global (building === null)
+  // 2. Είναι office admin και έχει πρόσβαση σε κάποιο από τα buildings του που περιέχει τη ψηφοφορία
+  // 3. Έχει πρόσβαση στο κτίριο της ψηφοφορίας (ανεξάρτητα από το currentBuilding επιλεγμένο)
   const hasAccessToVote = () => {
-    if (!currentBuilding) return false;
-    
+    // Global vote - όλοι οι authenticated χρήστες έχουν πρόσβαση
     if (vote.building === null) {
       return true;
     }
     
+    // Αν τα buildings δεν έχουν φορτωθεί ακόμα, δεν μπορούμε να κάνουμε έλεγχο
+    // Αυτό δεν θα πρέπει να συμβεί λόγω του guard clause πάνω, αλλά το προσθέτουμε για safety
+    if (buildings.length === 0) {
+      return false; // Θα επιστρέψει loading state από το guard clause
+    }
+    
+    // Office admin: έλεγχος αν έχει πρόσβαση στο building της ψηφοφορίας
     if (hasOfficeAdminAccess(user)) {
       return buildings.some(building => building.id === vote.building);
     }
     
-    return vote.building === currentBuilding.id;
+    // Απλός χρήστης: έλεγχος αν έχει πρόσβαση στο building της ψηφοφορίας
+    // (δεν περιορίζουμε με βάση το currentBuilding - ο χρήστης μπορεί να δει
+    // ψηφοφορίες από όλα τα κτίρια στα οποία έχει πρόσβαση)
+    return buildings.some(building => building.id === vote.building);
   };
+
+  // Έλεγχος πρόσβασης μόνο αν τα buildings έχουν φορτωθεί
+  // Αν τα buildings είναι άδεια αλλά δεν είναι loading, τότε ο χρήστης δεν έχει πρόσβαση σε κανένα κτίριο
+  if (buildings.length === 0 && !buildingsLoading) {
+    return <ErrorMessage message="Δεν έχετε πρόσβαση σε κανένα κτίριο." />;
+  }
 
   if (!hasAccessToVote()) {
     return <ErrorMessage message="Δεν έχετε δικαίωμα πρόσβασης σε αυτή την ψηφοφορία." />;
