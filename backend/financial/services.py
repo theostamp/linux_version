@@ -1,5 +1,7 @@
 import logging
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 from typing import Dict, Any, List, Optional
 from django.db.models import Sum
 from datetime import datetime
@@ -251,22 +253,22 @@ class CommonExpenseCalculator:
                 
                 # Έλεγχος αν ο επιλεγμένος μήνας είναι πριν την έναρξη συλλογής
                 if selected_year_month < start_year_month:
-                    print(f"⏭️ Μήνας {self.month} είναι πριν την έναρξη συλλογής - παρακάμπτεται")
+                    logger.debug(f"⏭️ Μήνας {self.month} είναι πριν την έναρξη συλλογής - παρακάμπτεται")
                     return  # Δεν συλλέγουμε αποθεματικό πριν την έναρξη
                 
                 # Έλεγχος αν ο επιλεγμένος μήνας είναι μετά την ολοκλήρωση
                 if self.building.reserve_fund_target_date:
                     target_year_month = (self.building.reserve_fund_target_date.year, self.building.reserve_fund_target_date.month)
                     if selected_year_month > target_year_month:
-                        print(f"⏭️ Μήνας {self.month} είναι μετά την ολοκλήρωση συλλογής - παρακάμπτεται")
+                        logger.debug(f"⏭️ Μήνας {self.month} είναι μετά την ολοκλήρωση συλλογής - παρακάμπτεται")
                         return  # Δεν συλλέγουμε αποθεματικό μετά την ολοκλήρωση
                     
             except Exception as e:
-                print(f"Error parsing month {self.month}: {e}")
+                logger.error(f"Error parsing month {self.month}: {e}")
                 return
         
         # Το αποθεματικό συλλέγεται πάντα (είναι απόφαση ΓΣ)
-        print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (απόφαση ΓΣ)")
+        logger.debug(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (απόφαση ΓΣ)")
 
         # Υπολογισμός μηνιαίας εισφοράς αποθεματικού
         monthly_target = 0
@@ -329,7 +331,7 @@ class CommonExpenseCalculator:
             # ✅ REFACTORED: Using centralized date helper
             from .utils.date_helpers import is_date_in_reserve_fund_timeline
             if not is_date_in_reserve_fund_timeline(expense_date, self.building):
-                print(f"⏭️ Μήνας {self.month} δεν ανήκει στο reserve fund timeline - παρακάμπτεται")
+                logger.debug(f"⏭️ Μήνας {self.month} δεν ανήκει στο reserve fund timeline - παρακάμπτεται")
                 return
             
             # Έλεγχος αν υπάρχει ήδη δαπάνη αποθεματικού για αυτόν τον μήνα
@@ -341,7 +343,7 @@ class CommonExpenseCalculator:
             ).first()
             
             if existing_expense:
-                print(f"✅ Δαπάνη αποθεματικού υπάρχει ήδη για {self.month}: €{existing_expense.amount}")
+                logger.debug(f"✅ Δαπάνη αποθεματικού υπάρχει ήδη για {self.month}: €{existing_expense.amount}")
                 return
             
             # Δημιουργία νέας δαπάνης αποθεματικού
@@ -359,10 +361,10 @@ class CommonExpenseCalculator:
                 notes=f"Αυτόματη δημιουργία - Μηνιαία εισφορά αποθεματικού (στόχος: €{self.building.reserve_fund_goal})"
             )
             
-            print(f"🆕 Δημιουργήθηκε δαπάνη αποθεματικού για {self.month}: €{monthly_target}")
+            logger.debug(f"🆕 Δημιουργήθηκε δαπάνη αποθεματικού για {self.month}: €{monthly_target}")
             
         except Exception as e:
-            print(f"❌ Σφάλμα δημιουργίας δαπάνης αποθεματικού: {e}")
+            logger.error(f"❌ Σφάλμα δημιουργίας δαπάνης αποθεματικού: {e}")
     
     # ❌ DELETED: _is_month_in_reserve_fund_timeline() method
     # This duplicate implementation has been replaced with centralized utility:
@@ -388,7 +390,7 @@ class CommonExpenseCalculator:
                 # τότε ο Οκτώβριος 2025 (2025-10-01) είναι πριν την έναρξη και δεν πρέπει να χρεώνεται
                 if self.period_start_date < self.building.financial_system_start_date:
                     should_charge_management_fees = False
-                    print(f"⏭️ Management fees παρακάμπονται για {self.period_start_date.strftime('%Y-%m')} - πριν από financial_system_start_date ({self.building.financial_system_start_date})")
+                    logger.debug(f"⏭️ Management fees παρακάμπονται για {self.period_start_date.strftime('%Y-%m')} - πριν από financial_system_start_date ({self.building.financial_system_start_date})")
             
             if not should_charge_management_fees:
                 return
@@ -498,11 +500,11 @@ class FinancialDashboardService:
                     if not building.financial_system_start_date or month_start_date >= building.financial_system_start_date:
                         total_management_cost = management_fee_per_apartment * apartments_count
                         effective_management_fee_per_apartment = management_fee_per_apartment
-                        print(f"✅ Management fees χρεώνονται για {month} - μετά από financial_system_start_date")
+                        logger.debug(f"✅ Management fees χρεώνονται για {month} - μετά από financial_system_start_date")
                     else:
                         total_management_cost = Decimal('0.00')  # 🔧 ΝΕΟ: Ορισμός ρητά σε 0
                         effective_management_fee_per_apartment = Decimal('0.00')  # 🔧 ΝΕΟ: Ορισμός ρητά σε 0
-                        print(f"⏭️ Management fees παρακάμπονται για {month} - πριν από financial_system_start_date ({building.financial_system_start_date})")
+                        logger.debug(f"⏭️ Management fees παρακάμπονται για {month} - πριν από financial_system_start_date ({building.financial_system_start_date})")
                 except Exception:
                     # Fallback: χρεώνουμε αν δεν μπορούμε να κάνουμε parse το month
                     total_management_cost = management_fee_per_apartment * apartments_count
@@ -678,7 +680,7 @@ class FinancialDashboardService:
                       selected_month_date > self.building.reserve_fund_target_date):
                     reserve_fund_monthly_target = Decimal('0.00')
             except Exception as e:
-                print(f"Error parsing month {month}: {e}")
+                logger.error(f"Error parsing month {month}: {e}")
                 reserve_fund_monthly_target = Decimal('0.00')
         
         # Υπολογισμός εισφοράς αποθεματικού με προτεραιότητα
@@ -701,7 +703,7 @@ class FinancialDashboardService:
                     # Ενημερώνουμε το total_management_cost για μήνες πριν την έναρξη
                     total_management_cost = Decimal('0.00')
                     effective_management_fee_per_apartment = Decimal('0.00')
-                    print(f"🔧 Final update: total_management_cost = 0.00 for {self.current_month}")
+                    logger.debug(f"🔧 Final update: total_management_cost = 0.00 for {self.current_month}")
             except Exception:
                 pass
         
@@ -720,8 +722,8 @@ class FinancialDashboardService:
         # Add debugging info for month-specific calculations
         calculation_context = "current" if not month else f"snapshot_{month}"
         
-        print(f"🔍 FinancialDashboard ({calculation_context}): current_reserve={current_reserve}, total_obligations={total_obligations}")
-        print(f"🔍 FinancialDashboard ({calculation_context}): total_balance={total_balance}")
+        logger.debug(f"🔍 FinancialDashboard ({calculation_context}): current_reserve={current_reserve}, total_obligations={total_obligations}")
+        logger.debug(f"🔍 FinancialDashboard ({calculation_context}): total_balance={total_balance}")
         
         # Calculate previous obligations FIRST (needed for current_obligations calculation)
         if month:
@@ -760,11 +762,11 @@ class FinancialDashboardService:
                     if prev_balance:
                         # ✅ Χρήση carry_forward από το MonthlyBalance του προηγούμενου μήνα
                         previous_obligations = prev_balance.carry_forward
-                        print(f"✅ Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
-                        print(f"   (από MonthlyBalance {prev_month:02d}/{prev_year} carry_forward)")
+                        logger.debug(f"✅ Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
+                        logger.debug(f"   (από MonthlyBalance {prev_month:02d}/{prev_year} carry_forward)")
                     else:
                         # Fallback: Raw calculation αν δεν υπάρχει MonthlyBalance
-                        print(f"⚠️ MonthlyBalance not found for {prev_month:02d}/{prev_year}, using raw calculation")
+                        logger.warning(f" MonthlyBalance not found for {prev_month:02d}/{prev_year}, using raw calculation")
                         
                         # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ 2025-10-10:
                         # Έλεγχος financial_system_start_date για αποφυγή χρεώσεων από το -άπειρο
@@ -793,18 +795,18 @@ class FinancialDashboardService:
 
                         previous_obligations = expenses_before_month - payments_before_month
 
-                        print(f"   Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
-                        print(f"   System start date: {start_filter_date}")
-                        print(f"   Expenses before month (from {start_filter_date}): €{expenses_before_month:.2f}")
-                        print(f"   Payments before month (from {start_filter_date}): €{payments_before_month:.2f}")
+                        logger.debug(f"   Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
+                        logger.debug(f"   System start date: {start_filter_date}")
+                        logger.debug(f"   Expenses before month (from {start_filter_date}): €{expenses_before_month:.2f}")
+                        logger.debug(f"   Payments before month (from {start_filter_date}): €{payments_before_month:.2f}")
 
                 except Exception as e:
-                    print(f"⚠️ Error calculating previous obligations: {e}")
+                    logger.warning(f" Error calculating previous obligations: {e}")
                     import traceback
                     traceback.print_exc()
                     previous_obligations = Decimal('0.00')
             except Exception as e:
-                print(f"⚠️ Error calculating previous obligations for {month}: {e}")
+                logger.warning(f" Error calculating previous obligations for {month}: {e}")
                 previous_obligations = apartment_obligations
         else:
             # For current view, use current apartment obligations
@@ -870,13 +872,13 @@ class FinancialDashboardService:
         # Δεν είναι πληρωμές μείον οφειλές - αυτό είναι το net cash flow
         # Το total_balance αντιπροσωπεύει την οικονομική θέση του κτιρίου
         total_balance = current_reserve - current_obligations
-        print(f"🔧 TOTAL BALANCE: current_reserve={current_reserve} - current_obligations={current_obligations} = {total_balance}")
+        logger.debug(f"🔧 TOTAL BALANCE: current_reserve={current_reserve} - current_obligations={current_obligations} = {total_balance}")
 
         # 🔧 ΝΕΟΟ FIELD: Δαπάνες μόνο του τρέχοντος μήνα (χωρίς παλαιότερες οφειλές)
         # Διασφαλίζουμε ότι previous_obligations δεν είναι None
         safe_previous_obligations = previous_obligations if previous_obligations is not None else Decimal('0.00')
         current_month_expenses = current_obligations - safe_previous_obligations
-        print(f"🔧 CURRENT MONTH EXPENSES: {current_month_expenses} = {current_obligations} - {safe_previous_obligations}")
+        logger.debug(f"🔧 CURRENT MONTH EXPENSES: {current_month_expenses} = {current_obligations} - {safe_previous_obligations}")
 
         # Παίρνουμε την αναλυτική κατανομή δαπανών
         expense_breakdown = self.get_expense_breakdown(month, grouped=False)
@@ -945,10 +947,10 @@ class FinancialDashboardService:
                     month_start_date = date(year, mon, 1)
                     if month_start_date < building.financial_system_start_date:
                         management_cost = Decimal('0.00')
-                        print(f"⏭️ Reserve fund: No management fees for {self.current_month} - before financial_system_start_date")
+                        logger.debug(f"⏭️ Reserve fund: No management fees for {self.current_month} - before financial_system_start_date")
                     else:
                         management_cost = management_fee_per_apartment * apartments_count
-                        print(f"✅ Reserve fund: Management fees charged for {self.current_month}")
+                        logger.debug(f"✅ Reserve fund: Management fees charged for {self.current_month}")
                 except Exception:
                     management_cost = management_fee_per_apartment * apartments_count
             else:
@@ -958,7 +960,7 @@ class FinancialDashboardService:
             management_cost = Decimal('0.00')
         
         # Το αποθεματικό συλλέγεται πάντα (είναι απόφαση ΓΣ)
-        print(f"✅ FinancialDashboard: Συλλογή αποθεματικού (απόφαση ΓΣ)")
+        logger.debug(f"✅ FinancialDashboard: Συλλογή αποθεματικού (απόφαση ΓΣ)")
 
         # Υπολογίζουμε την εισφορά αποθεματικού
         # Χρησιμοποιούμε τον ίδιο υπολογισμό με το CommonExpenseCalculator
@@ -1026,11 +1028,11 @@ class FinancialDashboardService:
         
         activity_found = has_expenses or has_payments or has_issued_expenses
         
-        print(f"🔍 Monthly Activity Check for {month}:")
-        print(f"   📤 Has expenses: {has_expenses}")
-        print(f"   📥 Has payments: {has_payments}")
-        print(f"   📋 Has issued expenses: {has_issued_expenses}")
-        print(f"   ✅ Overall activity: {activity_found}")
+        logger.debug(f"🔍 Monthly Activity Check for {month}:")
+        logger.debug(f"   📤 Has expenses: {has_expenses}")
+        logger.debug(f"   📥 Has payments: {has_payments}")
+        logger.debug(f"   📋 Has issued expenses: {has_issued_expenses}")
+        logger.debug(f"   ✅ Overall activity: {activity_found}")
         
         return activity_found
     
@@ -1152,14 +1154,14 @@ class FinancialDashboardService:
                         # Fallback: ισόποση κατανομή
                         previous_balance = total_carry_forward / Decimal(safe_apartment_count)
                     
-                    print(f"📊 Apartment {apartment.number} - Previous balance from MonthlyBalance:")
-                    print(f"   Total carry_forward ({prev_month:02d}/{prev_year}): €{total_carry_forward:.2f}")
-                    print(f"   Apartment ratio: {apartment.participation_mills}/{total_participation_mills}")
-                    print(f"   Apartment previous_balance: €{previous_balance:.2f}")
+                    logger.debug(f"📊 Apartment {apartment.number} - Previous balance from MonthlyBalance:")
+                    logger.debug(f"   Total carry_forward ({prev_month:02d}/{prev_year}): €{total_carry_forward:.2f}")
+                    logger.debug(f"   Apartment ratio: {apartment.participation_mills}/{total_participation_mills}")
+                    logger.debug(f"   Apartment previous_balance: €{previous_balance:.2f}")
                 else:
                     # Fallback: Χρήση calculated_balance (υπολογισμός από Expense records)
                     previous_balance = calculated_balance
-                    print(f"⚠️ No MonthlyBalance found for {prev_month:02d}/{prev_year}, using calculated_balance: €{previous_balance:.2f}")
+                    logger.warning(f" No MonthlyBalance found for {prev_month:02d}/{prev_year}, using calculated_balance: €{previous_balance:.2f}")
                 
                 # 1.1. Υπολογισμός previous balance διαχωρισμένο σε resident/owner
                 previous_resident_expenses = Decimal('0.00')
@@ -1280,14 +1282,14 @@ class FinancialDashboardService:
                 # Το expense_share ΗΔΗ περιλαμβάνει ΟΛΑ (management fees + reserve fund + άλλες δαπάνες)
                 net_obligation = previous_balance + expense_share - month_payments
                 
-                print(f"📊 Apartment {apartment.number} - {month}:")
-                print(f"   Previous Balance: €{previous_balance:.2f}")
-                print(f"   Current Month Expenses: €{expense_share:.2f}")
-                print(f"     - Resident: €{current_resident_expenses:.2f}")
-                print(f"     - Owner: €{current_owner_expenses:.2f}")
-                print(f"   Reserve Fund Share: €{reserve_fund_share:.2f}")
-                print(f"   Payments This Month: €{month_payments:.2f}")
-                print(f"   Net Obligation: €{net_obligation:.2f}")
+                logger.debug(f"📊 Apartment {apartment.number} - {month}:")
+                logger.debug(f"   Previous Balance: €{previous_balance:.2f}")
+                logger.debug(f"   Current Month Expenses: €{expense_share:.2f}")
+                logger.debug(f"     - Resident: €{current_resident_expenses:.2f}")
+                logger.debug(f"     - Owner: €{current_owner_expenses:.2f}")
+                logger.debug(f"   Reserve Fund Share: €{reserve_fund_share:.2f}")
+                logger.debug(f"   Payments This Month: €{month_payments:.2f}")
+                logger.debug(f"   Net Obligation: €{net_obligation:.2f}")
             else:
                 # ✅ ΔΙΟΡΘΩΣΗ: Για current view (χωρίς month), υπολογίζουμε reserve_fund_share για τον τρέχοντα μήνα
                 from datetime import date

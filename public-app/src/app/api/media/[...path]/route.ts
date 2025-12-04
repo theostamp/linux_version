@@ -21,10 +21,11 @@ const resolveBackendBase = () => {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const pathSegments = params.path || [];
+    const resolvedParams = await params;
+    const pathSegments = resolvedParams.path || [];
     const mediaPath = pathSegments.join('/');
     
     if (!mediaPath) {

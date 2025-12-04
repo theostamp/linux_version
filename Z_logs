@@ -1,1104 +1,231 @@
-﻿﻿Το newconcierge.app είναι πλατφόρμα “ψηφιακού θυρωρού” για πολυκατοικίες.
-
-Διαφοροποίηση: InfoPoint Kiosk στην είσοδο της πολυκατοικίας (οθόνη 32" με Android + σύνδεση), όχι απλώς κοινόχρηστα.
-
-Στόχος: πολυκατοικίες που μπορούν να πληρώνουν ~30–40€/μήνα, όχι ο φθηνότερος παίχτης στην αγορά κοινοχρήστων.
-
-Κύριο προϊόν: Kiosk All-In Plan. Όλα τα άλλα πακέτα (software-only, free) είναι υποστηρικτικά.
-
-Κοινό:
-
-εσωτερικοί διαχειριστές πολυκατοικίας,
-
-γραφεία διαχείρισης (property/κοινοχρήστων managers).
-
-2. Δομή σελίδας newconcierge.app (landing + pricing)
-
-Πρόταση βασικών sections με IDs (για να την “διαβάσει” ο agent):
-
-hero – Κεντρικό μήνυμα / H1
-
-how-it-works – Πώς λειτουργεί ο Ψηφιακός Θυρωρός
-
-kiosk-focus – Τι είναι το InfoPoint Kiosk & γιατί αξίζει
-
-features – Λειτουργίες πλατφόρμας
-
-pricing – Πακέτα & τιμολόγηση
-
-for-managers – Ενότητα ειδικά για γραφεία διαχείρισης
-
-faq – Συχνές ερωτήσεις
-
-cta (τελικό) – Τελικό call-to-action / φόρμα demo ή κουμπί εγγραφής
-
-3. Πλάνο τιμολόγησης (business rules)
-3.1 Βασικές αρχές
-
-Kiosk-first: Το βασικό πακέτο είναι το “InfoPoint Kiosk – All In”.
-
-Τιμή–στόχος: ~39€/μήνα/πολυκατοικία (24μηνο συμβόλαιο, χωρίς ΦΠΑ).
-
-Κόστος hardware (για δική σου χρήση):
-
-TV 32" Android: ~160€
-
-4G router: ~30€
-
-Βάση + εγκατάσταση: ~50€
-
-Σύνολο hardware+setup ≈ 240–260€ (όπως τα εκτιμήσαμε).
-
-3.2 Πακέτα
-
-Free Plan (χωρίς Kiosk)
-
-Σκοπός: “δόλωμα”, να μπουν στην πλατφόρμα.
-
-0€/μήνα, 1 πολυκατοικία, έως 12 διαμερίσματα.
-
-Περιορισμένες λειτουργίες.
-
-Concierge Cloud – Software Only
-
-20–25€/μήνα/πολυκατοικία (χωρίς ΦΠΑ).
-
-Full πλατφόρμα, αλλά χωρίς Kiosk.
-
-Δευτερεύον πακέτο, φαίνεται αλλά δεν είναι “το βασικό”.
-
-InfoPoint Kiosk – All In (κύριο πακέτο)
-
-~39€/μήνα/πολυκατοικία (χωρίς ΦΠΑ), 24μηνο συμβόλαιο.
-
-Χωρίς αρχικό κόστος hardware για τον πελάτη.
-
-Περιλαμβάνει:
-
-32" Android TV,
-
-4G router,
-
-setup & παραμετροποίηση,
-
-κάρτα SIM (data) – μπορεί να αναφέρεται ως “περιλαμβάνει βασικό πακέτο δεδομένων”.
-
-Kiosk Upfront – Για γραφεία διαχείρισης
-
-Hardware & setup: 240–260€ εφάπαξ / πολυκατοικία.
-
-SaaS + support: 25€/μήνα/πολυκατοικία (χωρίς ΦΠΑ).
-
-Στόχος: γραφεία που θέλουν χαμηλότερο πάγιο και μπορούν να επενδύσουν upfront.
-
-Custom Office Plan (multi-building)
-
-Για 10+ πολυκατοικίες με Kiosk.
-
-“Επικοινωνήστε μαζί μας για προσφορά”.
-
-Πρόβλεψη για εκπτώσεις σε volume.
-
-4. Αναλυτική δομή & προτεινόμενο κείμενο ανά section
-4.1 Section hero
-
-Στόχος: Να καταλάβει ο επισκέπτης σε 1 δευτερόλεπτο ότι πρόκειται για ψηφιακό πίνακα ανακοινώσεων στην είσοδο + πλατφόρμα.
-
-Προτεινόμενο layout:
-
-Αριστερά: κείμενα (H1, υπότιτλος, bullet points, CTA)
-
-Δεξιά: mockup οθόνης Kiosk / πολυκατοικίας
-
-Προτεινόμενο κείμενο:
-
-H1:
-Ο ψηφιακός θυρωρός της πολυκατοικίας σου. Στην είσοδο, όχι στο συρτάρι.
-
-Υπότιτλος:
-Ένα InfoPoint Kiosk στην είσοδο της πολυκατοικίας και μια έξυπνη πλατφόρμα στο cloud.
-Ανακοινώσεις, ψηφοφορίες, αιτήματα και ενημέρωση για όλους – χωρίς χαρτιά, χωρίς φωνές.
-
-Bullets (3–4):
-
-🔔 Ψηφιακός πίνακας ανακοινώσεων στην είσοδο
-
-🗳️ Ηλεκτρονικές ψηφοφορίες και αποφάσεις πολυκατοικίας
-
-🧾 Κοινόχρηστα & ενημερώσεις σε πραγματικό χρόνο
-
-💬 Επικοινωνία ενοίκων & διαχειριστή χωρίς ομάδες στο Viber
-
-CTA buttons:
-
-Πρωτεύον: Ζήτησε demo
-
-Δευτερεύον: Δες τα πακέτα τιμών
-
-4.2 Section how-it-works
-
-Τίτλος:
-Πώς λειτουργεί ο Ψηφιακός Θυρωρός
-
-3 βήματα:
-
-Τοποθέτηση Kiosk στην είσοδο
-Εγκαθιστούμε μια οθόνη 32" με Android και σύνδεση internet στην είσοδο της πολυκατοικίας.
-
-Σύνδεση με την πλατφόρμα newconcierge.app
-Ο διαχειριστής και το γραφείο διαχείρισης χρησιμοποιούν ένα απλό web περιβάλλον για να ανεβάζουν ανακοινώσεις, κοινόχρηστα, ψηφοφορίες και ενημερώσεις.
-
-Όλοι ενημερώνονται σε πραγματικό χρόνο
-Οι ένοικοι βλέπουν τα πάντα στο Kiosk, αλλά και από το κινητό τους – χωρίς να χρειάζεται να ρωτάνε τον διαχειριστή για κάθε λεπτομέρεια.
-
-4.3 Section kiosk-focus
-
-Τίτλος:
-Το InfoPoint Kiosk κάνει τη διαφορά
-
-Subheading:
-Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Είναι κάτι που βλέπεις κάθε μέρα στην είσοδο.
-
-Bullets (ή 3 “κάρτες”):
-
-Ορατότητα & διαφάνεια
-Όλες οι ανακοινώσεις, ψηφοφορίες και ενημερώσεις εμφανίζονται σε μεγάλη οθόνη.
-Κανείς δεν μπορεί να πει «δεν το είδα».
-
-Λιγότερη ένταση στις συνελεύσεις
-Τα θέματα είναι ήδη αναρτημένα, οι ψηφοφορίες γίνονται ηλεκτρονικά, τα αποτελέσματα είναι ξεκάθαρα.
-
-Εικόνα πολυκατοικίας 2025+
-Η πολυκατοικία αποκτά “ταυτότητα” – μια σύγχρονη είσοδο, που δείχνει οργάνωση και φροντίδα.
-
-4.4 Section features
-
-Τίτλος:
-Όλα όσα χρειάζεται μια σύγχρονη πολυκατοικία – σε ένα μέρος
-
-Προτεινόμενες κατηγορίες:
-
-Ανακοινώσεις & ενημέρωση
-
-Ανάρτηση ανακοινώσεων
-
-Προγραμματισμένες εργασίες
-
-Προειδοποιήσεις / έκτακτα θέματα
-
-Κοινόχρηστα & οικονομικά
-
-Προβολή ποσών ανά διαμέρισμα
-
-Επισήμανση εξοφλήσεων
-
-Ιστορικό χρεώσεων (ανά μήνα)
-
-Αιτήματα ενοίκων
-
-Καταχώρηση βλαβών/αιτημάτων
-
-Παρακολούθηση κατάστασης (σε εξέλιξη, ολοκληρώθηκε)
-
-Στατιστικά: ποια είναι τα συχνότερα θέματα
-
-Ψηφοφορίες & αποφάσεις
-
-Ηλεκτρονικές ψηφοφορίες
-
-Καταγραφή αποτελεσμάτων
-
-Διασφάλιση ότι κάθε διαμέρισμα ψηφίζει μία φορά
-
-Επικοινωνία & διαφάνεια
-
-Βασικό “chat”/σχόλια σε ανακοινώσεις
-
-Ενημέρωση με email / SMS (ανά πακέτο)
-
-Ρόλοι: διαχειριστής, ένοικος, γραφείο
-
-4.5 Section pricing
-
-Τίτλος:
-Πακέτα για κάθε πολυκατοικία – με επίκεντρο το Kiosk
-
-Υποτίτλος:
-Διάλεξε το μοντέλο που ταιριάζει στην πολυκατοικία ή στο γραφείο διαχείρισής σου.
-
-Πακέτο 1 – Free
-
-Όνομα: Free
-
-Τιμή: 0€ / μήνα / πολυκατοικία
-
-Περιγραφή:
-Ιδανικό για μια πρώτη γνωριμία με την πλατφόρμα.
-
-Περιλαμβάνει:
-
-1 πολυκατοικία, έως 12 διαμερίσματα
-
-Βασική διαχείριση κοινοχρήστων
-
-Εκτύπωση συγκεντρωτικής κατάστασης
-
-Βασικές ανακοινώσεις
-
-Πακέτο 2 – Concierge Cloud (Software only)
-
-Όνομα: Concierge Cloud
-
-Τιμή: από 25€ / μήνα / πολυκατοικία (χωρίς ΦΠΑ)
-
-Περιγραφή:
-Για πολυκατοικίες που θέλουν πλήρη ψηφιακή διαχείριση, χωρίς Kiosk στην είσοδο.
-
-Περιλαμβάνει:
-
-Όλες τις λειτουργίες της πλατφόρμας (ανακοινώσεις, αιτήματα, ψηφοφορίες, οικονομικά)
-
-Απεριόριστες ανακοινώσεις, αιτήματα και ψηφοφορίες
-
-Πρόσβαση ενοίκων από browser ή κινητό
-
-Πακέτο 3 – InfoPoint Kiosk – All In (Προτεινόμενο)
-
-Badge: Προτεινόμενο / Kiosk Plan
-
-Όνομα: InfoPoint Kiosk – All In
-
-Τιμή: από 39€ / μήνα / πολυκατοικία (χωρίς ΦΠΑ, 24μηνο)
-
-Περιγραφή:
-Το πλήρες πακέτο με Kiosk στην είσοδο της πολυκατοικίας και όλη την πλατφόρμα από πίσω.
-
-Περιλαμβάνει:
-
-Παραχώρηση οθόνης 32" Android & 4G router
-
-Εγκατάσταση & αρχική παραμετροποίηση
-
-Πλήρη πρόσβαση στην πλατφόρμα newconcierge.app
-
-Cloud hosting & updates
-
-Βασικό πακέτο δεδομένων internet για το Kiosk
-
-Τηλεφωνική & online υποστήριξη σε εργάσιμες ώρες
-
-Πακέτο 4 – Kiosk Upfront (για γραφεία διαχείρισης)
-
-Όνομα: Kiosk Upfront – Office
-
-Τιμή:
-
-Hardware & Setup: από 250€ εφάπαξ / πολυκατοικία
-
-SaaS: 25€ / μήνα / πολυκατοικία (χωρίς ΦΠΑ)
-
-Περιγραφή:
-Για γραφεία που διαχειρίζονται πολλές πολυκατοικίες και προτιμούν μικρότερο μηνιαίο πάγιο.
-
-Περιλαμβάνει:
-
-Εγκατάσταση Kiosk ανά πολυκατοικία
-
-Πλήρη πρόσβαση στην πλατφόρμα
-
-Υποστήριξη & αναβαθμίσεις
-
-Πακέτο 5 – Custom Office Plan
-
-Όνομα: Custom Office Plan
-
-Τιμή: Κατόπιν συνεννόησης
-
-Περιγραφή:
-Για γραφεία με 10+ Kiosks ή ιδιαίτερες ανάγκες (multi-building διαχείριση, ειδικές αναφορές κ.λπ.).
-
-Κάτω από τα πακέτα:
-
-CTA: Ζήτησε προσφορά για το δικό σου κτίριο
-
-Μικρό disclaimer:
-Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%. Το κόστος εγκατάστασης μπορεί να διαφοροποιηθεί ανάλογα με το κτίριο.
-
-4.6 Section for-managers
-
-Τίτλος:
-Για γραφεία διαχείρισης: λιγότερα τηλέφωνα, περισσότερη οργάνωση
-
-Μικρό κείμενο:
-
-Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα, τα email και οι απορίες των ενοίκων.
-Με το newconcierge.app και τα InfoPoint Kiosks, κάθε πολυκατοικία ενημερώνεται αυτόματα – κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
-
-Bullet points:
-
-Κεντρικό dashboard για όλες τις πολυκατοικίες
-
-Ενεργά αιτήματα & βλάβες σε μία οθόνη
-
-Λιγότερες παρεξηγήσεις για κοινόχρηστα και αποφάσεις
-
-Δυνατότητα για custom αναφορές & αναλύσεις
-
-4.7 Section faq
-
-Ενδεικτικές ερωτήσεις:
-
-Χρειάζεται να αλλάξουμε γραφείο διαχείρισης για να χρησιμοποιήσουμε την πλατφόρμα;
-Όχι απαραίτητα. Το newconcierge.app μπορεί να το χρησιμοποιήσει είτε ο εσωτερικός διαχειριστής, είτε το γραφείο που ήδη συνεργάζεστε.
-
-Τι γίνεται αν χαλάσει το Kiosk;
-Προσφέρουμε υποστήριξη και αντικατάσταση βάσει του συμβολαίου συντήρησης. Η πλατφόρμα συνεχίζει να λειτουργεί κανονικά από web.
-
-Χρειάζεται internet στην πολυκατοικία;
-Όχι. Το Kiosk συνοδεύεται από δική του σύνδεση δεδομένων (4G) μέσα στο πακέτο.
-
-Τι γίνεται αν κάποιος ένοικος δεν θέλει να χρησιμοποιεί ψηφιακά μέσα;
-Μπορεί να ενημερώνεται από το Kiosk στην είσοδο, χωρίς να χρειάζεται λογαριασμό ή κωδικό.
-
-4.8 Τελικό cta section
-
-Τίτλος:
-Έτοιμος για τον ψηφιακό θυρωρό της πολυκατοικίας σου;
-
-Κείμενο:
-
-Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών, ειδικά για τη δική σου πολυκατοικία ή γραφείο.
-
-Φόρμα:
-
-Όνομα
-
-Email
-
-Τηλέφωνο
-
-Ρόλος (εσωτερικός διαχειριστής / γραφείο διαχείρισης / ιδιοκτήτης)
-
-Περιοχή & αριθμός πολυκατοικιών
-
-5. Data structure για τα πακέτα (για χρήση από τον agent)
-
-Μπορείς να του το δώσεις ως παράδειγμα:
-
-const pricingPlans = [
-  {
-    id: "free",
-    name: "Free",
-    priceMonthly: 0,
-    currency: "EUR",
-    highlight: false,
-    target: "Εσωτερικοί διαχειριστές που θέλουν μια πρώτη γνωριμία",
-    features: [
-      "1 πολυκατοικία, έως 12 διαμερίσματα",
-      "Βασική διαχείριση κοινοχρήστων",
-      "Εκτύπωση συγκεντρωτικής κατάστασης",
-      "Βασικές ανακοινώσεις"
-    ]
-  },
-  {
-    id: "cloud",
-    name: "Concierge Cloud",
-    priceMonthly: 25,
-    currency: "EUR",
-    highlight: false,
-    target: "Πολυκατοικίες που θέλουν πλήρη ψηφιακή διαχείριση χωρίς Kiosk",
-    features: [
-      "Πλήρης πλατφόρμα (ανακοινώσεις, αιτήματα, ψηφοφορίες, οικονομικά)",
-      "Απεριόριστες ανακοινώσεις, αιτήματα, ψηφοφορίες",
-      "Πρόσβαση ενοίκων μέσω web / κινητού"
-    ]
-  },
-  {
-    id: "kiosk_all_in",
-    name: "InfoPoint Kiosk – All In",
-    priceMonthly: 39,
-    currency: "EUR",
-    highlight: true,
-    badge: "Προτεινόμενο",
-    target: "Πολυκατοικίες που θέλουν ψηφιακό πίνακα ανακοινώσεων στην είσοδο",
-    features: [
-      "Οθόνη 32\" Android & 4G router",
-      "Εγκατάσταση & παραμετροποίηση",
-      "Πλήρης πρόσβαση στην πλατφόρμα newconcierge.app",
-      "Βασικό πακέτο δεδομένων για το Kiosk",
-      "Cloud hosting & υποστήριξη"
-    ]
-  },
-  {
-    id: "kiosk_upfront",
-    name: "Kiosk Upfront – Office",
-    priceMonthly: 25,
-    upfrontCost: 250,
-    currency: "EUR",
-    highlight: false,
-    target: "Γραφεία διαχείρισης με πολλές πολυκατοικίες",
-    features: [
-      "Εγκατάσταση Kiosk ανά πολυκατοικία",
-      "Χαμηλότερο μηνιαίο πάγιο",
-      "Πλήρης πρόσβαση στην πλατφόρμα",
-      "Υποστήριξη & αναβαθμίσεις"
-    ]
-  }
-];
-
-
-// frontend/app/page.tsx
-import React from "react";
-
-const pricingPlans = [
-  {
-    id: "free",
-    name: "Free",
-    priceMonthly: "0€",
-    upfrontCost: null as string | null,
-    currency: "EUR",
-    highlight: false,
-    badge: null as string | null,
-    target: "Εσωτερικοί διαχειριστές που θέλουν μια πρώτη γνωριμία με την πλατφόρμα",
-    features: [
-      "1 πολυκατοικία, έως 12 διαμερίσματα",
-      "Βασική διαχείριση κοινοχρήστων",
-      "Εκτύπωση συγκεντρωτικής κατάστασης",
-      "Βασικές ανακοινώσεις στην πλατφόρμα"
-    ]
-  },
-  {
-    id: "cloud",
-    name: "Concierge Cloud",
-    priceMonthly: "από 25€",
-    upfrontCost: null as string | null,
-    currency: "EUR",
-    highlight: false,
-    badge: null as string | null,
-    target: "Πολυκατοικίες που θέλουν πλήρη ψηφιακή διαχείριση χωρίς Kiosk",
-    features: [
-      "Πλήρης πλατφόρμα (ανακοινώσεις, αιτήματα, ψηφοφορίες, οικονομικά)",
-      "Απεριόριστες ανακοινώσεις, αιτήματα και ψηφοφορίες",
-      "Πρόσβαση ενοίκων μέσω web / κινητού",
-      "Ιδανικό για δοκιμή πριν το Kiosk"
-    ]
-  },
-  {
-    id: "kiosk_all_in",
-    name: "InfoPoint Kiosk – All In",
-    priceMonthly: "από 39€",
-    upfrontCost: null as string | null,
-    currency: "EUR",
-    highlight: true,
-    badge: "Προτεινόμενο",
-    target: "Πολυκατοικίες που θέλουν ψηφιακό πίνακα ανακοινώσεων στην είσοδο",
-    features: [
-      "Οθόνη 32\" Android & 4G router",
-      "Εγκατάσταση & αρχική παραμετροποίηση",
-      "Πλήρης πρόσβαση στην πλατφόρμα newconcierge.app",
-      "Βασικό πακέτο δεδομένων για το Kiosk",
-      "Cloud hosting, ενημερώσεις & υποστήριξη"
-    ]
-  },
-  {
-    id: "kiosk_upfront",
-    name: "Kiosk Upfront – Office",
-    priceMonthly: "25€",
-    upfrontCost: "250€ εφάπαξ",
-    currency: "EUR",
-    highlight: false,
-    badge: null as string | null,
-    target: "Γραφεία διαχείρισης με πολλές πολυκατοικίες",
-    features: [
-      "Εγκατάσταση Kiosk ανά πολυκατοικία",
-      "Χαμηλότερο μηνιαίο πάγιο",
-      "Πλήρης πρόσβαση στην πλατφόρμα",
-      "Υποστήριξη & αναβαθμίσεις"
-    ]
-  }
-];
-
-const faqs = [
-  {
-    question: "Χρειάζεται να αλλάξουμε γραφείο διαχείρισης για να χρησιμοποιήσουμε την πλατφόρμα;",
-    answer:
-      "Όχι απαραίτητα. Το newconcierge.app μπορεί να το χρησιμοποιήσει είτε ο εσωτερικός διαχειριστής της πολυκατοικίας, είτε το γραφείο διαχείρισης με το οποίο συνεργάζεστε ήδη."
-  },
-  {
-    question: "Χρειάζεται internet στην πολυκατοικία;",
-    answer:
-      "Όχι. Το InfoPoint Kiosk συνοδεύεται από δική του σύνδεση δεδομένων (4G), η οποία περιλαμβάνεται στο πακέτο, ώστε η πολυκατοικία να μην χρειάζεται ξεχωριστή γραμμή internet."
-  },
-  {
-    question: "Τι γίνεται αν χαλάσει το Kiosk;",
-    answer:
-      "Παρέχουμε υποστήριξη και αντικατάσταση βάσει του συμβολαίου συντήρησης. Ακόμη και αν υπάρξει πρόβλημα με το Kiosk, η πλατφόρμα συνεχίζει να λειτουργεί κανονικά μέσω web."
-  },
-  {
-    question: "Τι γίνεται αν κάποιοι ένοικοι δεν θέλουν να χρησιμοποιούν εφαρμογές;",
-    answer:
-      "Μπορούν να ενημερώνονται από το InfoPoint Kiosk στην είσοδο της πολυκατοικίας, χωρίς να χρειάζεται να κάνουν login ή να χρησιμοποιούν κινητό τηλέφωνο."
-  }
-];
-
-export default function LandingPage() {
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      {/* HERO SECTION */}
-      <section
-        id="hero"
-        className="relative overflow-hidden border-b border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950"
-      >
-        <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-16 md:flex-row md:items-center md:py-24">
-          {/* Left content */}
-          <div className="flex-1 space-y-6">
-            <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-emerald-200">
-              Ψηφιακός Θυρωρός • InfoPoint Kiosk
-            </span>
-            <h1 className="text-balance text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-              Ο ψηφιακός θυρωρός της πολυκατοικίας σου.
-              <br />
-              <span className="text-emerald-400">Στην είσοδο, όχι στο συρτάρι.</span>
-            </h1>
-            <p className="max-w-xl text-sm text-slate-300 sm:text-base">
-              Ένα InfoPoint Kiosk στην είσοδο της πολυκατοικίας και μια έξυπνη πλατφόρμα στο cloud.
-              Ανακοινώσεις, ψηφοφορίες, αιτήματα και ενημέρωση για όλους – χωρίς χαρτιά, χωρίς φωνές,
-              χωρίς χαμένο χρόνο.
-            </p>
-
-            <ul className="grid gap-2 text-sm text-slate-200 sm:grid-cols-2">
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 text-center text-xs leading-5">
-                  ✓
-                </span>
-                <span>Ψηφιακός πίνακας ανακοινώσεων στην είσοδο</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 text-center text-xs leading-5">
-                  ✓
-                </span>
-                <span>Ηλεκτρονικές ψηφοφορίες & αποφάσεις πολυκατοικίας</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 text-center text-xs leading-5">
-                  ✓
-                </span>
-                <span>Κοινόχρηστα, αιτήματα και ενημερώσεις σε πραγματικό χρόνο</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 text-center text-xs leading-5">
-                  ✓
-                </span>
-                <span>Λιγότερα τηλέφωνα, περισσότερη οργάνωση</span>
-              </li>
-            </ul>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href="#cta"
-                className="rounded-full bg-emerald-500 px-6 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 hover:bg-emerald-400"
-              >
-                Ζήτησε demo
-              </a>
-              <a
-                href="#pricing"
-                className="rounded-full border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500"
-              >
-                Δες τα πακέτα τιμών
-              </a>
-              <p className="w-full text-xs text-slate-400 sm:w-auto">
-                Ιδανικό για πολυκατοικίες 15+ διαμερισμάτων και γραφεία διαχείρισης.
-              </p>
-            </div>
-          </div>
-
-          {/* Right side: media placeholder */}
-          <div className="flex-1">
-            <div className="relative mx-auto max-w-md">
-              <div className="aspect-[9/16] rounded-3xl border border-dashed border-slate-700 bg-slate-900/60 p-4 shadow-xl shadow-emerald-500/10">
-                {/* PLACEHOLDER: Εδώ θα τοποθετηθεί mockup του Kiosk με UI της εφαρμογής */}
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-xs text-slate-400">
-                  <span className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-wide text-slate-300">
-                    Placeholder Media
-                  </span>
-                  <p className="max-w-[12rem]">
-                    Εδώ θα μπει mockup ή screenshot από την οθόνη του InfoPoint Kiosk
-                    (ανακοινώσεις, ψηφοφορίες, κοινόχρηστα).
-                  </p>
-                  <p className="max-w-[12rem] text-[11px] text-slate-500">
-                    Πρόταση: 3D render της εισόδου πολυκατοικίας με την οθόνη στον τοίχο.
-                  </p>
-                </div>
-              </div>
-              {/* Μικρό badge πάνω από τη μακέτα */}
-              <div className="absolute -right-2 -top-2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-slate-950 shadow-lg shadow-emerald-500/40">
-                InfoPoint Kiosk
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="how-it-works" className="border-b border-slate-800 bg-slate-950">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-16">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              Πώς λειτουργεί ο Ψηφιακός Θυρωρός
-            </h2>
-            <p className="mt-2 text-sm text-slate-300 sm:text-base">
-              Από την είσοδο της πολυκατοικίας μέχρι το κινητό του κάθε ενοίκου – σε τρία απλά βήματα.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-              <div className="mb-3 text-sm font-semibold text-emerald-400">1. Τοποθέτηση Kiosk</div>
-              <p className="text-sm text-slate-200">
-                Εγκαθιστούμε μια οθόνη 32&quot; με Android και σύνδεση 4G στην είσοδο της
-                πολυκατοικίας. Η οθόνη λειτουργεί ως ψηφιακός πίνακας ανακοινώσεων.
-              </p>
-              {/* PLACEHOLDER ICON */}
-              <div className="mt-4 rounded-xl border border-dashed border-slate-700 p-3 text-center text-xs text-slate-400">
-                Placeholder εικόνας: εικονίδιο ή σκίτσο εγκατάστασης οθόνης σε είσοδο.
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-              <div className="mb-3 text-sm font-semibold text-emerald-400">
-                2. Διαχείριση από το newconcierge.app
-              </div>
-              <p className="text-sm text-slate-200">
-                Ο διαχειριστής ή το γραφείο διαχείρισης χρησιμοποιεί ένα απλό web περιβάλλον για να
-                ανεβάζει ανακοινώσεις, κοινόχρηστα, ψηφοφορίες και ενημερώσεις.
-              </p>
-              {/* PLACEHOLDER ICON */}
-              <div className="mt-4 rounded-xl border border-dashed border-slate-700 p-3 text-center text-xs text-slate-400">
-                Placeholder εικόνας: screenshot από dashboard διαχειριστή στο browser.
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-              <div className="mb-3 text-sm font-semibold text-emerald-400">
-                3. Ενημέρωση για όλους
-              </div>
-              <p className="text-sm text-slate-200">
-                Οι ένοικοι βλέπουν τις πληροφορίες στο Kiosk, αλλά και από το κινητό τους. Κανείς δεν
-                μπορεί να πει «δεν το είδα».
-              </p>
-              {/* PLACEHOLDER ICON */}
-              <div className="mt-4 rounded-xl border border-dashed border-slate-700 p-3 text-center text-xs text-slate-400">
-                Placeholder εικόνας: συνδυασμός Kiosk + mobile συσκευών με notifications.
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* KIOSK FOCUS */}
-      <section id="kiosk-focus" className="border-b border-slate-800 bg-slate-900/60">
-        <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-14 md:flex-row md:items-center">
-          <div className="flex-1 space-y-4">
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              Το InfoPoint Kiosk κάνει τη διαφορά
-            </h2>
-            <p className="text-sm text-slate-300 sm:text-base">
-              Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Είναι κάτι που βλέπεις κάθε μέρα στην είσοδο.
-              Ένας ψηφιακός πίνακας ανακοινώσεων που φέρνει διαφάνεια, οργάνωση και εικόνα
-              πολυκατοικίας 2025+.
-            </p>
-
-            <div className="space-y-3 text-sm text-slate-200">
-              <div>
-                <span className="font-semibold text-emerald-400">
-                  Ορατότητα &amp; διαφάνεια
-                </span>
-                <p className="text-slate-300">
-                  Όλες οι ανακοινώσεις, τα κοινόχρηστα και τα αποτελέσματα των ψηφοφοριών εμφανίζονται
-                  σε μεγάλη οθόνη. Δεν χρειάζονται χαρτιά στην είσοδο ή πρόχειρα email.
-                </p>
-              </div>
-              <div>
-                <span className="font-semibold text-emerald-400">
-                  Λιγότερη ένταση στις συνελεύσεις
-                </span>
-                <p className="text-slate-300">
-                  Τα θέματα είναι ήδη δημοσιευμένα, οι ψηφοφορίες γίνονται ηλεκτρονικά, τα αποτελέσματα
-                  είναι ξεκάθαρα. Ο καθένας ξέρει τι ψηφίστηκε και πότε.
-                </p>
-              </div>
-              <div>
-                <span className="font-semibold text-emerald-400">Εικόνα &amp; κύρος</span>
-                <p className="text-slate-300">
-                  Η πολυκατοικία αποκτά ταυτότητα. Μια σύγχρονη είσοδο που δείχνει οργάνωση, σεβασμό
-                  στους ενοίκους και σοβαρή διαχείριση.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Placeholder media: zoom στο kiosk UI */}
-          <div className="flex-1">
-            <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950 p-4">
-              <div className="aspect-video rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-                {/* PLACEHOLDER: UI panel */}
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-slate-400">
-                  <span className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-wide text-slate-300">
-                    Placeholder UI Panel
-                  </span>
-                  <p className="max-w-xs">
-                    Εδώ μπορεί να τοποθετηθεί zoomed-in screenshot από την οθόνη του Kiosk
-                    (π.χ. widget ανακοινώσεων, λίστας αιτημάτων, τρέχουσας ψηφοφορίας).
-                  </p>
-                  <p className="max-w-xs text-[11px] text-slate-500">
-                    Πρόταση: 3–4 κάρτες ανακοινώσεων σε layout, για να φαίνεται καθαρά το design.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="features" className="border-b border-slate-800 bg-slate-950">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-16">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              Όλα όσα χρειάζεται μια σύγχρονη πολυκατοικία – σε ένα μέρος
-            </h2>
-            <p className="mt-2 text-sm text-slate-300 sm:text-base">
-              Από τις ανακοινώσεις και τα κοινόχρηστα, μέχρι ψηφοφορίες, αιτήματα βλαβών και
-              επικοινωνία ενοίκων.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-emerald-400">
-                Ανακοινώσεις &amp; ενημέρωση
-              </h3>
-              <p className="text-sm text-slate-200">
-                Ανάρτηση ανακοινώσεων, προγραμματισμένες εργασίες, έκτακτες ενημερώσεις. Όλα
-                εμφανίζονται αυτόματα στο Kiosk και στην εφαρμογή.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-emerald-400">
-                Κοινόχρηστα &amp; οικονομικά
-              </h3>
-              <p className="text-sm text-slate-200">
-                Προβολή ποσών ανά διαμέρισμα, κατάσταση εξόφλησης, ιστορικό χρεώσεων. Μείωση των
-                ερωτήσεων «πόσα χρωστάω;».
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-emerald-400">Αιτήματα ενοίκων</h3>
-              <p className="text-sm text-slate-200">
-                Οι ένοικοι καταχωρούν αιτήματα (βλάβες, προτάσεις, παρατηρήσεις) και παρακολουθούν την
-                πορεία τους. Ο διαχειριστής βλέπει συνολική εικόνα.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-emerald-400">
-                Ψηφοφορίες &amp; αποφάσεις
-              </h3>
-              <p className="text-sm text-slate-200">
-                Ηλεκτρονικές ψηφοφορίες με καταγραφή αποτελεσμάτων. Κάθε διαμέρισμα ψηφίζει μία φορά,
-                οι αποφάσεις είναι ξεκάθαρες και προσβάσιμες.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-emerald-400">
-                Επικοινωνία &amp; διαφάνεια
-              </h3>
-              <p className="text-sm text-slate-200">
-                Σχόλια σε ανακοινώσεις, βασική ανταλλαγή μηνυμάτων, ενημέρωση με email/SMS (ανάλογα με
-                το πακέτο). Λιγότερες παρεξηγήσεις, περισσότερη διαφάνεια.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-              <h3 className="mb-2 text-sm font-semibold text-emerald-400">
-                Έτοιμο για επέκταση σε IoT &amp; ενέργεια
-              </h3>
-              <p className="text-sm text-slate-200">
-                Η αρχιτεκτονική της πλατφόρμας υποστηρίζει μελλοντική σύνδεση με μετρητές ενέργειας,
-                αισθητήρες και άλλα IoT modules, για πλήρη εικόνα του κτιρίου.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section id="pricing" className="border-b border-slate-800 bg-slate-900/70">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-16">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              Πακέτα για κάθε πολυκατοικία – με επίκεντρο το Kiosk
-            </h2>
-            <p className="mt-2 text-sm text-slate-300 sm:text-base">
-              Διάλεξε το μοντέλο που ταιριάζει στην πολυκατοικία ή στο γραφείο διαχείρισής σου. Οι
-              τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-4">
-            {pricingPlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`flex flex-col rounded-2xl border bg-slate-950/70 p-4 text-sm ${
-                  plan.highlight
-                    ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
-                    : "border-slate-800"
-                }`}
-              >
-                {plan.badge && (
-                  <div className="mb-2 inline-flex w-fit items-center rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-semibold text-slate-950">
-                    {plan.badge}
-                  </div>
-                )}
-                <h3 className="text-base font-semibold text-slate-50">{plan.name}</h3>
-                <p className="mt-1 text-xs text-slate-400">{plan.target}</p>
-
-                <div className="mt-4">
-                  <div className="text-lg font-semibold text-emerald-400">
-                    {plan.priceMonthly}{" "}
-                    <span className="text-xs font-normal text-slate-300">
-                      / μήνα / πολυκατοικία
-                    </span>
-                  </div>
-                  {plan.upfrontCost && (
-                    <div className="text-xs text-slate-300">
-                      + {plan.upfrontCost}{" "}
-                      <span className="text-[11px] text-slate-400">hardware &amp; setup</span>
-                    </div>
-                  )}
-                </div>
-
-                <ul className="mt-4 space-y-2 text-xs text-slate-200">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <span className="mt-[2px] h-4 w-4 rounded-full bg-emerald-500/20 text-center text-[10px] leading-4">
-                        ✓
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-5">
-                  <a
-                    href="#cta"
-                    className={`inline-flex w-full items-center justify-center rounded-full px-4 py-2 text-xs font-semibold ${
-                      plan.highlight
-                        ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
-                        : "border border-slate-700 text-slate-100 hover:border-slate-500"
-                    }`}
-                  >
-                    Ζήτησε προσφορά
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Placeholder για συγκριτικό πίνακα ή badge */}
-          <div className="mt-6 rounded-2xl border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">
-            Placeholder: Εδώ μπορεί να μπει ένας μικρός συγκριτικός πίνακας (Free vs Cloud vs Kiosk)
-            ή badge τύπου «Ιδανικό για πολυκατοικίες 15+ διαμερισμάτων».
-          </div>
-        </div>
-      </section>
-
-      {/* FOR MANAGERS */}
-      <section id="for-managers" className="border-b border-slate-800 bg-slate-950">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-14 md:flex-row md:items-center">
-          <div className="flex-1 space-y-4">
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              Για γραφεία διαχείρισης: λιγότερα τηλέφωνα, περισσότερη οργάνωση
-            </h2>
-            <p className="text-sm text-slate-300 sm:text-base">
-              Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα, τα email
-              και οι απορίες των ενοίκων. Με το newconcierge.app και τα InfoPoint Kiosks, κάθε
-              πολυκατοικία ενημερώνεται αυτόματα – κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
-            </p>
-
-            <ul className="space-y-2 text-sm text-slate-200">
-              <li>• Κεντρικό dashboard για όλες τις πολυκατοικίες του γραφείου</li>
-              <li>• Ενεργά αιτήματα &amp; βλάβες σε μία οθόνη</li>
-              <li>• Λιγότερες παρεξηγήσεις για κοινόχρηστα και αποφάσεις</li>
-              <li>• Δυνατότητα για custom αναφορές &amp; στατιστικά ανά κτίριο</li>
-            </ul>
-          </div>
-
-          {/* Placeholder media */}
-          <div className="flex-1">
-            <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/80 p-4">
-              <div className="aspect-video rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-slate-400">
-                  <span className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-wide text-slate-300">
-                    Placeholder Dashboard
-                  </span>
-                  <p className="max-w-xs">
-                    Εδώ θα μπορούσε να μπει screenshot ή mockup από το dashboard γραφείου διαχείρισης
-                    με πολλαπλές πολυκατοικίες.
-                  </p>
-                  <p className="max-w-xs text-[11px] text-slate-500">
-                    Πρόταση: πίνακας με λίστα κτιρίων, ενεργά αιτήματα και status.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="border-b border-slate-800 bg-slate-900/70">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-16">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-semibold sm:text-3xl">Συχνές ερωτήσεις</h2>
-            <p className="mt-2 text-sm text-slate-300 sm:text-base">
-              Μερικές από τις πιο συχνές απορίες γύρω από το InfoPoint Kiosk και την πλατφόρμα
-              newconcierge.app.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((item) => (
-              <div
-                key={item.question}
-                className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4"
-              >
-                <h3 className="text-sm font-semibold text-slate-50">{item.question}</h3>
-                <p className="mt-1 text-sm text-slate-300">{item.answer}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section id="cta" className="bg-slate-950">
-        <div className="mx-auto max-w-3xl px-4 py-14 sm:py-16">
-          <div className="rounded-3xl border border-emerald-500/40 bg-gradient-to-br from-emerald-600/20 via-slate-900 to-slate-950 p-6 sm:p-8">
-            <h2 className="text-center text-2xl font-semibold sm:text-3xl">
-              Έτοιμος για τον ψηφιακό θυρωρό της πολυκατοικίας σου;
-            </h2>
-            <p className="mt-3 text-center text-sm text-slate-200 sm:text-base">
-              Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών,
-              ειδικά για τη δική σου πολυκατοικία ή για το γραφείο διαχείρισης.
-            </p>
-
-            {/* Φόρμα επικοινωνίας – placeholder φόρμα */}
-            <form className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-              <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-slate-200">Όνομα</label>
-                <input
-                  type="text"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  placeholder="Π.χ. Γιώργος Παπαδόπουλος"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-slate-200">Email</label>
-                <input
-                  type="email"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-slate-200">Τηλέφωνο</label>
-                <input
-                  type="tel"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  placeholder="Π.χ. 69XXXXXXXX"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-slate-200">Ρόλος</label>
-                <select className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 focus:border-emerald-500 focus:outline-none">
-                  <option>Εσωτερικός διαχειριστής</option>
-                  <option>Γραφείο διαχείρισης</option>
-                  <option>Ιδιοκτήτης / εκπρόσωπος πολυκατοικίας</option>
-                  <option>Άλλο</option>
-                </select>
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-slate-200">
-                  Περιοχή πολυκατοικίας
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  placeholder="Π.χ. Παγκράτι, Γλυφάδα, Κηφισιά"
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-slate-200">
-                  Αριθμός πολυκατοικιών
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  placeholder="Π.χ. 1, 5, 20..."
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <button
-                  type="submit"
-                  className="mt-2 flex w-full items-center justify-center rounded-full bg-emerald-500 px-6 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/40 hover:bg-emerald-400"
-                >
-                  Ζήτησε demo / προσφορά
-                </button>
-              </div>
-            </form>
-
-            <p className="mt-3 text-center text-[11px] text-slate-400">
-              Με την αποστολή της φόρμας αποδέχεσαι να επικοινωνήσουμε μαζί σου για να συζητήσουμε
-              τις ανάγκες της πολυκατοικίας σου. Δεν στέλνουμε spam, ούτε δίνουμε τα στοιχεία σου σε
-              τρίτους.
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-
-Σχόλια / Βελτιώσεις που θα πρότεινα
-
-Visual placeholders
-Τα div με border-dashed είναι ιδανικά για τον designer/agent στο Cursor: μπορεί εύκολα να τα αντικαταστήσει με:
-
-πραγματικά screenshots,
-
-SVG εικονίδια,
-
-3D mockups (π.χ. από Figma).
-
-SEO / Head
-Καλό είναι να συμπληρώσεις αντίστοιχα metadata στο app/layout.tsx (title, description) με βάση το hero.
-
-Φόρμα CTA
-Τώρα είναι στατικός placeholder. Ο agent μπορεί:
-
-να συνδέσει τη φόρμα με API route (/api/contact),
-
-ή με εξωτερικό service (Brevo, MailerLite κ.λπ.).
-
-Μελλοντικό split
-Μπορείς αργότερα να σπάσεις σε components:
-
-HeroSection, PricingSection, FaqSection κτλ,
-αλλά για τον agent στο Cursor είναι πιο βολικό στην αρχή να τα έχει όλα σε ένα αρχείο και μετά να τα «σπάσει».
+﻿﻿thContext] loadUserOnMount starting...
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API CALL] Attempting to fetch /api/users/me/
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [AuthContext] Token check interval disabled to debug hanging issue
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [ReactQueryProvider] Setting up global refresh system
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [Global Refresh] Query client registered
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [Global Refresh] Initializing global refresh system
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [AppProviders] Current pathname: /financial
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [AppProviders] Is Dashboard: true
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [AppProviders] Is Kiosk Mode: false
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [AppProviders] Is Info Screen: false
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [AppProviders] Is No Sidebar Route: false
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 AuthContext: Refreshed user data: etherm2021@gmail.com
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [BuildingSelector] Filtered buildings (no search): 0 out of 0
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/todos/notifications/?is_read=false_{"is_read":"false"}
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API CALL] Fetching buildings from /buildings/
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API CALL] Fetching buildings from /buildings/
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/buildings/?page_size=1000&page=1_{"page_size":1000,"page":1}
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [AuthContext] Token check interval disabled to debug hanging issue
+f116dc912b2ffba2.js?…Tnfpra9tx3HVdkCZ7:1 [Violation] 'message' handler took 237ms
+/api/media/office_lo…/logo_Oy16F1g.jpg:1 
+ GET https://theo.newconcierge.app/api/media/office_logos/logo_Oy16F1g.jpg 400 (Bad Request)
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] Loaded buildings: 2 buildings
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] Loaded buildings: 2 buildings
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 [FinancialPage] BuildingId resolution: 
+{urlBuildingId: '2', urlBuildingIdNum: 2, validUrlBuildingId: 2, selectedBuildingId: 2, currentBuildingId: 2, …}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 [FinancialPage] Initial activeBuildingId: 
+{selectedBuildingId: 2, buildingIdProp: 2, initialId: 2}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔍 FinancialPage selectedMonth initialization: 
+{now: '2025-12-04T12:13:59.379Z', getMonth: 11, monthPlusOne: 12, result: '2025-12', currentURL: 'https://theo.newconcierge.app/financial?building=2&month=2026-01&tab=balances'}
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:5 [BuildingSelector] Filtered buildings (no search): 0 out of 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔍 Loading apartment balances for building: 2
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12_{}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 👂 FinancialPage setting up open-maintenance-overview event listener
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Dependencies changed, triggering refresh
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Executing automatic refresh...
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12_{}
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12_{}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 Selected month changed to: 2025-12
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔍 FinancialPage URL params: 
+{tabParam: 'balances', monthParam: '2026-01', currentSelectedMonth: '2025-12', willOverride: true}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: URL overriding selectedMonth from 2025-12 to 2026-01
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/apartments/?building=2_{"building":2}
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] Building changed to 2, invalidating queries...
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] ✓ Queries invalidated for building 2
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔍 Loading apartment balances for building: 2
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2026-01_{}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Dependencies changed, triggering refresh
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Refresh already in progress, skipping...
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 Selected month changed to: 2026-01
+f116dc912b2ffba2.js?…Tnfpra9tx3HVdkCZ7:1 [Violation] 'message' handler took 198ms
+cad3d404df475647.js?…Tnfpra9tx3HVdkCZ7:1 [BuildingContext] Fetching context for building 2...
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 [FinancialPage] BuildingId resolution: 
+{urlBuildingId: '2', urlBuildingIdNum: 2, validUrlBuildingId: 2, selectedBuildingId: 2, currentBuildingId: 2, …}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Dependencies changed, triggering refresh
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Refresh already in progress, skipping...
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 
+ GET https://theo.newconcierge.app/api/financial/dashboard/summary?building_id=2&month=2025-12 404 (Not Found)
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1319 Error fetching financial summary: Error: GET https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12 failed: 404
+    at u (ccb5e16534cc219e.js?…ra9tx3HVdkCZ7:1:834)
+    at ccb5e16534cc219e.js?…a9tx3HVdkCZ7:1:3171
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1319 Error fetching financial summary: Error: GET https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12 failed: 404
+    at u (ccb5e16534cc219e.js?…ra9tx3HVdkCZ7:1:834)
+    at ccb5e16534cc219e.js?…a9tx3HVdkCZ7:1:3171
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1319 Error fetching financial summary: Error: GET https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12 failed: 404
+    at u (ccb5e16534cc219e.js?…ra9tx3HVdkCZ7:1:834)
+    at ccb5e16534cc219e.js?…a9tx3HVdkCZ7:1:3171
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 ❌ Error loading apartment balances: Error: GET https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2025-12 failed: 404
+    at u (ccb5e16534cc219e.js?…ra9tx3HVdkCZ7:1:834)
+    at ccb5e16534cc219e.js?…a9tx3HVdkCZ7:1:3171
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 ✅ FinancialPage: Automatic refresh completed successfully
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG current_month_expenses: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG current_obligations: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG previous_obligations: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG final value: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1319 🔄 BuildingOverviewSection: Reserve fund calculation: 
+{goal: 0, duration: 1, correctMonthlyTarget: 0}
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG current_month_expenses: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG current_obligations: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG previous_obligations: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG final value: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG current_month_expenses: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG current_obligations: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG previous_obligations: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1321 🔍 DEBUG final value: 0
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Dependencies changed, triggering refresh
+bfd5918f1bf7f311.js?…pra9tx3HVdkCZ7:1676 🔄 FinancialPage: Executing automatic refresh...
+ccb5e16534cc219e.js?…Tnfpra9tx3HVdkCZ7:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=2&month=2026-01_{}
+﻿
+
+
+Apartment 14 - Previous balance from MonthlyBalance:
+📊 Apartment 14 - 2025-12:
+   Total carry_forward (11/2025): €3270.00
+   Previous Balance: €212.55
+   Apartment ratio: 65/1000
+   Current Month Expenses: €125.00
+     - Resident: €27.50
+     - Owner: €97.50
+   Reserve Fund Share: €32.50
+   Payments This Month: €0.00
+   Net Obligation: €337.55
+📊 Apartment 14 - Previous balance from MonthlyBalance:
+   Total carry_forward (12/2025): €5190.00
+   Apartment ratio: 65/1000
+   Apartment previous_balance: €337.35
+📊 Apartment 14 - 2026-01:
+   Previous Balance: €337.35
+   Current Month Expenses: €105.50
+     - Resident: €8.00
+     - Owner: €97.50
+   Reserve Fund Share: €32.50
+   Payments This Month: €0.00
+   Net Obligation: €442.85
+📊 Apartment 15 - Previous balance from MonthlyBalance:
+   Total carry_forward (11/2025): €3270.00
+   Apartment ratio: 65/1000
+   Apartment previous_balance: €212.55
+📊 Apartment 15 - 2025-12:
+   Previous Balance: €212.55
+   Current Month Expenses: €125.00
+     - Resident: €27.50
+     - Owner: €97.50
+   Reserve Fund Share: €32.50
+   Payments This Month: €0.00
+   Net Obligation: €337.55
+📊 Apartment 15 - Previous balance from MonthlyBalance:
+   Total carry_forward (12/2025): €5190.00
+   Apartment ratio: 65/1000
+   Apartment previous_balance: €337.35
+📊 Apartment 15 - 2026-01:
+   Previous Balance: €337.35
+   Current Month Expenses: €105.50
+     - Resident: €8.00
+     - Owner: €97.50
+   Reserve Fund Share: €32.50
+   Payments This Month: €0.00
+   Net Obligation: €442.85
+📊 Apartment 2 - Previous balance from MonthlyBalance:
+   Total carry_forward (11/2025): €3270.00
+   Apartment ratio: 66/1000
+   Apartment previous_balance: €215.82
+📊 Apartment 2 - 2025-12:
+   Previous Balance: €215.82
+   Current Month Expenses: €126.80
+     - Resident: €27.80
+     - Owner: €99.00
+   Reserve Fund Share: €33.00
+   Payments This Month: €0.00
+   Net Obligation: €342.62
+📊 Apartment 2 - Previous balance from MonthlyBalance:
+   Total carry_forward (12/2025): €5190.00
+   Apartment ratio: 66/1000
+   Apartment previous_balance: €342.54
+📊 Apartment 2 - 2026-01:
+   Previous Balance: €342.54
+   Current Month Expenses: €107.00
+     - Resident: €8.00
+     - Owner: €99.00
+   Reserve Fund Share: €33.00
+   Payments This Month: €0.00
+   Net Obligation: €449.54
+📊 Apartment 3 - Previous balance from MonthlyBalance:
+   Total carry_forward (11/2025): €3270.00
+   Apartment ratio: 77/1000
+   Apartment previous_balance: €251.79
+   Apartment previous_balance: €399.63
+📊 Apartment 3 - 2025-12:
+📊 Apartment 3 - 2026-01:
+   Previous Balance: €251.79
+   Previous Balance: €399.63
+   Current Month Expenses: €146.60
+     - Resident: €31.10
+   Current Month Expenses: €123.50
+     - Owner: €115.50
+     - Resident: €8.00
+   Reserve Fund Share: €38.50
+   Payments This Month: €0.00
+     - Owner: €115.50
+   Net Obligation: €398.39
+   Reserve Fund Share: €38.50
+📊 Apartment 3 - Previous balance from MonthlyBalance:
+   Payments This Month: €0.00
+   Total carry_forward (12/2025): €5190.00
+   Net Obligation: €523.13
+📊 Apartment 4 - Previous balance from MonthlyBalance:
+   Apartment ratio: 77/1000
+   Total carry_forward (11/2025): €3270.00
+   Apartment ratio: 70/1000
+   Apartment previous_balance: €228.90
+📊 Apartment 4 - 2025-12:
+   Previous Balance: €228.90
+   Current Month Expenses: €134.00
+     - Resident: €29.00
+   Previous Balance: €212.55
+     - Owner: €105.00
+   Current Month Expenses: €125.00
+   Reserve Fund Share: €35.00
+     - Resident: €27.50
+     - Owner: €97.50
+   Previous Balance: €363.30
+   Reserve Fund Share: €32.50
+   Payments This Month: €0.00
+   Current Month Expenses: €113.00
+   Net Obligation: €362.90
+     - Resident: €8.00
+📊 Apartment 4 - Previous balance from MonthlyBalance:
+     - Owner: €105.00
+   Total carry_forward (12/2025): €5190.00
+   Apartment ratio: 70/1000
+   Reserve Fund Share: €35.00
+   Apartment previous_balance: €363.30
+   Payments This Month: €0.00
+📊 Apartment 4 - 2026-01:
+   Net Obligation: €476.30
+📊 Apartment 5 - Previous balance from MonthlyBalance:
+   Total carry_forward (11/2025): €3270.00
+   Apartment ratio: 65/1000
+   Apartment previous_balance: €212.55
+📊 Apartment 5 - 2025-12:
+   Apartment previous_balance: €170.04
+📊 Apartment 6 - 2025-12:
+   Previous Balance: €170.04
+   Current Month Expenses: €101.60
+     - Resident: €23.60
+     - Owner: €78.00

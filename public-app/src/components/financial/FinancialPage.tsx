@@ -263,15 +263,18 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     buildingId: activeBuildingId
   });
   const [selectedMonth, setSelectedMonth] = useState(() => {
+    // Check URL parameter first to avoid double render
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const monthParam = urlParams.get('month');
+      if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+        console.log('🔍 FinancialPage selectedMonth initialization: Using URL param', monthParam);
+        return monthParam;
+      }
+    }
     const now = new Date();
     const result = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    console.log('🔍 FinancialPage selectedMonth initialization:', {
-      now: now.toISOString(),
-      getMonth: now.getMonth(),
-      monthPlusOne: now.getMonth() + 1,
-      result,
-      currentURL: window.location.href
-    });
+    console.log('🔍 FinancialPage selectedMonth initialization: Using current month', result);
     return result;
   });
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
@@ -412,27 +415,22 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     // }
   }, [selectedMonth]);
   
-  // Handle URL parameters (initial load and browser navigation)
+  // Handle URL parameters for browser navigation (not initial load - that's handled in useState)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     const monthParam = searchParams.get('month');
-    
-    console.log('🔍 FinancialPage URL params:', {
-      tabParam,
-      monthParam,
-      currentSelectedMonth: selectedMonth,
-      willOverride: !!monthParam
-    });
     
     if (tabParam) {
       setActiveTab(tabParam);
     }
     
-    if (monthParam) {
-      console.log('🔄 FinancialPage: URL overriding selectedMonth from', selectedMonth, 'to', monthParam);
+    // Only update if monthParam differs from current AND it's a valid format
+    // This prevents double renders on initial load since useState already reads URL
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam) && monthParam !== selectedMonth) {
+      console.log('🔄 FinancialPage: URL navigation changed month to', monthParam);
       setSelectedMonth(monthParam);
     }
-  }, [searchParams]);
+  }, [searchParams, selectedMonth]);
   
   // Scroll to tab content when page loads with a specific tab
   useEffect(() => {
