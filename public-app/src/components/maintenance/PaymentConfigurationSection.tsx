@@ -43,9 +43,10 @@ export function PaymentConfigurationSection({
   
   const paymentEnabled = watch('payment_config.enabled');
   const paymentType = watch('payment_config.payment_type');
-  const totalAmount = watch('payment_config.total_amount') || projectPrice;
-  const advancePercentage = watch('payment_config.advance_percentage') || 30;
-  const installmentCount = watch('payment_config.installment_count') || 3;
+  const watchedTotalAmount = watch('payment_config.total_amount');
+  const totalAmount = watchedTotalAmount ?? projectPrice;
+  const advancePercentage = watch('payment_config.advance_percentage') ?? 30;
+  const installmentCount = watch('payment_config.installment_count') ?? 3;
   
   // Debug logging
   useEffect(() => {
@@ -63,10 +64,14 @@ export function PaymentConfigurationSection({
 
   // Sync total_amount with projectPrice when projectPrice changes
   useEffect(() => {
-    if (projectPrice > 0 && (!totalAmount || totalAmount === 0)) {
-      setValue('payment_config.total_amount', projectPrice, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    if (projectPrice !== undefined && projectPrice !== watchedTotalAmount) {
+      setValue('payment_config.total_amount', projectPrice, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
     }
-  }, [projectPrice, totalAmount, setValue]);
+  }, [projectPrice, watchedTotalAmount, setValue]);
 
   // Auto-calculate amounts based on configuration
   useEffect(() => {
@@ -167,16 +172,9 @@ export function PaymentConfigurationSection({
           <Controller
             name="payment_config.total_amount"
             control={control}
-            render={({ field }) => {
-              // Auto-sync with projectPrice
-              React.useEffect(() => {
-                if (projectPrice && field.value !== projectPrice) {
-                  field.onChange(Number(projectPrice));
-                }
-              }, [projectPrice, field]);
-              
-              return <input type="hidden" value={projectPrice || 0} />;
-            }}
+            render={({ field }) => (
+              <input type="hidden" {...field} value={field.value ?? projectPrice ?? 0} readOnly />
+            )}
           />
           <p className="text-xs text-muted-foreground">
             Το ποσό λαμβάνεται από το πεδίο "Συνολικό Κόστος" παραπάνω

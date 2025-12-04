@@ -229,8 +229,6 @@ export default function QuickSend() {
         (apiData && typeof apiData === 'object' ? JSON.stringify(apiData) : null) ||
         error?.message;
       toast.error(detail || 'Δεν ήταν δυνατή η αποστολή');
-      // Helpful console log for debugging backend validation
-      // eslint-disable-next-line no-console
       console.error('[QuickSend] send failed', { apiData, error });
     },
   });

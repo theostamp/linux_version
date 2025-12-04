@@ -13,6 +13,23 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
     return expensesData;
   }, [data]);
 
+  const currentMonth = format(new Date(), 'MMMM yyyy', { locale: el });
+  const periodInfo = data?.financial?.current_month_period;
+
+  const periodLabel = useMemo(() => {
+    if (periodInfo?.is_fallback) {
+      return 'Πρόσφατες';
+    }
+    if (periodInfo?.start) {
+      try {
+        return format(new Date(periodInfo.start), 'MMMM yyyy', { locale: el });
+      } catch {
+        return currentMonth;
+      }
+    }
+    return currentMonth;
+  }, [periodInfo, currentMonth]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -32,23 +49,6 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
     );
   }
 
-  const currentMonth = format(new Date(), 'MMMM yyyy', { locale: el });
-  const periodInfo = data?.financial?.current_month_period;
-
-  const periodLabel = useMemo(() => {
-    if (periodInfo?.is_fallback) {
-      return 'Πρόσφατες';
-    }
-    if (periodInfo?.start) {
-      try {
-        return format(new Date(periodInfo.start), 'MMMM yyyy', { locale: el });
-      } catch {
-        return currentMonth;
-      }
-    }
-    return currentMonth;
-  }, [periodInfo, currentMonth]);
-  
   const totalAmount = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
 
   return (

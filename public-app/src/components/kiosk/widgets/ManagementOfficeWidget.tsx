@@ -19,6 +19,23 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
     return () => clearInterval(interval);
   }, []);
 
+  const building = data?.building_info;
+  const currentDate = currentTime;
+
+  // Debug logging
+  useEffect(() => {
+    const logoUrl = getOfficeLogoUrl(building?.office_logo);
+    console.log('[ManagementOfficeWidget] Building info:', {
+      office_logo_raw: building?.office_logo,
+      office_logo_url: logoUrl,
+      management_office_name: building?.management_office_name,
+      management_office_phone: building?.management_office_phone,
+      management_office_email: building?.management_office_email,
+      management_office_address: building?.management_office_address,
+      management_office_phone_emergency: building?.management_office_phone_emergency,
+    });
+  }, [building]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -37,23 +54,6 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
       </div>
     );
   }
-
-  const building = data?.building_info;
-  const currentDate = currentTime;
-
-  // Debug logging
-  useEffect(() => {
-    const logoUrl = getOfficeLogoUrl(building?.office_logo);
-    console.log('[ManagementOfficeWidget] Building info:', {
-      office_logo_raw: building?.office_logo,
-      office_logo_url: logoUrl,
-      management_office_name: building?.management_office_name,
-      management_office_phone: building?.management_office_phone,
-      management_office_email: building?.management_office_email,
-      management_office_address: building?.management_office_address,
-      management_office_phone_emergency: building?.management_office_phone_emergency,
-    });
-  }, [building]);
 
   return (
     <div className="h-full flex items-center justify-between px-6 py-3">

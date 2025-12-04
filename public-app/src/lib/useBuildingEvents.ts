@@ -80,7 +80,6 @@ export function useBuildingEvents(buildingIdParam?: number) {
       wsRef.current = null;
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingIdParam]);
 
   const handleEvent = async (name?: string, _payload?: Record<string, unknown>) => {

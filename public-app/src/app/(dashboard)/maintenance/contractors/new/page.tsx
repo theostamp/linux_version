@@ -62,7 +62,6 @@ export default function NewContractorPage() {
     if (suggested && form.name !== suggested) {
       setForm((prev) => ({ ...prev, name: suggested }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.service_type, customService, nameEdited]); // form.name intentionally omitted to avoid infinite loop
 
   async function handleSave() {

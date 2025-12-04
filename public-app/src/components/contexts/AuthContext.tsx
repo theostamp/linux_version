@@ -231,7 +231,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     };
 
     loadUserOnMount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Remove hasInitialized dependency to prevent re-runs
 
   // Compute isAuthenticated based on user state and token existence

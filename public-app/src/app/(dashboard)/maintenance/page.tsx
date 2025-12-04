@@ -495,12 +495,11 @@ function MaintenanceDashboardContent() {
   }, [serviceExpensesYearQ.data]);
 
   // Total expenses for the year (for operational expenses tab)
-  // Note: Currently unused but kept for future use
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _totalSpentThisYear = useMemo(() => {
     const rows = extractResults<ExpenseRow>(expensesYearQ.data ?? []);
     return rows.reduce((sum: number, r: ExpenseRow) => sum + (Number(r?.amount) || 0), 0);
   }, [expensesYearQ.data]);
+  void _totalSpentThisYear;
   const completedThisYear = useMemo(() => {
     // Prefer server-side count if provided
     const data = completedYearQ.data;

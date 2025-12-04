@@ -58,7 +58,6 @@ function FinancialContent() {
         lastUpdatedBuildingId.current = selectedBuilding.id;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBuilding?.id, buildingLoading]);
 
   if (authLoading || buildingLoading) {

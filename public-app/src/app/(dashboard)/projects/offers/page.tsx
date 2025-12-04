@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useOffers, useOfferMutations } from '@/hooks/useOffers';
 import { getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -250,10 +251,10 @@ function OffersPageContent() {
             size="sm"
           />
           <Button asChild>
-            <a href="/projects/offers/new">
+            <Link href="/projects/offers/new">
               <Award className="w-4 h-4 mr-2" />
               Νέα Προσφορά
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -375,10 +376,10 @@ function OffersPageContent() {
                     Δεν έχουν καταχωρηθεί προσφορές ακόμα.
                   </p>
                   <Button asChild>
-                    <a href="/projects/offers/new">
+                    <Link href="/projects/offers/new">
                       <Award className="w-4 h-4 mr-2" />
                       Δημιουργία Προσφοράς
-                    </a>
+                    </Link>
                   </Button>
                 </>
               )}

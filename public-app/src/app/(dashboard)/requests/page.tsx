@@ -9,12 +9,11 @@ import type { UserRequest } from '@/types/userRequests';
 import Link from 'next/link';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
-import { Plus, Wrench, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Plus, Wrench, SlidersHorizontal, MapPin, Building as BuildingIcon, Search, X } from 'lucide-react';
 import { deleteUserRequest } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
-import RequestCard from '@/components/RequestCard';
 import RequestSkeleton from '@/components/RequestSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
@@ -22,6 +21,9 @@ import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { hasOfficeAdminAccess } from '@/lib/roleUtils';
+import { Badge } from '@/components/ui/badge';
+
+type SelectedBuildingInfo = ReturnType<typeof useBuilding>['selectedBuilding'];
 
 function RequestsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
@@ -398,6 +400,127 @@ export default function RequestsPage() {
         <RequestsPageContent />
       </SubscriptionGate>
     </AuthGate>
+  );
+}
+
+type RequestItemContentProps = {
+  request: UserRequest;
+  selectedBuilding: SelectedBuildingInfo;
+  canDelete: boolean;
+  deletingId: number | null;
+  handleDelete: (request: UserRequest) => Promise<void> | void;
+};
+
+function RequestItemContent({
+  request,
+  selectedBuilding,
+  canDelete,
+  deletingId,
+  handleDelete,
+}: RequestItemContentProps) {
+  const {
+    id,
+    title,
+    description,
+    status,
+    priority,
+    maintenance_category,
+    building_name,
+    created_at,
+    location,
+    apartment_number,
+  } = request;
+
+  const statusInfo =
+    REQUEST_STATUSES.find((item) => item.value === status) ??
+    { label: status, icon: '📋', color: 'text-muted-foreground' };
+  const priorityInfo =
+    PRIORITY_LEVELS.find((item) => item.value === priority) ??
+    { label: 'Μέτρια', icon: '🟡', color: 'text-yellow-600' };
+  const categoryInfo =
+    MAINTENANCE_CATEGORIES.find((item) => item.value === maintenance_category || item.value === request.type) ??
+    { label: 'Άλλο', icon: '📋', color: 'text-muted-foreground' };
+
+  const isDeleting = deletingId === id;
+  const showBuildingInfo = !selectedBuilding && building_name;
+  const createdDate = new Date(created_at);
+  const formattedCreated = createdDate.toLocaleString('el-GR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const pillClass = (baseColor?: string) =>
+    cn(
+      'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold',
+      baseColor ?? 'text-muted-foreground border-muted'
+    );
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xl">{categoryInfo.icon}</span>
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+        </div>
+        {showBuildingInfo && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <BuildingIcon className="h-4 w-4" />
+            <span>{building_name}</span>
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground line-clamp-3">{description}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Badge variant="outline" className={pillClass(statusInfo.color)}>
+          <span>{statusInfo.icon}</span>
+          {statusInfo.label}
+        </Badge>
+        <Badge variant="outline" className={pillClass(priorityInfo.color)}>
+          <span>{priorityInfo.icon}</span>
+          {priorityInfo.label}
+        </Badge>
+        <Badge variant="outline" className={pillClass(categoryInfo.color)}>
+          {categoryInfo.label}
+        </Badge>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <Wrench className="h-4 w-4" />
+          {formattedCreated}
+        </span>
+        {location && (
+          <span className="flex items-center gap-1">
+            <MapPin className="h-4 w-4" />
+            {location}
+          </span>
+        )}
+        {apartment_number && (
+          <span className="flex items-center gap-1">
+            Διαμέρισμα {apartment_number}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href={`/requests/${id}`} className="text-sm font-medium text-primary hover:underline">
+          Προβολή αιτήματος
+        </Link>
+        {canDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(request)}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Διαγραφή...' : 'Διαγραφή'}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -1088,7 +1088,6 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       }
     };
     run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingId, state.customPeriod.startDate, state.customPeriod.endDate, state.advancedOptions.includeReserveFund, state.advancedOptions.heatingFixedPercentage, state.advancedOptions.elevatorMills, state.advancedOptions.reserveFundMonthlyAmount]);
 
   // Loading skeleton component

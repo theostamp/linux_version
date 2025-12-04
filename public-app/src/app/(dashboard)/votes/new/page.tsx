@@ -18,6 +18,9 @@ export default function NewVotePage() {
   const { isAccessAllowed, isLoading } = useSuperUserGuard();
   const queryClient = useQueryClient();
 
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   if (isLoading) {
     return <p className="p-4">Έλεγχος δικαιωμάτων...</p>;
   }
@@ -25,9 +28,6 @@ export default function NewVotePage() {
   if (!isAccessAllowed) {
     return <p className="p-4 text-red-600">🚫 Δεν έχετε πρόσβαση σε αυτή τη σελίδα.</p>;
   }
-
-  const buildingId = selectedBuilding?.id || currentBuilding?.id;
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   async function handleSubmit(data: CreateVotePayload) {
     // Προστασία από double submission
