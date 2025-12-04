@@ -1283,8 +1283,25 @@ export type BuildingResidentsResponse = {
 
 export async function fetchBuildingResidents(buildingId: number): Promise<BuildingResidentsResponse> {
   try {
-    const data = await apiGet<BuildingResidentsResponse>(`/apartments/building-residents/${buildingId}/`);
-    return data;
+    const data = await apiGet<unknown>(`/apartments/building-residents/${buildingId}/`);
+
+    let residents: BuildingResident[] = [];
+
+    if (Array.isArray(data)) {
+      residents = data as BuildingResident[];
+    } else if (data && typeof data === 'object') {
+      const record = data as Partial<{
+        residents?: BuildingResident[];
+        results?: BuildingResident[];
+      }>;
+      if (Array.isArray(record.residents)) {
+        residents = record.residents;
+      } else if (Array.isArray(record.results)) {
+        residents = record.results;
+      }
+    }
+
+    return { residents };
   } catch (error) {
     if (isNotFoundError(error)) {
       console.warn('[fetchBuildingResidents] Endpoint returned 404, returning empty list');
