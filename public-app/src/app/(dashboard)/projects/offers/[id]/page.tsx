@@ -158,7 +158,7 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <BackButton href="/projects/offers" label="Πίσω στις προσφορές" size="sm" />
             <Badge variant="outline" className="text-xs">
-              Προσφορά #{offer.id.slice(0, 8)}
+              Προσφορά #{offer.id ? offer.id.slice(0, 8) : 'N/A'}
             </Badge>
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Προσφορά Εργολάβου</h1>
