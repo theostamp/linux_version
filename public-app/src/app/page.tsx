@@ -329,9 +329,9 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-slate-950 to-slate-950" />
         <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center md:py-24 lg:px-8">
+        <div className="relative flex w-full flex-col gap-12 py-16 md:flex-row md:items-stretch md:py-24">
           {/* Left content */}
-          <div className="flex-1 space-y-6">
+          <div className="relative z-10 flex w-full flex-1 flex-col space-y-6 px-4 sm:px-6 md:justify-center lg:px-16">
             <AnimatedSection>
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
@@ -410,39 +410,41 @@ export default function LandingPage() {
             </AnimatedSection>
           </div>
 
-          {/* Right side: Kiosk mockup placeholder */}
-          <AnimatedSection delay={300} className="flex-1">
-            <div className="relative mx-auto max-w-md">
-              <div className="aspect-[9/16] overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 p-1 shadow-2xl shadow-emerald-500/10 transition-transform duration-500 hover:scale-[1.02]">
-                <div className="flex h-full flex-col rounded-[20px] border border-slate-800 bg-slate-900">
-                  {/* Info Point header */}
-                  <div className="border-b border-slate-800 bg-slate-900/80 px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
-                        <span className="text-xs font-medium text-slate-400">Σημείο Ενημέρωσης</span>
-                      </div>
-                      <span className="text-xs text-slate-500">12:45</span>
+          {/* Right side: full-width Info Point visual */}
+          <AnimatedSection
+            delay={300}
+            className="relative w-full px-4 sm:px-6 md:flex-1 md:self-stretch md:px-0 md:pl-8 lg:pl-12"
+          >
+            <div className="relative h-[420px] w-full overflow-hidden rounded-[40px] border border-slate-800 bg-gradient-to-b from-slate-900/90 via-slate-950/90 to-slate-950 shadow-2xl shadow-emerald-500/20 sm:h-[520px] md:h-full md:min-h-[560px] lg:min-h-[640px]">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/15 via-transparent to-transparent" />
+              <div className="relative flex h-full flex-col rounded-[32px] border border-slate-800 bg-slate-900/80">
+                {/* Info Point header */}
+                <div className="border-b border-slate-800 bg-slate-900/80 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
+                      <span className="text-xs font-medium text-slate-300">Σημείο Ενημέρωσης</span>
                     </div>
+                    <span className="text-xs text-slate-500">12:45</span>
                   </div>
-                  {/* Info Point content */}
-                  <div className="relative flex-1 overflow-hidden">
-                    <Image
-                      src="/screen_eisodos.jpg"
-                      alt="Info Point - Σημείο ενημέρωσης στην είσοδο"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 400px"
-                    />
-                  </div>
+                </div>
+                {/* Info Point content */}
+                <div className="relative flex-1 overflow-hidden">
+                  <Image
+                    src="/screen_eisodos.jpg"
+                    alt="Info Point - Σημείο ενημέρωσης στην είσοδο"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
+                  />
                 </div>
               </div>
               {/* Badge */}
-              <div className="absolute -right-2 -top-2 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/40">
+              <div className="absolute -right-3 -top-3 rounded-full bg-emerald-500 px-5 py-1.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/40">
                 Info Point
               </div>
               {/* Glow effect */}
-              <div className="absolute -inset-4 -z-10 rounded-3xl bg-emerald-500/20 blur-2xl" />
+              <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[48px] bg-emerald-500/20 blur-3xl" />
             </div>
           </AnimatedSection>
         </div>
