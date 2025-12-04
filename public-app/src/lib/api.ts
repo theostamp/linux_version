@@ -921,7 +921,21 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
 }
 
 export async function fetchBuilding(id: number): Promise<Building> {
-  return apiGet<Building>(`/buildings/list/${id}/`);
+  const response = await apiGet<Building | BuildingsResponse>(`/buildings/list/${id}/`);
+  
+  // Handle both single object and list response (workaround for routing issues)
+  if ('results' in response && Array.isArray(response.results)) {
+    // If we got a list response, find the building by ID
+    const building = response.results.find(b => b.id === id);
+    if (!building) {
+      throw new Error(`Building with ID ${id} not found`);
+    }
+    console.log(`[fetchBuilding] Extracted building ${id} from list response`);
+    return building;
+  }
+  
+  // Single object response (expected format)
+  return response as Building;
 }
 
 export async function createBuilding(payload: BuildingPayload): Promise<Building> {

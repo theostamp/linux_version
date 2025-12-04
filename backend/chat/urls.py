@@ -8,7 +8,9 @@ from .views import (
     OnlineStatusViewSet
 )
 
-router = DefaultRouter()
+# Use trailing_slash=False to support both /path and /path/ URLs
+# This fixes 405 errors when Next.js (with trailingSlash: false) strips trailing slashes
+router = DefaultRouter(trailing_slash=False)
 # Building chat
 router.register(r'rooms', ChatRoomViewSet, basename='chatroom')
 router.register(r'messages', ChatMessageViewSet, basename='chatmessage')

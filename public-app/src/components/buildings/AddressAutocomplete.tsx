@@ -51,9 +51,15 @@ export default function AddressAutocomplete({
       return;
     }
 
-    // Verify it's actually an HTMLInputElement
+    // Verify it's actually an HTMLInputElement with extra safety checks
     if (!(inputElement instanceof HTMLInputElement)) {
       console.warn('[AddressAutocomplete] inputRef.current is not an HTMLInputElement');
+      return;
+    }
+
+    // Additional check: ensure the element is in the DOM
+    if (!document.body.contains(inputElement)) {
+      console.warn('[AddressAutocomplete] Input element is not in the DOM');
       return;
     }
 
@@ -88,15 +94,19 @@ export default function AddressAutocomplete({
         return;
       }
 
-      // Double-check input is still valid before creating Autocomplete
-      if (!inputRef.current || !(inputRef.current instanceof HTMLInputElement)) {
-        console.warn('[AddressAutocomplete] Input element no longer valid');
+      // Final safety check before creating Autocomplete
+      // Re-verify input is still valid, in DOM, and is HTMLInputElement
+      const currentInput = inputRef.current;
+      if (!currentInput || 
+          !(currentInput instanceof HTMLInputElement) || 
+          !document.body.contains(currentInput)) {
+        console.warn('[AddressAutocomplete] Input element validation failed before Autocomplete init');
         initAttemptedRef.current = false;
         return;
       }
 
       const autocomplete = new AutocompleteConstructor(
-        inputRef.current,
+        currentInput,
         {
           types: ['address'],
           componentRestrictions: { country: 'gr' }, // Restrict to Greece
@@ -170,8 +180,16 @@ export default function AddressAutocomplete({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    let checkIntervalId: NodeJS.Timeout | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+    let cleanupTimeoutId: NodeJS.Timeout | null = null;
+    let isMounted = true;
+
     // Wait for DOM to be ready and input to be mounted
-    const timeoutId = setTimeout(() => {
+    // Use longer delay to ensure React has finished rendering
+    timeoutId = setTimeout(() => {
+      if (!isMounted) return;
+      
       // Check if Google Maps is already loaded (from global script in layout.tsx)
       if (window.google?.maps) {
         initializeAutocomplete();
@@ -179,19 +197,29 @@ export default function AddressAutocomplete({
       }
 
       // If not loaded yet, wait for it
-      const checkGoogleMaps = setInterval(() => {
+      checkIntervalId = setInterval(() => {
+        if (!isMounted) {
+          if (checkIntervalId) clearInterval(checkIntervalId);
+          return;
+        }
         if (window.google?.maps) {
-          clearInterval(checkGoogleMaps);
+          if (checkIntervalId) clearInterval(checkIntervalId);
           initializeAutocomplete();
         }
       }, 200);
 
       // Clear interval after 10 seconds
-      setTimeout(() => clearInterval(checkGoogleMaps), 10000);
-    }, 100); // Small delay to ensure DOM is ready
+      cleanupTimeoutId = setTimeout(() => {
+        if (checkIntervalId) clearInterval(checkIntervalId);
+      }, 10000);
+    }, 300); // Longer delay to ensure DOM is fully ready
 
     return () => {
-      clearTimeout(timeoutId);
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (checkIntervalId) clearInterval(checkIntervalId);
+      if (cleanupTimeoutId) clearTimeout(cleanupTimeoutId);
+      
       if (autocompleteRef.current) {
         try {
           window.google?.maps?.event?.clearInstanceListeners?.(autocompleteRef.current);
