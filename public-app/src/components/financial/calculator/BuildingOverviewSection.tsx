@@ -38,6 +38,7 @@ import { api, makeRequestWithRetry } from '@/lib/api';
 import { toast } from 'sonner';
 import { ServicePackageModal } from '../ServicePackageModal';
 import { AmountDetailsModal } from '../AmountDetailsModal';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 import { PreviousObligationsModal } from '../PreviousObligationsModal';
 import { ApartmentOverviewIntegrated } from '../ApartmentOverviewIntegrated';
 
@@ -1638,7 +1639,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
       {/* Reserve Fund Info Modal */}
       {showReserveFundInfoModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <ModalPortal>
+        <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-green-800 flex items-center gap-2">
@@ -1700,6 +1702,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
 

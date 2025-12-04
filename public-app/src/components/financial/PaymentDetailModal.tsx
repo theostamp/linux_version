@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Payment } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer, Filter, Trash2, Euro } from 'lucide-react';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 interface Transaction {
   id: number;
@@ -464,8 +465,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   };
 
   return (
+    <ModalPortal>
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={onClose}
     >
       <div 
@@ -771,8 +773,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
+        <ModalPortal>
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 flex items-center justify-center z-[130] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
           onClick={cancelDeletePayment}
         >
           <div 
@@ -861,7 +864,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
+    </ModalPortal>
   );
 };

@@ -14,6 +14,7 @@ import { api } from '@/lib/api';
 import { useApartmentsWithFinancialData, ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { useSmartDateDefault } from '@/hooks/useSmartDateDefault';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 interface AddPaymentModalProps {
   isOpen: boolean;
@@ -372,8 +373,9 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   if (!isOpen) return null;
 
   return (
+    <ModalPortal>
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={handleClose}
     >
       <div 
@@ -773,5 +775,6 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

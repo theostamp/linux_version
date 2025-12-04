@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Calendar, Euro, TrendingUp, TrendingDown, Receipt, CreditCard, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 export interface TransactionItem {
   id: number;
@@ -123,8 +124,9 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
   }
 
   return (
+    <ModalPortal>
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={onClose}
     >
       <div 
@@ -413,5 +415,6 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 };
