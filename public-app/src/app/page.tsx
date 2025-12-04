@@ -2,6 +2,7 @@
 // Updated landing page v2.3 - Community & resident-centric messaging
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Users, Heart } from "lucide-react";
 
 const pricingPlans = [
@@ -12,7 +13,7 @@ const pricingPlans = [
     upfrontCost: null as string | null,
     highlight: false,
     badge: null as string | null,
-    target: "Για μικρές κοινότητες που θέλουν μια πρώτη γνωριμία",
+    target: "Εσωτερικοί διαχειριστές που θέλουν μια πρώτη γνωριμία με την πλατφόρμα",
     features: [
       "1 πολυκατοικία, έως 12 διαμερίσματα",
       "Βασική διαχείριση κοινοχρήστων",
@@ -27,7 +28,7 @@ const pricingPlans = [
     upfrontCost: null as string | null,
     highlight: false,
     badge: null as string | null,
-    target: "Κοινότητες που θέλουν πλήρη ψηφιακή συνεργασία",
+    target: "Πολυκατοικίες που θέλουν πλήρη ψηφιακή διαχείριση χωρίς Info Point",
     features: [
       "Πλήρης πλατφόρμα για όλους τους ενοίκους",
       "Απεριόριστες ανακοινώσεις, αιτήματα και ψηφοφορίες",
@@ -42,10 +43,10 @@ const pricingPlans = [
     upfrontCost: null as string | null,
     highlight: true,
     badge: "Προτεινόμενο",
-    target: "Κοινότητες που θέλουν σημείο ενημέρωσης στην είσοδο",
+    target: "Πολυκατοικίες που θέλουν σημείο ενημέρωσης στην είσοδο",
     features: [
       "Οθόνη ενημέρωσης στην είσοδο της πολυκατοικίας",
-      "Εγκατάσταση & παραμετροποίηση για την κοινότητά σας",
+      "Εγκατάσταση & αρχική παραμετροποίηση",
       "Πλήρης πρόσβαση στην πλατφόρμα για όλους",
       "Σύνδεση στο internet περιλαμβάνεται",
       "Υποστήριξη & ενημερώσεις",
@@ -58,11 +59,11 @@ const pricingPlans = [
     upfrontCost: "250€ εφάπαξ",
     highlight: false,
     badge: null as string | null,
-    target: "Γραφεία που διαχειρίζονται πολλές κοινότητες",
+    target: "Γραφεία διαχείρισης με πολλές πολυκατοικίες",
     features: [
       "Σημείο ενημέρωσης ανά πολυκατοικία",
       "Χαμηλότερο μηνιαίο πάγιο",
-      "Ενοποιημένη διαχείριση κοινοτήτων",
+      "Ενοποιημένη διαχείριση πολυκατοικιών",
       "Υποστήριξη & αναβαθμίσεις",
     ],
   },
@@ -111,7 +112,7 @@ const testimonials = [
     location: "Αθήνα",
     avatar: "ΓΠ",
     rating: 5,
-    text: "Διαχειριζόμαστε 35 κοινότητες. Με το newconcierge βλέπω όλα τα αιτήματα σε ένα dashboard. Οι ένοικοι είναι πιο ικανοποιημένοι γιατί νιώθουν ότι τους ακούμε.",
+    text: "Διαχειριζόμαστε 35 πολυκατοικίες. Με το newconcierge βλέπω όλα τα αιτήματα σε ένα dashboard. Οι ένοικοι είναι πιο ικανοποιημένοι γιατί νιώθουν ότι τους ακούμε.",
   },
   {
     name: "Δημήτρης Α.",
@@ -132,8 +133,8 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "50+", label: "Κοινότητες" },
-  { value: "2.500+", label: "Ένοικοι" },
+  { value: "50+", label: "Πολυκατοικίες" },
+  { value: "2.500+", label: "Διαμερίσματα" },
   { value: "98%", label: "Ικανοποίηση" },
 ];
 
@@ -424,24 +425,15 @@ export default function LandingPage() {
                       <span className="text-xs text-slate-500">12:45</span>
                     </div>
                   </div>
-                  {/* Placeholder content */}
-                  <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-                    <div className="rounded-full border border-dashed border-slate-700 p-4">
-                      <Users className="h-8 w-8 text-slate-600" />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                        Placeholder Media
-                      </p>
-                      <p className="max-w-[200px] text-xs text-slate-600">
-                        Εδώ θα μπει mockup από την οθόνη ενημέρωσης στην είσοδο
-                      </p>
-                    </div>
-                    <div className="mt-4 space-y-2 text-left">
-                      <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-800/50" />
-                      <div className="h-8 w-40 animate-pulse rounded-lg bg-slate-800/50" style={{ animationDelay: "150ms" }} />
-                      <div className="h-8 w-44 animate-pulse rounded-lg bg-slate-800/50" style={{ animationDelay: "300ms" }} />
-                    </div>
+                  {/* Info Point content */}
+                  <div className="relative flex-1 overflow-hidden">
+                    <Image
+                      src="/screen_eisodos.jpg"
+                      alt="Info Point - Σημείο ενημέρωσης στην είσοδο"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 400px"
+                    />
                   </div>
                 </div>
               </div>
@@ -487,7 +479,7 @@ export default function LandingPage() {
                 title: "Εύκολη διαχείριση",
                 description:
                   "Ο διαχειριστής χρησιμοποιεί ένα απλό περιβάλλον για ανακοινώσεις, κοινόχρηστα και ψηφοφορίες. Η κοινότητα ενημερώνεται αυτόματα.",
-                placeholder: "Dashboard διαχείρισης κοινότητας",
+                placeholder: "Screenshot από dashboard διαχειριστή",
               },
               {
                 step: "3",
@@ -563,19 +555,17 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Placeholder media */}
+          {/* Info Point screenshot */}
           <AnimatedSection delay={200} className="flex-1">
             <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
-              <div className="aspect-video rounded-2xl border border-dashed border-slate-700 bg-slate-950 p-6">
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                  <span className="rounded-full border border-slate-700 px-4 py-1.5 text-[11px] uppercase tracking-wider text-slate-500">
-                    Placeholder
-                  </span>
-                  <p className="max-w-xs text-sm text-slate-500">
-                    Εδώ μπορεί να τοποθετηθεί screenshot από την οθόνη ενημέρωσης
-                    (π.χ. ανακοινώσεις, ψηφοφορία, αποτελέσματα).
-                  </p>
-                </div>
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+                <Image
+                  src="/screen_eisodos.jpg"
+                  alt="Screenshot από την οθόνη ενημέρωσης - ανακοινώσεις, ψηφοφορίες, αποτελέσματα"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 600px"
+                />
               </div>
             </div>
           </AnimatedSection>
@@ -650,13 +640,13 @@ export default function LandingPage() {
           <AnimatedSection>
             <div className="mb-12 text-center">
               <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
-                Κοινότητες που άλλαξαν
+                Κριτικές
               </span>
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
-                Τι λένε οι κοινότητές μας
+                Τι λένε οι χρήστες μας
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
-                Ένοικοι, διαχειριστές και γραφεία μοιράζονται πώς άλλαξε η συνεργασία στην πολυκατοικία τους.
+                Ένοικοι, διαχειριστές και γραφεία διαχείρισης μοιράζονται πώς άλλαξε η συνεργασία στην πολυκατοικία τους.
               </p>
             </div>
           </AnimatedSection>
@@ -678,10 +668,10 @@ export default function LandingPage() {
                 Πακέτα
               </span>
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
-                Πακέτα για κάθε κοινότητα
+                Πακέτα για κάθε πολυκατοικία
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
-                Διάλεξε αυτό που ταιριάζει στην κοινότητά σου – με ή χωρίς σημείο ενημέρωσης.
+                Διάλεξε το μοντέλο που ταιριάζει στην πολυκατοικία ή στο γραφείο διαχείρισής σου – με ή χωρίς σημείο ενημέρωσης.
                 <br />
                 <span className="text-xs text-slate-500">
                   Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
@@ -751,9 +741,9 @@ export default function LandingPage() {
           {/* Custom plan note */}
           <AnimatedSection delay={400}>
             <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
-              <h3 className="mb-2 text-lg font-semibold text-slate-50">Πολλές κοινότητες;</h3>
+              <h3 className="mb-2 text-lg font-semibold text-slate-50">Πολλές πολυκατοικίες;</h3>
               <p className="text-sm text-slate-400">
-                Για γραφεία που διαχειρίζονται 10+ κοινότητες ή έχουν ιδιαίτερες ανάγκες – επικοινωνήστε για custom λύση.
+                Για γραφεία διαχείρισης ή εταιρείες διαχείρισης που διαχειρίζονται 10+ πολυκατοικίες ή έχουν ιδιαίτερες ανάγκες – επικοινωνήστε για custom λύση.
               </p>
               <a
                 href="#cta"
@@ -780,24 +770,24 @@ export default function LandingPage() {
             </AnimatedSection>
             <AnimatedSection delay={100}>
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
-                Διαχειρίζεσαι πολλές κοινότητες;
+                Για γραφεία διαχείρισης: λιγότερα τηλέφωνα, περισσότερη οργάνωση
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
               <p className="text-base text-slate-400">
-                Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα και οι απορίες.
-                Με το newconcierge.app, κάθε κοινότητα ενημερώνεται αυτόματα – οι ένοικοι είναι ικανοποιημένοι 
-                κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
+                Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα, τα email
+                και οι απορίες των ενοίκων. Με το newconcierge.app και τα Info Points, κάθε
+                πολυκατοικία ενημερώνεται αυτόματα – κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
               </p>
             </AnimatedSection>
 
             <AnimatedSection delay={300}>
               <ul className="space-y-3 text-sm text-slate-300">
                 {[
-                  "Ενοποιημένη διαχείριση όλων των κοινοτήτων σου",
-                  "Ικανοποιημένοι ένοικοι = λιγότερα τηλέφωνα",
-                  "Διαφάνεια που χτίζει εμπιστοσύνη",
-                  "Custom αναφορές & στατιστικά ανά κοινότητα",
+                  "Κεντρικό dashboard για όλες τις πολυκατοικίες του γραφείου",
+                  "Ενεργά αιτήματα & βλάβες σε μία οθόνη",
+                  "Λιγότερες παρεξηγήσεις για κοινόχρηστα και αποφάσεις",
+                  "Δυνατότητα για custom αναφορές & στατιστικά ανά κτίριο",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
@@ -810,18 +800,17 @@ export default function LandingPage() {
             </AnimatedSection>
           </div>
 
-          {/* Placeholder media */}
+          {/* Dashboard screenshot */}
           <AnimatedSection delay={200} className="flex-1">
             <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
-              <div className="aspect-video rounded-2xl border border-dashed border-slate-700 bg-slate-950 p-6">
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                  <span className="rounded-full border border-slate-700 px-4 py-1.5 text-[11px] uppercase tracking-wider text-slate-500">
-                    Placeholder Dashboard
-                  </span>
-                  <p className="max-w-xs text-sm text-slate-500">
-                    Εδώ θα μπει screenshot από το dashboard με πολλαπλές κοινότητες.
-                  </p>
-                </div>
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+                <Image
+                  src="/phone_screenshot.jpg"
+                  alt="Dashboard γραφείου διαχείρισης - πολλαπλές πολυκατοικίες"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 600px"
+                />
               </div>
             </div>
           </AnimatedSection>
@@ -838,7 +827,7 @@ export default function LandingPage() {
               </span>
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">Συχνές ερωτήσεις</h2>
               <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
-                Μερικές από τις πιο συχνές απορίες για το πώς μπορεί η κοινότητά σας να ξεκινήσει.
+                Μερικές από τις πιο συχνές απορίες γύρω από το Info Point και την πλατφόρμα.
               </p>
             </div>
           </AnimatedSection>
@@ -969,7 +958,7 @@ export default function LandingPage() {
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                 ))}
-                <span className="ml-2 text-xs text-slate-500">4.9/5 από 50+ κοινότητες</span>
+                <span className="ml-2 text-xs text-slate-500">4.9/5 από 50+ πολυκατοικίες</span>
               </div>
             </div>
 
