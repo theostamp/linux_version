@@ -32,6 +32,16 @@ export const useFinancialAutoRefresh = (
   const lastRefreshRef = useRef<number>(Date.now());
   const isRefreshingRef = useRef<boolean>(false);
 
+  const {
+    loadSummary,
+    loadExpenses,
+    loadPayments,
+    loadApartmentBalances,
+    loadObligations,
+  } = refreshFunctions;
+
+  const { buildingId, selectedMonth } = dependencies;
+
   // Function to execute all refresh functions
   const executeRefresh = useCallback(async () => {
     if (isRefreshingRef.current) {
@@ -46,36 +56,36 @@ export const useFinancialAutoRefresh = (
       const refreshPromises: Promise<void>[] = [];
 
       // Execute all provided refresh functions
-      if (refreshFunctions.loadSummary) {
-        const result = refreshFunctions.loadSummary();
+      if (loadSummary) {
+        const result = loadSummary();
         if (result instanceof Promise) {
           refreshPromises.push(result);
         }
       }
 
-      if (refreshFunctions.loadExpenses) {
-        const result = refreshFunctions.loadExpenses();
+      if (loadExpenses) {
+        const result = loadExpenses();
         if (result instanceof Promise) {
           refreshPromises.push(result);
         }
       }
 
-      if (refreshFunctions.loadPayments) {
-        const result = refreshFunctions.loadPayments();
+      if (loadPayments) {
+        const result = loadPayments();
         if (result instanceof Promise) {
           refreshPromises.push(result);
         }
       }
 
-      if (refreshFunctions.loadApartmentBalances) {
-        const result = refreshFunctions.loadApartmentBalances();
+      if (loadApartmentBalances) {
+        const result = loadApartmentBalances();
         if (result instanceof Promise) {
           refreshPromises.push(result);
         }
       }
 
-      if (refreshFunctions.loadObligations) {
-        const result = refreshFunctions.loadObligations();
+      if (loadObligations) {
+        const result = loadObligations();
         if (result instanceof Promise) {
           refreshPromises.push(result);
         }
@@ -99,7 +109,14 @@ export const useFinancialAutoRefresh = (
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [refreshFunctions, componentName]);
+  }, [
+    loadSummary,
+    loadExpenses,
+    loadPayments,
+    loadApartmentBalances,
+    loadObligations,
+    componentName,
+  ]);
 
   // Manual refresh function
   const manualRefresh = useCallback(async () => {
@@ -109,7 +126,7 @@ export const useFinancialAutoRefresh = (
 
   // Start automatic refresh interval
   useEffect(() => {
-    if (!enableAutoRefresh || !dependencies.buildingId) {
+    if (!enableAutoRefresh || !buildingId) {
       return;
     }
 
@@ -134,15 +151,18 @@ export const useFinancialAutoRefresh = (
         intervalRef.current = null;
       }
     };
-  }, [enableAutoRefresh, dependencies.buildingId, refreshInterval, executeRefresh, componentName]);
+  }, [enableAutoRefresh, buildingId, refreshInterval, executeRefresh, componentName]);
 
   // Refresh when dependencies change
   useEffect(() => {
-    if (dependencies.buildingId || dependencies.selectedMonth) {
+    if (!enableAutoRefresh) {
+      return;
+    }
+    if (buildingId || selectedMonth) {
       console.log(`🔄 ${componentName}: Dependencies changed, triggering refresh`);
       executeRefresh();
     }
-  }, [dependencies.buildingId, dependencies.selectedMonth, executeRefresh, componentName]);
+  }, [enableAutoRefresh, buildingId, selectedMonth, executeRefresh, componentName]);
 
   // Cleanup on unmount
   useEffect(() => {
