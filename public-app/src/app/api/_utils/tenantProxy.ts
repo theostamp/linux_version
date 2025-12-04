@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS";
 
+// Next.js 15+ uses Promise-based params
 export type ProxyRouteContext = {
-  params?: Record<string, string | string[] | undefined>;
+  params?: Promise<Record<string, string | string[] | undefined>> | Record<string, string | string[] | undefined>;
 };
 
 type TenantProxyConfig = {
@@ -11,7 +12,7 @@ type TenantProxyConfig = {
     request: NextRequest,
     context: ProxyRouteContext,
     method: HttpMethod,
-  ) => string;
+  ) => string | Promise<string>;
   logLabel?: string;
   forwardSearchParams?: boolean;
   ensureTrailingSlash?: boolean;
@@ -21,6 +22,22 @@ type ProxyHandler = (
   request: NextRequest,
   context: ProxyRouteContext,
 ) => Promise<NextResponse>;
+
+/**
+ * Helper to resolve params whether they are a Promise (Next.js 15+) or direct value
+ */
+export async function resolveParams(
+  params: ProxyRouteContext["params"]
+): Promise<Record<string, string | string[] | undefined>> {
+  if (!params) return {};
+  
+  // Check if params is a Promise by looking for .then method
+  if (typeof params === 'object' && 'then' in params && typeof params.then === 'function') {
+    return await params;
+  }
+  
+  return params as Record<string, string | string[] | undefined>;
+}
 
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
@@ -71,14 +88,14 @@ const normalizeBackendPath = (
   return prefixed.endsWith("/") ? prefixed : `${prefixed}/`;
 };
 
-const buildTargetUrl = (
+const buildTargetUrl = async (
   request: NextRequest,
   method: HttpMethod,
   config: TenantProxyConfig,
   context: ProxyRouteContext,
 ) => {
   const ensureTrailingSlash = config.ensureTrailingSlash ?? true;
-  const backendPath = config.resolvePath(request, context, method);
+  const backendPath = await config.resolvePath(request, context, method);
   if (!backendPath) {
     const logger = createLogger(config.logLabel ?? "unknown");
     logger.error("Empty backend path resolved", undefined, {
@@ -239,7 +256,7 @@ async function proxyTenantRequest(
   const logger = createLogger(config.logLabel ?? "unknown");
   const startTime = Date.now();
   
-  const targetUrl = buildTargetUrl(request, method, config, context);
+  const targetUrl = await buildTargetUrl(request, method, config, context);
   const headers = createForwardHeaders(request);
   const host = request.headers.get("host") ?? "unknown";
   let body: ArrayBuffer | undefined;

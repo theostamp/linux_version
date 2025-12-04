@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-type RouteContext = {
-  params: { path?: string[] };
-};
-
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
   "keep-alive",
@@ -33,7 +29,7 @@ const stripHopByHopHeaders = (headers: Headers) => {
   return headers;
 };
 
-const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
+const buildTargetUrl = (request: NextRequest) => {
   const base = resolveBackendBaseUrl();
   // Get the original path from the request URL to preserve trailing slash
   const originalPath = request.nextUrl.pathname.replace('/backend-proxy', '');
@@ -143,8 +139,8 @@ const createForwardHeaders = (request: NextRequest) => {
   return stripHopByHopHeaders(forwardHeaders);
 };
 
-async function proxyRequest(request: NextRequest, ctx: RouteContext) {
-  const targetUrl = buildTargetUrl(ctx, request);
+async function proxyRequest(request: NextRequest) {
+  const targetUrl = buildTargetUrl(request);
   const headers = createForwardHeaders(request);
   let body: ArrayBuffer | undefined;
 
@@ -249,26 +245,26 @@ async function proxyRequest(request: NextRequest, ctx: RouteContext) {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest, ctx: RouteContext) {
-  return proxyRequest(request, ctx);
+export async function GET(request: NextRequest) {
+  return proxyRequest(request);
 }
 
-export async function POST(request: NextRequest, ctx: RouteContext) {
-  return proxyRequest(request, ctx);
+export async function POST(request: NextRequest) {
+  return proxyRequest(request);
 }
 
-export async function PUT(request: NextRequest, ctx: RouteContext) {
-  return proxyRequest(request, ctx);
+export async function PUT(request: NextRequest) {
+  return proxyRequest(request);
 }
 
-export async function PATCH(request: NextRequest, ctx: RouteContext) {
-  return proxyRequest(request, ctx);
+export async function PATCH(request: NextRequest) {
+  return proxyRequest(request);
 }
 
-export async function DELETE(request: NextRequest, ctx: RouteContext) {
-  return proxyRequest(request, ctx);
+export async function DELETE(request: NextRequest) {
+  return proxyRequest(request);
 }
 
-export async function OPTIONS(request: NextRequest, ctx: RouteContext) {
-  return proxyRequest(request, ctx);
+export async function OPTIONS(request: NextRequest) {
+  return proxyRequest(request);
 }

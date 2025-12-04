@@ -1,4 +1,6 @@
 import type { HttpMethod, ProxyRouteContext } from "./tenantProxy";
+// Re-export for convenience
+export type { HttpMethod, ProxyRouteContext } from "./tenantProxy";
 import type { NextRequest, NextResponse } from "next/server";
 
 type ProxyHandler = (

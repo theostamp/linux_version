@@ -26,8 +26,11 @@ export function middleware(request: NextRequest) {
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "announcements",
-    resolvePath: (_request, context) => {
-      const segments = context.params?.path;
+    resolvePath: async (_request, context) => {
+      // Next.js 15+ requires awaiting params
+      const { resolveParams } = await import("../../_utils/tenantProxy");
+      const params = await resolveParams(context.params);
+      const segments = params?.path;
       const pathSegments = Array.isArray(segments)
         ? segments
         : segments

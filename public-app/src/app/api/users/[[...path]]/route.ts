@@ -1,4 +1,4 @@
-import { createTenantProxyHandlers } from "../../_utils/tenantProxy";
+import { createTenantProxyHandlers, resolveParams } from "../../_utils/tenantProxy";
 import { exportHandlers } from "../../_utils/exportHandlers";
 
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
@@ -8,8 +8,10 @@ console.log("[ROUTE HANDLER] /api/users/[[...path]]/route.ts loaded - handles ro
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "users",
-    resolvePath: (_request, context) => {
-      const segments = context.params?.path;
+    resolvePath: async (_request, context) => {
+      // Next.js 15+ requires awaiting params
+      const params = await resolveParams(context.params);
+      const segments = params?.path;
       const pathSegments = Array.isArray(segments)
         ? segments
         : segments

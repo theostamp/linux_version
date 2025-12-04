@@ -70,9 +70,8 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // eslint configuration was removed in Next.js 16
+  // Use eslint.config.mjs or biome for linting
   typescript: {
     ignoreBuildErrors: true,
   },

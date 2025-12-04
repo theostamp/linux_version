@@ -1,4 +1,4 @@
-import { createTenantProxyHandlers } from "../../../_utils/tenantProxy";
+import { createTenantProxyHandlers, resolveParams } from "../../../_utils/tenantProxy";
 import { exportHandlers } from "../../../_utils/exportHandlers";
 
 const methods = ["GET", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
@@ -8,9 +8,14 @@ console.log("[ROUTE HANDLER] /api/buildings/list/[id]/route.ts loaded");
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "building-detail",
-    resolvePath: (_request, context) => {
-      const id = context.params?.id;
+    resolvePath: async (_request, context) => {
+      // Next.js 15+ requires awaiting params
+      const params = await resolveParams(context.params);
+      const id = params?.id;
       console.log("[ROUTE HANDLER] building-detail resolvePath called with id:", id);
+      if (!id || id === 'undefined') {
+        throw new Error(`[building-detail] Invalid building ID: ${id}`);
+      }
       return `buildings/list/${id}`;
     },
     ensureTrailingSlash: true,
