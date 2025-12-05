@@ -53,6 +53,36 @@ def _filter_for_manager(base_queryset, user, building_param, building_field):
             Q(**{f"{building_field}_id__in": managed_ids}) | Q(**{f"{building_field}": None})
         )
 
+def _filter_for_internal_manager(base_queryset, user, building_param, building_field):
+    """Filter για internal_manager - μπορεί να διαχειρίζεται ένα ή περισσότερα κτίρια"""
+    managed_ids = list(Building.objects.filter(internal_manager_id=user.id).values_list("id", flat=True))
+    print(f"Internal manager managed buildings: {managed_ids}")
+    if building_param and building_param != 'null':
+        building_id = _validate_building_param(building_param)
+        try:
+            building_id = int(building_id)
+        except Exception as e:
+            print(f"[ERROR] building_id could not be cast to int: {e}")
+            return base_queryset.none()
+        if building_id in managed_ids:
+            # Include both specific building and global items (building=null)
+            return base_queryset.filter(
+                Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
+            )
+        else:
+            print("Internal manager δεν διαχειρίζεται αυτό το κτήριο.")
+            return base_queryset.none()
+    else:
+        # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια που διαχειρίζεται + global
+        print("Internal manager: showing all managed buildings")
+        if managed_ids:
+            return base_queryset.filter(
+                Q(**{f"{building_field}_id__in": managed_ids}) | Q(**{f"{building_field}": None})
+            )
+        else:
+            # Αν δεν διαχειρίζεται κανένα κτίριο, επιστρέφουμε μόνο global items
+            return base_queryset.filter(**{f"{building_field}": None})
+
 def _filter_for_resident(base_queryset, user, building_param, building_field):
     try:
         profile = getattr(user, "profile", None)
@@ -85,7 +115,7 @@ def _filter_for_resident(base_queryset, user, building_param, building_field):
 
 def filter_queryset_by_user_and_building(request, base_queryset, building_field='building'):
     """
-    Φιλτράρει queryset με βάση το building param και το ρόλο χρήστη (superuser, manager, resident).
+    Φιλτράρει queryset με βάση το building param και το ρόλο χρήστη (superuser, manager, internal_manager, resident).
     """
     user = getattr(request, "user", None)
     building_param = request.query_params.get("building")
@@ -111,6 +141,11 @@ def filter_queryset_by_user_and_building(request, base_queryset, building_field=
 
     if getattr(user, "is_staff", False):
         return _filter_for_manager(base_queryset, user, building_param, building_field)
+
+    # Έλεγχος για internal_manager (πριν το resident filtering)
+    user_role = getattr(user, "role", None)
+    if user_role == "internal_manager":
+        return _filter_for_internal_manager(base_queryset, user, building_param, building_field)
 
     return _filter_for_resident(base_queryset, user, building_param, building_field)
 
