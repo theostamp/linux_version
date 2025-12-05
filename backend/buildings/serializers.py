@@ -1,5 +1,6 @@
 # backend/buildings/serializers.py
 from rest_framework import serializers 
+from django.core.exceptions import ObjectDoesNotExist
 from .models import Building, ServicePackage
 from users.models import CustomUser
 from .models import BuildingMembership
@@ -15,7 +16,7 @@ class BuildingMembershipSerializer(serializers.ModelSerializer):
         email = validated_data.pop('user_email')
         try:
             user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
+        except ObjectDoesNotExist:
             raise serializers.ValidationError({'user_email': 'Δεν βρέθηκε χρήστης με αυτό το email.'})
 
         return BuildingMembership.objects.create(user=user, **validated_data)
@@ -44,7 +45,7 @@ class CoordinateField(serializers.Field):
                 raise serializers.ValidationError("Η τιμή πρέπει να είναι αριθμός.")
             
             # Validate range based on field name
-            field_name = self.field_name if hasattr(self, 'field_name') else ''
+            field_name = self.field_name if hasattr(self, 'field_name') and self.field_name else ''
             if 'latitude' in field_name:
                 if decimal_value < -90 or decimal_value > 90:
                     raise serializers.ValidationError("Το γεωγραφικό πλάτος πρέπει να είναι μεταξύ -90 και 90 μοιρών.")
@@ -89,7 +90,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
                 building = Building.objects.get(id=building_id)
                 apartments_count = building.apartments_count or 0
                 return obj.get_total_cost_for_building(apartments_count)
-            except Building.DoesNotExist:
+            except ObjectDoesNotExist:
                 return 0
         return 0
 
@@ -215,7 +216,7 @@ class BuildingSerializer(serializers.ModelSerializer):
             from django.db import connection
             from django_tenants.utils import get_public_schema_name, schema_context
             
-            current_schema = connection.schema_name
+            current_schema = getattr(connection, 'schema_name', 'unknown')
             logger.warning(f"🔍 [BuildingSerializer.validate] Current schema: {current_schema}")
             
             # Try in current schema

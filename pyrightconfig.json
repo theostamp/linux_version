@@ -6,7 +6,8 @@
     "**/__pycache__",
     "**/node_modules",
     "**/venv",
-    "**/.venv"
+    "**/.venv",
+    "**/migrations"
   ],
   "venvPath": "backend",
   "venv": "venv",
@@ -14,6 +15,8 @@
   "typeCheckingMode": "basic",
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": false,
+  "reportGeneralTypeIssues": "warning",
+  "reportAttributeAccessIssue": "warning",
   "pythonPlatform": "Linux",
   "executionEnvironments": [
     {

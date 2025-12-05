@@ -35,7 +35,7 @@ class Command(BaseCommand):
         # Βρες τον χρήστη
         try:
             user = CustomUser.objects.get(email=email)  # type: ignore[attr-defined]
-            self.stdout.write(f"✅ Βρέθηκε χρήστης: {user.email} (ID: {user.id})")
+            self.stdout.write(f"✅ Βρέθηκε χρήστης: {user.email} (ID: {user.id})")  # pyright: ignore[reportAttributeAccessIssue]
         except CustomUser.DoesNotExist:  # type: ignore[attr-defined]
             raise CommandError(f"❌ Δεν βρέθηκε χρήστης με email: {email}")
 
@@ -53,12 +53,12 @@ class Command(BaseCommand):
                 buildings = Building.objects.filter(name__icontains=building_identifier)  # type: ignore[attr-defined]
                 self.stdout.write(self.style.WARNING("⚠️ Βρέθηκαν πολλά κτίρια:"))  # type: ignore[attr-defined]
                 for b in buildings:
-                    self.stdout.write(f"   - ID: {b.id}, Όνομα: {b.name}")
+                    self.stdout.write(f"   - ID: {b.id}, Όνομα: {b.name}")  # pyright: ignore[reportAttributeAccessIssue]
                 raise CommandError("Χρησιμοποίησε το ID του κτιρίου αντί για το όνομα")
         except Building.DoesNotExist:  # type: ignore[attr-defined]
             raise CommandError(f"❌ Δεν βρέθηκε κτίριο με ID: {building_id}")
 
-        self.stdout.write(f"✅ Βρέθηκε κτίριο: {building.name} (ID: {building.id})")
+        self.stdout.write(f"✅ Βρέθηκε κτίριο: {building.name} (ID: {building.id})")  # pyright: ignore[reportAttributeAccessIssue]
 
         # Αφαίρεσε τον προηγούμενο internal_manager (αν υπάρχει)
         old_manager = building.internal_manager
