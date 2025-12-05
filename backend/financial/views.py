@@ -4298,17 +4298,27 @@ def _scan_database_for_cleanup():
     )
     
     # 3. Scan for balance mismatches
-    apartments = Apartment.objects.select_related('building').all()[:20]
+    # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Σύγκριση stored vs calculated balance
+    from .balance_service import BalanceCalculationService
+    
+    apartments = Apartment.objects.select_related('building').all()
     for apt in apartments:
-        # Simple check: compare stored vs calculated from transactions
         stored_balance = float(apt.current_balance or 0)
-        # This is simplified - real calculation would be more complex
-        if abs(stored_balance) > 0.01:
+        
+        # Υπολογισμός πραγματικού υπολοίπου από transactions
+        calculated_balance = BalanceCalculationService.calculate_apartment_balance(apt)
+        calculated_balance_float = float(calculated_balance or 0)
+        
+        # Έλεγχος απόκλισης (>1 cent διαφορά)
+        difference = abs(stored_balance - calculated_balance_float)
+        if difference > 0.01:
             results['balance_mismatches']['items'].append({
                 'apartment_id': apt.id,
                 'number': apt.number,
                 'building': apt.building.name if apt.building else None,
-                'stored_balance': stored_balance
+                'stored_balance': stored_balance,
+                'calculated_balance': calculated_balance_float,
+                'difference': round(difference, 2)
             })
             results['balance_mismatches']['count'] += 1
     
