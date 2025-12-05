@@ -663,7 +663,11 @@ class FinancialDashboardService:
                 date__lte=today  # 🔧 ΝΕΟ: Εξαίρεση μελλοντικών δαπανών
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            current_reserve = total_payments_all_time - total_expenses_all_time - total_management_cost
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Αφαίρεση του total_management_cost
+            # Τα management fees είναι ΗΔΗ Expense records (category='management_fees')
+            # και περιλαμβάνονται στο total_expenses_all_time.
+            # Δεν πρέπει να αφαιρεθούν 2 φορές!
+            current_reserve = total_payments_all_time - total_expenses_all_time
         
         # Calculate reserve fund monthly target FIRST
         # Always show the calculated monthly target for all months
