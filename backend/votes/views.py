@@ -7,7 +7,7 @@ import logging
 
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer
-from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin
+from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin, IsOfficeManagerOrInternalManager
 from core.utils import filter_queryset_by_user_and_building
 
 logger = logging.getLogger(__name__)
@@ -25,9 +25,10 @@ class VoteViewSet(viewsets.ModelViewSet):
     serializer_class = VoteSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'my_submission', 'results']:
+        if self.action in ['list', 'retrieve', 'my_submission', 'results', 'vote']:
             return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
+        # create, update, destroy: επιτρέπεται σε office managers και internal managers
+        return [permissions.IsAuthenticated(), IsOfficeManagerOrInternalManager()]
 
     def get_queryset(self):
         """

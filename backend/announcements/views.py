@@ -9,7 +9,7 @@ import logging
 
 from .models import Announcement
 from .serializers import AnnouncementSerializer, AnnouncementListSerializer
-from core.permissions import IsManagerOrSuperuser
+from core.permissions import IsManagerOrSuperuser, IsOfficeManagerOrInternalManager
 from core.utils import filter_queryset_by_user_and_building
 from users.permissions import IsBuildingAdmin
 
@@ -28,12 +28,11 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     serializer_class = AnnouncementSerializer
 
     def get_permissions(self):
-        # Tests expect public list and authenticated create
+        # Read access for all
         if self.action in ['list', 'retrieve', 'urgent', 'active']:
             return [permissions.AllowAny()]
-        if self.action in ['create']:
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
+        # Create, update, destroy: επιτρέπεται σε office managers και internal managers
+        return [permissions.IsAuthenticated(), IsOfficeManagerOrInternalManager()]
 
     def get_serializer_class(self):
         if self.action == 'list':
