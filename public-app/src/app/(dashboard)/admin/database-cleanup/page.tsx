@@ -38,6 +38,18 @@ interface ScanResult {
       building: string;
     }>;
   };
+  future_expenses: {
+    count: number;
+    total_amount: number;
+    items: Array<{
+      id: number;
+      title: string;
+      amount: number;
+      date: string;
+      category: string;
+      building: string;
+    }>;
+  };
   balance_mismatches: {
     count: number;
     items: Array<{
@@ -269,7 +281,7 @@ export default function DatabaseCleanupPage() {
           </div>
 
           {/* Results Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white border rounded-xl p-4">
               <div className="text-sm text-gray-500 mb-1">Ορφανά Transactions</div>
               <div className="text-2xl font-bold text-orange-600">
@@ -277,6 +289,16 @@ export default function DatabaseCleanupPage() {
               </div>
               <div className="text-sm text-gray-400">
                 Σύνολο: €{(scanResults.orphan_transactions?.total_amount || 0).toFixed(2)}
+              </div>
+            </div>
+            
+            <div className="bg-white border rounded-xl p-4">
+              <div className="text-sm text-gray-500 mb-1">🔮 Μελλοντικές Δαπάνες</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {scanResults.future_expenses?.count || 0}
+              </div>
+              <div className="text-sm text-gray-400">
+                Σύνολο: €{(scanResults.future_expenses?.total_amount || 0).toFixed(2)}
               </div>
             </div>
             
@@ -293,7 +315,7 @@ export default function DatabaseCleanupPage() {
             <div className="bg-white border rounded-xl p-4">
               <div className="text-sm text-gray-500 mb-1">Κατάσταση</div>
               <div className="text-2xl font-bold text-green-600">
-                {(scanResults.orphan_transactions?.count || 0) === 0 ? '✓ OK' : '⚠️ Θέματα'}
+                {(scanResults.orphan_transactions?.count || 0) + (scanResults.future_expenses?.count || 0) === 0 ? '✓ OK' : '⚠️ Θέματα'}
               </div>
             </div>
           </div>
@@ -332,6 +354,55 @@ export default function DatabaseCleanupPage() {
                 {scanResults.orphan_transactions.items.length > 5 && (
                   <div className="px-4 py-2 bg-gray-50 text-gray-500 text-sm">
                     ... και {scanResults.orphan_transactions.items.length - 5} ακόμα
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Future Expenses Preview */}
+          {scanResults.future_expenses?.items?.length > 0 && (
+            <div className="bg-white border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-purple-50 border-b">
+                <h3 className="font-semibold text-purple-800">
+                  🔮 Μελλοντικές Δαπάνες (προεπισκόπηση)
+                </h3>
+                <p className="text-sm text-purple-600 mt-1">
+                  Δαπάνες με ημερομηνία στο μέλλον που επηρεάζουν τον υπολογισμό αποθεματικού
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left">ID</th>
+                      <th className="px-4 py-2 text-left">Τίτλος</th>
+                      <th className="px-4 py-2 text-left">Κατηγορία</th>
+                      <th className="px-4 py-2 text-right">Ποσό</th>
+                      <th className="px-4 py-2 text-left">Ημερομηνία</th>
+                      <th className="px-4 py-2 text-left">Κτίριο</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scanResults.future_expenses.items.slice(0, 10).map((item) => (
+                      <tr key={item.id} className="border-t">
+                        <td className="px-4 py-2 text-gray-500">#{item.id}</td>
+                        <td className="px-4 py-2">{item.title}</td>
+                        <td className="px-4 py-2">
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700">
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-right font-medium">€{item.amount.toFixed(2)}</td>
+                        <td className="px-4 py-2 text-orange-600">{item.date}</td>
+                        <td className="px-4 py-2">{item.building || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {scanResults.future_expenses.items.length > 10 && (
+                  <div className="px-4 py-2 bg-gray-50 text-gray-500 text-sm">
+                    ... και {scanResults.future_expenses.items.length - 10} ακόμα
                   </div>
                 )}
               </div>

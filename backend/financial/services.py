@@ -647,12 +647,20 @@ class FinancialDashboardService:
             
         else:
             # CURRENT VIEW: Current actual financial position (all time)
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Εξαίρεση μελλοντικών δαπανών από τον υπολογισμό current_reserve
+            # Οι μελλοντικές δαπάνες (π.χ. management fees για επόμενους μήνες) δεν πρέπει να
+            # επηρεάζουν το τρέχον αποθεματικό
+            from datetime import date as date_class
+            today = date_class.today()
+            
             total_payments_all_time = Payment.objects.filter(
                 apartment__building_id=self.building_id
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
+            # Μόνο δαπάνες με ημερομηνία μέχρι σήμερα (εξαίρεση μελλοντικών)
             total_expenses_all_time = Expense.objects.filter(
-                building_id=self.building_id
+                building_id=self.building_id,
+                date__lte=today  # 🔧 ΝΕΟ: Εξαίρεση μελλοντικών δαπανών
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
             current_reserve = total_payments_all_time - total_expenses_all_time - total_management_cost

@@ -61,14 +61,7 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
           icon={DollarSign}
           colorScheme="financial"
           loading={loading}
-          trend={
-            data && balanceValue !== 0
-              ? {
-                  value: Math.abs(Math.round((balanceValue / Math.max(balanceValue + obligationsValue, 1)) * 100)),
-                  direction: balanceValue > 0 ? 'up' : balanceValue < 0 ? 'down' : 'neutral',
-                }
-              : undefined
-          }
+          trend={undefined}
         />
         
         <MetricsCard

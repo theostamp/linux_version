@@ -443,45 +443,35 @@ class Building(models.Model):
         
         super().save(*args, **kwargs)
         
-        # ✨ ΝΕΟ: Αυτόματη δημιουργία μελλοντικών μηνιαίων χρεώσεων
-        # Μόνο αν το management fee ορίστηκε για πρώτη φορά ή άλλαξε
+        # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Αφαίρεση αυτόματης δημιουργίας μελλοντικών δαπανών
+        # Οι μελλοντικές δαπάνες διαχείρισης προκαλούσαν σύγχυση στους υπολογισμούς
+        # Τώρα δημιουργούνται μόνο για τον ΤΡΕΧΟΝΤΑ μήνα (αν δεν υπάρχουν ήδη)
         if (is_new or management_fee_changed) and self.management_fee_per_apartment > 0:
-            self._create_future_management_fees()
+            self._create_current_month_management_fees()
     
-    def _create_future_management_fees(self, months_ahead: int = 12):
+    def _create_current_month_management_fees(self):
         """
-        Δημιουργεί αυτόματα management fee expenses για τους επόμενους Ν μήνες
+        Δημιουργεί management fee expense ΜΟΝΟ για τον τρέχοντα μήνα
         
-        Args:
-            months_ahead: Αριθμός μηνών μπροστά (default: 12)
+        📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Δεν δημιουργούνται πλέον μελλοντικές δαπάνες
+        που προκαλούσαν σύγχυση στο αποθεματικό
         """
         from datetime import date
         from financial.monthly_charge_service import MonthlyChargeService
         
         try:
-            print(f"🔮 Auto-creating management fees for next {months_ahead} months...")
+            current_month = date.today().replace(day=1)
             
-            start_month = date.today().replace(day=1)
-            current = start_month
-            created_count = 0
+            result = MonthlyChargeService.create_monthly_charges(self, current_month)
             
-            for i in range(months_ahead):
-                result = MonthlyChargeService.create_monthly_charges(self, current)
-                
-                if result.get('management_fees_created'):
-                    created_count += 1
-                
-                # Next month
-                if current.month == 12:
-                    current = date(current.year + 1, 1, 1)
-                else:
-                    current = date(current.year, current.month + 1, 1)
-            
-            print(f"✅ Auto-created {created_count} management fee expenses for {self.name}")
+            if result.get('management_fees_created'):
+                print(f"✅ Created management fee expense for {self.name} - {current_month.strftime('%B %Y')}")
+            else:
+                print(f"ℹ️ Management fee already exists for {self.name} - {current_month.strftime('%B %Y')}")
             
         except Exception as e:
             # Δεν θέλουμε να σταματήσει το save αν αποτύχει η δημιουργία
-            print(f"⚠️ Error auto-creating management fees: {e}")
+            print(f"⚠️ Error creating management fees: {e}")
             import traceback
             traceback.print_exc()
 

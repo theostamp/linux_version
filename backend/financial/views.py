@@ -4152,6 +4152,13 @@ def database_cleanup(request):
                         'affects': 'Υπόλοιπα διαμερισμάτων'
                     },
                     {
+                        'id': 'future_expenses',
+                        'name': 'Μελλοντικές Δαπάνες',
+                        'description': 'Διαγραφή δαπανών με ημερομηνία στο μέλλον (management fees, αποθεματικό κλπ)',
+                        'danger_level': 'medium',
+                        'affects': 'Αποθεματικό, υπολογισμοί'
+                    },
+                    {
                         'id': 'recalculate_balances',
                         'name': 'Επανυπολογισμός Υπολοίπων',
                         'description': 'Επανυπολογισμός όλων των υπολοίπων διαμερισμάτων',
@@ -4201,6 +4208,8 @@ def database_cleanup(request):
         
         if operation == 'orphan_transactions':
             result = _cleanup_orphan_transactions(user, search_term, building_id)
+        elif operation == 'future_expenses':
+            result = _cleanup_future_expenses(user, building_id)
         elif operation == 'recalculate_balances':
             result = _recalculate_all_balances(user, building_id)
         elif operation == 'clean_test_data':
@@ -4224,9 +4233,17 @@ def database_cleanup(request):
 def _scan_database_for_cleanup():
     """Σαρώνει τη βάση για θέματα που χρειάζονται cleanup"""
     from decimal import Decimal
+    from datetime import date
+    
+    today = date.today()
     
     results = {
         'orphan_transactions': {
+            'count': 0,
+            'total_amount': 0,
+            'items': []
+        },
+        'future_expenses': {
             'count': 0,
             'total_amount': 0,
             'items': []
@@ -4261,7 +4278,26 @@ def _scan_database_for_cleanup():
             txs.aggregate(total=models.Sum('amount'))['total'] or 0
         )
     
-    # 2. Scan for balance mismatches
+    # 2. Scan for future expenses (management fees, reserve fund etc. with future dates)
+    # 📝 ΠΡΟΣΘΗΚΗ 2025-12-05: Σάρωση μελλοντικών δαπανών που προκαλούν σύγχυση
+    future_expenses = Expense.objects.filter(date__gt=today).select_related('building')
+    
+    for exp in future_expenses[:15]:  # Limit preview
+        results['future_expenses']['items'].append({
+            'id': exp.id,
+            'title': exp.title[:50] if exp.title else f'{exp.category}',
+            'amount': float(exp.amount),
+            'date': exp.date.isoformat() if exp.date else None,
+            'category': exp.category,
+            'building': exp.building.name if exp.building else None
+        })
+    
+    results['future_expenses']['count'] = future_expenses.count()
+    results['future_expenses']['total_amount'] = float(
+        future_expenses.aggregate(total=models.Sum('amount'))['total'] or 0
+    )
+    
+    # 3. Scan for balance mismatches
     apartments = Apartment.objects.select_related('building').all()[:20]
     for apt in apartments:
         # Simple check: compare stored vs calculated from transactions
@@ -4276,7 +4312,7 @@ def _scan_database_for_cleanup():
             })
             results['balance_mismatches']['count'] += 1
     
-    # 3. Scan for test data patterns
+    # 4. Scan for test data patterns
     test_patterns = ['Demo', 'Test', 'Sample']
     # This would need to be customized based on actual test data patterns
     
@@ -4348,6 +4384,70 @@ def _cleanup_orphan_transactions(user, search_term, building_id):
         'deleted_count': deleted_count,
         'total_amount_removed': float(total_amount),
         'balance_updates': balance_updates,
+        'executed_by': user.email
+    }
+
+
+def _cleanup_future_expenses(user, building_id=None):
+    """
+    Διαγραφή δαπανών με ημερομηνία στο μέλλον
+    
+    📝 ΠΡΟΣΘΗΚΗ 2025-12-05: Οι μελλοντικές δαπάνες (management fees, αποθεματικό κλπ)
+    που δημιουργήθηκαν αυτόματα προκαλούσαν σύγχυση στον υπολογισμό του αποθεματικού
+    """
+    import logging
+    from datetime import date
+    from django.db.models import Sum
+    
+    logger = logging.getLogger(__name__)
+    today = date.today()
+    
+    # Build query for future expenses
+    future_expenses = Expense.objects.filter(date__gt=today)
+    
+    if building_id:
+        future_expenses = future_expenses.filter(building_id=building_id)
+    
+    # Get stats before deletion
+    stats_by_category = future_expenses.values('category').annotate(
+        count=models.Count('id'),
+        total=Sum('amount')
+    )
+    
+    deleted_count = future_expenses.count()
+    total_amount = float(future_expenses.aggregate(total=Sum('amount'))['total'] or 0)
+    
+    if deleted_count == 0:
+        return {
+            'status': 'success',
+            'message': '✅ Δεν βρέθηκαν μελλοντικές δαπάνες για διαγραφή',
+            'deleted_count': 0
+        }
+    
+    # Log categories
+    category_breakdown = []
+    for stat in stats_by_category:
+        category_breakdown.append({
+            'category': stat['category'],
+            'count': stat['count'],
+            'amount': float(stat['total'] or 0)
+        })
+        logger.info(f"[CLEANUP] Category {stat['category']}: {stat['count']} expenses, €{stat['total']}")
+    
+    # Delete
+    future_expenses.delete()
+    logger.warning(
+        f"[CLEANUP] Deleted {deleted_count} future expenses "
+        f"(total €{total_amount:.2f}) by {user.email}"
+    )
+    
+    return {
+        'status': 'success',
+        'operation': 'future_expenses',
+        'message': f'✅ Διαγράφηκαν {deleted_count} μελλοντικές δαπάνες',
+        'deleted_count': deleted_count,
+        'total_amount_removed': total_amount,
+        'category_breakdown': category_breakdown,
         'executed_by': user.email
     }
 
