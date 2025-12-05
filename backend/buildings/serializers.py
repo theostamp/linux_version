@@ -115,7 +115,7 @@ class BuildingSerializer(serializers.ModelSerializer):
     # Εσωτερικός Διαχειριστής - ForeignKey
     internal_manager = InternalManagerSerializer(read_only=True)
     internal_manager_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),
+        queryset=CustomUser.objects.all(),  # SHARED_APPS - cross-schema via django-tenants
         source='internal_manager',
         required=False,
         allow_null=True,
@@ -198,6 +198,39 @@ class BuildingSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Additional validation for the entire building data"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Enhanced debug logging for internal_manager
+        logger.warning(f"🔍 [BuildingSerializer.validate] data keys: {list(data.keys())}")
+        logger.warning(f"🔍 [BuildingSerializer.validate] internal_manager in data: {'internal_manager' in data}")
+        internal_manager = data.get('internal_manager')
+        logger.warning(f"🔍 [BuildingSerializer.validate] internal_manager value: {internal_manager}")
+        if internal_manager:
+            logger.warning(f"🔍 [BuildingSerializer.validate] internal_manager.id: {internal_manager.id}")
+            logger.warning(f"🔍 [BuildingSerializer.validate] internal_manager.email: {internal_manager.email}")
+        
+        # Debug: Check if user 849 exists in the queryset (cross-schema)
+        try:
+            from django.db import connection
+            from django_tenants.utils import get_public_schema_name, schema_context
+            
+            current_schema = connection.schema_name
+            logger.warning(f"🔍 [BuildingSerializer.validate] Current schema: {current_schema}")
+            
+            # Try in current schema
+            user_849_current = CustomUser.objects.filter(id=849).first()
+            logger.warning(f"🔍 [BuildingSerializer.validate] User 849 in {current_schema}: {user_849_current is not None}")
+            
+            # Try in public schema
+            with schema_context(get_public_schema_name()):
+                user_849_public = CustomUser.objects.filter(id=849).first()
+                logger.warning(f"🔍 [BuildingSerializer.validate] User 849 in public: {user_849_public is not None}")
+                if user_849_public:
+                    logger.warning(f"🔍 [BuildingSerializer.validate] User 849 email: {user_849_public.email}")
+        except Exception as e:
+            logger.error(f"🔍 [BuildingSerializer.validate] Error checking user 849: {e}")
+        
         print(f"🔍 BuildingSerializer.validate() called with data: {data}")
         
         # If both latitude and longitude are provided, ensure they're both valid
@@ -223,10 +256,12 @@ class BuildingSerializer(serializers.ModelSerializer):
         import logging
         logger = logging.getLogger(__name__)
         
-        # Debug logging
-        logger.info(f"[BuildingSerializer.update] validated_data keys: {list(validated_data.keys())}")
-        logger.info(f"[BuildingSerializer.update] internal_manager in validated_data: {'internal_manager' in validated_data}")
-        logger.info(f"[BuildingSerializer.update] internal_manager value: {validated_data.get('internal_manager')}")
+        # Debug logging - ENHANCED
+        logger.warning(f"🔍 [BuildingSerializer.update] Building ID: {instance.id}")
+        logger.warning(f"🔍 [BuildingSerializer.update] validated_data keys: {list(validated_data.keys())}")
+        logger.warning(f"🔍 [BuildingSerializer.update] internal_manager in validated_data: {'internal_manager' in validated_data}")
+        logger.warning(f"🔍 [BuildingSerializer.update] internal_manager value: {validated_data.get('internal_manager')}")
+        logger.warning(f"🔍 [BuildingSerializer.update] Current internal_manager: {instance.internal_manager}")
         
         # Ελέγχουμε αν αλλάζει ο internal_manager
         new_internal_manager = validated_data.get('internal_manager')
@@ -292,7 +327,15 @@ class BuildingSerializer(serializers.ModelSerializer):
                 elif created:
                     logger.info(f"Created BuildingMembership for internal_manager {new_internal_manager.email}")
         
-        return super().update(instance, validated_data)
+        result = super().update(instance, validated_data)
+        
+        # Debug: Log the result after update
+        logger.warning(f"🔍 [BuildingSerializer.update] After save - internal_manager: {result.internal_manager}")
+        if result.internal_manager:
+            logger.warning(f"🔍 [BuildingSerializer.update] After save - internal_manager.id: {result.internal_manager.id}")
+            logger.warning(f"🔍 [BuildingSerializer.update] After save - internal_manager.email: {result.internal_manager.email}")
+        
+        return result
 
 
 # ========================================================================
