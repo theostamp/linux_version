@@ -4306,7 +4306,7 @@ def _scan_database_for_cleanup():
         stored_balance = float(apt.current_balance or 0)
         
         # Υπολογισμός πραγματικού υπολοίπου από transactions
-        calculated_balance = BalanceCalculationService.calculate_apartment_balance(apt)
+        calculated_balance = BalanceCalculationService.calculate_current_balance(apt)
         calculated_balance_float = float(calculated_balance or 0)
         
         # Έλεγχος απόκλισης (>1 cent διαφορά)
