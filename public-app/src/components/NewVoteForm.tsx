@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, X } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 type Props = Readonly<{
   onSubmit: (data: CreateVotePayload) => void | Promise<void>;
@@ -22,31 +22,12 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [choices, setChoices] = useState<string[]>(['Ναι', 'Όχι', 'Λευκό']);
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(buildingId || null);
   const [submitting, setSubmitting] = useState(false);
   const { buildings } = useBuilding();
   
   // Χρησιμοποιούμε external isSubmitting αν υπάρχει, αλλιώς local state
   const isSubmittingState = externalIsSubmitting !== undefined ? externalIsSubmitting : submitting;
-
-  const handleChoiceChange = (index: number, value: string) => {
-    const newChoices = [...choices];
-    newChoices[index] = value;
-    setChoices(newChoices);
-  };
-
-  const addChoice = () => {
-    setChoices([...choices, '']);
-  };
-
-  const removeChoice = (index: number) => {
-    if (choices.length <= 1) {
-      toast.error('Πρέπει να υπάρχει τουλάχιστον μία επιλογή');
-      return;
-    }
-    setChoices(choices.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +40,6 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
     if (externalIsSubmitting === undefined) {
       setSubmitting(true);
     }
-
-    const trimmedChoices = choices.map(c => c.trim()).filter(Boolean);
 
     if (!title.trim() || !description.trim()) {
       toast.error('Ο τίτλος και η περιγραφή είναι υποχρεωτικά');
@@ -78,27 +57,16 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
       return;
     }
 
-    if (trimmedChoices.length < 2) {
-      toast.error('Πρέπει να υπάρχουν τουλάχιστον δύο επιλογές');
-      if (externalIsSubmitting === undefined) {
-        setSubmitting(false);
-      }
-      return;
-    }
-
     const payload: CreateVotePayload = {
       title: title.trim(),
       description: description.trim(),
       start_date: startDate,
       end_date: endDate || undefined,
-      choices: trimmedChoices,
-      building: selectedBuildingId || 0,
+      building: selectedBuildingId || null,  // null για καθολικές ψηφοφορίες
     };
 
     try {
-      // Περιμένουμε να ολοκληρωθεί το onSubmit πριν reset το submitting
       await Promise.resolve(onSubmit(payload));
-      // Αν το onSubmit ολοκληρώθηκε επιτυχώς, το parent component θα χειριστεί το reset
     } catch (err) {
       console.error('Vote submission failed:', err);
       toast.error('Αποτυχία υποβολής');
@@ -109,25 +77,27 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
       <div>
-        <Label htmlFor="title">Τίτλος Ψηφοφορίας</Label>
+        <Label htmlFor="title">Τίτλος Ψηφοφορίας *</Label>
         <Input
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="mt-1"
+          placeholder="π.χ. Ανανέωση ανελκυστήρα"
           required
         />
       </div>
 
       <div>
-        <Label htmlFor="description">Περιγραφή</Label>
+        <Label htmlFor="description">Περιγραφή *</Label>
         <Textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="mt-1 h-24"
+          placeholder="Περιγράψτε το θέμα της ψηφοφορίας..."
           required
         />
       </div>
@@ -136,17 +106,17 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
       <div>
         <Label htmlFor="building">Κτίριο</Label>
         <Select
-          value={selectedBuildingId?.toString() || '0'}
-          onValueChange={(value) => setSelectedBuildingId(value === '0' ? null : Number(value))}
+          value={selectedBuildingId?.toString() || 'all'}
+          onValueChange={(value) => setSelectedBuildingId(value === 'all' ? null : Number(value))}
         >
           <SelectTrigger id="building" className="mt-1">
             <SelectValue placeholder="Επιλέξτε κτίριο" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0">Όλα τα κτίρια (Καθολική ψηφοφορία)</SelectItem>
+            <SelectItem value="all">🌐 Όλα τα κτίρια (Καθολική ψηφοφορία)</SelectItem>
             {buildings.map((building) => (
               <SelectItem key={building.id} value={building.id.toString()}>
-                {building.name}
+                🏢 {building.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -156,9 +126,9 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
         </p>
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Label htmlFor="vote-start-date">Έναρξη</Label>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="vote-start-date">Ημερομηνία Έναρξης *</Label>
           <Input
             id="vote-start-date"
             type="date"
@@ -168,62 +138,40 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
             required
           />
         </div>
-        <div className="flex-1">
-          <Label htmlFor="vote-end-date">Λήξη (προαιρετικά)</Label>
+        <div>
+          <Label htmlFor="vote-end-date">Ημερομηνία Λήξης</Label>
           <Input
             id="vote-end-date"
             type="date"
             className="mt-1"
             value={endDate}
             onChange={e => setEndDate(e.target.value)}
+            min={startDate}
           />
+          <p className="mt-1 text-xs text-gray-500">Προαιρετικό</p>
         </div>
       </div>
 
-      <div>
-        <Label className="mb-2 block">
-          Επιλογές Ψηφοφορίας
-        </Label>
-        {choices.map((choice, index) => (
-          <div key={`${choice}-${index}`} className="flex items-center gap-2 mb-2">
-            <Input
-              id={`vote-choice-${index}`}
-              className="flex-1"
-              value={choice}
-              onChange={(e) => handleChoiceChange(index, e.target.value)}
-              required
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => removeChoice(index)}
-              className="text-red-600 hover:text-red-700"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+      {/* Info about voting options */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-blue-800">Επιλογές Ψηφοφορίας</p>
+            <p className="text-sm text-blue-700 mt-1">
+              Οι ένοικοι θα μπορούν να ψηφίσουν: <strong>ΝΑΙ</strong>, <strong>ΌΧΙ</strong> ή <strong>ΛΕΥΚΟ</strong>
+            </p>
           </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addChoice}
-          className="mt-1"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Προσθήκη Επιλογής
-        </Button>
+        </div>
       </div>
 
       <Button
         type="submit"
         disabled={isSubmittingState}
-        className="w-full"
+        className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
       >
-        {isSubmittingState ? 'Υποβολή…' : 'Δημιουργία Ψηφοφορίας'}
+        {isSubmittingState ? '⏳ Δημιουργία...' : '🗳️ Δημιουργία Ψηφοφορίας'}
       </Button>
     </form>
   );
 }
-

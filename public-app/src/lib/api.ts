@@ -1047,8 +1047,10 @@ export type VoteResultsData = {
 export type CreateVotePayload = {
   title: string;
   description: string;
+  start_date: string;
+  end_date?: string;
   building?: number | null;
-  choices: string[];
+  choices?: string[];  // Optional - backend has default choices
 };
 
 export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
