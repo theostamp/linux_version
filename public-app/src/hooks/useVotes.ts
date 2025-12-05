@@ -63,6 +63,7 @@ export function useVotes(
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
+    refetchOnMount: 'always', // Πάντα refetch όταν mount για να βεβαιωθούμε ότι έχουμε τα τελευταία δεδομένα
     ...options,
   });
 }

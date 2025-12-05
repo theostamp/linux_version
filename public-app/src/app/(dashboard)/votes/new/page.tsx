@@ -38,10 +38,18 @@ export default function NewVotePage() {
     setIsSubmitting(true);
     try {
       await createVote(data);
-      // ✅ Invalidate AND explicitly refetch for immediate UI update
-      await queryClient.invalidateQueries({ queryKey: ['votes'] });
-      await queryClient.refetchQueries({ queryKey: ['votes'] });
+      // ✅ Invalidate όλα τα votes queries (με prefix matching)
+      await queryClient.invalidateQueries({ queryKey: ['votes'], exact: false });
+      // ✅ Refetch το συγκεκριμένο query για το τρέχον buildingId
+      if (buildingId) {
+        await queryClient.refetchQueries({ queryKey: ['votes', buildingId] });
+      } else {
+        // Αν δεν υπάρχει buildingId, refetch όλα
+        await queryClient.refetchQueries({ queryKey: ['votes'], exact: false });
+      }
       toast.success('Η ψηφοφορία δημιουργήθηκε με επιτυχία');
+      // Μικρή καθυστέρηση για να προλάβει το refetch
+      await new Promise(resolve => setTimeout(resolve, 100));
       router.push('/votes');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Αποτυχία δημιουργίας ψηφοφορίας';

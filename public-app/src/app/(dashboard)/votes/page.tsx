@@ -323,8 +323,15 @@ function VotesPageContent() {
     try {
       const message = await deleteVote(vote.id);
       toast.success(message);
-      await queryClient.invalidateQueries({ queryKey: ['votes'] });
-      await queryClient.refetchQueries({ queryKey: ['votes'] });
+      // ✅ Invalidate όλα τα votes queries (με prefix matching)
+      await queryClient.invalidateQueries({ queryKey: ['votes'], exact: false });
+      // ✅ Refetch το συγκεκριμένο query για το τρέχον buildingId
+      if (buildingId) {
+        await queryClient.refetchQueries({ queryKey: ['votes', buildingId] });
+      } else {
+        // Αν δεν υπάρχει buildingId, refetch όλα
+        await queryClient.refetchQueries({ queryKey: ['votes'], exact: false });
+      }
     } catch (err) {
       console.error('Error deleting vote:', err);
       toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');
