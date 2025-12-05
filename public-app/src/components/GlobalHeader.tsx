@@ -17,6 +17,8 @@ export default function GlobalHeader() {
   const isAdminLevel = hasOfficeAdminAccess(user);
   const isResidentUser = isResident(user);
   const isInternalManager = getEffectiveRole(user) === 'internal_manager';
+  // Επιτρέπουμε αλλαγή κτιρίου σε διαχειριστές και εσωτερικούς διαχειριστές
+  const canSelectBuilding = isAdminLevel || isInternalManager;
   const roleLabel = getRoleLabel(user);
   // Show office details for admins AND internal managers
   const showOfficeDetails = isAdminLevel || isInternalManager;
@@ -100,8 +102,8 @@ export default function GlobalHeader() {
                     )}
                   </div>
 
-                      {/* Building Selector - ADMIN-ONLY */}
-                      {isAdminLevel && (
+                      {/* Building Selector - ADMIN & INTERNAL MANAGER */}
+                      {canSelectBuilding && (
                     <div className="hidden lg:flex items-center gap-2 min-w-0">
                       <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
                       <BuildingSelectorButton
