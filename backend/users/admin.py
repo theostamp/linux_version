@@ -488,3 +488,10 @@ class CustomUserAdmin(UserAdmin):
     delete_invitations_only.short_description = _('🗑️ Διαγραφή μόνο προσκλήσεων (όχι χρήστη)')
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+# Import και register του TenantInvitationAdmin
+# Το κάνουμε εδώ για να είναι διαθέσιμο στο admin
+try:
+    from .admin_invitation import TenantInvitationAdmin  # noqa: F401, E402
+except ImportError:
+    pass  # Αν δεν υπάρχει το αρχείο, συνεχίζουμε
