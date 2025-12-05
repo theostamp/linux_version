@@ -34,28 +34,28 @@ class Command(BaseCommand):
 
         # Βρες τον χρήστη
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(email=email)  # type: ignore[attr-defined]
             self.stdout.write(f"✅ Βρέθηκε χρήστης: {user.email} (ID: {user.id})")
-        except CustomUser.DoesNotExist:
+        except CustomUser.DoesNotExist:  # type: ignore[attr-defined]
             raise CommandError(f"❌ Δεν βρέθηκε χρήστης με email: {email}")
 
         # Βρες το κτίριο (με ID ή όνομα)
         try:
             building_id = int(building_identifier)
-            building = Building.objects.get(id=building_id)
+            building = Building.objects.get(id=building_id)  # type: ignore[attr-defined]
         except ValueError:
             # Αν δεν είναι αριθμός, ψάξε με όνομα
             try:
-                building = Building.objects.get(name__icontains=building_identifier)
-            except Building.DoesNotExist:
+                building = Building.objects.get(name__icontains=building_identifier)  # type: ignore[attr-defined]
+            except Building.DoesNotExist:  # type: ignore[attr-defined]
                 raise CommandError(f"❌ Δεν βρέθηκε κτίριο με όνομα: {building_identifier}")
-            except Building.MultipleObjectsReturned:
-                buildings = Building.objects.filter(name__icontains=building_identifier)
-                self.stdout.write(self.style.WARNING("⚠️ Βρέθηκαν πολλά κτίρια:"))
+            except Building.MultipleObjectsReturned:  # type: ignore[attr-defined]
+                buildings = Building.objects.filter(name__icontains=building_identifier)  # type: ignore[attr-defined]
+                self.stdout.write(self.style.WARNING("⚠️ Βρέθηκαν πολλά κτίρια:"))  # type: ignore[attr-defined]
                 for b in buildings:
                     self.stdout.write(f"   - ID: {b.id}, Όνομα: {b.name}")
                 raise CommandError("Χρησιμοποίησε το ID του κτιρίου αντί για το όνομα")
-        except Building.DoesNotExist:
+        except Building.DoesNotExist:  # type: ignore[attr-defined]
             raise CommandError(f"❌ Δεν βρέθηκε κτίριο με ID: {building_id}")
 
         self.stdout.write(f"✅ Βρέθηκε κτίριο: {building.name} (ID: {building.id})")
@@ -65,7 +65,7 @@ class Command(BaseCommand):
         if old_manager and old_manager != user:
             self.stdout.write(f"📝 Αφαίρεση προηγούμενου internal_manager: {old_manager.email}")
             # Αν δεν είναι internal_manager σε άλλο κτίριο, άλλαξε τον ρόλο του
-            other_buildings = Building.objects.filter(internal_manager=old_manager).exclude(id=building.id)
+            other_buildings = Building.objects.filter(internal_manager=old_manager).exclude(id=building.id)  # type: ignore[attr-defined]
             if not other_buildings.exists() and old_manager.role == 'internal_manager':
                 old_manager.role = 'resident'
                 old_manager.save(update_fields=['role'])
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             self.stdout.write(f"ℹ️ Ο χρήστης είχε ήδη ρόλο: internal_manager")
 
         # Δημιούργησε/ενημέρωσε BuildingMembership
-        membership, created = BuildingMembership.objects.get_or_create(
+        membership, created = BuildingMembership.objects.get_or_create(  # type: ignore[attr-defined]
             resident=user,
             building=building,
             defaults={'role': 'internal_manager'}
@@ -102,10 +102,11 @@ class Command(BaseCommand):
                 self.stdout.write(f"ℹ️ BuildingMembership υπήρχε ήδη με role: internal_manager")
 
         # Τελικό μήνυμα
-        self.stdout.write(self.style.SUCCESS(f"""
+        success_message = f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║  ✅ ΕΠΙΤΥΧΙΑ! Ο χρήστης {user.email}
 ║  είναι τώρα internal_manager του κτιρίου "{building.name}"
 ╚══════════════════════════════════════════════════════════════╝
-        """))
+        """
+        self.stdout.write(self.style.SUCCESS(success_message))  # type: ignore[attr-defined]
 
