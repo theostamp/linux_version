@@ -29,6 +29,7 @@ credentials/
 !package-lock.json
 !tsconfig.json
 !tsconfig.*.json
+!pyrightconfig.json
 *-credentials.json
 *-secret.json
 *-key.json
