@@ -1,24 +1,76 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Building2, Mail, ArrowRight, Check, AlertCircle, Loader2, Phone, Home } from 'lucide-react';
-// Note: Home icon kept for success message section
+import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { 
+  Building2, 
+  Mail, 
+  ArrowRight, 
+  Check, 
+  AlertCircle, 
+  Loader2, 
+  Phone, 
+  Home,
+  Info,
+  UserCheck,
+  Sparkles,
+  ExternalLink
+} from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// Check if user is authenticated (has valid token)
+function checkAuth(): { isAuthenticated: boolean; userEmail?: string } {
+  if (typeof window === 'undefined') return { isAuthenticated: false };
+  
+  const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+  const userStr = localStorage.getItem('user');
+  
+  if (!token) return { isAuthenticated: false };
+  
+  try {
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      return { isAuthenticated: true, userEmail: user?.email };
+    }
+  } catch {
+    // Invalid user data
+  }
+  
+  return { isAuthenticated: !!token };
+}
+
 function KioskConnectContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const buildingId = searchParams?.get('building') || searchParams?.get('building_id');
   const token = searchParams?.get('token');
 
+  // User input states
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  
+  // UI states
   const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'existing_user_redirect'>('idle');
   const [message, setMessage] = useState('');
   const [buildingInfo, setBuildingInfo] = useState<{ name: string; address: string } | null>(null);
+  
+  // View mode: 'initial' for choice screen, 'register' for registration form
+  const [viewMode, setViewMode] = useState<'initial' | 'register' | 'info'>('initial');
+  
+  // Auth state
+  const [authState, setAuthState] = useState<{ isAuthenticated: boolean; userEmail?: string }>({ isAuthenticated: false });
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Check auth state on mount
+  useEffect(() => {
+    const state = checkAuth();
+    setAuthState(state);
+    setAuthChecked(true);
+  }, []);
 
   // Fetch building info on mount
   useEffect(() => {
@@ -44,6 +96,11 @@ function KioskConnectContent() {
         address: ''
       });
     }
+  };
+
+  // Handle authenticated user going to their apartment
+  const handleGoToMyApartment = () => {
+    router.push('/my-apartment');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,8 +139,14 @@ function KioskConnectContent() {
       const data = await response.json();
 
       if (response.ok) {
-        setStatus('success');
-        setMessage(data.message || 'Ελέγξτε το email σας για να συνεχίσετε!');
+        // Check if this is an existing user - they get a magic login link
+        if (data.status === 'existing_user') {
+          setStatus('existing_user_redirect');
+          setMessage(data.message || 'Ελέγξτε το email σας για να μεταβείτε απευθείας στο διαμέρισμά σας!');
+        } else {
+          setStatus('success');
+          setMessage(data.message || 'Ελέγξτε το email σας για να συνεχίσετε!');
+        }
         // Clear form
         setEmail('');
         setPhone('');
@@ -100,21 +163,278 @@ function KioskConnectContent() {
     }
   };
 
-  // Validation check
+  // Validation check - show error if no building/token
   if (!buildingId || !token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 max-w-md text-center">
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Μη έγκυρο QR Code</h2>
-          <p className="text-red-200">
+          <p className="text-red-200 mb-6">
             Παρακαλώ σαρώστε το QR code από την οθόνη του κτιρίου σας.
           </p>
+          <Link 
+            href="/"
+            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
+          >
+            <span>Μάθετε περισσότερα για την εφαρμογή</span>
+            <ExternalLink className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     );
   }
 
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    );
+  }
+
+  // === AUTHENTICATED USER VIEW ===
+  if (authState.isAuthenticated && viewMode === 'initial') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl mb-6 shadow-2xl">
+              <UserCheck className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-3">
+              Καλώς ήρθατε!
+            </h1>
+            {authState.userEmail && (
+              <p className="text-white/60 text-sm mb-2">
+                Συνδεδεμένος ως: <span className="text-emerald-400">{authState.userEmail}</span>
+              </p>
+            )}
+            {buildingInfo && (
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mt-4">
+                <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
+                {buildingInfo.address && (
+                  <p className="text-sm text-white/60 mt-1">{buildingInfo.address}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Options */}
+          <div className="space-y-4">
+            {/* Go to My Apartment */}
+            <button
+              onClick={handleGoToMyApartment}
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <Home className="w-5 h-5" />
+              <span>Πήγαινε στο διαμέρισμά μου</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            {/* Learn More */}
+            <Link
+              href="/"
+              className="w-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3"
+            >
+              <Info className="w-5 h-5" />
+              <span>Μάθε περισσότερα για την εφαρμογή</span>
+            </Link>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center mt-8">
+            <p className="text-xs text-white/30">
+              © {new Date().getFullYear()} New Concierge. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // === INITIAL CHOICE VIEW (Not authenticated) ===
+  if (viewMode === 'initial') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Header with Building Info */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-2xl">
+              <Building2 className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-3">
+              Καλώς ήρθατε
+            </h1>
+            {buildingInfo && (
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mb-4">
+                <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
+                {buildingInfo.address && (
+                  <p className="text-sm text-white/60 mt-1">{buildingInfo.address}</p>
+                )}
+              </div>
+            )}
+            <p className="text-white/70 text-sm">
+              Τι θα θέλατε να κάνετε;
+            </p>
+          </div>
+
+          {/* Choice Cards */}
+          <div className="space-y-4">
+            {/* I'm a Resident */}
+            <button
+              onClick={() => setViewMode('register')}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-5 px-6 rounded-2xl transition-all duration-200 flex items-start gap-4 shadow-lg hover:shadow-xl text-left group"
+            >
+              <div className="bg-white/20 rounded-xl p-3 group-hover:bg-white/30 transition-colors">
+                <Home className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="block text-lg font-bold">Είμαι ιδιοκτήτης / ένοικος</span>
+                <span className="text-sm text-white/70">
+                  Σύνδεση ή εγγραφή στην εφαρμογή
+                </span>
+              </div>
+              <ArrowRight className="w-5 h-5 mt-3 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </button>
+
+            {/* Learn More About the App */}
+            <button
+              onClick={() => setViewMode('info')}
+              className="w-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium py-5 px-6 rounded-2xl transition-all duration-200 flex items-start gap-4 text-left group"
+            >
+              <div className="bg-white/10 rounded-xl p-3 group-hover:bg-white/20 transition-colors">
+                <Sparkles className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <span className="block text-lg font-semibold">Θέλω να μάθω περισσότερα</span>
+                <span className="text-sm text-white/60">
+                  Τι είναι η εφαρμογή New Concierge
+                </span>
+              </div>
+              <ArrowRight className="w-5 h-5 mt-3 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center mt-8">
+            <p className="text-xs text-white/30">
+              © {new Date().getFullYear()} New Concierge. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // === INFO VIEW - About the App ===
+  if (viewMode === 'info') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl mb-6 shadow-2xl">
+              <Sparkles className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              New Concierge
+            </h1>
+            <p className="text-white/70 text-sm">
+              Ο Ψηφιακός Θυρωρός της πολυκατοικίας
+            </p>
+          </div>
+
+          {/* Building Context */}
+          {buildingInfo && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-6 text-center">
+              <p className="text-xs text-emerald-300 uppercase tracking-wider mb-1">Αυτή η οθόνη ανήκει στο</p>
+              <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
+              {buildingInfo.address && (
+                <p className="text-sm text-white/60">{buildingInfo.address}</p>
+              )}
+            </div>
+          )}
+
+          {/* Info Card */}
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl mb-6">
+            <h2 className="text-lg font-bold text-white mb-4">Τι είναι το New Concierge;</h2>
+            
+            <div className="space-y-4 text-white/80">
+              <p className="text-sm leading-relaxed">
+                Μια σύγχρονη πλατφόρμα διαχείρισης πολυκατοικιών που φέρνει 
+                <span className="text-emerald-400 font-medium"> διαφάνεια, οργάνωση και συνεργασία</span> στις κοινότητες.
+              </p>
+              
+              <div className="border-t border-white/10 pt-4">
+                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="text-lg">✨</span> Τι προσφέρει:
+                </h3>
+                <ul className="space-y-2.5 text-sm">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>Ενημέρωση για ανακοινώσεις & εργασίες</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>Διαφανή οικονομικά & κοινόχρηστα</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>Ψηφοφορίες για αποφάσεις κοινότητας</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>Αιτήματα & επικοινωνία με τη διαχείριση</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>Info Point - Οθόνη ενημέρωσης στην είσοδο</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA for visitors */}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4 text-center">
+            <p className="text-sm text-blue-200 mb-2">
+              Θέλετε να ενεργοποιήσετε το New Concierge στη δική σας πολυκατοικία;
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <Link
+              href="/"
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <span>Μάθετε περισσότερα</span>
+              <ExternalLink className="w-5 h-5" />
+            </Link>
+
+            <button
+              onClick={() => setViewMode('initial')}
+              className="w-full bg-white/10 hover:bg-white/15 border border-white/20 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200"
+            >
+              ← Πίσω
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center mt-8">
+            <p className="text-xs text-white/30">
+              © {new Date().getFullYear()} New Concierge. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // === REGISTRATION FORM VIEW ===
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -124,8 +444,8 @@ function KioskConnectContent() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-2xl">
             <Building2 className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3">
-            Καλώς ήρθατε
+          <h1 className="text-3xl font-bold text-white mb-3">
+            Σύνδεση / Εγγραφή
           </h1>
           {buildingInfo && (
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mb-2">
@@ -135,15 +455,12 @@ function KioskConnectContent() {
               )}
             </div>
           )}
-          <p className="text-white/70 text-sm">
-            Συνδεθείτε ή εγγραφείτε για πρόσβαση στην εφαρμογή
-          </p>
         </div>
 
         {/* Main Card */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
 
-          {/* Success State */}
+          {/* Success State - New User */}
           {status === 'success' && (
             <div className="text-center">
               <div className="w-16 h-16 bg-green-500/20 border-2 border-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -155,19 +472,54 @@ function KioskConnectContent() {
               {/* Info about next steps */}
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
                 <div className="flex items-center justify-center gap-2 text-blue-300 mb-2">
-                  <Home className="w-5 h-5" />
+                  <Mail className="w-5 h-5" />
                   <span className="font-medium">Επόμενο βήμα</span>
                 </div>
                 <p className="text-sm text-white/70">
                   Ελέγξτε το email σας και ακολουθήστε τον σύνδεσμο για να ολοκληρώσετε την εγγραφή.
-                  Μετά θα μπορείτε να δείτε το διαμέρισμά σας!
                 </p>
               </div>
+              
+              <button
+                onClick={() => setViewMode('initial')}
+                className="mt-6 text-white/60 hover:text-white text-sm transition-colors"
+              >
+                ← Πίσω στην αρχή
+              </button>
+            </div>
+          )}
+
+          {/* Success State - Existing User (Magic Link Sent) */}
+          {status === 'existing_user_redirect' && (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-500/20 border-2 border-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserCheck className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Έχετε ήδη λογαριασμό!</h3>
+              <p className="text-white/80 leading-relaxed mb-4">{message}</p>
+              
+              {/* Info about magic link */}
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mt-4">
+                <div className="flex items-center justify-center gap-2 text-emerald-300 mb-2">
+                  <Home className="w-5 h-5" />
+                  <span className="font-medium">Γρήγορη πρόσβαση</span>
+                </div>
+                <p className="text-sm text-white/70">
+                  Σας στείλαμε ένα σύνδεσμο στο email σας. Πατήστε τον για να μεταβείτε απευθείας στο διαμέρισμά σας!
+                </p>
+              </div>
+              
+              <button
+                onClick={() => setViewMode('initial')}
+                className="mt-6 text-white/60 hover:text-white text-sm transition-colors"
+              >
+                ← Πίσω στην αρχή
+              </button>
             </div>
           )}
 
           {/* Form State */}
-          {status !== 'success' && (
+          {status !== 'success' && status !== 'existing_user_redirect' && (
             <form onSubmit={handleSubmit} className="space-y-5">
 
               {/* Phone Input */}
@@ -234,7 +586,7 @@ function KioskConnectContent() {
                   </>
                 ) : (
                   <>
-                    <span>Εγγραφή</span>
+                    <span>Συνέχεια</span>
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -245,9 +597,18 @@ function KioskConnectContent() {
                 <p className="text-xs text-white/50 leading-relaxed">
                   Θα αναζητηθεί το τηλέφωνό σας στα στοιχεία του κτιρίου.
                   <br />
-                  Αν βρεθεί, θα λάβετε email για ολοκλήρωση εγγραφής.
+                  Αν βρεθεί, θα λάβετε email για σύνδεση ή ολοκλήρωση εγγραφής.
                 </p>
               </div>
+
+              {/* Back Button */}
+              <button
+                type="button"
+                onClick={() => setViewMode('initial')}
+                className="w-full text-white/60 hover:text-white text-sm transition-colors py-2"
+              >
+                ← Πίσω
+              </button>
             </form>
           )}
         </div>
@@ -283,3 +644,4 @@ export default function KioskConnectPage() {
     </Suspense>
   );
 }
+

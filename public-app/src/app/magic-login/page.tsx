@@ -9,6 +9,7 @@ function MagicLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const redirect = searchParams.get('redirect'); // Optional custom redirect destination
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string>('');
@@ -33,17 +34,21 @@ function MagicLoginContent() {
         if (response.ok) {
           const userData = await response.json();
           
-          // Store the token in localStorage
+          // Store the token in localStorage (both keys for compatibility)
           localStorage.setItem('access_token', token);
+          localStorage.setItem('access', token);
           
           // Store user data
           localStorage.setItem('user', JSON.stringify(userData));
           
           setStatus('success');
           
-          // Redirect to my-apartment after a brief delay
+          // Determine redirect destination (default to my-apartment for residents)
+          const destination = redirect || '/my-apartment';
+          
+          // Redirect after a brief delay
           setTimeout(() => {
-            router.push('/my-apartment');
+            router.push(destination);
           }, 1500);
         } else {
           setStatus('error');
@@ -57,7 +62,7 @@ function MagicLoginContent() {
     };
 
     performMagicLogin();
-  }, [token, router]);
+  }, [token, redirect, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
