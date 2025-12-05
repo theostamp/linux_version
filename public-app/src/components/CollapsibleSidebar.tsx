@@ -200,7 +200,7 @@ const navigationGroups: NavigationGroup[] = [
         href: '/invitations',
         label: 'Προσκλήσεις',
         icon: <Mail className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser', 'office_staff'],
+        roles: ['manager', 'staff', 'superuser', 'office_staff', 'internal_manager'],
         tooltip: 'Προβολή και διαχείριση προσκλήσεων χρηστών',
       },
     ]
