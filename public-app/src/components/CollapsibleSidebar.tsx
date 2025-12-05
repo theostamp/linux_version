@@ -190,18 +190,18 @@ const navigationGroups: NavigationGroup[] = [
         tooltip: 'Οπτικοποίηση των κτιρίων σε χάρτη',
       },
       {
-        href: '/data-migration',
-        label: 'Μετανάστευση',
-        icon: <RefreshCw className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        tooltip: 'Μεταφορά δεδομένων μεταξύ συστημάτων',
-      },
-      {
         href: '/invitations',
         label: 'Προσκλήσεις',
         icon: <Mail className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser', 'office_staff', 'internal_manager'],
         tooltip: 'Προβολή και διαχείριση προσκλήσεων χρηστών',
+      },
+      {
+        href: '/data-migration',
+        label: 'Μετανάστευση',
+        icon: <RefreshCw className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Μεταφορά δεδομένων μεταξύ συστημάτων',
       },
     ]
   },
