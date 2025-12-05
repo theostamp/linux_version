@@ -350,6 +350,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 Request data type: {type(request.data)}")
         print(f"🔍 Request content type: {request.content_type}")
         print(f"🔍 Request method: {request.method}")
+        print(f"🔍 internal_manager_id from request: {request.data.get('internal_manager_id')} (type: {type(request.data.get('internal_manager_id'))})")
         print(f"🔍 Latitude from request: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
         print(f"🔍 Longitude from request: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
         print(f"🔍 Street view image from request: {request.data.get('street_view_image')} (type: {type(request.data.get('street_view_image'))})")
@@ -357,6 +358,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         # Check if data is a QueryDict (which might cause the array issue)
         if hasattr(request.data, 'getlist'):
             print("⚠️  Request.data is a QueryDict-like object")
+            print(f"🔍 internal_manager_id getlist: {request.data.getlist('internal_manager_id')}")
             print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
             print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
             print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")

@@ -192,11 +192,22 @@ export default function CreateBuildingForm({
 
   // Επιλογή χρήστη ως internal manager
   const handleUserSelect = (selectedUser: User) => {
-    setFormData(prev => ({
-      ...prev,
-      internal_manager_id: selectedUser.id,
-      internal_manager_name: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email,
-    }));
+    console.log('[CreateBuildingForm] handleUserSelect called:', {
+      selectedUser,
+      userId: selectedUser.id,
+    });
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        internal_manager_id: selectedUser.id,
+        internal_manager_name: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email,
+      };
+      console.log('[CreateBuildingForm] Updated formData:', {
+        internal_manager_id: updated.internal_manager_id,
+        internal_manager_name: updated.internal_manager_name,
+      });
+      return updated;
+    });
     setShowUsersDropdown(false);
     setUserSearchTerm('');
     toast.success(`✅ Ο χρήστης ${selectedUser.email} ορίστηκε ως εσωτερικός διαχειριστής`);
@@ -434,6 +445,13 @@ export default function CreateBuildingForm({
       else if (!payload.internal_manager_id && !payload.internal_manager_name) {
         payload.internal_manager_id = null;
       }
+
+      // Debug logging για internal_manager_id
+      console.log('[CreateBuildingForm] Submitting payload:', {
+        internal_manager_id: payload.internal_manager_id,
+        internal_manager_name: payload.internal_manager_name,
+        formData_internal_manager_id: formData.internal_manager_id,
+      });
 
       let result: Building;
 

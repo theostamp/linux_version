@@ -223,9 +223,17 @@ class BuildingSerializer(serializers.ModelSerializer):
         import logging
         logger = logging.getLogger(__name__)
         
+        # Debug logging
+        logger.info(f"[BuildingSerializer.update] validated_data keys: {list(validated_data.keys())}")
+        logger.info(f"[BuildingSerializer.update] internal_manager in validated_data: {'internal_manager' in validated_data}")
+        logger.info(f"[BuildingSerializer.update] internal_manager value: {validated_data.get('internal_manager')}")
+        
         # Ελέγχουμε αν αλλάζει ο internal_manager
         new_internal_manager = validated_data.get('internal_manager')
         old_internal_manager = instance.internal_manager
+        
+        logger.info(f"[BuildingSerializer.update] Old internal_manager: {old_internal_manager}")
+        logger.info(f"[BuildingSerializer.update] New internal_manager: {new_internal_manager}")
         
         # Αν αλλάζει ο internal_manager
         if 'internal_manager' in validated_data:
