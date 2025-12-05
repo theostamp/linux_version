@@ -55,28 +55,31 @@ class VoteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'creator', 'creator_name', 'project_title']
 
     def validate_building(self, value):
-        # If building is None (global vote), allow it for staff users
-        if value is None:
-            user = self.context['request'].user
-            if user.is_superuser or user.is_staff:
-                return value
-            else:
-                raise serializers.ValidationError("Μόνο οι διαχειριστές μπορούν να δημιουργήσουν καθολικές ψηφοφορίες.")
-        
         user = self.context['request'].user
         
-        # Superusers can create votes anywhere
-        if user.is_superuser:
+        # Superusers και staff έχουν πλήρη πρόσβαση
+        if user.is_superuser or user.is_staff:
             return value
-            
-        # Staff users can create votes in any building
-        if user.is_staff:
+        
+        # Office managers (role='manager') έχουν πλήρη πρόσβαση
+        if getattr(user, 'is_office_manager', False) or user.role == 'manager':
             return value
+        
+        # Internal managers μπορούν να δημιουργήσουν ψηφοφορίες ΜΟΝΟ για τη δική τους πολυκατοικία
+        if getattr(user, 'is_internal_manager', False) or user.role == 'internal_manager':
+            if value is None:
+                # Internal managers ΔΕΝ μπορούν να δημιουργήσουν καθολικές ψηφοφορίες
+                raise serializers.ValidationError("Οι εσωτερικοί διαχειριστές δεν μπορούν να δημιουργήσουν καθολικές ψηφοφορίες. Επιλέξτε το κτίριό σας.")
             
-        # Regular managers can only create votes in buildings they manage
-        if hasattr(value, 'manager') and value.manager is not None:
-            if value.manager == user:
+            # Έλεγχος αν ο internal_manager διαχειρίζεται αυτό το κτίριο
+            if hasattr(user, 'is_internal_manager_of') and user.is_internal_manager_of(value):
                 return value
+            
+            raise serializers.ValidationError("Μπορείτε να δημιουργήσετε ψηφοφορία μόνο για το κτίριο που διαχειρίζεστε.")
+        
+        # Regular managers μπορούν να δημιουργήσουν ψηφοφορίες στα κτίρια που διαχειρίζονται
+        if value is not None and hasattr(value, 'manager') and value.manager == user:
+            return value
                 
         raise serializers.ValidationError("Δεν έχετε δικαίωμα διαχείρισης για αυτό το κτήριο.")
 
