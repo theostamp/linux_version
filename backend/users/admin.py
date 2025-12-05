@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.admin.utils import unquote
 
 from .models import CustomUser
+from .models_invitation import TenantInvitation
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -20,6 +21,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('is_staff', 'is_active')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
+    actions = ['delete_invitations_only']
     
     def is_protected(self, obj):
         """Visual indicator για προστατευμένους users"""
@@ -436,5 +438,53 @@ class CustomUserAdmin(UserAdmin):
                 request,
                 _('Οι υπόλοιποι χρήστες διαγράφηκαν, αλλά ο προστατευμένος admin user παραμένει.')
             )
+
+    def delete_invitations_only(self, request, queryset):
+        """
+        Admin action: Διαγράφει μόνο τις προσκλήσεις των επιλεγμένων χρηστών,
+        όχι τους ίδιους τους χρήστες.
+        """
+        deleted_count = 0
+        users_processed = 0
+        
+        for user in queryset:
+            # Βρες όλες τις προσκλήσεις που σχετίζονται με αυτόν τον χρήστη
+            invitations_by_email = TenantInvitation.objects.filter(email=user.email)
+            invitations_by_user = TenantInvitation.objects.filter(created_user=user)
+            invitations_sent_by_user = TenantInvitation.objects.filter(invited_by=user)
+            
+            all_invitations = (invitations_by_email | invitations_by_user | invitations_sent_by_user).distinct()
+            count = all_invitations.count()
+            
+            if count > 0:
+                all_invitations.delete()
+                deleted_count += count
+                users_processed += 1
+                self.message_user(
+                    request,
+                    _('Διαγράφηκαν %(count)d προσκλήσεις για τον χρήστη %(email)s') % {
+                        'count': count,
+                        'email': user.email
+                    },
+                    messages.SUCCESS
+                )
+        
+        if deleted_count > 0:
+            self.message_user(
+                request,
+                _('✅ Διαγράφηκαν συνολικά %(total)d προσκλήσεις για %(users)d χρήστες. Οι χρήστες παραμένουν στη βάση.') % {
+                    'total': deleted_count,
+                    'users': users_processed
+                },
+                messages.SUCCESS
+            )
+        else:
+            self.message_user(
+                request,
+                _('ℹ️ Δεν βρέθηκαν προσκλήσεις για τους επιλεγμένους χρήστες.'),
+                messages.INFO
+            )
+    
+    delete_invitations_only.short_description = _('🗑️ Διαγραφή μόνο προσκλήσεων (όχι χρήστη)')
 
 admin.site.register(CustomUser, CustomUserAdmin)
