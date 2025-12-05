@@ -169,6 +169,11 @@ class CustomUserAdmin(UserAdmin):
             'todo_management_todo',  # Todos created by user (CASCADE)
         ]
         
+        # Tables with CASCADE delete in TENANT schemas
+        cascade_tenant_tables = [
+            'buildings_buildingmembership',  # Building memberships (CASCADE) - must be deleted before user
+        ]
+        
         # STEP 1a: Set SET_NULL fields to NULL in PUBLIC schema
         for table, field in set_null_public_tables:
             try:
@@ -207,7 +212,7 @@ class CustomUserAdmin(UserAdmin):
                 except Exception as e:
                     logger.warning(f"Error updating {schema}.{table}.{field}: {e}")
         
-        # STEP 2: Delete CASCADE tables
+        # STEP 2a: Delete CASCADE tables in PUBLIC schema
         for table in cascade_tables:
             try:
                 with transaction.atomic():
@@ -217,19 +222,46 @@ class CustomUserAdmin(UserAdmin):
                             cursor.execute(f"DELETE FROM {table} WHERE user_id IN ({placeholders if len(ids) > 1 else '%s'})", params if len(ids) > 1 else [ids[0]])
                         else:
                             cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
+                        if cursor.rowcount > 0:
+                            logger.info(f"Deleted {cursor.rowcount} rows from public.{table} for user IDs {ids}")
             except ProgrammingError as e:
                 # Table might not exist in all environments - skip silently
                 error_str = str(e)
                 if 'does not exist' not in error_str.lower():
                     # Log but don't raise - continue with other tables
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Could not delete from {table}: {e}")
+                    logger.warning(f"Could not delete from public.{table}: {e}")
             except Exception as e:
                 # Log other errors but continue
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Error deleting from {table}: {e}")
+                logger.warning(f"Error deleting from public.{table}: {e}")
+        
+        # STEP 2b: Delete CASCADE tables in ALL TENANT schemas
+        for schema in tenant_schemas:
+            for table in cascade_tenant_tables:
+                try:
+                    with transaction.atomic():
+                        with connection.cursor() as cursor:
+                            # Use schema-qualified table name
+                            qualified_table = f'"{schema}".{table}'
+                            # BuildingMembership uses resident_id
+                            if table == 'buildings_buildingmembership':
+                                if len(ids) == 1:
+                                    cursor.execute(f"DELETE FROM {qualified_table} WHERE resident_id = %s", [ids[0]])
+                                else:
+                                    cursor.execute(f"DELETE FROM {qualified_table} WHERE resident_id IN ({placeholders})", ids)
+                            else:
+                                # Generic delete for other tenant tables
+                                if len(ids) == 1:
+                                    cursor.execute(f"DELETE FROM {qualified_table} WHERE {where_clause.replace('user_id', 'id')}", params)
+                                else:
+                                    cursor.execute(f"DELETE FROM {qualified_table} WHERE {where_clause.replace('user_id', 'id')}", params)
+                            if cursor.rowcount > 0:
+                                logger.info(f"Deleted {cursor.rowcount} rows from {qualified_table} for user IDs {ids}")
+                except ProgrammingError as e:
+                    error_str = str(e)
+                    if 'does not exist' not in error_str.lower():
+                        logger.warning(f"Could not delete from {schema}.{table}: {e}")
+                except Exception as e:
+                    logger.warning(f"Error deleting from {schema}.{table}: {e}")
         
         # STEP 3: Now delete the user in main transaction
         try:
@@ -276,12 +308,19 @@ class CustomUserAdmin(UserAdmin):
             # Log before deletion only if we're deleting the currently logged-in user.
             if deleting_current_user:
                 pre_logged_entry = self.log_deletion(request, obj, obj_display)
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            
             try:
+                logger.info(f"Attempting to delete user {obj.pk} ({obj.email})")
                 self._delete_user_rows([obj.pk])
+                logger.info(f"Successfully deleted user {obj.pk}")
             except ProgrammingError as e:
                 if pre_logged_entry:
                     pre_logged_entry.delete()
                 error_str = str(e)
+                logger.error(f"ProgrammingError deleting user {obj.pk}: {error_str}", exc_info=True)
                 if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
                     messages.error(
                         request,
@@ -290,17 +329,27 @@ class CustomUserAdmin(UserAdmin):
                     return HttpResponseRedirect(
                         reverse(f'admin:{opts.app_label}_{opts.model_name}_change', args=[object_id])
                     )
-                raise
+                # Log full error for debugging
+                logger.error(f"ProgrammingError details: {e}", exc_info=True)
+                messages.error(
+                    request,
+                    _("Αποτυχία διαγραφής (ProgrammingError): %(error)s") % {'error': error_str[:200]},
+                )
+                return HttpResponseRedirect(
+                    reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
+                )
             except Exception as e:
                 if pre_logged_entry:
                     pre_logged_entry.delete()
                 # Catch any other errors and display them
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error deleting user {obj.pk}: {e}", exc_info=True)
+                logger.error(f"Error deleting user {obj.pk}: {type(e).__name__}: {e}", exc_info=True)
+                error_message = str(e)
+                # Truncate long error messages
+                if len(error_message) > 300:
+                    error_message = error_message[:300] + "..."
                 messages.error(
                     request,
-                    _("Αποτυχία διαγραφής: %(error)s") % {'error': str(e)},
+                    _("Αποτυχία διαγραφής: %(error)s") % {'error': error_message},
                 )
                 return HttpResponseRedirect(
                     reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
