@@ -636,7 +636,11 @@ class FinancialDashboardService:
                 date__lte=end_date
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            current_reserve = total_payments_snapshot - total_expenses_snapshot - total_management_cost
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Αφαίρεση του total_management_cost
+            # Τα management fees είναι ΗΔΗ Expense records (category='management_fees')
+            # και περιλαμβάνονται στο total_expenses_snapshot.
+            # Δεν πρέπει να αφαιρεθούν 2 φορές!
+            current_reserve = total_payments_snapshot - total_expenses_snapshot
             
             # Σημείωση: Όλες οι δαπάνες θεωρούνται εκδομένες
             # Δεν υπάρχουν πια "ανέκδοτες" δαπάνες
