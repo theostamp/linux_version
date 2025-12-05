@@ -3,11 +3,11 @@
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import AssemblyForm from '@/components/AssemblyForm';
-import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';
+import { useInternalManagerGuard } from '@/hooks/useInternalManagerGuard';
 
 export default function NewAssemblyPage() {
   const { currentBuilding } = useBuilding();
-  const { isAccessAllowed, isLoading } = useSuperUserGuard();
+  const { isAccessAllowed, isLoading } = useInternalManagerGuard();
 
   if (isLoading) return <p className="p-4">Έλεγχος δικαιωμάτων...</p>;
   if (!isAccessAllowed) return <p className="p-4 text-red-600">🚫 Δεν έχετε πρόσβαση σε αυτή τη σελίδα.</p>;

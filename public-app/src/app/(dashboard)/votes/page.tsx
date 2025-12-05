@@ -261,15 +261,6 @@ function VotesPageContent() {
   const canDelete = hasOfficeAdminAccess(user);
   const canCreateVote = hasInternalManagerAccess(user);
 
-  // Debug logging for role check
-  console.log('[VotesPage] User role check:', {
-    userRole: user?.role,
-    userProfile: user?.profile,
-    canCreateVote,
-    canDelete,
-    hasInternalManagerAccess: hasInternalManagerAccess(user),
-  });
-
   const {
     data: votesData = [],
     isLoading,
@@ -290,7 +281,7 @@ function VotesPageContent() {
     return (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
+      <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">🗳️ Ψηφοφορίες</h1>
             <p className="text-muted-foreground mt-1">Συμμετοχή στη λήψη αποφάσεων</p>
           </div>
@@ -411,7 +402,7 @@ function VotesPageContent() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {activeVotes.map((vote, index) => (
                   <VoteItemContent
-                    key={vote.id}
+                key={vote.id}
                     vote={vote as VoteItemContentProps['vote']}
                     active={true}
                     selectedBuilding={selectedBuilding}
@@ -436,7 +427,7 @@ function VotesPageContent() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {pastVotes.map((vote, index) => (
-                  <VoteItemContent
+                  <VoteItemContent 
                     key={vote.id}
                     vote={vote as VoteItemContentProps['vote']}
                     active={false}
@@ -445,7 +436,7 @@ function VotesPageContent() {
                     deletingId={deletingId}
                     handleDelete={handleDelete}
                     index={index}
-                  />
+              />
                 ))}
               </div>
             </div>

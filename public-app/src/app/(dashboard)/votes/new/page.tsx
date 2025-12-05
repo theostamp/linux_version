@@ -7,7 +7,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { createVote, CreateVotePayload } from '@/lib/api';
 import NewVoteForm from '@/components/NewVoteForm';
-import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';
+import { useInternalManagerGuard } from '@/hooks/useInternalManagerGuard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export default function NewVotePage() {
   const { currentBuilding, selectedBuilding } = useBuilding();
   const router = useRouter();
-  const { isAccessAllowed, isLoading } = useSuperUserGuard();
+  const { isAccessAllowed, isLoading } = useInternalManagerGuard();
   const queryClient = useQueryClient();
 
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
