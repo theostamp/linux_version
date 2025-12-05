@@ -261,6 +261,15 @@ function VotesPageContent() {
   const canDelete = hasOfficeAdminAccess(user);
   const canCreateVote = hasInternalManagerAccess(user);
 
+  // Debug logging for role check
+  console.log('[VotesPage] User role check:', {
+    userRole: user?.role,
+    userProfile: user?.profile,
+    canCreateVote,
+    canDelete,
+    hasInternalManagerAccess: hasInternalManagerAccess(user),
+  });
+
   const {
     data: votesData = [],
     isLoading,
