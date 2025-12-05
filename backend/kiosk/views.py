@@ -1004,6 +1004,7 @@ def kiosk_register(request):
         try:
             from django_tenants.utils import schema_context
             from buildings.models import BuildingMembership
+            from rest_framework_simplejwt.tokens import RefreshToken
             
             # Get tenant from current connection or user
             tenant = None
@@ -1046,26 +1047,42 @@ def kiosk_register(request):
                 kiosk_logger.warning(f"No tenant found for user {email}, skipping building/apartment linking")
                 linked_apartments = [apartment.number]
             
-            # Send magic login email with direct link to my-apartment
-            EmailService.send_magic_login_email(existing_user, building, apartment)
+            # Generate JWT token for instant login (phone verification is our trust anchor)
+            # The user has proven they have access to the registered phone number
+            refresh = RefreshToken.for_user(existing_user)
+            access_token = str(refresh.access_token)
+            
+            kiosk_logger.info(f"Generated instant login token for existing user {email}")
             
             # Build response message based on number of apartments
             if len(all_matches) > 1:
                 apt_list = ', '.join([m['apartment'].number for m in all_matches])
-                message = f'Έχετε ήδη λογαριασμό! Συνδεθήκατε με {len(all_matches)} διαμερίσματα ({apt_list}). Ελέγξτε το email σας.'
+                message = f'Καλώς ήρθατε! Βρέθηκαν {len(all_matches)} διαμερίσματα ({apt_list}).'
             else:
-                message = 'Έχετε ήδη λογαριασμό! Ελέγξτε το email σας για να μεταβείτε απευθείας στο διαμέρισμά σας.'
+                message = f'Καλώς ήρθατε! Μεταφέρεστε στο διαμέρισμά σας...'
             
+            # Return token for instant login - no email verification needed
             return Response({
                 'message': message,
                 'status': 'existing_user',
                 'apartment': apartment.number,
-                'apartments': [m['apartment'].number for m in all_matches]
+                'apartments': [m['apartment'].number for m in all_matches],
+                'access_token': access_token,  # JWT for instant login
+                'user': {
+                    'email': existing_user.email,
+                    'first_name': existing_user.first_name or '',
+                    'last_name': existing_user.last_name or '',
+                }
             })
         except Exception as e:
             kiosk_logger.error(f"Error processing existing user: {e}")
+            # Fallback: send magic login email if token generation fails
+            try:
+                EmailService.send_magic_login_email(existing_user, building, apartment)
+            except:
+                pass
             return Response({
-                'message': 'Έχετε ήδη λογαριασμό. Χρησιμοποιήστε την επιλογή "Ξέχασα τον κωδικό μου" για να συνδεθείτε.',
+                'message': 'Έχετε ήδη λογαριασμό. Ελέγξτε το email σας για σύνδεση.',
                 'status': 'existing_user'
             })
     

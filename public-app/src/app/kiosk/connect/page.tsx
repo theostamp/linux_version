@@ -139,17 +139,41 @@ function KioskConnectContent() {
       const data = await response.json();
 
       if (response.ok) {
-        // Check if this is an existing user - they get a magic login link
-        if (data.status === 'existing_user') {
+        // Check if this is an existing user with instant login token
+        if (data.status === 'existing_user' && data.access_token) {
+          // Instant login - store token and redirect immediately
+          localStorage.setItem('access_token', data.access_token);
+          localStorage.setItem('access', data.access_token);
+          
+          // Store user data if provided
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
+          
+          setStatus('existing_user_redirect');
+          setMessage(data.message || 'Μεταφέρεστε στο διαμέρισμά σας...');
+          
+          // Clear form
+          setEmail('');
+          setPhone('');
+          
+          // Redirect to my-apartment after brief delay
+          setTimeout(() => {
+            router.push('/my-apartment');
+          }, 1500);
+        } else if (data.status === 'existing_user') {
+          // Fallback: email was sent
           setStatus('existing_user_redirect');
           setMessage(data.message || 'Ελέγξτε το email σας για να μεταβείτε απευθείας στο διαμέρισμά σας!');
+          setEmail('');
+          setPhone('');
         } else {
+          // New user - registration email sent
           setStatus('success');
           setMessage(data.message || 'Ελέγξτε το email σας για να συνεχίσετε!');
+          setEmail('');
+          setPhone('');
         }
-        // Clear form
-        setEmail('');
-        setPhone('');
       } else {
         setStatus('error');
         setMessage(data.error || 'Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.');
@@ -489,32 +513,22 @@ function KioskConnectContent() {
             </div>
           )}
 
-          {/* Success State - Existing User (Magic Link Sent) */}
+          {/* Success State - Existing User (Instant Login) */}
           {status === 'existing_user_redirect' && (
             <div className="text-center">
               <div className="w-16 h-16 bg-emerald-500/20 border-2 border-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <UserCheck className="w-8 h-8 text-emerald-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Έχετε ήδη λογαριασμό!</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Καλώς ήρθατε! 🎉</h3>
               <p className="text-white/80 leading-relaxed mb-4">{message}</p>
               
-              {/* Info about magic link */}
+              {/* Loading indicator for redirect */}
               <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mt-4">
-                <div className="flex items-center justify-center gap-2 text-emerald-300 mb-2">
-                  <Home className="w-5 h-5" />
-                  <span className="font-medium">Γρήγορη πρόσβαση</span>
+                <div className="flex items-center justify-center gap-3 text-emerald-300">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="font-medium">Μεταφορά στο διαμέρισμά σας...</span>
                 </div>
-                <p className="text-sm text-white/70">
-                  Σας στείλαμε ένα σύνδεσμο στο email σας. Πατήστε τον για να μεταβείτε απευθείας στο διαμέρισμά σας!
-                </p>
               </div>
-              
-              <button
-                onClick={() => setViewMode('initial')}
-                className="mt-6 text-white/60 hover:text-white text-sm transition-colors"
-              >
-                ← Πίσω στην αρχή
-              </button>
             </div>
           )}
 
