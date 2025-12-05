@@ -2168,15 +2168,17 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'health_score': 50
                     })
             
-            # Get announcements count
+            # Get announcements count - 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Εξαίρεση ληγμένων ανακοινώσεων
+            today = datetime.now().date()
             announcements_count = Announcement.objects.filter(
                 building__in=buildings,
                 is_active=True,
                 published=True
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)  # Μόνο ανακοινώσεις που δεν έχουν λήξει
             ).count()
             
             # Get active votes count
-            today = datetime.now().date()
             votes_count = Vote.objects.filter(
                 building__in=buildings,
                 is_active=True,
@@ -2197,19 +2199,32 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 requests_count = 0
                 urgent_requests = 0
             
-            # Calculate urgent items
-            urgent_items = urgent_requests + votes_count
+            # Calculate urgent items - 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Προσθήκη urgent ανακοινώσεων που δεν έχουν λήξει
+            urgent_announcements = Announcement.objects.filter(
+                building__in=buildings,
+                is_active=True,
+                published=True,
+                is_urgent=True
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)
+            ).count()
+            urgent_items = urgent_requests + votes_count + urgent_announcements
             
             # Get recent activity (announcements + votes)
+            # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Εξαίρεση ληγμένων ανακοινώσεων/ψηφοφοριών
             recent_announcements = Announcement.objects.filter(
                 building__in=buildings,
                 is_active=True,
                 published=True
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)  # Μόνο μη-ληγμένες
             ).order_by('-created_at')[:5]
             
             recent_votes = Vote.objects.filter(
                 building__in=buildings,
                 is_active=True
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=today)  # Μόνο μη-ληγμένες
             ).order_by('-created_at')[:5]
             
             recent_activity = []
