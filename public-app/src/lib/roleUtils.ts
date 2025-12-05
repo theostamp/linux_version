@@ -38,6 +38,15 @@ export function getEffectiveRole(user: RoleAwareUser): NormalizedRole | undefine
     normalizeRole(user?.role) ??
     normalizeRole(user?.profile?.role);
 
+  // Debug logging
+  console.log('[roleUtils] getEffectiveRole:', {
+    rawRole: user?.role,
+    profileRole: user?.profile?.role,
+    normalizedRole: declaredRole,
+    is_superuser: user?.is_superuser,
+    is_staff: user?.is_staff,
+  });
+
   // If user has an explicit declared role, use it (even if they also have is_staff/is_superuser)
   if (declaredRole) {
     return declaredRole;
