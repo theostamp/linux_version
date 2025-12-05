@@ -115,9 +115,7 @@ class BuildingSerializer(serializers.ModelSerializer):
     
     # Εσωτερικός Διαχειριστής - ForeignKey
     internal_manager = InternalManagerSerializer(read_only=True)
-    internal_manager_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(),  # SHARED_APPS - cross-schema via django-tenants
-        source='internal_manager',
+    internal_manager_id = serializers.IntegerField(
         required=False,
         allow_null=True,
         write_only=True
@@ -202,6 +200,28 @@ class BuildingSerializer(serializers.ModelSerializer):
         import logging
         logger = logging.getLogger(__name__)
         
+        # Manually resolve internal_manager_id since we changed it to IntegerField
+        # to bypass DRF's PrimaryKeyRelatedField cross-schema limitations
+        internal_manager_id = data.get('internal_manager_id')
+        if internal_manager_id:
+            try:
+                from django_tenants.utils import get_public_schema_name, schema_context
+                # Always look for users in public schema
+                with schema_context(get_public_schema_name()):
+                    user = CustomUser.objects.get(id=internal_manager_id)
+                    data['internal_manager'] = user
+                    logger.info(f"✅ [BuildingSerializer.validate] Resolved internal_manager: {user.email} (ID: {user.id})")
+            except CustomUser.DoesNotExist:
+                logger.error(f"❌ [BuildingSerializer.validate] User with ID {internal_manager_id} not found in public schema")
+                raise serializers.ValidationError({'internal_manager_id': 'Ο χρήστης δεν βρέθηκε.'})
+            except Exception as e:
+                logger.error(f"❌ [BuildingSerializer.validate] Error resolving user: {e}")
+                raise serializers.ValidationError({'internal_manager_id': f'Σφάλμα κατά την ανάκτηση χρήστη: {str(e)}'})
+        elif 'internal_manager_id' in data and data['internal_manager_id'] is None:
+            # Handle clearing the internal manager
+            data['internal_manager'] = None
+            logger.info("ℹ️ [BuildingSerializer.validate] Clearing internal_manager")
+
         # Enhanced debug logging for internal_manager
         logger.warning(f"🔍 [BuildingSerializer.validate] data keys: {list(data.keys())}")
         logger.warning(f"🔍 [BuildingSerializer.validate] internal_manager in data: {'internal_manager' in data}")
