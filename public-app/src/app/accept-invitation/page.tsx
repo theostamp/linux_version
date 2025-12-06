@@ -9,6 +9,7 @@ function AcceptInvitationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const buildingId = searchParams.get('building_id');
   
   const [formData, setFormData] = useState({
     password: '',
@@ -105,6 +106,14 @@ function AcceptInvitationForm() {
       }
       if (data.tokens?.refresh) {
         localStorage.setItem('refresh_token', data.tokens.refresh);
+      }
+
+      // Store building context from invitation URL or API response
+      const finalBuildingId = buildingId || data.building_id;
+      if (finalBuildingId) {
+        localStorage.setItem('selectedBuildingId', finalBuildingId.toString());
+        localStorage.setItem('activeBuildingId', finalBuildingId.toString());
+        console.log(`[AcceptInvitation] Set active building from invitation: ${finalBuildingId}`);
       }
 
       setSuccess(true);

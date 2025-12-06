@@ -12,6 +12,7 @@ class TenantInvitationSerializer(serializers.ModelSerializer):
     invited_by_email = serializers.EmailField(source='invited_by.email', read_only=True)
     invited_by_name = serializers.SerializerMethodField()
     apartment_info = serializers.SerializerMethodField()
+    building_info = serializers.SerializerMethodField()
     is_expired = serializers.BooleanField(read_only=True)
     can_be_accepted = serializers.BooleanField(read_only=True)
     invitation_url = serializers.SerializerMethodField()
@@ -19,7 +20,8 @@ class TenantInvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = TenantInvitation
         fields = [
-            'id', 'email', 'invited_role', 'apartment', 'apartment_info',
+            'id', 'email', 'invited_role', 'building_id', 'building_info',
+            'apartment', 'apartment_info',
             'invited_by', 'invited_by_email', 'invited_by_name',
             'invited_at', 'expires_at', 'status',
             'accepted_at', 'declined_at', 'message',
@@ -33,13 +35,33 @@ class TenantInvitationSerializer(serializers.ModelSerializer):
     def get_invited_by_name(self, obj):
         return obj.invited_by.get_full_name() or obj.invited_by.email
     
+    def get_building_info(self, obj):
+        """Get building info from building_id or apartment"""
+        building_id = obj.building_id
+        if not building_id and obj.apartment and hasattr(obj.apartment, 'building_id'):
+            building_id = obj.apartment.building_id
+        
+        if building_id:
+            try:
+                from buildings.models import Building
+                building = Building.objects.get(id=building_id)
+                return {
+                    'id': building.id,
+                    'name': building.name,
+                    'address': building.address
+                }
+            except Exception:
+                return {'id': building_id, 'name': None, 'address': None}
+        return None
+    
     def get_apartment_info(self, obj):
         if obj.apartment:
             return {
                 'id': obj.apartment.id,
-                'number': obj.apartment.apartment_number,
+                'number': getattr(obj.apartment, 'number', None) or getattr(obj.apartment, 'apartment_number', None),
                 'floor': obj.apartment.floor,
-                'building': obj.apartment.building.name if obj.apartment.building else None
+                'building': obj.apartment.building.name if obj.apartment.building else None,
+                'building_id': obj.apartment.building_id if obj.apartment.building else None
             }
         return None
     
@@ -55,6 +77,7 @@ class CreateInvitationSerializer(serializers.Serializer):
         choices=TenantInvitation.InvitedRole.choices,
         default=TenantInvitation.InvitedRole.RESIDENT
     )
+    building_id = serializers.IntegerField(required=False, allow_null=True, help_text='Building ID for context')
     apartment_id = serializers.IntegerField(required=False, allow_null=True)
     message = serializers.CharField(required=False, allow_blank=True, max_length=500)
     expires_in_days = serializers.IntegerField(default=7, min_value=1, max_value=30)

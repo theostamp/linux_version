@@ -12,6 +12,7 @@ interface InvitationDetails {
   email: string;
   building_name: string;
   building_address?: string;
+  building_id?: number;
   expires_at: string;
 }
 
@@ -57,6 +58,7 @@ function CompleteRegistrationContent() {
           email: data.email,
           building_name: data.building_name || 'Κτίριο',
           building_address: data.building_address,
+          building_id: data.building_id,
           expires_at: data.expires_at
         });
       } else {
@@ -132,6 +134,14 @@ function CompleteRegistrationContent() {
         }
         if (data.tokens?.refresh) {
           localStorage.setItem('refresh_token', data.tokens.refresh);
+        }
+        
+        // Store building context from invitation or API response
+        const buildingId = data.building_id || invitationDetails?.building_id;
+        if (buildingId) {
+          localStorage.setItem('selectedBuildingId', buildingId.toString());
+          localStorage.setItem('activeBuildingId', buildingId.toString());
+          console.log(`[KioskRegistration] Set active building: ${buildingId}`);
         }
         // No auto-redirect - let user choose where to go
       } else {

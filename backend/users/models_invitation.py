@@ -45,15 +45,22 @@ class TenantInvitation(models.Model):
         help_text='Role the user will have when they accept'
     )
     
-    # Optional: Link to specific apartment (commented out until buildings app is properly installed)
-    # apartment = models.ForeignKey(
-    #     'buildings.Apartment',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name='invitations',
-    #     help_text='Optional: Assign user to specific apartment'
-    # )
+    # Optional: Link to specific building (for building context on login)
+    building_id = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Optional: ID of the building this invitation is for'
+    )
+    
+    # Optional: Link to specific apartment
+    apartment = models.ForeignKey(
+        'apartments.Apartment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tenant_invitations',
+        help_text='Optional: Assign user to specific apartment'
+    )
     
     # Invitation metadata
     invited_by = models.ForeignKey(
@@ -210,8 +217,16 @@ class TenantInvitation(models.Model):
         logger.info(f"Invitation {self.id} cancelled by sender")
     
     def get_invitation_url(self):
-        """Get the full invitation acceptance URL"""
+        """Get the full invitation acceptance URL with building context"""
         token = self.generate_token()
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-        return f"{frontend_url}/invitations/accept?token={token}"
+        
+        # Add building_id to URL if available (for building context on login)
+        building_param = ""
+        if self.building_id:
+            building_param = f"&building_id={self.building_id}"
+        elif self.apartment and hasattr(self.apartment, 'building_id'):
+            building_param = f"&building_id={self.apartment.building_id}"
+        
+        return f"{frontend_url}/invitations/accept?token={token}{building_param}"
 

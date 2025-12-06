@@ -95,12 +95,18 @@ class EmailService:
         
         # Build the invitation URL with tenant subdomain
         base_url = settings.FRONTEND_URL.rstrip('/')
+        
+        # Add building_id to URL if available (for building context on login)
+        building_param = ""
+        if invitation.building_id:
+            building_param = f"&building_id={invitation.building_id}"
+        
         if tenant_subdomain and 'newconcierge.app' in base_url:
             # Replace the base domain with tenant subdomain
             # e.g., https://newconcierge.app -> https://theo.newconcierge.app
-            invitation_url = f"https://{tenant_subdomain}.newconcierge.app/accept-invitation?token={invitation.token}"
+            invitation_url = f"https://{tenant_subdomain}.newconcierge.app/accept-invitation?token={invitation.token}{building_param}"
         else:
-            invitation_url = f"{base_url}/accept-invitation?token={invitation.token}"
+            invitation_url = f"{base_url}/accept-invitation?token={invitation.token}{building_param}"
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Πρόσκληση στο New Concierge"
         
