@@ -2010,6 +2010,10 @@ export async function deleteInvitation(invitationId: string | number): Promise<v
   await apiDelete(`/users/invitations/${invitationId}/`);
 }
 
+export async function cancelInvitation(invitationId: string | number): Promise<{ message: string }> {
+  return await apiPost<{ message: string }>(`/users/invitations/${invitationId}/cancel/`, {});
+}
+
 // ============================================================================
 // User Management API Functions
 // ============================================================================

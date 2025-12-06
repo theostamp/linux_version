@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { listInvitations, deleteInvitation, resendInvitation, UserInvitation } from '@/lib/api';
+import { listInvitations, deleteInvitation, resendInvitation, cancelInvitation, UserInvitation } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { 
   Mail, Clock, CheckCircle, XCircle, AlertCircle, Trash2, 
-  Send, Copy, RefreshCw, Info, HelpCircle 
+  Send, Copy, RefreshCw, Info, Ban 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -57,6 +57,7 @@ export default function InvitationsList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invitationToDelete, setInvitationToDelete] = useState<UserInvitation | null>(null);
   const [resendingId, setResendingId] = useState<number | null>(null);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   const { data: invitations = [], isLoading, error, refetch } = useQuery({
     queryKey: ['invitations'],
@@ -96,6 +97,19 @@ export default function InvitationsList() {
       toast.error('Αποτυχία επαναποστολής πρόσκλησης');
     } finally {
       setResendingId(null);
+    }
+  };
+
+  const handleCancel = async (invitation: UserInvitation) => {
+    setCancellingId(invitation.id);
+    try {
+      await cancelInvitation(invitation.id);
+      toast.success(`Η πρόσκληση για ${invitation.email} ακυρώθηκε`);
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    } catch (err) {
+      toast.error('Αποτυχία ακύρωσης πρόσκλησης');
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -302,6 +316,28 @@ export default function InvitationsList() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Επαναποστολή email</TooltipContent>
+                            </Tooltip>
+                          )}
+
+                          {/* Cancel */}
+                          {invitation.status === 'pending' && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-orange-600"
+                                  onClick={() => handleCancel(invitation)}
+                                  disabled={cancellingId === invitation.id}
+                                >
+                                  {cancellingId === invitation.id ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Ban className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Ακύρωση πρόσκλησης</TooltipContent>
                             </Tooltip>
                           )}
 
