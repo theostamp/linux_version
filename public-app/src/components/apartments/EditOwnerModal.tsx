@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
+import DeleteUserSection from './DeleteUserSection';
 
 type EditOwnerModalProps = {
   open: boolean;
@@ -259,6 +260,21 @@ export default function EditOwnerModal({ open, onOpenChange, apartment, onSucces
             </Button>
           </DialogFooter>
         </form>
+
+        {/* Danger Zone - Delete User */}
+        {apartment.owner_user && (
+          <DeleteUserSection
+            userId={apartment.owner_user}
+            userEmail={apartment.owner_email || undefined}
+            userName={apartment.owner_name || undefined}
+            apartmentNumber={apartment.number}
+            userType="owner"
+            onSuccess={() => {
+              onOpenChange(false);
+              if (onSuccess) onSuccess();
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
