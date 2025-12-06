@@ -1,17 +1,243 @@
-# Cursor AI Rules - Project Root
-
-
+# Cursor AI Rules - New Concierge Project
 
 ## Communication Language
 - **Οι περιγραφικές απαντήσεις θα δίνονται στα Ελληνικά** - Descriptive responses should be provided in Greek
 - **Στην αρχή κάθε νέας συνεδρίας** (μετά από το πρώτο prompt) θα αναφέρεις αν έχεις γνώση του αντικειμένου σε βαθμό senior προγραμματιστή
-- **At the beginning of each new session** (after the first prompt) mention whether you have senior programmer-level knowledge of the subject
-- **Θα δημιουργείς πάντα ένα πλάνο δράσης που θα επιλύει αποτελεσματικά το πρόβλημα** - Always outline an action plan that resolves the problem efficiently before executing steps
-- **Θα επιλέγεις με προσοχή το μοντέλο** σύμφωνα με τη δυσκολία της ερώτησης - choose models thoughtfully based on task complexity
-- **Σε περίπτωση αστοχίας στη δεύτερη απάντηση** θα επιλέγεις διαφορετικό μοντέλο με ικανότητα βαθύτερης ανάλυσης - if the second response fails, switch to a more analytical model
+- **Θα δημιουργείς πάντα ένα πλάνο δράσης που θα επιλύει αποτελεσματικά το πρόβλημα** - Always outline an action plan before executing
+- **Σε περίπτωση αστοχίας στη δεύτερη απάντηση** θα επιλέγεις διαφορετικό μοντέλο με ικανότητα βαθύτερης ανάλυσης
 
 ## Answer Quality Standards
-- **Δεν θα δίνονται απαντήσεις** εάν δεν είσαι σιγουρος 99.99% ότι είναι λειτουργικές και συμφωνες με τις απαιτήσεις του έργου
-- **Do NOT provide answers** unless you are 99.99% sure they are functional and compliant with project requirements
-- **Εάν δεν είσαι σίγουρος, θα το λες ευθαρσώς** - If you are not sure, say so honestly and directly
+- **Δεν θα δίνονται απαντήσεις** εάν δεν είσαι σίγουρος 99.99% ότι είναι λειτουργικές και σύμφωνες με τις απαιτήσεις του έργου
+- **Εάν δεν είσαι σίγουρος, θα το λες ευθαρσώς** - If you are not sure, say so honestly
 
+---
+
+## 🏗️ Project Architecture
+
+### Overview
+**New Concierge** - SaaS εφαρμογή διαχείρισης πολυκατοικιών με multi-tenant αρχιτεκτονική.
+
+### Tech Stack
+| Component | Technology |
+|-----------|------------|
+| **Backend** | Django 5.x + Django REST Framework |
+| **Multi-tenancy** | django-tenants (PostgreSQL schemas) |
+| **Frontend** | Next.js 14+ (App Router) + TypeScript |
+| **UI Library** | Tailwind CSS + shadcn/ui |
+| **State Management** | React Query (TanStack Query) |
+| **Authentication** | JWT (SimpleJWT) + OAuth (Google, Microsoft) |
+| **Payments** | Stripe (SaaS subscriptions) |
+| **Deployment** | Railway (backend) + Vercel (frontend) |
+| **Database** | PostgreSQL |
+
+---
+
+## 📁 Project Structure
+
+```
+/home/theo/project/
+├── backend/                    # Django Backend
+│   ├── new_concierge_backend/  # Django settings
+│   │   ├── settings.py         # Main settings
+│   │   └── settings/base.py    # Base settings
+│   ├── users/                  # User management (SHARED_APPS)
+│   ├── tenants/                # Tenant/Client models (SHARED_APPS)
+│   ├── billing/                # Stripe subscriptions (SHARED_APPS)
+│   ├── buildings/              # Building models (TENANT_APPS)
+│   ├── apartments/             # Apartment models (TENANT_APPS)
+│   ├── financial/              # Κοινόχρηστα, πληρωμές (TENANT_APPS)
+│   ├── announcements/          # Ανακοινώσεις (TENANT_APPS)
+│   ├── kiosk/                  # Kiosk display system (TENANT_APPS)
+│   ├── maintenance/            # Συντήρηση (TENANT_APPS)
+│   └── ...
+│
+├── public-app/                 # Next.js Frontend
+│   └── src/
+│       ├── app/                # App Router pages
+│       │   ├── (dashboard)/    # Protected dashboard routes
+│       │   ├── login/
+│       │   ├── accept-invitation/
+│       │   └── kiosk/
+│       ├── components/
+│       │   ├── contexts/       # React Contexts
+│       │   │   ├── AuthContext.tsx
+│       │   │   └── BuildingContext.tsx
+│       │   ├── financial/
+│       │   └── ...
+│       ├── lib/
+│       │   └── api.ts          # API client
+│       └── hooks/
+│
+└── linux_version/frontend/     # Legacy frontend (deprecated)
+```
+
+---
+
+## 🔑 Key Concepts
+
+### Multi-Tenancy Architecture
+```
+PUBLIC SCHEMA (Shared across all tenants)
+├── users_customuser          # All users (unique email globally)
+├── tenants_client            # Tenant definitions
+├── billing_*                 # Stripe subscriptions
+└── office_staff_*
+
+TENANT SCHEMAS (Per-tenant data)
+├── buildings_building        # Κτίρια
+├── apartments_apartment      # Διαμερίσματα
+├── buildings_buildingmembership  # User ↔ Building relation
+├── financial_*               # Οικονομικά
+├── announcements_*           # Ανακοινώσεις
+└── ...
+```
+
+### User Roles
+| Role | Description |
+|------|-------------|
+| `admin` | Superuser (platform admin) |
+| `manager` | Office Manager (Γραφείο διαχείρισης - Tenant owner) |
+| `office_staff` | Υπάλληλος γραφείου διαχείρισης |
+| `internal_manager` | Εσωτερικός διαχειριστής πολυκατοικίας |
+| `resident` | Ένοικος/Ιδιοκτήτης |
+
+### Important Models
+
+**CustomUser** (`users/models.py`)
+- `email` - Unique globally
+- `tenant` - ForeignKey to Client (ONE tenant per user)
+- `role` - SystemRole choices
+
+**Building** (`buildings/models.py`)
+- `manager_id` - Integer (cross-schema reference)
+- `internal_manager` - ForeignKey to CustomUser
+
+**BuildingMembership** (`buildings/models.py`)
+- Links User ↔ Building
+- `unique_together = ('building', 'resident')`
+- Roles: resident, representative, internal_manager
+
+**Apartment** (`apartments/models.py`)
+- `owner_user`, `tenant_user` - ForeignKeys to CustomUser
+- `kiosk_token` - UUID for QR code access
+
+---
+
+## 🛣️ Key API Endpoints
+
+### Buildings
+- `GET /api/buildings/` - List buildings
+- `GET /api/buildings/my-buildings/` - User's buildings with permissions
+- `GET /api/buildings/current-context/?building_id=X` - Building context + permissions
+
+### Users/Auth
+- `POST /api/users/login/` - JWT login
+- `POST /api/users/register/` - Registration
+- `POST /api/users/accept-invitation/` - Accept invitation
+- `GET /api/users/me/` - Current user info
+
+### Invitations
+- `GET /api/users/invitations/` - List invitations
+- `POST /api/users/invite/` - Create invitation
+- `POST /api/kiosk/register/` - Kiosk self-registration
+
+---
+
+## 🔧 Common Patterns
+
+### Building Context (Frontend)
+```typescript
+// Use BuildingContext for active building
+import { useBuilding } from '@/components/contexts/BuildingContext';
+
+const { selectedBuilding, permissions, setSelectedBuilding } = useBuilding();
+
+// Building ID is stored in localStorage:
+// - selectedBuildingId
+// - activeBuildingId
+```
+
+### API Calls with Building Filter
+```typescript
+// Always pass building_id to scope data
+const { data } = useQuery({
+  queryKey: ['apartments', selectedBuilding?.id],
+  queryFn: () => api.get(`/apartments/?building=${selectedBuilding?.id}`)
+});
+```
+
+### Cross-Schema Queries (Backend)
+```python
+# Users are in public schema, buildings in tenant schema
+from django_tenants.utils import schema_context
+
+with schema_context('public'):
+    user = CustomUser.objects.get(id=user_id)
+```
+
+---
+
+## ⚠️ Important Considerations
+
+### Email Uniqueness
+- `CustomUser.email` is **globally unique** (not per-tenant)
+- One user cannot have different accounts in different tenants
+- User belongs to ONE tenant via ForeignKey
+
+### Building Context for Multi-Building Users
+- When user has access to multiple buildings:
+  - `building_id` is passed in invitation URLs
+  - Stored in localStorage on acceptance
+  - BuildingContext auto-loads from localStorage
+  - All API calls should filter by `building_id`
+
+### Migrations
+- `SHARED_APPS` migrations run on public schema
+- `TENANT_APPS` migrations run on each tenant schema
+- After adding fields to shared models: `python manage.py migrate_schemas --shared`
+- After adding fields to tenant models: `python manage.py migrate_schemas`
+
+---
+
+## 🔒 Environment Variables
+
+### Backend (Railway)
+```
+DATABASE_URL=postgresql://...
+SECRET_KEY=...
+FRONTEND_URL=https://your-app.vercel.app
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
+```
+
+### Frontend (Vercel)
+```
+NEXT_PUBLIC_CORE_API_URL=https://your-backend.railway.app
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...
+```
+
+---
+
+## 📝 Development Commands
+
+```bash
+# Backend
+cd backend
+python3 manage.py runserver
+python3 manage.py makemigrations
+python3 manage.py migrate_schemas
+python3 manage.py createsuperuser
+
+# Frontend
+cd public-app
+npm run dev
+npm run build
+```
+
+---
+
+## 🔗 Related Documentation
+- `ARCHITECTURE.md` - Detailed architecture overview
+- `INVITATION_SYSTEM_FLOW.md` - Invitation system documentation
+- `BUILDING_CONTEXT_REFACTORING_PLAN.md` - Building context patterns
+- `REFACTORING_SUMMARY.md` - API refactoring summary
