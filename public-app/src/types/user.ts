@@ -31,6 +31,7 @@ export type User = {
   groups?: { id: number; name: string }[];
   is_staff?: boolean;
   is_superuser?: boolean;
+  is_active?: boolean; // Whether the user can log in
   role?: string;
 
   // Staff permissions (μόνο για staff role)

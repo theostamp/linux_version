@@ -1,8 +1,8 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUsers, User } from '@/lib/api';
-import { Edit, Mail, UserCheck, UserX, Loader2, AlertCircle, Building2 } from 'lucide-react';
+import { fetchUsers, User, deactivateUser, activateUser } from '@/lib/api';
+import { Edit, Mail, UserCheck, UserX, Loader2, AlertCircle, Building2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -13,9 +13,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useState } from 'react';
 import EditUserModal from './users/EditUserModal';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 const roleLabels = {
   resident: 'Ένοικος',
@@ -28,7 +36,9 @@ const roleLabels = {
 export default function UsersList() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -38,6 +48,35 @@ export default function UsersList() {
   const handleEdit = (user: User) => {
     setSelectedUser(user);
     setEditModalOpen(true);
+  };
+
+  const handleToggleUserStatus = async (user: User) => {
+    setTogglingUserId(user.id);
+    try {
+      if (user.is_active !== false) {
+        await deactivateUser(user.id);
+        toast.success(`Ο χρήστης ${user.email} απενεργοποιήθηκε`);
+      } else {
+        await activateUser(user.id);
+        toast.success(`Ο χρήστης ${user.email} ενεργοποιήθηκε`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    } catch (err) {
+      const error = err as { message?: string };
+      toast.error(error?.message || 'Αποτυχία αλλαγής κατάστασης χρήστη');
+    } finally {
+      setTogglingUserId(null);
+    }
+  };
+
+  // Check if user can be toggled (not current user, not admin/superuser)
+  const canToggleUser = (user: User): boolean => {
+    // Can't toggle yourself
+    if (currentUser && user.id === currentUser.id) return false;
+    // Can't toggle admins/superusers
+    if (user.role === 'admin' || user.is_superuser) return false;
+    // Managers can toggle residents and internal_managers
+    return true;
   };
 
   if (isLoading) {
@@ -70,7 +109,7 @@ export default function UsersList() {
   }
 
   return (
-    <>
+    <TooltipProvider>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -114,6 +153,42 @@ export default function UsersList() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
+                    {/* Toggle User Status Button */}
+                    {canToggleUser(user) && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={user.is_active !== false 
+                              ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
+                              : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                            }
+                            onClick={() => handleToggleUserStatus(user)}
+                            disabled={togglingUserId === user.id}
+                          >
+                            {togglingUserId === user.id ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : user.is_active !== false ? (
+                              <>
+                                <UserX className="h-4 w-4 mr-1" />
+                                Απενεργοποίηση
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                Ενεργοποίηση
+                              </>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {user.is_active !== false 
+                            ? 'Ο χρήστης δεν θα μπορεί να συνδεθεί' 
+                            : 'Ο χρήστης θα μπορεί ξανά να συνδεθεί'}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -139,6 +214,7 @@ export default function UsersList() {
           </TableBody>
         </Table>
       </div>
+    </TooltipProvider>
 
       <EditUserModal
         open={editModalOpen}
