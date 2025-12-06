@@ -21,7 +21,7 @@ class TenantInvitationSerializer(serializers.ModelSerializer):
         model = TenantInvitation
         fields = [
             'id', 'email', 'invited_role', 'building_id', 'building_info',
-            'apartment', 'apartment_info',
+            'apartment_id', 'apartment_info',
             'invited_by', 'invited_by_email', 'invited_by_name',
             'invited_at', 'expires_at', 'status',
             'accepted_at', 'declined_at', 'message',
@@ -55,14 +55,20 @@ class TenantInvitationSerializer(serializers.ModelSerializer):
         return None
     
     def get_apartment_info(self, obj):
-        if obj.apartment:
-            return {
-                'id': obj.apartment.id,
-                'number': getattr(obj.apartment, 'number', None) or getattr(obj.apartment, 'apartment_number', None),
-                'floor': obj.apartment.floor,
-                'building': obj.apartment.building.name if obj.apartment.building else None,
-                'building_id': obj.apartment.building_id if obj.apartment.building else None
-            }
+        """Get apartment info from apartment_id (cross-schema lookup)"""
+        if obj.apartment_id:
+            try:
+                from apartments.models import Apartment
+                apartment = Apartment.objects.get(id=obj.apartment_id)
+                return {
+                    'id': apartment.id,
+                    'number': apartment.number,
+                    'floor': apartment.floor,
+                    'building': apartment.building.name if apartment.building else None,
+                    'building_id': apartment.building_id if apartment.building else None
+                }
+            except Exception:
+                return {'id': obj.apartment_id}
         return None
     
     def get_invitation_url(self, obj):

@@ -46,6 +46,7 @@ class TenantInvitation(models.Model):
     )
     
     # Optional: Link to specific building (for building context on login)
+    # Note: Using IntegerField instead of ForeignKey because buildings are in tenant schema
     building_id = models.IntegerField(
         null=True,
         blank=True,
@@ -53,13 +54,11 @@ class TenantInvitation(models.Model):
     )
     
     # Optional: Link to specific apartment
-    apartment = models.ForeignKey(
-        'apartments.Apartment',
-        on_delete=models.SET_NULL,
+    # Note: Using IntegerField instead of ForeignKey because apartments are in tenant schema
+    apartment_id = models.IntegerField(
         null=True,
         blank=True,
-        related_name='tenant_invitations',
-        help_text='Optional: Assign user to specific apartment'
+        help_text='Optional: ID of the apartment this invitation is for'
     )
     
     # Invitation metadata
@@ -225,8 +224,6 @@ class TenantInvitation(models.Model):
         building_param = ""
         if self.building_id:
             building_param = f"&building_id={self.building_id}"
-        elif self.apartment and hasattr(self.apartment, 'building_id'):
-            building_param = f"&building_id={self.apartment.building_id}"
         
         return f"{frontend_url}/invitations/accept?token={token}{building_param}"
 
