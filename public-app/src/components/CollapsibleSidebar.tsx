@@ -183,6 +183,13 @@ const navigationGroups: NavigationGroup[] = [
         tooltip: 'Διαχείριση διαμερισμάτων και κατοίκων',
       },
       {
+        href: '/users',
+        label: 'Χρήστες & Προσκλήσεις',
+        icon: <Users className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Διαχείριση χρηστών και αποστολή προσκλήσεων',
+      },
+      {
         href: '/map-visualization',
         label: 'Χάρτης',
         icon: <MapPin className="w-5 h-5" />,
