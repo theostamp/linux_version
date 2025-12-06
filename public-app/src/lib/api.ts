@@ -2033,6 +2033,7 @@ export async function removeUserFromBuilding(userId: number, buildingId: number)
   remaining_buildings: number; 
   user_still_active: boolean;
 }> {
+  // Ensure trailing slash to avoid 301 redirects that break POST requests
   return await apiPost<{ message: string; remaining_buildings: number; user_still_active: boolean }>(
     `/buildings/remove-membership/`, 
     { user_id: userId, building_id: buildingId }
@@ -2046,6 +2047,7 @@ export async function addUserToBuilding(userId: number, buildingId: number, role
   message: string; 
   membership_id: number;
 }> {
+  // Ensure trailing slash to avoid 301 redirects that break POST requests
   return await apiPost<{ message: string; membership_id: number }>(
     `/buildings/add-membership/`, 
     { user_id: userId, building_id: buildingId, role }
