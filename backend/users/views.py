@@ -460,6 +460,63 @@ class UserViewSet(viewsets.ModelViewSet):
         
         return super().destroy(request, *args, **kwargs)
 
+    @action(detail=True, methods=['post'])
+    def deactivate(self, request, pk=None):
+        """
+        POST /api/users/<id>/deactivate/
+        Απενεργοποίηση χρήστη - ο χρήστης παραμένει στο σύστημα αλλά δεν μπορεί να συνδεθεί.
+        """
+        from core.permissions import IsManagerOrSuperuser
+        
+        # Έλεγχος δικαιωμάτων
+        if not IsManagerOrSuperuser().has_permission(request, self):
+            return Response({
+                'error': 'Μόνο οι διαχειριστές μπορούν να απενεργοποιήσουν χρήστες.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        user_to_deactivate = self.get_object()
+        
+        # Δεν μπορείς να απενεργοποιήσεις τον εαυτό σου
+        if user_to_deactivate.id == request.user.id:
+            return Response({
+                'error': 'Δεν μπορείτε να απενεργοποιήσετε τον εαυτό σας.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Δεν μπορείς να απενεργοποιήσεις superusers ή managers
+        if user_to_deactivate.is_superuser or user_to_deactivate.role in ['manager', 'admin']:
+            return Response({
+                'error': 'Δεν επιτρέπεται η απενεργοποίηση διαχειριστών.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        user_to_deactivate.is_active = False
+        user_to_deactivate.save()
+        
+        return Response({
+            'message': f'Ο χρήστης {user_to_deactivate.email} απενεργοποιήθηκε επιτυχώς.'
+        })
+
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        """
+        POST /api/users/<id>/activate/
+        Επανενεργοποίηση χρήστη.
+        """
+        from core.permissions import IsManagerOrSuperuser
+        
+        # Έλεγχος δικαιωμάτων
+        if not IsManagerOrSuperuser().has_permission(request, self):
+            return Response({
+                'error': 'Μόνο οι διαχειριστές μπορούν να ενεργοποιήσουν χρήστες.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        user_to_activate = self.get_object()
+        user_to_activate.is_active = True
+        user_to_activate.save()
+        
+        return Response({
+            'message': f'Ο χρήστης {user_to_activate.email} ενεργοποιήθηκε επιτυχώς.'
+        })
+
 
 # ===== AUTHENTICATION ENDPOINTS =====
 

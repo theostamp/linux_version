@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { listInvitations, deleteInvitation, resendInvitation, cancelInvitation, UserInvitation } from '@/lib/api';
+import { listInvitations, deleteInvitation, resendInvitation, cancelInvitation, deactivateUser, activateUser, UserInvitation } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { 
   Mail, Clock, CheckCircle, XCircle, AlertCircle, Trash2, 
-  Send, Copy, RefreshCw, Info, Ban 
+  Send, Copy, RefreshCw, Info, Ban, UserX, UserCheck 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -58,6 +58,7 @@ export default function InvitationsList() {
   const [invitationToDelete, setInvitationToDelete] = useState<UserInvitation | null>(null);
   const [resendingId, setResendingId] = useState<number | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
 
   const { data: invitations = [], isLoading, error, refetch } = useQuery({
     queryKey: ['invitations'],
@@ -110,6 +111,28 @@ export default function InvitationsList() {
       toast.error('Αποτυχία ακύρωσης πρόσκλησης');
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleToggleUserStatus = async (invitation: UserInvitation) => {
+    if (!invitation.created_user_id) return;
+    
+    setTogglingUserId(invitation.created_user_id);
+    try {
+      if (invitation.created_user_active) {
+        await deactivateUser(invitation.created_user_id);
+        toast.success(`Ο χρήστης ${invitation.email} απενεργοποιήθηκε`);
+      } else {
+        await activateUser(invitation.created_user_id);
+        toast.success(`Ο χρήστης ${invitation.email} ενεργοποιήθηκε`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    } catch (err) {
+      const error = err as { message?: string };
+      toast.error(error?.message || 'Αποτυχία αλλαγής κατάστασης χρήστη');
+    } finally {
+      setTogglingUserId(null);
     }
   };
 
@@ -319,7 +342,7 @@ export default function InvitationsList() {
                             </Tooltip>
                           )}
 
-                          {/* Cancel */}
+                          {/* Cancel Invitation (for pending) */}
                           {invitation.status === 'pending' && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -338,6 +361,38 @@ export default function InvitationsList() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Ακύρωση πρόσκλησης</TooltipContent>
+                            </Tooltip>
+                          )}
+
+                          {/* Deactivate/Activate User (for accepted with created user) */}
+                          {invitation.status === 'accepted' && invitation.created_user_id && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={`h-8 w-8 ${
+                                    invitation.created_user_active 
+                                      ? 'text-muted-foreground hover:text-orange-600' 
+                                      : 'text-orange-600 hover:text-green-600'
+                                  }`}
+                                  onClick={() => handleToggleUserStatus(invitation)}
+                                  disabled={togglingUserId === invitation.created_user_id}
+                                >
+                                  {togglingUserId === invitation.created_user_id ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                  ) : invitation.created_user_active ? (
+                                    <UserX className="h-4 w-4" />
+                                  ) : (
+                                    <UserCheck className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {invitation.created_user_active 
+                                  ? 'Απενεργοποίηση χρήστη' 
+                                  : 'Ενεργοποίηση χρήστη'}
+                              </TooltipContent>
                             </Tooltip>
                           )}
 

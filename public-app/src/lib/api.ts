@@ -1971,6 +1971,8 @@ export type UserInvitation = {
   created_at: string;
   invited_by: number;
   invited_by_name?: string;
+  created_user_id?: number | null;
+  created_user_active?: boolean | null;
 };
 
 export type CreateInvitationPayload = {
@@ -2012,6 +2014,14 @@ export async function deleteInvitation(invitationId: string | number): Promise<v
 
 export async function cancelInvitation(invitationId: string | number): Promise<{ message: string }> {
   return await apiPost<{ message: string }>(`/users/invitations/${invitationId}/cancel/`, {});
+}
+
+export async function deactivateUser(userId: number): Promise<{ message: string }> {
+  return await apiPost<{ message: string }>(`/users/${userId}/deactivate/`, {});
+}
+
+export async function activateUser(userId: number): Promise<{ message: string }> {
+  return await apiPost<{ message: string }>(`/users/${userId}/activate/`, {});
 }
 
 // ============================================================================

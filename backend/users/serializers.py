@@ -354,6 +354,8 @@ class UserInvitationSerializer(serializers.ModelSerializer):
     invited_by_name = serializers.SerializerMethodField()
     building_name = serializers.SerializerMethodField()
     apartment_number = serializers.SerializerMethodField()
+    created_user_id = serializers.SerializerMethodField()
+    created_user_active = serializers.SerializerMethodField()
     
     class Meta:
         model = UserInvitation
@@ -361,7 +363,7 @@ class UserInvitationSerializer(serializers.ModelSerializer):
             'id', 'email', 'first_name', 'last_name', 'invitation_type',
             'status', 'expires_at', 'invited_by', 'invited_by_name',
             'building_id', 'building_name', 'apartment_id', 'apartment_number',
-            'assigned_role', 'created_at'
+            'assigned_role', 'created_at', 'created_user_id', 'created_user_active'
         )
         read_only_fields = ('id', 'token', 'invited_by', 'status', 'created_at')
     
@@ -386,6 +388,18 @@ class UserInvitationSerializer(serializers.ModelSerializer):
                 return apartment.number
             except:
                 return None
+        return None
+    
+    def get_created_user_id(self, obj):
+        """Επιστρέφει το ID του χρήστη που δημιουργήθηκε από την πρόσκληση"""
+        if obj.created_user:
+            return obj.created_user.id
+        return None
+    
+    def get_created_user_active(self, obj):
+        """Επιστρέφει αν ο χρήστης είναι ενεργός"""
+        if obj.created_user:
+            return obj.created_user.is_active
         return None
 
 
