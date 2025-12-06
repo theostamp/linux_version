@@ -416,6 +416,7 @@ export async function apiGet<T>(
  */
 export async function apiPost<T>(path: string, body: unknown, maxRetries: number = 3): Promise<T> {
   const url = getApiUrl(path);
+  console.log(`[API POST] ${url}`); // Debug URL structure
   
   let lastError: Error | null = null;
   
