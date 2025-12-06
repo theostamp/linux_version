@@ -214,7 +214,6 @@ export default function UsersList() {
           </TableBody>
         </Table>
       </div>
-    </TooltipProvider>
 
       <EditUserModal
         open={editModalOpen}
@@ -224,7 +223,7 @@ export default function UsersList() {
           queryClient.invalidateQueries({ queryKey: ['users'] });
         }}
       />
-    </>
+    </TooltipProvider>
   );
 }
 
