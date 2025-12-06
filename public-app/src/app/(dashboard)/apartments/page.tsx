@@ -206,7 +206,15 @@ const renderContactBlock = (
 ) => (
   <div>
     <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">{label}</p>
-    <p className="text-sm font-medium text-foreground">{name || 'Δεν έχει οριστεί'}</p>
+    <p className="text-sm font-medium text-foreground flex items-center gap-1.5 flex-wrap">
+      {name || 'Δεν έχει οριστεί'}
+      {isRegistered && (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium" title="Ενεργός χρήστης">
+          <UserCheck className="w-3 h-3" />
+          Ενεργός
+        </span>
+      )}
+    </p>
     <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
       {phone && (
         <a href={`tel:${phone}`} className="flex items-center gap-1 text-primary hover:underline">
@@ -676,7 +684,15 @@ const ApartmentsPageContent = () => {
                                 </td>
                                 <td>
                                   <div className="space-y-1">
-                                    <p className="font-medium text-foreground">{apartment.owner_name || '—'}</p>
+                                    <p className="font-medium text-foreground flex items-center gap-1.5">
+                                      {apartment.owner_name || '—'}
+                                      {apartment.owner_user && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium" title="Ενεργός χρήστης">
+                                          <UserCheck className="w-3 h-3" />
+                                          Ενεργός
+                                        </span>
+                                      )}
+                                    </p>
                                     <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                                       {apartment.owner_phone && (
                                         <a href={`tel:${apartment.owner_phone}`} className="inline-flex items-center gap-1 text-primary hover:underline">
@@ -698,8 +714,14 @@ const ApartmentsPageContent = () => {
                                 </td>
                                 <td>
                                   <div className="space-y-1">
-                                    <p className="font-medium text-foreground">
+                                    <p className="font-medium text-foreground flex items-center gap-1.5">
                                       {apartment.tenant_name || apartment.occupant_name || '—'}
+                                      {apartment.tenant_user && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium" title="Ενεργός χρήστης">
+                                          <UserCheck className="w-3 h-3" />
+                                          Ενεργός
+                                        </span>
+                                      )}
                                     </p>
                                     <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                                       {apartment.tenant_phone && (
