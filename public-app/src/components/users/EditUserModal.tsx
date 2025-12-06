@@ -179,7 +179,7 @@ export default function EditUserModal({ open, onOpenChange, user, onSuccess }: E
               <SelectTrigger id="role">
                 <SelectValue placeholder="Επιλέξτε ρόλο" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[9999]" position="popper" sideOffset={4}>
                 {roleOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
