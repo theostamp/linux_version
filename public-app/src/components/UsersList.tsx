@@ -1,8 +1,8 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUsers, deleteUser, User } from '@/lib/api';
-import { Edit, Trash2, Mail, UserCheck, UserX, Loader2, AlertCircle } from 'lucide-react';
+import { fetchUsers, User } from '@/lib/api';
+import { Edit, Mail, UserCheck, UserX, Loader2, AlertCircle, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -13,10 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import { useState } from 'react';
 import EditUserModal from './users/EditUserModal';
-import DeleteUserDialog from './users/DeleteUserDialog';
+import Link from 'next/link';
 
 const roleLabels = {
   resident: 'Ένοικος',
@@ -28,7 +27,6 @@ const roleLabels = {
 
 export default function UsersList() {
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
@@ -40,27 +38,6 @@ export default function UsersList() {
   const handleEdit = (user: User) => {
     setSelectedUser(user);
     setEditModalOpen(true);
-  };
-
-  const handleDelete = (user: User) => {
-    setSelectedUser(user);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedUser) return;
-
-    try {
-      await deleteUser(selectedUser.id);
-      toast.success('Ο χρήστης διαγράφηκε επιτυχώς');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setDeleteDialogOpen(false);
-      setSelectedUser(null);
-    } catch (err) {
-      const error = err as { message?: string; response?: { data?: { error?: string } } };
-      const errorMessage = error?.response?.data?.error || error?.message || 'Αποτυχία διαγραφής χρήστη';
-      toast.error(errorMessage);
-    }
   };
 
   if (isLoading) {
@@ -148,11 +125,12 @@ export default function UsersList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(user)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      asChild
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Διαγραφή
+                      <Link href="/apartments">
+                        <Building2 className="h-4 w-4 mr-1" />
+                        Διαμερίσματα
+                      </Link>
                     </Button>
                   </div>
                 </TableCell>
@@ -169,13 +147,6 @@ export default function UsersList() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['users'] });
         }}
-      />
-
-      <DeleteUserDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        user={selectedUser}
-        onConfirm={handleDeleteConfirm}
       />
     </>
   );
