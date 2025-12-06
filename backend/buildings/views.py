@@ -831,3 +831,79 @@ def add_user_to_building(request):
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_membership(request):
+    """
+    POST /api/buildings/remove-membership/
+    
+    Αφαιρεί έναν χρήστη από κτίριο (διαγράφει BuildingMembership).
+    Αυτό ΔΕΝ απενεργοποιεί τον χρήστη, απλά αφαιρεί την πρόσβασή του στο συγκεκριμένο κτίριο.
+    Ο χρήστης μπορεί να έχει ακόμα πρόσβαση σε άλλα κτίρια.
+    
+    Μόνο για managers και superusers.
+    
+    Body:
+        {
+            "user_id": 123,
+            "building_id": 456
+        }
+    """
+    from core.permissions import IsManagerOrSuperuser
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManagerOrSuperuser().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να αφαιρέσουν χρήστες από κτίρια.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    user_id = request.data.get('user_id')
+    building_id = request.data.get('building_id')
+    
+    if not user_id or not building_id:
+        return Response({
+            'error': 'Απαιτούνται user_id και building_id'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = CustomUser.objects.get(id=user_id)
+        building = Building.objects.get(id=building_id)
+        
+        # Βρες και διέγραψε το membership
+        membership = BuildingMembership.objects.filter(resident=user, building=building).first()
+        
+        if not membership:
+            return Response({
+                'message': f'Ο χρήστης {user.email} δεν είναι μέλος του κτιρίου {building.name}'
+            }, status=status.HTTP_200_OK)
+        
+        membership.delete()
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"Removed membership: user={user.email} from building={building.name}")
+        
+        # Έλεγχος αν ο χρήστης έχει ακόμα πρόσβαση σε άλλα κτίρια
+        remaining_memberships = BuildingMembership.objects.filter(resident=user).count()
+        
+        return Response({
+            'message': f'Ο χρήστης {user.email} αφαιρέθηκε από το κτίριο {building.name}',
+            'remaining_buildings': remaining_memberships,
+            'user_still_active': user.is_active
+        }, status=status.HTTP_200_OK)
+        
+    except CustomUser.DoesNotExist:
+        return Response({
+            'error': f'Δεν βρέθηκε χρήστης με ID {user_id}'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Building.DoesNotExist:
+        return Response({
+            'error': f'Δεν βρέθηκε κτίριο με ID {building_id}'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error removing user from building: {e}", exc_info=True)
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

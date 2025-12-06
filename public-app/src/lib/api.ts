@@ -2024,6 +2024,34 @@ export async function activateUser(userId: number): Promise<{ message: string }>
   return await apiPost<{ message: string }>(`/users/${userId}/activate/`, {});
 }
 
+/**
+ * Remove a user from a specific building (deletes BuildingMembership).
+ * This does NOT deactivate the user - they can still access other buildings.
+ */
+export async function removeUserFromBuilding(userId: number, buildingId: number): Promise<{ 
+  message: string; 
+  remaining_buildings: number; 
+  user_still_active: boolean;
+}> {
+  return await apiPost<{ message: string; remaining_buildings: number; user_still_active: boolean }>(
+    `/buildings/remove-membership/`, 
+    { user_id: userId, building_id: buildingId }
+  );
+}
+
+/**
+ * Add a user to a building (creates BuildingMembership).
+ */
+export async function addUserToBuilding(userId: number, buildingId: number, role: string = 'resident'): Promise<{ 
+  message: string; 
+  membership_id: number;
+}> {
+  return await apiPost<{ message: string; membership_id: number }>(
+    `/buildings/add-membership/`, 
+    { user_id: userId, building_id: buildingId, role }
+  );
+}
+
 // ============================================================================
 // User Management API Functions
 // ============================================================================

@@ -1,8 +1,8 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUsers, User, deactivateUser, activateUser } from '@/lib/api';
-import { Edit, Mail, UserCheck, UserX, Loader2, AlertCircle, Building2, RefreshCw } from 'lucide-react';
+import { fetchUsers, User, deactivateUser, activateUser, removeUserFromBuilding } from '@/lib/api';
+import { Edit, Mail, UserCheck, UserX, Loader2, AlertCircle, Building2, RefreshCw, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -24,6 +24,7 @@ import EditUserModal from './users/EditUserModal';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 const roleLabels = {
   resident: 'Ένοικος',
@@ -37,8 +38,10 @@ export default function UsersList() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
+  const [removingUserId, setRemovingUserId] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  const { selectedBuilding } = useBuilding();
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -50,12 +53,36 @@ export default function UsersList() {
     setEditModalOpen(true);
   };
 
+  // Remove user from current building only (keeps access to other buildings)
+  const handleRemoveFromBuilding = async (user: User) => {
+    if (!selectedBuilding) {
+      toast.error('Παρακαλώ επιλέξτε κτίριο πρώτα');
+      return;
+    }
+    
+    setRemovingUserId(user.id);
+    try {
+      const result = await removeUserFromBuilding(user.id, selectedBuilding.id);
+      toast.success(result.message);
+      if (result.remaining_buildings > 0) {
+        toast.info(`Ο χρήστης έχει ακόμα πρόσβαση σε ${result.remaining_buildings} κτίρι${result.remaining_buildings === 1 ? 'ο' : 'α'}`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    } catch (err) {
+      const error = err as { message?: string };
+      toast.error(error?.message || 'Αποτυχία αφαίρεσης χρήστη από κτίριο');
+    } finally {
+      setRemovingUserId(null);
+    }
+  };
+
+  // Global deactivate - user cannot login anywhere
   const handleToggleUserStatus = async (user: User) => {
     setTogglingUserId(user.id);
     try {
       if (user.is_active !== false) {
         await deactivateUser(user.id);
-        toast.success(`Ο χρήστης ${user.email} απενεργοποιήθηκε`);
+        toast.success(`Ο χρήστης ${user.email} απενεργοποιήθηκε (σε όλα τα κτίρια)`);
       } else {
         await activateUser(user.id);
         toast.success(`Ο χρήστης ${user.email} ενεργοποιήθηκε`);
@@ -153,7 +180,34 @@ export default function UsersList() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {/* Toggle User Status Button */}
+                    {/* Remove from Building Button (per-building action) */}
+                    {canToggleUser(user) && selectedBuilding && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleRemoveFromBuilding(user)}
+                            disabled={removingUserId === user.id}
+                          >
+                            {removingUserId === user.id ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <UserMinus className="h-4 w-4 mr-1" />
+                                Αφαίρεση
+                              </>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Αφαίρεση από: <strong>{selectedBuilding.name}</strong></p>
+                          <p className="text-xs text-muted-foreground">Ο χρήστης θα διατηρήσει πρόσβαση σε άλλα κτίρια</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {/* Global Deactivate Button (affects all buildings) */}
                     {canToggleUser(user) && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -184,7 +238,7 @@ export default function UsersList() {
                         </TooltipTrigger>
                         <TooltipContent>
                           {user.is_active !== false 
-                            ? 'Ο χρήστης δεν θα μπορεί να συνδεθεί' 
+                            ? <><p>Απενεργοποίηση <strong>παντού</strong></p><p className="text-xs text-muted-foreground">Ο χρήστης δεν θα μπορεί να συνδεθεί σε κανένα κτίριο</p></>
                             : 'Ο χρήστης θα μπορεί ξανά να συνδεθεί'}
                         </TooltipContent>
                       </Tooltip>
