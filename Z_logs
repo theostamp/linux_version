@@ -1,3 +1,13 @@
-﻿﻿{"timestamp":"2025-12-06T22:33:52.732Z","level":"error","message":"[tenantProxy:kiosk] Upstream error response","error":"undefined","method":"POST","path":"/api/kiosk/connect","targetUrl":"https://linuxversion-production.up.railway.app/api/kiosk/connect/","status":400,"statusText":"Bad Request","durationMs":173,"errorBody":"{\"error\":\"Το τηλέφωνο δεν βρέθηκε στα καταχωρημένα στοιχεία του κτιρίου. Παρακαλώ επικοινωνήστε με τη διαχείριση.\"}","errorBodyLength":115}
+﻿﻿fd4edbfa95a93b8b.js?…M6SrknW747HWxNf3c:1 [AuthContext] Token check interval disabled to debug hanging issue
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] Loaded buildings: 2 buildings
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] Building changed to 2, invalidating queries...
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] ✓ Queries invalidated for building 2
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] Fetching context for building 2...
+814cefd8c8049e45.js?…M6SrknW747HWxNf3c:1 [BuildingContext] Building context loaded: 
+Object
+api/buildings/remove-membership:1 
+ Failed to load resource: the server responded with a status of 405 ()
 
-{"timestamp":"2025-12-06T22:33:52.732Z","level":"error","message":"[tenantProxy:kiosk] Upstream error response","error":"undefined","method":"POST","path":"/api/kiosk/connect","targetUrl":"https://linuxversion-production.up.railway.app/api/kiosk/connect/","status":400,"statusText":"Bad Request","durationMs":173,"errorBody":"{\"error\":\"Το τηλέφωνο δεν βρέθηκε στα καταχωρημένα στοιχεία του κτιρίου. Παρακαλώ επικοινωνήστε με τη διαχείριση.\"}","errorBodyLength":115}
+
