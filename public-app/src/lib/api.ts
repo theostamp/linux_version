@@ -416,7 +416,6 @@ export async function apiGet<T>(
  */
 export async function apiPost<T>(path: string, body: unknown, maxRetries: number = 3): Promise<T> {
   const url = getApiUrl(path);
-  console.log(`[API POST] ${url}`); // Debug URL structure
   
   let lastError: Error | null = null;
   
@@ -2034,9 +2033,9 @@ export async function removeUserFromBuilding(userId: number, buildingId: number)
   remaining_buildings: number; 
   user_still_active: boolean;
 }> {
-  // Ensure trailing slash to avoid 301 redirects that break POST requests
+  // Use actions/ path to ensure clean matching
   return await apiPost<{ message: string; remaining_buildings: number; user_still_active: boolean }>(
-    `/buildings/remove-membership/`, 
+    `/buildings/actions/remove-membership/`, 
     { user_id: userId, building_id: buildingId }
   );
 }
@@ -2048,9 +2047,9 @@ export async function addUserToBuilding(userId: number, buildingId: number, role
   message: string; 
   membership_id: number;
 }> {
-  // Ensure trailing slash to avoid 301 redirects that break POST requests
+  // Use actions/ path to ensure clean matching
   return await apiPost<{ message: string; membership_id: number }>(
-    `/buildings/add-membership/`, 
+    `/buildings/actions/add-membership/`, 
     { user_id: userId, building_id: buildingId, role }
   );
 }

@@ -18,13 +18,16 @@ router.register(r'service-packages', ServicePackageViewSet, basename='service-pa
 
 urlpatterns = [
     # Custom paths BEFORE router to ensure they match first
-    # Both with and without trailing slash for compatibility
+    # Using specific namespace to avoid conflicts
+    path('actions/add-membership/', add_user_to_building, name='building-add-membership'),
+    path('actions/remove-membership/', remove_membership, name='building-remove-membership'),
+    
+    # Legacy paths for backward compatibility
+    path('add-membership/', add_user_to_building),
+    path('remove-membership/', remove_membership),
+    
     path('current-context/', get_current_context_view, name='building-current-context'),
-    path('current-context', get_current_context_view, name='building-current-context-no-slash'),
-    path('add-membership/', add_user_to_building, name='building-add-membership'),
-    path('add-membership', add_user_to_building, name='building-add-membership-no-slash'),
-    path('remove-membership/', remove_membership, name='building-remove-membership'),
-    path('remove-membership', remove_membership, name='building-remove-membership-no-slash'),
+    
     # Router URLs last
     path('', include(router.urls)),
 ]
