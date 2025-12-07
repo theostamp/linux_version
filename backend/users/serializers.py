@@ -1,16 +1,21 @@
 # users/serializers.py
 
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django_tenants.utils import schema_context
 from .models import CustomUser, UserInvitation, PasswordResetToken, UserLoginAttempt
 from .audit import SecurityAuditLogger
+import logging
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
@@ -168,6 +173,69 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    """
+    Custom TokenRefreshSerializer that looks up users in the public schema.
+    This is necessary because CustomUser is a SHARED_APP and lives in the public schema,
+    but the tenant middleware may have set a different schema context.
+    """
+    
+    def validate(self, attrs):
+        refresh = attrs.get('refresh')
+        
+        if not refresh:
+            raise InvalidToken('No valid refresh token provided')
+        
+        try:
+            # Decode the refresh token to get the user_id
+            token = RefreshToken(refresh)
+            user_id = token.get('user_id')
+            
+            if not user_id:
+                raise InvalidToken('Token contains no user_id')
+            
+            # Look up the user in the public schema where CustomUser lives
+            with schema_context('public'):
+                try:
+                    user = User.objects.get(id=user_id)
+                    logger.info(f"[TokenRefresh] Found user {user.email} in public schema")
+                except User.DoesNotExist:
+                    logger.error(f"[TokenRefresh] User with id={user_id} not found in public schema")
+                    raise InvalidToken('User not found')
+            
+            # Check if user is active
+            if not user.is_active:
+                raise InvalidToken('User account is disabled')
+            
+            # Generate new tokens
+            data = {
+                'access': str(token.access_token),
+            }
+            
+            # If rotating refresh tokens, include the new refresh token
+            if hasattr(token, 'set_jti') or hasattr(token, 'blacklist'):
+                # Blacklist the old token if using blacklist
+                try:
+                    token.blacklist()
+                except AttributeError:
+                    pass
+                
+                # Create new refresh token
+                refresh_token = RefreshToken.for_user(user)
+                data['refresh'] = str(refresh_token)
+                data['access'] = str(refresh_token.access_token)
+            
+            return data
+            
+        except TokenError as e:
+            logger.error(f"[TokenRefresh] Token error: {str(e)}")
+            raise InvalidToken(str(e))
+        except Exception as e:
+            logger.error(f"[TokenRefresh] Unexpected error: {str(e)}")
+            raise InvalidToken(f'Token refresh failed: {str(e)}')
+
 
 class StaffPermissionsSerializer(serializers.Serializer):
     """Serializer for staff permissions (read-only for frontend)"""

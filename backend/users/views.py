@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.utils import timezone
 from .models import CustomUser, UserInvitation, PasswordResetToken
 from .serializers import (
@@ -36,6 +36,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [LoginThrottle]
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Custom JWT token refresh view that looks up users in the public schema.
+    This is necessary because CustomUser is a SHARED_APP and lives in public schema.
+    """
+    from .serializers import CustomTokenRefreshSerializer
+    serializer_class = CustomTokenRefreshSerializer
+    throttle_classes = []  # No throttling for refresh
+
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
