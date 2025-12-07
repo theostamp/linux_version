@@ -23,6 +23,13 @@ function MagicLoginContent() {
       }
 
       try {
+        // Get backend URL for cross-domain API call
+        let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
+        if (coreApiUrl && !coreApiUrl.startsWith('http')) {
+          coreApiUrl = `https://${coreApiUrl}`;
+        }
+        coreApiUrl = coreApiUrl?.replace(/\/$/, '') || '';
+
         // Verify the token by calling the API
         const response = await fetch('/api/users/me/', {
           headers: {
@@ -46,9 +53,24 @@ function MagicLoginContent() {
           // Determine redirect destination (default to my-apartment for residents)
           const destination = redirect || '/my-apartment';
           
+          // Check if user has tenant and we need cross-subdomain redirect
+          const tenantSchema = userData.tenant?.schema_name;
+          const currentHost = window.location.hostname;
+          const expectedHost = tenantSchema ? `${tenantSchema}.newconcierge.app` : null;
+          
+          console.log('[Magic Login] Tenant check:', { tenantSchema, currentHost, expectedHost });
+          
           // Redirect after a brief delay
           setTimeout(() => {
-            router.push(destination);
+            if (expectedHost && currentHost !== expectedHost) {
+              // Cross-subdomain redirect needed - pass tokens via URL hash
+              const targetUrl = `https://${expectedHost}/auth/callback#access=${encodeURIComponent(token)}&redirect=${encodeURIComponent(destination)}`;
+              console.log('[Magic Login] Cross-subdomain redirect to:', targetUrl);
+              window.location.href = targetUrl;
+            } else {
+              // Same domain redirect
+              router.push(destination);
+            }
           }, 1500);
         } else {
           setStatus('error');
