@@ -244,6 +244,22 @@ function PlansContent() {
   }
 
   if (!user) {
+    // Check if tokens exist in localStorage (user might be loading)
+    const hasTokens = typeof window !== 'undefined' && localStorage.getItem('access_token');
+    
+    if (hasTokens) {
+      // Tokens exist but user not loaded yet - show loading
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-4" />
+            <p className="text-slate-400">Φόρτωση...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    // No tokens - actually not logged in
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
