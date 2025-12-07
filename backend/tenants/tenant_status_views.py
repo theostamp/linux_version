@@ -9,6 +9,7 @@ import logging
 from core.permissions import IsInternalService
 from tenants.models import Client
 from users.models import CustomUser
+from users.services import EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,78 @@ class TenantStatusView(APIView):
                 'email_verified': False,
                 'email_sent': False,
                 'tenant_url': None,
+                'error': 'Internal server error'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ResendVerificationView(APIView):
+    """
+    POST /api/internal/tenants/{tenant_subdomain}/resend-verification/
+    
+    Resends verification email to the user associated with a tenant.
+    This is called from the verify-payment page when user clicks "Resend Email".
+    """
+    
+    authentication_classes = []
+    permission_classes = [IsInternalService]
+    
+    def post(self, request, tenant_subdomain):
+        """
+        Resend verification email to tenant's user.
+        """
+        logger.info(f"[RESEND_VERIFICATION] Request received for tenant: {tenant_subdomain}")
+        
+        try:
+            # Get tenant
+            tenant = Client.objects.get(schema_name=tenant_subdomain)
+            logger.info(f"[RESEND_VERIFICATION] Tenant found: {tenant.schema_name}")
+            
+            # Get user associated with tenant
+            try:
+                user = CustomUser.objects.get(tenant=tenant)
+            except CustomUser.DoesNotExist:
+                logger.error(f"[RESEND_VERIFICATION] No user found for tenant: {tenant_subdomain}")
+                return Response({
+                    'error': 'User not found for tenant'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if email is already verified
+            if user.email_verified:
+                logger.info(f"[RESEND_VERIFICATION] Email already verified for: {user.email}")
+                return Response({
+                    'message': 'Email is already verified',
+                    'email_verified': True
+                }, status=status.HTTP_200_OK)
+            
+            # Send verification email
+            try:
+                success = EmailService.send_verification_email(user)
+                if success:
+                    logger.info(f"[RESEND_VERIFICATION] Verification email sent to: {user.email}")
+                    return Response({
+                        'success': True,
+                        'message': 'Verification email sent successfully',
+                        'email': user.email
+                    }, status=status.HTTP_200_OK)
+                else:
+                    logger.error(f"[RESEND_VERIFICATION] Failed to send email to: {user.email}")
+                    return Response({
+                        'error': 'Failed to send verification email'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception as e:
+                logger.error(f"[RESEND_VERIFICATION] Error sending email: {e}")
+                return Response({
+                    'error': f'Email service error: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        except Client.DoesNotExist:
+            logger.error(f"[RESEND_VERIFICATION] Tenant not found: {tenant_subdomain}")
+            return Response({
+                'error': 'Tenant not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"[RESEND_VERIFICATION] Error: {e}")
+            return Response({
                 'error': 'Internal server error'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
