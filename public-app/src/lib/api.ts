@@ -123,6 +123,75 @@ let hasShown401Error = false;
 let last401ErrorTime = 0;
 const ERROR_TOAST_COOLDOWN = 5000; // 5 seconds cooldown between 401 error toasts
 
+// Global flag to prevent multiple token refresh attempts simultaneously
+let isRefreshingToken = false;
+let refreshTokenPromise: Promise<string | null> | null = null;
+
+/**
+ * Attempt to refresh the access token using the refresh token
+ * Returns the new access token or null if refresh failed
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  // If already refreshing, return the existing promise
+  if (isRefreshingToken && refreshTokenPromise) {
+    console.log('[API TOKEN REFRESH] Already refreshing, waiting for existing refresh...');
+    return refreshTokenPromise;
+  }
+
+  if (typeof window === 'undefined') return null;
+
+  const refreshToken = localStorage.getItem('refresh_token') || localStorage.getItem('refresh');
+  if (!refreshToken) {
+    console.log('[API TOKEN REFRESH] No refresh token found');
+    return null;
+  }
+
+  isRefreshingToken = true;
+  console.log('[API TOKEN REFRESH] Attempting to refresh access token...');
+
+  refreshTokenPromise = (async () => {
+    try {
+      const response = await fetch('/api/users/token/refresh/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+
+      if (!response.ok) {
+        console.log(`[API TOKEN REFRESH] Refresh failed with status: ${response.status}`);
+        return null;
+      }
+
+      const data = await response.json() as { access: string; refresh?: string };
+      const newAccessToken = data.access;
+
+      // Store new access token
+      localStorage.setItem('access_token', newAccessToken);
+      localStorage.setItem('access', newAccessToken);
+      
+      // If a new refresh token was returned (rotation enabled), store it too
+      if (data.refresh) {
+        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.setItem('refresh', data.refresh);
+      }
+
+      console.log('[API TOKEN REFRESH] Token refreshed successfully');
+      return newAccessToken;
+    } catch (error) {
+      console.error('[API TOKEN REFRESH] Error refreshing token:', error);
+      return null;
+    } finally {
+      isRefreshingToken = false;
+      refreshTokenPromise = null;
+    }
+  })();
+
+  return refreshTokenPromise;
+}
+
 /**
  * Handle 401 Unauthorized errors with user-friendly message
  * Uses deduplication to prevent multiple toasts for concurrent requests
@@ -331,6 +400,7 @@ function normalizeQueryParams(params?: Record<string, unknown> | { params?: Reco
 export async function apiGet<T>(
   path: string,
   params?: Record<string, unknown> | { params?: Record<string, unknown> },
+  skipTokenRefresh: boolean = false,
 ): Promise<T> {
   const apiUrl = getApiUrl(path);
   const url = new URL(apiUrl);
@@ -370,11 +440,27 @@ export async function apiGet<T>(
   // Create fetch promise
   const fetchPromise = (async () => {
     try {
-      const res = await fetch(urlString, {
+      let res = await fetch(urlString, {
         method: "GET",
         headers: getHeaders('GET'),
         credentials: "include",
       });
+      
+      // Handle 401 with token refresh (only if not already retrying)
+      if (res.status === 401 && !skipTokenRefresh) {
+        console.log(`[API] Got 401 for ${urlString}, attempting token refresh...`);
+        const newToken = await refreshAccessToken();
+        
+        if (newToken) {
+          // Retry the request with the new token
+          console.log(`[API] Retrying request with new token...`);
+          res = await fetch(urlString, {
+            method: "GET",
+            headers: getHeaders('GET'), // This will pick up the new token from localStorage
+            credentials: "include",
+          });
+        }
+      }
       
       if (!res.ok) {
         resetRetryDelay(urlString);
@@ -412,12 +498,13 @@ export async function apiGet<T>(
 }
 
 /**
- * POST request helper with retry logic
+ * POST request helper with retry logic and token refresh
  */
-export async function apiPost<T>(path: string, body: unknown, maxRetries: number = 3): Promise<T> {
+export async function apiPost<T>(path: string, body: unknown, maxRetries: number = 3, skipTokenRefresh: boolean = false): Promise<T> {
   const url = getApiUrl(path);
   
   let lastError: Error | null = null;
+  let tokenRefreshAttempted = false;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -438,9 +525,33 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
         delete headers['Content-Type'];
       }
 
-      const res = await fetch(url, {
+      let res = await fetch(url, {
         ...requestInit,
       });
+      
+      // Handle 401 with token refresh (only once per request)
+      if (res.status === 401 && !skipTokenRefresh && !tokenRefreshAttempted) {
+        console.log(`[API] Got 401 for POST ${url}, attempting token refresh...`);
+        tokenRefreshAttempted = true;
+        const newToken = await refreshAccessToken();
+        
+        if (newToken) {
+          // Retry the request with the new token
+          console.log(`[API] Retrying POST request with new token...`);
+          const retryHeaders = getHeaders('POST');
+          if (isFormData) {
+            delete retryHeaders['Content-Type'];
+          }
+          res = await fetch(url, {
+            method: "POST",
+            headers: retryHeaders,
+            credentials: "include",
+            body: body !== undefined && body !== null 
+              ? (isFormData ? (body as FormData) : JSON.stringify(body)) 
+              : undefined,
+          });
+        }
+      }
       
       if (!res.ok) {
         // Handle rate limiting (429) with exponential backoff
@@ -497,9 +608,9 @@ async function exponentialBackoff(attempt: number, maxAttempts: number = 3): Pro
 }
 
 /**
- * PUT request helper
+ * PUT request helper with token refresh
  */
-export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+export async function apiPut<T>(path: string, body: unknown, skipTokenRefresh: boolean = false): Promise<T> {
   const url = getApiUrl(path);
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const headers = getHeaders('PUT');
@@ -517,7 +628,29 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     delete headers['Content-Type'];
   }
 
-  const res = await fetch(url, requestInit);
+  let res = await fetch(url, requestInit);
+  
+  // Handle 401 with token refresh
+  if (res.status === 401 && !skipTokenRefresh) {
+    console.log(`[API] Got 401 for PUT ${url}, attempting token refresh...`);
+    const newToken = await refreshAccessToken();
+    
+    if (newToken) {
+      console.log(`[API] Retrying PUT request with new token...`);
+      const retryHeaders = getHeaders('PUT');
+      if (isFormData) {
+        delete retryHeaders['Content-Type'];
+      }
+      res = await fetch(url, {
+        method: "PUT",
+        headers: retryHeaders,
+        credentials: "include",
+        body: body !== undefined && body !== null 
+          ? (isFormData ? (body as FormData) : JSON.stringify(body)) 
+          : undefined,
+      });
+    }
+  }
   
   if (!res.ok) {
     const text = await res.text();
@@ -533,9 +666,9 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
 }
 
 /**
- * PATCH request helper
+ * PATCH request helper with token refresh
  */
-export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+export async function apiPatch<T>(path: string, body: unknown, skipTokenRefresh: boolean = false): Promise<T> {
   const url = getApiUrl(path);
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const headers = getHeaders('PATCH');
@@ -554,7 +687,29 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   }
 
   console.log(`[API CALL] PATCH ${url}`, body ? { body } : '');
-  const res = await fetch(url, requestInit);
+  let res = await fetch(url, requestInit);
+  
+  // Handle 401 with token refresh
+  if (res.status === 401 && !skipTokenRefresh) {
+    console.log(`[API] Got 401 for PATCH ${url}, attempting token refresh...`);
+    const newToken = await refreshAccessToken();
+    
+    if (newToken) {
+      console.log(`[API] Retrying PATCH request with new token...`);
+      const retryHeaders = getHeaders('PATCH');
+      if (isFormData) {
+        delete retryHeaders['Content-Type'];
+      }
+      res = await fetch(url, {
+        method: "PATCH",
+        headers: retryHeaders,
+        credentials: "include",
+        body: body !== undefined && body !== null 
+          ? (isFormData ? (body as FormData) : JSON.stringify(body)) 
+          : undefined,
+      });
+    }
+  }
   
   if (!res.ok) {
     const text = await res.text();
@@ -572,16 +727,31 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
 }
 
 /**
- * DELETE request helper
+ * DELETE request helper with token refresh
  */
-export async function apiDelete<T>(path: string): Promise<T> {
+export async function apiDelete<T>(path: string, skipTokenRefresh: boolean = false): Promise<T> {
   const url = getApiUrl(path);
   
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     method: "DELETE",
     headers: getHeaders('DELETE'),
     credentials: "include",
   });
+  
+  // Handle 401 with token refresh
+  if (res.status === 401 && !skipTokenRefresh) {
+    console.log(`[API] Got 401 for DELETE ${url}, attempting token refresh...`);
+    const newToken = await refreshAccessToken();
+    
+    if (newToken) {
+      console.log(`[API] Retrying DELETE request with new token...`);
+      res = await fetch(url, {
+        method: "DELETE",
+        headers: getHeaders('DELETE'),
+        credentials: "include",
+      });
+    }
+  }
   
   if (!res.ok) {
     const text = await res.text();

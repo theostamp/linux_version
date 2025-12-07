@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from .views import login_view, CustomTokenObtainPairView, me_view, update_office_details
 from .oauth_views import google_oauth_initiate, microsoft_oauth_initiate, oauth_callback, oauth_health
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .profile_views import (
     UserProfileView, 
     UserChangePasswordView, 
@@ -44,6 +44,7 @@ urlpatterns = [
     path('office-details', update_office_details, name='user-office-details-no-slash'),  # Without trailing slash
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/simple/', TokenObtainPairView.as_view(), name='token_obtain_pair_simple'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Profile endpoints
     path('profile/', UserProfileView.as_view(), name='user-profile'),
