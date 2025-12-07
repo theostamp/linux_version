@@ -167,7 +167,14 @@ function OAuthCallback() {
 
         // For login flow, redirect based on user role (from backend)
         // Backend returns redirect_path: '/my-apartment' for residents, '/dashboard' for managers
-        const redirectPath = stateData.redirect || data.redirect_path || '/dashboard';
+        // IMPORTANT: If backend says '/plans' (user has no tenant), ALWAYS follow that
+        // Otherwise use the stateData redirect or backend default
+        let redirectPath = data.redirect_path || stateData.redirect || '/dashboard';
+        
+        // If user has no tenant, backend says go to /plans - this takes priority
+        if (data.redirect_path === '/plans') {
+          redirectPath = '/plans';
+        }
         
         if (data.tenant_url) {
           // Cross-subdomain redirect: pass tokens via URL hash (more secure than query params)
