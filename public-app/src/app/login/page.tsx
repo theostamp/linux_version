@@ -220,10 +220,10 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-transparent relative">
       <BuildingRevealBackground />
       {/* Header */}
-      <header className="bg-card shadow-md">
+      <header className="bg-card/95 backdrop-blur-sm shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <Link href="/" className="flex items-center">
@@ -256,7 +256,7 @@ function LoginForm() {
             </p>
           </div>
 
-          <div className="bg-card rounded-xl shadow-app-lg p-8 border border-slate-200/50">
+          <div className="bg-card/95 backdrop-blur-sm rounded-xl shadow-app-lg p-8 border border-slate-200/50">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">
                 Σύνδεση
@@ -294,7 +294,7 @@ function LoginForm() {
             {/* Google OAuth Button */}
             <button
               onClick={handleGoogleLogin}
-              className="w-full bg-card shadow-sm border border-input text-foreground py-3 px-6 rounded-md font-semibold hover:shadow-md hover:bg-accent/50 transition-all flex items-center justify-center mb-6"
+              className="w-full bg-card/95 backdrop-blur-sm shadow-sm border border-input text-foreground py-3 px-6 rounded-md font-semibold hover:shadow-md hover:bg-accent/50 transition-all flex items-center justify-center mb-6"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -322,7 +322,7 @@ function LoginForm() {
                 <div className="w-full border-t border-muted"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-card text-muted-foreground">ή</span>
+                <span className="px-2 bg-card/95 backdrop-blur-sm text-muted-foreground">ή</span>
               </div>
             </div>
 
@@ -340,7 +340,7 @@ function LoginForm() {
                     value={formData.email}
                     onChange={handleInputChange}
                     autoComplete="email"
-                    className={`w-full pl-10 pr-4 py-3 rounded-md shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground border border-input ${
+                    className={`w-full pl-10 pr-4 py-3 rounded-md shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card/95 backdrop-blur-sm text-foreground placeholder:text-muted-foreground border border-input ${
                       errors.email ? 'ring-2 ring-destructive border-destructive' : ''
                     }`}
                     placeholder="john@example.com"
@@ -364,7 +364,7 @@ function LoginForm() {
                     value={formData.password}
                     onChange={handleInputChange}
                     autoComplete="current-password"
-                    className={`w-full pl-10 pr-12 py-3 rounded-md shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card text-foreground placeholder:text-muted-foreground border border-input ${
+                    className={`w-full pl-10 pr-12 py-3 rounded-md shadow-sm focus:ring-2 focus:ring-ring focus:shadow-md bg-card/95 backdrop-blur-sm text-foreground placeholder:text-muted-foreground border border-input ${
                       errors.password ? 'ring-2 ring-destructive border-destructive' : ''
                     }`}
                     placeholder="••••••••"
