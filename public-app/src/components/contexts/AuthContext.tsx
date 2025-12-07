@@ -176,6 +176,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         setUser(null);
         setIsLoading(false);
         setIsAuthReady(true);
+        globalAuthInitializing = false;
         return;
       }
 
@@ -199,6 +200,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           clearTimeout(timeoutId);
           setIsLoading(false);
           setIsAuthReady(true);
+          globalAuthInitializing = false;
           return;
         } catch (e) {
           console.error('AuthContext: Failed to parse cached user', e);

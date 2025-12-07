@@ -6,7 +6,6 @@ import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/components/contexts/ThemeContext';
 import { AuthProvider } from '@/components/contexts/AuthContext';
 import { BuildingProvider } from '@/components/contexts/BuildingContext';
-import { ReactQueryProvider } from '@/components/contexts/ReactQueryProvider';
 import { LoadingProvider } from '@/components/contexts/LoadingContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
 
@@ -74,12 +73,10 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   if (isKioskMode) {
     return (
       <ThemeProvider>
-        <ReactQueryProvider>
-          <LoadingProvider>
-            {children}
-            <Toaster position="top-right" richColors closeButton />
-          </LoadingProvider>
-        </ReactQueryProvider>
+        <LoadingProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </LoadingProvider>
       </ThemeProvider>
     );
   }
@@ -88,12 +85,10 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   if (isInfoScreen) {
     return (
       <ThemeProvider>
-        <ReactQueryProvider>
-          <LoadingProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
-            <Toaster position="top-right" richColors closeButton />
-          </LoadingProvider>
-        </ReactQueryProvider>
+        <LoadingProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+          <Toaster position="top-right" richColors closeButton />
+        </LoadingProvider>
       </ThemeProvider>
     );
   }
@@ -109,29 +104,25 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   if (isNoAuthLoadingRoute) {
     return (
       <ThemeProvider>
-        <ReactQueryProvider>
-          <LoadingProvider>
-            {children}
-            <Toaster position="top-right" richColors closeButton />
-          </LoadingProvider>
-        </ReactQueryProvider>
+        <LoadingProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </LoadingProvider>
       </ThemeProvider>
     );
   }
 
   return (
     <ThemeProvider>
-      <ReactQueryProvider>
-        <LoadingProvider>
-          <AuthProvider>
-            <BuildingProvider>
-              {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
-              {/* ✅ Sonner Toaster - Available globally for all routes */}
-              <Toaster position="top-right" richColors closeButton />
-            </BuildingProvider>
-          </AuthProvider>
-        </LoadingProvider>
-      </ReactQueryProvider>
+      <LoadingProvider>
+        <AuthProvider>
+          <BuildingProvider>
+            {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
+            {/* ✅ Sonner Toaster - Available globally for all routes */}
+            <Toaster position="top-right" richColors closeButton />
+          </BuildingProvider>
+        </AuthProvider>
+      </LoadingProvider>
     </ThemeProvider>
   );
 }

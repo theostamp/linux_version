@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Play } from "next/font/google";
 import "./globals.css";
 import AppProviders from "@/components/AppProviders";
 import GoogleMapsScript from "@/components/GoogleMapsScript";
+import { ReactQueryProvider } from "@/components/contexts/ReactQueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,7 +60,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} ${play.variable} antialiased`}>
         <GoogleMapsScript apiKey={googleMapsApiKey} />
-        <AppProviders>{children}</AppProviders>
+        <ReactQueryProvider>
+          <AppProviders>{children}</AppProviders>
+        </ReactQueryProvider>
       </body>
     </html>
   );
