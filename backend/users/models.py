@@ -467,6 +467,15 @@ class UserInvitation(models.Model):
         help_text=_('Αν η πρόσκληση είναι αυτόματα εγκεκριμένη (για kiosk registrations)')
     )
     
+    # Tenant schema name - for cross-schema invitation acceptance
+    tenant_schema_name = models.CharField(
+        _('Tenant Schema Name'),
+        max_length=63,
+        blank=True,
+        null=True,
+        help_text=_('Schema name του tenant στον οποίο ανήκει η πρόσκληση')
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)

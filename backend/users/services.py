@@ -1062,12 +1062,25 @@ class InvitationService:
         logger.info(f"[INVITATION] User created: {user.email}, ID: {user.id}")
         logger.info(f"[INVITATION] Password verification after creation: {password_check}")
         
-        # Ορισμός tenant - προτεραιότητα: invited_by.tenant → passed tenant
+        # Ορισμός tenant - προτεραιότητα: invitation.tenant_schema_name → invited_by.tenant → passed tenant
         user_tenant = None
-        if invitation.invited_by and hasattr(invitation.invited_by, 'tenant') and invitation.invited_by.tenant:
+        
+        # First priority: Use tenant_schema_name stored in invitation (for kiosk registrations)
+        if invitation.tenant_schema_name:
+            try:
+                from tenants.models import Client
+                user_tenant = Client.objects.get(schema_name=invitation.tenant_schema_name)
+                logger.info(f"[INVITATION] Using tenant from invitation.tenant_schema_name: {user_tenant.schema_name}")
+            except Client.DoesNotExist:
+                logger.warning(f"[INVITATION] Tenant '{invitation.tenant_schema_name}' not found")
+        
+        # Second priority: Use invited_by.tenant
+        if not user_tenant and invitation.invited_by and hasattr(invitation.invited_by, 'tenant') and invitation.invited_by.tenant:
             user_tenant = invitation.invited_by.tenant
             logger.info(f"[INVITATION] Using tenant from invited_by: {user_tenant.schema_name}")
-        elif tenant:
+        
+        # Third priority: Use passed tenant (from request.tenant)
+        if not user_tenant and tenant:
             user_tenant = tenant
             logger.info(f"[INVITATION] Using passed tenant: {user_tenant.schema_name}")
         

@@ -1150,6 +1150,11 @@ def kiosk_register(request):
     
     # Create auto-approved invitation (verified by apartment matching)
     try:
+        # Get current tenant schema for cross-domain invitation acceptance
+        current_tenant_schema = getattr(connection, 'schema_name', None)
+        if current_tenant_schema == 'public':
+            current_tenant_schema = None  # Don't store 'public' as tenant
+        
         invitation = UserInvitation.objects.create(
             email=email,
             first_name=first_name,
@@ -1161,8 +1166,11 @@ def kiosk_register(request):
             source=UserInvitation.InvitationSource.KIOSK,
             auto_approved=True,
             invited_by=invited_by,
+            tenant_schema_name=current_tenant_schema,  # Store tenant for cross-domain acceptance
             expires_at=timezone.now() + timezone.timedelta(days=7)
         )
+        
+        kiosk_logger.info(f"Created kiosk invitation for {email} with tenant_schema_name: {current_tenant_schema}")
         
         kiosk_logger.info(f"Created kiosk registration invitation for {email} ({match_type}) in apt {apartment.number}")
         
