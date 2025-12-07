@@ -1,1 +1,41 @@
-﻿﻿
+﻿﻿54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] loadUserOnMount starting...
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] On auth callback path, skipping auto-verification to allow OAuth flow
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] Token check interval disabled to debug hanging issue
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Current pathname: /auth/callback
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is Dashboard: false
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is Kiosk Mode: false
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is Info Screen: false
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is No Sidebar Route: true
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:7 [ReactQueryProvider] Setting up global refresh system
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [Global Refresh] Query client registered
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [Global Refresh] Initializing global refresh system
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] loadUserOnMount starting...
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] On auth callback path, skipping auto-verification to allow OAuth flow
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] Token check interval disabled to debug hanging issue
+83cbea22267bf4b3.js?…cbue2Cu2GCJCoZJXy:1 [API CALL] Attempting to fetch /api/users/me/
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 AuthContext: Token login successful for user: thodoris_st@hotmail.com
+83cbea22267bf4b3.js?…cbue2Cu2GCJCoZJXy:1 [API CALL] Fetching buildings from /buildings/
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] Token check interval disabled to debug hanging issue
+api/buildings?page_size=1000&page=1:1 
+ Failed to load resource: the server responded with a status of 404 ()
+83cbea22267bf4b3.js?…cbue2Cu2GCJCoZJXy:1 [API CALL] Error fetching buildings from /buildings/: Error: GET https://public.newconcierge.app/api/buildings/?page_size=1000&page=1 failed: 404
+    at p (83cbea22267bf4b3.js?…Cu2GCJCoZJXy:1:1868)
+    at 83cbea22267bf4b3.js?…Cu2GCJCoZJXy:1:4439
+    at async U (83cbea22267bf4b3.js?…Cu2GCJCoZJXy:1:9913)
+    at async 54cfbdb944a99e8f.js?…u2GCJCoZJXy:1:14695
+83cbea22267bf4b3.js?…cbue2Cu2GCJCoZJXy:1 [API CALL] Fetching buildings from /buildings/public/
+83cbea22267bf4b3.js?…cbue2Cu2GCJCoZJXy:1 [API DEDUP] Returning in-flight request for https://public.newconcierge.app/api/todos/notifications/?is_read=false_{"is_read":"false"}
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [AuthContext] Already initialized or global initialization in progress, skipping...
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Current pathname: /my-apartment
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is Dashboard: true
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is Kiosk Mode: false
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is Info Screen: false
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:5 [AppProviders] Is No Sidebar Route: false
+api/todos/notifications?is_read=false:1 
+ Failed to load resource: the server responded with a status of 404 ()
+api/financial/my-apartment:1 
+ Failed to load resource: the server responded with a status of 404 ()
+api/todos/notifications:1 
+ Failed to load resource: the server responded with a status of 404 ()
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [BuildingContext] Loaded buildings: 0 buildings
+54cfbdb944a99e8f.js?…cbue2Cu2GCJCoZJXy:1 [BuildingContext] No buildings found for user

@@ -102,6 +102,17 @@ function LoginForm() {
       });
 
       const data = await response.json();
+      
+      // DEBUG: Log backend response
+      console.log('[Login] Backend response:', {
+        status: response.status,
+        tenant_url: data.tenant_url,
+        redirect_path: data.redirect_path,
+        user_email: data.user?.email,
+        user_role: data.user?.role,
+        has_access: !!data.access,
+        has_refresh: !!data.refresh
+      });
 
       if (!response.ok) {
         throw new Error(data.error || 'Σφάλμα σύνδεσης');
