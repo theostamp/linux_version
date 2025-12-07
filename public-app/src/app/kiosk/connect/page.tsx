@@ -81,12 +81,19 @@ function KioskConnectContent() {
 
   const fetchBuildingInfo = async (id: string) => {
     try {
-      const response = await fetch(`/api/buildings/${id}/`);
+      // Use public-info endpoint which works without tenant context
+      const response = await fetch(`/api/public-info/${id}/`);
       if (response.ok) {
         const data = await response.json();
         setBuildingInfo({
-          name: data.name || `Κτίριο #${id}`,
-          address: data.address || ''
+          name: data.building?.name || data.name || `Κτίριο #${id}`,
+          address: data.building?.address || data.address || ''
+        });
+      } else {
+        // Fallback to generic info
+        setBuildingInfo({
+          name: `Κτίριο #${id}`,
+          address: ''
         });
       }
     } catch (error) {
@@ -158,8 +165,15 @@ function KioskConnectContent() {
           setPhone('');
           
           // Redirect to my-apartment after brief delay
+          // Use tenant subdomain if available for cross-domain redirect
           setTimeout(() => {
-            router.push('/my-apartment');
+            if (data.tenant_url) {
+              // Cross-subdomain redirect with tokens
+              const targetUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(data.access_token)}&refresh=&redirect=${encodeURIComponent('/my-apartment')}`;
+              window.location.href = targetUrl;
+            } else {
+              router.push('/my-apartment');
+            }
           }, 1500);
         } else if (data.status === 'existing_user') {
           // Fallback: email was sent

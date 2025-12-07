@@ -1061,6 +1061,11 @@ def kiosk_register(request):
             else:
                 message = f'Καλώς ήρθατε! Μεταφέρεστε στο διαμέρισμά σας...'
             
+            # Get tenant URL for cross-subdomain redirect
+            tenant_url = None
+            if hasattr(existing_user, 'tenant') and existing_user.tenant:
+                tenant_url = f"{existing_user.tenant.schema_name}.newconcierge.app"
+            
             # Return token for instant login - no email verification needed
             return Response({
                 'message': message,
@@ -1068,6 +1073,7 @@ def kiosk_register(request):
                 'apartment': apartment.number,
                 'apartments': [m['apartment'].number for m in all_matches],
                 'access_token': access_token,  # JWT for instant login
+                'tenant_url': tenant_url,  # For cross-subdomain redirect
                 'user': {
                     'email': existing_user.email,
                     'first_name': existing_user.first_name or '',
