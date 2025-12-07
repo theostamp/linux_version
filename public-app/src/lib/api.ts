@@ -2058,8 +2058,9 @@ export async function addUserToBuilding(userId: number, buildingId: number, role
 // User Management API Functions
 // ============================================================================
 
-export async function fetchUsers(): Promise<User[]> {
-  const response = await apiGet<User[] | { results: User[]; count?: number }>('/users/');
+export async function fetchUsers(buildingId?: number): Promise<User[]> {
+  const url = buildingId ? `/users/?building=${buildingId}` : '/users/';
+  const response = await apiGet<User[] | { results: User[]; count?: number }>(url);
   // Handle both array response and paginated response from DRF
   if (Array.isArray(response)) {
     return response;

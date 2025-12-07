@@ -416,11 +416,32 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet για CRUD operations στο CustomUser.
     Protected πίσω από JWT authentication.
+    
+    Query parameters:
+        - building: Filter users by building membership (only users with membership in this building)
     """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
+    
+    def get_queryset(self):
+        """
+        Override queryset to filter users by building if building parameter is provided.
+        Only returns users that have a BuildingMembership for the specified building.
+        """
+        queryset = super().get_queryset()
+        building_id = self.request.query_params.get('building')
+        
+        if building_id:
+            from buildings.models import BuildingMembership
+            # Get user IDs that have membership in this building
+            member_user_ids = BuildingMembership.objects.filter(
+                building_id=building_id
+            ).values_list('resident_id', flat=True)
+            queryset = queryset.filter(id__in=member_user_ids)
+        
+        return queryset
     
     def destroy(self, request, *args, **kwargs):
         """

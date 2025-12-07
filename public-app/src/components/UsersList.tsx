@@ -44,8 +44,9 @@ export default function UsersList() {
   const { selectedBuilding } = useBuilding();
 
   const { data: users, isLoading, error } = useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
+    queryKey: ['users', selectedBuilding?.id],
+    queryFn: () => fetchUsers(selectedBuilding?.id),
+    enabled: !!selectedBuilding?.id, // Only fetch when building is selected
   });
 
   const handleEdit = (user: User) => {
@@ -67,7 +68,7 @@ export default function UsersList() {
       if (result.remaining_buildings > 0) {
         toast.info(`Ο χρήστης έχει ακόμα πρόσβαση σε ${result.remaining_buildings} κτίρι${result.remaining_buildings === 1 ? 'ο' : 'α'}`);
       }
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', selectedBuilding?.id] });
     } catch (err) {
       const error = err as { message?: string };
       toast.error(error?.message || 'Αποτυχία αφαίρεσης χρήστη από κτίριο');
@@ -87,7 +88,7 @@ export default function UsersList() {
         await activateUser(user.id);
         toast.success(`Ο χρήστης ${user.email} ενεργοποιήθηκε`);
       }
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', selectedBuilding?.id] });
     } catch (err) {
       const error = err as { message?: string };
       toast.error(error?.message || 'Αποτυχία αλλαγής κατάστασης χρήστη');
