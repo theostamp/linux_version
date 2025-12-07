@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class CustomTenantMiddleware(TenantMainMiddleware):
     BASE_DOMAIN_TENANT_MAP = {
-        "newconcierge.app": "theo",
+        "newconcierge.app": "public",
     }
     """
     Custom tenant middleware that handles frontend proxy requests.
