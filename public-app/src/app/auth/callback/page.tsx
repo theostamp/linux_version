@@ -5,6 +5,17 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Building, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
+interface StateData {
+  provider?: string;
+  action?: string;
+  redirect?: string;
+  originUrl?: string;
+  plan?: string;
+  apartments?: number;
+  billingInterval?: string;
+  tenantSubdomain?: string;
+}
+
 function OAuthCallback() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -12,10 +23,43 @@ function OAuthCallback() {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
   
+  // Check for cross-subdomain token transfer (via URL hash)
+  const hashTokens = searchParams.get('tokens');
+  const hashRedirect = searchParams.get('redirect_path');
+  
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Επεξεργασία...');
 
   useEffect(() => {
+    // Handle cross-subdomain token transfer (tokens passed via URL hash after main callback)
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && hash.includes('access=')) {
+        try {
+          const hashParams = new URLSearchParams(hash.substring(1));
+          const access = hashParams.get('access');
+          const refresh = hashParams.get('refresh');
+          const redirectPath = hashParams.get('redirect') || '/dashboard';
+          
+          if (access) {
+            localStorage.setItem('access_token', access);
+          }
+          if (refresh) {
+            localStorage.setItem('refresh_token', refresh);
+          }
+          
+          // Clear hash and redirect
+          window.location.hash = '';
+          setStatus('success');
+          setMessage('Σύνδεση επιτυχής!');
+          router.push(redirectPath);
+          return;
+        } catch (e) {
+          console.error('Failed to parse hash tokens:', e);
+        }
+      }
+    }
+    
     if (error) {
       setStatus('error');
       setMessage('Η σύνδεση με Google απέτυχε');
@@ -44,7 +88,7 @@ function OAuthCallback() {
         coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
         // Parse state to get redirect info
-        let stateData = {};
+        let stateData: StateData = {};
         try {
           if (state) {
             stateData = JSON.parse(decodeURIComponent(state));
@@ -52,6 +96,10 @@ function OAuthCallback() {
         } catch (e) {
           console.error('Failed to parse state:', e);
         }
+
+        // Use the fixed redirect URI (main app URL) that was registered with Google
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+        const redirectUri = `${appUrl}/auth/callback`;
 
         // Call backend OAuth callback (POST method)
         const response = await fetch(`${coreApiUrl}/api/users/auth/callback/`, {
@@ -63,7 +111,7 @@ function OAuthCallback() {
           body: JSON.stringify({
             code: code,
             state: state || '{}',
-            redirect_uri: `${window.location.origin}/auth/callback`
+            redirect_uri: redirectUri
           }),
         });
 
@@ -73,7 +121,7 @@ function OAuthCallback() {
           throw new Error(data.error || 'OAuth callback failed');
         }
 
-        // Store tokens if provided
+        // Store tokens locally (will be transferred cross-domain if needed)
         if (data.access) {
           localStorage.setItem('access_token', data.access);
         }
@@ -114,9 +162,13 @@ function OAuthCallback() {
 
         // For login flow, redirect based on user role (from backend)
         // Backend returns redirect_path: '/my-apartment' for residents, '/dashboard' for managers
-        const redirectPath = data.redirect_path || '/dashboard';
+        const redirectPath = stateData.redirect || data.redirect_path || '/dashboard';
+        
         if (data.tenant_url) {
-          window.location.href = `https://${data.tenant_url}${redirectPath}`;
+          // Cross-subdomain redirect: pass tokens via URL hash (more secure than query params)
+          // Hash fragment is not sent to server, reducing exposure
+          const targetUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(data.access)}&refresh=${encodeURIComponent(data.refresh)}&redirect=${encodeURIComponent(redirectPath)}`;
+          window.location.href = targetUrl;
         } else {
           router.push(redirectPath);
         }
