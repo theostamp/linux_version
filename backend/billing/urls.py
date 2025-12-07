@@ -7,6 +7,7 @@ from .views import (
     SubscriptionPlanViewSet, UserSubscriptionViewSet,
     PaymentMethodViewSet, UsageTrackingViewSet,
     BillingCycleViewSet,
+    PricingTierViewSet, PriceCalculatorView,  # Νέα views για tiered pricing
     CreatePaymentIntentView, UsageAnalyticsView,
     UsageTrendsView, PlanComparisonView,
     BillingHistoryView, AdminUsageStatsView,
@@ -31,10 +32,15 @@ router.register(r'subscriptions', UserSubscriptionViewSet, basename='user-subscr
 router.register(r'payment-methods', PaymentMethodViewSet, basename='payment-method')
 router.register(r'usage-tracking', UsageTrackingViewSet, basename='usage-tracking')
 router.register(r'billing-cycles', BillingCycleViewSet, basename='billing-cycle')
+router.register(r'pricing-tiers', PricingTierViewSet, basename='pricing-tier')  # Νέο ViewSet
 
 urlpatterns = [
     # API routes
     path('', include(router.urls)),
+    
+    # Price Calculator (Public - for landing page slider)
+    path('calculate-price/', PriceCalculatorView.as_view(), name='calculate-price'),
+    path('calculate-price', PriceCalculatorView.as_view(), name='calculate-price-no-slash'),
     
     # Stripe webhook (with and without trailing slash for compatibility)
     path('webhook/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),

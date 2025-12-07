@@ -4,16 +4,182 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
 import uuid
 
 User = get_user_model()
 
 
+class PricingTier(models.Model):
+    """
+    Κλιμακωτή τιμολόγηση βάσει αριθμού διαμερισμάτων.
+    
+    Παράδειγμα:
+    - Cloud: 8-20 διαμ → €18, 21-30 διαμ → €22, 31+ → €25
+    - Kiosk: 8-20 διαμ → €28, 21-30 διαμ → €35, 31+ → €40
+    """
+    PLAN_CATEGORY_CHOICES = [
+        ('free', 'Free'),
+        ('cloud', 'Cloud'),
+        ('kiosk', 'Info Point (Kiosk)'),
+    ]
+    
+    plan_category = models.CharField(
+        max_length=20,
+        choices=PLAN_CATEGORY_CHOICES,
+        verbose_name='Κατηγορία Πακέτου'
+    )
+    
+    min_apartments = models.PositiveIntegerField(
+        verbose_name='Ελάχιστα Διαμερίσματα',
+        help_text='Κάτω όριο διαμερισμάτων για αυτό το tier'
+    )
+    
+    max_apartments = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Μέγιστα Διαμερίσματα',
+        help_text='Άνω όριο (null = απεριόριστα)'
+    )
+    
+    monthly_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Μηνιαία Τιμή (€)'
+    )
+    
+    yearly_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Ετήσια Τιμή (€)',
+        help_text='Αν είναι null, υπολογίζεται αυτόματα με έκπτωση'
+    )
+    
+    yearly_discount_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('16.67'),
+        verbose_name='Ετήσια Έκπτωση (%)',
+        help_text='Έκπτωση για ετήσια πληρωμή (default: 2 μήνες δωρεάν = 16.67%)'
+    )
+    
+    # Stripe Price IDs για κάθε tier
+    stripe_price_id_monthly = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Stripe Price ID (Monthly)'
+    )
+    
+    stripe_price_id_yearly = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Stripe Price ID (Yearly)'
+    )
+    
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Ενεργό'
+    )
+    
+    display_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Σειρά Εμφάνισης'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Κλίμακα Τιμολόγησης'
+        verbose_name_plural = 'Κλίμακες Τιμολόγησης'
+        ordering = ['plan_category', 'min_apartments']
+        unique_together = ['plan_category', 'min_apartments']
+    
+    def __str__(self):
+        max_str = str(self.max_apartments) if self.max_apartments else '∞'
+        return f"{self.get_plan_category_display()} | {self.min_apartments}-{max_str} διαμ. | €{self.monthly_price}/μήνα"
+    
+    @property
+    def calculated_yearly_price(self):
+        """Υπολογισμός ετήσιας τιμής με έκπτωση"""
+        if self.yearly_price:
+            return self.yearly_price
+        yearly_full = self.monthly_price * 12
+        discount = yearly_full * (self.yearly_discount_percent / 100)
+        return yearly_full - discount
+    
+    @property
+    def tier_label(self):
+        """Human-readable label για το tier"""
+        if self.max_apartments:
+            return f"{self.min_apartments}-{self.max_apartments} διαμερίσματα"
+        return f"{self.min_apartments}+ διαμερίσματα"
+    
+    @classmethod
+    def get_tier_for_apartments(cls, plan_category: str, apartment_count: int):
+        """
+        Βρίσκει το κατάλληλο tier βάσει αριθμού διαμερισμάτων.
+        
+        Args:
+            plan_category: 'free', 'cloud', ή 'kiosk'
+            apartment_count: Αριθμός διαμερισμάτων
+            
+        Returns:
+            PricingTier ή None
+        """
+        return cls.objects.filter(
+            plan_category=plan_category,
+            is_active=True,
+            min_apartments__lte=apartment_count
+        ).filter(
+            models.Q(max_apartments__gte=apartment_count) | 
+            models.Q(max_apartments__isnull=True)
+        ).first()
+    
+    @classmethod
+    def get_price_for_apartments(cls, plan_category: str, apartment_count: int, yearly: bool = False):
+        """
+        Επιστρέφει την τιμή για συγκεκριμένο αριθμό διαμερισμάτων.
+        
+        Returns:
+            dict με price, tier_label, stripe_price_id
+        """
+        tier = cls.get_tier_for_apartments(plan_category, apartment_count)
+        
+        if not tier:
+            return None
+        
+        if yearly:
+            return {
+                'price': tier.calculated_yearly_price,
+                'tier_label': tier.tier_label,
+                'stripe_price_id': tier.stripe_price_id_yearly,
+                'billing_interval': 'year'
+            }
+        else:
+            return {
+                'price': tier.monthly_price,
+                'tier_label': tier.tier_label,
+                'stripe_price_id': tier.stripe_price_id_monthly,
+                'billing_interval': 'month'
+            }
+
+
 class SubscriptionPlan(models.Model):
     """
-    Model για τα διαθέσιμα subscription plans
+    Model για τα διαθέσιμα subscription plans.
+    
+    ΣΗΜΕΙΩΣΗ: Τα πεδία monthly_price/yearly_price διατηρούνται για 
+    backward compatibility, αλλά η πραγματική τιμολόγηση γίνεται 
+    μέσω του PricingTier model (κλιμακωτή τιμολόγηση).
     """
     PLAN_TYPES = [
+        ('free', 'Free'),
+        ('cloud', 'Cloud'),
+        ('kiosk', 'Info Point (Kiosk)'),
+        # Legacy types for backward compatibility
         ('starter', 'Starter'),
         ('professional', 'Professional'),
         ('enterprise', 'Enterprise'),
@@ -26,7 +192,7 @@ class SubscriptionPlan(models.Model):
     
     name = models.CharField(
         max_length=100,
-        help_text='Plan name (e.g., Starter, Professional, Enterprise)'
+        help_text='Plan name (e.g., Free, Cloud, Info Point)'
     )
     
     plan_type = models.CharField(
@@ -40,17 +206,36 @@ class SubscriptionPlan(models.Model):
         help_text='Plan description and features'
     )
     
-    # Pricing
+    # Pricing (legacy - για backward compatibility)
+    # Η πραγματική τιμολόγηση γίνεται μέσω PricingTier
     monthly_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        help_text='Monthly price in EUR'
+        default=Decimal('0.00'),
+        help_text='Base monthly price (legacy - use PricingTier for tiered pricing)'
     )
     
     yearly_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        help_text='Yearly price in EUR'
+        default=Decimal('0.00'),
+        help_text='Base yearly price (legacy - use PricingTier for tiered pricing)'
+    )
+    
+    # Νέα πεδία για tier-based pricing
+    uses_tiered_pricing = models.BooleanField(
+        default=True,
+        help_text='If True, pricing is determined by PricingTier based on apartment count'
+    )
+    
+    includes_kiosk_hardware = models.BooleanField(
+        default=False,
+        help_text='If True, plan includes Kiosk hardware and installation'
+    )
+    
+    max_buildings_online_signup = models.PositiveIntegerField(
+        default=5,
+        help_text='Max buildings for online signup (more = "Contact Us")'
     )
     
     # Features and limits

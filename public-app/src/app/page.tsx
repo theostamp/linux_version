@@ -1,9 +1,10 @@
 "use client";
-// Updated landing page v2.3 - Community & resident-centric messaging
+// Updated landing page v2.4 - Dynamic pricing calculator
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Users, Heart } from "lucide-react";
+import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Users, Heart, Check, Home, Monitor } from "lucide-react";
+import { PricingCalculator } from "@/components/pricing";
 
 const pricingPlans = [
   {
@@ -667,13 +668,13 @@ export default function LandingPage() {
           <AnimatedSection>
             <div className="mb-12 text-center">
               <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
-                Πακέτα
+                Τιμολόγηση
               </span>
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
-                Πακέτα για κάθε πολυκατοικία
+                Απλή τιμολόγηση, χωρίς κρυφές χρεώσεις
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
-                Διάλεξε το μοντέλο που ταιριάζει στην πολυκατοικία ή στο γραφείο διαχείρισής σου – με ή χωρίς σημείο ενημέρωσης.
+                Πληρώνεις ανάλογα με τον αριθμό διαμερισμάτων. Σύρε το slider για να δεις την τιμή σου.
                 <br />
                 <span className="text-xs text-slate-500">
                   Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
@@ -682,76 +683,174 @@ export default function LandingPage() {
             </div>
           </AnimatedSection>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {pricingPlans.map((plan, index) => (
-              <AnimatedSection key={plan.id} delay={index * 100}>
-                <div
-                  className={`relative flex h-full flex-col rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02] ${
-                    plan.highlight
-                      ? "border-emerald-500 bg-slate-900 shadow-xl shadow-emerald-500/20"
-                      : "border-slate-800 bg-slate-950/70 hover:border-slate-700"
-                  }`}
-                >
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-4 py-1 text-xs font-bold text-slate-950">
-                      {plan.badge}
-                    </div>
-                  )}
-                  <div className={plan.badge ? "pt-2" : ""}>
-                    <h3 className="text-lg font-bold text-slate-50">{plan.name}</h3>
-                    <p className="mt-1 text-xs text-slate-500">{plan.target}</p>
-                  </div>
+          {/* Pricing Calculator Section */}
+          <AnimatedSection delay={100}>
+            <div className="mb-12">
+              <PricingCalculator 
+                onSelectPlan={(plan, apartments, price) => {
+                  console.log('Selected plan:', plan, apartments, price);
+                  // TODO: Navigate to signup with selected plan
+                }} 
+                initialApartments={15}
+                showCTA={true}
+              />
+            </div>
+          </AnimatedSection>
 
-                  <div className="mt-5">
-                    <div className="text-2xl font-bold text-emerald-400">
-                      {plan.priceMonthly}
-                      <span className="ml-1 text-xs font-normal text-slate-500">/ μήνα / πολυκατοικία</span>
-                    </div>
-                    {plan.upfrontCost && (
-                      <div className="mt-1 text-xs text-slate-400">
-                        + {plan.upfrontCost} <span className="text-slate-500">hardware & setup</span>
+          {/* Quick Pricing Table */}
+          <AnimatedSection delay={200}>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 overflow-x-auto">
+              <h3 className="mb-4 text-center text-lg font-semibold text-slate-50">
+                Γρήγορος οδηγός τιμολόγησης
+              </h3>
+              <table className="w-full min-w-[400px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="py-3 text-left text-slate-400 font-medium">Διαμερίσματα</th>
+                    <th className="py-3 text-center text-slate-400 font-medium">
+                      <div className="flex items-center justify-center gap-2">
+                        <Home className="h-4 w-4" />
+                        Free
                       </div>
-                    )}
+                    </th>
+                    <th className="py-3 text-center text-slate-400 font-medium">
+                      <div className="flex items-center justify-center gap-2">
+                        <Building className="h-4 w-4" />
+                        Cloud
+                      </div>
+                    </th>
+                    <th className="py-3 text-center text-slate-400 font-medium">
+                      <div className="flex items-center justify-center gap-2">
+                        <Monitor className="h-4 w-4" />
+                        Info Point
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-800/50">
+                    <td className="py-3 text-slate-300">1-7</td>
+                    <td className="py-3 text-center">
+                      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-400 font-semibold">
+                        Δωρεάν
+                      </span>
+                    </td>
+                    <td className="py-3 text-center text-slate-500">-</td>
+                    <td className="py-3 text-center text-slate-500">-</td>
+                  </tr>
+                  <tr className="border-b border-slate-800/50">
+                    <td className="py-3 text-slate-300">8-20</td>
+                    <td className="py-3 text-center text-slate-500">-</td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€18/μήνα</td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€28/μήνα</td>
+                  </tr>
+                  <tr className="border-b border-slate-800/50">
+                    <td className="py-3 text-slate-300">21-30</td>
+                    <td className="py-3 text-center text-slate-500">-</td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€22/μήνα</td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€35/μήνα</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 text-slate-300">31+</td>
+                    <td className="py-3 text-center text-slate-500">-</td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€25/μήνα</td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€40/μήνα</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="mt-4 text-center text-xs text-slate-500">
+                * Ετήσια πληρωμή: 2 μήνες δωρεάν (16.67% έκπτωση)
+              </p>
+            </div>
+          </AnimatedSection>
+
+          {/* Feature Comparison */}
+          <AnimatedSection delay={300}>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              {/* Free Features */}
+              <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
+                    <Home className="h-4 w-4 text-slate-400" />
                   </div>
-
-                  <ul className="mt-6 flex-1 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2 text-xs text-slate-300">
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] text-emerald-400">
-                          ✓
-                        </span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <a
-                    href="#cta"
-                    className={`mt-6 block w-full rounded-full py-2.5 text-center text-sm font-semibold transition-all duration-300 ${
-                      plan.highlight
-                        ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:scale-105"
-                        : "border border-slate-700 text-slate-200 hover:border-slate-500 hover:bg-slate-800"
-                    }`}
-                  >
-                    Ζήτησε προσφορά
-                  </a>
+                  <h4 className="font-semibold text-slate-200">Free</h4>
                 </div>
-              </AnimatedSection>
-            ))}
-          </div>
+                <ul className="space-y-2">
+                  {["Έως 7 διαμερίσματα", "Βασικό φύλλο κοινοχρήστων", "1 πολυκατοικία"].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                      <Check className="h-3 w-3 text-emerald-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Cloud Features */}
+              <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <Building className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <h4 className="font-semibold text-slate-200">Cloud</h4>
+                </div>
+                <ul className="space-y-2">
+                  {[
+                    "Απεριόριστα διαμερίσματα",
+                    "Ανακοινώσεις & ψηφοφορίες",
+                    "Αιτήματα συντήρησης",
+                    "Web & mobile πρόσβαση",
+                    "Έως 5 πολυκατοικίες"
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                      <Check className="h-3 w-3 text-emerald-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Kiosk Features */}
+              <div className="rounded-xl border border-emerald-500/30 bg-slate-900 p-4 shadow-lg shadow-emerald-500/10">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
+                    <Monitor className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <h4 className="font-semibold text-slate-200">Info Point</h4>
+                  <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                    Δημοφιλές
+                  </span>
+                </div>
+                <ul className="space-y-2">
+                  {[
+                    "Όλα τα Cloud features",
+                    "Οθόνη στην είσοδο",
+                    "Hardware & εγκατάσταση",
+                    "Ενσωματωμένο internet",
+                    "Τεχνική υποστήριξη 24/7"
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                      <Check className="h-3 w-3 text-emerald-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </AnimatedSection>
 
           {/* Custom plan note */}
           <AnimatedSection delay={400}>
             <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
-              <h3 className="mb-2 text-lg font-semibold text-slate-50">Πολλές πολυκατοικίες;</h3>
+              <h3 className="mb-2 text-lg font-semibold text-slate-50">Γραφείο διαχείρισης με 5+ πολυκατοικίες;</h3>
               <p className="text-sm text-slate-400">
-                Για γραφεία διαχείρισης ή εταιρείες διαχείρισης που διαχειρίζονται 10+ πολυκατοικίες ή έχουν ιδιαίτερες ανάγκες – επικοινωνήστε για custom λύση.
+                Επικοινωνήστε μαζί μας για προσαρμοσμένη τιμολόγηση και ειδικές λειτουργίες για επαγγελματίες διαχειριστές.
               </p>
               <a
                 href="#cta"
                 className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
               >
-                Επικοινωνήστε μαζί μας
+                <Phone className="h-4 w-4" />
+                Καλέστε μας
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>

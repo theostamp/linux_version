@@ -13,7 +13,7 @@ import logging
 
 from .models import (
     SubscriptionPlan, UserSubscription, BillingCycle, 
-    UsageTracking, PaymentMethod
+    UsageTracking, PaymentMethod, PricingTier
 )
 from users.models import CustomUser
 from .serializers import (
@@ -21,7 +21,9 @@ from .serializers import (
     BillingCycleSerializer, UsageTrackingSerializer,
     PaymentMethodSerializer, CreateSubscriptionSerializer,
     UpdateSubscriptionSerializer, CancelSubscriptionSerializer,
-    AddPaymentMethodSerializer, SubscriptionSummarySerializer
+    AddPaymentMethodSerializer, SubscriptionSummarySerializer,
+    PricingTierSerializer, PriceCalculationRequestSerializer,
+    PriceCalculationResponseSerializer
 )
 from .services import BillingService, PaymentService, WebhookService
 from .integrations.stripe import StripeService
@@ -40,6 +42,204 @@ class SubscriptionPlanViewSet(ReadOnlyModelViewSet):
     queryset = SubscriptionPlan.objects.filter(is_active=True)
     serializer_class = SubscriptionPlanSerializer
     permission_classes = [permissions.AllowAny]  # Public για να μπορούν να δουν τα plans
+
+
+class PricingTierViewSet(ReadOnlyModelViewSet):
+    """
+    ViewSet για pricing tiers (κλιμακωτή τιμολόγηση)
+    """
+    queryset = PricingTier.objects.filter(is_active=True)
+    serializer_class = PricingTierSerializer
+    permission_classes = [permissions.AllowAny]  # Public endpoint
+
+    def list(self, request, *args, **kwargs):
+        """
+        Επιστρέφει όλα τα pricing tiers ομαδοποιημένα ανά κατηγορία
+        """
+        queryset = self.get_queryset().order_by('display_order')
+        serializer = self.get_serializer(queryset, many=True)
+        
+        # Ομαδοποίηση ανά κατηγορία
+        grouped = {
+            'free': [],
+            'cloud': [],
+            'kiosk': []
+        }
+        
+        for tier in serializer.data:
+            category = tier['plan_category']
+            if category in grouped:
+                grouped[category].append(tier)
+        
+        return Response({
+            'tiers': serializer.data,
+            'grouped': grouped,
+            'summary': {
+                'free': {'max_apartments': 7, 'price': 0},
+                'cloud': {'min_price': 18, 'max_price': 25},
+                'kiosk': {'min_price': 28, 'max_price': 40},
+            }
+        })
+
+
+class PriceCalculatorView(APIView):
+    """
+    API endpoint για υπολογισμό τιμής βάσει αριθμού διαμερισμάτων.
+    
+    POST /api/billing/calculate-price/
+    {
+        "plan_category": "cloud",  // "free", "cloud", "kiosk"
+        "apartment_count": 25,
+        "building_count": 1,
+        "yearly": false
+    }
+    
+    Returns:
+    {
+        "plan_category": "cloud",
+        "plan_category_display": "Cloud",
+        "apartment_count": 25,
+        "building_count": 1,
+        "monthly_price_per_building": 22.00,
+        "total_monthly_price": 22.00,
+        "yearly_price_per_building": 220.00,
+        "total_yearly_price": 220.00,
+        "yearly_discount_percent": 16.67,
+        "yearly_savings": 44.00,
+        "tier_label": "21-30 διαμερίσματα",
+        "tier_id": 2,
+        "stripe_price_id_monthly": "price_xxx",
+        "stripe_price_id_yearly": "price_yyy",
+        "requires_contact": false,
+        "contact_reason": null,
+        "is_free": false
+    }
+    """
+    permission_classes = [permissions.AllowAny]  # Public endpoint για landing page
+
+    def post(self, request):
+        serializer = PriceCalculationRequestSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = serializer.validated_data
+        plan_category = data['plan_category']
+        apartment_count = data['apartment_count']
+        building_count = data.get('building_count', 1)
+        yearly = data.get('yearly', False)
+        
+        # Έλεγχος για "Καλέστε μας" (>5 πολυκατοικίες)
+        if building_count > 5:
+            return Response({
+                'plan_category': plan_category,
+                'plan_category_display': dict(PricingTier.PLAN_CATEGORY_CHOICES).get(plan_category, plan_category),
+                'apartment_count': apartment_count,
+                'building_count': building_count,
+                'monthly_price_per_building': None,
+                'total_monthly_price': None,
+                'yearly_price_per_building': None,
+                'total_yearly_price': None,
+                'yearly_discount_percent': None,
+                'yearly_savings': None,
+                'tier_label': None,
+                'tier_id': None,
+                'stripe_price_id_monthly': '',
+                'stripe_price_id_yearly': '',
+                'requires_contact': True,
+                'contact_reason': 'Για γραφεία διαχείρισης με 5+ πολυκατοικίες, επικοινωνήστε μαζί μας για προσαρμοσμένη τιμολόγηση.',
+                'is_free': False
+            })
+        
+        # Έλεγχος για Free tier (1-7 διαμερίσματα)
+        if plan_category == 'free' or (apartment_count <= 7 and plan_category != 'kiosk'):
+            tier = PricingTier.get_tier_for_apartments('free', apartment_count)
+            
+            if tier:
+                return Response({
+                    'plan_category': 'free',
+                    'plan_category_display': 'Free',
+                    'apartment_count': apartment_count,
+                    'building_count': building_count,
+                    'monthly_price_per_building': 0,
+                    'total_monthly_price': 0,
+                    'yearly_price_per_building': 0,
+                    'total_yearly_price': 0,
+                    'yearly_discount_percent': 0,
+                    'yearly_savings': 0,
+                    'tier_label': tier.tier_label,
+                    'tier_id': tier.id,
+                    'stripe_price_id_monthly': '',
+                    'stripe_price_id_yearly': '',
+                    'requires_contact': False,
+                    'contact_reason': None,
+                    'is_free': True
+                })
+        
+        # Εύρεση tier για το συγκεκριμένο plan_category
+        tier = PricingTier.get_tier_for_apartments(plan_category, apartment_count)
+        
+        if not tier:
+            # Fallback: χρησιμοποίησε το μεγαλύτερο tier
+            tier = PricingTier.objects.filter(
+                plan_category=plan_category,
+                is_active=True
+            ).order_by('-min_apartments').first()
+            
+            if not tier:
+                return Response({
+                    'error': f'No pricing tier found for {plan_category} with {apartment_count} apartments'
+                }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Υπολογισμός τιμών
+        monthly_per_building = tier.monthly_price
+        total_monthly = monthly_per_building * building_count
+        
+        yearly_per_building = tier.calculated_yearly_price
+        total_yearly = yearly_per_building * building_count
+        
+        yearly_full = monthly_per_building * 12 * building_count
+        yearly_savings = yearly_full - total_yearly
+        
+        return Response({
+            'plan_category': plan_category,
+            'plan_category_display': tier.get_plan_category_display(),
+            'apartment_count': apartment_count,
+            'building_count': building_count,
+            'monthly_price_per_building': monthly_per_building,
+            'total_monthly_price': total_monthly,
+            'yearly_price_per_building': yearly_per_building,
+            'total_yearly_price': total_yearly,
+            'yearly_discount_percent': tier.yearly_discount_percent,
+            'yearly_savings': yearly_savings,
+            'tier_label': tier.tier_label,
+            'tier_id': tier.id,
+            'stripe_price_id_monthly': tier.stripe_price_id_monthly or '',
+            'stripe_price_id_yearly': tier.stripe_price_id_yearly or '',
+            'requires_contact': False,
+            'contact_reason': None,
+            'is_free': False
+        })
+
+    def get(self, request):
+        """
+        GET endpoint για quick price lookup με query parameters
+        
+        GET /api/billing/calculate-price/?plan_category=cloud&apartment_count=25
+        """
+        plan_category = request.query_params.get('plan_category', 'cloud')
+        apartment_count = int(request.query_params.get('apartment_count', 10))
+        building_count = int(request.query_params.get('building_count', 1))
+        yearly = request.query_params.get('yearly', 'false').lower() == 'true'
+        
+        # Επαναχρησιμοποίηση της POST logic
+        request._full_data = {
+            'plan_category': plan_category,
+            'apartment_count': apartment_count,
+            'building_count': building_count,
+            'yearly': yearly
+        }
+        return self.post(request)
 
 
 class UserSubscriptionViewSet(ModelViewSet):

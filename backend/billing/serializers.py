@@ -6,9 +6,90 @@ from typing import Dict, Any
 
 from .models import (
     SubscriptionPlan, UserSubscription, BillingCycle, 
-    UsageTracking, PaymentMethod
+    UsageTracking, PaymentMethod, PricingTier
 )
 from users.models import CustomUser
+
+
+class PricingTierSerializer(serializers.ModelSerializer):
+    """
+    Serializer για PricingTier (κλιμακωτή τιμολόγηση)
+    """
+    tier_label = serializers.CharField(read_only=True)
+    calculated_yearly_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
+    plan_category_display = serializers.CharField(
+        source='get_plan_category_display', read_only=True
+    )
+    
+    class Meta:
+        model = PricingTier
+        fields = [
+            'id', 'plan_category', 'plan_category_display',
+            'min_apartments', 'max_apartments', 'tier_label',
+            'monthly_price', 'yearly_price', 'calculated_yearly_price',
+            'yearly_discount_percent',
+            'stripe_price_id_monthly', 'stripe_price_id_yearly',
+            'is_active', 'display_order'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class PriceCalculationRequestSerializer(serializers.Serializer):
+    """
+    Serializer για αίτημα υπολογισμού τιμής
+    """
+    plan_category = serializers.ChoiceField(
+        choices=['free', 'cloud', 'kiosk'],
+        help_text='Τύπος πακέτου: free, cloud, ή kiosk'
+    )
+    apartment_count = serializers.IntegerField(
+        min_value=1,
+        max_value=500,
+        help_text='Αριθμός διαμερισμάτων'
+    )
+    building_count = serializers.IntegerField(
+        min_value=1,
+        max_value=100,
+        default=1,
+        help_text='Αριθμός πολυκατοικιών'
+    )
+    yearly = serializers.BooleanField(
+        default=False,
+        help_text='Ετήσια χρέωση (με έκπτωση)'
+    )
+
+
+class PriceCalculationResponseSerializer(serializers.Serializer):
+    """
+    Serializer για απάντηση υπολογισμού τιμής
+    """
+    plan_category = serializers.CharField()
+    plan_category_display = serializers.CharField()
+    apartment_count = serializers.IntegerField()
+    building_count = serializers.IntegerField()
+    
+    # Τιμολόγηση
+    monthly_price_per_building = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_monthly_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    yearly_price_per_building = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+    total_yearly_price = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+    yearly_discount_percent = serializers.DecimalField(max_digits=5, decimal_places=2)
+    yearly_savings = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+    
+    # Tier info
+    tier_label = serializers.CharField()
+    tier_id = serializers.IntegerField()
+    
+    # Stripe
+    stripe_price_id_monthly = serializers.CharField(allow_blank=True)
+    stripe_price_id_yearly = serializers.CharField(allow_blank=True)
+    
+    # Flags
+    requires_contact = serializers.BooleanField()
+    contact_reason = serializers.CharField(allow_blank=True, allow_null=True)
+    is_free = serializers.BooleanField()
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
