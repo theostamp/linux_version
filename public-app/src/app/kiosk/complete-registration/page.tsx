@@ -36,6 +36,8 @@ function CompleteRegistrationContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState('');
+  const [tenantUrl, setTenantUrl] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState('/my-apartment');
 
   // Verify token on mount
   useEffect(() => {
@@ -143,7 +145,14 @@ function CompleteRegistrationContent() {
           localStorage.setItem('activeBuildingId', buildingId.toString());
           console.log(`[KioskRegistration] Set active building: ${buildingId}`);
         }
-        // No auto-redirect - let user choose where to go
+        
+        // Store tenant URL for cross-subdomain redirect
+        if (data.tenant_url) {
+          setTenantUrl(data.tenant_url);
+        }
+        if (data.redirect_path) {
+          setRedirectPath(data.redirect_path);
+        }
       } else {
         setSubmitStatus('error');
         setSubmitMessage(data.error || 'Σφάλμα κατά την εγγραφή. Παρακαλώ δοκιμάστε ξανά.');
@@ -187,6 +196,26 @@ function CompleteRegistrationContent() {
 
   // Success state
   if (submitStatus === 'success') {
+    // Build URLs for navigation - use tenant subdomain if available
+    const buildUrl = (path: string) => {
+      if (tenantUrl) {
+        // Cross-subdomain redirect with tokens
+        const access = localStorage.getItem('access_token') || '';
+        const refresh = localStorage.getItem('refresh_token') || '';
+        return `https://${tenantUrl}/auth/callback#access=${encodeURIComponent(access)}&refresh=${encodeURIComponent(refresh)}&redirect=${encodeURIComponent(path)}`;
+      }
+      return path;
+    };
+    
+    const handleNavigation = (path: string) => {
+      const url = buildUrl(path);
+      if (tenantUrl) {
+        window.location.href = url;
+      } else {
+        router.push(path);
+      }
+    };
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
         <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-8 max-w-md text-center">
@@ -198,21 +227,21 @@ function CompleteRegistrationContent() {
           
           {/* Navigation buttons */}
           <div className="space-y-3">
-            <Link 
-              href="/my-apartment"
+            <button 
+              onClick={() => handleNavigation('/my-apartment')}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
             >
               <Home className="w-5 h-5" />
               <span>Δείτε το Διαμέρισμά σας</span>
-            </Link>
+            </button>
             
-            <Link 
-              href="/dashboard"
+            <button 
+              onClick={() => handleNavigation('/dashboard')}
               className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3"
             >
               <LayoutDashboard className="w-5 h-5" />
               <span>Πίνακας Ελέγχου</span>
-            </Link>
+            </button>
           </div>
           
           <p className="text-white/40 text-xs mt-6">

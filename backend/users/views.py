@@ -940,6 +940,15 @@ def accept_invitation_view(request):
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
             
+            # Get tenant URL for cross-subdomain redirect
+            tenant_url = None
+            redirect_path = '/dashboard'
+            if hasattr(user, 'tenant') and user.tenant:
+                tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
+                # Residents go to /my-apartment
+                if getattr(user, 'role', None) == 'resident':
+                    redirect_path = '/my-apartment'
+            
             return Response({
                 'message': 'Πρόσκληση αποδεχτή επιτυχώς.',
                 'user': {
@@ -951,7 +960,9 @@ def accept_invitation_view(request):
                 'tokens': {
                     'access': access_token,
                     'refresh': refresh_token,
-                }
+                },
+                'tenant_url': tenant_url,
+                'redirect_path': redirect_path,
             }, status=status.HTTP_201_CREATED)
             
         except ValueError as e:
