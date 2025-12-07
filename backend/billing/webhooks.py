@@ -107,6 +107,7 @@ class StripeWebhookView(APIView):
         user_email = metadata.get('user_email')
         user_first_name = metadata.get('user_first_name', '')
         user_last_name = metadata.get('user_last_name', '')
+        user_password = metadata.get('user_password')  # Password from signup form
         
         # Convert plan name to plan_type for lookup
         plan_type = None
@@ -158,16 +159,21 @@ class StripeWebhookView(APIView):
                         return
                     
                     logger.info(f"[WEBHOOK] Creating new user from metadata: {user_email}")
+                    # Use the actual password from signup form, or fallback to temp password
+                    actual_password = user_password if user_password else 'temp_password_123'
+                    if not user_password:
+                        logger.warning(f"[WEBHOOK] No password in metadata for {user_email}, using temp password")
+                    
                     user = CustomUser.objects.create_user(
                         email=user_email,
-                        password='temp_password_123',  # Will be reset after email verification
+                        password=actual_password,
                         first_name=user_first_name,
                         last_name=user_last_name,
                         is_active=False,  # Needs email verification
                         stripe_checkout_session_id=stripe_checkout_session_id
                         # username is set automatically by CustomUserManager to email
                     )
-                    logger.info(f"[WEBHOOK] Created new user: {user.email}")
+                    logger.info(f"[WEBHOOK] Created new user: {user.email} (password from metadata: {bool(user_password)})")
             else:
                 logger.error(f"[WEBHOOK] User not found for session: {stripe_checkout_session_id} and no email in metadata")
                 return
@@ -188,6 +194,19 @@ class StripeWebhookView(APIView):
 
         # Provisioning με transaction
         try:
+            # Store password for tenant user creation if available
+            if user_password:
+                try:
+                    from users.password_storage import store_password
+                    store_password(
+                        user_email=user.email,
+                        session_id=stripe_checkout_session_id,
+                        password=user_password
+                    )
+                    logger.info(f"[WEBHOOK] Stored password for tenant user creation: {user.email}")
+                except Exception as e:
+                    logger.warning(f"[WEBHOOK] Failed to store password: {e}")
+            
             with transaction.atomic():
                 # Δημιουργία tenant infrastructure
                 tenant_service = TenantService()
