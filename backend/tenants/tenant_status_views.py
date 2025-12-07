@@ -104,15 +104,46 @@ class ResendVerificationView(APIView):
         """
         logger.info(f"[RESEND_VERIFICATION] Request received for tenant: {tenant_subdomain}")
         
+        user = None
+        
         try:
-            # Get tenant
-            tenant = Client.objects.get(schema_name=tenant_subdomain)
-            logger.info(f"[RESEND_VERIFICATION] Tenant found: {tenant.schema_name}")
-            
-            # Get user associated with tenant
+            # Try to find tenant first
             try:
-                user = CustomUser.objects.get(tenant=tenant)
-            except CustomUser.DoesNotExist:
+                tenant = Client.objects.get(schema_name=tenant_subdomain)
+                logger.info(f"[RESEND_VERIFICATION] Tenant found: {tenant.schema_name}")
+                
+                # Get user associated with tenant
+                user = CustomUser.objects.filter(tenant=tenant).first()
+                if user:
+                    logger.info(f"[RESEND_VERIFICATION] Found user via tenant: {user.email}")
+            except Client.DoesNotExist:
+                logger.warning(f"[RESEND_VERIFICATION] Tenant not found: {tenant_subdomain}")
+            
+            # If no user found via tenant, try to find recently created unverified user
+            # This handles the case where tenant creation failed but user was created
+            if not user:
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                # Look for unverified users created in last 24 hours
+                recent_cutoff = timezone.now() - timedelta(hours=24)
+                
+                # Try to find user whose pending subscription matches this tenant
+                unverified_users = CustomUser.objects.filter(
+                    email_verified=False,
+                    date_joined__gte=recent_cutoff,
+                    tenant__isnull=True  # User without tenant (failed provisioning)
+                ).order_by('-date_joined')
+                
+                for candidate in unverified_users:
+                    logger.info(f"[RESEND_VERIFICATION] Checking candidate: {candidate.email}")
+                    # Check if this user's Stripe metadata matches the tenant
+                    if candidate.stripe_customer_id:
+                        user = candidate
+                        logger.info(f"[RESEND_VERIFICATION] Found orphan user: {user.email}")
+                        break
+            
+            if not user:
                 logger.error(f"[RESEND_VERIFICATION] No user found for tenant: {tenant_subdomain}")
                 return Response({
                     'error': 'User not found for tenant'
@@ -147,11 +178,6 @@ class ResendVerificationView(APIView):
                     'error': f'Email service error: {str(e)}'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-        except Client.DoesNotExist:
-            logger.error(f"[RESEND_VERIFICATION] Tenant not found: {tenant_subdomain}")
-            return Response({
-                'error': 'Tenant not found'
-            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"[RESEND_VERIFICATION] Error: {e}")
             return Response({
