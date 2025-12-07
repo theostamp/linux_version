@@ -52,10 +52,18 @@ class ApartmentViewSet(viewsets.ModelViewSet):
         # Δικαιώματα χρήστη
         if user.is_superuser:
             return queryset
-        elif user.is_staff:
-            # Managers μπορούν να βλέπουν διαμερίσματα από κτίρια που διαχειρίζονται
-            managed_buildings = Building.objects.filter(manager_id=user.id)
-            return queryset.filter(building__in=managed_buildings)
+        
+        # Έλεγχος αν ο χρήστης είναι προσωπικό γραφείου (Manager ή Staff)
+        # Επιτρέπουμε πρόσβαση αν έχει τον κατάλληλο ρόλο ή είναι staff
+        is_office_personnel = (
+            user.role in ['manager', 'office_staff', 'staff', 'admin'] or 
+            user.is_staff
+        )
+
+        if is_office_personnel:
+            # Το προσωπικό γραφείου βλέπει όλα τα διαμερίσματα του tenant (τρέχον schema)
+            # Δεν χρειάζεται φιλτράρισμα ανά manager_id γιατί όλα τα κτίρια στο schema ανήκουν στο γραφείο
+            return queryset
         else:
             # Κανονικοί χρήστες βλέπουν μόνο τα διαμερίσματά τους
             return queryset.filter(
@@ -134,16 +142,31 @@ class ApartmentViewSet(viewsets.ModelViewSet):
         
         # Έλεγχος δικαιωμάτων
         user = request.user
-        # Άδεια πρόσβαση για superusers και staff
-        if user.is_superuser or user.is_staff:
-            pass  # Άδεια πρόσβαση
+        
+        # Προσωπικό γραφείου (Managers, Staff, Admins) έχουν πρόσβαση σε όλα τα κτίρια του tenant
+        is_office_personnel = (
+            user.is_superuser or 
+            user.is_staff or 
+            user.role in ['manager', 'office_staff', 'staff', 'admin'] or
+            getattr(user, 'is_office_manager', False) or
+            getattr(user, 'is_office_staff', False)
+        )
+        
+        if is_office_personnel:
+            pass  # Άδεια πρόσβαση σε όλο το προσωπικό
         else:
             # Έλεγχος αν ο χρήστης είναι manager του κτιρίου
             if building.manager != user:
-                return Response(
-                    {'error': 'Δεν έχετε δικαίωμα πρόσβασης σε αυτό το κτίριο'}, 
-                    status=status.HTTP_403_FORBIDDEN
-                )
+                # Έλεγχος αν είναι εσωτερικός διαχειριστής
+                if building.internal_manager == user:
+                    pass # Οκ
+                # Έλεγχος αν είναι ένοικος στο κτίριο (για read-only πρόσβαση ίσως;)
+                # Σημείωση: Το by_building επιστρέφει λίστα διαμερισμάτων που ίσως δεν πρέπει να βλέπει ο απλός ένοικος όλα
+                else:
+                    return Response(
+                        {'error': 'Δεν έχετε δικαίωμα πρόσβασης σε αυτό το κτίριο'}, 
+                        status=status.HTTP_403_FORBIDDEN
+                    )
         
         try:
             # Δημιουργία όλων των διαμερισμάτων αν δεν υπάρχουν

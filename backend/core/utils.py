@@ -26,32 +26,53 @@ def _filter_for_superuser(base_queryset, building_param, building_field):
     return base_queryset
 
 def _filter_for_manager(base_queryset, user, building_param, building_field):
-    managed_ids = list(Building.objects.filter(manager_id=user.id).values_list("id", flat=True))
-    print(f"Managed buildings: {managed_ids}")
-    if building_param and building_param != 'null':
-        building_id = _validate_building_param(building_param)
-        print(f"[DEBUG] building_id type: {type(building_id)}, value: {building_id}")
-        print(f"[DEBUG] managed_ids types: {[type(i) for i in managed_ids]}, values: {managed_ids}")
-        # Ensure both are int for comparison
-        try:
-            building_id = int(building_id)
-        except Exception as e:
-            print(f"[ERROR] building_id could not be cast to int: {e}")
+    # Στο πλαίσιο του tenant schema, οι managers και το προσωπικό γραφείου 
+    # έχουν πρόσβαση σε ΟΛΑ τα κτίρια.
+    # Δεν χρειάζεται να φιλτράρουμε με βάση το manager_id του Building,
+    # καθώς η απομόνωση δεδομένων γίνεται ήδη μέσω του schema.
+    
+    # Επιβεβαίωση ότι ο χρήστης έχει ρόλο διαχείρισης
+    is_management_staff = (
+        user.is_staff or 
+        user.role in ['manager', 'office_staff', 'staff', 'admin'] or
+        getattr(user, 'is_office_manager', False) or
+        getattr(user, 'is_office_staff', False)
+    )
+    
+    if not is_management_staff:
+        # Αν για κάποιο λόγο μπήκε εδώ χωρίς να είναι staff, fallback σε αυστηρό έλεγχο
+        managed_ids = list(Building.objects.filter(manager_id=user.id).values_list("id", flat=True))
+        if building_param and building_param != 'null':
+            try:
+                building_id = int(_validate_building_param(building_param))
+                if building_id in managed_ids:
+                     return base_queryset.filter(
+                        Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
+                    )
+            except Exception:
+                pass
+            print("Manager (non-staff) δεν διαχειρίζεται αυτό το κτήριο.")
             return base_queryset.none()
-        if building_id in managed_ids:
-            # Include both specific building and global items (building=null)
+        else:
+             return base_queryset.filter(
+                Q(**{f"{building_field}_id__in": managed_ids}) | Q(**{f"{building_field}": None})
+            )
+
+    # Για κανονικούς managers/staff του γραφείου, επιστρέφουμε τα πάντα (φιλτραρισμένα μόνο από το building_param αν υπάρχει)
+    if building_param and building_param != 'null':
+        try:
+            building_id = int(_validate_building_param(building_param))
+            print(f"Manager/Staff accessing building_id: {building_id}")
             return base_queryset.filter(
                 Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
             )
-        else:
-            print("Manager δεν διαχειρίζεται αυτό το κτήριο.")
+        except Exception as e:
+            print(f"[ERROR] building_id error: {e}")
             return base_queryset.none()
     else:
-        # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια που διαχειρίζεται + global
-        print("Manager: showing all managed buildings")
-        return base_queryset.filter(
-            Q(**{f"{building_field}_id__in": managed_ids}) | Q(**{f"{building_field}": None})
-        )
+        # Αν building_param είναι null, επιστρέφουμε όλα τα κτίρια
+        print("Manager/Staff: showing all buildings")
+        return base_queryset
 
 def _filter_for_internal_manager(base_queryset, user, building_param, building_field):
     """Filter για internal_manager - μπορεί να διαχειρίζεται ένα ή περισσότερα κτίρια"""
