@@ -64,13 +64,17 @@ class TenantStatusView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Client.DoesNotExist:
+            # Return 200 with tenant_ready=False instead of 404
+            # This allows the frontend to continue polling
+            logger.info(f"[TENANT_STATUS] Tenant not found yet: {tenant_subdomain}")
             return Response({
                 'tenant_ready': False,
                 'email_verified': False,
                 'email_sent': False,
                 'tenant_url': None,
-                'error': 'Tenant not found'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'status': 'pending',
+                'message': 'Tenant creation in progress'
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error getting tenant status: {e}")
             return Response({

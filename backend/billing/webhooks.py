@@ -112,9 +112,20 @@ class StripeWebhookView(APIView):
         plan_type = None
         if plan_name:
             plan_type_mapping = {
+                # Legacy plan names
                 'basic': 'starter',
                 'professional': 'professional',
                 'enterprise': 'enterprise',
+                'starter': 'starter',
+                # New plan names (matching signup page)
+                'free': 'free',
+                'cloud': 'cloud',
+                'kiosk': 'kiosk',
+                'info_point': 'kiosk',
+                'infopoint': 'kiosk',
+                # Names as they appear in the database
+                'concierge cloud': 'cloud',
+                'info point': 'kiosk',
             }
             plan_type = plan_type_mapping.get(plan_name.lower())
             if not plan_type:
