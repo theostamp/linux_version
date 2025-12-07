@@ -205,32 +205,6 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
-  // Προσωρινά απενεργοποιημένο - Συνεργασίες & Ομάδες
-  // {
-  //   id: 'collaboration',
-  //   title: 'Συνεργασίες',
-  //   colorKey: 'info',
-  //   links: [
-  //     {
-  //       href: '/teams',
-  //       label: 'Ομάδες',
-  //       icon: <Users className="w-5 h-5" />,
-  //       roles: ['manager', 'staff', 'superuser'],
-  //     },
-  //     {
-  //       href: '/collaborators',
-  //       label: 'Συνεργάτες',
-  //       icon: <UserCheck className="w-5 h-5" />,
-  //       roles: ['manager', 'staff', 'superuser'],
-  //     },
-  //     {
-  //       href: '/suppliers',
-  //       label: 'Προμηθευτές',
-  //       icon: <Truck className="w-5 h-5" />,
-  //       roles: ['manager', 'staff', 'superuser'],
-  //     },
-  //   ]
-  // },
   {
     id: 'communication',
     title: 'Επικοινωνία',
@@ -407,15 +381,61 @@ export default function CollapsibleSidebar() {
     })
   })).filter(group => group.links.length > 0);
 
-  const getColorScheme = (colorKey: keyof typeof designSystem.colors) => {
-    const colors = designSystem.colors[colorKey];
-    return {
-      bg: colors[50],
-      hover: colors[100],
-      text: colors[700],
-      icon: colors[600],
-      active: colors[500],
+  // Map color keys to Tailwind classes for Dark Mode support
+  const getColorClasses = (colorKey: keyof typeof designSystem.colors) => {
+    const colorMap: Record<string, {
+      bg: string;
+      hover: string;
+      text: string;
+      icon: string;
+      active: string;
+    }> = {
+      primary: {
+        bg: "bg-indigo-50 dark:bg-indigo-900/20",
+        hover: "hover:bg-indigo-100 dark:hover:bg-indigo-900/40",
+        text: "text-indigo-700 dark:text-indigo-300",
+        icon: "text-indigo-600 dark:text-indigo-400",
+        active: "bg-indigo-500 text-white dark:bg-indigo-600",
+      },
+      success: { // Using emerald/teal logic from design system
+        bg: "bg-teal-50 dark:bg-teal-900/20",
+        hover: "hover:bg-teal-100 dark:hover:bg-teal-900/40",
+        text: "text-teal-700 dark:text-teal-300",
+        icon: "text-teal-600 dark:text-teal-400",
+        active: "bg-teal-500 text-white dark:bg-teal-600",
+      },
+      orange: {
+        bg: "bg-orange-50 dark:bg-orange-900/20",
+        hover: "hover:bg-orange-100 dark:hover:bg-orange-900/40",
+        text: "text-orange-700 dark:text-orange-300",
+        icon: "text-orange-600 dark:text-orange-400",
+        active: "bg-orange-500 text-white dark:bg-orange-600",
+      },
+      info: {
+        bg: "bg-sky-50 dark:bg-sky-900/20",
+        hover: "hover:bg-sky-100 dark:hover:bg-sky-900/40",
+        text: "text-sky-700 dark:text-sky-300",
+        icon: "text-sky-600 dark:text-sky-400",
+        active: "bg-sky-500 text-white dark:bg-sky-600",
+      },
+      purple: {
+        bg: "bg-purple-50 dark:bg-purple-900/20",
+        hover: "hover:bg-purple-100 dark:hover:bg-purple-900/40",
+        text: "text-purple-700 dark:text-purple-300",
+        icon: "text-purple-600 dark:text-purple-400",
+        active: "bg-purple-500 text-white dark:bg-purple-600",
+      },
+      danger: {
+        bg: "bg-rose-50 dark:bg-rose-900/20",
+        hover: "hover:bg-rose-100 dark:hover:bg-rose-900/40",
+        text: "text-rose-700 dark:text-rose-300",
+        icon: "text-rose-600 dark:text-rose-400",
+        active: "bg-rose-500 text-white dark:bg-rose-600",
+      },
     };
+
+    // Fallback if color key not found
+    return colorMap[colorKey] || colorMap.primary;
   };
 
   // Loading state
@@ -425,16 +445,15 @@ export default function CollapsibleSidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-slate-200/60"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
         >
           <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* Loading Sidebar */}
         <aside
-          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-slate-200/60 flex-col justify-center items-center z-40"
+          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col justify-center items-center z-40 bg-card transition-colors duration-300"
           style={{
-            backgroundColor: '#FFFAF0',
             width: '80px',
           }}
         >
@@ -449,7 +468,7 @@ export default function CollapsibleSidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-slate-200/60"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
       >
         <Menu className="w-5 h-5 text-muted-foreground" />
       </button>
@@ -459,18 +478,17 @@ export default function CollapsibleSidebar() {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-slate-200/60 flex-col z-40 overflow-hidden",
+          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col z-40 overflow-hidden bg-card text-card-foreground",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
-          backgroundColor: '#FFFAF0',
           width: isExpanded ? '256px' : '80px',
           fontFamily: 'var(--font-sans)',
         }}
       >
         {/* Header */}
         <div 
-          className="p-4 border-b border-slate-200/50 flex items-center gap-3 min-h-[64px]"
+          className="p-4 border-b border-border/50 flex items-center gap-3 min-h-[64px]"
         >
           <div 
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-primary text-primary-foreground"
@@ -505,21 +523,20 @@ export default function CollapsibleSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
           {availableGroups.map((group) => {
-            const colors = getColorScheme(group.colorKey);
+            const colorClasses = getColorClasses(group.colorKey);
             
             return (
               <div key={group.id} className="mb-4">
                 {/* Group Title - Only visible when expanded */}
                 {isExpanded && (
                   <div
-                    className="px-3 py-1.5 mb-2 rounded-lg font-semibold tracking-wide uppercase whitespace-nowrap"
-                    style={{
-                      fontSize: '10px',
-                      color: colors.text,
-                      backgroundColor: colors.bg,
-                    }}
+                    className={cn(
+                      "px-3 py-1.5 mb-2 rounded-lg font-semibold tracking-wide uppercase whitespace-nowrap text-[10px]",
+                      colorClasses.bg,
+                      colorClasses.text
+                    )}
                   >
                     {group.title}
                   </div>
@@ -540,32 +557,19 @@ export default function CollapsibleSidebar() {
                             'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
                             isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
                             isActive && 'shadow-md',
+                            isActive ? colorClasses.active : `text-muted-foreground ${colorClasses.hover} hover:text-foreground`
                           )}
                           style={{
                             fontSize: designSystem.typography.fontSize.sm,
-                            color: isActive ? 'white' : colors.text,
-                            backgroundColor: isActive ? colors.active : 'transparent',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isActive) {
-                              e.currentTarget.style.backgroundColor = colors.hover;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isActive) {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }
                           }}
                         >
                           {/* Icon */}
                           <span 
                             className={cn(
                               'transition-colors duration-200 flex-shrink-0',
-                              isExpanded && 'mr-3'
+                              isExpanded && 'mr-3',
+                              !isActive && colorClasses.icon
                             )}
-                            style={{
-                              color: isActive ? 'white' : colors.icon,
-                            }}
                           >
                             {link.icon}
                           </span>
@@ -588,17 +592,17 @@ export default function CollapsibleSidebar() {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                   }}
-                                  className="ml-auto p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0"
-                                  style={{
-                                    color: isActive ? 'rgba(255, 255, 255, 0.8)' : colors.icon,
-                                  }}
+                                  className={cn(
+                                    "ml-auto p-1 rounded transition-colors flex-shrink-0",
+                                    isActive ? "hover:bg-white/10 text-white/80" : "hover:bg-muted text-muted-foreground"
+                                  )}
                                 >
                                   <Info className="w-3.5 h-3.5" />
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent 
                                 side="right" 
-                                className="max-w-xs z-50 bg-white text-gray-900 border-gray-200 shadow-lg"
+                                className="max-w-xs z-50 bg-popover text-popover-foreground border-border shadow-lg"
                                 sideOffset={8}
                               >
                                 <p className="text-xs leading-relaxed">{link.tooltip}</p>
@@ -611,14 +615,13 @@ export default function CollapsibleSidebar() {
                             <span 
                               className={cn(
                                 "px-2 py-0.5 rounded-full font-bold",
-                                link.tooltip ? "ml-2" : "ml-auto"
+                                link.tooltip ? "ml-2" : "ml-auto",
+                                !isActive && colorClasses.bg,
+                                !isActive && colorClasses.text
                               )}
                               style={{
                                 fontSize: designSystem.typography.fontSize.xs,
-                                backgroundColor: isActive 
-                                  ? 'rgba(255, 255, 255, 0.2)' 
-                                  : colors.hover,
-                                color: isActive ? 'white' : colors.text,
+                                backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : undefined,
                               }}
                             >
                               BETA
@@ -636,7 +639,7 @@ export default function CollapsibleSidebar() {
 
         {/* Calculator Tool */}
         <div 
-          className="p-3 border-t border-slate-200/50"
+          className="p-3 border-t border-border/50"
         >
           <CalculatorModal>
             <button 
@@ -666,18 +669,17 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-slate-200/60 flex flex-col z-50",
+          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-border flex flex-col z-50 bg-card text-card-foreground",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{
-          backgroundColor: '#FFFAF0',
           fontFamily: 'var(--font-sans)',
         }}
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-slate-200/50 flex items-center justify-between"
+          className="p-4 border-b border-border/50 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <div 
@@ -709,17 +711,16 @@ export default function CollapsibleSidebar() {
         {/* Mobile Navigation */}
         <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
           {availableGroups.map((group) => {
-            const colors = getColorScheme(group.colorKey);
+            const colorClasses = getColorClasses(group.colorKey);
             
             return (
               <div key={group.id}>
                 <div
-                  className="px-3 py-1.5 mb-2 rounded-lg font-semibold tracking-wide uppercase"
-                  style={{
-                    fontSize: '10px',
-                    color: colors.text,
-                    backgroundColor: colors.bg,
-                  }}
+                  className={cn(
+                    "px-3 py-1.5 mb-2 rounded-lg font-semibold tracking-wide uppercase text-[10px]",
+                    colorClasses.bg,
+                    colorClasses.text
+                  )}
                 >
                   {group.title}
                 </div>
@@ -732,14 +733,15 @@ export default function CollapsibleSidebar() {
                       <div key={link.href} className="relative flex items-center">
                         <button
                           onClick={() => handleNavigation(link.href)}
-                          className="flex items-center flex-1 px-3 py-2.5 rounded-lg font-medium transition-all duration-200"
+                          className={cn(
+                            "flex items-center flex-1 px-3 py-2.5 rounded-lg font-medium transition-all duration-200",
+                            isActive ? colorClasses.active : `text-muted-foreground ${colorClasses.hover} hover:text-foreground`
+                          )}
                           style={{
                             fontSize: designSystem.typography.fontSize.sm,
-                            color: isActive ? 'white' : colors.text,
-                            backgroundColor: isActive ? colors.active : 'transparent',
                           }}
                         >
-                          <span className="mr-3" style={{ color: isActive ? 'white' : colors.icon }}>
+                          <span className={cn("mr-3", !isActive && colorClasses.icon)}>
                             {link.icon}
                           </span>
                           <span>{link.label}</span>
@@ -752,17 +754,17 @@ export default function CollapsibleSidebar() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                 }}
-                                className="p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0 ml-2"
-                                style={{
-                                  color: isActive ? 'rgba(255, 255, 255, 0.8)' : colors.icon,
-                                }}
+                                className={cn(
+                                  "p-1 rounded transition-colors flex-shrink-0 ml-2",
+                                  isActive ? "hover:bg-white/10 text-white/80" : "hover:bg-muted text-muted-foreground"
+                                )}
                               >
                                 <Info className="w-3.5 h-3.5" />
                               </button>
                             </TooltipTrigger>
                             <TooltipContent 
                               side="right" 
-                              className="max-w-xs z-[60] bg-white text-gray-900 border-gray-200 shadow-lg"
+                              className="max-w-xs z-[60] bg-popover text-popover-foreground border-border shadow-lg"
                               sideOffset={8}
                             >
                               <p className="text-xs leading-relaxed">{link.tooltip}</p>
@@ -782,11 +784,10 @@ export default function CollapsibleSidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
     </TooltipProvider>
   );
 }
-

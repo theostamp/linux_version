@@ -10,7 +10,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // -- ΟΡΙΣΜΟΣ ΧΡΩΜΑΤΩΝ --
+      // -- COLORS defined in globals.css --
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -50,22 +50,8 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // Το υπάρχον teal χρώμα, ενσωματωμένο σωστά
-        teal: {
-          '50': '#f0fdfa',
-          '100': '#ccfbf1',
-          '200': '#99f6e4',
-          '300': '#5eead4',
-          '400': '#2dd4bf',
-          '500': '#14b8a6', // Αυτό πιθανόν είναι το primary
-          '600': '#0d9488',
-          '700': '#0f766e',
-          '800': '#115e59',
-          '900': '#134e4a',
-          '950': '#042f2e',
-        },
       },
-      // -- ΟΡΙΣΜΟΣ BORDER RADIUS --
+      // -- BORDER RADIUS --
       borderRadius: {
         lg: `var(--radius-lg)`,
         md: `var(--radius-md)`,

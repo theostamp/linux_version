@@ -38,7 +38,7 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm shadow-md border-b border-slate-200/40">
+      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm shadow-md border-b border-border/40">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="container mx-auto">
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-8 h-20 py-3">
@@ -196,8 +196,10 @@ export default function GlobalHeader() {
 
               {/* User Info Card */}
               {user && (
-                <div className={`flex items-center gap-3 px-4 py-2 rounded-md shadow-sm ${
-                  isInternalManager ? 'bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-500/30' : 'bg-muted'
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-md shadow-sm transition-colors ${
+                  isInternalManager 
+                    ? 'bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-500/30' 
+                    : 'bg-muted dark:bg-muted/50'
                 }`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     isInternalManager ? 'bg-amber-500' : 'bg-muted-foreground'

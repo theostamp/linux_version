@@ -58,51 +58,55 @@
   --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
 }
 
-/* Dark Mode - Based on landing page palette (slate-950, emerald-500) */
+/* Dark Mode - Unified Landing Page Palette (Slate 950 + Emerald 500) */
 .dark {
-  /* -- Dark Mode Palette (Slate 950 + Emerald accents) -- */
+  /* -- Dark Mode Palette -- */
 
-  /* Background: Slate 950 (#020617) - From landing page */
+  /* Background: Slate 950 (#020617) -> HSL 222 47% 4% */
   --background: 222 47% 4%;
   
-  /* Foreground: Slate 50 (#F8FAFC) */
+  /* Foreground: Slate 50 (#F8FAFC) -> HSL 210 40% 98% */
   --foreground: 210 40% 98%;
 
-  /* Primary: Emerald 400-500 - Brighter for dark mode visibility */
-  --primary: 158 64% 60%;
-  --primary-foreground: 222 47% 4%;
-  --primary-hover: 158 64% 52%;
+  /* Primary: Emerald 500 (#10b981) -> HSL 158 64% 52% */
+  --primary: 158 64% 52%;
+  --primary-foreground: 222 47% 4%; /* Dark text on primary for contrast */
+  --primary-hover: 158 64% 45%;
 
-  /* Secondary: Slate 800 (#1E293B) */
-  --secondary: 217 33% 17%;
+  /* Secondary: Slate 800 (#1E293B) -> HSL 215 28% 17% */
+  --secondary: 215 28% 17%;
   --secondary-foreground: 210 40% 98%;
 
-  /* Muted: Slate 800 (#1E293B) */
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 16% 65%;
+  /* Muted: Slate 900 (#0F172A) -> HSL 222 47% 11% (Background of cards is muted relative to bg?) 
+     Actually, standard shadcn muted is usually lighter/different. 
+     Let's align with "Surface/Cards" logic or slightly lighter than bg.
+     Landing Page Cards are Slate 900/50.
+  */
+  --muted: 217 33% 17%; /* Slate 800ish */
+  --muted-foreground: 215 20% 65%; /* Slate 400 */
 
-  /* Accent: Slate 800 with emerald tint */
-  --accent: 217 33% 17%;
+  /* Accent: Slate 800 with emerald tint or just Slate 800 */
+  --accent: 215 28% 17%;
   --accent-foreground: 210 40% 98%;
 
-  /* Borders: Slate 800 (#1E293B) - Subtle lines */
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 158 64% 60%;
+  /* Borders: Slate 800 (#1E293B) -> HSL 215 28% 17% */
+  --border: 215 28% 17%;
+  --input: 215 28% 17%;
+  --ring: 158 64% 52%;
 
-  /* Cards: Slate 900 (#0F172A) - Lighter than background to pop */
+  /* Cards: Slate 900 (#0F172A) -> HSL 222 47% 11% */
   --card: 222 47% 11%;
   --card-foreground: 210 40% 98%;
   
   --popover: 222 47% 11%;
   --popover-foreground: 210 40% 98%;
 
-  /* Destructive: Adjusted for dark */
-  --destructive: 0 72% 60%;
+  /* Destructive */
+  --destructive: 0 62% 30%;
   --destructive-foreground: 0 0% 98%;
 
-  /* Success: Emerald 400 - Brighter for dark mode */
-  --success: 158 64% 60%;
+  /* Success: Emerald 500 */
+  --success: 158 64% 52%;
   --success-foreground: 222 47% 4%;
   
   /* Shadows - stronger for dark mode */
@@ -214,7 +218,7 @@ body {
   transition: background-color 0.15s ease;
 }
 
-/* Zebra stripes */
+/* Zebra stripes - Adjusted for dark mode compatibility */
 .data-table tbody tr:nth-child(odd) {
   background-color: hsl(var(--background));
 }
