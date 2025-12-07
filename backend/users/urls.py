@@ -64,13 +64,18 @@ urlpatterns = [
     # Free tenant creation (for authenticated users without tenant)
     path('create-free-tenant/', views.create_free_tenant_view, name='create-free-tenant'),
     
-    # Invitation endpoints
+    # Invitation endpoints (with and without trailing slashes for compatibility)
     path('invitations/', views.list_invitations_view, name='list-invitations'),
+    path('invitations', views.list_invitations_view, name='list-invitations-no-slash'),
     path('invitations/verify/', views.verify_invitation_view, name='verify-invitation'),
+    path('invitations/verify', views.verify_invitation_view, name='verify-invitation-no-slash'),
     path('invitations/resend/', views.resend_invitation_view, name='resend-invitation'),
+    path('invitations/resend', views.resend_invitation_view, name='resend-invitation-no-slash'),
     path('invitations/<int:pk>/', views.delete_invitation_view, name='delete-invitation'),
     path('invite/', views.create_invitation_view, name='invite-user'),
+    path('invite', views.create_invitation_view, name='invite-user-no-slash'),
     path('accept-invitation/', views.accept_invitation_view, name='accept-invitation'),
+    path('accept-invitation', views.accept_invitation_view, name='accept-invitation-no-slash'),
     
     # Include router URLs (MUST be last to avoid conflicts with specific paths)
     path('', include(router.urls)),
