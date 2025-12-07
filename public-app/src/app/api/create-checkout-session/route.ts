@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
       apartments = 15,
       billingInterval = 'month',
       userData, 
-      tenantSubdomain 
+      tenantSubdomain,
+      oauth = false  // Flag for OAuth users (no password needed)
     } = body;
 
     if (!plan || !userData || !tenantSubdomain) {
@@ -205,7 +206,8 @@ export async function POST(request: NextRequest) {
         user_email: userData.email,
         user_first_name: userData.firstName,
         user_last_name: userData.lastName,
-        user_password: userData.password, // Will be hashed by Django
+        user_password: oauth ? '' : (userData.password || ''), // OAuth users don't need password
+        is_oauth: oauth ? 'true' : 'false',
         monthly_price: monthlyPrice.toString(),
         tier_label: tierLabel,
       },

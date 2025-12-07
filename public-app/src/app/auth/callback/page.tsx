@@ -141,11 +141,13 @@ function OAuthCallback() {
               },
               body: JSON.stringify({
                 plan: stateData.plan,
+                apartments: stateData.apartments || 15,
+                billingInterval: stateData.billingInterval || 'month',
                 userData: {
                   email: data.email,
                   firstName: data.first_name || '',
                   lastName: data.last_name || '',
-                  password: '' // OAuth users don't need password
+                  password: '' // OAuth users don't need password - they use Google
                 },
                 tenantSubdomain: stateData.tenantSubdomain,
                 oauth: true
@@ -153,6 +155,9 @@ function OAuthCallback() {
             });
 
             const checkoutData = await checkoutResponse.json();
+            if (checkoutData.error) {
+              throw new Error(checkoutData.error);
+            }
             if (checkoutData.url) {
               window.location.href = checkoutData.url;
               return;

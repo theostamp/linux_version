@@ -108,6 +108,7 @@ class StripeWebhookView(APIView):
         user_first_name = metadata.get('user_first_name', '')
         user_last_name = metadata.get('user_last_name', '')
         user_password = metadata.get('user_password')  # Password from signup form
+        is_oauth = metadata.get('is_oauth') == 'true'  # OAuth users don't need password
         
         # Convert plan name to plan_type for lookup
         plan_type = None
@@ -158,22 +159,31 @@ class StripeWebhookView(APIView):
                         logger.error(f"[WEBHOOK] Missing plan name in metadata")
                         return
                     
-                    logger.info(f"[WEBHOOK] Creating new user from metadata: {user_email}")
-                    # Use the actual password from signup form, or fallback to temp password
-                    actual_password = user_password if user_password else 'temp_password_123'
-                    if not user_password:
-                        logger.warning(f"[WEBHOOK] No password in metadata for {user_email}, using temp password")
+                    logger.info(f"[WEBHOOK] Creating new user from metadata: {user_email} (OAuth: {is_oauth})")
+                    
+                    # For OAuth users, they already exist (created during OAuth callback) or will use Google to login
+                    # For regular users, use the password from metadata or fallback
+                    if is_oauth:
+                        # Generate a random unusable password for OAuth users
+                        import secrets
+                        actual_password = secrets.token_urlsafe(32)
+                        logger.info(f"[WEBHOOK] OAuth user - using random password (will use Google to login)")
+                    else:
+                        actual_password = user_password if user_password else 'temp_password_123'
+                        if not user_password:
+                            logger.warning(f"[WEBHOOK] No password in metadata for {user_email}, using temp password")
                     
                     user = CustomUser.objects.create_user(
                         email=user_email,
                         password=actual_password,
                         first_name=user_first_name,
                         last_name=user_last_name,
-                        is_active=False,  # Needs email verification
+                        is_active=is_oauth,  # OAuth users are active immediately (email verified by Google)
+                        email_verified=is_oauth,  # OAuth users are verified
                         stripe_checkout_session_id=stripe_checkout_session_id
                         # username is set automatically by CustomUserManager to email
                     )
-                    logger.info(f"[WEBHOOK] Created new user: {user.email} (password from metadata: {bool(user_password)})")
+                    logger.info(f"[WEBHOOK] Created new user: {user.email} (OAuth: {is_oauth})")
             else:
                 logger.error(f"[WEBHOOK] User not found for session: {stripe_checkout_session_id} and no email in metadata")
                 return
@@ -242,22 +252,34 @@ class StripeWebhookView(APIView):
                 user.is_staff = True
                 user.is_superuser = False  # NO superuser rights (security fix)
                 user.role = 'manager'  # Tenant owner/admin role
-                user.is_active = False  # Needs email verification before activation
-                user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role', 'is_active'])
+                
+                # OAuth users are active immediately (email verified by Google)
+                # Regular users need email verification
+                if is_oauth:
+                    user.is_active = True
+                    user.email_verified = True
+                    logger.info(f"[WEBHOOK] OAuth user - activated immediately")
+                else:
+                    user.is_active = False  # Needs email verification before activation
+                
+                user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role', 'is_active', 'email_verified'])
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
                 
-                # Send email verification after tenant creation
-                try:
-                    from users.services import EmailService
-                    email_sent = EmailService.send_verification_email(user)
-                    if email_sent:
-                        logger.info(f"[WEBHOOK] Verification email sent to {user.email}")
-                    else:
-                        logger.warning(f"[WEBHOOK] Failed to send verification email to {user.email}")
-                except Exception as e:
-                    logger.error(f"[WEBHOOK] Error sending verification email: {e}")
-                    # Don't fail webhook if email fails - tenant is already created
+                # Send email verification only for non-OAuth users
+                if not is_oauth:
+                    try:
+                        from users.services import EmailService
+                        email_sent = EmailService.send_verification_email(user)
+                        if email_sent:
+                            logger.info(f"[WEBHOOK] Verification email sent to {user.email}")
+                        else:
+                            logger.warning(f"[WEBHOOK] Failed to send verification email to {user.email}")
+                    except Exception as e:
+                        logger.error(f"[WEBHOOK] Error sending verification email: {e}")
+                        # Don't fail webhook if email fails - tenant is already created
+                else:
+                    logger.info(f"[WEBHOOK] OAuth user - skipping email verification")
 
         except Exception as e:
             logger.error(f"[WEBHOOK] Provisioning failed: {e}", exc_info=True)
