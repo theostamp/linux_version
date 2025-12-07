@@ -10,12 +10,16 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   getCurrentUser,
   loginUser,
   logoutUser as apiLogoutUser,
 } from '@/lib/api';
 import FullPageSpinner from '@/components/FullPageSpinner';
+
+// Paths where AuthContext should NOT auto-verify tokens (OAuth callbacks handle their own auth)
+const AUTH_CALLBACK_PATHS = ['/auth/callback', '/auth/google/callback'];
 
 interface AuthCtx {
   user: User | null;
@@ -35,11 +39,15 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 let globalAuthInitializing = false;
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
+  const pathname = usePathname();
   const [userState, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const initializationStartedRef = useRef(false);
+  
+  // Check if we're on an auth callback path where OAuth flow handles authentication
+  const isAuthCallbackPath = AUTH_CALLBACK_PATHS.some(path => pathname?.startsWith(path));
 
   // Always sync user to localStorage
   const setUser = useCallback((user: User | null) => {
@@ -172,6 +180,19 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         globalAuthInitializing = false;
       }, 5000);
 
+      // CRITICAL: Skip auto-verification on auth callback paths
+      // The OAuth callback page handles its own authentication flow
+      // If we verify here with old tokens, we'll get 401 and clear localStorage
+      // before the callback page can store the new tokens
+      if (isAuthCallbackPath) {
+        console.log('[AuthContext] On auth callback path, skipping auto-verification to allow OAuth flow');
+        clearTimeout(timeoutId);
+        setIsLoading(false);
+        setIsAuthReady(true);
+        globalAuthInitializing = false;
+        return;
+      }
+
       // Check both access_token and access for backward compatibility
       const token = localStorage.getItem('access_token') || localStorage.getItem('access');
       const cachedUser = localStorage.getItem('user');
@@ -284,7 +305,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         initializationStartedRef.current = false;
       }
     };
-  }, []); // Remove hasInitialized dependency to prevent re-runs
+  }, [isAuthCallbackPath]); // Include isAuthCallbackPath to handle OAuth callback paths
 
   // Compute isAuthenticated based on user state and token existence
   // Check both access_token and access for backward compatibility

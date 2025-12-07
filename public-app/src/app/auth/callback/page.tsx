@@ -2,8 +2,9 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Building, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 interface StateData {
   provider?: string;
@@ -19,6 +20,7 @@ interface StateData {
 function OAuthCallback() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { loginWithToken } = useAuth();
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
@@ -35,28 +37,37 @@ function OAuthCallback() {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
       if (hash && hash.includes('access=')) {
-        try {
-          const hashParams = new URLSearchParams(hash.substring(1));
-          const access = hashParams.get('access');
-          const refresh = hashParams.get('refresh');
-          const redirectPath = hashParams.get('redirect') || '/dashboard';
-          
-          if (access) {
-            localStorage.setItem('access_token', access);
+        const handleHashTokens = async () => {
+          try {
+            const hashParams = new URLSearchParams(hash.substring(1));
+            const access = hashParams.get('access');
+            const refresh = hashParams.get('refresh');
+            const redirectPath = hashParams.get('redirect') || '/dashboard';
+            
+            if (access) {
+              // Store refresh token first
+              if (refresh) {
+                localStorage.setItem('refresh_token', refresh);
+              }
+              
+              // Use loginWithToken to properly set auth state
+              await loginWithToken(access);
+              
+              // Clear hash and redirect
+              window.location.hash = '';
+              setStatus('success');
+              setMessage('Σύνδεση επιτυχής!');
+              router.push(redirectPath);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to parse hash tokens:', e);
+            setStatus('error');
+            setMessage('Αποτυχία επεξεργασίας tokens');
           }
-          if (refresh) {
-            localStorage.setItem('refresh_token', refresh);
-          }
-          
-          // Clear hash and redirect
-          window.location.hash = '';
-          setStatus('success');
-          setMessage('Σύνδεση επιτυχής!');
-          router.push(redirectPath);
-          return;
-        } catch (e) {
-          console.error('Failed to parse hash tokens:', e);
-        }
+        };
+        handleHashTokens();
+        return;
       }
     }
     
@@ -121,12 +132,24 @@ function OAuthCallback() {
           throw new Error(data.error || 'OAuth callback failed');
         }
 
-        // Store tokens locally (will be transferred cross-domain if needed)
-        if (data.access) {
-          localStorage.setItem('access_token', data.access);
-        }
+        // Store refresh token first
         if (data.refresh) {
           localStorage.setItem('refresh_token', data.refresh);
+        }
+        
+        // Use loginWithToken to properly set auth state (if not cross-domain redirect)
+        if (data.access && !data.tenant_url) {
+          try {
+            await loginWithToken(data.access);
+            console.log('[OAuth Callback] Auth state updated via loginWithToken');
+          } catch (tokenError) {
+            console.error('[OAuth Callback] loginWithToken failed:', tokenError);
+            // Fall back to localStorage-only approach
+            localStorage.setItem('access_token', data.access);
+          }
+        } else if (data.access) {
+          // For cross-domain redirect, just store the token (will be transferred via URL hash)
+          localStorage.setItem('access_token', data.access);
         }
 
         // Handle different flows based on state
@@ -195,7 +218,7 @@ function OAuthCallback() {
     };
 
     handleCallback();
-  }, [code, state, error, router]);
+  }, [code, state, error, router, loginWithToken]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
