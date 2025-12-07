@@ -8,6 +8,7 @@ import React, {
   useState,
   ReactNode,
   useCallback,
+  useRef,
 } from 'react';
 import {
   getCurrentUser,
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const initializationStartedRef = useRef(false);
 
   // Always sync user to localStorage
   const setUser = useCallback((user: User | null) => {
@@ -146,6 +148,9 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   }, [setUser]);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
+
     const loadUserOnMount = async () => {
       if (hasInitialized || globalAuthInitializing) {
         console.log('[AuthContext] Already initialized or global initialization in progress, skipping...');
@@ -154,14 +159,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
       console.log('[AuthContext] loadUserOnMount starting...');
       globalAuthInitializing = true;
+      initializationStartedRef.current = true;
       setHasInitialized(true);
       setIsLoading(true);
 
       // Set a timeout to prevent infinite hanging
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        if (!isMounted) return;
         console.error('[AuthContext] Initialization timeout after 5 seconds, forcing ready state');
         setIsLoading(false);
         setIsAuthReady(true);
+        globalAuthInitializing = false;
       }, 5000);
 
       // Check both access_token and access for backward compatibility
@@ -172,7 +180,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
       if (!token) {
         console.log('[AuthContext] No token found on mount, setting auth as ready');
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!isMounted) return;
         setUser(null);
         setIsLoading(false);
         setIsAuthReady(true);
@@ -189,20 +198,36 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           
           try {
             const freshUser = await getCurrentUser();
+            if (!isMounted) {
+              globalAuthInitializing = false;
+              return;
+            }
             setUser(freshUser);
             console.log('AuthContext: Refreshed user data:', freshUser?.email);
           } catch (apiError) {
+            if (!isMounted) {
+              globalAuthInitializing = false;
+              return;
+            }
             console.error('AuthContext: Failed to refresh user, clearing auth state:', apiError);
             // Clear invalid auth state
             performClientLogout();
           }
 
-          clearTimeout(timeoutId);
+          if (timeoutId) clearTimeout(timeoutId);
+          if (!isMounted) {
+            globalAuthInitializing = false;
+            return;
+          }
           setIsLoading(false);
           setIsAuthReady(true);
           globalAuthInitializing = false;
           return;
         } catch (e) {
+          if (!isMounted) {
+            globalAuthInitializing = false;
+            return;
+          }
           console.error('AuthContext: Failed to parse cached user', e);
           localStorage.removeItem('user');
           setUser(null);
@@ -212,9 +237,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       try {
         console.log('AuthContext: Fetching current user');
         const me = await getCurrentUser();
+        if (!isMounted) {
+          globalAuthInitializing = false;
+          return;
+        }
         setUser(me);
         console.log('AuthContext: Current user fetched successfully:', me?.email);
       } catch (error: unknown) {
+        if (!isMounted) {
+          globalAuthInitializing = false;
+          return;
+        }
         console.error('AuthContext: Failed to fetch current user', error);
 
         // Αν το σφάλμα είναι 401, καθαρίζουμε τα tokens
@@ -225,7 +258,11 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           // Skip auto-login fallback - keep it simple
         }
       } finally {
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!isMounted) {
+          globalAuthInitializing = false;
+          return;
+        }
         setIsLoading(false);
         setIsAuthReady(true);
         globalAuthInitializing = false;
@@ -233,6 +270,20 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     };
 
     loadUserOnMount();
+
+    // Cleanup function: reset flag if component unmounts before initialization completes
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // Only reset if we were the one who set it
+      if (globalAuthInitializing && initializationStartedRef.current) {
+        console.log('[AuthContext] Component unmounted during initialization, resetting flag');
+        globalAuthInitializing = false;
+        initializationStartedRef.current = false;
+      }
+    };
   }, []); // Remove hasInitialized dependency to prevent re-runs
 
   // Compute isAuthenticated based on user state and token existence
