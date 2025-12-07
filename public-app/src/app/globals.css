@@ -9,10 +9,10 @@
   /* Foreground: Slate 900 (#0F172A) for strong text */
   --foreground: 222 47% 11%;
 
-  /* Primary: Indigo 600 (#4F46E5) */
-  --primary: 249 72% 59%;
+  /* Primary: Emerald 500 (#10b981) - Based on landing page */
+  --primary: 158 64% 52%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 249 72% 65%;
+  --primary-hover: 158 64% 45%;
 
   /* Secondary: Slate 200 (#E2E8F0) */
   --secondary: 214 32% 91%;
@@ -22,21 +22,21 @@
   --muted: 210 40% 96%;
   --muted-foreground: 215 16% 47%;
 
-  /* Accent: Indigo 100 (#E0E7FF) for hover states */
-  --accent: 244 86% 94%;
-  --accent-foreground: 249 72% 59%;
+  /* Accent: Emerald 100 for hover states */
+  --accent: 151 81% 96%;
+  --accent-foreground: 158 64% 52%;
 
   /* Borders: Slate 200 */
   --border: 214 32% 91%;
   --input: 214 32% 91%;
-  --ring: 249 72% 59%;
+  --ring: 158 64% 52%;
 
   /* Semantic Colors */
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
   
-  /* Success: Teal 600 (#0D9488) */
-  --success: 176 84% 32%;
+  /* Success: Emerald 600 - Consistent with primary */
+  --success: 158 64% 45%;
   --success-foreground: 0 0% 100%;
 
   /* Popovers/Cards */
@@ -58,58 +58,58 @@
   --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* -- Dark Mode Palette (Deep Slate) -- */
+/* Dark Mode - Based on landing page palette (slate-950, emerald-500) */
+.dark {
+  /* -- Dark Mode Palette (Slate 950 + Emerald accents) -- */
 
-    /* Background: Slate 950 (#020617) - Slightly darker than 900 for depth */
-    --background: 222 47% 5%; 
-    
-    /* Foreground: Slate 50 (#F8FAFC) */
-    --foreground: 210 40% 98%;
+  /* Background: Slate 950 (#020617) - From landing page */
+  --background: 222 47% 4%;
+  
+  /* Foreground: Slate 50 (#F8FAFC) */
+  --foreground: 210 40% 98%;
 
-    /* Primary: Indigo 500 (#6366F1) - Vibrant on dark */
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
-    --primary-hover: 239 84% 72%;
+  /* Primary: Emerald 400-500 - Brighter for dark mode visibility */
+  --primary: 158 64% 60%;
+  --primary-foreground: 222 47% 4%;
+  --primary-hover: 158 64% 52%;
 
-    /* Secondary: Slate 800 (#1E293B) */
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+  /* Secondary: Slate 800 (#1E293B) */
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
 
-    /* Muted: Slate 800 (#1E293B) */
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+  /* Muted: Slate 800 (#1E293B) */
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 16% 65%;
 
-    /* Accent: Slate 800 for hover, or slight Indigo tint */
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+  /* Accent: Slate 800 with emerald tint */
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
 
-    /* Borders: Slate 800 (#1E293B) - Subtle lines */
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 239 84% 67%;
+  /* Borders: Slate 800 (#1E293B) - Subtle lines */
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 158 64% 60%;
 
-    /* Cards: Slate 900 (#0F172A) - Lighter than background to pop */
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+  /* Cards: Slate 900 (#0F172A) - Lighter than background to pop */
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
 
-    /* Destructive */
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 98%;
+  /* Destructive: Adjusted for dark */
+  --destructive: 0 72% 60%;
+  --destructive-foreground: 0 0% 98%;
 
-    /* Success: Teal 500 (#14B8A6) */
-    --success: 173 80% 40%;
-    --success-foreground: 0 0% 100%;
-    
-    /* Shadows - slightly stronger for dark mode */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  }
+  /* Success: Emerald 400 - Brighter for dark mode */
+  --success: 158 64% 60%;
+  --success-foreground: 222 47% 4%;
+  
+  /* Shadows - stronger for dark mode */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
 }
 
 @theme inline {

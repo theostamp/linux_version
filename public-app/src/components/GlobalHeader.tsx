@@ -7,6 +7,7 @@ import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
+import { ThemeToggle } from './ThemeToggle';
 import { User, Building as BuildingIcon, Settings, Calendar, Shield } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
 import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAccess, getEffectiveRole } from '@/lib/roleUtils';
@@ -157,6 +158,9 @@ export default function GlobalHeader() {
                 <Calendar className="w-5 h-5" />
               </button>
 
+              {/* Theme Toggle Button */}
+              <ThemeToggle className="hidden sm:flex" />
+
               {/* Settings Button - Desktop - ADMIN-ONLY */}
               {isAdminLevel && (
                 <button
@@ -186,6 +190,9 @@ export default function GlobalHeader() {
                   window.location.href = '/calendar';
                 }}
               />
+
+              {/* Theme Toggle Button - Mobile */}
+              <ThemeToggle className="sm:hidden" />
 
               {/* User Info Card */}
               {user && (
