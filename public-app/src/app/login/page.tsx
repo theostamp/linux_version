@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getDefaultLandingPath, type RoleDescriptor } from '@/lib/roleUtils';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 // Καθορίζει τη σωστή landing page βάσει του ρόλου του χρήστη
 interface UserData extends RoleDescriptor {
@@ -202,11 +203,16 @@ function LoginForm() {
     // Remove trailing slash
     coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
-    // Redirect to backend Google OAuth endpoint
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    // Use fixed redirect URI (main app URL) for Google OAuth
+    // This allows single redirect URI in Google Console for all subdomains
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    const redirectUri = `${appUrl}/auth/callback`;
+    
+    // Store the original origin in state for cross-subdomain redirect
     const state = JSON.stringify({ 
       provider: 'google',
-      redirect: explicitRedirect || '/dashboard'  // Google OAuth χρειάζεται explicit redirect
+      redirect: explicitRedirect || '/dashboard',
+      originUrl: window.location.origin  // Where to redirect after auth
     });
     const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
     
@@ -214,7 +220,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <BuildingRevealBackground />
       {/* Header */}
       <header className="bg-card shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -232,6 +239,23 @@ function LoginForm() {
 
       <main className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
+          {/* App Description Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 mb-4">
+              <Building className="h-6 w-6 text-primary" />
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                New Concierge
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-3">
+              Η πολυκατοικία σου γίνεται κοινότητα
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+              Ένα σημείο ενημέρωσης με οθόνη στην είσοδο και μια πλατφόρμα για όλους τους ενοίκους.
+              Διαφάνεια, συνεργασία και ομαλή επικοινωνία – χωρίς χαρτιά, χωρίς εντάσεις.
+            </p>
+          </div>
+
           <div className="bg-card rounded-xl shadow-app-lg p-8 border border-slate-200/50">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">

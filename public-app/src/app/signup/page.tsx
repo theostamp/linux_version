@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Building, User, Mail, Lock, ArrowRight, CheckCircle, Eye, EyeOff, Home, Monitor, Minus, Plus, ChevronLeft } from 'lucide-react';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 /**
  * Τιμολογιακή Πολιτική:
@@ -295,21 +296,28 @@ function SignupForm() {
     }
     coreApiUrl = coreApiUrl.replace(/\/$/, '');
     
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    // Use fixed redirect URI (main app URL) for Google OAuth
+    // This allows single redirect URI in Google Console for all subdomains
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    const redirectUri = `${appUrl}/auth/callback`;
+    
+    // Store the original origin in state for cross-subdomain redirect
     const state = JSON.stringify({ 
       provider: 'google',
       action: 'signup',
       plan: effectivePlan,
       apartments,
       billingInterval: isYearly ? 'year' : 'month',
-      tenantSubdomain: formData.tenantSubdomain 
+      tenantSubdomain: formData.tenantSubdomain,
+      originUrl: window.location.origin  // Where to redirect after auth
     });
     const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
     window.location.href = googleAuthUrl;
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-950 relative">
+      <BuildingRevealBackground />
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -333,6 +341,23 @@ function SignupForm() {
 
       <main className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
+          {/* App Description Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 mb-4">
+              <Building className="h-6 w-6 text-emerald-400" />
+              <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                New Concierge
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-50 mb-3">
+              Η πολυκατοικία σου γίνεται κοινότητα
+            </h2>
+            <p className="text-sm text-slate-400 leading-relaxed max-w-2xl mx-auto mb-6">
+              Ένα σημείο ενημέρωσης με οθόνη στην είσοδο και μια πλατφόρμα για όλους τους ενοίκους.
+              Διαφάνεια, συνεργασία και ομαλή επικοινωνία – χωρίς χαρτιά, χωρίς εντάσεις.
+            </p>
+          </div>
+
           {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 mb-2">
