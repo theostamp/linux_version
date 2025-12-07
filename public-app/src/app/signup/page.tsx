@@ -316,10 +316,10 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent relative">
+    <div className="min-h-screen bg-slate-950 relative">
       <BuildingRevealBackground />
       {/* Header */}
-      <header className="border-b border-slate-800/50 bg-slate-950/60 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
@@ -373,7 +373,7 @@ function SignupForm() {
             {/* Left: Plan Selection & Pricing */}
             <div className="lg:col-span-2 space-y-6">
               {/* Apartment Counter */}
-              <div className="rounded-2xl border border-slate-800/50 bg-slate-900/80 backdrop-blur-sm p-6">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
                 <h3 className="text-sm font-medium text-slate-400 mb-4">Διαμερίσματα στην πολυκατοικία</h3>
                 <div className="flex items-center justify-center gap-4">
                   <button
@@ -408,7 +408,7 @@ function SignupForm() {
 
               {/* Plan Selection */}
               {apartments > 7 && (
-                <div className="rounded-2xl border border-slate-800/50 bg-slate-900/80 backdrop-blur-sm p-6">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
                   <h3 className="text-sm font-medium text-slate-400 mb-4">Επιλέξτε πακέτο</h3>
                   <div className="space-y-3">
                     <button
@@ -488,7 +488,7 @@ function SignupForm() {
               )}
 
               {/* Price Summary */}
-              <div className="rounded-2xl border border-emerald-500/30 bg-slate-900/90 backdrop-blur-sm p-6">
+              <div className="rounded-2xl border border-emerald-500/30 bg-slate-900 p-6">
                 <div className="text-center">
                   <p className="text-sm text-slate-400 mb-2">
                     {effectivePlan === 'free' ? 'Δωρεάν πακέτο' : 'Συνολικό κόστος'}
@@ -526,7 +526,7 @@ function SignupForm() {
 
             {/* Right: Signup Form */}
             <div className="lg:col-span-3">
-              <div className="rounded-2xl border border-slate-800/50 bg-slate-900/80 backdrop-blur-sm p-6 sm:p-8">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 sm:p-8">
                 <h2 className="text-xl font-bold text-slate-50 mb-6">Στοιχεία Λογαριασμού</h2>
                 
                 {errors.general && (
@@ -539,7 +539,7 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={handleGoogleAuth}
-                  className="w-full bg-slate-800/95 backdrop-blur-sm border border-slate-700 text-slate-100 py-3 px-6 rounded-xl font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-3 mb-6"
+                  className="w-full bg-slate-800 border border-slate-700 text-slate-200 py-3 px-6 rounded-xl font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-3 mb-6"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -555,7 +555,7 @@ function SignupForm() {
                     <div className="w-full border-t border-slate-700"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-slate-900/80 backdrop-blur-sm text-slate-400">ή με email</span>
+                    <span className="px-3 bg-slate-900 text-slate-500">ή με email</span>
                   </div>
                 </div>
 
@@ -575,7 +575,7 @@ function SignupForm() {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           autoComplete="given-name"
-                          className={`w-full pl-10 pr-4 py-3 bg-slate-800/95 backdrop-blur-sm border rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                          className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
                             errors.firstName ? 'border-red-500/50' : 'border-slate-700'
                           }`}
                           placeholder="Γιώργος"
@@ -599,7 +599,7 @@ function SignupForm() {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           autoComplete="family-name"
-                          className={`w-full pl-10 pr-4 py-3 bg-slate-800/95 backdrop-blur-sm border rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                          className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
                             errors.lastName ? 'border-red-500/50' : 'border-slate-700'
                           }`}
                           placeholder="Παπαδόπουλος"
@@ -625,7 +625,7 @@ function SignupForm() {
                         value={formData.email}
                         onChange={handleInputChange}
                         autoComplete="email"
-                        className={`w-full pl-10 pr-4 py-3 bg-slate-800/95 backdrop-blur-sm border rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                        className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
                           errors.email ? 'border-red-500/50' : 'border-slate-700'
                         }`}
                         placeholder="email@example.com"
@@ -649,7 +649,7 @@ function SignupForm() {
                         name="tenantSubdomain"
                         value={formData.tenantSubdomain}
                         onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 bg-slate-800/95 backdrop-blur-sm border rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                        className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
                           errors.tenantSubdomain ? 'border-red-500/50' : 'border-slate-700'
                         }`}
                         placeholder="my-building"
@@ -678,7 +678,7 @@ function SignupForm() {
                           value={formData.password}
                           onChange={handleInputChange}
                           autoComplete="new-password"
-                          className={`w-full pl-10 pr-12 py-3 bg-slate-800/95 backdrop-blur-sm border rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                          className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
                             errors.password ? 'border-red-500/50' : 'border-slate-700'
                           }`}
                           placeholder="••••••••"
@@ -709,7 +709,7 @@ function SignupForm() {
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
                           autoComplete="new-password"
-                          className={`w-full pl-10 pr-12 py-3 bg-slate-800/95 backdrop-blur-sm border rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                          className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
                             errors.confirmPassword ? 'border-red-500/50' : 'border-slate-700'
                           }`}
                           placeholder="••••••••"

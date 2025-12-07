@@ -1061,3 +1061,144 @@ def user_profile_view(request):
 
 
 # UserViewSet is defined above (line ~321) - removed duplicate definition
+
+
+# ===== FREE TENANT CREATION ENDPOINT =====
+
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def create_free_tenant_view(request):
+    """
+    POST /api/users/create-free-tenant/
+    Δημιουργία free tenant για authenticated user χωρίς Stripe.
+    
+    Body: { "subdomain": "my-building", "apartments": 5 }
+    """
+    import logging
+    from tenants.services import TenantService
+    from billing.models import SubscriptionPlan
+    
+    logger = logging.getLogger('django')
+    user = request.user
+    
+    # Check if user already has a tenant
+    if hasattr(user, 'tenant') and user.tenant:
+        return Response({
+            'error': 'Έχετε ήδη workspace',
+            'tenant_url': f"{user.tenant.schema_name}.newconcierge.app"
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    subdomain = request.data.get('subdomain', '').strip().lower()
+    apartments = request.data.get('apartments', 7)
+    
+    # Validate subdomain
+    if not subdomain:
+        return Response({
+            'error': 'Το subdomain είναι υποχρεωτικό'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    import re
+    if not re.match(r'^[a-z0-9-]+$', subdomain):
+        return Response({
+            'error': 'Το subdomain πρέπει να περιέχει μόνο πεζά γράμματα, αριθμούς και παύλες'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check apartments limit for free plan
+    try:
+        apartments = int(apartments)
+    except (TypeError, ValueError):
+        apartments = 7
+    
+    if apartments > 7:
+        return Response({
+            'error': 'Το Free plan υποστηρίζει έως 7 διαμερίσματα'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get the free plan
+    try:
+        free_plan = SubscriptionPlan.objects.get(plan_type='free')
+    except SubscriptionPlan.DoesNotExist:
+        # Try to find by name if plan_type doesn't exist
+        try:
+            free_plan = SubscriptionPlan.objects.filter(
+                name__icontains='free'
+            ).first()
+            if not free_plan:
+                # Create a default free plan if it doesn't exist
+                free_plan = SubscriptionPlan.objects.create(
+                    name='Free',
+                    plan_type='free',
+                    description='Δωρεάν πλάνο για μικρές πολυκατοικίες (1-7 διαμερίσματα)',
+                    monthly_price=0,
+                    yearly_price=0,
+                    max_buildings=1,
+                    max_apartments_per_building=7,
+                    trial_days=0,
+                    is_active=True
+                )
+                logger.info(f"Created default free plan: {free_plan.id}")
+        except Exception as e:
+            logger.error(f"Failed to get/create free plan: {e}")
+            return Response({
+                'error': 'Δεν βρέθηκε το δωρεάν πλάνο'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    # Create tenant
+    try:
+        from django.db import transaction
+        
+        tenant_service = TenantService()
+        
+        with transaction.atomic():
+            # Create tenant and subscription with empty Stripe IDs
+            tenant, subscription = tenant_service.create_tenant_and_subscription(
+                schema_name=subdomain,
+                user=user,
+                plan_id=free_plan.id,
+                stripe_customer_id='',  # No Stripe for free plan
+                stripe_subscription_id='',  # No Stripe for free plan
+                stripe_checkout_session_id=None
+            )
+            
+            # Update subscription status to active (not trial) for free plan
+            subscription.status = 'active'
+            subscription.trial_start = None
+            subscription.trial_end = None
+            subscription.save(update_fields=['status', 'trial_start', 'trial_end'])
+            
+            # Link user to tenant
+            user.tenant = tenant
+            user.is_staff = True
+            user.role = 'manager'
+            user.is_active = True
+            user.email_verified = True  # Auto-verify for free plan
+            user.save(update_fields=['tenant', 'is_staff', 'role', 'is_active', 'email_verified'])
+            
+            logger.info(f"[FREE TENANT] Created free tenant '{subdomain}' for user {user.email}")
+        
+        # Generate new tokens with updated user info
+        refresh = RefreshToken.for_user(user)
+        
+        tenant_url = f"{tenant.schema_name}.newconcierge.app"
+        
+        return Response({
+            'success': True,
+            'message': 'Το workspace δημιουργήθηκε επιτυχώς!',
+            'tenantUrl': tenant_url,
+            'tenant': {
+                'id': tenant.id,
+                'name': tenant.name,
+                'schema_name': tenant.schema_name
+            },
+            'tokens': {
+                'access': str(refresh.access_token),
+                'refresh': str(refresh)
+            }
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"[FREE TENANT] Failed to create tenant: {e}", exc_info=True)
+        return Response({
+            'error': f'Αποτυχία δημιουργίας workspace: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

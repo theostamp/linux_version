@@ -93,23 +93,6 @@ export default function BuildingRevealBackground() {
       className="fixed top-0 left-0 w-full h-full -z-10"
       style={{ pointerEvents: 'none' }}
     >
-      {/* Dot Grid Pattern Definition */}
-      <defs>
-        <pattern
-          id="dotGrid"
-          x="0"
-          y="0"
-          width="40"
-          height="40"
-          patternUnits="userSpaceOnUse"
-        >
-          <circle cx="20" cy="20" r="1" fill="#888888" opacity="0.15" />
-        </pattern>
-      </defs>
-
-      {/* Background with dot grid */}
-      <rect width="1000" height="600" fill="url(#dotGrid)" />
-
       {/* Building Group - Right side (1/4 of screen) */}
       <g id="building-group" strokeLinecap="round">
         {/* Horizontal building edges */}
@@ -121,7 +104,7 @@ export default function BuildingRevealBackground() {
             y2="150"
             className="b-edge h-edge-1"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -133,7 +116,7 @@ export default function BuildingRevealBackground() {
             y2="300"
             className="b-edge h-edge-2"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -145,7 +128,7 @@ export default function BuildingRevealBackground() {
             y2="500"
             className="b-edge h-edge-3"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -161,7 +144,7 @@ export default function BuildingRevealBackground() {
             y2="500"
             className="b-edge v-edge-1"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -173,7 +156,7 @@ export default function BuildingRevealBackground() {
             y2="350"
             className="b-edge v-edge-2"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -185,7 +168,7 @@ export default function BuildingRevealBackground() {
             y2="500"
             className="b-edge v-edge-3"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -197,7 +180,7 @@ export default function BuildingRevealBackground() {
             y2="500"
             className="b-edge v-edge-4"
             stroke="#a0a0a0"
-            strokeWidth="1.5"
+            strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
             strokeDashoffset="1000"
@@ -207,7 +190,7 @@ export default function BuildingRevealBackground() {
       </g>
 
       {/* Scanning Lines */}
-      <g id="scanners" strokeWidth="0.5" opacity="0.3">
+      <g id="scanners" strokeWidth="1" opacity="0.4">
         {/* Horizontal scanner (moves vertically) */}
         <line
           id="scanner-h"

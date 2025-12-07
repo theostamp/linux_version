@@ -20,11 +20,28 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/',
     '/login',
     '/register',
+    '/signup',
+    '/plans',
     '/payment',
     '/auth/callback',
     '/logout',
-    '/verify-payment'
+    '/verify-payment',
+    '/forgot-password',
+    '/accept-invitation'
   ];
+  
+  // Auth pages that should NOT show the loading spinner (they handle their own auth)
+  const noAuthLoadingRoutes = [
+    '/login',
+    '/signup',
+    '/forgot-password',
+    '/accept-invitation',
+    '/'
+  ];
+  
+  const isNoAuthLoadingRoute = noAuthLoadingRoutes.some(route =>
+    pathname === route || (route !== '/' && pathname?.startsWith(route))
+  );
 
   // All routes from the (dashboard) directory should use auth
   // Check if the pathname starts with any of the dashboard routes
@@ -82,6 +99,18 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // - No sidebar routes (landing, auth, payment pages)
   // - Kiosk and info screen routes (handled above)
   const shouldUseLayoutWrapper = pathname && !isDashboard && !isKioskMode && !isInfoScreen && !isNoSidebarRoute;
+
+  // For auth pages (login, signup, etc.), skip AuthProvider to avoid loading spinner
+  if (isNoAuthLoadingRoute) {
+    return (
+      <ReactQueryProvider>
+        <LoadingProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </LoadingProvider>
+      </ReactQueryProvider>
+    );
+  }
 
   return (
     <ReactQueryProvider>

@@ -60,6 +60,9 @@ urlpatterns = [
     path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
     path('subscription/create/', UserCreateSubscriptionView.as_view(), name='user-create-subscription'),
 
+    # Free tenant creation (for authenticated users without tenant)
+    path('create-free-tenant/', views.create_free_tenant_view, name='create-free-tenant'),
+    
     # Invitation endpoints
     path('invitations/', views.list_invitations_view, name='list-invitations'),
     path('invitations/verify/', views.verify_invitation_view, name='verify-invitation'),
