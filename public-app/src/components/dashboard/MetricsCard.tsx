@@ -3,7 +3,6 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { designSystem } from '@/lib/design-system';
 
 interface MetricsCardProps {
   title: string;
@@ -29,7 +28,14 @@ export function MetricsCard({
   onClick,
   loading = false,
 }: MetricsCardProps) {
-  const scheme = designSystem.dashboard.metrics[colorScheme];
+  const schemes: Record<NonNullable<MetricsCardProps['colorScheme']>, { accent: string }> = {
+    buildings: { accent: '#00BC7D' },
+    apartments: { accent: '#00BC7D' },
+    financial: { accent: '#8b5cf6' },
+    alerts: { accent: '#e11d48' },
+    pending: { accent: '#f59e0b' },
+  };
+  const scheme = schemes[colorScheme] || schemes.buildings;
   
   const isClickable = !!onClick;
   
@@ -41,16 +47,16 @@ export function MetricsCard({
           "animate-pulse"
         )}
         style={{
-          backgroundColor: scheme.bg,
-          borderColor: scheme.border,
+          backgroundColor: 'hsl(var(--card))',
+          borderColor: 'hsl(var(--border))',
         }}
       >
         <div className="flex items-start justify-between mb-4">
-          <div className="h-4 w-20 bg-gray-300 rounded" />
-          <div className="h-10 w-10 bg-gray-300 rounded-lg" />
+          <div className="h-4 w-20 rounded" style={{ backgroundColor: 'hsl(var(--muted))' }} />
+          <div className="h-10 w-10 rounded-lg" style={{ backgroundColor: 'hsl(var(--muted))' }} />
         </div>
-        <div className="h-8 w-16 bg-gray-300 rounded mb-2" />
-        <div className="h-3 w-24 bg-gray-300 rounded" />
+        <div className="h-8 w-16 rounded mb-2" style={{ backgroundColor: 'hsl(var(--muted))' }} />
+        <div className="h-3 w-24 rounded" style={{ backgroundColor: 'hsl(var(--muted))' }} />
       </div>
     );
   }
@@ -64,23 +70,23 @@ export function MetricsCard({
         !isClickable && "shadow-sm"
       )}
       style={{
-        backgroundColor: scheme.bg,
-        borderColor: scheme.border,
+        backgroundColor: 'hsl(var(--card))',
+        borderColor: 'hsl(var(--border))',
       }}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <h3 
           className="text-sm font-medium"
-          style={{ color: scheme.text }}
+          style={{ color: 'hsl(var(--muted-foreground))' }}
         >
           {title}
         </h3>
         <div 
           className="w-10 h-10 rounded-lg flex items-center justify-center"
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            color: scheme.icon,
+            backgroundColor: `${scheme.accent}26`,
+            color: scheme.accent,
           }}
         >
           <Icon className="w-5 h-5" />
@@ -90,7 +96,7 @@ export function MetricsCard({
       {/* Value */}
       <div 
         className="text-3xl font-bold mb-2"
-        style={{ color: scheme.text }}
+        style={{ color: 'hsl(var(--foreground))' }}
       >
         {value}
       </div>
@@ -100,7 +106,7 @@ export function MetricsCard({
         {subtitle && (
           <p 
             className="text-xs opacity-75"
-            style={{ color: scheme.text }}
+            style={{ color: 'hsl(var(--muted-foreground))' }}
           >
             {subtitle}
           </p>

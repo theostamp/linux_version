@@ -310,7 +310,8 @@ const navigationGroups: NavigationGroup[] = [
 export default function CollapsibleSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Desktop: expanded by default. Mobile: collapsed (set in effect).
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const { user, isLoading: authIsLoading, isAuthReady } = useAuth();
   const {
@@ -350,6 +351,17 @@ export default function CollapsibleSidebar() {
     setIsMobileMenuOpen(false);
     await navigateWithLoading(href);
   };
+
+  // Auto-set expanded state based on viewport (lg breakpoint ~1024px)
+  useEffect(() => {
+    const applyResponsiveState = () => {
+      const isMobile = window.innerWidth < 1024;
+      setIsExpanded(!isMobile);
+    };
+    applyResponsiveState();
+    window.addEventListener('resize', applyResponsiveState);
+    return () => window.removeEventListener('resize', applyResponsiveState);
+  }, []);
 
   // Determine user role
   const userRole = getEffectiveRole(user);
@@ -475,8 +487,6 @@ export default function CollapsibleSidebar() {
 
       {/* Desktop Sidebar - Collapsible */}
       <aside
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
         className={cn(
           "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col z-40 overflow-hidden bg-card text-card-foreground",
           "transition-all duration-300 ease-in-out"
@@ -513,13 +523,19 @@ export default function CollapsibleSidebar() {
             </p>
           </div>
           
-          {/* Expand/Collapse Indicator */}
-          <div className={cn(
-            "ml-auto transition-all duration-300",
-            isExpanded ? "opacity-100" : "opacity-0"
-          )}>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </div>
+          {/* Expand/Collapse Toggle */}
+          <button
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="ml-auto p-2 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted transition"
+            aria-label={isExpanded ? 'Σύμπτυξη sidebar' : 'Άνοιγμα sidebar'}
+          >
+            <ChevronRight
+              className={cn(
+                "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                isExpanded ? "rotate-180" : "rotate-0"
+              )}
+            />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -550,84 +566,99 @@ export default function CollapsibleSidebar() {
                     
                     return (
                       <div key={link.href} className="relative group/item">
-                        <button
-                          onClick={() => handleNavigation(link.href)}
-                          title={!isExpanded ? link.label : undefined}
-                          className={cn(
-                            'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
-                            isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
-                            isActive && 'shadow-md',
-                            isActive ? colorClasses.active : `text-muted-foreground ${colorClasses.hover} hover:text-foreground`
-                          )}
-                          style={{
-                            fontSize: designSystem.typography.fontSize.sm,
-                          }}
-                        >
-                          {/* Icon */}
-                          <span 
-                            className={cn(
-                              'transition-colors duration-200 flex-shrink-0',
-                              isExpanded && 'mr-3',
-                              !isActive && colorClasses.icon
-                            )}
-                          >
-                            {link.icon}
-                          </span>
-                          
-                          {/* Label */}
-                          <span 
-                            className={cn(
-                              "transition-all duration-300 overflow-hidden whitespace-nowrap",
-                              isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                            )}
-                          >
-                            {link.label}
-                          </span>
-                          
-                          {/* Info Icon with Tooltip */}
-                          {link.tooltip && isExpanded && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                  }}
-                                  className={cn(
-                                    "ml-auto p-1 rounded transition-colors flex-shrink-0",
-                                    isActive ? "hover:bg-white/10 text-white/80" : "hover:bg-muted text-muted-foreground"
-                                  )}
-                                >
-                                  <Info className="w-3.5 h-3.5" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent 
-                                side="right" 
-                                className="max-w-xs z-50 bg-popover text-popover-foreground border-border shadow-lg"
-                                sideOffset={8}
-                              >
-                                <p className="text-xs leading-relaxed">{link.tooltip}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          
-                          {/* Beta Badge */}
-                          {link.isBeta && isExpanded && (
-                            <span 
+                        <Tooltip disableHoverableContent={isExpanded}>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => handleNavigation(link.href)}
                               className={cn(
-                                "px-2 py-0.5 rounded-full font-bold",
-                                link.tooltip ? "ml-2" : "ml-auto",
-                                !isActive && colorClasses.bg,
-                                !isActive && colorClasses.text
+                                'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
+                                isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
+                                isActive && 'shadow-md',
+                                isActive ? colorClasses.active : `text-muted-foreground ${colorClasses.hover} hover:text-foreground`
                               )}
                               style={{
-                                fontSize: designSystem.typography.fontSize.xs,
-                                backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : undefined,
+                                fontSize: designSystem.typography.fontSize.sm,
                               }}
                             >
-                              BETA
-                            </span>
+                              {/* Icon */}
+                              <span 
+                                className={cn(
+                                  'transition-colors duration-200 flex-shrink-0',
+                                  isExpanded && 'mr-3',
+                                  !isActive && colorClasses.icon
+                                )}
+                              >
+                                {link.icon}
+                              </span>
+                              
+                              {/* Label */}
+                              <span 
+                                className={cn(
+                                  "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                                  isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                )}
+                              >
+                                {link.label}
+                              </span>
+                              
+                              {/* Info Icon with Tooltip */}
+                              {link.tooltip && isExpanded && (
+                                <Tooltip disableHoverableContent>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                      className={cn(
+                                        "ml-auto p-1 rounded transition-colors flex-shrink-0",
+                                        isActive ? "hover:bg-white/10 text-white/80" : "hover:bg-muted text-muted-foreground"
+                                      )}
+                                    >
+                                      <Info className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent 
+                                    side="right" 
+                                    className="max-w-xs z-50 bg-popover text-popover-foreground border-border shadow-lg"
+                                    sideOffset={8}
+                                  >
+                                    <p className="text-xs leading-relaxed">{link.tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                              
+                              {/* Beta Badge */}
+                              {link.isBeta && isExpanded && (
+                                <span 
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-full font-bold",
+                                    link.tooltip ? "ml-2" : "ml-auto",
+                                    !isActive && colorClasses.bg,
+                                    !isActive && colorClasses.text
+                                  )}
+                                  style={{
+                                    fontSize: designSystem.typography.fontSize.xs,
+                                    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : undefined,
+                                  }}
+                                >
+                                  BETA
+                                </span>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          {!isExpanded && (
+                            <TooltipContent
+                              side="right"
+                              className="z-50 bg-popover text-popover-foreground border-border shadow-lg"
+                              sideOffset={10}
+                            >
+                              <p className="text-xs font-semibold">{link.label}</p>
+                              {link.tooltip && (
+                                <p className="text-xs mt-1 text-muted-foreground/80">{link.tooltip}</p>
+                              )}
+                            </TooltipContent>
                           )}
-                        </button>
+                        </Tooltip>
                       </div>
                     );
                   })}
