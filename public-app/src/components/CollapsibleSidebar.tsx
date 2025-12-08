@@ -494,6 +494,7 @@ export default function CollapsibleSidebar() {
         style={{
           width: isExpanded ? '256px' : '80px',
           fontFamily: 'var(--font-sans)',
+          backgroundImage: 'linear-gradient(180deg, rgba(0,188,125,0.08) 0%, rgba(11,22,32,0.85) 35%, rgba(11,22,32,0.95) 100%)',
         }}
       >
         {/* Header */}
