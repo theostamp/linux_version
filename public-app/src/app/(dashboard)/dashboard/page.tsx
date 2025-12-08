@@ -275,10 +275,11 @@ function DashboardContent() {
                       <Link
                         key={vote.id}
                         href={`/votes/${vote.id}`}
-                        className="block rounded-xl border border-border/40 bg-background px-4 py-3 transition-colors hover:bg-muted/50"
+                        className="block rounded-xl border border-[hsl(var(--border))/60] bg-[hsl(var(--card))] px-4 py-3 transition-colors hover:bg-[hsl(var(--muted)/0.4)]"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full"
+                               style={{ backgroundColor: '#00BC7D1f', color: '#00BC7D' }}>
                             <VoteIcon className="h-4 w-4" />
                           </div>
                           <div className="flex-1 space-y-1">
@@ -291,13 +292,14 @@ function DashboardContent() {
                                 {formatDateRange(vote.start_date, vote.end_date)}
                               </span>
                               {typeof daysLeft === 'number' && daysLeft >= 0 && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                                      style={{ backgroundColor: '#00BC7D1f', color: '#00BC7D' }}>
                                   <Clock className="h-3 w-3" />
                                   {daysLeft === 0 ? 'Λήγει σήμερα' : `Σε ${daysLeft} ${daysLeft === 1 ? 'ημέρα' : 'ημέρες'}`}
                                 </span>
                               )}
                               {!selectedBuilding && vote.building_name && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-background px-2 py-0.5">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--border))/50] bg-[hsl(var(--card))] px-2 py-0.5">
                                   🏢 {vote.building_name}
                                 </span>
                               )}

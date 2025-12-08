@@ -2257,3 +2257,403 @@ export async function updateUser(userId: number, payload: UpdateUserPayload): Pr
 export async function deleteUser(userId: number): Promise<void> {
   return await apiDelete(`/users/${userId}/`);
 }
+
+// ============================================================
+// 📋 ASSEMBLIES (Γενικές Συνελεύσεις)
+// ============================================================
+
+export type AssemblyStatus = 
+  | 'draft' 
+  | 'scheduled' 
+  | 'convened' 
+  | 'in_progress' 
+  | 'completed' 
+  | 'cancelled' 
+  | 'adjourned';
+
+export type AssemblyType = 'regular' | 'extraordinary' | 'continuation';
+
+export type AgendaItemType = 'informational' | 'discussion' | 'voting' | 'approval';
+export type AgendaItemStatus = 'pending' | 'in_progress' | 'completed' | 'deferred' | 'cancelled';
+export type VotingType = 'simple_majority' | 'qualified_majority' | 'unanimous' | 'relative_majority';
+
+export type RSVPStatus = 'pending' | 'attending' | 'not_attending' | 'maybe';
+export type AttendanceType = 'in_person' | 'online' | 'proxy' | 'pre_vote_only';
+export type VoteChoice = 'approve' | 'reject' | 'abstain';
+export type VoteSource = 'pre_vote' | 'live' | 'proxy';
+
+export type AgendaItem = {
+  id: string;
+  assembly: string;
+  order: number;
+  title: string;
+  description: string;
+  item_type: AgendaItemType;
+  item_type_display: string;
+  estimated_duration: number;
+  actual_duration: number | null;
+  started_at: string | null;
+  ended_at: string | null;
+  presenter: number | null;
+  presenter_name: string;
+  presenter_name_display: string | null;
+  status: AgendaItemStatus;
+  status_display: string;
+  time_status: string | null;
+  voting_type: VotingType;
+  voting_type_display: string;
+  allows_pre_voting: boolean;
+  is_voting_item: boolean;
+  linked_vote: number | null;
+  linked_project: string | null;
+  linked_project_title: string | null;
+  decision: string;
+  decision_type: string;
+  discussion_notes: string;
+  has_attachments: boolean;
+  vote_results: {
+    total_votes: number;
+    approve_votes: number;
+    reject_votes: number;
+    abstain_votes: number;
+    approve_mills: number;
+    reject_mills: number;
+    abstain_mills: number;
+    total_mills: number;
+    approve_percentage: number;
+    reject_percentage: number;
+    abstain_percentage: number;
+  } | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssemblyAttendee = {
+  id: string;
+  assembly: string;
+  apartment: number;
+  apartment_number: string;
+  user: number | null;
+  display_name: string;
+  mills: number;
+  rsvp_status: RSVPStatus;
+  rsvp_status_display: string;
+  rsvp_at: string | null;
+  rsvp_notes: string;
+  attendance_type: AttendanceType;
+  attendance_type_display: string;
+  is_present: boolean;
+  checked_in_at: string | null;
+  checked_out_at: string | null;
+  is_proxy: boolean;
+  proxy_from_apartment: number | null;
+  has_pre_voted: boolean;
+  pre_voted_at: string | null;
+  attendee_name: string;
+  attendee_phone: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Assembly = {
+  id: string;
+  title: string;
+  building: number;
+  building_name: string;
+  assembly_type: AssemblyType;
+  assembly_type_display: string;
+  description: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  estimated_duration: number;
+  is_physical: boolean;
+  is_online: boolean;
+  location: string;
+  meeting_link: string;
+  meeting_id: string;
+  meeting_password: string;
+  total_building_mills: number;
+  required_quorum_percentage: number;
+  required_quorum_mills: number;
+  achieved_quorum_mills: number;
+  quorum_achieved: boolean;
+  quorum_achieved_at: string | null;
+  quorum_percentage: number;
+  quorum_status: 'achieved' | 'close' | 'far';
+  status: AssemblyStatus;
+  status_display: string;
+  actual_start_time: string | null;
+  actual_end_time: string | null;
+  pre_voting_enabled: boolean;
+  pre_voting_start_date: string | null;
+  pre_voting_end_date: string | null;
+  is_pre_voting_active: boolean;
+  minutes_text: string;
+  minutes_approved: boolean;
+  minutes_approved_at: string | null;
+  invitation_sent: boolean;
+  invitation_sent_at: string | null;
+  linked_announcement: number | null;
+  continued_from: string | null;
+  continued_from_title: string | null;
+  total_agenda_duration: number;
+  is_upcoming: boolean;
+  agenda_items: AgendaItem[];
+  attendees: AssemblyAttendee[];
+  stats: {
+    total_apartments_invited: number;
+    rsvp_attending: number;
+    rsvp_not_attending: number;
+    rsvp_pending: number;
+    present_count: number;
+    pre_voted_count: number;
+    agenda_items_total: number;
+    agenda_items_completed: number;
+    agenda_items_pending: number;
+    voting_items_count: number;
+  };
+  created_by: number | null;
+  created_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssemblyListItem = Pick<Assembly, 
+  'id' | 'title' | 'building' | 'building_name' | 'assembly_type' | 'assembly_type_display' |
+  'scheduled_date' | 'scheduled_time' | 'estimated_duration' | 'status' | 'status_display' |
+  'is_physical' | 'is_online' | 'location' | 'quorum_percentage' | 'quorum_achieved' | 
+  'quorum_status' | 'is_upcoming' | 'is_pre_voting_active' | 'pre_voting_enabled' |
+  'invitation_sent' | 'created_at'
+> & {
+  agenda_items_count: number;
+  attendees_count: number;
+};
+
+export type AssemblyVote = {
+  id: string;
+  agenda_item: string;
+  attendee: string;
+  attendee_name: string;
+  apartment_number: string;
+  vote: VoteChoice;
+  vote_display: string;
+  mills: number;
+  vote_source: VoteSource;
+  voted_at: string;
+  notes: string;
+};
+
+export type CreateAssemblyPayload = {
+  title: string;
+  building: number;
+  assembly_type?: AssemblyType;
+  description?: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  estimated_duration?: number;
+  is_physical?: boolean;
+  is_online?: boolean;
+  location?: string;
+  meeting_link?: string;
+  meeting_id?: string;
+  meeting_password?: string;
+  total_building_mills?: number;
+  required_quorum_percentage?: number;
+  pre_voting_enabled?: boolean;
+  pre_voting_start_date?: string;
+  pre_voting_end_date?: string;
+  agenda_items?: Array<{
+    order: number;
+    title: string;
+    description?: string;
+    item_type: AgendaItemType;
+    estimated_duration?: number;
+    presenter_name?: string;
+    voting_type?: VotingType;
+    allows_pre_voting?: boolean;
+  }>;
+};
+
+export type CreateAgendaItemPayload = {
+  assembly?: string;
+  order: number;
+  title: string;
+  description?: string;
+  item_type: AgendaItemType;
+  estimated_duration?: number;
+  presenter?: number;
+  presenter_name?: string;
+  voting_type?: VotingType;
+  allows_pre_voting?: boolean;
+  linked_project?: string;
+};
+
+// Assembly API functions
+
+export async function fetchAssemblies(buildingId?: number | null): Promise<AssemblyListItem[]> {
+  const params = buildingId ? `?building=${buildingId}` : '';
+  const response = await apiGet<Paginated<AssemblyListItem>>(`/assemblies/${params}`);
+  return normalizePaginatedResponse(response);
+}
+
+export async function fetchAssembly(assemblyId: string): Promise<Assembly> {
+  return await apiGet<Assembly>(`/assemblies/${assemblyId}/`);
+}
+
+export async function createAssembly(payload: CreateAssemblyPayload): Promise<Assembly> {
+  return await apiPost<Assembly>('/assemblies/', payload);
+}
+
+export async function updateAssembly(assemblyId: string, payload: Partial<CreateAssemblyPayload>): Promise<Assembly> {
+  return await apiPatch<Assembly>(`/assemblies/${assemblyId}/`, payload);
+}
+
+export async function deleteAssembly(assemblyId: string): Promise<void> {
+  return await apiDelete(`/assemblies/${assemblyId}/`);
+}
+
+export async function startAssembly(assemblyId: string): Promise<{ message: string; started_at: string }> {
+  return await apiPost(`/assemblies/${assemblyId}/start/`, {});
+}
+
+export async function endAssembly(assemblyId: string): Promise<{ message: string; ended_at: string }> {
+  return await apiPost(`/assemblies/${assemblyId}/end/`, {});
+}
+
+export async function adjournAssembly(
+  assemblyId: string, 
+  continuationDate?: string
+): Promise<{ message: string; continuation_assembly?: { id: string; title: string; scheduled_date: string } }> {
+  return await apiPost(`/assemblies/${assemblyId}/adjourn/`, { continuation_date: continuationDate });
+}
+
+export async function sendAssemblyInvitation(assemblyId: string): Promise<{ message: string; sent_at: string }> {
+  return await apiPost(`/assemblies/${assemblyId}/send_invitation/`, {});
+}
+
+export async function getAssemblyQuorum(assemblyId: string): Promise<{
+  total_building_mills: number;
+  required_quorum_mills: number;
+  required_quorum_percentage: number;
+  achieved_quorum_mills: number;
+  quorum_percentage: number;
+  quorum_achieved: boolean;
+  quorum_achieved_at: string | null;
+  quorum_status: string;
+  present_attendees: number;
+}> {
+  return await apiGet(`/assemblies/${assemblyId}/quorum/`);
+}
+
+export async function generateAssemblyMinutes(
+  assemblyId: string, 
+  options?: { template_id?: string; secretary_name?: string; chairman_name?: string }
+): Promise<{ message?: string; minutes_text: string; approved?: boolean }> {
+  if (options) {
+    return await apiPost(`/assemblies/${assemblyId}/generate_minutes/`, options);
+  }
+  return await apiGet(`/assemblies/${assemblyId}/generate_minutes/`);
+}
+
+export async function approveAssemblyMinutes(assemblyId: string): Promise<{ message: string; approved_at: string }> {
+  return await apiPost(`/assemblies/${assemblyId}/approve_minutes/`, {});
+}
+
+export async function getAssemblyLiveStatus(assemblyId: string): Promise<{
+  status: AssemblyStatus;
+  quorum_achieved: boolean;
+  quorum_percentage: number;
+  present_count: number;
+  current_agenda_item: AgendaItem | null;
+  completed_items: number;
+  total_items: number;
+  elapsed_time: number;
+}> {
+  return await apiGet(`/assemblies/${assemblyId}/live_status/`);
+}
+
+// Agenda Item API functions
+
+export async function fetchAgendaItems(assemblyId: string): Promise<AgendaItem[]> {
+  const response = await apiGet<Paginated<AgendaItem>>(`/agenda-items/?assembly=${assemblyId}`);
+  return normalizePaginatedResponse(response);
+}
+
+export async function createAgendaItem(assemblyId: string, payload: CreateAgendaItemPayload): Promise<AgendaItem> {
+  return await apiPost<AgendaItem>('/agenda-items/', { ...payload, assembly: assemblyId });
+}
+
+export async function updateAgendaItem(itemId: string, payload: Partial<CreateAgendaItemPayload>): Promise<AgendaItem> {
+  return await apiPatch<AgendaItem>(`/agenda-items/${itemId}/`, payload);
+}
+
+export async function deleteAgendaItem(itemId: string): Promise<void> {
+  return await apiDelete(`/agenda-items/${itemId}/`);
+}
+
+export async function startAgendaItem(itemId: string): Promise<{ message: string; started_at: string }> {
+  return await apiPost(`/agenda-items/${itemId}/start/`, {});
+}
+
+export async function endAgendaItem(
+  itemId: string, 
+  options?: { decision?: string; decision_type?: string }
+): Promise<{ message: string; ended_at: string; actual_duration: number }> {
+  return await apiPost(`/agenda-items/${itemId}/end/`, options || {});
+}
+
+export async function deferAgendaItem(itemId: string, reason?: string): Promise<{ message: string }> {
+  return await apiPost(`/agenda-items/${itemId}/defer/`, { reason });
+}
+
+export async function getAgendaItemVoteResults(itemId: string): Promise<{
+  agenda_item: { id: string; title: string; voting_type: VotingType };
+  summary: {
+    approve: { count: number; mills: number };
+    reject: { count: number; mills: number };
+    abstain: { count: number; mills: number };
+    total: { count: number; mills: number };
+  };
+  votes: AssemblyVote[];
+}> {
+  return await apiGet(`/agenda-items/${itemId}/vote_results/`);
+}
+
+// Attendee API functions
+
+export async function fetchAssemblyAttendees(assemblyId: string): Promise<AssemblyAttendee[]> {
+  const response = await apiGet<Paginated<AssemblyAttendee>>(`/assembly-attendees/?assembly=${assemblyId}`);
+  return normalizePaginatedResponse(response);
+}
+
+export async function attendeeCheckIn(
+  attendeeId: string, 
+  attendanceType: AttendanceType = 'in_person'
+): Promise<{ message: string; checked_in_at: string; assembly_quorum: { achieved_mills: number; quorum_achieved: boolean } }> {
+  return await apiPost(`/assembly-attendees/${attendeeId}/check_in/`, { attendance_type: attendanceType });
+}
+
+export async function attendeeCheckOut(attendeeId: string): Promise<{ message: string; checked_out_at: string }> {
+  return await apiPost(`/assembly-attendees/${attendeeId}/check_out/`, {});
+}
+
+export async function attendeeRSVP(
+  attendeeId: string, 
+  status: RSVPStatus, 
+  notes?: string
+): Promise<{ message: string; rsvp_status: RSVPStatus; rsvp_at: string }> {
+  return await apiPost(`/assembly-attendees/${attendeeId}/rsvp/`, { rsvp_status: status, notes });
+}
+
+export async function attendeeCastVote(
+  attendeeId: string, 
+  agendaItemId: string, 
+  vote: VoteChoice, 
+  notes?: string
+): Promise<{ message: string; vote: AssemblyVote }> {
+  return await apiPost(`/assembly-attendees/${attendeeId}/vote/`, { 
+    agenda_item_id: agendaItemId, 
+    vote, 
+    notes 
+  });
+}

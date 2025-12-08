@@ -115,6 +115,9 @@ urlpatterns = [
     # Office Finance (Income/Expense Management for the Office)
     path('api/office-finance/', include('office_finance.urls')),
 
+    # Assemblies (Γενικές Συνελεύσεις)
+    path('api/', include('assemblies.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

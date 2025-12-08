@@ -1,0 +1,880 @@
+"""
+Assembly Views
+"""
+
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django.utils import timezone
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+
+from .models import (
+    Assembly, AgendaItem, AgendaItemAttachment,
+    AssemblyAttendee, AssemblyVote, AssemblyMinutesTemplate
+)
+from .serializers import (
+    AssemblyListSerializer, AssemblyDetailSerializer, AssemblyCreateSerializer,
+    AgendaItemSerializer, AgendaItemCreateSerializer,
+    AssemblyAttendeeSerializer, AssemblyVoteSerializer,
+    AssemblyMinutesTemplateSerializer,
+    CheckInSerializer, RSVPSerializer, CastVoteSerializer,
+    StartAssemblySerializer, EndAssemblySerializer, AdjournAssemblySerializer,
+    EndAgendaItemSerializer, GenerateMinutesSerializer
+)
+from .services import AssemblyMinutesService
+
+
+class AssemblyViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση Γενικών Συνελεύσεων
+    
+    Endpoints:
+    - GET /api/assemblies/ - Λίστα συνελεύσεων
+    - POST /api/assemblies/ - Δημιουργία συνέλευσης
+    - GET /api/assemblies/{id}/ - Λεπτομέρειες συνέλευσης
+    - PUT/PATCH /api/assemblies/{id}/ - Ενημέρωση συνέλευσης
+    - DELETE /api/assemblies/{id}/ - Διαγραφή συνέλευσης
+    
+    Actions:
+    - POST /api/assemblies/{id}/start/ - Έναρξη συνέλευσης
+    - POST /api/assemblies/{id}/end/ - Λήξη συνέλευσης
+    - POST /api/assemblies/{id}/adjourn/ - Αναβολή συνέλευσης
+    - POST /api/assemblies/{id}/send_invitation/ - Αποστολή πρόσκλησης
+    - GET /api/assemblies/{id}/quorum/ - Κατάσταση απαρτίας
+    - GET /api/assemblies/{id}/generate_minutes/ - Δημιουργία πρακτικών
+    - POST /api/assemblies/{id}/approve_minutes/ - Έγκριση πρακτικών
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['building', 'status', 'assembly_type', 'scheduled_date']
+    search_fields = ['title', 'description']
+    ordering_fields = ['scheduled_date', 'created_at', 'status']
+    ordering = ['-scheduled_date']
+    
+    def get_queryset(self):
+        return Assembly.objects.filter(
+            building__id__in=self._get_user_building_ids()
+        ).select_related('building', 'created_by').prefetch_related(
+            'agenda_items', 'attendees'
+        )
+    
+    def _get_user_building_ids(self):
+        """Επιστρέφει τα building IDs που έχει πρόσβαση ο χρήστης"""
+        user = self.request.user
+        # Manager βλέπει όλα τα buildings
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            from buildings.models import Building
+            return Building.objects.values_list('id', flat=True)
+        # Residents βλέπουν μόνο τα δικά τους buildings
+        from buildings.models import BuildingMembership
+        return BuildingMembership.objects.filter(
+            resident=user
+        ).values_list('building_id', flat=True)
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return AssemblyListSerializer
+        elif self.action == 'create':
+            return AssemblyCreateSerializer
+        return AssemblyDetailSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+    
+    @action(detail=True, methods=['post'], serializer_class=StartAssemblySerializer)
+    def start(self, request, pk=None):
+        """Έναρξη συνέλευσης"""
+        assembly = self.get_object()
+        
+        if assembly.status not in ['scheduled', 'convened']:
+            return Response(
+                {'error': 'Η συνέλευση δεν μπορεί να ξεκινήσει από αυτή την κατάσταση'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        assembly.start_assembly()
+        return Response({
+            'message': 'Η συνέλευση ξεκίνησε',
+            'started_at': assembly.actual_start_time
+        })
+    
+    @action(detail=True, methods=['post'], serializer_class=EndAssemblySerializer)
+    def end(self, request, pk=None):
+        """Λήξη συνέλευσης"""
+        assembly = self.get_object()
+        
+        if assembly.status != 'in_progress':
+            return Response(
+                {'error': 'Η συνέλευση δεν είναι σε εξέλιξη'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        assembly.end_assembly()
+        return Response({
+            'message': 'Η συνέλευση ολοκληρώθηκε',
+            'ended_at': assembly.actual_end_time
+        })
+    
+    @action(detail=True, methods=['post'], serializer_class=AdjournAssemblySerializer)
+    def adjourn(self, request, pk=None):
+        """Αναβολή συνέλευσης για συνέχιση"""
+        assembly = self.get_object()
+        serializer = AdjournAssemblySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        continuation = assembly.adjourn_assembly(
+            continuation_date=serializer.validated_data.get('continuation_date')
+        )
+        
+        response_data = {
+            'message': 'Η συνέλευση αναβλήθηκε',
+            'adjourned_at': assembly.actual_end_time
+        }
+        
+        if continuation:
+            response_data['continuation_assembly'] = {
+                'id': str(continuation.id),
+                'title': continuation.title,
+                'scheduled_date': continuation.scheduled_date
+            }
+        
+        return Response(response_data)
+    
+    @action(detail=True, methods=['get'])
+    def quorum(self, request, pk=None):
+        """Κατάσταση απαρτίας"""
+        assembly = self.get_object()
+        assembly.check_quorum()
+        
+        return Response({
+            'total_building_mills': assembly.total_building_mills,
+            'required_quorum_mills': assembly.required_quorum_mills,
+            'required_quorum_percentage': float(assembly.required_quorum_percentage),
+            'achieved_quorum_mills': assembly.achieved_quorum_mills,
+            'quorum_percentage': float(assembly.quorum_percentage),
+            'quorum_achieved': assembly.quorum_achieved,
+            'quorum_achieved_at': assembly.quorum_achieved_at,
+            'quorum_status': assembly.quorum_status,
+            'present_attendees': assembly.attendees.filter(is_present=True).count()
+        })
+    
+    @action(detail=True, methods=['post'])
+    def send_invitation(self, request, pk=None):
+        """Αποστολή πρόσκλησης/ανακοίνωσης"""
+        assembly = self.get_object()
+        
+        if assembly.invitation_sent:
+            return Response(
+                {'warning': 'Η πρόσκληση έχει ήδη σταλεί'},
+                status=status.HTTP_200_OK
+            )
+        
+        # TODO: Create announcement and send notifications
+        # This will be implemented with the announcement integration
+        
+        assembly.invitation_sent = True
+        assembly.invitation_sent_at = timezone.now()
+        assembly.status = 'convened'
+        assembly.save(update_fields=['invitation_sent', 'invitation_sent_at', 'status'])
+        
+        return Response({
+            'message': 'Η πρόσκληση στάλθηκε',
+            'sent_at': assembly.invitation_sent_at
+        })
+    
+    @action(detail=True, methods=['get', 'post'], serializer_class=GenerateMinutesSerializer)
+    def generate_minutes(self, request, pk=None):
+        """Δημιουργία πρακτικών"""
+        assembly = self.get_object()
+        
+        if request.method == 'GET':
+            # Return current minutes
+            minutes_service = AssemblyMinutesService(assembly)
+            minutes_text = minutes_service.generate()
+            return Response({
+                'minutes_text': minutes_text,
+                'approved': assembly.minutes_approved
+            })
+        
+        # POST - Generate and save
+        serializer = GenerateMinutesSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        template_id = serializer.validated_data.get('template_id')
+        template = None
+        if template_id:
+            template = get_object_or_404(AssemblyMinutesTemplate, id=template_id)
+        
+        minutes_service = AssemblyMinutesService(
+            assembly,
+            template=template,
+            secretary_name=serializer.validated_data.get('secretary_name'),
+            chairman_name=serializer.validated_data.get('chairman_name')
+        )
+        minutes_text = minutes_service.generate()
+        
+        assembly.minutes_text = minutes_text
+        assembly.save(update_fields=['minutes_text'])
+        
+        return Response({
+            'message': 'Τα πρακτικά δημιουργήθηκαν',
+            'minutes_text': minutes_text
+        })
+    
+    @action(detail=True, methods=['post'])
+    def approve_minutes(self, request, pk=None):
+        """Έγκριση πρακτικών"""
+        assembly = self.get_object()
+        
+        if not assembly.minutes_text:
+            return Response(
+                {'error': 'Δεν υπάρχουν πρακτικά για έγκριση'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        assembly.minutes_approved = True
+        assembly.minutes_approved_at = timezone.now()
+        assembly.minutes_approved_by = request.user
+        assembly.save(update_fields=['minutes_approved', 'minutes_approved_at', 'minutes_approved_by'])
+        
+        return Response({
+            'message': 'Τα πρακτικά εγκρίθηκαν',
+            'approved_at': assembly.minutes_approved_at
+        })
+    
+    @action(detail=True, methods=['get'])
+    def live_status(self, request, pk=None):
+        """Live status για real-time updates κατά τη διάρκεια της συνέλευσης"""
+        assembly = self.get_object()
+        
+        current_item = assembly.agenda_items.filter(status='in_progress').first()
+        
+        return Response({
+            'status': assembly.status,
+            'quorum_achieved': assembly.quorum_achieved,
+            'quorum_percentage': float(assembly.quorum_percentage),
+            'present_count': assembly.attendees.filter(is_present=True).count(),
+            'current_agenda_item': AgendaItemSerializer(current_item).data if current_item else None,
+            'completed_items': assembly.agenda_items.filter(status='completed').count(),
+            'total_items': assembly.agenda_items.count(),
+            'elapsed_time': (timezone.now() - assembly.actual_start_time).total_seconds() / 60 if assembly.actual_start_time else 0
+        })
+
+
+class AgendaItemViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση θεμάτων ημερήσιας διάταξης
+    
+    Actions:
+    - POST /api/agenda-items/{id}/start/ - Έναρξη θέματος
+    - POST /api/agenda-items/{id}/end/ - Ολοκλήρωση θέματος
+    - POST /api/agenda-items/{id}/defer/ - Αναβολή θέματος
+    - GET /api/agenda-items/{id}/vote_results/ - Αποτελέσματα ψηφοφορίας
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['assembly', 'item_type', 'status']
+    search_fields = ['title', 'description']
+    ordering_fields = ['order', 'created_at']
+    ordering = ['order']
+    
+    def get_queryset(self):
+        return AgendaItem.objects.filter(
+            assembly__building__id__in=self._get_user_building_ids()
+        ).select_related('assembly', 'presenter', 'linked_project')
+    
+    def _get_user_building_ids(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            from buildings.models import Building
+            return Building.objects.values_list('id', flat=True)
+        from buildings.models import BuildingMembership
+        return BuildingMembership.objects.filter(
+            resident=user
+        ).values_list('building_id', flat=True)
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AgendaItemCreateSerializer
+        return AgendaItemSerializer
+    
+    @action(detail=True, methods=['post'])
+    def start(self, request, pk=None):
+        """Έναρξη συζήτησης θέματος"""
+        item = self.get_object()
+        
+        if item.status != 'pending':
+            return Response(
+                {'error': 'Το θέμα δεν μπορεί να ξεκινήσει'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Ολοκλήρωσε το προηγούμενο θέμα αν υπάρχει
+        current = item.assembly.agenda_items.filter(status='in_progress').first()
+        if current:
+            current.end_item()
+        
+        item.start_item()
+        return Response({
+            'message': f'Ξεκίνησε το θέμα: {item.title}',
+            'started_at': item.started_at
+        })
+    
+    @action(detail=True, methods=['post'], serializer_class=EndAgendaItemSerializer)
+    def end(self, request, pk=None):
+        """Ολοκλήρωση θέματος"""
+        item = self.get_object()
+        serializer = EndAgendaItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        if item.status != 'in_progress':
+            return Response(
+                {'error': 'Το θέμα δεν είναι σε εξέλιξη'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        item.end_item(
+            decision=serializer.validated_data.get('decision'),
+            decision_type=serializer.validated_data.get('decision_type')
+        )
+        
+        return Response({
+            'message': f'Ολοκληρώθηκε το θέμα: {item.title}',
+            'ended_at': item.ended_at,
+            'actual_duration': item.actual_duration
+        })
+    
+    @action(detail=True, methods=['post'])
+    def defer(self, request, pk=None):
+        """Αναβολή θέματος"""
+        item = self.get_object()
+        reason = request.data.get('reason', '')
+        
+        item.defer_item(reason)
+        return Response({
+            'message': f'Το θέμα αναβλήθηκε: {item.title}'
+        })
+    
+    @action(detail=True, methods=['get'])
+    def vote_results(self, request, pk=None):
+        """Λεπτομερή αποτελέσματα ψηφοφορίας"""
+        item = self.get_object()
+        
+        if not item.is_voting_item:
+            return Response(
+                {'error': 'Αυτό το θέμα δεν είναι ψηφοφορία'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        votes = item.assembly_votes.all().select_related('attendee', 'attendee__apartment')
+        
+        # Group by vote type
+        approve_votes = [v for v in votes if v.vote == 'approve']
+        reject_votes = [v for v in votes if v.vote == 'reject']
+        abstain_votes = [v for v in votes if v.vote == 'abstain']
+        
+        return Response({
+            'agenda_item': {
+                'id': str(item.id),
+                'title': item.title,
+                'voting_type': item.voting_type
+            },
+            'summary': {
+                'approve': {
+                    'count': len(approve_votes),
+                    'mills': sum(v.mills for v in approve_votes)
+                },
+                'reject': {
+                    'count': len(reject_votes),
+                    'mills': sum(v.mills for v in reject_votes)
+                },
+                'abstain': {
+                    'count': len(abstain_votes),
+                    'mills': sum(v.mills for v in abstain_votes)
+                },
+                'total': {
+                    'count': len(votes),
+                    'mills': sum(v.mills for v in votes)
+                }
+            },
+            'votes': AssemblyVoteSerializer(votes, many=True).data
+        })
+
+
+class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση παρόντων συνέλευσης
+    
+    Actions:
+    - POST /api/assembly-attendees/{id}/check_in/ - Check-in
+    - POST /api/assembly-attendees/{id}/check_out/ - Check-out
+    - POST /api/assembly-attendees/{id}/rsvp/ - RSVP
+    - POST /api/assembly-attendees/{id}/vote/ - Ψηφοφορία
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = AssemblyAttendeeSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['assembly', 'is_present', 'rsvp_status', 'attendance_type']
+    search_fields = ['attendee_name', 'apartment__apartment_number']
+    ordering = ['apartment__apartment_number']
+    
+    def get_queryset(self):
+        return AssemblyAttendee.objects.filter(
+            assembly__building__id__in=self._get_user_building_ids()
+        ).select_related('assembly', 'apartment', 'user')
+    
+    def _get_user_building_ids(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            from buildings.models import Building
+            return Building.objects.values_list('id', flat=True)
+        from buildings.models import BuildingMembership
+        return BuildingMembership.objects.filter(
+            resident=user
+        ).values_list('building_id', flat=True)
+    
+    @action(detail=True, methods=['post'], serializer_class=CheckInSerializer)
+    def check_in(self, request, pk=None):
+        """Check-in παρόντος"""
+        attendee = self.get_object()
+        serializer = CheckInSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        attendee.check_in(
+            attendance_type=serializer.validated_data.get('attendance_type', 'in_person')
+        )
+        
+        return Response({
+            'message': f'{attendee.display_name} checked in',
+            'checked_in_at': attendee.checked_in_at,
+            'assembly_quorum': {
+                'achieved_mills': attendee.assembly.achieved_quorum_mills,
+                'quorum_achieved': attendee.assembly.quorum_achieved
+            }
+        })
+    
+    @action(detail=True, methods=['post'])
+    def check_out(self, request, pk=None):
+        """Check-out παρόντος"""
+        attendee = self.get_object()
+        attendee.check_out()
+        
+        return Response({
+            'message': f'{attendee.display_name} checked out',
+            'checked_out_at': attendee.checked_out_at
+        })
+    
+    @action(detail=True, methods=['post'], serializer_class=RSVPSerializer)
+    def rsvp(self, request, pk=None):
+        """RSVP απάντηση"""
+        attendee = self.get_object()
+        serializer = RSVPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        attendee.rsvp(
+            status=serializer.validated_data['rsvp_status'],
+            notes=serializer.validated_data.get('notes', '')
+        )
+        
+        return Response({
+            'message': 'RSVP καταγράφηκε',
+            'rsvp_status': attendee.rsvp_status,
+            'rsvp_at': attendee.rsvp_at
+        })
+    
+    @action(detail=True, methods=['post'], serializer_class=CastVoteSerializer)
+    def vote(self, request, pk=None):
+        """Ψηφοφορία σε θέμα"""
+        attendee = self.get_object()
+        serializer = CastVoteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        agenda_item_id = request.data.get('agenda_item_id')
+        if not agenda_item_id:
+            return Response(
+                {'error': 'Απαιτείται agenda_item_id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        agenda_item = get_object_or_404(
+            AgendaItem,
+            id=agenda_item_id,
+            assembly=attendee.assembly
+        )
+        
+        if not agenda_item.is_voting_item:
+            return Response(
+                {'error': 'Αυτό το θέμα δεν είναι ψηφοφορία'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if already voted
+        existing_vote = AssemblyVote.objects.filter(
+            agenda_item=agenda_item,
+            attendee=attendee
+        ).first()
+        
+        if existing_vote:
+            return Response(
+                {'error': 'Έχετε ήδη ψηφίσει σε αυτό το θέμα'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Determine vote source
+        assembly = attendee.assembly
+        if assembly.status == 'in_progress':
+            vote_source = 'live'
+        elif assembly.is_pre_voting_active:
+            vote_source = 'pre_vote'
+            attendee.has_pre_voted = True
+            attendee.pre_voted_at = timezone.now()
+            attendee.save(update_fields=['has_pre_voted', 'pre_voted_at'])
+        else:
+            return Response(
+                {'error': 'Η ψηφοφορία δεν είναι ενεργή'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        vote = AssemblyVote.objects.create(
+            agenda_item=agenda_item,
+            attendee=attendee,
+            vote=serializer.validated_data['vote'],
+            mills=attendee.mills,
+            vote_source=vote_source,
+            notes=serializer.validated_data.get('notes', '')
+        )
+        
+        return Response({
+            'message': 'Η ψήφος καταγράφηκε',
+            'vote': AssemblyVoteSerializer(vote).data
+        })
+
+
+class AssemblyVoteViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet για προβολή ψήφων (read-only)
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = AssemblyVoteSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['agenda_item', 'vote', 'vote_source']
+    
+    def get_queryset(self):
+        return AssemblyVote.objects.filter(
+            agenda_item__assembly__building__id__in=self._get_user_building_ids()
+        ).select_related('agenda_item', 'attendee', 'attendee__apartment')
+    
+    def _get_user_building_ids(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            from buildings.models import Building
+            return Building.objects.values_list('id', flat=True)
+        from buildings.models import BuildingMembership
+        return BuildingMembership.objects.filter(
+            resident=user
+        ).values_list('building_id', flat=True)
+
+
+class AssemblyMinutesTemplateViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση templates πρακτικών
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = AssemblyMinutesTemplateSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['building', 'is_default']
+    search_fields = ['name', 'description']
+    
+    def get_queryset(self):
+        return AssemblyMinutesTemplate.objects.filter(
+            building__id__in=self._get_user_building_ids()
+        ) | AssemblyMinutesTemplate.objects.filter(building__isnull=True)
+    
+    def _get_user_building_ids(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            from buildings.models import Building
+            return Building.objects.values_list('id', flat=True)
+        from buildings.models import BuildingMembership
+        return BuildingMembership.objects.filter(
+            resident=user
+        ).values_list('building_id', flat=True)
+
+
+# ============================================================
+# Public Endpoints (No Auth Required)
+# ============================================================
+
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from datetime import timedelta
+
+
+class UpcomingAssemblyView(APIView):
+    """
+    Public endpoint για το kiosk display.
+    Επιστρέφει την επερχόμενη συνέλευση του κτιρίου.
+    """
+    
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        building_id = request.query_params.get('building_id')
+        
+        if not building_id:
+            return Response(
+                {'error': 'building_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            building_id = int(building_id)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid building_id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        today = timezone.now().date()
+        
+        # Get assembly for today or upcoming (within 7 days)
+        assembly = Assembly.objects.filter(
+            building_id=building_id,
+            status__in=['scheduled', 'convened', 'in_progress'],
+            scheduled_date__gte=today,
+            scheduled_date__lte=today + timedelta(days=7)
+        ).select_related('building').prefetch_related(
+            'agenda_items',
+            'attendees'
+        ).order_by('scheduled_date', 'scheduled_time').first()
+        
+        if not assembly:
+            return Response({'assembly': None})
+        
+        # Calculate stats
+        attendees = assembly.attendees.all()
+        total_invited = attendees.count()
+        rsvp_attending = attendees.filter(rsvp_status='attending').count()
+        rsvp_not_attending = attendees.filter(rsvp_status='not_attending').count()
+        rsvp_pending = attendees.filter(rsvp_status='pending').count()
+        pre_voted = attendees.filter(has_pre_voted=True).count()
+        
+        # Serialize agenda items
+        agenda_items = []
+        for item in assembly.agenda_items.order_by('order'):
+            agenda_items.append({
+                'id': str(item.id),
+                'order': item.order,
+                'title': item.title,
+                'item_type': item.item_type,
+                'estimated_duration': item.estimated_duration,
+            })
+        
+        response_data = {
+            'assembly': {
+                'id': str(assembly.id),
+                'title': assembly.title,
+                'scheduled_date': assembly.scheduled_date.isoformat(),
+                'scheduled_time': assembly.scheduled_time.strftime('%H:%M'),
+                'location': assembly.location,
+                'is_online': assembly.is_online,
+                'is_physical': assembly.is_physical,
+                'meeting_link': assembly.meeting_link if assembly.is_online else None,
+                'status': assembly.status,
+                'building_name': assembly.building.name if assembly.building else '',
+                'is_pre_voting_active': assembly.is_pre_voting_active,
+                'quorum_percentage': assembly.quorum_percentage,
+                'agenda_items': agenda_items,
+                'stats': {
+                    'total_apartments_invited': total_invited,
+                    'rsvp_attending': rsvp_attending,
+                    'rsvp_not_attending': rsvp_not_attending,
+                    'rsvp_pending': rsvp_pending,
+                    'pre_voted_count': pre_voted,
+                    'pre_voted_percentage': round((pre_voted / total_invited * 100) if total_invited > 0 else 0, 1),
+                }
+            }
+        }
+        
+        return Response(response_data)
+
+
+class EmailVoteView(APIView):
+    """
+    Public endpoint για ψηφοφορία μέσω email link.
+    Επαληθεύει το token και επιστρέφει τα στοιχεία ψηφοφορίας.
+    """
+    
+    permission_classes = [AllowAny]
+    
+    def get(self, request, token):
+        """Επαλήθευση token και επιστροφή στοιχείων ψηφοφορίας"""
+        from .email_service import verify_vote_token
+        
+        result = verify_vote_token(token)
+        if not result:
+            return Response(
+                {'error': 'Μη έγκυρος ή ληγμένος σύνδεσμος ψηφοφορίας'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        attendee_id, assembly_id = result
+        
+        try:
+            attendee = AssemblyAttendee.objects.select_related(
+                'assembly', 'apartment', 'user'
+            ).get(id=attendee_id, assembly_id=assembly_id)
+        except AssemblyAttendee.DoesNotExist:
+            return Response(
+                {'error': 'Δεν βρέθηκε η εγγραφή συμμετοχής'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        assembly = attendee.assembly
+        
+        # Check if pre-voting is active
+        if not assembly.is_pre_voting_active and assembly.status != 'in_progress':
+            return Response(
+                {'error': 'Η ψηφοφορία δεν είναι ενεργή αυτή τη στιγμή'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get voting items
+        voting_items = assembly.agenda_items.filter(
+            item_type='voting',
+            allows_pre_voting=True
+        ).order_by('order')
+        
+        # Get already voted items
+        voted_item_ids = set(
+            AssemblyVote.objects.filter(
+                attendee=attendee
+            ).values_list('agenda_item_id', flat=True)
+        )
+        
+        items_data = []
+        for item in voting_items:
+            items_data.append({
+                'id': str(item.id),
+                'order': item.order,
+                'title': item.title,
+                'description': item.description,
+                'voting_type': item.voting_type,
+                'has_voted': item.id in voted_item_ids,
+            })
+        
+        return Response({
+            'valid': True,
+            'assembly': {
+                'id': str(assembly.id),
+                'title': assembly.title,
+                'scheduled_date': assembly.scheduled_date.isoformat(),
+            },
+            'attendee': {
+                'id': str(attendee.id),
+                'apartment_number': attendee.apartment.number if attendee.apartment else '',
+                'mills': attendee.mills,
+            },
+            'voting_items': items_data,
+            'all_voted': len(voted_item_ids) >= len(items_data),
+        })
+    
+    def post(self, request, token):
+        """Καταχώρηση ψήφου μέσω email link"""
+        from .email_service import verify_vote_token, queue_vote_confirmation
+        
+        result = verify_vote_token(token)
+        if not result:
+            return Response(
+                {'error': 'Μη έγκυρος ή ληγμένος σύνδεσμος ψηφοφορίας'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        attendee_id, assembly_id = result
+        
+        try:
+            attendee = AssemblyAttendee.objects.select_related(
+                'assembly', 'apartment'
+            ).get(id=attendee_id, assembly_id=assembly_id)
+        except AssemblyAttendee.DoesNotExist:
+            return Response(
+                {'error': 'Δεν βρέθηκε η εγγραφή συμμετοχής'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        assembly = attendee.assembly
+        
+        # Validate request data
+        votes_data = request.data.get('votes', [])
+        if not votes_data:
+            return Response(
+                {'error': 'Δεν παρασχέθηκαν ψήφοι'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        created_votes = []
+        
+        with transaction.atomic():
+            for vote_data in votes_data:
+                agenda_item_id = vote_data.get('agenda_item_id')
+                vote_choice = vote_data.get('vote')
+                
+                if not agenda_item_id or not vote_choice:
+                    continue
+                
+                try:
+                    agenda_item = AgendaItem.objects.get(
+                        id=agenda_item_id,
+                        assembly=assembly
+                    )
+                except AgendaItem.DoesNotExist:
+                    continue
+                
+                # Check if already voted
+                if AssemblyVote.objects.filter(
+                    attendee=attendee,
+                    agenda_item=agenda_item
+                ).exists():
+                    continue
+                
+                # Create vote
+                vote = AssemblyVote.objects.create(
+                    agenda_item=agenda_item,
+                    attendee=attendee,
+                    vote=vote_choice,
+                    mills=attendee.mills,
+                    vote_source='pre_vote',
+                    notes=f'Ψήφος μέσω email link'
+                )
+                created_votes.append(vote)
+            
+            # Mark attendee as pre-voted
+            if created_votes:
+                attendee.has_pre_voted = True
+                attendee.pre_voted_at = timezone.now()
+                attendee.save(update_fields=['has_pre_voted', 'pre_voted_at'])
+        
+        # Queue confirmation email (async via Celery)
+        if created_votes:
+            queue_vote_confirmation(attendee, created_votes)
+        
+        return Response({
+            'success': True,
+            'votes_recorded': len(created_votes),
+            'message': f'Καταχωρήθηκαν {len(created_votes)} ψήφοι επιτυχώς'
+        })

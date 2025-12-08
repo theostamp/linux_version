@@ -159,9 +159,6 @@ TENANT_APPS = [
     'teams',
     'collaborators',
     
-    # 🖥️ Kiosk Widget Management
-    'kiosk',
-    
     # 🔄 AI Data Migration
     'data_migration',
     
@@ -176,6 +173,9 @@ TENANT_APPS = [
     
     # 💼 Office Finance (Income/Expense Management for the Office)
     'office_finance',
+    
+    # 📋 Assembly Management (Γενικές Συνελεύσεις)
+    'assemblies.apps.AssembliesConfig',
 ]
 
 

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Επιβεβαίωση Ψήφου</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+        }
+        
+        .email-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 16px;
+        }
+        
+        .success-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+        
+        .success-icon {
+            font-size: 24px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 1px solid #a7f3d0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .summary-card h2 {
+            color: #047857;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        
+        .summary-card p {
+            color: #059669;
+            font-size: 14px;
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #047857;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .votes-list {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+        
+        .vote-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            margin-bottom: 8px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .vote-content {
+            flex: 1;
+        }
+        
+        .vote-title {
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .vote-meta {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        
+        .vote-choice {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .vote-approve {
+            background-color: #d1fae5;
+            color: #047857;
+        }
+        
+        .vote-reject {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .vote-abstain {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .timestamp-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .timestamp-card h4 {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        
+        .timestamp-value {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #1e293b;
+            background-color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .legal-notice {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .legal-notice h4 {
+            font-size: 14px;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+        
+        .legal-notice p {
+            font-size: 13px;
+            color: #a16207;
+        }
+        
+        .cta-section {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .footer {
+            background-color: #1f2937;
+            padding: 24px 30px;
+            text-align: center;
+        }
+        
+        .footer p {
+            color: #9ca3af;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        
+        .building-name {
+            color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .summary-stats {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <!-- Header -->
+        <div class="header">
+            <h1>✅ Επιβεβαίωση Ψήφου</h1>
+            <p>{{ building.name }}</p>
+            <div class="success-badge">
+                <span class="success-icon">🗳️</span>
+                <span>Η ψήφος σας καταχωρήθηκε</span>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">
+                Αγαπητέ/ή {{ user.first_name|default:"Ιδιοκτήτη/Ένοικε" }},
+            </p>
+            
+            <!-- Summary Card -->
+            <div class="summary-card">
+                <h2>Ευχαριστούμε για τη συμμετοχή σας!</h2>
+                <p>Η ψήφος σας καταχωρήθηκε επιτυχώς για τη συνέλευση:</p>
+                <p style="font-weight: 600; color: #047857; margin-top: 8px;">
+                    {{ assembly.title }}
+                </p>
+                
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ votes|length }}</div>
+                        <div class="stat-label">Ψήφοι</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ total_mills }}</div>
+                        <div class="stat-label">Μιλέσιμα</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Votes Summary -->
+            <h3 class="section-title">📊 Αναλυτικά οι ψήφοι σας</h3>
+            <ul class="votes-list">
+                {% for vote in votes %}
+                <li class="vote-item">
+                    <div class="vote-content">
+                        <div class="vote-title">Θέμα {{ vote.item_order }}: {{ vote.item_title }}</div>
+                        <div class="vote-meta">
+                            {{ vote.mills }} μιλέσιμα • {{ vote.voted_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    <span class="vote-choice {% if vote.vote_display == 'Υπέρ' %}vote-approve{% elif vote.vote_display == 'Κατά' %}vote-reject{% else %}vote-abstain{% endif %}">
+                        {% if vote.vote_display == 'Υπέρ' %}✓{% elif vote.vote_display == 'Κατά' %}✗{% else %}○{% endif %}
+                        {{ vote.vote_display }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <!-- Timestamp -->
+            <div class="timestamp-card">
+                <h4>🕐 Χρονοσφραγίδα Καταχώρησης</h4>
+                <div class="timestamp-value">
+                    {{ voted_at|date:"Y-m-d H:i:s" }} UTC
+                </div>
+                <p style="font-size: 12px; color: #64748b; margin-top: 8px;">
+                    Διατηρήστε αυτό το email ως απόδειξη της ψήφου σας.
+                </p>
+            </div>
+            
+            <!-- Legal Notice -->
+            <div class="legal-notice">
+                <h4>⚖️ Σημαντική Ενημέρωση</h4>
+                <p>
+                    Η ψήφος σας καταχωρήθηκε ηλεκτρονικά και θα συμπεριληφθεί στα επίσημα αποτελέσματα 
+                    της Γενικής Συνέλευσης. Σε περίπτωση που παρευρεθείτε φυσικά στη συνέλευση, 
+                    θα έχετε τη δυνατότητα να αλλάξετε την ψήφο σας επί τόπου. Η τελική ψήφος που θα 
+                    καταγραφεί στα πρακτικά θα είναι η ψήφος που δόθηκε κατά τη διάρκεια της συνέλευσης.
+                </p>
+            </div>
+            
+            <!-- CTA -->
+            <div class="cta-section">
+                <a href="{{ assembly_url }}" class="cta-button">
+                    Δείτε τη Συνέλευση
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="building-name">{{ building.name }}</p>
+            <p>{{ building.address }}, {{ building.city }}</p>
+            <p style="margin-top: 12px; font-size: 11px; color: #6b7280;">
+                Αυτό το email στάλθηκε αυτόματα ως επιβεβαίωση της ψήφου σας.<br>
+                © {{ now|date:"Y" }} New Concierge. Με επιφύλαξη παντός δικαιώματος.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

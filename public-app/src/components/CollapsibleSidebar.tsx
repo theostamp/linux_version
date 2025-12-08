@@ -119,6 +119,13 @@ const navigationGroups: NavigationGroup[] = [
         tooltip: 'Δημιουργήστε και συμμετέχετε σε ψηφοφορίες για θέματα του κτιρίου',
       },
       {
+        href: '/assemblies',
+        label: 'Συνελεύσεις',
+        icon: <Users className="w-5 h-5" />,
+        roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
+        tooltip: 'Οργάνωση και διαχείριση γενικών συνελεύσεων με δομημένη ατζέντα',
+      },
+      {
         href: '/requests',
         label: 'Αιτήματα',
         icon: <ClipboardList className="w-5 h-5" />,

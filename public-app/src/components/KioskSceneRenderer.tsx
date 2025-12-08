@@ -6,6 +6,7 @@ import { useKioskData } from '@/hooks/useKioskData';
 import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
 import AmbientShowcaseScene from '@/components/kiosk/scenes/AmbientShowcaseScene';
+import AssemblyCountdownScene from '@/components/kiosk/scenes/AssemblyCountdownScene';
 import { extractAmbientBrandingFromSettings } from '@/components/kiosk/scenes/branding';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
@@ -292,6 +293,38 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
       </div>
     );
   }
+
+  // Check if this is the Assembly Countdown scene
+  if (currentScene.name === 'Συνέλευση' || currentScene.name === 'Assembly Countdown') {
+    return (
+      <div
+        className={`transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <AssemblyCountdownScene
+          data={kioskData}
+          buildingId={effectiveBuildingId}
+        />
+
+        {scenes.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform z-50">
+            <div className="flex gap-2">
+              {scenes.map((scene, index) => (
+                <div
+                  key={scene.id}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentSceneIndex ? 'w-10 bg-white' : 'w-2 bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Calculate grid dimensions from placements
   const maxRow = Math.max(...currentScene.placements.map(p => p.gridRowEnd), 8);
   const maxCol = Math.max(...currentScene.placements.map(p => p.gridColEnd), 12);

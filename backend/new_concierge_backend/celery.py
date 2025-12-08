@@ -24,10 +24,15 @@ app.conf.beat_schedule = {
         'task': 'financial.tasks.create_monthly_management_fees',
         'schedule': crontab(minute=0, hour=3, day_of_month=1),  # 1st of month at 3:00 AM
     },
-    # Daily reminder one day before general assemblies
+    # Daily reminder one day before general assemblies (legacy)
     'send-general-assembly-reminders-daily': {
         'task': 'notifications.tasks.send_general_assembly_reminders',
         'schedule': crontab(minute=0, hour=9),  # 09:00 daily
+    },
+    # Assembly email reminders - check every hour from 8-10 AM
+    'check-assembly-email-reminders': {
+        'task': 'assemblies.tasks.check_and_send_assembly_reminders',
+        'schedule': crontab(minute=0, hour='8,9,10'),  # 08:00, 09:00, 10:00 daily
     },
 }
 

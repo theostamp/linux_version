@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ header_title|default:"Η ψήφος σας μετράει" }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background-color: #f3f4f6;
+        }
+        
+        .email-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        .header {
+            {% if is_urgent %}
+            background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
+            {% elif is_gentle_reminder %}
+            background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%);
+            {% else %}
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            {% endif %}
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 16px;
+        }
+        
+        .countdown-badge {
+            display: inline-block;
+            {% if is_urgent %}
+            background-color: rgba(255, 255, 255, 0.3);
+            {% else %}
+            background-color: rgba(255, 255, 255, 0.2);
+            {% endif %}
+            color: #ffffff;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+        
+        .assembly-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .assembly-card h2 {
+            color: #0369a1;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .assembly-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .meta-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .agenda-list {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+        
+        .agenda-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+        
+        .agenda-item.voting {
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border: 1px solid #c7d2fe;
+        }
+        
+        .agenda-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+        
+        .agenda-item.voting .agenda-number {
+            background-color: #4f46e5;
+            color: #ffffff;
+        }
+        
+        .agenda-content {
+            flex: 1;
+        }
+        
+        .agenda-title {
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .agenda-meta {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        
+        .voting-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #4f46e5;
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .cta-section {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .cta-section h3 {
+            color: #6b21a8;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        
+        .cta-section p {
+            color: #7c3aed;
+            margin-bottom: 16px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .cta-button:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+        }
+        
+        .legal-notice {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .legal-notice h4 {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        
+        .legal-notice p {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .footer {
+            background-color: #1f2937;
+            padding: 24px 30px;
+            text-align: center;
+        }
+        
+        .footer p {
+            color: #9ca3af;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        
+        .building-name {
+            color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .assembly-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <!-- Header -->
+        <div class="header">
+            {% if is_urgent %}
+            <h1>🔔 {{ header_title|default:"Η ψήφος σας μετράει" }}</h1>
+            {% elif is_gentle_reminder %}
+            <h1>📋 {{ header_title|default:"Ευγενική Υπενθύμιση" }}</h1>
+            {% else %}
+            <h1>🗳️ {{ header_title|default:"Η ψήφος σας μετράει" }}</h1>
+            {% endif %}
+            <p>{{ building.name }}</p>
+            {% if is_today %}
+            <div class="countdown-badge">📍 ΣΗΜΕΡΑ!</div>
+            {% elif is_tomorrow %}
+            <div class="countdown-badge">⏰ Αύριο</div>
+            {% elif days_until > 0 %}
+            <div class="countdown-badge">📅 Σε {{ days_until }} ημέρες</div>
+            {% endif %}
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">
+                Αγαπητέ/ή {{ user.first_name|default:"Ιδιοκτήτη/Ένοικε" }},
+            </p>
+            
+            {% if greeting_extra %}
+            <p style="color: #4b5563; margin-bottom: 20px;">
+                {{ greeting_extra }}
+            </p>
+            {% endif %}
+            
+            <!-- Assembly Card -->
+            <div class="assembly-card">
+                <h2>{{ assembly.title }}</h2>
+                <div class="assembly-meta">
+                    <span class="meta-item">
+                        📅 {{ assembly.scheduled_date|date:"l, d F Y" }}
+                    </span>
+                    <span class="meta-item">
+                        🕐 {{ assembly.scheduled_time|time:"H:i" }}
+                    </span>
+                    {% if assembly.location %}
+                    <span class="meta-item">
+                        📍 {{ assembly.location }}
+                    </span>
+                    {% endif %}
+                    {% if assembly.is_online %}
+                    <span class="meta-item">
+                        💻 Διαδικτυακή συμμετοχή
+                    </span>
+                    {% endif %}
+                </div>
+                
+                {% if assembly.description %}
+                <p style="color: #475569; font-size: 14px;">{{ assembly.description }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Agenda -->
+            <h3 class="section-title">📋 Θέματα Ημερήσιας Διάταξης</h3>
+            <ul class="agenda-list">
+                {% for item in agenda_items %}
+                <li class="agenda-item {% if item.item_type == 'voting' %}voting{% endif %}">
+                    <div class="agenda-number">{{ item.order }}</div>
+                    <div class="agenda-content">
+                        <div class="agenda-title">{{ item.title }}</div>
+                        <div class="agenda-meta">
+                            {{ item.estimated_duration }} λεπτά
+                            {% if item.item_type == 'voting' %}
+                            <span class="voting-badge">🗳️ Ψηφοφορία</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <!-- Voting CTA -->
+            {% if has_pending_votes and vote_url %}
+            <div class="cta-section" {% if is_urgent %}style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);"{% endif %}>
+                {% if is_urgent %}
+                <h3 style="color: #b91c1c;">⏰ {{ cta_text|default:"Ψηφίστε Άμεσα" }}!</h3>
+                {% elif is_gentle_reminder %}
+                <h3 style="color: #0e7490;">📋 {{ cta_text|default:"Ψηφίστε Ηλεκτρονικά" }}</h3>
+                {% else %}
+                <h3>🗳️ {{ cta_text|default:"Ψηφίστε Τώρα" }}</h3>
+                {% endif %}
+                <p {% if is_urgent %}style="color: #dc2626;"{% endif %}>
+                    Έχετε {{ pending_votes|length }} θέμα{% if pending_votes|length > 1 %}τα{% endif %} προς ψήφιση.
+                    {% if voted_count > 0 %}
+                    <br>Έχετε ήδη ψηφίσει σε {{ voted_count }} από {{ total_voting_items }} θέματα.
+                    {% endif %}
+                </p>
+                <a href="{{ vote_url }}" class="cta-button" {% if is_urgent %}style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);"{% endif %}>
+                    {% if is_urgent %}🔔{% else %}🗳️{% endif %} {{ cta_text|default:"Ψηφίστε Τώρα" }}
+                </a>
+            </div>
+            {% elif total_voting_items > 0 and voted_count == total_voting_items %}
+            <div class="cta-section" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">
+                <h3 style="color: #047857;">✅ Έχετε ολοκληρώσει την ψηφοφορία!</h3>
+                <p style="color: #059669;">
+                    Ευχαριστούμε για τη συμμετοχή σας. Έχετε ψηφίσει σε όλα τα {{ total_voting_items }} θέματα.
+                </p>
+            </div>
+            {% endif %}
+            
+            <!-- Legal Notice -->
+            <div class="legal-notice">
+                <h4>📜 Νομική Σημείωση</h4>
+                <p>
+                    Η ηλεκτρονική ψήφος καταγράφεται με χρονοσφραγίδα και αντιστοιχεί στα μιλέσιμα του διαμερίσματός σας 
+                    ({{ attendee.mills }} χιλιοστά). Η ψήφος σας θα ενσωματωθεί στα επίσημα αποτελέσματα της συνέλευσης 
+                    και καταγράφεται στα πρακτικά. Σε περίπτωση φυσικής παρουσίας στη συνέλευση, θα έχετε τη δυνατότητα 
+                    να αλλάξετε την ψήφο σας.
+                </p>
+            </div>
+            
+            <!-- Additional Info -->
+            <p style="color: #6b7280; font-size: 14px;">
+                Για οποιαδήποτε απορία ή πληροφορία, μπορείτε να επικοινωνήσετε με τη διαχείριση του κτιρίου.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="building-name">{{ building.name }}</p>
+            <p>{{ building.address }}, {{ building.city }}</p>
+            <p style="margin-top: 16px;">
+                <a href="{{ assembly_url }}">Δείτε τη συνέλευση online</a>
+            </p>
+            <p style="margin-top: 12px; font-size: 11px; color: #6b7280;">
+                Αυτό το email στάλθηκε από το newconcierge.app<br>
+                © {{ now|date:"Y" }} New Concierge. Με επιφύλαξη παντός δικαιώματος.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+
