@@ -312,6 +312,8 @@ export default function CollapsibleSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // Desktop: expanded by default. Mobile: collapsed (set in effect).
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isPinned, setIsPinned] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const { user, isLoading: authIsLoading, isAuthReady } = useAuth();
   const {
@@ -357,10 +359,21 @@ export default function CollapsibleSidebar() {
     const applyResponsiveState = () => {
       const isMobile = window.innerWidth < 1024;
       setIsExpanded(!isMobile);
+      setIsPinned(!isMobile);
     };
     applyResponsiveState();
     window.addEventListener('resize', applyResponsiveState);
     return () => window.removeEventListener('resize', applyResponsiveState);
+  }, []);
+
+  // Track dark mode (class-based) to switch sidebar backplate
+  useEffect(() => {
+    const root = document.documentElement;
+    const updateMode = () => setIsDarkMode(root.classList.contains('dark'));
+    updateMode();
+    const observer = new MutationObserver(updateMode);
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
   }, []);
 
   // Determine user role
@@ -487,14 +500,21 @@ export default function CollapsibleSidebar() {
 
       {/* Desktop Sidebar - Collapsible */}
       <aside
+        onMouseEnter={() => setIsExpanded(true)}
+        onMouseLeave={() => {
+          if (!isPinned) setIsExpanded(false);
+        }}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col z-40 overflow-hidden bg-card text-card-foreground",
+          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col z-40 overflow-hidden text-card-foreground",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
           width: isExpanded ? '256px' : '80px',
           fontFamily: 'var(--font-sans)',
-          backgroundImage: 'linear-gradient(180deg, rgba(0,188,125,0.08) 0%, rgba(11,22,32,0.85) 35%, rgba(11,22,32,0.95) 100%)',
+          backgroundColor: isDarkMode ? undefined : '#f7f9fb',
+          backgroundImage: isDarkMode
+            ? 'linear-gradient(180deg, rgba(0,188,125,0.08) 0%, rgba(11,22,32,0.85) 35%, rgba(11,22,32,0.95) 100%)'
+            : undefined,
         }}
       >
         {/* Header */}
@@ -526,7 +546,10 @@ export default function CollapsibleSidebar() {
           
           {/* Expand/Collapse Toggle */}
           <button
-            onClick={() => setIsExpanded((prev) => !prev)}
+            onClick={() => {
+              setIsPinned((prev) => !prev);
+              setIsExpanded((prev) => !prev);
+            }}
             className="ml-auto p-2 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted transition"
             aria-label={isExpanded ? 'Σύμπτυξη sidebar' : 'Άνοιγμα sidebar'}
           >
