@@ -21,7 +21,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('is_staff', 'is_active')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
-    actions = ['delete_invitations_only']
+    actions = ['delete_invitations_only', 'revoke_user_access_action']
     
     def is_protected(self, obj):
         """Visual indicator για προστατευμένους users"""
@@ -486,6 +486,76 @@ class CustomUserAdmin(UserAdmin):
             )
     
     delete_invitations_only.short_description = _('🗑️ Διαγραφή μόνο προσκλήσεων (όχι χρήστη)')
+
+    def revoke_user_access_action(self, request, queryset):
+        """
+        Admin action: Πλήρης αφαίρεση πρόσβασης χρήστη
+        - Αφαιρεί BuildingMembership
+        - Αποσυνδέει από διαμερίσματα
+        - Ακυρώνει pending προσκλήσεις
+        - ΔΕΝ διαγράφει τον χρήστη
+        """
+        from .services import InvitationService
+        
+        total_results = {
+            'memberships_deleted': 0,
+            'apartments_unlinked': 0,
+            'internal_manager_removed': 0,
+            'invitations_cancelled': 0,
+            'users_processed': 0,
+            'errors': []
+        }
+        
+        for user in queryset:
+            # Προστασία για superusers
+            if user.is_superuser:
+                self.message_user(
+                    request,
+                    _('⚠️ Παράλειψη superuser: %(email)s') % {'email': user.email},
+                    messages.WARNING
+                )
+                continue
+            
+            try:
+                results = InvitationService.revoke_user_access(
+                    user_id=user.id,
+                    building_id=None,  # Αφαίρεση από όλα τα κτίρια
+                    delete_user=False,
+                    revoked_by=request.user
+                )
+                
+                total_results['memberships_deleted'] += results.get('memberships_deleted', 0)
+                total_results['apartments_unlinked'] += results.get('apartments_unlinked', 0)
+                if results.get('internal_manager_removed'):
+                    total_results['internal_manager_removed'] += 1
+                total_results['invitations_cancelled'] += results.get('invitations_cancelled', 0)
+                total_results['users_processed'] += 1
+                
+                if results.get('errors'):
+                    total_results['errors'].extend(results['errors'])
+                    
+            except Exception as e:
+                total_results['errors'].append(f"Σφάλμα για {user.email}: {str(e)}")
+        
+        # Μήνυμα αποτελέσματος
+        if total_results['users_processed'] > 0:
+            msg = _(
+                '✅ Αφαιρέθηκε η πρόσβαση για %(users)d χρήστες: '
+                '%(memberships)d memberships, %(apartments)d διαμερίσματα, '
+                '%(invitations)d προσκλήσεις ακυρώθηκαν'
+            ) % {
+                'users': total_results['users_processed'],
+                'memberships': total_results['memberships_deleted'],
+                'apartments': total_results['apartments_unlinked'],
+                'invitations': total_results['invitations_cancelled']
+            }
+            self.message_user(request, msg, messages.SUCCESS)
+        
+        if total_results['errors']:
+            for error in total_results['errors'][:5]:  # Μόνο τα πρώτα 5 errors
+                self.message_user(request, f"❌ {error}", messages.ERROR)
+    
+    revoke_user_access_action.short_description = _('🚫 Αφαίρεση πρόσβασης (membership & διαμερίσματα)')
 
 admin.site.register(CustomUser, CustomUserAdmin)
 

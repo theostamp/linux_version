@@ -916,6 +916,69 @@ def delete_invitation_view(request, pk):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def revoke_user_access_view(request):
+    """
+    POST /api/users/revoke-access/
+    Αφαίρεση πρόσβασης χρήστη από κτίριο/διαμερίσματα
+    
+    Request body:
+        - user_id: ID του χρήστη (required)
+        - building_id: ID του κτιρίου (optional, αν δεν δοθεί αφαιρείται από όλα)
+        - delete_user: Boolean - αν διαγραφεί και ο χρήστης (default: false)
+    
+    Returns:
+        - memberships_deleted: Αριθμός διαγραμμένων BuildingMemberships
+        - apartments_unlinked: Αριθμός αποσυνδεδεμένων διαμερισμάτων
+        - internal_manager_removed: Boolean - αν αφαιρέθηκε από internal_manager
+        - user_deleted: Boolean - αν διαγράφηκε ο χρήστης
+        - invitations_cancelled: Αριθμός ακυρωμένων προσκλήσεων
+    """
+    from core.permissions import IsManagerOrSuperuser
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManagerOrSuperuser().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να αφαιρούν πρόσβαση χρηστών.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    user_id = request.data.get('user_id')
+    building_id = request.data.get('building_id')
+    delete_user = request.data.get('delete_user', False)
+    
+    if not user_id:
+        return Response({
+            'error': 'Το user_id είναι υποχρεωτικό.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        results = InvitationService.revoke_user_access(
+            user_id=user_id,
+            building_id=building_id,
+            delete_user=delete_user,
+            revoked_by=request.user
+        )
+        
+        message = f"Αφαιρέθηκε η πρόσβαση: {results['memberships_deleted']} membership(s), {results['apartments_unlinked']} διαμέρισμα(τα)"
+        if results['user_deleted']:
+            message += ", ο χρήστης διαγράφηκε"
+        
+        return Response({
+            'message': message,
+            'results': results
+        }, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({
+            'error': f'Σφάλμα: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

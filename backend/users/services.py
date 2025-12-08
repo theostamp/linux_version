@@ -1231,6 +1231,148 @@ class InvitationService:
         logger.info(f"[INVITATION] Final user state: role={user.role}, is_staff={user.is_staff}, is_superuser={user.is_superuser}")
         
         return user
+    
+    @staticmethod
+    def revoke_user_access(user_id, building_id=None, delete_user=False, revoked_by=None):
+        """
+        Αφαίρεση πρόσβασης χρήστη από κτίριο/διαμερίσματα
+        
+        Αυτή η μέθοδος είναι η αντίστροφη της accept_invitation:
+        - Διαγράφει BuildingMembership
+        - Αποσυνδέει τον χρήστη από διαμερίσματα (owner_user/tenant_user = null)
+        - Αφαιρεί τον χρήστη από internal_manager αν είναι
+        - Προαιρετικά διαγράφει τον χρήστη
+        
+        Args:
+            user_id: ID του χρήστη
+            building_id: ID του κτιρίου (αν None, αφαίρεση από όλα τα κτίρια του tenant)
+            delete_user: Αν True, διαγράφει και τον χρήστη
+            revoked_by: Ο χρήστης που κάνει την αφαίρεση (για logging)
+            
+        Returns:
+            dict με τα αποτελέσματα της λειτουργίας
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        results = {
+            'memberships_deleted': 0,
+            'apartments_unlinked': 0,
+            'internal_manager_removed': False,
+            'user_deleted': False,
+            'invitations_cancelled': 0,
+            'errors': []
+        }
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValueError(f"Χρήστης με ID {user_id} δεν βρέθηκε.")
+        
+        logger.info(f"[REVOKE] Starting revoke_user_access for user: {user.email} (ID: {user_id})")
+        
+        if user.tenant:
+            from buildings.models import Building, BuildingMembership
+            from apartments.models import Apartment
+            from django_tenants.utils import schema_context
+            
+            try:
+                with schema_context(user.tenant.schema_name):
+                    # 1. Βρες τα buildings που θα επηρεαστούν
+                    if building_id:
+                        buildings = Building.objects.filter(id=building_id)
+                    else:
+                        # Όλα τα buildings που έχει membership ο χρήστης
+                        membership_building_ids = BuildingMembership.objects.filter(
+                            resident=user
+                        ).values_list('building_id', flat=True)
+                        buildings = Building.objects.filter(id__in=membership_building_ids)
+                    
+                    for building in buildings:
+                        logger.info(f"[REVOKE] Processing building: {building.name} (ID: {building.id})")
+                        
+                        # 2. Αποσύνδεση από διαμερίσματα
+                        apartments_as_owner = Apartment.objects.filter(
+                            building=building, 
+                            owner_user=user
+                        )
+                        owner_count = apartments_as_owner.count()
+                        if owner_count > 0:
+                            apartments_as_owner.update(owner_user=None)
+                            results['apartments_unlinked'] += owner_count
+                            logger.info(f"[REVOKE] Unlinked {owner_count} apartments (as owner)")
+                        
+                        apartments_as_tenant = Apartment.objects.filter(
+                            building=building, 
+                            tenant_user=user
+                        )
+                        tenant_count = apartments_as_tenant.count()
+                        if tenant_count > 0:
+                            apartments_as_tenant.update(tenant_user=None)
+                            results['apartments_unlinked'] += tenant_count
+                            logger.info(f"[REVOKE] Unlinked {tenant_count} apartments (as tenant)")
+                        
+                        # 3. Αφαίρεση από internal_manager αν είναι
+                        if building.internal_manager and building.internal_manager.id == user.id:
+                            building.internal_manager = None
+                            building.save(update_fields=['internal_manager'])
+                            results['internal_manager_removed'] = True
+                            logger.info(f"[REVOKE] Removed user as internal_manager from building {building.name}")
+                    
+                    # 4. Διαγραφή BuildingMemberships
+                    if building_id:
+                        memberships = BuildingMembership.objects.filter(
+                            resident=user, 
+                            building_id=building_id
+                        )
+                    else:
+                        memberships = BuildingMembership.objects.filter(resident=user)
+                    
+                    membership_count = memberships.count()
+                    if membership_count > 0:
+                        memberships.delete()
+                        results['memberships_deleted'] = membership_count
+                        logger.info(f"[REVOKE] Deleted {membership_count} BuildingMembership(s)")
+                        
+            except Exception as e:
+                error_msg = f"Σφάλμα κατά την αφαίρεση πρόσβασης στο tenant schema: {str(e)}"
+                results['errors'].append(error_msg)
+                logger.error(f"[REVOKE] {error_msg}", exc_info=True)
+        
+        # 5. Ακύρωση pending invitations για αυτόν τον χρήστη (στο public schema)
+        try:
+            cancelled = UserInvitation.objects.filter(
+                email=user.email, 
+                status='pending'
+            ).update(status='cancelled')
+            results['invitations_cancelled'] = cancelled
+            if cancelled > 0:
+                logger.info(f"[REVOKE] Cancelled {cancelled} pending invitation(s)")
+        except Exception as e:
+            error_msg = f"Σφάλμα κατά την ακύρωση προσκλήσεων: {str(e)}"
+            results['errors'].append(error_msg)
+            logger.error(f"[REVOKE] {error_msg}")
+        
+        # 6. Διαγραφή χρήστη (αν ζητήθηκε)
+        if delete_user:
+            try:
+                # Έλεγχος για protected users
+                if user.is_superuser:
+                    error_msg = "Δεν μπορεί να διαγραφεί superuser"
+                    results['errors'].append(error_msg)
+                    logger.warning(f"[REVOKE] {error_msg}")
+                else:
+                    user_email = user.email
+                    user.delete()
+                    results['user_deleted'] = True
+                    logger.info(f"[REVOKE] Deleted user: {user_email}")
+            except Exception as e:
+                error_msg = f"Σφάλμα κατά τη διαγραφή χρήστη: {str(e)}"
+                results['errors'].append(error_msg)
+                logger.error(f"[REVOKE] {error_msg}")
+        
+        logger.info(f"[REVOKE] Completed. Results: {results}")
+        return results
 
 
 class PasswordResetService:

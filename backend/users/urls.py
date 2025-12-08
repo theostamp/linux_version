@@ -76,6 +76,8 @@ urlpatterns = [
     path('invite', views.create_invitation_view, name='invite-user-no-slash'),
     path('accept-invitation/', views.accept_invitation_view, name='accept-invitation'),
     path('accept-invitation', views.accept_invitation_view, name='accept-invitation-no-slash'),
+    path('revoke-access/', views.revoke_user_access_view, name='revoke-user-access'),
+    path('revoke-access', views.revoke_user_access_view, name='revoke-user-access-no-slash'),
     
     # Include router URLs (MUST be last to avoid conflicts with specific paths)
     path('', include(router.urls)),
