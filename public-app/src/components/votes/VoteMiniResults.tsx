@@ -15,9 +15,9 @@ interface VoteMiniResultsProps {
 }
 
 const COLORS = {
-  ΝΑΙ: { fill: '#10b981', label: 'Ναι' },
-  ΟΧΙ: { fill: '#f43f5e', label: 'Όχι' },
-  ΛΕΥΚΟ: { fill: '#94a3b8', label: 'Λευκό' },
+  ΝΑΙ: { fill: '#00BC7D', label: 'Ναι' },       // primary teal
+  ΟΧΙ: { fill: '#e11d48', label: 'Όχι' },       // danger rose
+  ΛΕΥΚΟ: { fill: '#9aa5bf', label: 'Λευκό' },   // muted navy gray
 };
 
 export default function VoteMiniResults({

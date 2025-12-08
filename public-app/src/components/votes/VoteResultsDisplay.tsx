@@ -21,28 +21,28 @@ interface VoteResultsDisplayProps {
 
 const VOTE_COLORS = {
   ΝΑΙ: {
-    bg: 'bg-emerald-500',
-    gradient: 'from-emerald-500 to-emerald-600',
-    fill: '#10b981',
-    light: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    border: 'border-emerald-200',
+    bg: 'bg-[#00BC7D]',
+    gradient: 'from-[#00BC7D] to-[#009A6B]',
+    fill: '#00BC7D',
+    light: 'bg-[#E6FFF5]',
+    text: 'text-[#0B1225]',
+    border: 'border-[#c0ffe6]',
   },
   ΟΧΙ: {
-    bg: 'bg-rose-500',
-    gradient: 'from-rose-500 to-rose-600',
-    fill: '#f43f5e',
-    light: 'bg-rose-50',
-    text: 'text-rose-700',
-    border: 'border-rose-200',
+    bg: 'bg-[#e11d48]',
+    gradient: 'from-[#e11d48] to-[#be123c]',
+    fill: '#e11d48',
+    light: 'bg-[#ffe4e6]',
+    text: 'text-[#7f102c]',
+    border: 'border-[#fecdd3]',
   },
   ΛΕΥΚΟ: {
-    bg: 'bg-slate-400',
-    gradient: 'from-slate-400 to-slate-500',
-    fill: '#94a3b8',
-    light: 'bg-slate-50',
-    text: 'text-slate-700',
-    border: 'border-slate-200',
+    bg: 'bg-[#9aa5bf]',
+    gradient: 'from-[#9aa5bf] to-[#7884a0]',
+    fill: '#9aa5bf',
+    light: 'bg-[#f5f6f9]',
+    text: 'text-[#0B1225]',
+    border: 'border-[#d6dce8]',
   },
 };
 
@@ -212,9 +212,9 @@ export default function VoteResultsDisplay({
                   colors.border,
                   'border',
                   isWinner && 'ring-2 ring-offset-2',
-                  isWinner && choice === 'ΝΑΙ' && 'ring-emerald-400',
-                  isWinner && choice === 'ΟΧΙ' && 'ring-rose-400',
-                  isWinner && choice === 'ΛΕΥΚΟ' && 'ring-slate-400'
+                  isWinner && choice === 'ΝΑΙ' && 'ring-[#52F5BE]',
+                  isWinner && choice === 'ΟΧΙ' && 'ring-[#f9a8b1]',
+                  isWinner && choice === 'ΛΕΥΚΟ' && 'ring-[#c1c9da]'
                 )}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -244,7 +244,7 @@ export default function VoteResultsDisplay({
                 </div>
                 
                 {/* Progress bar */}
-                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-3 bg-[#d6dce8] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percent}%` }}
@@ -270,7 +270,7 @@ export default function VoteResultsDisplay({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-100"
+        className="bg-gradient-to-r from-[#f5f6f9] to-[#e8ebf2] rounded-xl p-4 border border-[#d6dce8]"
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
@@ -278,7 +278,7 @@ export default function VoteResultsDisplay({
             <p className="text-sm text-gray-500">Σύνολο ψήφων</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-emerald-600">{results.ΝΑΙ || 0}</p>
+            <p className="text-2xl font-bold text-[#00BC7D]">{results.ΝΑΙ || 0}</p>
             <p className="text-sm text-gray-500">Υπέρ (Ναι)</p>
           </div>
           <div>
@@ -286,7 +286,7 @@ export default function VoteResultsDisplay({
             <p className="text-sm text-gray-500">Κατά (Όχι)</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-600">{results.ΛΕΥΚΟ || 0}</p>
+            <p className="text-2xl font-bold text-[#3e4a68]">{results.ΛΕΥΚΟ || 0}</p>
             <p className="text-sm text-gray-500">Λευκό</p>
           </div>
         </div>

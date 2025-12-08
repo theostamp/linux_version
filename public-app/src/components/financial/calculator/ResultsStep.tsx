@@ -340,7 +340,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               font-family: 'Segoe UI', Arial, sans-serif; 
               font-size: 11pt; 
               line-height: 1.4;
-              color: #2d3748; 
+              color: #0B1225; 
               background: white;
             }
             
@@ -349,8 +349,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               text-align: center; 
               margin-bottom: 25px; 
               padding-bottom: 20px;
-              border-bottom: 3px solid #2563eb; 
-              background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+              border-bottom: 3px solid #00BC7D; 
+              background: linear-gradient(135deg, #f5f6f9 0%, #d6dce8 100%);
               padding: 20px;
               border-radius: 8px;
             }
@@ -358,7 +358,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .brand { 
               font-size: 22pt; 
               font-weight: 700; 
-              color: #2563eb; 
+              color: #00BC7D; 
               margin-bottom: 8px;
               text-transform: uppercase;
               letter-spacing: 1px;
@@ -366,7 +366,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             
             .subtitle { 
               font-size: 12pt; 
-              color: #64748b; 
+              color: #3e4a68; 
               font-style: italic;
               margin-bottom: 15px;
             }
@@ -374,7 +374,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .main-title { 
               font-size: 24pt; 
               font-weight: 700; 
-              color: #1e293b; 
+              color: #1D293D; 
               margin: 15px 0;
               text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             }
@@ -382,8 +382,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .period { 
               font-size: 16pt; 
               font-weight: 600; 
-              color: #0f172a; 
-              background: #e0e7ff;
+              color: #0B1225; 
+              background: #e6fff5;
               padding: 8px 16px;
               border-radius: 20px;
               display: inline-block;
@@ -392,13 +392,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .timestamp {
               margin-top: 12px;
               font-size: 11pt;
-              color: #475569;
+              color: #3e4a68;
               font-style: italic;
-              background: #f1f5f9;
+              background: #f5f6f9;
               padding: 6px 12px;
               border-radius: 15px;
               display: inline-block;
-              border: 1px solid #e2e8f0;
+              border: 1px solid #d6dce8;
             }
             
             /* Information Table */
@@ -416,13 +416,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             }
             
             .info-table th, .info-table td { 
-              border: 1px solid #e2e8f0; 
+              border: 1px solid #d6dce8; 
               padding: 12px 16px; 
               text-align: left; 
             }
             
             .info-table th { 
-              background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+              background: linear-gradient(135deg, #00BC7D 0%, #009A6B 100%);
               color: white; 
               font-weight: 600; 
               width: 30%;
@@ -438,11 +438,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .section-title { 
               font-size: 16pt; 
               font-weight: 700; 
-              color: #1e293b; 
+              color: #1D293D; 
               margin: 30px 0 20px 0; 
               padding: 12px 0 8px 0;
-              border-bottom: 2px solid #3b82f6; 
-              background: linear-gradient(90deg, #f1f5f9 0%, transparent 100%);
+              border-bottom: 2px solid #00BC7D; 
+              background: linear-gradient(90deg, #f5f6f9 0%, transparent 100%);
               padding-left: 15px;
             }
             
@@ -458,7 +458,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             }
             
             .analysis-table th, .analysis-table td { 
-              border: 1px solid #cbd5e1; 
+              border: 1px solid #d6dce8; 
               padding: 6px 4px; 
               text-align: center;
               vertical-align: middle;
@@ -482,43 +482,43 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             }
             
             .analysis-table tr:nth-child(even) {
-              background: #f8fafc;
+              background: #f5f6f9;
             }
             
             .analysis-table tr:hover {
-              background: #e0e7ff;
+              background: #e6fff5;
             }
             
             .totals-row { 
-              background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+              background: linear-gradient(135deg, #f5f6f9 0%, #d6dce8 100%) !important;
               font-weight: 700;
-              border-top: 2px solid #3b82f6;
+              border-top: 2px solid #00BC7D;
             }
             
             .totals-row td {
               font-weight: 600;
-              color: #1e293b;
+              color: #1D293D;
             }
             
             /* Footer */
             .footer { 
               margin-top: 30px; 
               padding-top: 20px; 
-              border-top: 2px solid #e2e8f0;
-              background: #f8fafc;
+              border-top: 2px solid #d6dce8;
+              background: #f5f6f9;
               border-radius: 8px;
               padding: 20px;
             }
             
             .footer .info-table th {
-              background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+              background: linear-gradient(135deg, #1D293D 0%, #3e4a68 100%);
             }
             
             /* Utility Classes */
             .text-left { text-align: left !important; }
             .text-right { text-align: right !important; }
             .font-bold { font-weight: 700; }
-            .text-primary { color: #2563eb; }
+            .text-primary { color: #00BC7D; }
             
             /* Print Optimizations */
             @media print {

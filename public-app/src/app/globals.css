@@ -1,49 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  /* -- Light Mode Palette (Clean Slate) -- */
+  /* Light Mode · Landing palette derived */
+  --background: 224 24% 97%;         /* #F5F6F9 */
+  --foreground: 224 54% 9%;          /* #0B1225 */
+
+  --primary: 160 100% 37%;           /* #00BC7D */
+  --primary-foreground: 224 24% 97%; /* Light on primary */
+  --primary-hover: 160 85% 33%;      /* #009A6B */
+
+  --secondary: 217 25% 32%;          /* navy companion */
+  --secondary-foreground: 224 24% 97%;
+
+  --muted: 221 25% 90%;
+  --muted-foreground: 223 30% 40%;
+
+  --accent: 161 52% 89%;             /* soft teal tint */
+  --accent-foreground: 224 54% 9%;
+
+  --border: 221 23% 81%;
+  --input: 221 23% 81%;
+  --ring: 160 100% 37%;
+
+  --destructive: 357 72% 55%;
+  --destructive-foreground: 224 24% 97%;
   
-  /* Background: Slate 50 (#F8FAFC) */
-  --background: 210 40% 98%;
-  
-  /* Foreground: Slate 900 (#0F172A) for strong text */
-  --foreground: 222 47% 11%;
+  --success: 160 100% 37%;
+  --success-foreground: 224 24% 97%;
 
-  /* Primary: Emerald 500 (#10b981) - Based on landing page */
-  --primary: 158 64% 52%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 158 64% 45%;
-
-  /* Secondary: Slate 200 (#E2E8F0) */
-  --secondary: 214 32% 91%;
-  --secondary-foreground: 222 47% 11%;
-
-  /* Muted: Slate 100 (#F1F5F9) */
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-
-  /* Accent: Emerald 100 for hover states */
-  --accent: 151 81% 96%;
-  --accent-foreground: 158 64% 52%;
-
-  /* Borders: Slate 200 */
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 158 64% 52%;
-
-  /* Semantic Colors */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  
-  /* Success: Emerald 600 - Consistent with primary */
-  --success: 158 64% 45%;
-  --success-foreground: 0 0% 100%;
-
-  /* Popovers/Cards */
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 224 54% 9%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 224 54% 9%;
 
   /* Radius */
   --radius: 0.5rem;
@@ -58,58 +46,40 @@
   --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
 }
 
-/* Dark Mode - Unified Landing Page Palette (Slate 950 + Emerald 500) */
 .dark {
-  /* -- Dark Mode Palette -- */
+  /* Dark Mode · Landing palette derived */
+  --background: 229 85% 5%;          /* #020618 */
+  --foreground: 224 24% 97%;         /* #F5F6F9 */
 
-  /* Background: Slate 950 (#020617) -> HSL 222 47% 4% */
-  --background: 222 47% 4%;
+  --primary: 160 100% 37%;           /* #00BC7D */
+  --primary-foreground: 224 24% 97%;
+  --primary-hover: 160 85% 33%;
+
+  --secondary: 217 35% 18%;          /* #1D293D */
+  --secondary-foreground: 224 24% 97%;
+
+  --muted: 222 15% 14%;
+  --muted-foreground: 220 29% 77%;
+
+  --accent: 217 30% 24%;
+  --accent-foreground: 224 24% 97%;
+
+  --border: 218 26% 22%;
+  --input: 218 26% 22%;
+  --ring: 160 100% 37%;
+
+  --card: 224 54% 9%;                /* #0B1225 */
+  --card-foreground: 224 24% 97%;
   
-  /* Foreground: Slate 50 (#F8FAFC) -> HSL 210 40% 98% */
-  --foreground: 210 40% 98%;
+  --popover: 224 54% 9%;
+  --popover-foreground: 224 24% 97%;
 
-  /* Primary: Emerald 500 (#10b981) -> HSL 158 64% 52% */
-  --primary: 158 64% 52%;
-  --primary-foreground: 222 47% 4%; /* Dark text on primary for contrast */
-  --primary-hover: 158 64% 45%;
+  --destructive: 357 72% 55%;
+  --destructive-foreground: 224 24% 97%;
 
-  /* Secondary: Slate 800 (#1E293B) -> HSL 215 28% 17% */
-  --secondary: 215 28% 17%;
-  --secondary-foreground: 210 40% 98%;
-
-  /* Muted: Slate 900 (#0F172A) -> HSL 222 47% 11% (Background of cards is muted relative to bg?) 
-     Actually, standard shadcn muted is usually lighter/different. 
-     Let's align with "Surface/Cards" logic or slightly lighter than bg.
-     Landing Page Cards are Slate 900/50.
-  */
-  --muted: 217 33% 17%; /* Slate 800ish */
-  --muted-foreground: 215 20% 65%; /* Slate 400 */
-
-  /* Accent: Slate 800 with emerald tint or just Slate 800 */
-  --accent: 215 28% 17%;
-  --accent-foreground: 210 40% 98%;
-
-  /* Borders: Slate 800 (#1E293B) -> HSL 215 28% 17% */
-  --border: 215 28% 17%;
-  --input: 215 28% 17%;
-  --ring: 158 64% 52%;
-
-  /* Cards: Slate 900 (#0F172A) -> HSL 222 47% 11% */
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
+  --success: 160 100% 37%;
+  --success-foreground: 224 24% 97%;
   
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-
-  /* Destructive */
-  --destructive: 0 62% 30%;
-  --destructive-foreground: 0 0% 98%;
-
-  /* Success: Emerald 500 */
-  --success: 158 64% 52%;
-  --success-foreground: 222 47% 4%;
-  
-  /* Shadows - stronger for dark mode */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);

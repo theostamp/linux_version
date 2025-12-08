@@ -6,36 +6,36 @@
  */
 
 // ============================================================================
-// COLORS
+// COLORS (Landing-aligned · Teal/Navy)
 // ============================================================================
 
 export const colors = {
-  // Primary Brand Colors - INDIGO (was Blue)
+  // Primary Brand Colors - TEAL (#00BC7D)
   primary: {
-    50: '#eef2ff',
-    100: '#e0e7ff',
-    200: '#c7d2fe',
-    300: '#a5b4fc',
-    400: '#818cf8',
-    500: '#6366f1',  // Main Indigo
-    600: '#4f46e5',
-    700: '#4338ca',
-    800: '#3730a3',
-    900: '#312e81',
+    50: '#e6fff5',
+    100: '#c0ffe6',
+    200: '#8effd4',
+    300: '#52f5be',
+    400: '#1fdea4',
+    500: '#00bc7d',  // Main Brand Teal
+    600: '#009a6b',
+    700: '#007f55',
+    800: '#005f40',
+    900: '#014b32',
   },
   
-  // Semantic Colors - Success - TEAL (was Green)
+  // Semantic Colors - Success (alias to brand hue)
   success: {
-    50: '#f0fdfa',
-    100: '#ccfbf1',
-    200: '#99f6e4',
-    300: '#5eead4',
-    400: '#2dd4bf',
-    500: '#14b8a6',  // Main Teal
-    600: '#0d9488',
-    700: '#0f766e',
-    800: '#115e59',
-    900: '#134e4a',
+    50: '#e6fff5',
+    100: '#c0ffe6',
+    200: '#8effd4',
+    300: '#52f5be',
+    400: '#1fdea4',
+    500: '#00bc7d',
+    600: '#009a6b',
+    700: '#007f55',
+    800: '#005f40',
+    900: '#014b32',
   },
   
   // Semantic Colors - Warning - AMBER (unchanged)
@@ -108,18 +108,18 @@ export const colors = {
     900: '#7c2d12',
   },
   
-  // Neutral/Gray Scale - SLATE (Cool Gray)
+  // Neutral/Gray Scale - Navy/Slate inspired
   gray: {
-    50: '#f8fafc',
-    100: '#f1f5f9',
-    200: '#e2e8f0',
-    300: '#cbd5e1',
-    400: '#94a3b8',
-    500: '#64748b',
-    600: '#475569',
-    700: '#334155',
-    800: '#1e293b',
-    900: '#0f172a', // The requested Slate 900
+    50: '#f5f6f9',   // landing bg
+    100: '#e8ebf2',
+    200: '#d6dce8',
+    300: '#c1c9da',
+    400: '#9aa5bf',
+    500: '#7884a0',
+    600: '#596481',
+    700: '#3e4a68',
+    800: '#1d293d',   // landing navy
+    900: '#0b1225',   // deep navy
   },
 } as const;
 

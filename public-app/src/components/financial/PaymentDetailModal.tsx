@@ -147,12 +147,12 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   const getMethodColor = (method: string) => {
     const colors: Record<string, string> = {
-      'cash': 'bg-green-100 text-green-800',
-      'bank_transfer': 'bg-blue-100 text-blue-800',
+      'cash': 'bg-[#E6FFF5] text-[#005f40]',
+      'bank_transfer': 'bg-[#d6dce8] text-[#1D293D]',
       'check': 'bg-purple-100 text-purple-800',
       'card': 'bg-orange-100 text-orange-800',
     };
-    return colors[method] || 'bg-gray-100 text-gray-800';
+    return colors[method] || 'bg-[#f5f6f9] text-[#3e4a68]';
   };
 
   const getMethodLabel = (method: string) => {
@@ -291,22 +291,22 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            color: #333;
+            color: #0B1225;
             line-height: 1.6;
           }
           .header {
             text-align: center;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid #1D293D;
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
           .header h1 {
             margin: 0;
-            color: #2563eb;
+            color: #00BC7D;
           }
           .header p {
             margin: 5px 0;
-            color: #666;
+            color: #3e4a68;
           }
           .summary {
             display: grid;
@@ -315,28 +315,28 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             margin-bottom: 30px;
           }
           .summary-card {
-            border: 1px solid #ddd;
+            border: 1px solid #d6dce8;
             padding: 15px;
             border-radius: 8px;
             text-align: center;
           }
           .summary-card h3 {
             margin: 0 0 10px 0;
-            color: #374151;
+            color: #1D293D;
             font-size: 14px;
           }
           .summary-card .value {
             font-size: 18px;
             font-weight: bold;
           }
-          .positive { color: #16a34a; }
-          .negative { color: #dc2626; }
-          .neutral { color: #374151; }
+          .positive { color: #00BC7D; }
+          .negative { color: #e11d48; }
+          .neutral { color: #1D293D; }
           .transactions {
             margin-top: 30px;
           }
           .transactions h2 {
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #d6dce8;
             padding-bottom: 10px;
             margin-bottom: 20px;
           }
@@ -347,15 +347,15 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             padding: 12px;
             border-left: 4px solid;
             margin-bottom: 10px;
-            background: #f9fafb;
+            background: #f5f6f9;
           }
           .transaction.payment {
-            border-left-color: #16a34a;
-            background: #f0fdf4;
+            border-left-color: #00BC7D;
+            background: #e6fff5;
           }
           .transaction.charge {
-            border-left-color: #dc2626;
-            background: #fef2f2;
+            border-left-color: #e11d48;
+            background: #ffe4e6;
           }
           .transaction-info {
             flex: 1;
@@ -366,14 +366,14 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           }
           .transaction-balance {
             font-size: 12px;
-            color: #666;
+            color: #3e4a68;
           }
           .footer {
             margin-top: 40px;
             text-align: center;
             font-size: 12px;
-            color: #666;
-            border-top: 1px solid #ddd;
+            color: #3e4a68;
+            border-top: 1px solid #d6dce8;
             padding-top: 20px;
           }
           @media print {
@@ -431,7 +431,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         <div class="transactions">
           <h2>${isFiltered ? 'Φιλτραρισμένο Ιστορικό Συναλλαγών' : 'Ιστορικό Συναλλαγών'}</h2>
           ${transactions.length === 0 
-            ? `<div style="text-align: center; padding: 20px; color: #666;">
+            ? `<div style="text-align: center; padding: 20px; color: #3e4a68;">
                 ${isFiltered 
                   ? `Δεν βρέθηκαν συναλλαγές για την περίοδο ${startDate ? new Date(startDate).toLocaleDateString('el-GR') : ''} ${startDate && endDate ? '-' : ''} ${endDate ? new Date(endDate).toLocaleDateString('el-GR') : ''}`
                   : 'Δεν βρέθηκαν συναλλαγές'
@@ -441,8 +441,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             <div class="transaction ${transaction.type}">
               <div class="transaction-info">
                 <div><strong>${transaction.description}</strong></div>
-                <div style="font-size: 12px; color: #666;">${formatDate(transaction.date)}</div>
-                ${transaction.method ? `<div style="font-size: 12px; color: #666;">Τρόπος: ${getMethodLabel(transaction.method)}</div>` : ''}
+                <div style="font-size: 12px; color: #3e4a68;">${formatDate(transaction.date)}</div>
+                ${transaction.method ? `<div style="font-size: 12px; color: #3e4a68;">Τρόπος: ${getMethodLabel(transaction.method)}</div>` : ''}
               </div>
               <div class="transaction-amount">
                 <div class="${transaction.type === 'payment' ? 'positive' : 'negative'}">
@@ -471,33 +471,39 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] border border-[hsl(var(--border))] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
+        <div
+          className="px-6 py-4 border-b flex items-center justify-between"
+          style={{
+            backgroundColor: 'hsl(var(--muted) / 0.25)',
+            borderColor: 'hsl(var(--border))',
+          }}
+        >
           <div className="flex items-center gap-3">
-            <User className="h-6 w-6 text-blue-600" />
+            <User className="h-6 w-6 text-[hsl(var(--primary))]" />
             <div>
               <h2 className="text-xl font-semibold">
                 Καρτέλα Ενοίκου - {payment.tenant_name || payment.owner_name}
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">
                 Διαμέρισμα {payment.apartment_number} • Ιστορικό Συναλλαγών
                 {isFiltered && (
                   <>
                     {startDate && endDate && (
-                      <span className="ml-2 text-blue-600">
+                      <span className="ml-2 text-[hsl(var(--primary))]">
                         • Περίοδος: {new Date(startDate).toLocaleDateString('el-GR')} - {new Date(endDate).toLocaleDateString('el-GR')}
                       </span>
                     )}
                     {startDate && !endDate && (
-                      <span className="ml-2 text-blue-600">
+                      <span className="ml-2 text-[hsl(var(--primary))]">
                         • Από: {new Date(startDate).toLocaleDateString('el-GR')}
                       </span>
                     )}
                     {!startDate && endDate && (
-                      <span className="ml-2 text-blue-600">
+                      <span className="ml-2 text-[hsl(var(--primary))]">
                         • Έως: {new Date(endDate).toLocaleDateString('el-GR')}
                       </span>
                     )}
@@ -523,7 +529,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             >
               {isPrinting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[hsl(var(--primary))] mr-2"></div>
                   Εκτύπωση...
                 </>
               ) : (
@@ -550,7 +556,13 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
         {/* Date Range Controls */}
         {showDateRange && (
-          <div className="bg-gray-50 px-6 py-4 border-b">
+          <div
+            className="px-6 py-4 border-b"
+            style={{
+              backgroundColor: 'hsl(var(--muted) / 0.2)',
+              borderColor: 'hsl(var(--border))',
+            }}
+          >
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Label htmlFor="startDate" className="text-sm font-medium">Από:</Label>
@@ -598,7 +610,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4 text-blue-600" />
+                  <Home className="h-4 w-4 text-[hsl(var(--primary))]" />
                   <span className="text-sm font-medium">Διαμέρισμα</span>
                 </div>
                 <p className="text-lg font-semibold">{payment.apartment_number}</p>
@@ -623,18 +635,18 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <Euro className="h-4 w-4 text-green-600" />
+                  <Euro className="h-4 w-4 text-[hsl(var(--primary))]" />
                   <span className="text-sm font-medium">Ποσό Εισπράξεως</span>
                 </div>
-                <p className="text-lg font-semibold text-green-600">
+                <p className="text-lg font-semibold text-[hsl(var(--primary))]">
                   {formatCurrency(payment.amount)}
                 </p>
                 {payment.reserve_fund_amount && payment.reserve_fund_amount > 0 && (
-                  <p className="text-xs text-blue-600">
+                  <p className="text-xs text-[hsl(var(--primary))]">
                     Αποθεματικό: {formatCurrency(payment.reserve_fund_amount)}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
                   Συνολικό ποσό που εισπράχθηκε
                 </p>
               </CardContent>
@@ -680,14 +692,14 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             <CardContent>
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--primary))]"></div>
                 </div>
               ) : error ? (
                 <div className="text-center py-8 text-red-600">
                   {error}
                 </div>
               ) : transactions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-[hsl(var(--muted-foreground))]">
                   {isFiltered 
                     ? `Δεν βρέθηκαν συναλλαγές για την περίοδο ${startDate ? new Date(startDate).toLocaleDateString('el-GR') : ''} ${startDate && endDate ? '-' : ''} ${endDate ? new Date(endDate).toLocaleDateString('el-GR') : ''}`
                     : 'Δεν βρέθηκαν συναλλαγές'
@@ -700,7 +712,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                       key={`${transaction.id}-${index}`}
                       className={`p-4 rounded-lg border-l-4 ${
                         transaction.type === 'payment' 
-                          ? 'border-l-green-500 bg-green-50' 
+                          ? 'border-l-[hsl(var(--success))] bg-[#E6FFF5]' 
                           : 'border-l-red-500 bg-red-50'
                       }`}
                     >
@@ -747,7 +759,13 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t flex justify-between">
+        <div
+          className="px-6 py-4 border-t flex justify-between"
+          style={{
+            backgroundColor: 'hsl(var(--muted) / 0.2)',
+            borderColor: 'hsl(var(--border))',
+          }}
+        >
           <Button 
             variant="outline" 
             onClick={handlePrint}
@@ -755,7 +773,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           >
             {isPrinting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[hsl(var(--primary))] mr-2"></div>
                 Εκτύπωση...
               </>
             ) : (
@@ -799,33 +817,39 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
             {/* Content */}
             <div className="mb-6">
-              <p className="text-gray-700 mb-4">
+              <p className="text-[hsl(var(--card-foreground))] mb-4">
                 Είστε σίγουροι ότι θέλετε να διαγράψετε την εισπραξή;
               </p>
               
               {/* Payment Details */}
-              <div className="bg-gray-50 rounded-lg p-3 border">
+              <div
+                className="rounded-lg p-3 border"
+                style={{
+                  backgroundColor: 'hsl(var(--muted) / 0.2)',
+                  borderColor: 'hsl(var(--border))',
+                }}
+              >
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-600">Διαμέρισμα:</span>
-                    <p className="font-medium text-blue-600">
+                    <span className="text-[hsl(var(--muted-foreground))]">Διαμέρισμα:</span>
+                    <p className="font-medium text-[hsl(var(--primary))]">
                       {payment.apartment_number || `Διαμέρισμα ${payment.apartment}`}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Ποσό:</span>
-                    <p className="font-medium text-green-600">
+                    <span className="text-[hsl(var(--muted-foreground))]">Ποσό:</span>
+                    <p className="font-medium text-[hsl(var(--primary))]">
                       {formatCurrency(typeof payment.amount === 'string' ? parseFloat(payment.amount) : Number(payment.amount))}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Ημερομηνία:</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">Ημερομηνία:</span>
                     <p className="font-medium">
                       {formatDate(payment.date)}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Ενοίκος:</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">Ενοίκος:</span>
                     <p className="font-medium">
                       {payment.tenant_name || payment.owner_name || 'Μη καταχωρημένος'}
                     </p>
