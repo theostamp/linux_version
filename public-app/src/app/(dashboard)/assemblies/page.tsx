@@ -204,16 +204,6 @@ function AssembliesPageContent() {
     refetch
   } = useAssemblies(buildingId);
 
-  // Debug logging
-  console.log('[AssembliesPage] Query state:', { 
-    buildingId, 
-    isLoading, 
-    isError, 
-    isSuccess, 
-    error: error?.message,
-    assembliesCount: assemblies.length 
-  });
-
   // Separate by status
   const upcomingAssemblies = assemblies.filter(a => 
     ['scheduled', 'convened', 'in_progress'].includes(a.status)
