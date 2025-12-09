@@ -59,6 +59,9 @@ export function useAssemblies(
     queryFn: () => fetchAssemblies(buildingId),
     enabled,
     staleTime: 1000 * 60, // 1 minute
+    gcTime: 1000 * 60 * 5, // 5 minutes garbage collection
+    refetchOnWindowFocus: false, // Disable refetch on window focus to reduce API calls
+    retry: 2, // Retry failed requests twice
     ...options,
   });
 }
