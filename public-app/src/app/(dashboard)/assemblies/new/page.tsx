@@ -15,8 +15,6 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useCreateAssembly } from '@/hooks/useAssemblies';
 import type { CreateAssemblyPayload, AgendaItemType, VotingType } from '@/lib/api';
 
-import AuthGate from '@/components/AuthGate';
-import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -632,13 +630,5 @@ function CreateAssemblyContent() {
   );
 }
 
-export default function CreateAssemblyPage() {
-  return (
-    <AuthGate role="any">
-      <SubscriptionGate requiredStatus="any">
-        <CreateAssemblyContent />
-      </SubscriptionGate>
-    </AuthGate>
-  );
-}
+export default CreateAssemblyContent;
 
