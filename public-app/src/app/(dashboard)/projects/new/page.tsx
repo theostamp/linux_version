@@ -13,8 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
+import CreateAssemblyModal, { type ProjectDataForAssembly } from '@/components/assemblies/CreateAssemblyModal';
 import { BackButton } from '@/components/ui/BackButton';
-import { Save, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Plus, Settings as SettingsIcon, Users, ExternalLink } from 'lucide-react';
 
 const SUGGESTED_PROJECTS = [
   { title: 'Στεγανοποίηση Ταράτσας', description: 'Πλήρης στεγανοποίηση ταράτσας με ασφαλτόπανο και τσιμεντοκονίαμα', priority: 'high' },
@@ -68,7 +69,9 @@ export default function NewProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'new' | 'suggested'>('new');
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
+  const [isAssemblyModalOpen, setIsAssemblyModalOpen] = useState(false);
   const [createGeneralAssembly, setCreateGeneralAssembly] = useState(false);
+  const [linkedAssemblyId, setLinkedAssemblyId] = useState<number | null>(null);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -160,6 +163,8 @@ export default function NewProjectPage() {
         assembly_zoom_auto_record: createGeneralAssembly ? formData.assembly_zoom_settings.autoRecord : false,
         assembly_zoom_notes: createGeneralAssembly ? formData.assembly_zoom_settings.notes || null : null,
         payment_terms: formData.payment_terms || null,
+        // Link to Assembly system
+        linked_assembly: linkedAssemblyId,
       };
 
       const response = await api.post('/projects/', payload);
@@ -308,78 +313,72 @@ export default function NewProjectPage() {
               />
             </div>
 
-            <Card className="border-2 border-primary/30 bg-primary/5 shadow-sm">
+            <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-sm">
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-lg font-bold text-blue-900">Γενική Συνέλευση (προαιρετική)</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Ενεργοποιήστε μόνο αν θέλετε να δημιουργηθεί συνέλευση μαζί με το έργο
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <Label className="text-lg font-bold text-indigo-900">Γενική Συνέλευση</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Δημιουργία πλήρους συνέλευσης με ημερήσια διάταξη και ψηφοφορία
+                      </p>
+                    </div>
                   </div>
                   <Switch checked={createGeneralAssembly} onCheckedChange={setCreateGeneralAssembly} />
                 </div>
 
                 {createGeneralAssembly && (
-                  <div className="space-y-6 pt-4 border-t border-blue-200">
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="general_assembly_date">Ημερομηνία</Label>
-                        <Input
-                          id="general_assembly_date"
-                          type="date"
-                          value={formData.general_assembly_date}
-                          onChange={(e) => handleInputChange('general_assembly_date', e.target.value)}
-                        />
+                  <div className="space-y-4 pt-4 border-t border-indigo-200">
+                    {linkedAssemblyId ? (
+                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                            <Users className="w-4 h-4 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-green-800">Συνέλευση δημιουργήθηκε!</p>
+                            <p className="text-sm text-gray-500">ID: {linkedAssemblyId}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/assemblies/${linkedAssemblyId}`, '_blank')}
+                          >
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Προβολή
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsAssemblyModalOpen(true)}
+                          >
+                            Αλλαγή
+                          </Button>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="assembly_time">Ώρα</Label>
-                        <Input
-                          id="assembly_time"
-                          type="time"
-                          value={formData.assembly_time}
-                          onChange={(e) => handleInputChange('assembly_time', e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="assembly_location">Τοποθεσία</Label>
-                      <Input
-                        id="assembly_location"
-                        placeholder="π.χ. Γραφείο διαχείρισης"
-                        value={formData.assembly_location}
-                        onChange={(e) => handleInputChange('assembly_location', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          id="assembly_is_online"
-                          type="checkbox"
-                          className="h-4 w-4"
-                          checked={formData.assembly_is_online}
-                          onChange={(e) => handleInputChange('assembly_is_online', e.target.checked)}
-                        />
-                        <Label htmlFor="assembly_is_online" className="cursor-pointer">
-                          Διαδικτυακά (Zoom)
-                        </Label>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <input
-                          id="assembly_is_physical"
-                          type="checkbox"
-                          className="h-4 w-4"
-                          checked={formData.assembly_is_physical}
-                          onChange={(e) => handleInputChange('assembly_is_physical', e.target.checked)}
-                        />
-                        <Label htmlFor="assembly_is_physical" className="cursor-pointer">
-                          Δια ζώσης
-                        </Label>
-                      </div>
-                    </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-20 border-2 border-dashed border-indigo-300 hover:border-indigo-500 hover:bg-indigo-100/50"
+                        onClick={() => setIsAssemblyModalOpen(true)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Plus className="w-5 h-5 text-indigo-600" />
+                          <div className="text-left">
+                            <p className="font-medium text-indigo-700">Ρύθμιση Συνέλευσης</p>
+                            <p className="text-sm text-gray-500">Κλικ για δημιουργία ημερήσιας διάταξης & ψηφοφορίας</p>
+                          </div>
+                        </div>
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -484,6 +483,26 @@ export default function NewProjectPage() {
         onClose={() => setIsZoomModalOpen(false)}
         onSave={handleZoomSettingsSave}
         initialSettings={formData.assembly_zoom_settings}
+      />
+
+      <CreateAssemblyModal
+        isOpen={isAssemblyModalOpen}
+        onClose={() => setIsAssemblyModalOpen(false)}
+        onSuccess={(assemblyId) => {
+          setLinkedAssemblyId(assemblyId);
+          toast({
+            title: 'Συνέλευση δημιουργήθηκε',
+            description: 'Η συνέλευση θα συνδεθεί με το έργο μετά την αποθήκευση',
+          });
+        }}
+        projectData={{
+          title: formData.title,
+          description: formData.description,
+          estimatedCost: formData.estimated_cost,
+          buildingId: buildingId || undefined,
+          proposedDate: formData.general_assembly_date,
+          proposedTime: formData.assembly_time,
+        }}
       />
     </div>
   );

@@ -126,6 +126,16 @@ class Project(models.Model):
         verbose_name="Συνδεδεμένη Δαπάνη"
     )
     
+    # Σύνδεση με Assembly system
+    linked_assembly = models.ForeignKey(
+        'assemblies.Assembly',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_projects',
+        verbose_name="Συνδεδεμένη Συνέλευση"
+    )
+    
     class Meta:
         verbose_name = "Έργο"
         verbose_name_plural = "Έργα"

@@ -207,7 +207,57 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
 
-            {(project.assembly_is_online || project.assembly_is_physical) && (
+            {/* Linked Assembly from Assembly System */}
+            {project.linked_assembly_data && (
+              <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-indigo-900">
+                    <Users className="w-5 h-5" />
+                    Συνδεδεμένη Συνέλευση
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{project.linked_assembly_data.title}</span>
+                    <Badge className={
+                      project.linked_assembly_data.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      project.linked_assembly_data.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-700'
+                    }>
+                      {project.linked_assembly_data.status_display || project.linked_assembly_data.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">{formatDate(project.linked_assembly_data.scheduled_date)}</span>
+                    {project.linked_assembly_data.scheduled_time && (
+                      <>
+                        <Clock className="w-4 h-4 text-gray-500 ml-2" />
+                        <span className="text-sm">{project.linked_assembly_data.scheduled_time}</span>
+                      </>
+                    )}
+                  </div>
+                  {project.linked_assembly_data.pre_voting_enabled && (
+                    <div className="flex items-center gap-2 text-indigo-600">
+                      <span className="text-xs px-2 py-1 bg-indigo-100 rounded-full">
+                        🗳️ Ηλεκτρονική Ψηφοφορία Ενεργή
+                      </span>
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={() => router.push(`/assemblies/${project.linked_assembly_data.id}`)}
+                  >
+                    Προβολή Συνέλευσης
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Legacy assembly info (if no linked assembly) */}
+            {!project.linked_assembly_data && (project.assembly_is_online || project.assembly_is_physical) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

@@ -2,6 +2,18 @@ from rest_framework import serializers
 from .models import Project, Offer, OfferFile, ProjectVote, ProjectExpense
 
 
+class LinkedAssemblySerializer(serializers.Serializer):
+    """Simplified serializer for linked assembly in Project"""
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    scheduled_date = serializers.DateField(read_only=True)
+    scheduled_time = serializers.TimeField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    pre_voting_enabled = serializers.BooleanField(read_only=True)
+    quorum_achieved = serializers.BooleanField(read_only=True)
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     offers_count = serializers.SerializerMethodField()
     votes_count = serializers.SerializerMethodField()
@@ -12,6 +24,9 @@ class ProjectSerializer(serializers.ModelSerializer):
     payment_fields_locked = serializers.BooleanField(read_only=True)
     payment_lock_reason = serializers.SerializerMethodField()
     expenses_count = serializers.SerializerMethodField()
+    
+    # Linked Assembly (nested for read, id for write)
+    linked_assembly_data = LinkedAssemblySerializer(source='linked_assembly', read_only=True)
 
     class Meta:
         model = Project
@@ -26,11 +41,11 @@ class ProjectSerializer(serializers.ModelSerializer):
             'selected_contractor', 'final_cost', 'payment_terms',
             'payment_method', 'installments', 'advance_payment',
             'created_by', 'created_by_name', 'offers_count', 'votes_count',
-            'linked_expense',
+            'linked_expense', 'linked_assembly', 'linked_assembly_data',
             # New lock fields
             'payment_fields_locked', 'payment_lock_reason', 'expenses_count',
         ]
-        read_only_fields = ['created_at', 'updated_at', 'offers_count', 'votes_count', 'payment_fields_locked', 'payment_lock_reason', 'expenses_count']
+        read_only_fields = ['created_at', 'updated_at', 'offers_count', 'votes_count', 'payment_fields_locked', 'payment_lock_reason', 'expenses_count', 'linked_assembly_data']
 
     def get_offers_count(self, obj):
         return obj.offers.count()
