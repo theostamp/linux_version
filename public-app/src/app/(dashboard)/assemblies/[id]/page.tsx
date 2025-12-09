@@ -20,6 +20,8 @@ import {
 } from '@/hooks/useAssemblies';
 import type { Assembly, AssemblyStatus } from '@/lib/api';
 
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -535,5 +537,13 @@ function AssemblyDetailContent() {
   );
 }
 
-export default AssemblyDetailContent;
+export default function AssemblyDetailPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <AssemblyDetailContent />
+      </SubscriptionGate>
+    </AuthGate>
+  );
+}
 

@@ -15,6 +15,8 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useAssemblies, useDeleteAssembly } from '@/hooks/useAssemblies';
 import type { AssemblyListItem, AssemblyStatus } from '@/lib/api';
 
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -396,5 +398,13 @@ function AssembliesPageContent() {
   );
 }
 
-export default AssembliesPageContent;
+export default function AssembliesPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <AssembliesPageContent />
+      </SubscriptionGate>
+    </AuthGate>
+  );
+}
 

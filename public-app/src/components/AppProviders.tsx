@@ -46,7 +46,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // All routes from the (dashboard) directory should use auth
   // Check if the pathname starts with any of the dashboard routes
   const dashboardRoutes = [
-    '/dashboard', '/office-dashboard', '/announcements', '/votes', '/requests', '/buildings', '/apartments', '/notifications',
+    '/dashboard', '/office-dashboard', '/announcements', '/votes', '/requests', '/buildings', '/apartments', '/notifications', '/assemblies',
     '/map-visualization', '/residents', '/maintenance', '/collaborators', '/documents',
     '/kiosk-widgets', '/kiosk-management', '/financial', '/office-finance', '/projects', '/teams', '/admin', '/calendar',
     '/chat', '/data-migration', '/suppliers', '/system-health',
