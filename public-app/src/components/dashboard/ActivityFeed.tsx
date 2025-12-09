@@ -51,9 +51,9 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
   
   const getActivityIcon = (type: string, isUrgent: boolean) => {
     if (type === 'announcement') {
-      return <Bell className={`w-4 h-4 ${isUrgent ? 'text-red-600' : 'text-blue-600'}`} />;
+      return <Bell className={`w-4 h-4 ${isUrgent ? 'text-destructive' : 'text-blue-500'}`} />;
     } else if (type === 'vote') {
-      return <CheckCircle className={`w-4 h-4 ${isUrgent ? 'text-red-600' : 'text-green-600'}`} />;
+      return <CheckCircle className={`w-4 h-4 ${isUrgent ? 'text-destructive' : 'text-emerald-500'}`} />;
     }
     return <Clock className="w-4 h-4 text-muted-foreground" />;
   };
@@ -78,11 +78,11 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.slice(0, 5).map((activity, index) => (
-              <div
-                key={`${activity.type}-${activity.id}-${index}`}
-                onClick={() => handleActivityClick(activity)}
-                className="flex items-start gap-3 p-3 rounded-none hover:bg-muted cursor-pointer transition-colors group"
-              >
+            <div
+              key={`${activity.type}-${activity.id}-${index}`}
+              onClick={() => handleActivityClick(activity)}
+              className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors group"
+            >
                 <div className="flex-shrink-0 mt-0.5">
                   {getActivityIcon(activity.type, activity.is_urgent)}
                 </div>

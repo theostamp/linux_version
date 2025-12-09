@@ -34,9 +34,9 @@ const formatCurrency = (value: number) => {
 
 const getDaysOverdueLabel = (days: number) => {
   if (days <= 0) return null;
-  if (days <= 30) return { label: `${days} ημέρες`, className: 'bg-amber-50 text-amber-700' };
-  if (days <= 60) return { label: `${days} ημέρες`, className: 'bg-orange-50 text-orange-700' };
-  return { label: `${days} ημέρες`, className: 'bg-red-50 text-red-700' };
+  if (days <= 30) return { label: `${days} ημέρες`, className: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' };
+  if (days <= 60) return { label: `${days} ημέρες`, className: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400' };
+  return { label: `${days} ημέρες`, className: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400' };
 };
 
 export function TopDebtorsCard({ 
@@ -78,8 +78,8 @@ export function TopDebtorsCard({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-emerald-600" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p className="text-muted-foreground">Δεν υπάρχουν οφειλέτες!</p>
             <p className="text-sm text-muted-foreground">Όλα τα διαμερίσματα είναι ενήμερα.</p>
@@ -102,10 +102,10 @@ export function TopDebtorsCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             Μεγαλύτεροι Οφειλέτες
           </CardTitle>
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
             Σύνολο: {formatCurrency(totalDebt)}
           </Badge>
         </div>
@@ -118,15 +118,15 @@ export function TopDebtorsCard({
             return (
               <div 
                 key={debtor.apartment_id}
-                className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
+                className="flex items-center justify-between p-4 rounded-xl border border-border hover:border-border/80 hover:bg-muted/50 transition-all"
               >
                 <div className="flex items-center gap-4">
                   {/* Ranking */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    index === 0 ? 'bg-red-100 text-red-700' :
-                    index === 1 ? 'bg-orange-100 text-orange-700' :
-                    index === 2 ? 'bg-amber-100 text-amber-700' :
-                    'bg-slate-100 text-slate-600'
+                    index === 0 ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' :
+                    index === 1 ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300' :
+                    index === 2 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' :
+                    'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300'
                   }`}>
                     {index + 1}
                   </div>
@@ -157,7 +157,7 @@ export function TopDebtorsCard({
 
                 {/* Amount and Action */}
                 <div className="flex items-center gap-4">
-                  <span className="text-lg font-bold text-red-600">
+                  <span className="text-lg font-bold text-red-600 dark:text-red-400">
                     {formatCurrency(debtor.balance)}
                   </span>
                   <Button

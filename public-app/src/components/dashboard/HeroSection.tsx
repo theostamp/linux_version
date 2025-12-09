@@ -35,7 +35,7 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
       )}
       
       {/* Key Metrics Grid */}
-      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[radial-gradient(circle_at_20%_20%,rgba(0,188,125,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(29,41,61,0.18),transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.02),rgba(0,0,0,0.2))] p-4 md:p-6">
+      <div className="rounded-2xl border border-border bg-card/50 p-4 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricsCard
             title="Κτίρια"

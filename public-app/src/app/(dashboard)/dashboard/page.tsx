@@ -61,19 +61,19 @@ const differenceInDays = (value?: string | null) => {
 };
 
 const REQUEST_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Σε εκκρεμότητα', className: 'bg-amber-100 text-amber-700 border-amber-200' },
-  in_progress: { label: 'Σε εξέλιξη', className: 'bg-blue-100 text-blue-700 border-blue-200' },
-  approved: { label: 'Εγκεκριμένο', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  scheduled: { label: 'Προγραμματισμένο', className: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  pending: { label: 'Σε εκκρεμότητα', className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' },
+  in_progress: { label: 'Σε εξέλιξη', className: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' },
+  approved: { label: 'Εγκεκριμένο', className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' },
+  scheduled: { label: 'Προγραμματισμένο', className: 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20' },
 };
 
 const getRequestStatusToken = (status?: string) => {
   if (!status) {
-    return { label: 'Άγνωστη', className: 'bg-slate-100 text-slate-600 border-slate-200' };
+    return { label: 'Άγνωστη', className: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20' };
   }
   return REQUEST_STATUS_CONFIG[status] ?? {
     label: status.replace(/_/g, ' '),
-    className: 'bg-slate-100 text-slate-600 border-slate-200',
+    className: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
   };
 };
 
@@ -275,11 +275,10 @@ function DashboardContent() {
                       <Link
                         key={vote.id}
                         href={`/votes/${vote.id}`}
-                        className="block rounded-xl border border-[hsl(var(--border))/60] bg-[hsl(var(--card))] px-4 py-3 transition-colors hover:bg-[hsl(var(--muted)/0.4)]"
+                        className="block rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/40"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full"
-                               style={{ backgroundColor: '#00BC7D1f', color: '#00BC7D' }}>
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <VoteIcon className="h-4 w-4" />
                           </div>
                           <div className="flex-1 space-y-1">
@@ -292,14 +291,13 @@ function DashboardContent() {
                                 {formatDateRange(vote.start_date, vote.end_date)}
                               </span>
                               {typeof daysLeft === 'number' && daysLeft >= 0 && (
-                                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                                      style={{ backgroundColor: '#00BC7D1f', color: '#00BC7D' }}>
+                                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-primary/10 text-primary">
                                   <Clock className="h-3 w-3" />
                                   {daysLeft === 0 ? 'Λήγει σήμερα' : `Σε ${daysLeft} ${daysLeft === 1 ? 'ημέρα' : 'ημέρες'}`}
                                 </span>
                               )}
                               {!selectedBuilding && vote.building_name && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--border))/50] bg-[hsl(var(--card))] px-2 py-0.5">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
                                   🏢 {vote.building_name}
                                 </span>
                               )}
@@ -351,7 +349,7 @@ function DashboardContent() {
                         className="rounded-xl border border-border/40 bg-background px-4 py-3"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
                             <MessageSquare className="h-4 w-4" />
                           </div>
                           <div className="flex-1 space-y-1">

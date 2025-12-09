@@ -24,26 +24,26 @@ const getAlertConfig = (type: string) => {
     case 'critical':
       return {
         icon: AlertTriangle,
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
-        iconColor: 'text-red-600',
-        textColor: 'text-red-800',
+        bgColor: 'bg-red-50 dark:bg-red-500/10',
+        borderColor: 'border-red-200 dark:border-red-500/20',
+        iconColor: 'text-red-600 dark:text-red-400',
+        textColor: 'text-red-800 dark:text-red-200',
       };
     case 'warning':
       return {
         icon: AlertCircle,
-        bgColor: 'bg-amber-50',
-        borderColor: 'border-amber-200',
-        iconColor: 'text-amber-600',
-        textColor: 'text-amber-800',
+        bgColor: 'bg-amber-50 dark:bg-amber-500/10',
+        borderColor: 'border-amber-200 dark:border-amber-500/20',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        textColor: 'text-amber-800 dark:text-amber-200',
       };
     default:
       return {
         icon: Info,
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
-        iconColor: 'text-blue-600',
-        textColor: 'text-blue-800',
+        bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+        borderColor: 'border-blue-200 dark:border-blue-500/20',
+        iconColor: 'text-blue-600 dark:text-blue-400',
+        textColor: 'text-blue-800 dark:text-blue-200',
       };
   }
 };
@@ -82,8 +82,8 @@ export function AlertsPanel({ data, loading = false }: AlertsPanelProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
-              <Bell className="w-8 h-8 text-emerald-600" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+              <Bell className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p className="text-muted-foreground">Όλα καλά!</p>
             <p className="text-sm text-muted-foreground">Δεν υπάρχουν ειδοποιήσεις.</p>

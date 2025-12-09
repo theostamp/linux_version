@@ -177,7 +177,7 @@ function AssemblyCard({
             assembly.quorum_status === 'close' ? 'text-amber-600' : 'text-gray-400'
         )}>
           <Percent className="w-4 h-4" />
-          <span>{assembly.quorum_percentage.toFixed(0)}%</span>
+          <span>{(Number(assembly.quorum_percentage) || 0).toFixed(0)}%</span>
           {assembly.quorum_achieved && <CheckCircle className="w-4 h-4" />}
         </div>
       </div>

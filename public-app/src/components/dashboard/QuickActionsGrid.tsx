@@ -29,7 +29,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
       key: 'announcements',
       label: 'Ανακοινώσεις',
       icon: <Bell className="w-5 h-5" />,
-      accent: '#00BC7D',
+      accent: 'hsl(var(--primary))',
       link: '/announcements',
       count: data?.announcements_count || 0,
       description: `${data?.announcements_count || 0} ενεργές`,
@@ -38,7 +38,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
       key: 'votes',
       label: 'Ψηφοφορίες',
       icon: <CheckCircle className="w-5 h-5" />,
-      accent: '#8b5cf6',
+      accent: '#8b5cf6', // Purple - consider moving to variable if used widely
       link: '/votes',
       count: data?.votes_count || 0,
       description: `${data?.votes_count || 0} διαθέσιμες`,
@@ -47,7 +47,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
       key: 'requests',
       label: 'Αιτήματα',
       icon: <AlertCircle className="w-5 h-5" />,
-      accent: '#f59e0b',
+      accent: '#f59e0b', // Amber/Warning
       link: '/requests',
       count: data?.requests_count || 0,
       description: `${data?.requests_count || 0} συνολικά`,
@@ -56,7 +56,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
       key: 'urgent',
       label: 'Επείγοντα',
       icon: <Clock className="w-5 h-5" />,
-      accent: '#e11d48',
+      accent: 'hsl(var(--destructive))',
       link: '/requests',
       count: data?.urgent_items || 0,
       description: `${data?.urgent_items || 0} προς επίλυση`,
@@ -71,7 +71,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="rounded-none p-4 border-0 shadow-sm bg-muted animate-pulse"
+              className="rounded-xl p-4 border-0 shadow-sm bg-muted animate-pulse"
             >
               <div className="h-10 bg-muted-foreground/20 rounded-none mb-3" />
               <div className="h-8 w-12 bg-muted-foreground/20 rounded-none mb-1" />
@@ -103,7 +103,12 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
             <div className="flex items-center justify-between mb-3">
               <div
                 className="p-2 rounded-lg shadow-sm"
-                style={{ backgroundColor: `${action.accent}1f`, color: action.accent }}
+                style={{ 
+                  color: action.accent,
+                  backgroundColor: action.accent.startsWith('#') 
+                    ? `${action.accent}1f` 
+                    : `color-mix(in srgb, ${action.accent}, transparent 90%)`
+                }}
               >
                 {action.icon}
               </div>

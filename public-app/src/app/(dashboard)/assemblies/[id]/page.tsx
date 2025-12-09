@@ -41,8 +41,8 @@ const statusColors: Record<AssemblyStatus, { bg: string; text: string; icon: Rea
 };
 
 function QuorumMeter({ assembly }: { assembly: Assembly }) {
-  const percentage = assembly.quorum_percentage;
-  const required = assembly.required_quorum_percentage;
+  const percentage = Number(assembly.quorum_percentage) || 0;
+  const required = Number(assembly.required_quorum_percentage) || 50;
   const achieved = assembly.quorum_achieved;
 
   return (

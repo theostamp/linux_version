@@ -51,7 +51,7 @@ function OfficeDashboardContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <LayoutDashboard className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <LayoutDashboard className="h-16 w-16 text-destructive mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Σφάλμα φόρτωσης</h2>
           <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : 'Αδυναμία φόρτωσης δεδομένων'}

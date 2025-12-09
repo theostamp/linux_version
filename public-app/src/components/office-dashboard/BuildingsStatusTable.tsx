@@ -40,22 +40,22 @@ const getStatusConfig = (status: string) => {
       return {
         label: 'Κρίσιμο',
         icon: AlertTriangle,
-        className: 'bg-red-100 text-red-700 border-red-200',
-        iconClass: 'text-red-600',
+        className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20',
+        iconClass: 'text-red-600 dark:text-red-400',
       };
     case 'warning':
       return {
         label: 'Προσοχή',
         icon: AlertCircle,
-        className: 'bg-amber-100 text-amber-700 border-amber-200',
-        iconClass: 'text-amber-600',
+        className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+        iconClass: 'text-amber-600 dark:text-amber-400',
       };
     default:
       return {
         label: 'Υγιές',
         icon: CheckCircle2,
-        className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-        iconClass: 'text-emerald-600',
+        className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+        iconClass: 'text-emerald-600 dark:text-emerald-400',
       };
   }
 };
@@ -126,16 +126,16 @@ export function BuildingsStatusTable({
           </CardTitle>
           <div className="flex gap-2">
             {criticalCount > 0 && (
-              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20">
                 {criticalCount} κρίσιμα
               </Badge>
             )}
             {warningCount > 0 && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
                 {warningCount} προσοχή
               </Badge>
             )}
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
               {healthyCount} υγιή
             </Badge>
           </div>
@@ -145,7 +145,7 @@ export function BuildingsStatusTable({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200">
+              <tr className="border-b border-border">
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Κτίριο</th>
                 <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Διαμ.</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Υπόλοιπο</th>
@@ -163,7 +163,7 @@ export function BuildingsStatusTable({
                 return (
                   <tr 
                     key={building.id} 
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    className="border-b border-border/50 hover:bg-muted/50 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <div>
@@ -195,7 +195,7 @@ export function BuildingsStatusTable({
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center">
-                        <div className="w-16 bg-slate-200 rounded-full h-2">
+                        <div className="w-16 bg-muted rounded-full h-2">
                           <div 
                             className={`h-2 rounded-full ${
                               building.collection_rate >= 70 ? 'bg-green-500' : 
