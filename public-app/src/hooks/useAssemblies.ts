@@ -50,11 +50,14 @@ export function useAssemblies(
   options?: UseQueryOptions<AssemblyListItem[], Error>
 ) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  const enabled = isAuthenticated && !authLoading;
+  console.log('[useAssemblies] buildingId:', buildingId, 'isAuthenticated:', isAuthenticated, 'authLoading:', authLoading, 'enabled:', enabled);
 
   return useQuery<AssemblyListItem[], Error>({
     queryKey: ['assemblies', buildingId],
     queryFn: () => fetchAssemblies(buildingId),
-    enabled: isAuthenticated && !authLoading,
+    enabled,
     staleTime: 1000 * 60, // 1 minute
     ...options,
   });

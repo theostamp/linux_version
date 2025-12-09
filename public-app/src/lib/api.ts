@@ -2491,8 +2491,10 @@ export type CreateAgendaItemPayload = {
 // Assembly API functions
 
 export async function fetchAssemblies(buildingId?: number | null): Promise<AssemblyListItem[]> {
+  console.log('[API CALL] Fetching assemblies, buildingId:', buildingId);
   const params = buildingId ? `?building=${buildingId}` : '';
   const response = await apiGet<Paginated<AssemblyListItem>>(`/assemblies/${params}`);
+  console.log('[API CALL] Assemblies response:', response);
   return normalizePaginatedResponse(response);
 }
 

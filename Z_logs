@@ -1,1 +1,29 @@
-﻿﻿
+﻿﻿[AuthContext] loadUserOnMount starting...
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 AuthContext: Fetching current user
+bdebf4afd2bdfa75.js?…dNw4WWRsqhuuSxSLw:1 [API CALL] Attempting to fetch /api/users/me/
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 [AuthContext] Token check interval disabled to debug hanging issue
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [AppProviders] Current pathname: /assemblies
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [AppProviders] Is Dashboard: true
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [AppProviders] Is Kiosk Mode: false
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [AppProviders] Is Info Screen: false
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [AppProviders] Is No Sidebar Route: false
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:7 [ReactQueryProvider] Setting up global refresh system
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [Global Refresh] Query client registered
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:5 [Global Refresh] Initializing global refresh system
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 [AuthContext] Component unmounted during initialization, resetting flag
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 [AuthContext] loadUserOnMount starting...
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 AuthContext: Fetching current user
+bdebf4afd2bdfa75.js?…dNw4WWRsqhuuSxSLw:1 [API CALL] getCurrentUser already in progress, returning existing promise
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 [AuthContext] Token check interval disabled to debug hanging issue
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 AuthContext: Current user fetched successfully: etherm2021@gmail.com
+bdebf4afd2bdfa75.js?…dNw4WWRsqhuuSxSLw:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/todos/notifications/?is_read=false_{"is_read":"false"}
+bdebf4afd2bdfa75.js?…dNw4WWRsqhuuSxSLw:1 [API CALL] Fetching buildings from /buildings/
+63dbd937673fdbd3.js?…dNw4WWRsqhuuSxSLw:1 [AuthContext] Token check interval disabled to debug hanging issue
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] Loaded buildings: 2 buildings
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] Building changed to 2, invalidating queries...
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] ✓ Queries invalidated for building 2
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] Fetching context for building 2...
+d672dcec4b83084e.js?…dNw4WWRsqhuuSxSLw:1 [BuildingContext] Building context loaded: 
+{id: 2, name: 'Βουλής 6 -Demo', permissions: {…}}
