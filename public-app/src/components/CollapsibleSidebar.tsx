@@ -423,46 +423,46 @@ export default function CollapsibleSidebar() {
       active: string;
     }> = {
       primary: {
-        bg: "bg-indigo-50 dark:bg-indigo-900/20",
-        hover: "hover:bg-indigo-100 dark:hover:bg-indigo-900/40",
-        text: "text-indigo-700 dark:text-indigo-300",
+        bg: "bg-indigo-50 dark:bg-transparent",
+        hover: "hover:bg-indigo-50 dark:hover:bg-indigo-500/10",
+        text: "text-indigo-700 dark:text-indigo-400",
         icon: "text-indigo-600 dark:text-indigo-400",
-        active: "bg-indigo-500 text-white dark:bg-indigo-600",
+        active: "bg-indigo-100 text-indigo-900 dark:bg-indigo-500/20 dark:text-indigo-300",
       },
-      success: { // Using emerald/teal logic from design system
-        bg: "bg-teal-50 dark:bg-teal-900/20",
-        hover: "hover:bg-teal-100 dark:hover:bg-teal-900/40",
-        text: "text-teal-700 dark:text-teal-300",
+      success: {
+        bg: "bg-teal-50 dark:bg-transparent",
+        hover: "hover:bg-teal-50 dark:hover:bg-teal-500/10",
+        text: "text-teal-700 dark:text-teal-400",
         icon: "text-teal-600 dark:text-teal-400",
-        active: "bg-teal-500 text-white dark:bg-teal-600",
+        active: "bg-teal-100 text-teal-900 dark:bg-teal-500/20 dark:text-teal-300",
       },
       orange: {
-        bg: "bg-orange-50 dark:bg-orange-900/20",
-        hover: "hover:bg-orange-100 dark:hover:bg-orange-900/40",
-        text: "text-orange-700 dark:text-orange-300",
+        bg: "bg-orange-50 dark:bg-transparent",
+        hover: "hover:bg-orange-50 dark:hover:bg-orange-500/10",
+        text: "text-orange-700 dark:text-orange-400",
         icon: "text-orange-600 dark:text-orange-400",
-        active: "bg-orange-500 text-white dark:bg-orange-600",
+        active: "bg-orange-100 text-orange-900 dark:bg-orange-500/20 dark:text-orange-300",
       },
       info: {
-        bg: "bg-sky-50 dark:bg-sky-900/20",
-        hover: "hover:bg-sky-100 dark:hover:bg-sky-900/40",
-        text: "text-sky-700 dark:text-sky-300",
+        bg: "bg-sky-50 dark:bg-transparent",
+        hover: "hover:bg-sky-50 dark:hover:bg-sky-500/10",
+        text: "text-sky-700 dark:text-sky-400",
         icon: "text-sky-600 dark:text-sky-400",
-        active: "bg-sky-500 text-white dark:bg-sky-600",
+        active: "bg-sky-100 text-sky-900 dark:bg-sky-500/20 dark:text-sky-300",
       },
       purple: {
-        bg: "bg-purple-50 dark:bg-purple-900/20",
-        hover: "hover:bg-purple-100 dark:hover:bg-purple-900/40",
-        text: "text-purple-700 dark:text-purple-300",
+        bg: "bg-purple-50 dark:bg-transparent",
+        hover: "hover:bg-purple-50 dark:hover:bg-purple-500/10",
+        text: "text-purple-700 dark:text-purple-400",
         icon: "text-purple-600 dark:text-purple-400",
-        active: "bg-purple-500 text-white dark:bg-purple-600",
+        active: "bg-purple-100 text-purple-900 dark:bg-purple-500/20 dark:text-purple-300",
       },
       danger: {
-        bg: "bg-rose-50 dark:bg-rose-900/20",
-        hover: "hover:bg-rose-100 dark:hover:bg-rose-900/40",
-        text: "text-rose-700 dark:text-rose-300",
+        bg: "bg-rose-50 dark:bg-transparent",
+        hover: "hover:bg-rose-50 dark:hover:bg-rose-500/10",
+        text: "text-rose-700 dark:text-rose-400",
         icon: "text-rose-600 dark:text-rose-400",
-        active: "bg-rose-500 text-white dark:bg-rose-600",
+        active: "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-300",
       },
     };
 
@@ -518,10 +518,6 @@ export default function CollapsibleSidebar() {
         style={{
           width: isExpanded ? '256px' : '80px',
           fontFamily: 'var(--font-sans)',
-          backgroundColor: isDarkMode ? undefined : '#f7f9fb',
-          backgroundImage: isDarkMode
-            ? 'linear-gradient(180deg, rgba(0,188,125,0.08) 0%, rgba(11,22,32,0.85) 35%, rgba(11,22,32,0.95) 100%)'
-            : undefined,
         }}
       >
         {/* Header */}

@@ -47,38 +47,38 @@
 }
 
 .dark {
-  /* Dark Mode · Softer green-tinted base */
-  --background: 210 30% 9%;          /* ~#0b1620, ηπιότερο απόλυτο μαύρο */
-  --foreground: 214 32% 92%;         /* ~#E6ECF5, απαλό off-white */
+  /* Dark Mode · Redesigned Flat Palette */
+  --background: 213 33% 11%;         /* #121a24 - Main Background */
+  --foreground: 0 0% 88%;            /* #e0e0e0 - Primary Text */
 
-  --primary: 160 100% 37%;           /* #00BC7D */
-  --primary-foreground: 224 24% 97%;
-  --primary-hover: 160 85% 33%;
+  --primary: 215 43% 51%;            /* #4a7abb - Desaturated Corporate Blue */
+  --primary-foreground: 0 0% 100%;   /* White text on primary */
+  --primary-hover: 215 43% 45%;      /* Slightly darker for hover */
 
-  --secondary: 217 35% 18%;          /* #1D293D */
-  --secondary-foreground: 224 24% 97%;
+  --secondary: 215 29% 15%;          /* #1a2330 - Secondary Background */
+  --secondary-foreground: 0 0% 88%;
 
-  --muted: 210 22% 16%;
-  --muted-foreground: 215 22% 72%;
+  --muted: 215 29% 15%;              /* #1a2330 */
+  --muted-foreground: 212 11% 72%;   /* #b0b8c1 - Secondary Text */
 
-  --accent: 217 30% 24%;
-  --accent-foreground: 224 24% 97%;
+  --accent: 219 30% 24%;             /* #2b3850 - Surface Hover / Highlight */
+  --accent-foreground: 0 0% 88%;
 
-  --border: 214 20% 26%;
-  --input: 214 20% 26%;
-  --ring: 160 100% 37%;
+  --border: 219 30% 24%;             /* #2b3850 */
+  --input: 219 30% 24%;
+  --ring: 215 43% 51%;
 
-  --card: 214 24% 12%;               /* πιο ήπιο layer πάνω από background */
-  --card-foreground: 214 32% 92%;
+  --card: 214 27% 18%;               /* #212c3a - Surface/Panels */
+  --card-foreground: 0 0% 88%;
   
-  --popover: 214 24% 12%;
-  --popover-foreground: 214 32% 92%;
+  --popover: 214 27% 18%;            /* #212c3a */
+  --popover-foreground: 0 0% 88%;
 
   --destructive: 357 72% 55%;
-  --destructive-foreground: 224 24% 97%;
+  --destructive-foreground: 0 0% 100%;
 
   --success: 160 100% 37%;
-  --success-foreground: 224 24% 97%;
+  --success-foreground: 0 0% 100%;
   
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 type Theme = 'light' | 'dark';
 
@@ -17,6 +18,7 @@ const THEME_STORAGE_KEY = 'theme-preference';
 export function ThemeProvider({ children }: { readonly children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -39,6 +41,12 @@ export function ThemeProvider({ children }: { readonly children: ReactNode }) {
 
     const root = document.documentElement;
     
+    // Force light mode on landing page
+    if (pathname === '/') {
+      root.classList.remove('dark');
+      return;
+    }
+    
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
@@ -47,7 +55,7 @@ export function ThemeProvider({ children }: { readonly children: ReactNode }) {
 
     // Persist to localStorage
     localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme, mounted]);
+  }, [theme, mounted, pathname]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
@@ -76,4 +84,3 @@ export function useTheme() {
   }
   return context;
 }
-
