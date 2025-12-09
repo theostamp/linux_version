@@ -1,92 +1,59 @@
-﻿﻿📋 Γενικές Συνελεύσεις
-Βρίσκεστε στο: Βουλής 6 -Demo
-Αδυναμία φόρτωσης συνελεύσεων.
-
-Δοκιμή ξανά
-
-[AuthContext] loadUserOnMount starting...
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Attempting to fetch /api/users/me/
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 [AuthContext] Token check interval disabled to debug hanging issue
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [AppProviders] Current pathname: /assemblies
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [AppProviders] Is Dashboard: true
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [AppProviders] Is Kiosk Mode: false
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [AppProviders] Is Info Screen: false
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [AppProviders] Is No Sidebar Route: false
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:7 [ReactQueryProvider] Setting up global refresh system
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Query client registered
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Initializing global refresh system
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 [AuthContext] Component unmounted during initialization, resetting flag
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 [AuthContext] loadUserOnMount starting...
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] getCurrentUser already in progress, returning existing promise
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 [AuthContext] Token check interval disabled to debug hanging issue
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 AuthContext: Refreshed user data: etherm2021@gmail.com
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: null isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/todos/notifications/?is_read=false_{"is_read":"false"}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: null
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching buildings from /buildings/
-63dbd937673fdbd3.js?…YqwQaMPvP9dwij9h5:1 [AuthContext] Token check interval disabled to debug hanging issue
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: null isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
+﻿﻿[AuthContext] loadUserOnMount starting...
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Attempting to fetch /api/users/me/
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 [AuthContext] Token check interval disabled to debug hanging issue
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [AppProviders] Current pathname: /assemblies
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [AppProviders] Is Dashboard: true
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [AppProviders] Is Kiosk Mode: false
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [AppProviders] Is Info Screen: false
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [AppProviders] Is No Sidebar Route: false
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:7 [ReactQueryProvider] Setting up global refresh system
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [Global Refresh] Query client registered
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:5 [Global Refresh] Initializing global refresh system
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 [AuthContext] Component unmounted during initialization, resetting flag
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 [AuthContext] loadUserOnMount starting...
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] getCurrentUser already in progress, returning existing promise
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 [AuthContext] Token check interval disabled to debug hanging issue
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 AuthContext: Refreshed user data: etherm2021@gmail.com
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [useAssemblies] buildingId: null isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [AssembliesPage] Query state: 
+{buildingId: null, isLoading: true, isError: false, isSuccess: false, error: undefined, …}
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/todos/notifications/?is_read=false_{"is_read":"false"}
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Fetching assemblies, buildingId: null
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Fetching buildings from /buildings/
+63dbd937673fdbd3.js?…HoD7Grs62ukVdzKYV:1 [AuthContext] Token check interval disabled to debug hanging issue
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [useAssemblies] buildingId: null isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [AssembliesPage] Query state: 
+{buildingId: null, isLoading: true, isError: false, isSuccess: false, error: undefined, …}
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Assemblies response: 
 {count: 0, next: null, previous: null, results: Array(0), data: {…}}
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] Loaded buildings: 2 buildings
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] Building changed to 2, invalidating queries...
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] ✓ Queries invalidated for building 2
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] Fetching context for building 2...
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] Loaded buildings: 2 buildings
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [AssembliesPage] Query state: 
+{buildingId: 2, isLoading: true, isError: false, isSuccess: false, error: undefined, …}
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Fetching assemblies, buildingId: 2
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] Building changed to 2, invalidating queries...
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] ✓ Queries invalidated for building 2
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] Fetching context for building 2...
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [AssembliesPage] Query state: 
+{buildingId: 2, isLoading: true, isError: false, isSuccess: false, error: undefined, …}
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Assemblies response: 
 {count: 0, next: null, previous: null, results: Array(0), data: {…}}
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:1 [BuildingContext] Building context loaded: 
+d672dcec4b83084e.js?…HoD7Grs62ukVdzKYV:1 [BuildingContext] Building context loaded: 
 {id: 2, name: 'Βουλής 6 -Demo', permissions: {…}}
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [AssembliesPage] Query state: 
+{buildingId: 2, isLoading: true, isError: false, isSuccess: false, error: undefined, …}
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Fetching assemblies, buildingId: 2
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Assemblies response: 
 {count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Fetching assemblies, buildingId: 2
+08eb5e25c1615fff.js?…HoD7Grs62ukVdzKYV:1 [API CALL] Assemblies response: 
 {count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Tab hidden
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Tab visible again after 6s
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Refreshing financial data...
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Financial data refreshed
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Tab hidden
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Tab visible again after 7s
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Refreshing financial data...
-d672dcec4b83084e.js?…YqwQaMPvP9dwij9h5:5 [Global Refresh] Financial data refreshed
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Fetching assemblies, buildingId: 2
-08eb5e25c1615fff.js?…YqwQaMPvP9dwij9h5:1 [API CALL] Assemblies response: 
-{count: 0, next: null, previous: null, results: Array(0), data: {…}}
-4e427d234e857e94.js?…YqwQaMPvP9dwij9h5:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [useAssemblies] buildingId: 2 isAuthenticated: true authLoading: false enabled: true
+fe59d2af298ba880.js?…HoD7Grs62ukVdzKYV:1 [AssembliesPage] Query state: 
+{buildingId: 2, isLoading: false, isError: true, isSuccess: false, error: 'normalizePaginatedResponse is not defined', …}

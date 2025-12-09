@@ -2495,7 +2495,7 @@ export async function fetchAssemblies(buildingId?: number | null): Promise<Assem
   const params = buildingId ? `?building=${buildingId}` : '';
   const response = await apiGet<Paginated<AssemblyListItem>>(`/assemblies/${params}`);
   console.log('[API CALL] Assemblies response:', response);
-  return normalizePaginatedResponse(response);
+  return extractResults(response);
 }
 
 export async function fetchAssembly(assemblyId: string): Promise<Assembly> {
@@ -2578,7 +2578,7 @@ export async function getAssemblyLiveStatus(assemblyId: string): Promise<{
 
 export async function fetchAgendaItems(assemblyId: string): Promise<AgendaItem[]> {
   const response = await apiGet<Paginated<AgendaItem>>(`/agenda-items/?assembly=${assemblyId}`);
-  return normalizePaginatedResponse(response);
+  return extractResults(response);
 }
 
 export async function createAgendaItem(assemblyId: string, payload: CreateAgendaItemPayload): Promise<AgendaItem> {
@@ -2625,7 +2625,7 @@ export async function getAgendaItemVoteResults(itemId: string): Promise<{
 
 export async function fetchAssemblyAttendees(assemblyId: string): Promise<AssemblyAttendee[]> {
   const response = await apiGet<Paginated<AssemblyAttendee>>(`/assembly-attendees/?assembly=${assemblyId}`);
-  return normalizePaginatedResponse(response);
+  return extractResults(response);
 }
 
 export async function attendeeCheckIn(
