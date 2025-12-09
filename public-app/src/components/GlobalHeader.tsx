@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from './BuildingSelectorButton';
@@ -8,7 +9,7 @@ import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
 import { ThemeToggle } from './ThemeToggle';
-import { User, Building as BuildingIcon, Settings, Calendar, Shield } from 'lucide-react';
+import { User, Building as BuildingIcon, Settings, Calendar, Shield, HelpCircle } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
 import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAccess, getEffectiveRole } from '@/lib/roleUtils';
 
@@ -146,6 +147,15 @@ export default function GlobalHeader() {
                 }}
               />
 
+              {/* Help Button */}
+              <Link
+                href="/help"
+                className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                title="Κέντρο Βοήθειας"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Link>
+
               {/* Calendar Button */}
               <button
                 onClick={() => {
@@ -171,6 +181,15 @@ export default function GlobalHeader() {
                   <Settings className="w-5 h-5" />
                 </button>
               )}
+
+              {/* Help Button - Mobile */}
+              <Link
+                href="/help"
+                className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                title="Βοήθεια"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </Link>
 
               {/* Settings Button - Mobile - ADMIN-ONLY */}
               {isAdminLevel && (
