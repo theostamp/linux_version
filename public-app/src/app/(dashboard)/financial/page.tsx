@@ -63,7 +63,7 @@ function FinancialContent() {
   if (authLoading || buildingLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
       </div>
     );
   }

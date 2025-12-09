@@ -116,10 +116,10 @@ const BuildingsPageContent = () => {
   if (isLoading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="ml-3 text-gray-600">Φόρτωση κτιρίων...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <p className="ml-3 text-muted-foreground">Φόρτωση κτιρίων...</p>
         </div>
       </div>
     );
@@ -128,7 +128,7 @@ const BuildingsPageContent = () => {
   if (error) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <ErrorMessage message={error} />
       </div>
     );
@@ -137,10 +137,10 @@ const BuildingsPageContent = () => {
   if (!Array.isArray(buildings)) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🏢 Διαχείριση Κτιρίων</h1>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <BuildingIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">Δεν βρέθηκαν κτίρια.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <div className="bg-card border border-border border-dashed rounded-lg p-8 text-center">
+          <BuildingIcon className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Δεν βρέθηκαν κτίρια.</p>
           {canManage && (
             <Link href="/buildings/new">
               <Button>
@@ -159,7 +159,7 @@ const BuildingsPageContent = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 font-condensed">🏢 Διαχείριση Κτιρίων</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🏢 Διαχείριση Κτιρίων</h1>
           <div className="flex gap-2">
             {/* View Mode Toggle */}
             <div className="flex items-center bg-secondary/30 rounded-lg p-1">
@@ -227,7 +227,7 @@ const BuildingsPageContent = () => {
         {/* Main Content Area - Filters & Buildings List */}
         <div className="space-y-6">
                 {/* Filters Bar */}
-                <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
+                <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                   <div className="flex flex-col md:flex-row gap-4 items-center">
                     {/* Search */}
                     <div className="flex-1 relative w-full">
@@ -289,7 +289,7 @@ const BuildingsPageContent = () => {
 
                 {/* Buildings Display */}
                 {filteredAndSortedBuildings.length === 0 ? (
-                  <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+                  <div className="bg-card rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
                     {searchTerm || cityFilter !== 'all' ? (
                       <>
                         <p className="mb-4">Δεν βρέθηκαν κτίρια με τα τρέχοντα φίλτρα.</p>
@@ -347,7 +347,7 @@ const BuildingsPageContent = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="bg-card rounded-xl shadow-sm border p-4">
+                  <div className="bg-card rounded-xl shadow-sm border border-border p-4">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}

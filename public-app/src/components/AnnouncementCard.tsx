@@ -102,17 +102,17 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
 
   return (
     <motion.div
-      className={`p-4 rounded-none shadow-sm text-gray-900 dark:text-gray-100 relative ${
+      className={`p-4 rounded-xl shadow-sm text-foreground relative ${
         isAssembly 
-          ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-0' 
-          : 'bg-white dark:bg-gray-800 border-0'
+          ? 'bg-purple-500/5 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-900' 
+          : 'bg-card border border-border'
       }`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
       {/* Timestamp at the top */}
-      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <div className="text-xs text-muted-foreground mb-3">
         {formatTimestamp(announcement.created_at)}
       </div>
 
@@ -121,8 +121,8 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         <div className="absolute top-3 left-3 z-10">
           <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
             isAssembly 
-              ? 'bg-purple-100 border border-purple-300 text-purple-700'
-              : 'bg-blue-50 border border-blue-200 text-blue-700'
+              ? 'bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300'
+              : 'bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300'
           }`}>
             🏢 {(announcement as { building_name?: string }).building_name}
           </span>
@@ -132,7 +132,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
       {/* Assembly badge */}
       {isAssembly && (
         <div className="absolute top-3 right-16 z-10">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 border border-purple-300 text-purple-700 rounded-full text-xs font-medium shadow-sm">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium shadow-sm">
             🏛️ Συνέλευση
           </span>
         </div>
@@ -142,7 +142,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         <button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
+          className="absolute top-3 right-3 p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive transition-colors disabled:opacity-50"
           title="Διαγραφή ανακοίνωσης"
         >
           <Trash2 className="w-4 h-4" />
@@ -154,8 +154,8 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         <span
           className={`text-xs font-medium px-3 py-1 rounded-full border ${
             isCurrentlyActive
-              ? 'bg-green-100 text-green-700 border-green-300'
-              : 'bg-gray-200 text-gray-600 border-slate-200'
+              ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30'
+              : 'bg-muted text-muted-foreground border-border'
           }`}
         >
           {isCurrentlyActive ? '✅ Ενεργή' : '⏸ Ανενεργή'}
@@ -164,19 +164,19 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
 
       {/* Assembly Topics Preview */}
       {isAssembly && assemblyTopics.length > 0 && (
-        <div className="mb-4 p-3 bg-white/70 rounded-lg border border-purple-200">
-          <h4 className="text-sm font-semibold text-purple-800 mb-2">
+        <div className="mb-4 p-3 bg-background/50 rounded-lg border border-purple-200 dark:border-purple-900">
+          <h4 className="text-sm font-semibold text-purple-800 dark:text-purple-300 mb-2">
             Θέματα Συνέλευσης ({assemblyTopics.length}):
           </h4>
           <div className="space-y-1">
             {assemblyTopics.slice(0, 3).map((topic, index) => (
-              <div key={index} className="text-xs text-purple-700 flex items-start">
+              <div key={index} className="text-xs text-purple-700 dark:text-purple-400 flex items-start">
                 <span className="font-medium mr-2">{index + 1}.</span>
                 <span className="line-clamp-2">{topic}</span>
               </div>
             ))}
             {assemblyTopics.length > 3 && (
-              <div className="text-xs text-purple-600 italic">
+              <div className="text-xs text-purple-600 dark:text-purple-500 italic">
                 ...και {assemblyTopics.length - 3} ακόμα
               </div>
             )}

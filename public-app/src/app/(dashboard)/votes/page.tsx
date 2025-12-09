@@ -92,15 +92,15 @@ function VoteItemContent({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className={cn(
-        'group relative rounded-xl border bg-white p-5 shadow-sm transition-all duration-300',
-        'hover:shadow-md hover:border-indigo-200',
-        vote.is_urgent && 'border-red-200 bg-gradient-to-br from-red-50/50 to-white'
+        'group relative rounded-xl border bg-card p-5 shadow-sm transition-all duration-300',
+        'hover:shadow-md hover:border-indigo-500/30',
+        vote.is_urgent && 'border-destructive/30 bg-destructive/5'
       )}
     >
       {/* Urgent indicator */}
       {vote.is_urgent && (
         <div className="absolute -top-1 -right-1">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs shadow-lg">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs shadow-lg">
             <Zap className="h-3 w-3" />
           </span>
         </div>
@@ -112,18 +112,18 @@ function VoteItemContent({
           <div className="flex flex-wrap items-center gap-2">
             <div className={cn(
               'flex items-center justify-center w-8 h-8 rounded-lg',
-              active ? 'bg-gradient-to-br from-indigo-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-500'
+              active ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'bg-muted text-muted-foreground'
             )}>
               <VoteIcon className="h-4 w-4" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 leading-tight group-hover:text-indigo-700 transition-colors">
+            <h3 className="text-base font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
               {vote.title}
             </h3>
           </div>
 
           {/* Description */}
           {vote.description && (
-            <p className="text-sm text-gray-600 line-clamp-2 ml-10">
+            <p className="text-sm text-muted-foreground line-clamp-2 ml-10">
               {vote.description}
             </p>
           )}
@@ -140,8 +140,8 @@ function VoteItemContent({
             }}
             disabled={deletingId === vote.id}
             className={cn(
-              'rounded-lg border border-transparent bg-gray-50 p-2 text-gray-400 transition-all',
-              'hover:bg-red-50 hover:border-red-200 hover:text-red-600',
+              'rounded-lg border border-transparent bg-muted/50 p-2 text-muted-foreground transition-all',
+              'hover:bg-destructive/10 hover:border-destructive/20 hover:text-destructive',
               'opacity-0 group-hover:opacity-100',
               deletingId === vote.id && 'opacity-60 cursor-not-allowed'
             )}
@@ -155,13 +155,13 @@ function VoteItemContent({
       {/* Badges row */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {showBuildingBadge && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
             <Building2 className="h-3 w-3" />
             {buildingName || 'Όλα τα κτίρια'}
           </span>
         )}
         
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
           {formatDate(vote.start_date)} – {formatDate(vote.end_date)}
         </span>
@@ -169,28 +169,28 @@ function VoteItemContent({
         <span className={cn(
           'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
           active 
-            ? 'bg-emerald-100 text-emerald-700' 
-            : 'bg-gray-100 text-gray-600'
+            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+            : 'bg-muted text-muted-foreground'
         )}>
           {active ? '✓ Ενεργή' : 'Ολοκληρώθηκε'}
         </span>
 
         {endSoon && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-700 font-medium animate-pulse">
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600 dark:text-amber-400 font-medium animate-pulse">
             <Clock className="h-3 w-3" />
             Λήγει σύντομα
           </span>
         )}
 
         {participationPercentage > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs text-blue-600 dark:text-blue-400">
             <Users className="h-3 w-3" />
             {participationPercentage.toFixed(0)}% συμμετοχή
           </span>
         )}
 
         {totalVotes > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-xs text-purple-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2.5 py-1 text-xs text-purple-600 dark:text-purple-400">
             {totalVotes} ψήφ{totalVotes === 1 ? 'ος' : 'οι'}
           </span>
         )}
@@ -375,15 +375,15 @@ function VotesPageContent() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center"
+          className="bg-card rounded-2xl border-2 border-dashed border-border p-12 text-center"
         >
-          <div className="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
-            <VoteIcon className="w-10 h-10 text-gray-300" />
+          <div className="w-20 h-20 bg-muted rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
+            <VoteIcon className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+          <h3 className="text-xl font-semibold text-foreground mb-2">
             Δεν υπάρχουν ψηφοφορίες
           </h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Οι ψηφοφορίες σας βοηθούν να πάρετε αποφάσεις μαζί με τους υπόλοιπους ενοίκους.
           </p>
           {canCreateVote && (
@@ -402,7 +402,7 @@ function VotesPageContent() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-foreground">
                   Ενεργές Ψηφοφορίες ({activeVotes.length})
                 </h2>
               </div>
@@ -427,8 +427,8 @@ function VotesPageContent() {
           {pastVotes.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-700">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                <h2 className="text-lg font-semibold text-muted-foreground">
                   Ολοκληρωμένες Ψηφοφορίες ({pastVotes.length})
                 </h2>
               </div>

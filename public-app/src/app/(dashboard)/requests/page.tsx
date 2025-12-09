@@ -210,7 +210,7 @@ function RequestsPageContent() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-card border border-slate-200/50 rounded-xl p-4 space-y-4 overflow-hidden shadow-sm"
+            className="bg-card border border-border rounded-xl p-4 space-y-4 overflow-hidden shadow-sm"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search Filter */}
@@ -290,30 +290,30 @@ function RequestsPageContent() {
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
-              <div className="pt-4 border-t border-slate-200/50">
+              <div className="pt-4 border-t border-border">
                 <div className="flex flex-wrap gap-2">
                   {searchTerm && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium">
                       🔍 "{searchTerm}"
-                      <button onClick={() => setSearchTerm('')} className="ml-1 hover:text-blue-600 dark:hover:text-blue-200"><X className="w-3 h-3" /></button>
+                      <button onClick={() => setSearchTerm('')} className="ml-1 hover:text-blue-800 dark:hover:text-blue-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {statusFilter && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-sm font-medium">
                       📊 {REQUEST_STATUSES.find(s => s.value === statusFilter)?.label}
-                      <button onClick={() => setStatusFilter('')} className="ml-1 hover:text-green-600 dark:hover:text-green-200"><X className="w-3 h-3" /></button>
+                      <button onClick={() => setStatusFilter('')} className="ml-1 hover:text-green-800 dark:hover:text-green-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {priorityFilter && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full text-sm font-medium">
                       ⚡ {PRIORITY_LEVELS.find(p => p.value === priorityFilter)?.label}
-                      <button onClick={() => setPriorityFilter('')} className="ml-1 hover:text-yellow-600 dark:hover:text-yellow-200"><X className="w-3 h-3" /></button>
+                      <button onClick={() => setPriorityFilter('')} className="ml-1 hover:text-yellow-800 dark:hover:text-yellow-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                   {categoryFilter && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm font-medium">
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-sm font-medium">
                       🏷️ {MAINTENANCE_CATEGORIES.find(c => c.value === categoryFilter)?.label}
-                      <button onClick={() => setCategoryFilter('')} className="ml-1 hover:text-purple-600 dark:hover:text-purple-200"><X className="w-3 h-3" /></button>
+                      <button onClick={() => setCategoryFilter('')} className="ml-1 hover:text-purple-800 dark:hover:text-purple-200"><X className="w-3 h-3" /></button>
                     </span>
                   )}
                 </div>

@@ -23,13 +23,13 @@ import { cn } from '@/lib/utils';
 import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils';
 
 const statusColors: Record<AssemblyStatus, { bg: string; text: string; icon: React.ReactNode }> = {
-  draft: { bg: 'bg-gray-100', text: 'text-gray-600', icon: <FileText className="w-3 h-3" /> },
-  scheduled: { bg: 'bg-blue-100', text: 'text-blue-700', icon: <Calendar className="w-3 h-3" /> },
-  convened: { bg: 'bg-indigo-100', text: 'text-indigo-700', icon: <Send className="w-3 h-3" /> },
-  in_progress: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: <Play className="w-3 h-3" /> },
-  completed: { bg: 'bg-green-100', text: 'text-green-700', icon: <CheckCircle className="w-3 h-3" /> },
-  cancelled: { bg: 'bg-red-100', text: 'text-red-700', icon: <XCircle className="w-3 h-3" /> },
-  adjourned: { bg: 'bg-amber-100', text: 'text-amber-700', icon: <AlertCircle className="w-3 h-3" /> },
+  draft: { bg: 'bg-muted', text: 'text-muted-foreground', icon: <FileText className="w-3 h-3" /> },
+  scheduled: { bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', icon: <Calendar className="w-3 h-3" /> },
+  convened: { bg: 'bg-indigo-500/10', text: 'text-indigo-600 dark:text-indigo-400', icon: <Send className="w-3 h-3" /> },
+  in_progress: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', icon: <Play className="w-3 h-3" /> },
+  completed: { bg: 'bg-green-500/10', text: 'text-green-600 dark:text-green-400', icon: <CheckCircle className="w-3 h-3" /> },
+  cancelled: { bg: 'bg-destructive/10', text: 'text-destructive', icon: <XCircle className="w-3 h-3" /> },
+  adjourned: { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', icon: <AlertCircle className="w-3 h-3" /> },
 };
 
 function AssemblyCard({ 
@@ -69,9 +69,9 @@ function AssemblyCard({
       transition={{ duration: 0.3, delay: index * 0.05 }}
       onClick={() => router.push(`/assemblies/${assembly.id}`)}
       className={cn(
-        'group relative rounded-xl border bg-white p-5 shadow-sm transition-all duration-300 cursor-pointer',
-        'hover:shadow-md hover:border-indigo-200',
-        isLive && 'border-emerald-300 bg-gradient-to-br from-emerald-50/50 to-white ring-2 ring-emerald-200'
+        'group relative rounded-xl border bg-card p-5 shadow-sm transition-all duration-300 cursor-pointer',
+        'hover:shadow-md hover:border-indigo-500/30',
+        isLive && 'border-emerald-500/50 bg-emerald-500/5 ring-2 ring-emerald-500/30'
       )}
     >
       {/* Live indicator */}
@@ -89,18 +89,18 @@ function AssemblyCard({
           <div className="flex flex-wrap items-center gap-2">
             <div className={cn(
               'flex items-center justify-center w-8 h-8 rounded-lg',
-              isLive ? 'bg-emerald-500 text-white' : 'bg-gradient-to-br from-indigo-500 to-purple-500 text-white'
+              isLive ? 'bg-emerald-500 text-white' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
             )}>
               <Users className="h-4 w-4" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900 leading-tight group-hover:text-indigo-700 transition-colors">
+            <h3 className="text-base font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
               {assembly.title}
             </h3>
           </div>
 
           {/* Building name (if no filter) */}
           {assembly.building_name && (
-            <div className="flex items-center gap-1 text-sm text-gray-500 ml-10">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground ml-10">
               <Building2 className="w-3.5 h-3.5" />
               <span>{assembly.building_name}</span>
             </div>
@@ -120,31 +120,31 @@ function AssemblyCard({
         </span>
 
         {/* Date/Time */}
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
           {formatDate(assembly.scheduled_date)}
         </span>
         
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" />
           {formatTime(assembly.scheduled_time)}
         </span>
 
         {/* Location type */}
         {assembly.is_physical && assembly.is_online && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-xs text-purple-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2.5 py-1 text-xs text-purple-600 dark:text-purple-400">
             <Video className="h-3 w-3" />
             Υβριδική
           </span>
         )}
         {assembly.is_online && !assembly.is_physical && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs text-blue-600 dark:text-blue-400">
             <Video className="h-3 w-3" />
             Online
           </span>
         )}
         {assembly.is_physical && !assembly.is_online && assembly.location && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
             {assembly.location}
           </span>
@@ -152,14 +152,14 @@ function AssemblyCard({
 
         {/* Pre-voting active */}
         {assembly.is_pre_voting_active && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-700 font-medium animate-pulse">
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600 dark:text-amber-400 font-medium animate-pulse">
             🗳️ Pre-voting ενεργό
           </span>
         )}
       </div>
 
       {/* Stats row */}
-      <div className="flex items-center gap-4 text-sm text-gray-500">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <FileText className="w-4 h-4" />
           <span>{assembly.agenda_items_count} θέματα</span>
@@ -173,8 +173,8 @@ function AssemblyCard({
         {/* Quorum indicator */}
         <div className={cn(
           'flex items-center gap-1.5 ml-auto',
-          assembly.quorum_achieved ? 'text-emerald-600' : 
-            assembly.quorum_status === 'close' ? 'text-amber-600' : 'text-gray-400'
+          assembly.quorum_achieved ? 'text-emerald-600 dark:text-emerald-400' : 
+            assembly.quorum_status === 'close' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
         )}>
           <Percent className="w-4 h-4" />
           <span>{(Number(assembly.quorum_percentage) || 0).toFixed(0)}%</span>
@@ -292,15 +292,15 @@ function AssembliesPageContent() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center"
+          className="bg-card rounded-2xl border-2 border-dashed border-border p-12 text-center"
         >
-          <div className="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
-            <Users className="w-10 h-10 text-gray-300" />
+          <div className="w-20 h-20 bg-muted rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
+            <Users className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+          <h3 className="text-xl font-semibold text-foreground mb-2">
             Δεν υπάρχουν συνελεύσεις
           </h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Δημιουργήστε τη πρώτη σας συνέλευση με δομημένη ατζέντα και αυτόματη δημιουργία πρακτικών.
           </p>
           {canManage && (
@@ -318,8 +318,8 @@ function AssembliesPageContent() {
           {draftAssemblies.length > 0 && canManage && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-700">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                <h2 className="text-lg font-semibold text-muted-foreground">
                   Προσχέδια ({draftAssemblies.length})
                 </h2>
               </div>
@@ -342,7 +342,7 @@ function AssembliesPageContent() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-foreground">
                   Επερχόμενες / Σε Εξέλιξη ({upcomingAssemblies.length})
                 </h2>
               </div>
@@ -364,8 +364,8 @@ function AssembliesPageContent() {
           {pastAssemblies.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-700">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                <h2 className="text-lg font-semibold text-muted-foreground">
                   Ολοκληρωμένες ({pastAssemblies.length})
                 </h2>
               </div>

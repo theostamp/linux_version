@@ -39,10 +39,10 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const statusConfig: Record<string, { label: string; icon: typeof Clock; color: string }> = {
-  pending: { label: 'Εκκρεμής', icon: Clock, color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  accepted: { label: 'Αποδεκτή', icon: CheckCircle, color: 'bg-green-100 text-green-800 border-green-200' },
-  expired: { label: 'Ληγμένη', icon: AlertCircle, color: 'bg-red-100 text-red-800 border-red-200' },
-  cancelled: { label: 'Ακυρωμένη', icon: XCircle, color: 'bg-gray-100 text-gray-600 border-gray-200' },
+  pending: { label: 'Εκκρεμής', icon: Clock, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
+  accepted: { label: 'Αποδεκτή', icon: CheckCircle, color: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20' },
+  expired: { label: 'Ληγμένη', icon: AlertCircle, color: 'bg-destructive/10 text-destructive border-destructive/20' },
+  cancelled: { label: 'Ακυρωμένη', icon: XCircle, color: 'bg-muted text-muted-foreground border-border' },
 };
 
 const roleLabels: Record<string, string> = {
@@ -167,12 +167,12 @@ export default function InvitationsList() {
     <TooltipProvider>
       <div className="space-y-4">
         {/* Info Box - Τι είναι οι προσκλήσεις */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Τι είναι οι Προσκλήσεις;</p>
-              <p className="text-blue-700">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-700 dark:text-blue-300">
+              <p className="font-medium mb-1 text-foreground">Τι είναι οι Προσκλήσεις;</p>
+              <p className="opacity-90">
                 Οι προσκλήσεις επιτρέπουν σε νέους χρήστες να εγγραφούν στην εφαρμογή. 
                 Όταν στέλνετε πρόσκληση, ο χρήστης λαμβάνει email με σύνδεσμο για να δημιουργήσει λογαριασμό.
                 Μετά την αποδοχή, εμφανίζεται στους "Καταχωρημένους Χρήστες" παραπάνω.
@@ -184,47 +184,47 @@ export default function InvitationsList() {
         {/* Stats Cards */}
         {invitations.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="bg-gradient-to-br from-slate-50 to-slate-100">
+            <Card className="bg-card border border-border shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Σύνολο</p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
+                    <p className="text-2xl font-bold text-foreground">{stats.total}</p>
                   </div>
-                  <Mail className="h-8 w-8 text-slate-400" />
+                  <Mail className="h-8 w-8 text-muted-foreground/50" />
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-amber-50 to-amber-100">
+            <Card className="bg-amber-500/5 border border-amber-500/20 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-amber-700 uppercase tracking-wide">Εκκρεμείς</p>
-                    <p className="text-2xl font-bold text-amber-800">{stats.pending}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide">Εκκρεμείς</p>
+                    <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.pending}</p>
                   </div>
-                  <Clock className="h-8 w-8 text-amber-400" />
+                  <Clock className="h-8 w-8 text-amber-500/50" />
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-green-50 to-green-100">
+            <Card className="bg-green-500/5 border border-green-500/20 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-green-700 uppercase tracking-wide">Αποδεκτές</p>
-                    <p className="text-2xl font-bold text-green-800">{stats.accepted}</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wide">Αποδεκτές</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.accepted}</p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-400" />
+                  <CheckCircle className="h-8 w-8 text-green-500/50" />
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-red-50 to-red-100">
+            <Card className="bg-destructive/5 border border-destructive/20 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-red-700 uppercase tracking-wide">Ληγμένες</p>
-                    <p className="text-2xl font-bold text-red-800">{stats.expired}</p>
+                    <p className="text-xs text-destructive uppercase tracking-wide">Ληγμένες</p>
+                    <p className="text-2xl font-bold text-destructive">{stats.expired}</p>
                   </div>
-                  <AlertCircle className="h-8 w-8 text-red-400" />
+                  <AlertCircle className="h-8 w-8 text-destructive/50" />
                 </div>
               </CardContent>
             </Card>
@@ -233,8 +233,8 @@ export default function InvitationsList() {
 
         {/* Empty State */}
         {invitations.length === 0 ? (
-          <div className="p-8 text-center border-2 border-dashed border-gray-200 rounded-lg">
-            <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <div className="p-8 text-center border-2 border-dashed border-border rounded-lg">
+            <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
             <p className="text-muted-foreground mb-2">Δεν υπάρχουν προσκλήσεις</p>
             <p className="text-sm text-muted-foreground">
               Χρησιμοποιήστε το κουμπί "Προσκάλεσε Χρήστη" για να στείλετε την πρώτη πρόσκληση.
@@ -373,8 +373,8 @@ export default function InvitationsList() {
                                   size="icon"
                                   className={`h-8 w-8 ${
                                     invitation.created_user_active 
-                                      ? 'text-muted-foreground hover:text-orange-600' 
-                                      : 'text-orange-600 hover:text-green-600'
+                                      ? 'text-muted-foreground hover:text-orange-600 dark:hover:text-orange-400' 
+                                      : 'text-orange-600 dark:text-orange-400 hover:text-green-600 dark:hover:text-green-400'
                                   }`}
                                   onClick={() => handleToggleUserStatus(invitation)}
                                   disabled={togglingUserId === invitation.created_user_id}

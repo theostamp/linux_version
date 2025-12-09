@@ -155,7 +155,7 @@ export default function UsersList() {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
+                    <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{user.email}</span>
                   </div>
                 </TableCell>
@@ -168,12 +168,12 @@ export default function UsersList() {
                 </TableCell>
                 <TableCell>
                   {user.is_active !== false ? (
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-green-500/10 text-green-600 dark:text-green-400">
                       <UserCheck className="h-3 w-3 mr-1" />
                       Ενεργός
                     </Badge>
                   ) : (
-                    <Badge className="bg-red-100 text-red-800">
+                    <Badge className="bg-destructive/10 text-destructive">
                       <UserX className="h-3 w-3 mr-1" />
                       Ανενεργός
                     </Badge>
@@ -188,7 +188,7 @@ export default function UsersList() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemoveFromBuilding(user)}
                             disabled={removingUserId === user.id}
                           >
@@ -216,8 +216,8 @@ export default function UsersList() {
                             variant="outline"
                             size="sm"
                             className={user.is_active !== false 
-                              ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
-                              : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                              ? 'text-orange-600 dark:text-orange-400 hover:bg-orange-500/10' 
+                              : 'text-green-600 dark:text-green-400 hover:bg-green-500/10'
                             }
                             onClick={() => handleToggleUserStatus(user)}
                             disabled={togglingUserId === user.id}

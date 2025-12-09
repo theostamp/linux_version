@@ -300,10 +300,10 @@ function ProjectsDashboardContent() {
     className?: string;
   }) => {
     const colorClasses = {
-      default: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
-      success: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
-      warning: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400",
-      danger: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400",
+      default: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      danger: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     };
 
     const handleClick = (e: React.MouseEvent) => {
@@ -361,7 +361,7 @@ function ProjectsDashboardContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προσφορές & Έργα</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Προσφορές & Έργα</h1>
           <p className="text-muted-foreground">
             Διαχείριση έργων, προσφορών και συμβολαίων
           </p>
@@ -445,7 +445,7 @@ function ProjectsDashboardContent() {
             <div className="space-y-4 mt-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Ολοκληρωμένα Έργα</span>
-                <span className="text-lg font-bold text-green-600">
+                <span className="text-lg font-bold text-green-600 dark:text-green-400">
                   {stats.completed_projects}/{stats.total_projects}
                 </span>
               </div>
@@ -457,13 +457,13 @@ function ProjectsDashboardContent() {
                 <Progress value={stats.average_completion_rate} className="h-2" />
               </div>
               <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{stats.active_projects}</div>
-                  <div className="text-xs text-blue-600">Σε Εξέλιξη</div>
+                <div className="text-center p-3 bg-blue-500/10 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.active_projects}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Σε Εξέλιξη</div>
                 </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{stats.completed_projects}</div>
-                  <div className="text-xs text-green-600">Ολοκληρωμένα</div>
+                <div className="text-center p-3 bg-green-500/10 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed_projects}</div>
+                  <div className="text-xs text-green-600 dark:text-green-400">Ολοκληρωμένα</div>
                 </div>
               </div>
             </div>
@@ -483,13 +483,13 @@ function ProjectsDashboardContent() {
             <div className="space-y-4 mt-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Συνολικός Προϋπολογισμός</span>
-                <span className="text-lg font-bold text-blue-600">
+                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                   €{stats.total_budget.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Συνολικά Έξοδα</span>
-                <span className="text-lg font-bold text-red-600">
+                <span className="text-lg font-bold text-destructive">
                   €{stats.total_spent.toLocaleString()}
                 </span>
               </div>
@@ -520,7 +520,7 @@ function ProjectsDashboardContent() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
               <Button 
                 variant="outline" 
-                className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60"
+                className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border"
                 onClick={() => {
                   const element = document.getElementById('projects-list');
                   if (element) {
@@ -533,19 +533,19 @@ function ProjectsDashboardContent() {
                 <FileText className="w-6 h-6 mb-2 text-primary" />
                 <span>Όλα τα Έργα</span>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/projects/offers">
                   <Award className="w-6 h-6 mb-2 text-yellow-600" />
                   <span>Προσφορές</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/projects">
                   <Users className="w-6 h-6 mb-2 text-blue-600" />
                   <span>Συμβόλαια</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/projects">
                   <TrendingUp className="w-6 h-6 mb-2 text-purple-600" />
                   <span>Αναφορές</span>
@@ -621,14 +621,14 @@ function ProjectsDashboardContent() {
         </div>
         
         {/* Filter & List Logic */}
-        <div className="bg-card rounded-xl border border-slate-200/50 p-6 shadow-sm">
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
           {/* Filters */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-wrap gap-4">
               {/* Search */}
               <div className="flex-1 min-w-[200px]">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     placeholder="Αναζήτηση έργων..."
                     value={searchQuery}
@@ -697,13 +697,13 @@ function ProjectsDashboardContent() {
           {projectsLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border rounded-lg p-4 animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                <div key={i} className="border border-border rounded-lg p-4 animate-pulse bg-card">
+                  <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
                   <div className="flex gap-4">
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    <div className="h-4 bg-muted rounded w-24"></div>
+                    <div className="h-4 bg-muted rounded w-24"></div>
+                    <div className="h-4 bg-muted rounded w-24"></div>
                   </div>
                 </div>
               ))}
@@ -712,9 +712,9 @@ function ProjectsDashboardContent() {
             <div className="text-center py-12">
               {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' ? (
                 <>
-                  <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Δεν βρέθηκαν έργα</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <Search className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Δεν βρέθηκαν έργα</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
                     Δοκιμάστε να αλλάξετε τα φίλτρα αναζήτησης.
                   </p>
                   <Button variant="outline" onClick={() => {
@@ -727,9 +727,9 @@ function ProjectsDashboardContent() {
                 </>
               ) : (
                 <>
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Δεν υπάρχουν έργα</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Δεν υπάρχουν έργα</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
                     Δημιουργήστε το πρώτο έργο για να ξεκινήσετε.
                   </p>
                   {(isAdmin || isManager) && (
@@ -750,20 +750,20 @@ function ProjectsDashboardContent() {
                 const approvedProjectOffers = approvedOffers.filter((o: any) => o.project === project.id || o.project_id === project.id);
                 
                 const priorityColors: Record<string, string> = {
-                  low: 'bg-gray-100 text-gray-700',
-                  medium: 'bg-blue-100 text-blue-700',
-                  high: 'bg-orange-100 text-orange-700',
-                  urgent: 'bg-red-100 text-red-700',
+                  low: 'bg-muted text-muted-foreground',
+                  medium: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+                  high: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+                  urgent: 'bg-red-500/10 text-destructive',
                 };
                 
                 const statusColors: Record<string, string> = {
-                  completed: 'bg-green-100 text-green-700',
-                  in_progress: 'bg-blue-100 text-blue-700',
-                  approved: 'bg-purple-100 text-purple-700',
-                  planning: 'bg-gray-100 text-gray-700',
-                  tendering: 'bg-yellow-100 text-yellow-700',
-                  evaluation: 'bg-amber-100 text-amber-700',
-                  cancelled: 'bg-red-100 text-red-700',
+                  completed: 'bg-green-500/10 text-green-600 dark:text-green-400',
+                  in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+                  approved: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+                  planning: 'bg-muted text-muted-foreground',
+                  tendering: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+                  evaluation: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                  cancelled: 'bg-destructive/10 text-destructive',
                 };
                 
                 const statusLabels: Record<string, string> = {
@@ -788,11 +788,11 @@ function ProjectsDashboardContent() {
                           <div className="flex-1 min-w-0">
                             <CardTitle className="text-base mb-2 line-clamp-2">{project.title || 'Άτιτλο Έργο'}</CardTitle>
                             <div className="flex flex-wrap gap-1">
-                              <Badge className={statusColors[project.status] || 'bg-gray-100 text-gray-700'} variant="outline">
+                              <Badge className={statusColors[project.status] || 'bg-muted text-muted-foreground'} variant="outline">
                                 {statusLabels[project.status] || project.status || 'Σχεδιασμός'}
                               </Badge>
                               {project.priority && (
-                                <Badge className={priorityColors[project.priority] || 'bg-gray-100 text-gray-700'} variant="outline">
+                                <Badge className={priorityColors[project.priority] || 'bg-muted text-muted-foreground'} variant="outline">
                                   {project.priority === 'low' ? 'Χαμηλή' : project.priority === 'medium' ? 'Μεσαία' : project.priority === 'high' ? 'Υψηλή' : 'Επείγον'}
                                 </Badge>
                               )}
@@ -885,11 +885,11 @@ function ProjectsDashboardContent() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
                                 <h3 className="text-lg font-semibold truncate">{project.title || 'Άτιτλο Έργο'}</h3>
-                                <Badge className={statusColors[project.status] || 'bg-gray-100 text-gray-700'}>
+                                <Badge className={statusColors[project.status] || 'bg-muted text-muted-foreground'}>
                                   {statusLabels[project.status] || project.status || 'Σχεδιασμός'}
                                 </Badge>
                                 {project.priority && (
-                                  <Badge className={priorityColors[project.priority] || 'bg-gray-100 text-gray-700'} variant="outline">
+                                  <Badge className={priorityColors[project.priority] || 'bg-muted text-muted-foreground'} variant="outline">
                                     {project.priority === 'low' ? 'Χαμηλή' : project.priority === 'medium' ? 'Μεσαία' : project.priority === 'high' ? 'Υψηλή' : 'Επείγον'}
                                   </Badge>
                                 )}
@@ -984,10 +984,10 @@ function ProjectsDashboardContent() {
               <p>
                 Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο <strong>&quot;{projectToDelete?.title}&quot;</strong>;
               </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-800 dark:text-amber-400">
                     <p className="font-semibold mb-1">Συνέπειες διαγραφής:</p>
                     <ul className="list-disc list-inside space-y-1 ml-1">
                       <li>Οι σχετιζόμενες προσφορές θα διαγραφούν</li>
@@ -997,7 +997,7 @@ function ProjectsDashboardContent() {
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-red-600 font-medium">
+              <p className="text-sm text-destructive font-medium">
                 Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
               </p>
             </DialogDescription>

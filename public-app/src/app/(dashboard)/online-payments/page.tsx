@@ -65,31 +65,31 @@ function OnlinePaymentsContent() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 text-white">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900/50 via-blue-800/30 to-indigo-900/50 border border-blue-900/50 p-8 text-foreground">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+            <div className="p-3 bg-blue-500/10 rounded-xl backdrop-blur-sm text-blue-400">
               <CreditCard className="w-8 h-8" />
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Πληρωμή Online</h1>
-              <p className="text-blue-100 mt-1">Εύκολη και ασφαλής πληρωμή κοινοχρήστων</p>
+              <p className="text-muted-foreground mt-1">Εύκολη και ασφαλής πληρωμή κοινοχρήστων</p>
             </div>
           </div>
           
           {isLoading ? (
-            <div className="flex items-center gap-2 text-blue-100">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" />
               <span>Φόρτωση οφειλών...</span>
             </div>
           ) : hasBalance ? (
-            <div className="mt-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm">
-              <p className="text-sm text-blue-100 mb-1">Συνολική Οφειλή</p>
-              <p className="text-4xl font-bold">{formatCurrency(totalBalance)}</p>
+            <div className="mt-6 p-4 bg-card/30 rounded-xl backdrop-blur-sm border border-border">
+              <p className="text-sm text-muted-foreground mb-1">Συνολική Οφειλή</p>
+              <p className="text-4xl font-bold text-foreground">{formatCurrency(totalBalance)}</p>
             </div>
           ) : (
-            <div className="mt-6 flex items-center gap-2 text-green-300">
+            <div className="mt-6 flex items-center gap-2 text-green-500 dark:text-green-400">
               <CheckCircle2 className="w-5 h-5" />
               <span className="font-medium">Δεν έχετε εκκρεμείς οφειλές!</span>
             </div>
@@ -98,7 +98,7 @@ function OnlinePaymentsContent() {
       </div>
 
       {/* Coming Soon Banner */}
-      <Card className="border-2 border-dashed border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+      <Card className="border-2 border-dashed border-amber-500/30 bg-amber-500/5">
         <CardContent className="py-8">
           <div className="flex flex-col items-center text-center">
             <div className="p-4 bg-amber-100 dark:bg-amber-900/40 rounded-full mb-4">
@@ -125,7 +125,7 @@ function OnlinePaymentsContent() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="group hover:shadow-lg transition-shadow">
           <CardHeader>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <div className="p-3 bg-blue-500/10 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform">
               <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <CardTitle className="text-lg">Πληρωμή με Κάρτα</CardTitle>
@@ -137,7 +137,7 @@ function OnlinePaymentsContent() {
 
         <Card className="group hover:shadow-lg transition-shadow">
           <CardHeader>
-            <div className="p-3 bg-green-100 dark:bg-green-900/40 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <div className="p-3 bg-green-500/10 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform">
               <Building2 className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <CardTitle className="text-lg">Τραπεζική Μεταφορά</CardTitle>
@@ -149,7 +149,7 @@ function OnlinePaymentsContent() {
 
         <Card className="group hover:shadow-lg transition-shadow">
           <CardHeader>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <div className="p-3 bg-purple-500/10 rounded-xl w-fit mb-3 group-hover:scale-110 transition-transform">
               <Wallet className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <CardTitle className="text-lg">Ηλεκτρονικό Πορτοφόλι</CardTitle>
@@ -260,7 +260,7 @@ function OnlinePaymentsContent() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-lg font-bold ${apt.current_balance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                    <p className={`text-lg font-bold ${apt.current_balance > 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400'}`}>
                       {formatCurrency(apt.current_balance)}
                     </p>
                     <Badge variant={apt.current_balance > 0 ? 'destructive' : 'secondary'} className="text-xs">

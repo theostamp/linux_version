@@ -251,47 +251,47 @@ function MyApartmentContent() {
       {data.apartments_count > 1 && (
         <>
           {/* Summary for ALL apartments */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <Card className="bg-card border-blue-200 dark:border-blue-900 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-blue-600" />
+                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 Συνολική Εποπτεία ({data.apartments_count} Διαμερίσματα)
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-4">
                 {/* Total Balance */}
-                <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Συνολική Οφειλή</p>
                   <p className={`text-xl font-bold ${
                     data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0) > 0 
                       ? 'text-destructive' 
-                      : 'text-green-600'
+                      : 'text-green-600 dark:text-green-400'
                   }`}>
                     {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0))}
                   </p>
                 </div>
                 
                 {/* Total Paid */}
-                <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Συνολικές Πληρωμές</p>
-                  <p className="text-xl font-bold text-green-600">
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400">
                     {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.summary.total_paid, 0))}
                   </p>
                 </div>
                 
                 {/* Total Expenses */}
-                <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Συνολικές Δαπάνες</p>
-                  <p className="text-xl font-bold">
+                  <p className="text-xl font-bold text-foreground">
                     {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.summary.total_expenses, 0))}
                   </p>
                 </div>
                 
                 {/* Apartments with Debt */}
-                <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Με Οφειλή</p>
-                  <p className="text-xl font-bold">
+                  <p className="text-xl font-bold text-foreground">
                     {data.apartments.filter(apt => apt.current_balance > 0).length} / {data.apartments_count}
                   </p>
                 </div>
@@ -332,7 +332,7 @@ function MyApartmentContent() {
             <Euro className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${apartment.current_balance > 0 ? 'text-destructive' : apartment.current_balance < 0 ? 'text-green-600' : ''}`}>
+            <div className={`text-2xl font-bold ${apartment.current_balance > 0 ? 'text-destructive' : apartment.current_balance < 0 ? 'text-green-600 dark:text-green-400' : ''}`}>
               {formatCurrency(apartment.current_balance)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -347,7 +347,7 @@ function MyApartmentContent() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {formatCurrency(apartment.summary.total_paid)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -459,7 +459,7 @@ function MyApartmentContent() {
                     {apartment.payment_history.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell>{formatDate(payment.date)}</TableCell>
-                        <TableCell className="font-medium text-green-600">
+                        <TableCell className="font-medium text-green-600 dark:text-green-400">
                           {formatCurrency(payment.amount)}
                         </TableCell>
                         <TableCell>{translatePaymentMethod(payment.payment_method)}</TableCell>
@@ -555,7 +555,7 @@ function MyApartmentContent() {
                           </Badge>
                         </TableCell>
                         <TableCell>{transaction.description || '-'}</TableCell>
-                        <TableCell className={transaction.type === 'payment' ? 'text-green-600' : 'text-destructive'}>
+                        <TableCell className={transaction.type === 'payment' ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
                           {transaction.type === 'payment' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
                         </TableCell>
                         <TableCell>

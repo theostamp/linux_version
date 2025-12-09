@@ -49,9 +49,9 @@ const getOccupancyBadge = (apartment: ApartmentList) => {
   const category = getOccupancyCategory(apartment);
   switch (category) {
     case 'tenant':
-      return <Badge className="bg-indigo-100 text-indigo-800">Με ενοικιαστή</Badge>;
+      return <Badge className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Με ενοικιαστή</Badge>;
     case 'owner':
-      return <Badge className="bg-success/10 text-success">Ιδιοκατοίκηση</Badge>;
+      return <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Ιδιοκατοίκηση</Badge>;
     default:
       return <Badge className="bg-muted text-muted-foreground">Κενό</Badge>;
   }
@@ -64,7 +64,7 @@ const getStatusBadge = (apartment: ApartmentList) => {
     return <Badge className="bg-muted text-muted-foreground">{status}</Badge>;
   }
   if (normalized.includes('εκκρεμ') || normalized.includes('pending')) {
-    return <Badge className="bg-amber-100 text-amber-800">{status}</Badge>;
+    return <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400">{status}</Badge>;
   }
   return <Badge className="bg-primary/10 text-primary">{status}</Badge>;
 };
@@ -78,7 +78,7 @@ const isInternalManagerApartment = (apartment: ApartmentList, internalManagerApa
 
 // Internal Manager Badge Component
 const InternalManagerBadge = () => (
-  <Badge className="bg-amber-500 text-white flex items-center gap-1">
+  <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center gap-1 border border-amber-500/50">
     <Shield className="w-3 h-3" />
     Εσωτ. Διαχειριστής
   </Badge>
@@ -505,7 +505,7 @@ const ApartmentsPageContent = () => {
       {/* Main Content Area - Filters & Table */}
       <div className="space-y-6">
               {/* Filters Bar */}
-              <div className="bg-card rounded-xl border border-slate-200/50 p-4 shadow-sm">
+              <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
@@ -546,7 +546,7 @@ const ApartmentsPageContent = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-slate-200/50">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-border">
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Ταξινόμηση:</span>
@@ -606,14 +606,14 @@ const ApartmentsPageContent = () => {
 
               {/* Results */}
               {isLoading ? (
-                <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+                <div className="bg-card rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-4">
                     <RefreshCw className="w-8 h-8 animate-spin text-primary" />
                     <p>Φόρτωση διαμερισμάτων...</p>
                   </div>
                 </div>
               ) : filteredApartments.length === 0 ? (
-                <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+                <div className="bg-card rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
                   <Home className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
                   <p className="font-medium mb-2">Δεν βρέθηκαν διαμερίσματα με τα τρέχοντα φίλτρα.</p>
                   {searchTerm || occupancyFilter !== 'all' || statusFilter !== 'all' ? (
@@ -659,11 +659,11 @@ const ApartmentsPageContent = () => {
                                       <div className={cn(
                                         "w-10 h-10 rounded-lg flex items-center justify-center",
                                         isInternalManagerApartment(apartment, internalManagerApartment) 
-                                          ? 'bg-amber-100 dark:bg-amber-500/20' 
+                                          ? 'bg-amber-500/10' 
                                           : 'bg-primary/10'
                                       )}>
                                         {isInternalManagerApartment(apartment, internalManagerApartment) ? (
-                                          <Shield className="w-5 h-5 text-amber-600" />
+                                          <Shield className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                                         ) : (
                                           <Home className="w-5 h-5 text-primary" />
                                         )}
@@ -863,7 +863,7 @@ const ApartmentsPageContent = () => {
                               {getStatusBadge(apartment)}
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-slate-200/50 py-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-border py-4">
                             {renderContactBlock(
                               'Ιδιοκτήτης', 
                               apartment.owner_name, 
@@ -906,7 +906,7 @@ const ApartmentsPageContent = () => {
                               <p className="font-semibold text-foreground">{formatDate(apartment.updated_at)}</p>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center pt-2 border-t border-slate-200/50 mt-2">
+                          <div className="flex justify-between items-center pt-2 border-t border-border mt-2">
                             <p className="text-xs text-muted-foreground">
                               Δημιουργήθηκε: {formatDate(apartment.created_at)}
                             </p>

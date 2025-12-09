@@ -44,29 +44,29 @@ export interface UserRequestType {
 
 // 🔧 New: Maintenance Categories
 export const MAINTENANCE_CATEGORIES = [
-  { value: 'maintenance', label: 'Συντήρηση', icon: '🔧', color: 'text-blue-600' },
-  { value: 'cleaning', label: 'Καθαριότητα', icon: '🧹', color: 'text-green-600' },
-  { value: 'technical', label: 'Τεχνικό', icon: '⚙️', color: 'text-gray-600' },
-  { value: 'security', label: 'Ασφάλεια', icon: '🔒', color: 'text-red-600' },
-  { value: 'noise', label: 'Θόρυβος', icon: '🔊', color: 'text-pink-600' },
-  { value: 'other', label: 'Άλλο', icon: '📋', color: 'text-gray-500' },
+  { value: 'maintenance', label: 'Συντήρηση', icon: '🔧', color: 'text-blue-600 dark:text-blue-400' },
+  { value: 'cleaning', label: 'Καθαριότητα', icon: '🧹', color: 'text-green-600 dark:text-green-400' },
+  { value: 'technical', label: 'Τεχνικό', icon: '⚙️', color: 'text-gray-600 dark:text-gray-400' },
+  { value: 'security', label: 'Ασφάλεια', icon: '🔒', color: 'text-red-600 dark:text-red-400' },
+  { value: 'noise', label: 'Θόρυβος', icon: '🔊', color: 'text-pink-600 dark:text-pink-400' },
+  { value: 'other', label: 'Άλλο', icon: '📋', color: 'text-gray-500 dark:text-gray-400' },
 ];
 
 // 🔧 New: Priority Levels
 export const PRIORITY_LEVELS = [
-  { value: 'low', label: 'Χαμηλή', icon: '🟢', color: 'text-green-600' },
-  { value: 'medium', label: 'Μέτρια', icon: '🟡', color: 'text-yellow-600' },
-  { value: 'high', label: 'Υψηλή', icon: '🟠', color: 'text-orange-600' },
-  { value: 'urgent', label: 'Επείγουσα', icon: '🔴', color: 'text-red-600' },
+  { value: 'low', label: 'Χαμηλή', icon: '🟢', color: 'text-green-600 dark:text-green-400' },
+  { value: 'medium', label: 'Μέτρια', icon: '🟡', color: 'text-yellow-600 dark:text-yellow-400' },
+  { value: 'high', label: 'Υψηλή', icon: '🟠', color: 'text-orange-600 dark:text-orange-400' },
+  { value: 'urgent', label: 'Επείγουσα', icon: '🔴', color: 'text-red-600 dark:text-red-400' },
 ];
 
 // 🔧 New: Status Options
 export const REQUEST_STATUSES = [
-  { value: 'pending', label: 'Σε εκκρεμότητα', icon: '⏳', color: 'text-gray-600' },
-  { value: 'in_progress', label: 'Σε εξέλιξη', icon: '🔄', color: 'text-blue-600' },
-  { value: 'completed', label: 'Ολοκληρωμένο', icon: '✅', color: 'text-green-600' },
-  { value: 'rejected', label: 'Απορρίφθηκε', icon: '❌', color: 'text-red-600' },
-  { value: 'cancelled', label: 'Ακυρώθηκε', icon: '🚫', color: 'text-gray-500' },
+  { value: 'pending', label: 'Σε εκκρεμότητα', icon: '⏳', color: 'text-gray-600 dark:text-gray-400' },
+  { value: 'in_progress', label: 'Σε εξέλιξη', icon: '🔄', color: 'text-blue-600 dark:text-blue-400' },
+  { value: 'completed', label: 'Ολοκληρωμένο', icon: '✅', color: 'text-green-600 dark:text-green-400' },
+  { value: 'rejected', label: 'Απορρίφθηκε', icon: '❌', color: 'text-red-600 dark:text-red-400' },
+  { value: 'cancelled', label: 'Ακυρώθηκε', icon: '🚫', color: 'text-gray-500 dark:text-gray-400' },
 ];
 
 // 🔧 New: Location Types

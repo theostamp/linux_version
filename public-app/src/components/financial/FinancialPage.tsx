@@ -72,12 +72,12 @@ interface FinancialTabDefinition {
 }
 
 const DESKTOP_TAB_BASE_CLASSES =
-  'group flex flex-col items-center p-2.5 rounded-lg border border-slate-200/50 bg-white text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white';
-const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-slate-200/50';
+  'group flex flex-col items-center p-2.5 rounded-lg border border-border bg-card text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
+const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border';
 const MOBILE_TAB_BASE_CLASSES =
-  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200/50 bg-white text-sm text-slate-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-white';
-const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-slate-200/50';
-const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-white';
+  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-sm text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
+const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border';
+const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-background';
 const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
 const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
 const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
@@ -93,13 +93,13 @@ const FINANCIAL_TABS: FinancialTabDefinition[] = [
     description: 'Υπολογισμός & Έκδοση',
     icon: Calculator,
     theme: {
-      cardActive: 'bg-blue-50 ring-blue-200',
-      cardHover: 'hover:ring-blue-200/60 hover:bg-blue-50/40',
-      iconActive: 'bg-blue-100 text-blue-600',
-      iconHover: 'group-hover:bg-blue-100 group-hover:text-blue-600',
-      labelActive: 'text-blue-700',
-      labelHover: 'group-hover:text-blue-600',
-      descriptionActive: 'text-blue-600/80',
+      cardActive: 'bg-blue-500/10 ring-blue-500/30',
+      cardHover: 'hover:ring-blue-500/20 hover:bg-blue-500/5',
+      iconActive: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+      iconHover: 'group-hover:bg-blue-500/20 group-hover:text-blue-600 dark:group-hover:text-blue-400',
+      labelActive: 'text-blue-700 dark:text-blue-300',
+      labelHover: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
+      descriptionActive: 'text-blue-600/80 dark:text-blue-400/80',
     },
   },
   {
@@ -109,13 +109,13 @@ const FINANCIAL_TABS: FinancialTabDefinition[] = [
     description: 'Κατάσταση Διαμερισμάτων',
     icon: DollarSign,
     theme: {
-      cardActive: 'bg-emerald-50 ring-emerald-200',
-      cardHover: 'hover:ring-emerald-200/60 hover:bg-emerald-50/40',
-      iconActive: 'bg-emerald-100 text-emerald-600',
-      iconHover: 'group-hover:bg-emerald-100 group-hover:text-emerald-600',
-      labelActive: 'text-emerald-700',
-      labelHover: 'group-hover:text-emerald-600',
-      descriptionActive: 'text-emerald-600/80',
+      cardActive: 'bg-emerald-500/10 ring-emerald-500/30',
+      cardHover: 'hover:ring-emerald-500/20 hover:bg-emerald-500/5',
+      iconActive: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+      iconHover: 'group-hover:bg-emerald-500/20 group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
+      labelActive: 'text-emerald-700 dark:text-emerald-300',
+      labelHover: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
+      descriptionActive: 'text-emerald-600/80 dark:text-emerald-400/80',
     },
   },
   {
@@ -125,13 +125,13 @@ const FINANCIAL_TABS: FinancialTabDefinition[] = [
     description: 'Διαχείριση Εξόδων',
     icon: Plus,
     theme: {
-      cardActive: 'bg-green-50 ring-green-200',
-      cardHover: 'hover:ring-green-200/60 hover:bg-green-50/40',
-      iconActive: 'bg-green-100 text-green-600',
-      iconHover: 'group-hover:bg-green-100 group-hover:text-green-600',
-      labelActive: 'text-green-700',
-      labelHover: 'group-hover:text-green-600',
-      descriptionActive: 'text-green-600/80',
+      cardActive: 'bg-green-500/10 ring-green-500/30',
+      cardHover: 'hover:ring-green-500/20 hover:bg-green-500/5',
+      iconActive: 'bg-green-500/20 text-green-600 dark:text-green-400',
+      iconHover: 'group-hover:bg-green-500/20 group-hover:text-green-600 dark:group-hover:text-green-400',
+      labelActive: 'text-green-700 dark:text-green-300',
+      labelHover: 'group-hover:text-green-600 dark:group-hover:text-green-400',
+      descriptionActive: 'text-green-600/80 dark:text-green-400/80',
     },
   },
   {
@@ -141,13 +141,13 @@ const FINANCIAL_TABS: FinancialTabDefinition[] = [
     description: 'Καταγραφή Μετρήσεων',
     icon: TrendingUp,
     theme: {
-      cardActive: 'bg-orange-50 ring-orange-200',
-      cardHover: 'hover:ring-orange-200/60 hover:bg-orange-50/40',
-      iconActive: 'bg-orange-100 text-orange-600',
-      iconHover: 'group-hover:bg-orange-100 group-hover:text-orange-600',
-      labelActive: 'text-orange-700',
-      labelHover: 'group-hover:text-orange-600',
-      descriptionActive: 'text-orange-600/80',
+      cardActive: 'bg-orange-500/10 ring-orange-500/30',
+      cardHover: 'hover:ring-orange-500/20 hover:bg-orange-500/5',
+      iconActive: 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+      iconHover: 'group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400',
+      labelActive: 'text-orange-700 dark:text-orange-300',
+      labelHover: 'group-hover:text-orange-600 dark:group-hover:text-orange-400',
+      descriptionActive: 'text-orange-600/80 dark:text-orange-400/80',
     },
   },
   {
@@ -157,13 +157,13 @@ const FINANCIAL_TABS: FinancialTabDefinition[] = [
     description: 'Αρχείο Συναλλαγών',
     icon: History,
     theme: {
-      cardActive: 'bg-indigo-50 ring-indigo-200',
-      cardHover: 'hover:ring-indigo-200/60 hover:bg-indigo-50/40',
-      iconActive: 'bg-indigo-100 text-indigo-600',
-      iconHover: 'group-hover:bg-indigo-100 group-hover:text-indigo-600',
-      labelActive: 'text-indigo-700',
-      labelHover: 'group-hover:text-indigo-600',
-      descriptionActive: 'text-indigo-600/80',
+      cardActive: 'bg-indigo-500/10 ring-indigo-500/30',
+      cardHover: 'hover:ring-indigo-500/20 hover:bg-indigo-500/5',
+      iconActive: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
+      iconHover: 'group-hover:bg-indigo-500/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400',
+      labelActive: 'text-indigo-700 dark:text-indigo-300',
+      labelHover: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400',
+      descriptionActive: 'text-indigo-600/80 dark:text-indigo-400/80',
     },
   },
   {
@@ -173,13 +173,13 @@ const FINANCIAL_TABS: FinancialTabDefinition[] = [
     description: 'Οπτικοποίηση Δεδομένων',
     icon: PieChart,
     theme: {
-      cardActive: 'bg-purple-50 ring-purple-200',
-      cardHover: 'hover:ring-purple-200/60 hover:bg-purple-50/40',
-      iconActive: 'bg-purple-100 text-purple-600',
-      iconHover: 'group-hover:bg-purple-100 group-hover:text-purple-600',
-      labelActive: 'text-purple-700',
-      labelHover: 'group-hover:text-purple-600',
-      descriptionActive: 'text-purple-600/80',
+      cardActive: 'bg-purple-500/10 ring-purple-500/30',
+      cardHover: 'hover:ring-purple-500/20 hover:bg-purple-500/5',
+      iconActive: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+      iconHover: 'group-hover:bg-purple-500/20 group-hover:text-purple-600 dark:group-hover:text-purple-400',
+      labelActive: 'text-purple-700 dark:text-purple-300',
+      labelHover: 'group-hover:text-purple-600 dark:group-hover:text-purple-400',
+      descriptionActive: 'text-purple-600/80 dark:text-purple-400/80',
     },
   },
 ];
@@ -583,14 +583,14 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </div>
         
         {/* Context Banner - Building & Month */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-50 rounded-lg shadow-md">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-500/10 rounded-lg shadow-md">
           {/* Building Info */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-md shadow-sm">
-              <Building2 className="h-5 w-5 text-indigo-600" />
+            <div className="p-2 bg-indigo-500/20 rounded-md shadow-sm">
+              <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <p className="text-lg font-bold text-blue-700 font-condensed">
+              <p className="text-lg font-bold text-blue-700 dark:text-blue-300 font-condensed">
                 {currentBuildingName}
               </p>
             </div>
@@ -598,8 +598,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           
           {/* Month Selector */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-md shadow-sm">
-              <Calendar className="h-5 w-5 text-indigo-600" />
+            <div className="p-2 bg-indigo-500/20 rounded-md shadow-sm">
+              <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -615,7 +615,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   }}
                   variant="outline"
                   size="sm"
-                  className="bg-white hover:bg-indigo-50 border-0 shadow-sm text-indigo-600 hover:text-indigo-700 transition-colors rounded-md"
+                  className="bg-card hover:bg-indigo-500/10 border-0 shadow-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors rounded-md"
                 >
                   Τρέχων
                 </Button>
@@ -634,7 +634,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 return (
                   <>
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-green-700">
+                    <span className="text-sm font-medium text-green-700 dark:text-green-400">
                       Δεδομένα ενημερωμένα
                     </span>
                   </>
@@ -646,7 +646,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 return (
                   <>
                     <div className="w-3 h-3 bg-amber-400 rounded-full"></div>
-                    <span className="text-sm font-medium text-amber-700 flex items-center gap-1">
+                    <span className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1">
                       <AlertTriangle className="h-4 w-4" /> Προβολή ιστορικών δεδομένων ({monthName})
                     </span>
                   </>
@@ -831,8 +831,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           className="md:col-span-1 md:row-span-2 h-fit sticky top-4 order-1 md:order-2"
           title={
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-indigo-600" />
-              <span className="text-lg font-bold text-slate-900">Επισκόπηση</span>
+              <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <span className="text-lg font-bold text-foreground">Επισκόπηση</span>
             </div>
           }
           description="Συνολική οικονομική εικόνα του κτιρίου"
@@ -851,15 +851,15 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       <ConditionalRender permission="expense_manage">
         {expenseModal.isOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
             onClick={handleExpenseCancel}
           >
             <div 
-              className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+              className="bg-card border border-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Νέα Δαπάνη</h2>
+                <h2 className="text-xl font-semibold text-foreground">Νέα Δαπάνη</h2>
                 <Button 
                   variant="ghost" 
                   size="sm"

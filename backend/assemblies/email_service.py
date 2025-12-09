@@ -19,35 +19,46 @@ from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
 logger = logging.getLogger(__name__)
 
 
-def generate_secure_vote_token(attendee_id: int, assembly_id: int) -> str:
+def generate_secure_vote_token(attendee_id, assembly_id) -> str:
     """
     Δημιουργεί ασφαλές token για email voting.
     Το token επιβεβαιώνει την ταυτότητα του ψηφοφόρου.
+    Supports both UUID and integer IDs.
     """
     secret = settings.SECRET_KEY
-    message = f"{attendee_id}:{assembly_id}:{timezone.now().date()}"
+    # Convert to string in case of UUID
+    attendee_str = str(attendee_id)
+    assembly_str = str(assembly_id)
+    
+    message = f"{attendee_str}:{assembly_str}:{timezone.now().date()}"
     signature = hmac.new(
         secret.encode(),
         message.encode(),
         hashlib.sha256
     ).digest()
-    token = base64.urlsafe_b64encode(signature).decode()[:32]
-    return f"{attendee_id}_{assembly_id}_{token}"
+    # Use only alphanumeric characters to avoid splitting issues
+    token = base64.urlsafe_b64encode(signature).decode()[:32].replace('_', 'X').replace('-', 'Y')
+    return f"{attendee_str}_{assembly_str}_{token}"
 
 
-def verify_vote_token(token: str) -> tuple[int, int] | None:
+def verify_vote_token(token: str) -> tuple[str, str] | None:
     """
     Επαληθεύει το token ψηφοφορίας.
-    Επιστρέφει (attendee_id, assembly_id) ή None αν είναι άκυρο.
+    Επιστρέφει (attendee_id, assembly_id) ως strings ή None αν είναι άκυρο.
     """
     try:
+        # Split only on first 2 underscores to handle UUIDs with hyphens
         parts = token.split('_')
-        if len(parts) != 3:
+        if len(parts) < 3:
             return None
         
-        attendee_id = int(parts[0])
-        assembly_id = int(parts[1])
-        provided_signature = parts[2]
+        # For UUIDs, the format is: uuid_uuid_signature
+        # UUIDs have format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (no underscores)
+        # So we can safely split by underscore
+        attendee_id = parts[0]
+        assembly_id = parts[1]
+        # Join remaining parts in case signature had underscores (shouldn't happen now)
+        provided_signature = '_'.join(parts[2:])
         
         # Regenerate expected signature
         secret = settings.SECRET_KEY
@@ -57,7 +68,7 @@ def verify_vote_token(token: str) -> tuple[int, int] | None:
             message.encode(),
             hashlib.sha256
         ).digest()
-        expected_token = base64.urlsafe_b64encode(expected_signature).decode()[:32]
+        expected_token = base64.urlsafe_b64encode(expected_signature).decode()[:32].replace('_', 'X').replace('-', 'Y')
         
         if hmac.compare_digest(provided_signature, expected_token):
             return (attendee_id, assembly_id)

@@ -128,138 +128,138 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
   if (showExpenseForm) {
     return (
       <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">Νέος Μηνιαίος Λογαριασμός</h2>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowExpenseForm(false)}
+            >
+              Ακύρωση
+            </Button>
+          </div>
+          <ExpenseForm
+            buildingId={buildingId || 1}
+            onSuccess={() => {
+              setShowExpenseForm(false);
+              operationalExpensesQ.refetch();
+            }}
+            onCancel={() => setShowExpenseForm(false)}
+          />
+        </div>
+      );
+    }
+  
+    return (
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Νέος Μηνιαίος Λογαριασμός</h2>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowExpenseForm(false)}
-          >
-            Ακύρωση
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">Λειτουργικές Δαπάνες</h2>
+            <p className="text-muted-foreground">
+              Διαχείριση μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
+            </p>
+          </div>
+          <Button onClick={() => setShowExpenseForm(true)}>
+            <FileText className="w-4 h-4 mr-2" />
+            Νέος Λογαριασμός
           </Button>
         </div>
-        <ExpenseForm
-          buildingId={buildingId || 1}
-          onSuccess={() => {
-            setShowExpenseForm(false);
-            operationalExpensesQ.refetch();
-          }}
-          onCancel={() => setShowExpenseForm(false)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Λειτουργικές Δαπάνες</h2>
-          <p className="text-muted-foreground">
-            Διαχείριση μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
-          </p>
+  
+        {/* Stats for Operational Expenses */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Συνολικές Δαπάνες</CardTitle>
+              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">€{Math.round(totalOperationalExpenses).toLocaleString('el-GR')}</div>
+              <p className="text-xs text-muted-foreground">Φέτος</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Αριθμός Δαπανών</CardTitle>
+              <div className="p-2 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
+                <FileText className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{expenseRows.length}</div>
+              <p className="text-xs text-muted-foreground">Καταχωρήσεις</p>
+            </CardContent>
+          </Card>
+  
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Μέσος Όρος/Μήνα</CardTitle>
+              <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+                <Calendar className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                €{expenseRows.length > 0 ? Math.round(totalOperationalExpenses / Math.max(expenseRows.length, 1)).toLocaleString('el-GR') : 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Ανά καταχώρηση</p>
+            </CardContent>
+          </Card>
+  
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Τελευταία Ενημέρωση</CardTitle>
+              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                <Clock className="w-4 h-4" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {expenseRows.length > 0 ? getRelativeTimeEl(new Date(expenseRows[0]?.date || new Date())) : 'Καμία'}
+              </div>
+              <p className="text-xs text-muted-foreground">Δαπάνη</p>
+            </CardContent>
+          </Card>
         </div>
-        <Button onClick={() => setShowExpenseForm(true)}>
-          <FileText className="w-4 h-4 mr-2" />
-          Νέος Λογαριασμός
-        </Button>
-      </div>
-
-      {/* Stats for Operational Expenses */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  
+        {/* Recent Operational Expenses */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Συνολικές Δαπάνες</CardTitle>
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-              <TrendingUp className="w-4 h-4" />
-            </div>
+          <CardHeader>
+            <CardTitle>Πρόσφατες Λειτουργικές Δαπάνες</CardTitle>
+            <CardDescription>
+              Τελευταίες καταχωρήσεις μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">€{Math.round(totalOperationalExpenses).toLocaleString('el-GR')}</div>
-            <p className="text-xs text-muted-foreground">Φέτος</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Αριθμός Δαπανών</CardTitle>
-            <div className="p-2 rounded-lg bg-green-50 text-green-600">
-              <FileText className="w-4 h-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{expenseRows.length}</div>
-            <p className="text-xs text-muted-foreground">Καταχωρήσεις</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Μέσος Όρος/Μήνα</CardTitle>
-            <div className="p-2 rounded-lg bg-yellow-50 text-yellow-600">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              €{expenseRows.length > 0 ? Math.round(totalOperationalExpenses / Math.max(expenseRows.length, 1)).toLocaleString('el-GR') : 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Ανά καταχώρηση</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Τελευταία Ενημέρωση</CardTitle>
-            <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
-              <Clock className="w-4 h-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {expenseRows.length > 0 ? getRelativeTimeEl(new Date(expenseRows[0]?.date || new Date())) : 'Καμία'}
-            </div>
-            <p className="text-xs text-muted-foreground">Δαπάνη</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Operational Expenses */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Πρόσφατες Λειτουργικές Δαπάνες</CardTitle>
-          <CardDescription>
-            Τελευταίες καταχωρήσεις μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {operationalExpensesQ.isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : expenseRows.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground mb-4">Δεν υπάρχουν μηνιαίοι λογαριασμοί.</p>
-              <Button onClick={() => setShowExpenseForm(true)}>
-                Προσθήκη πρώτου λογαριασμού
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {expenseRows.slice(0, 5).map((expense: OperationalExpense) => (
-                <div key={expense.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 rounded-lg bg-blue-50">
-                      <FileText className="w-4 h-4 text-blue-600" />
+            {operationalExpensesQ.isLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : expenseRows.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground mb-4">Δεν υπάρχουν μηνιαίοι λογαριασμοί.</p>
+                <Button onClick={() => setShowExpenseForm(true)}>
+                  Προσθήκη πρώτου λογαριασμού
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {expenseRows.slice(0, 5).map((expense: OperationalExpense) => (
+                  <div key={expense.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-2 rounded-lg bg-blue-500/10">
+                        <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{expense.title || 'Λειτουργική Δαπάνη'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(expense.date).toLocaleDateString('el-GR')}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{expense.title || 'Λειτουργική Δαπάνη'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(expense.date).toLocaleDateString('el-GR')}
-                      </p>
-                    </div>
-                  </div>
                   <div className="flex items-center space-x-3">
                     <div className="text-right">
                       <p className="text-sm font-bold">€{Number(expense.amount).toLocaleString('el-GR')}</p>
@@ -277,7 +277,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
                       size="sm"
                       onClick={() => handleDeleteExpense(expense.id, expense.title || 'Λειτουργική Δαπάνη')}
                       disabled={deletingExpenseId === expense.id}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
                       title="Διαγραφή δαπάνης"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -605,8 +605,8 @@ function MaintenanceDashboardContent() {
     const d = getCompletionDate(latestCompletedScheduled) ?? new Date();
     activityItems.push({
       key: `scheduled-${latestCompletedScheduled.id}`,
-      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
-      bgClass: 'bg-green-50',
+      icon: <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />,
+      bgClass: 'bg-green-500/10',
       text: latestCompletedScheduled?.title
         ? `Ολοκληρώθηκε έργο: ${latestCompletedScheduled.title}`
         : 'Ολοκληρώθηκε Προγραμματισμός Έργου',
@@ -620,8 +620,8 @@ function MaintenanceDashboardContent() {
     const contractorName: string | undefined = latestPendingReceipt?.contractor_name || latestPendingReceipt?.contractor?.name;
     activityItems.push({
       key: `receipt-${latestPendingReceipt.id}`,
-      icon: <Clock className="w-4 h-4 text-yellow-600" />,
-      bgClass: 'bg-yellow-50',
+      icon: <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />,
+      bgClass: 'bg-yellow-500/10',
       text: contractorName
         ? `Προστέθηκε νέα απόδειξη από ${contractorName}`
         : 'Προστέθηκε νέα απόδειξη συντήρησης',
@@ -634,8 +634,8 @@ function MaintenanceDashboardContent() {
     const d = toDate(latestContractor?.created_at) || toDate(latestContractor?.updated_at) || new Date();
     activityItems.push({
       key: `contractor-${latestContractor.id}`,
-      icon: <Users className="w-4 h-4 text-blue-600" />,
-      bgClass: 'bg-blue-50',
+      icon: <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+      bgClass: 'bg-blue-500/10',
       text: latestContractor?.name
         ? `Προστέθηκε νέο συνεργείο: ${latestContractor.name}`
         : 'Προστέθηκε νέο συνεργείο',
@@ -693,10 +693,10 @@ function MaintenanceDashboardContent() {
     className?: string;
   }) => {
     const colorClasses = {
-      default: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
-      success: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
-      warning: "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400",
-      danger: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400",
+      default: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      danger: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     };
 
     const content = (
@@ -741,7 +741,7 @@ function MaintenanceDashboardContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Υπηρεσίες & Δαπάνες</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Υπηρεσίες & Δαπάνες</h1>
           <p className="text-muted-foreground">
             Διαχείριση Συνεργείων,  Πληρωμές Δαπανών και Προγραμματισμένων Έργων
           </p>
@@ -848,27 +848,27 @@ function MaintenanceDashboardContent() {
           title="Γρήγορες Ενέργειες"
           header={
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/maintenance/receipts/new">
                   <FileText className="w-6 h-6 mb-2 text-primary" />
                   <span>Ανέβασμα Απόδειξης</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/maintenance/contractors">
-                  <Users className="w-6 h-6 mb-2 text-blue-600" />
+                  <Users className="w-6 h-6 mb-2 text-blue-600 dark:text-blue-400" />
                   <span>Διαχείριση Συνεργείων</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/maintenance/scheduled">
-                  <Calendar className="w-6 h-6 mb-2 text-indigo-600" />
+                  <Calendar className="w-6 h-6 mb-2 text-indigo-600 dark:text-indigo-400" />
                   <span>Προγραμματισμένα Έργα</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-accent hover:text-accent-foreground border-slate-200/60">
+              <Button asChild variant="outline" className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border">
                 <Link href="/maintenance/reports">
-                  <TrendingUp className="w-6 h-6 mb-2 text-emerald-600" />
+                  <TrendingUp className="w-6 h-6 mb-2 text-emerald-600 dark:text-emerald-400" />
                   <span>Reports</span>
                 </Link>
               </Button>
@@ -885,12 +885,12 @@ function MaintenanceDashboardContent() {
                 <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
               ) : (
                 activityItems.slice(0, 3).map((item) => (
-                  <div key={item.key} className="flex items-center space-x-3 p-2 hover:bg-accent/50 rounded-lg transition-colors">
+                  <div key={item.key} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg transition-colors">
                     <div className={`p-2 rounded-lg ${item.bgClass} shrink-0`}>
                       {item.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.text}</p>
+                      <p className="text-sm font-medium truncate text-foreground">{item.text}</p>
                       <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
                     </div>
                     <Badge variant={item.badge.variant} className="shrink-0">{item.badge.label}</Badge>

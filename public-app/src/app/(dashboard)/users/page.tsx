@@ -36,10 +36,10 @@ export default function UsersPage() {
     }
   }, [searchParams]);
   
-  if (!hasPermission) {
+    if (!hasPermission) {
     return (
       <div className="container mx-auto py-6">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
           Δεν έχετε δικαίωμα πρόσβασης σε αυτή τη σελίδα. Μόνο οι διαχειριστές μπορούν να προσκαλούν χρήστες.
         </div>
       </div>
@@ -50,8 +50,8 @@ export default function UsersPage() {
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Διαχείριση Χρηστών</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-foreground">Διαχείριση Χρηστών</h1>
+            <p className="text-muted-foreground mt-2">
               Προσκαλέστε νέους χρήστες και διαχειριστείτε τις προσκλήσεις
             </p>
           </div>
@@ -65,18 +65,18 @@ export default function UsersPage() {
           </Button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Καταχωρημένοι Χρήστες</h2>
+            <Users className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-xl font-semibold text-foreground">Καταχωρημένοι Χρήστες</h2>
           </div>
           <UsersList />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Mail className="h-5 w-5 text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Προσκλήσεις</h2>
+            <Mail className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-xl font-semibold text-foreground">Προσκλήσεις</h2>
           </div>
           <InvitationsList />
         </div>
