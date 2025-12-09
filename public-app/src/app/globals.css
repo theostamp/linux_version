@@ -47,31 +47,31 @@
 }
 
 .dark {
-  /* Dark Mode · Redesigned Flat Palette */
-  --background: 213 33% 11%;         /* #121a24 - Main Background */
-  --foreground: 0 0% 88%;            /* #e0e0e0 - Primary Text */
+  /* Dark Mode · Redesigned Flat Palette v2 */
+  --background: 215 28% 14%;         /* Main BG - Soft Dark Grey (not black) */
+  --foreground: 0 0% 88%;            /* Primary Text */
 
-  --primary: 215 43% 51%;            /* #4a7abb - Desaturated Corporate Blue */
-  --primary-foreground: 0 0% 100%;   /* White text on primary */
-  --primary-hover: 215 43% 45%;      /* Slightly darker for hover */
+  --primary: 215 43% 51%;            /* Corporate Blue */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 215 43% 45%;
 
-  --secondary: 215 29% 15%;          /* #1a2330 - Secondary Background */
+  --secondary: 215 25% 19%;          /* Secondary BG */
   --secondary-foreground: 0 0% 88%;
 
-  --muted: 215 29% 15%;              /* #1a2330 */
-  --muted-foreground: 212 11% 72%;   /* #b0b8c1 - Secondary Text */
+  --muted: 215 25% 19%;              /* Muted areas */
+  --muted-foreground: 212 11% 72%;
 
-  --accent: 219 30% 24%;             /* #2b3850 - Surface Hover / Highlight */
-  --accent-foreground: 0 0% 88%;
+  --accent: 215 25% 24%;             /* Highlights */
+  --accent-foreground: 0 0% 95%;
 
-  --border: 219 30% 24%;             /* #2b3850 */
-  --input: 219 30% 24%;
+  --border: 215 20% 22%;             /* Subtle Borders */
+  --input: 215 20% 22%;
   --ring: 215 43% 51%;
 
-  --card: 214 27% 18%;               /* #212c3a - Surface/Panels */
+  --card: 215 25% 19%;               /* Sidebar/Header - Lighter than BG */
   --card-foreground: 0 0% 88%;
   
-  --popover: 214 27% 18%;            /* #212c3a */
+  --popover: 215 25% 19%;
   --popover-foreground: 0 0% 88%;
 
   --destructive: 357 72% 55%;
