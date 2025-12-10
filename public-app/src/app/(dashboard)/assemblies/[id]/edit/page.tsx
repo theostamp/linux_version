@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Users, ArrowLeft, Calendar, Clock, MapPin, Video,
@@ -12,7 +11,7 @@ import {
 
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { useCreateAssembly } from '@/hooks/useAssemblies';
+import { useAssembly, useUpdateAssembly } from '@/hooks/useAssemblies';
 import type { CreateAssemblyPayload, AgendaItemType, VotingType } from '@/lib/api';
 
 import AuthGate from '@/components/AuthGate';
@@ -209,16 +208,20 @@ function AgendaItemCard({
   );
 }
 
-function CreateAssemblyContent() {
+function EditAssemblyContent() {
   const router = useRouter();
+  const params = useParams();
+  const assemblyId = params.id as string;
+  
   const { user } = useAuth();
-  const { currentBuilding, buildings } = useBuilding();
-  const createAssembly = useCreateAssembly();
+  const { buildings } = useBuilding();
+  const { data: assembly, isLoading, error } = useAssembly(assemblyId);
+  const updateAssembly = useUpdateAssembly();
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    building: currentBuilding?.id || 0,
+    building: 0,
     scheduled_date: '',
     scheduled_time: '19:00',
     estimated_duration: 60,
@@ -231,29 +234,102 @@ function CreateAssemblyContent() {
     pre_voting_end_date: '',
   });
 
-  const [agendaItems, setAgendaItems] = useState<AgendaItemForm[]>([
-    {
-      id: '1',
-      order: 1,
-      title: 'Έγκριση πρακτικών προηγούμενης συνέλευσης',
-      description: '',
-      item_type: 'approval',
-      estimated_duration: 5,
-      voting_type: 'simple_majority',
-      allows_pre_voting: false,
+  const [agendaItems, setAgendaItems] = useState<AgendaItemForm[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Pre-fill form with assembly data
+  useEffect(() => {
+    if (assembly && !isInitialized) {
+      setFormData({
+        title: assembly.title || '',
+        description: assembly.description || '',
+        building: assembly.building,
+        scheduled_date: assembly.scheduled_date || '',
+        scheduled_time: assembly.scheduled_time || '19:00',
+        estimated_duration: assembly.estimated_duration || 60,
+        is_physical: assembly.is_physical,
+        is_online: assembly.is_online,
+        location: assembly.location || '',
+        meeting_link: assembly.meeting_link || '',
+        pre_voting_enabled: assembly.pre_voting_enabled,
+        pre_voting_start_date: assembly.pre_voting_start_date || '',
+        pre_voting_end_date: assembly.pre_voting_end_date || '',
+      });
+
+      // Convert existing agenda items to form format
+      if (assembly.agenda_items && assembly.agenda_items.length > 0) {
+        setAgendaItems(
+          assembly.agenda_items.map((item) => ({
+            id: item.id,
+            order: item.order,
+            title: item.title,
+            description: item.description || '',
+            item_type: item.item_type,
+            estimated_duration: item.estimated_duration || 10,
+            voting_type: item.voting_type || 'simple_majority',
+            allows_pre_voting: item.allows_pre_voting,
+          }))
+        );
+      }
+
+      setIsInitialized(true);
     }
-  ]);
+  }, [assembly, isInitialized]);
 
   const canManage = hasInternalManagerAccess(user);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-500">Φόρτωση συνέλευσης...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !assembly) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900">Δεν βρέθηκε η συνέλευση</h2>
+        <p className="text-gray-500 mt-2">Η συνέλευση δεν υπάρχει ή δεν έχετε πρόσβαση.</p>
+        <Button variant="outline" onClick={() => router.push('/assemblies')} className="mt-4">
+          Επιστροφή στις Συνελεύσεις
+        </Button>
+      </div>
+    );
+  }
+
+  // Access check
   if (!canManage) {
-    router.push('/assemblies');
+    router.push(`/assemblies/${assemblyId}`);
     return null;
+  }
+
+  // Check if assembly can be edited (not started or ended)
+  const canEdit = assembly.status === 'scheduled' || assembly.status === 'invitation_sent';
+  if (!canEdit) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <AlertCircle className="w-12 h-12 text-amber-400 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900">Δεν μπορεί να επεξεργαστεί</h2>
+        <p className="text-gray-500 mt-2">
+          Η συνέλευση έχει ξεκινήσει ή ολοκληρωθεί και δεν μπορεί να τροποποιηθεί.
+        </p>
+        <Button variant="outline" onClick={() => router.push(`/assemblies/${assemblyId}`)} className="mt-4">
+          Επιστροφή στη Συνέλευση
+        </Button>
+      </div>
+    );
   }
 
   const addAgendaItem = () => {
     const newItem: AgendaItemForm = {
-      id: Date.now().toString(),
+      id: `new-${Date.now()}`,
       order: agendaItems.length + 1,
       title: '',
       description: '',
@@ -281,31 +357,8 @@ function CreateAssemblyContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Calculate pre-voting dates if not set
-    let preVotingStartDate = formData.pre_voting_start_date;
-    let preVotingEndDate = formData.pre_voting_end_date;
-
-    if (formData.pre_voting_enabled && formData.scheduled_date) {
-      const assemblyDate = new Date(formData.scheduled_date);
-      
-      if (!preVotingStartDate) {
-        // Default: voting starts 7 days before assembly
-        const startDate = new Date(assemblyDate);
-        startDate.setDate(startDate.getDate() - 7);
-        preVotingStartDate = startDate.toISOString().split('T')[0];
-      }
-      
-      if (!preVotingEndDate) {
-        // Default: voting closes 1 day BEFORE assembly (backend requirement)
-        const endDate = new Date(assemblyDate);
-        endDate.setDate(endDate.getDate() - 1);
-        preVotingEndDate = endDate.toISOString().split('T')[0];
-      }
-    }
-
-    const payload: CreateAssemblyPayload = {
-      title: formData.title || `Γενική Συνέλευση - ${new Date(formData.scheduled_date).toLocaleDateString('el-GR')}`,
-      building: formData.building,
+    const payload: Partial<CreateAssemblyPayload> = {
+      title: formData.title,
       description: formData.description,
       scheduled_date: formData.scheduled_date,
       scheduled_time: formData.scheduled_time,
@@ -315,8 +368,8 @@ function CreateAssemblyContent() {
       location: formData.location,
       meeting_link: formData.meeting_link,
       pre_voting_enabled: formData.pre_voting_enabled,
-      pre_voting_start_date: preVotingStartDate,
-      pre_voting_end_date: preVotingEndDate,
+      pre_voting_start_date: formData.pre_voting_start_date || undefined,
+      pre_voting_end_date: formData.pre_voting_end_date || undefined,
       agenda_items: agendaItems.filter(item => item.title.trim()).map(item => ({
         order: item.order,
         title: item.title,
@@ -329,8 +382,8 @@ function CreateAssemblyContent() {
     };
 
     try {
-      const assembly = await createAssembly.mutateAsync(payload);
-      router.push(`/assemblies/${assembly.id}`);
+      await updateAssembly.mutateAsync({ id: assemblyId, payload });
+      router.push(`/assemblies/${assemblyId}`);
     } catch (error) {
       // Error handled by mutation
     }
@@ -346,7 +399,7 @@ function CreateAssemblyContent() {
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/assemblies')}
+          onClick={() => router.push(`/assemblies/${assemblyId}`)}
           className="mb-2 -ml-2"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
@@ -358,8 +411,8 @@ function CreateAssemblyContent() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Νέα Συνέλευση</h1>
-            <p className="text-gray-500">Δημιουργήστε μια νέα γενική συνέλευση</p>
+            <h1 className="text-2xl font-bold text-gray-900">Επεξεργασία Συνέλευσης</h1>
+            <p className="text-gray-500">{assembly.title}</p>
           </div>
         </div>
       </div>
@@ -532,9 +585,7 @@ function CreateAssemblyContent() {
                 value={formData.pre_voting_start_date}
                 onChange={(e) => setFormData({ ...formData, pre_voting_start_date: e.target.value })}
                 className="mt-1"
-                placeholder="7 ημέρες πριν"
               />
-              <p className="text-xs text-indigo-500 mt-1">Αφήστε κενό για 7 ημέρες πριν</p>
             </div>
             <div>
               <Label>Λήξη pre-voting</Label>
@@ -543,9 +594,7 @@ function CreateAssemblyContent() {
                 value={formData.pre_voting_end_date}
                 onChange={(e) => setFormData({ ...formData, pre_voting_end_date: e.target.value })}
                 className="mt-1"
-                placeholder="3 ημέρες μετά"
               />
-              <p className="text-xs text-indigo-500 mt-1">Αφήστε κενό για 3 ημέρες μετά τη συνέλευση</p>
             </div>
           </div>
         )}
@@ -589,7 +638,7 @@ function CreateAssemblyContent() {
         {agendaItems.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <FileText className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-            <p>Δεν έχετε προσθέσει θέματα.</p>
+            <p>Δεν υπάρχουν θέματα στη διάταξη.</p>
             <Button
               type="button"
               variant="outline"
@@ -608,16 +657,16 @@ function CreateAssemblyContent() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push('/assemblies')}
+          onClick={() => router.push(`/assemblies/${assemblyId}`)}
         >
           Ακύρωση
         </Button>
         <Button
           type="submit"
-          disabled={createAssembly.isPending || !formData.scheduled_date}
+          disabled={updateAssembly.isPending || !formData.scheduled_date}
           className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
         >
-          {createAssembly.isPending ? (
+          {updateAssembly.isPending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Αποθήκευση...
@@ -625,7 +674,7 @@ function CreateAssemblyContent() {
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Δημιουργία Συνέλευσης
+              Αποθήκευση Αλλαγών
             </>
           )}
         </Button>
@@ -634,11 +683,11 @@ function CreateAssemblyContent() {
   );
 }
 
-export default function CreateAssemblyPage() {
+export default function EditAssemblyPage() {
   return (
     <AuthGate role="any">
       <SubscriptionGate requiredStatus="any">
-        <CreateAssemblyContent />
+        <EditAssemblyContent />
       </SubscriptionGate>
     </AuthGate>
   );

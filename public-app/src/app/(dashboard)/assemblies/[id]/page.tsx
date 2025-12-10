@@ -528,14 +528,14 @@ function AssemblyDetailContent() {
       {/* Admin actions at bottom */}
       {canManage && (
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-          {/* TODO: Enable when edit page is implemented
-          <Button variant="outline" asChild>
-            <Link href={`/assemblies/${assembly.id}/edit`}>
-              <Edit className="w-4 h-4 mr-2" />
-              Επεξεργασία
-            </Link>
-          </Button>
-          */}
+          {(assembly.status === 'scheduled' || assembly.status === 'invitation_sent') && (
+            <Button variant="outline" asChild>
+              <Link href={`/assemblies/${assembly.id}/edit`}>
+                <Edit className="w-4 h-4 mr-2" />
+                Επεξεργασία
+              </Link>
+            </Button>
+          )}
           <Button 
             variant="outline" 
             onClick={handleDelete}
