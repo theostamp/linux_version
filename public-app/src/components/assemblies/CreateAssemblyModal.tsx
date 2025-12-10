@@ -43,7 +43,7 @@ export interface ProjectDataForAssembly {
 interface CreateAssemblyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (assemblyId: number) => void;
+  onSuccess?: (assemblyId: string) => void;
   projectData?: ProjectDataForAssembly;
 }
 

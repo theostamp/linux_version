@@ -71,7 +71,7 @@ export default function NewProjectPage() {
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const [isAssemblyModalOpen, setIsAssemblyModalOpen] = useState(false);
   const [createGeneralAssembly, setCreateGeneralAssembly] = useState(false);
-  const [linkedAssemblyId, setLinkedAssemblyId] = useState<number | null>(null);
+  const [linkedAssemblyId, setLinkedAssemblyId] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
