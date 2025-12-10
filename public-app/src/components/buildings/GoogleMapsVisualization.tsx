@@ -434,13 +434,13 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
   }
 
   return (
-    <Card>
+    <Card className="bg-card border-border shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-foreground">
+          <MapPin className="w-5 h-5 text-primary" />
           Χάρτης Κτιρίων
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           {buildingsWithCoordinates.length > 0
             ? `${buildingsWithCoordinates.length} κτίρια με συντεταγμένες`
             : 'Δεν υπάρχουν κτίρια με συντεταγμένες για εμφάνιση'}
@@ -469,7 +469,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
           <div className="relative">
             <div
               ref={setMapContainer}
-              className="w-full h-[600px] rounded-lg border"
+              className="w-full h-[600px] rounded-lg border border-border"
               style={{ minHeight: '600px' }}
             />
             {mapLoaded && (

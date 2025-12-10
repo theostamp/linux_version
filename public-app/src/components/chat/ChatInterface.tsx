@@ -47,22 +47,22 @@ type ChatTab = 'group' | 'users' | 'direct';
 const roleConfig: Record<SenderRole, { label: string; color: string; icon: React.ReactNode }> = {
   manager: { 
     label: 'Διαχειριστής', 
-    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    color: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
     icon: <Crown className="w-3 h-3" />
   },
   internal_manager: { 
     label: 'Εσωτ. Διαχειριστής', 
-    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    color: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
     icon: <Settings className="w-3 h-3" />
   },
   resident: { 
     label: 'Κάτοικος', 
-    color: 'bg-sky-100 text-sky-800 border-sky-200',
+    color: 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20',
     icon: <Home className="w-3 h-3" />
   },
   other: { 
     label: 'Χρήστης', 
-    color: 'bg-gray-100 text-gray-800 border-gray-200',
+    color: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-muted dark:text-muted-foreground dark:border-border',
     icon: <User className="w-3 h-3" />
   },
 };
@@ -135,7 +135,7 @@ function ChatMessageItem({
             'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',
             isOwn 
               ? 'bg-primary text-primary-foreground' 
-              : 'bg-slate-200 text-slate-700'
+              : 'bg-slate-200 text-slate-700 dark:bg-muted dark:text-muted-foreground'
           )}>
             {message.sender_name?.charAt(0).toUpperCase() || '?'}
           </div>
@@ -150,7 +150,7 @@ function ChatMessageItem({
         {/* Sender name and role (only for first in group) */}
         {isFirstInGroup && !isOwn && (
           <div className="flex items-center gap-2 mb-1 px-1">
-            <span className="text-xs font-semibold text-slate-700">
+            <span className="text-xs font-semibold text-slate-700 dark:text-foreground">
               {message.sender_name}
             </span>
             <span className={cn(
@@ -168,7 +168,7 @@ function ChatMessageItem({
           'relative px-3 py-2 shadow-sm',
           isOwn 
             ? 'bg-primary text-primary-foreground' 
-            : 'bg-white text-slate-800 border border-slate-200',
+            : 'bg-card text-foreground border border-border',
           // Border radius based on position in group
           isFirstInGroup && isLastInGroup && 'rounded-2xl',
           isFirstInGroup && !isLastInGroup && (isOwn ? 'rounded-2xl rounded-br-md' : 'rounded-2xl rounded-bl-md'),
@@ -183,7 +183,7 @@ function ChatMessageItem({
               rel="noopener noreferrer"
               className={cn(
                 'flex items-center gap-2 mb-1 p-2 rounded-lg',
-                isOwn ? 'bg-white/20' : 'bg-slate-100'
+                isOwn ? 'bg-white/20' : 'bg-muted/50'
               )}
             >
               {message.message_type === 'image' ? (
@@ -209,14 +209,14 @@ function ChatMessageItem({
           )}>
             <span className={cn(
               'text-[10px]',
-              isOwn ? 'text-primary-foreground/70' : 'text-slate-400'
+              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
             )}>
               {formatMessageTime(message.created_at)}
             </span>
             {message.is_edited && (
               <span className={cn(
                 'text-[10px]',
-                isOwn ? 'text-primary-foreground/70' : 'text-slate-400'
+                isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
               )}>
                 (επεξεργασμένο)
               </span>
@@ -252,7 +252,7 @@ function TypingIndicator({ users }: { users: Map<number, string> }) {
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}
-            className="w-2 h-2 bg-slate-400 rounded-full"
+            className="w-2 h-2 bg-muted-foreground/50 rounded-full"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{
               duration: 0.6,
@@ -262,7 +262,7 @@ function TypingIndicator({ users }: { users: Map<number, string> }) {
           />
         ))}
       </div>
-      <span className="text-xs text-slate-500">{text}</span>
+      <span className="text-xs text-muted-foreground">{text}</span>
     </motion.div>
   );
 }
@@ -286,12 +286,12 @@ function ChatRoomItem({
         'w-full flex items-center gap-3 p-3 rounded-xl transition-all',
         isActive 
           ? 'bg-primary text-primary-foreground shadow-md' 
-          : 'hover:bg-slate-100'
+          : 'hover:bg-muted/50'
       )}
     >
       <div className={cn(
         'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-        isActive ? 'bg-white/20' : 'bg-slate-100'
+        isActive ? 'bg-white/20' : 'bg-muted'
       )}>
         <Building2 className="w-6 h-6" />
       </div>
@@ -300,7 +300,7 @@ function ChatRoomItem({
         <div className="flex items-center justify-between gap-2">
           <h3 className={cn(
             'font-semibold truncate text-sm',
-            !isActive && 'text-slate-800'
+            !isActive && 'text-foreground'
           )}>
             {room.building.name}
           </h3>
@@ -317,7 +317,7 @@ function ChatRoomItem({
         </div>
         <p className={cn(
           'text-xs truncate',
-          isActive ? 'text-primary-foreground/70' : 'text-slate-500'
+          isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
         )}>
           {room.participants_count} συμμετέχοντες
         </p>
@@ -347,20 +347,20 @@ function ParticipantsPanel({
           initial={{ x: 300, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 300, opacity: 0 }}
-          className="absolute right-0 top-0 bottom-0 w-72 bg-white border-l border-slate-200 shadow-lg z-10"
+          className="absolute right-0 top-0 bottom-0 w-72 bg-card border-l border-border shadow-lg z-10"
         >
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-slate-800">Συμμετέχοντες</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="font-semibold text-foreground">Συμμετέχοντες</h3>
+              <p className="text-xs text-muted-foreground">
                 {onlineCount} online / {participants.length} σύνολο
               </p>
             </div>
             <button 
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
             >
-              <X className="w-4 h-4 text-slate-500" />
+              <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
           
@@ -368,22 +368,22 @@ function ParticipantsPanel({
             {/* Online */}
             {participants.filter(p => p.is_online).length > 0 && (
               <div className="p-3">
-                <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider mb-2">
                   Συνδεδεμένοι
                 </h4>
                 {participants.filter(p => p.is_online).map(participant => (
                   <div key={participant.id} className="flex items-center gap-3 py-2">
                     <div className="relative">
-                      <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground">
                         {participant.user_name?.charAt(0).toUpperCase() || '?'}
                       </div>
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-700 truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {participant.user_name}
                       </p>
-                      <p className="text-xs text-green-600">Online</p>
+                      <p className="text-xs text-green-600 dark:text-green-400">Online</p>
                     </div>
                   </div>
                 ))}
@@ -393,21 +393,21 @@ function ParticipantsPanel({
             {/* Offline */}
             {participants.filter(p => !p.is_online).length > 0 && (
               <div className="p-3">
-                <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider mb-2">
                   Εκτός σύνδεσης
                 </h4>
                 {participants.filter(p => !p.is_online).map(participant => (
                   <div key={participant.id} className="flex items-center gap-3 py-2">
                     <div className="relative">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-semibold text-slate-400">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
                         {participant.user_name?.charAt(0).toUpperCase() || '?'}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-500 truncate">
+                      <p className="text-sm font-medium text-muted-foreground truncate">
                         {participant.user_name}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-muted-foreground/70">
                         {formatDistanceToNow(new Date(participant.last_seen), { 
                           addSuffix: true, 
                           locale: el 
@@ -535,7 +535,7 @@ export default function ChatInterface() {
   const activeRoom = rooms.find(r => r.building.id === activeBuildingId);
 
   return (
-    <div className="flex h-[calc(100vh-120px)] bg-slate-50 rounded-2xl overflow-hidden shadow-lg border border-slate-200">
+    <div className="flex h-[calc(100vh-120px)] bg-background rounded-2xl overflow-hidden shadow-lg border border-border">
       {/* Room List Sidebar */}
       <AnimatePresence>
         {showRoomList && (
@@ -544,30 +544,30 @@ export default function ChatInterface() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             className={cn(
-              'w-80 bg-white border-r border-slate-200 flex flex-col',
+              'w-80 bg-card border-r border-border flex flex-col',
               'max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-20 max-md:shadow-xl'
             )}
           >
             {/* Header */}
-            <div className="p-4 border-b border-slate-200">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-lg text-slate-800">Συνομιλίες</h2>
+                <h2 className="font-bold text-lg text-foreground">Συνομιλίες</h2>
                 <button 
                   onClick={refetchRooms}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
                   title="Ανανέωση"
                 >
-                  <RefreshCw className="w-4 h-4 text-slate-500" />
+                  <RefreshCw className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
               
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Αναζήτηση κτιρίου..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-sm border-0 focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-muted/50 rounded-xl text-sm border-0 focus:ring-2 focus:ring-primary/30 focus:bg-background transition-all"
                 />
               </div>
             </div>

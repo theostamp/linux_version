@@ -240,7 +240,7 @@ function ProjectsDashboardContent() {
     const d = getProjectRelevantDate(latestCompletedProject) || new Date();
     activityItems.push({
       key: `project-${latestCompletedProject.id}`,
-      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+      icon: <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />,
       bgClass: 'bg-green-50',
       text: latestCompletedProject?.title
         ? `Ολοκληρώθηκε έργο: ${latestCompletedProject.title}`
@@ -272,7 +272,7 @@ function ProjectsDashboardContent() {
     const amountStr = typeof amount === 'number' ? ` — €${amount.toLocaleString()}` : '';
     activityItems.push({
       key: `approved-offer-${latestApprovedOffer.id}`,
-      icon: <FileCheck className="w-4 h-4 text-green-600" />,
+      icon: <FileCheck className="w-4 h-4 text-green-600 dark:text-green-400" />,
       bgClass: 'bg-green-50',
       text: latestApprovedOffer?.contractor_name
         ? `Εγκεκριμένη προσφορά: ${latestApprovedOffer.contractor_name}${amountStr}`
@@ -445,7 +445,7 @@ function ProjectsDashboardContent() {
             <div className="space-y-4 mt-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Ολοκληρωμένα Έργα</span>
-                <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                <span className="text-lg font-bold text-green-600 dark:text-green-400 dark:text-green-400">
                   {stats.completed_projects}/{stats.total_projects}
                 </span>
               </div>
@@ -462,8 +462,8 @@ function ProjectsDashboardContent() {
                   <div className="text-xs text-blue-600 dark:text-blue-400">Σε Εξέλιξη</div>
                 </div>
                 <div className="text-center p-3 bg-green-500/10 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed_projects}</div>
-                  <div className="text-xs text-green-600 dark:text-green-400">Ολοκληρωμένα</div>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400 dark:text-green-400">{stats.completed_projects}</div>
+                  <div className="text-xs text-green-600 dark:text-green-400 dark:text-green-400">Ολοκληρωμένα</div>
                 </div>
               </div>
             </div>
@@ -757,7 +757,7 @@ function ProjectsDashboardContent() {
                 };
                 
                 const statusColors: Record<string, string> = {
-                  completed: 'bg-green-500/10 text-green-600 dark:text-green-400',
+                  completed: 'bg-green-500/10 text-green-600 dark:text-green-400 dark:text-green-400',
                   in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
                   approved: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
                   planning: 'bg-muted text-muted-foreground',
@@ -802,23 +802,23 @@ function ProjectsDashboardContent() {
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                         {project.description && (
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-3 flex-1">{project.description}</p>
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">{project.description}</p>
                         )}
                         <div className="space-y-2 text-sm">
                           {project.estimated_cost && (
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                               <DollarSign className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">Εκτιμ.: {typeof project.estimated_cost === 'number' ? `€${project.estimated_cost.toLocaleString()}` : project.estimated_cost}</span>
                             </div>
                           )}
                           {project.final_cost && (
-                            <div className="flex items-center gap-2 text-green-600 font-medium">
+                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-medium">
                               <DollarSign className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">Τελικό: {typeof project.final_cost === 'number' ? `€${project.final_cost.toLocaleString()}` : project.final_cost}</span>
                             </div>
                           )}
                           {project.deadline && (
-                            <div className="flex items-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                               <Calendar className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">{new Date(project.deadline).toLocaleDateString('el-GR')}</span>
                             </div>
@@ -826,13 +826,13 @@ function ProjectsDashboardContent() {
                           {(projectOffers.length > 0 || approvedProjectOffers.length > 0) && (
                             <div className="flex items-center gap-2 pt-2 border-t">
                               {projectOffers.length > 0 && (
-                                <Badge variant="outline" className="text-yellow-700 border-yellow-300">
+                                <Badge variant="outline" className="text-yellow-700 dark:text-yellow-400 border-yellow-500/50">
                                   <Award className="w-3 h-3 mr-1" />
                                   {projectOffers.length}
                                 </Badge>
                               )}
                               {approvedProjectOffers.length > 0 && (
-                                <Badge variant="outline" className="text-green-700 border-green-300">
+                                <Badge variant="outline" className="text-green-700 dark:text-green-400 border-green-500/50">
                                   <CheckCircle className="w-3 h-3 mr-1" />
                                   {approvedProjectOffers.length}
                                 </Badge>
@@ -895,43 +895,43 @@ function ProjectsDashboardContent() {
                                 )}
                               </div>
                               {project.description && (
-                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{project.description}</p>
+                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{project.description}</p>
                               )}
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-4 text-sm">
                             {project.estimated_cost && (
-                              <div className="flex items-center gap-1.5 text-gray-600">
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <DollarSign className="w-4 h-4 flex-shrink-0" />
                                 <span>Εκτιμ.: {typeof project.estimated_cost === 'number' ? `€${project.estimated_cost.toLocaleString()}` : project.estimated_cost}</span>
                               </div>
                             )}
                             {project.final_cost && (
-                              <div className="flex items-center gap-1.5 text-green-600 font-medium">
+                              <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
                                 <DollarSign className="w-4 h-4 flex-shrink-0" />
                                 <span>Τελικό: {typeof project.final_cost === 'number' ? `€${project.final_cost.toLocaleString()}` : project.final_cost}</span>
                               </div>
                             )}
                             {project.deadline && (
-                              <div className="flex items-center gap-1.5 text-gray-600">
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Calendar className="w-4 h-4 flex-shrink-0" />
                                 <span>{new Date(project.deadline).toLocaleDateString('el-GR')}</span>
                               </div>
                             )}
                             {project.selected_contractor && (
-                              <div className="flex items-center gap-1.5 text-gray-600">
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Building className="w-4 h-4 flex-shrink-0" />
                                 <span className="truncate max-w-[200px]">{project.selected_contractor}</span>
                               </div>
                             )}
                             {projectOffers.length > 0 && (
-                              <Badge variant="outline" className="text-yellow-700 border-yellow-300">
+                              <Badge variant="outline" className="text-yellow-700 dark:text-yellow-400 border-yellow-500/50">
                                 <Award className="w-3 h-3 mr-1" />
                                 {projectOffers.length} εκκρεμείς
                               </Badge>
                             )}
                             {approvedProjectOffers.length > 0 && (
-                              <Badge variant="outline" className="text-green-700 border-green-300">
+                              <Badge variant="outline" className="text-green-700 dark:text-green-400 border-green-500/50">
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 {approvedProjectOffers.length} εγκεκριμένη
                               </Badge>
@@ -955,7 +955,7 @@ function ProjectsDashboardContent() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="flex-shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={(e) => { 
                                 e.stopPropagation(); 
                                 setProjectToDelete(project);
@@ -987,7 +987,7 @@ function ProjectsDashboardContent() {
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800 dark:text-amber-400">
+                  <div className="text-sm text-amber-800 dark:text-amber-400 dark:text-amber-400">
                     <p className="font-semibold mb-1">Συνέπειες διαγραφής:</p>
                     <ul className="list-disc list-inside space-y-1 ml-1">
                       <li>Οι σχετιζόμενες προσφορές θα διαγραφούν</li>

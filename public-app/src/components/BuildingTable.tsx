@@ -81,11 +81,11 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
     });
   };
 
-  if (buildings.length === 0) {
+    if (buildings.length === 0) {
     return (
-      <div className="bg-white rounded-lg border p-8 text-center">
-        <BuildingIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 mb-4">Δεν βρέθηκαν κτίρια.</p>
+      <div className="bg-card rounded-xl border border-border border-dashed p-8 text-center">
+        <BuildingIcon className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+        <p className="text-muted-foreground mb-4">Δεν βρέθηκαν κτίρια.</p>
         {canManage && (
           <Link href="/buildings/new">
             <Button>
@@ -99,10 +99,10 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
   }
 
   return (
-    <div className="bg-white rounded-lg border overflow-hidden">
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px]">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-muted/50 border-b border-border">
             <tr>
               <th className={`px-6 py-3 text-left ${typography.tableHeader}`}>
                 Κτίριο
@@ -121,24 +121,24 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-border">
             {buildings.map((building) => {
               const apartmentsCount = (building as { total_apartments?: number; apartments_count?: number }).total_apartments || (building as { total_apartments?: number; apartments_count?: number }).apartments_count || 0;
               return (
-                <tr key={building.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={building.id} className="hover:bg-muted/50 transition-colors">
                   {/* Κτίριο */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <BuildingIcon className="h-5 w-5 text-blue-600" />
+                        <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <BuildingIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-foreground">
                           {building.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           ID: {building.id}
                         </div>
                       </div>
@@ -148,10 +148,10 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                   {/* Διεύθυνση */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <MapPin className="h-4 w-4 text-gray-400 mr-2" />
+                      <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
-                        <div className="text-sm text-gray-900">{building.address}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-foreground">{building.address}</div>
+                        <div className="text-sm text-muted-foreground">
                           {building.city && building.postal_code 
                             ? `${building.city}, ${building.postal_code}`
                             : building.city || building.postal_code || 'Δεν έχει οριστεί'
@@ -164,8 +164,8 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                   {/* Διαμερίσματα */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <Home className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">
+                      <Home className="h-4 w-4 text-muted-foreground mr-2" />
+                      <span className="text-sm text-foreground">
                         {apartmentsCount} {apartmentsCount === 1 ? 'διαμέρισμα' : 'διαμερίσματα'}
                       </span>
                     </div>
@@ -174,8 +174,8 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                   {/* Ημ/νία Δημιουργίας */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">
+                      <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                      <span className="text-sm text-foreground">
                         {formatDate(building.created_at)}
                       </span>
                     </div>
@@ -206,12 +206,12 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="text-xs text-red-600 hover:bg-red-50 border-red-200 px-2 py-1"
+                            className="text-xs text-destructive hover:bg-destructive/10 border-destructive/30 px-2 py-1"
                             onClick={() => handleDelete(building)}
                             disabled={deletingId === building.id}
                           >
                             {deletingId === building.id ? (
-                              <div className="animate-spin h-3 w-3 border-2 border-red-600 border-t-transparent rounded-full" />
+                              <div className="animate-spin h-3 w-3 border-2 border-destructive border-t-transparent rounded-full" />
                             ) : (
                               <>
                                 <Trash className="w-3 h-3 mr-1" />
