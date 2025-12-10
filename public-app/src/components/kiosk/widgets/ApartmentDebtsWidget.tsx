@@ -198,13 +198,17 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     );
   }
 
-  const totalExpenses = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance || 0), 0);
-  
-  // Calculate total payments from individual debts if summary is 0 or missing
+  // Calculate totals from debts data (most reliable source)
+  const debtsTotalObligations = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.net_obligation || 0), 0);
   const debtsTotalPayments = debts.reduce((sum, apt) => sum + (apt.month_payments || 0), 0);
   
-  // Use summary data if available and non-zero, otherwise fallback to debts sum
-  const totalObligations = summary?.total_obligations || 0; // Unpaid debt
+  // totalExpenses for display (used in header)
+  const totalExpenses = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance || 0), 0);
+  
+  // Use summary data if available and non-zero, otherwise fallback to debts calculation
+  const totalObligations = (summary?.total_obligations && summary.total_obligations > 0) 
+    ? summary.total_obligations 
+    : debtsTotalObligations;
   const totalPayments = (summary?.total_payments && summary.total_payments > 0) 
     ? summary.total_payments 
     : debtsTotalPayments;
