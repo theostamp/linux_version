@@ -311,7 +311,7 @@ function EditAssemblyContent() {
   }
 
   // Check if assembly can be edited (not started or ended)
-  const canEdit = assembly.status === 'scheduled' || assembly.status === 'invitation_sent';
+  const canEdit = assembly.status === 'draft' || assembly.status === 'scheduled' || assembly.status === 'convened';
   if (!canEdit) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">

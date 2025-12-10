@@ -528,7 +528,7 @@ function AssemblyDetailContent() {
       {/* Admin actions at bottom */}
       {canManage && (
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-          {(assembly.status === 'scheduled' || assembly.status === 'invitation_sent') && (
+          {(assembly.status === 'draft' || assembly.status === 'scheduled' || assembly.status === 'convened') && (
             <Button variant="outline" asChild>
               <Link href={`/assemblies/${assembly.id}/edit`}>
                 <Edit className="w-4 h-4 mr-2" />
