@@ -1221,6 +1221,7 @@ export type CreateVotePayload = {
   end_date?: string;
   building?: number | null;
   choices?: string[];  // Optional - backend has default choices
+  is_active?: boolean; // Optional - defaults to true on backend
 };
 
 export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {

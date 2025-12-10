@@ -167,7 +167,7 @@ export default function NewProjectPage() {
         linked_assembly: linkedAssemblyId,
       };
 
-      const response = await api.post('/projects/', payload);
+      const project = await api.post<{ id: number }>('/projects/', payload);
 
       if (formData.should_create_vote) {
         const votePayload: CreateVotePayload = {
@@ -201,8 +201,7 @@ export default function NewProjectPage() {
         });
       }
 
-      const projectId = (response.data as { id: number }).id;
-      router.push(`/projects/${projectId}`);
+      router.push(`/projects/${project.id}`);
     } catch (error: unknown) {
       const errorMessage = error && typeof error === 'object' && 'response' in error
         ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
