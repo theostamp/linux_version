@@ -48,8 +48,8 @@ export default function DashboardLayout({
       {/* Collapsible Sidebar - Gets user from AuthContext */}
       <CollapsibleSidebar />
 
-      {/* Main Content - Adjusted padding for collapsed sidebar (80px) */}
-      <div className="lg:pl-20">
+      {/* Main Content - Adjusted padding for collapsed sidebar (80px) + margin (20px) */}
+      <div className="lg:pl-[100px]">
         {/* Header */}
         <GlobalHeader />
 
