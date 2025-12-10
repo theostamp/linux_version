@@ -1376,6 +1376,13 @@ class FinancialDashboardService:
                             
                             # ✅ Το fallback αποθεματικού πρέπει να μετράει στις δαπάνες μήνα
                             expense_share += reserve_share
+
+                # Υπολογισμός πληρωμών τρέχοντος μήνα (για current view)
+                month_payments = Payment.objects.filter(
+                    apartment=apartment,
+                    date__gte=current_month_start,
+                    date__lt=end_date if end_date else date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
             # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
             if end_date:
@@ -1406,6 +1413,7 @@ class FinancialDashboardService:
                 'previous_resident_expenses': previous_resident_expenses if month else Decimal('0.00'),  # Δαπάνες Ενοίκου (προηγούμενοι)
                 'previous_owner_expenses': previous_owner_expenses if month else Decimal('0.00'),        # Δαπάνες Ιδιοκτήτη (προηγούμενοι)
                 'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
+                'month_payments': month_payments,      # ← ΝΕΟ FIELD: Πληρωμές τρέχοντος μήνα/περιόδου
                 'total_payments': total_payments_apartment,  # ← ΝΕΟ FIELD - Διόρθωση!
                 'participation_mills': apartment.participation_mills or 0,
                 'status': status,
