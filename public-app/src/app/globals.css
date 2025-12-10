@@ -126,6 +126,17 @@ h1, h2, h3, h4 {
   font-weight: 600;
 }
 
+/* H1 specific styles - Centered with dark gray color */
+/* Exclude h1 in header/nav elements and those with explicit alignment classes */
+h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
+  text-align: center;
+  color: rgb(31 41 55); /* gray-800 - Dark gray */
+}
+
+.dark h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
+  color: rgb(209 213 219); /* gray-300 - Lighter gray for dark mode */
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));

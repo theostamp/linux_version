@@ -296,7 +296,7 @@ function LiveAssemblyContent() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-gray-900">{assembly.title}</h1>
+                <h1 className="text-2xl font-bold">{assembly.title}</h1>
                 {isLive && (
                   <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse">
                     LIVE

@@ -39,8 +39,8 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b-0" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)' }}>
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b-0" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)' }}>
+        <div className="w-full px-4 sm:px-6 lg:px-8 lg:pr-[280px]">
           <div className="w-full max-w-full">
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-8 h-20 py-3">
               {/* Left Section - Logo */}
