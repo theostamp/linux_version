@@ -128,8 +128,14 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     return () => clearInterval(interval);
   }, [effectiveBuildingId, retryCount, monthParam, data?.financial]);
 
-  // Fetch summary data separately (includes payment coverage)
+  // Fetch summary data separately ONLY if not already loaded from public-info
+  // This is needed for authenticated dashboard views, but kiosk gets data from public-info
   useEffect(() => {
+    // Skip if summary already loaded from public-info (kiosk mode)
+    if (summary && (summary.total_obligations !== undefined || summary.total_payments !== undefined)) {
+      return;
+    }
+    
     const fetchSummary = async () => {
       if (!effectiveBuildingId) return;
       
@@ -151,7 +157,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     // Refresh every 5 minutes
     const interval = setInterval(fetchSummary, 300000);
     return () => clearInterval(interval);
-  }, [effectiveBuildingId, monthParam]);
+  }, [effectiveBuildingId, monthParam, summary]);
 
   if (isLoading || loading) {
     return (
