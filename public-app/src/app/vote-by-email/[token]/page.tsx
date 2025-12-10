@@ -262,7 +262,7 @@ export default function VoteByEmailPage() {
               Διαμέρισμα
             </div>
             <p className="text-white font-medium">
-              {data.attendee.apartment_number} • {data.attendee.mills} μιλέσιμα
+              {data.attendee.apartment_number} • {data.attendee.mills} χιλιοστά
             </p>
           </div>
         </div>
@@ -375,7 +375,7 @@ export default function VoteByEmailPage() {
             <Shield className="w-5 h-5 text-white/60 mt-0.5" />
             <div className="text-sm text-white/60">
               <p>
-                Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα μιλέσιμα του 
+                Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα χιλιοστά του 
                 διαμερίσματός σας ({data.attendee.mills}). Σε περίπτωση φυσικής παρουσίας 
                 στη συνέλευση, θα έχετε τη δυνατότητα να αλλάξετε την ψήφο σας.
               </p>

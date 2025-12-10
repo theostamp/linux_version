@@ -211,7 +211,7 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
               <div className="mb-4 p-3 bg-indigo-50 rounded-lg flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-indigo-600" />
                 <span className="text-sm text-indigo-700">
-                  Η ψήφος σας αντιστοιχεί σε <strong>{attendee.mills} μιλέσιμα</strong>
+                  Η ψήφος σας αντιστοιχεί σε <strong>{attendee.mills} χιλιοστά</strong>
                 </span>
               </div>
 
@@ -358,7 +358,7 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
             <strong>Τα μιλέσιμά σας:</strong> {attendee.mills}
           </p>
           <p className="text-xs text-indigo-600 mt-1">
-            Οι ψήφοι σας υπολογίζονται με βάση τα μιλέσιμα του διαμερίσματός σας.
+            Οι ψήφοι σας υπολογίζονται με βάση τα χιλιοστά του διαμερίσματός σας.
           </p>
         </div>
       </div>

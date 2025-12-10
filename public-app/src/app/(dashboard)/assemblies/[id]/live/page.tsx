@@ -91,7 +91,7 @@ function QuorumDisplay({
 
       <div className="flex justify-between mt-2 text-sm">
         <span className="text-gray-500">
-          {achievedMills} / {requiredMills} μιλέσιμα
+          {achievedMills} / {requiredMills} χιλιοστά
         </span>
         <span className={cn('font-medium', achieved ? 'text-emerald-600' : 'text-gray-600')}>
           {percentage.toFixed(1)}%

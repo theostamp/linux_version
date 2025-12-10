@@ -30,9 +30,9 @@ class AssemblyMinutesService:
 
 ## ΑΠΑΡΤΙΑ
 
-- **Συνολικά Μιλέσιμα Κτιρίου:** {total_mills}
+- **Συνολικά χιλιοστά Κτιρίου:** {total_mills}
 - **Απαιτούμενη Απαρτία:** {required_quorum_mills} ({required_quorum_percentage}%)
-- **Παρόντα Μιλέσιμα:** {achieved_quorum_mills} ({achieved_quorum_percentage}%)
+- **Παρόντα χιλιοστά:** {achieved_quorum_mills} ({achieved_quorum_percentage}%)
 - **Απαρτία:** {quorum_status}
 
 ---
@@ -162,7 +162,7 @@ class AssemblyMinutesService:
         if not attendees.exists():
             return "*Δεν καταγράφηκαν παρόντες*"
         
-        lines = ['| Διαμέρισμα | Όνομα | Μιλέσιμα | Τύπος |', '|------------|-------|----------|-------|']
+        lines = ['| Διαμέρισμα | Όνομα | χιλιοστά | Τύπος |', '|------------|-------|----------|-------|']
         
         for attendee in attendees:
             attendance_type = attendee.get_attendance_type_display()
@@ -247,7 +247,7 @@ class AssemblyMinutesService:
             '',
             '**Αποτελέσματα Ψηφοφορίας:**',
             '',
-            '| Επιλογή | Ψήφοι | Μιλέσιμα | Ποσοστό |',
+            '| Επιλογή | Ψήφοι | χιλιοστά | Ποσοστό |',
             '|---------|-------|----------|---------|',
             f'| ✅ Υπέρ | {approve_votes.count()} | {approve_mills} | {round(approve_mills * 100 / total_mills, 1) if total_mills > 0 else 0}% |',
             f'| ❌ Κατά | {reject_votes.count()} | {reject_mills} | {round(reject_mills * 100 / total_mills, 1) if total_mills > 0 else 0}% |',

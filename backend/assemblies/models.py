@@ -4,7 +4,7 @@ Assembly Management Models
 
 Features:
 - Δομημένη ατζέντα με time budgeting
-- Quorum tracking με μιλέσιμα
+- Quorum tracking με χιλιοστά
 - Υβριδική ψηφοφορία (pre-voting + live)
 - Αυτόματη δημιουργία πρακτικών
 """
@@ -90,7 +90,7 @@ class Assembly(models.Model):
     # Quorum - Απαρτία
     total_building_mills = models.PositiveIntegerField(
         default=1000,
-        verbose_name="Συνολικά Μιλέσιμα Κτιρίου"
+        verbose_name="Συνολικά χιλιοστά Κτιρίου"
     )
     required_quorum_percentage = models.DecimalField(
         max_digits=5,
@@ -101,7 +101,7 @@ class Assembly(models.Model):
     )
     achieved_quorum_mills = models.PositiveIntegerField(
         default=0,
-        verbose_name="Επιτευχθέντα Μιλέσιμα"
+        verbose_name="Επιτευχθέντα χιλιοστά"
     )
     quorum_achieved = models.BooleanField(default=False, verbose_name="Επετεύχθη Απαρτία")
     quorum_achieved_at = models.DateTimeField(null=True, blank=True, verbose_name="Ώρα Επίτευξης Απαρτίας")
@@ -223,7 +223,7 @@ class Assembly(models.Model):
 
     @property
     def required_quorum_mills(self):
-        """Υπολογίζει τα απαιτούμενα μιλέσιμα για απαρτία"""
+        """Υπολογίζει τα απαιτούμενα χιλιοστά για απαρτία"""
         return int(self.total_building_mills * self.required_quorum_percentage / 100)
     
     @property
@@ -572,7 +572,7 @@ class AssemblyAttendee(models.Model):
     Καταγράφει:
     - Ποιος παρευρέθηκε
     - Με ποιον τρόπο (φυσικά, online, proxy)
-    - Πόσα μιλέσιμα εκπροσωπεί
+    - Πόσα χιλιοστά εκπροσωπεί
     - RSVP status
     """
     
@@ -613,7 +613,7 @@ class AssemblyAttendee(models.Model):
     )
     
     # Mills
-    mills = models.PositiveIntegerField(verbose_name="Μιλέσιμα")
+    mills = models.PositiveIntegerField(verbose_name="χιλιοστά")
     
     # RSVP
     rsvp_status = models.CharField(
@@ -788,7 +788,7 @@ class AssemblyVote(models.Model):
         choices=VOTE_CHOICES,
         verbose_name="Ψήφος"
     )
-    mills = models.PositiveIntegerField(verbose_name="Μιλέσιμα Ψήφου")
+    mills = models.PositiveIntegerField(verbose_name="χιλιοστά Ψήφου")
     
     vote_source = models.CharField(
         max_length=10,
@@ -818,7 +818,7 @@ class AssemblyVote(models.Model):
         ordering = ['voted_at']
 
     def __str__(self):
-        return f"{self.attendee} - {self.get_vote_display()} ({self.mills} μιλέσιμα)"
+        return f"{self.attendee} - {self.get_vote_display()} ({self.mills} χιλιοστά)"
 
 
 class AssemblyMinutesTemplate(models.Model):

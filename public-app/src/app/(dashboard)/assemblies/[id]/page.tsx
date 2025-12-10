@@ -82,7 +82,7 @@ function QuorumMeter({ assembly }: { assembly: Assembly }) {
 
       <div className="flex justify-between mt-2 text-sm">
         <span className="text-gray-500">
-          {assembly.achieved_quorum_mills} / {assembly.required_quorum_mills} μιλέσιμα
+          {assembly.achieved_quorum_mills} / {assembly.required_quorum_mills} χιλιοστά
         </span>
         <span className={cn(
           'font-medium',

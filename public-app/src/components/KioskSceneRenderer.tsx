@@ -18,43 +18,105 @@ interface KioskSceneRendererProps {
 // Fallback scene rotator component
 function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: number | null }) {
   const [fallbackSceneIndex, setFallbackSceneIndex] = useState(0);
+  const [hasTodayAssembly, setHasTodayAssembly] = useState(false);
+  const [isCheckingAssembly, setIsCheckingAssembly] = useState(true);
+
+  // Check for today's assembly
+  useEffect(() => {
+    if (!buildingId) {
+      setIsCheckingAssembly(false);
+      return;
+    }
+
+    const checkAssembly = async () => {
+      try {
+        const response = await fetch(`/api/assemblies/upcoming?building_id=${buildingId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.assembly) {
+            // Check if assembly is today or within 24 hours
+            const assemblyDate = new Date(data.assembly.scheduled_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            assemblyDate.setHours(0, 0, 0, 0);
+            
+            const diffDays = Math.floor((assemblyDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            setHasTodayAssembly(diffDays <= 0); // Today or past (but assembly scene handles past)
+          }
+        }
+      } catch (error) {
+        console.error('[FallbackSceneRotator] Failed to check assembly:', error);
+      } finally {
+        setIsCheckingAssembly(false);
+      }
+    };
+
+    checkAssembly();
+    // Re-check every 5 minutes
+    const interval = setInterval(checkAssembly, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [buildingId]);
+
   const fallbackScenes = [
     { name: 'Πρωινή Επισκόπηση', Component: MorningOverviewSceneCustom },
     { name: 'Ambient Showcase', Component: AmbientShowcaseScene },
   ];
 
+  // If there's an assembly today, show only assembly scene
+  const scenesToShow = hasTodayAssembly 
+    ? [{ name: 'Συνέλευση Σήμερα', Component: AssemblyCountdownScene }]
+    : fallbackScenes;
+
   // Auto-rotate fallback scenes every 30 seconds
   useEffect(() => {
+    if (scenesToShow.length <= 1) return;
+    
     const timer = setInterval(() => {
-      setFallbackSceneIndex((prev) => (prev + 1) % fallbackScenes.length);
+      setFallbackSceneIndex((prev) => (prev + 1) % scenesToShow.length);
     }, 30000); // 30 seconds
 
     return () => clearInterval(timer);
-  }, []);
+  }, [scenesToShow.length]);
 
-  const CurrentFallbackScene = fallbackScenes[fallbackSceneIndex].Component;
+  // Reset index if scenes change
+  useEffect(() => {
+    setFallbackSceneIndex(0);
+  }, [hasTodayAssembly]);
+
+  if (isCheckingAssembly) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-400" />
+      </div>
+    );
+  }
+
+  const currentIndex = fallbackSceneIndex % scenesToShow.length;
+  const CurrentFallbackScene = scenesToShow[currentIndex].Component;
 
   return (
     <div className="relative">
       <CurrentFallbackScene data={data} buildingId={buildingId} />
 
       {/* Scene indicator */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
-        {fallbackScenes.map((scene, index) => (
-          <div
-            key={index}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === fallbackSceneIndex
-                ? 'w-8 bg-gradient-to-r from-purple-400 to-pink-400'
-                : 'w-2 bg-gray-600'
-            }`}
-          />
-        ))}
-      </div>
+      {scenesToShow.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
+          {scenesToShow.map((scene, index) => (
+            <div
+              key={index}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? 'w-8 bg-gradient-to-r from-purple-400 to-pink-400'
+                  : 'w-2 bg-gray-600'
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Scene name overlay */}
       <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
-        <p className="text-white text-sm font-medium">{fallbackScenes[fallbackSceneIndex].name}</p>
+        <p className="text-white text-sm font-medium">{scenesToShow[currentIndex].name}</p>
       </div>
     </div>
   );
