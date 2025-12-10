@@ -471,7 +471,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] border border-[hsl(var(--border))] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-lg"
+        className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] border border-gray-300 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

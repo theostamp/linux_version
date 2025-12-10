@@ -100,8 +100,8 @@ function AgendaOverview({ assembly }: { assembly: Assembly }) {
   const totalDuration = assembly.total_agenda_duration;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-gray-300 overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-300 flex items-center justify-between">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <FileText className="w-4 h-4" />
           Ημερήσια Διάταξη
@@ -150,7 +150,7 @@ function AgendaOverview({ assembly }: { assembly: Assembly }) {
       </div>
 
       {votingItems.length > 0 && (
-        <div className="px-5 py-3 bg-indigo-50 border-t border-indigo-100">
+        <div className="px-5 py-3 bg-indigo-50 border-t border-gray-300">
           <p className="text-sm text-indigo-700">
             <Vote className="w-4 h-4 inline mr-1" />
             {votingItems.length} θέμα{votingItems.length > 1 ? 'τα' : ''} προς ψήφιση
@@ -166,8 +166,8 @@ function AttendeesPreview({ assembly }: { assembly: Assembly }) {
   const displayAttendees = attendees.slice(0, 5);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-gray-300 overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-300 flex items-center justify-between">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <Users className="w-4 h-4" />
           Συμμετοχές
@@ -178,7 +178,7 @@ function AttendeesPreview({ assembly }: { assembly: Assembly }) {
       </div>
 
       {/* RSVP stats */}
-      <div className="px-5 py-3 grid grid-cols-3 gap-2 border-b border-gray-100">
+      <div className="px-5 py-3 grid grid-cols-3 gap-2 border-b border-gray-300">
         <div className="text-center">
           <div className="text-lg font-bold text-emerald-600">{stats.rsvp_attending}</div>
           <div className="text-xs text-gray-500">Θα έρθουν</div>

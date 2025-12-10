@@ -318,7 +318,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                   </div>
                   
                   {/* Συνολικές παλαιότερες οφειλές */}
-                  <div className="pt-2 border-t border-gray-200">
+                  <div className="pt-2 border-t border-gray-300">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-gray-800">Συνολικές παλαιότερες οφειλές:</span>
                       <span className="font-bold text-lg text-purple-600">
@@ -399,7 +399,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                         </div>
 
                                                  {apartment.expense_breakdown && apartment.expense_breakdown.length > 0 && (
-                           <div className="mt-3 pt-3 border-t border-gray-200">
+                           <div className="mt-3 pt-3 border-t border-gray-300">
                              <h4 className={`${typography.smallHeader} mb-2`}>Breakdown Δαπανών:</h4>
                              <div className="space-y-2">
                                {(() => {
@@ -418,8 +418,8 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                                  }, {} as { [key: string]: { month: string; month_display: string; expenses: any[] } });
                                  
                                  return Object.values(groupedExpenses).map((group, groupIndex) => (
-                                   <div key={groupIndex} className="border border-gray-200 rounded overflow-hidden">
-                                     <div className="bg-gray-50 px-2 py-1 border-b border-gray-200">
+                                   <div key={groupIndex} className="border border-gray-300 rounded overflow-hidden">
+                                     <div className="bg-gray-50 px-2 py-1 border-b border-gray-300">
                                        <h5 className="text-xs font-semibold text-gray-600">{group.month_display}</h5>
                                      </div>
                                      <div className="space-y-1 p-2">
@@ -429,7 +429,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                                            <span className="font-medium">{formatCurrency(expense.share_amount)}</span>
                                          </div>
                                        ))}
-                                       <div className="border-t border-gray-200 pt-1 mt-1">
+                                       <div className="border-t border-gray-300 pt-1 mt-1">
                                          <div className="flex justify-between text-xs font-semibold">
                                            <span className="text-gray-600">Σύνολο:</span>
                                            <span className="text-blue-600">

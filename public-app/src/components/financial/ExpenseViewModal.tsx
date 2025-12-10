@@ -242,10 +242,10 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
                     <Badge 
                       className={
                         expense.payer_responsibility === 'owner' 
-                          ? 'bg-red-50 text-red-700 border-red-200' 
+                          ? 'bg-red-50 text-red-700 border-gray-300' 
                           : expense.payer_responsibility === 'resident'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                          ? 'bg-green-50 text-green-700 border-gray-300'
+                          : 'bg-blue-50 text-blue-700 border-gray-300'
                       }
                     >
                       {expense.payer_responsibility === 'owner' 

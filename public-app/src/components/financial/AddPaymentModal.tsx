@@ -400,12 +400,12 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {error && (
-            <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-md">
+            <div className="mb-4 p-2 bg-red-50 border border-gray-300 rounded-md">
               <p className="text-red-600 text-xs">{error}</p>
             </div>
           )}
           {calcError && (
-            <div className="mb-4 p-2 bg-orange-50 border border-orange-200 rounded-md">
+            <div className="mb-4 p-2 bg-orange-50 border border-gray-300 rounded-md">
               <p className="text-orange-700 text-xs">{calcError}</p>
             </div>
           )}
@@ -498,7 +498,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                       </div>
                     </div>
                     {selectedApartment.last_payment_date && (
-                      <div className="mt-2 pt-2 border-t border-gray-200">
+                      <div className="mt-2 pt-2 border-t border-gray-300">
                         <span className="text-muted-foreground text-xs">Τελευταία πληρωμή:</span>
                         <span className="ml-2 text-xs text-foreground">
                           {formatCurrency(
@@ -644,7 +644,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   </p>
                 )}
                 {isHistoricalEntry && (
-                  <div className="flex items-center gap-2 mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                  <div className="flex items-center gap-2 mt-2 p-2 bg-orange-50 border border-gray-300 rounded">
                     <span className="text-orange-600 text-xs">⚠️</span>
                     <span className="text-xs text-orange-700">
                       Καταχωρείτε ιστορικά δεδομένα. Βεβαιωθείτε ότι η ημερομηνία είναι σωστή.

@@ -76,7 +76,7 @@ function AgendaItemRow({
   const itemType = itemTypes.find(t => t.value === item.item_type);
 
   return (
-    <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-gray-50 rounded-lg border border-gray-300 overflow-hidden">
       <div 
         className="p-3 flex items-center gap-2 cursor-pointer hover:bg-gray-100"
         onClick={() => setExpanded(!expanded)}
@@ -115,7 +115,7 @@ function AgendaItemRow({
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-200 p-3 space-y-3 bg-white">
+        <div className="border-t border-gray-300 p-3 space-y-3 bg-white">
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label className="text-xs">Τύπος</Label>
@@ -516,7 +516,7 @@ export default function CreateAssemblyModal({
               </div>
 
               {/* Pre-voting */}
-              <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+              <div className="p-3 bg-indigo-50 rounded-lg border border-gray-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Vote className="w-4 h-4 text-indigo-600" />

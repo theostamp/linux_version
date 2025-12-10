@@ -138,7 +138,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
               
               {/* Pending Obligations Warning */}
               {building.pending_obligations > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-200/50">
+                <div className="mt-3 pt-3 border-t border-gray-300">
                   <div className="flex items-center gap-2 text-orange-600">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <p className="text-xs">

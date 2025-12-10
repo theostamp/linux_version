@@ -281,7 +281,7 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
                   {expenses.length > 0 ? (
                     <div className="space-y-3">
                       {expenses.map((expense) => (
-                        <div key={expense.id} className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <div key={expense.id} className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-gray-300">
                           {getTransactionIcon('expense_created')}
                           <div className="flex-1">
                             <div className="font-medium text-sm text-red-800">
@@ -326,7 +326,7 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
                   {payments.length > 0 ? (
                     <div className="space-y-3">
                       {payments.map((payment) => (
-                        <div key={payment.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div key={payment.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-gray-300">
                           {getTransactionIcon('payment_received')}
                           <div className="flex-1">
                             <div className="font-medium text-sm text-green-800">

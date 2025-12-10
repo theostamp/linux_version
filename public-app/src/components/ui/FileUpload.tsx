@@ -168,7 +168,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       <div
         className={`
           border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-          ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-gray-400'}
+          ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           ${error ? 'border-red-500' : ''}
         `}

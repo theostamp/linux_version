@@ -72,11 +72,11 @@ interface FinancialTabDefinition {
 }
 
 const DESKTOP_TAB_BASE_CLASSES =
-  'group flex flex-col items-center p-2.5 rounded-lg border border-border bg-card text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
-const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border';
+  'group flex flex-col items-center p-2.5 rounded-lg border border-gray-300 bg-card text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
+const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-gray-300';
 const MOBILE_TAB_BASE_CLASSES =
-  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-sm text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
-const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border';
+  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 bg-card text-sm text-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
+const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-gray-300';
 const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-background';
 const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
 const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
@@ -855,7 +855,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             onClick={handleExpenseCancel}
           >
             <div 
-              className="bg-white border border-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl"
+              className="bg-white border border-gray-300 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">

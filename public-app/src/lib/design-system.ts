@@ -199,6 +199,35 @@ export const shadows = {
 } as const;
 
 // ============================================================================
+// BORDERS
+// ============================================================================
+
+export const borders = {
+  // Border colors - Gray scale
+  color: {
+    default: '#cbd5e1',      // gray-300 - Standard border
+    light: '#e2e8f0',        // gray-200 - Light border
+    medium: '#94a3b8',       // gray-400 - Medium border
+    dark: '#64748b',         // gray-500 - Dark border
+    muted: 'rgba(203, 213, 225, 0.5)', // gray-300 with opacity
+  },
+  // Border widths
+  width: {
+    none: '0',
+    thin: '1px',
+    base: '1px',
+    medium: '2px',
+    thick: '3px',
+  },
+  // Border styles
+  style: {
+    solid: 'solid',
+    dashed: 'dashed',
+    dotted: 'dotted',
+  },
+} as const;
+
+// ============================================================================
 // BORDER RADIUS
 // ============================================================================
 
@@ -370,6 +399,84 @@ export function getTrendDirection(current: number, previous: number): 'up' | 'do
 }
 
 // ============================================================================
+// SEMANTIC COLOR HELPERS
+// ============================================================================
+
+/**
+ * Get semantic background color classes
+ */
+export function getSemanticBgClasses(variant: 'success' | 'warning' | 'danger' | 'info' | 'primary'): {
+  bg: string;
+  text: string;
+  border: string;
+} {
+  const variants = {
+    success: {
+      bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+      text: 'text-emerald-700 dark:text-emerald-400',
+      border: 'border-emerald-200 dark:border-emerald-500/20',
+    },
+    warning: {
+      bg: 'bg-amber-50 dark:bg-amber-500/10',
+      text: 'text-amber-700 dark:text-amber-400',
+      border: 'border-amber-200 dark:border-amber-500/20',
+    },
+    danger: {
+      bg: 'bg-rose-50 dark:bg-rose-500/10',
+      text: 'text-rose-700 dark:text-rose-400',
+      border: 'border-rose-200 dark:border-rose-500/20',
+    },
+    info: {
+      bg: 'bg-blue-50 dark:bg-blue-500/10',
+      text: 'text-blue-700 dark:text-blue-400',
+      border: 'border-blue-200 dark:border-blue-500/20',
+    },
+    primary: {
+      bg: 'bg-indigo-50 dark:bg-indigo-500/10',
+      text: 'text-indigo-700 dark:text-indigo-400',
+      border: 'border-indigo-200 dark:border-indigo-500/20',
+    },
+  };
+  return variants[variant];
+}
+
+/**
+ * Get status badge classes (for request status, vote status, etc.)
+ */
+export function getStatusBadgeClasses(status: string): string {
+  const statusMap: Record<string, string> = {
+    // Request statuses
+    pending: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+    in_progress: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+    approved: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+    scheduled: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20',
+    completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
+    cancelled: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/20',
+    rejected: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20',
+    // Vote statuses
+    active: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
+    closed: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/20',
+    // Default
+    default: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
+  };
+  
+  return statusMap[status] || statusMap.default;
+}
+
+/**
+ * Get standard border class (replaces border-border, border-gray-300, etc.)
+ */
+export function getBorderClass(variant: 'default' | 'light' | 'medium' | 'dashed' = 'default'): string {
+  const variants = {
+    default: 'border-gray-300',
+    light: 'border-gray-200',
+    medium: 'border-gray-400',
+    dashed: 'border-dashed border-gray-300',
+  };
+  return variants[variant];
+}
+
+// ============================================================================
 // EXPORT ALL
 // ============================================================================
 
@@ -378,6 +485,7 @@ export const designSystem = {
   typography,
   spacing,
   shadows,
+  borders,
   borderRadius,
   transitions,
   zIndex,
@@ -388,6 +496,9 @@ export const designSystem = {
   formatCurrency,
   formatPercentage,
   getTrendDirection,
+  getSemanticBgClasses,
+  getStatusBadgeClasses,
+  getBorderClass,
 } as const;
 
 export default designSystem;

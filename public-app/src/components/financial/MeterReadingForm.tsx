@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
+import { getSemanticBgClasses, getBorderClass } from '@/lib/design-system';
 
 interface MeterReadingFormProps {
   buildingId: number;
@@ -189,15 +190,16 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
             
             {/* Πληροφορίες για σύστημα θέρμανσης */}
             {buildingHeatingSystem && buildingHeatingSystem !== 'none' && (
-              <div className={`p-3 rounded-lg text-sm ${
+              <div className={cn(
+                'p-3 rounded-lg text-sm',
                 buildingHeatingSystem === 'hour_meters' 
-                  ? 'bg-blue-50 border border-blue-200 text-blue-800'
+                  ? `${getSemanticBgClasses('info').bg} ${getSemanticBgClasses('info').border} ${getSemanticBgClasses('info').text}`
                   : buildingHeatingSystem === 'heat_meters'
-                  ? 'bg-purple-50 border border-purple-200 text-purple-800'
+                  ? `${getSemanticBgClasses('primary').bg} ${getSemanticBgClasses('primary').border} ${getSemanticBgClasses('primary').text}`
                   : buildingHeatingSystem === 'conventional'
-                  ? 'bg-green-50 border border-green-200 text-green-800'
-                  : 'bg-gray-50 border border-gray-200 text-gray-800'
-              }`}>
+                  ? `${getSemanticBgClasses('success').bg} ${getSemanticBgClasses('success').border} ${getSemanticBgClasses('success').text}`
+                  : 'bg-gray-50 border-gray-300 text-gray-800'
+              )}>
                 <div className="flex items-start space-x-2">
                   <span className="text-lg">🔥</span>
                   <div>
@@ -227,7 +229,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
             )}
 
             {buildingHeatingSystem === 'none' && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+              <div className={cn('bg-gray-50 rounded-lg p-3 text-sm text-gray-700', getBorderClass('default'))}>
                 <div className="flex items-start space-x-2">
                   <span>ℹ️</span>
                   <p>Αυτό το κτίριο δεν διαθέτει κεντρική θέρμανση. Χρησιμοποιήστε "Νερό" ή "Ηλεκτρικό" για άλλους μετρητές.</p>

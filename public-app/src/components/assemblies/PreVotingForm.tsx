@@ -88,7 +88,7 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
         'bg-white rounded-xl border-2 overflow-hidden transition-all',
         hasVoted 
           ? 'border-emerald-200 bg-emerald-50/30' 
-          : 'border-gray-200 hover:border-indigo-200'
+          : 'border-gray-300 hover:border-indigo-200'
       )}
     >
       {/* Header */}

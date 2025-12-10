@@ -26,6 +26,7 @@ import {
   DashboardErrorBoundary 
 } from '@/components/dashboard';
 import { isResident } from '@/lib/roleUtils';
+import { getStatusBadgeClasses } from '@/lib/design-system';
 
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 
@@ -60,20 +61,20 @@ const differenceInDays = (value?: string | null) => {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-const REQUEST_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Σε εκκρεμότητα', className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' },
-  in_progress: { label: 'Σε εξέλιξη', className: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' },
-  approved: { label: 'Εγκεκριμένο', className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' },
-  scheduled: { label: 'Προγραμματισμένο', className: 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20' },
+const REQUEST_STATUS_LABELS: Record<string, string> = {
+  pending: 'Σε εκκρεμότητα',
+  in_progress: 'Σε εξέλιξη',
+  approved: 'Εγκεκριμένο',
+  scheduled: 'Προγραμματισμένο',
 };
 
 const getRequestStatusToken = (status?: string) => {
   if (!status) {
-    return { label: 'Άγνωστη', className: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20' };
+    return { label: 'Άγνωστη', className: getStatusBadgeClasses('default') };
   }
-  return REQUEST_STATUS_CONFIG[status] ?? {
-    label: status.replace(/_/g, ' '),
-    className: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
+  return {
+    label: REQUEST_STATUS_LABELS[status] || status.replace(/_/g, ' '),
+    className: getStatusBadgeClasses(status),
   };
 };
 
@@ -264,7 +265,7 @@ function DashboardContent() {
                   <Skeleton className="h-14 w-full" />
                 </div>
               ) : filteredVotes.length === 0 ? (
-                <div className="flex min-h-[140px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/40 px-4 text-center text-sm text-muted-foreground">
+                <div className="flex min-h-[140px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-muted/40 px-4 text-center text-sm text-muted-foreground">
                   Δεν υπάρχουν ενεργές ή προγραμματισμένες ψηφοφορίες.
                 </div>
               ) : (
@@ -275,7 +276,7 @@ function DashboardContent() {
                       <Link
                         key={vote.id}
                         href={`/votes/${vote.id}`}
-                        className="block rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/40"
+                        className="block rounded-xl border border-gray-300 bg-card px-4 py-3 transition-colors hover:bg-muted/40"
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -297,7 +298,7 @@ function DashboardContent() {
                                 </span>
                               )}
                               {!selectedBuilding && vote.building_name && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-card px-2 py-0.5">
                                   🏢 {vote.building_name}
                                 </span>
                               )}
@@ -332,7 +333,7 @@ function DashboardContent() {
                   <Skeleton className="h-14 w-full" />
                 </div>
               ) : filteredRequests.length === 0 ? (
-                <div className="flex min-h-[140px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/40 px-4 text-center text-sm text-muted-foreground">
+                <div className="flex min-h-[140px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-muted/40 px-4 text-center text-sm text-muted-foreground">
                   Δεν υπάρχουν ενεργά αιτήματα.
                 </div>
               ) : (
@@ -346,7 +347,7 @@ function DashboardContent() {
                     return (
                       <div
                         key={request.id}
-                        className="rounded-xl border border-border/40 bg-background px-4 py-3"
+                        className="rounded-xl border border-gray-300 bg-background px-4 py-3"
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
@@ -433,7 +434,7 @@ function DashboardContent() {
             ) : filteredAnnouncements.length > 0 ? (
               <AnnouncementsCarousel announcements={filteredAnnouncements} />
             ) : (
-              <div className="flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/40 px-4 text-center text-sm text-muted-foreground">
+              <div className="flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-muted/40 px-4 text-center text-sm text-muted-foreground">
                 Δεν υπάρχουν ενεργές ανακοινώσεις.
               </div>
             )
@@ -443,7 +444,7 @@ function DashboardContent() {
 
       {/* Empty State / New User */}
       {effectiveBuildings.length === 0 && (
-        <div className="mt-8 bg-card rounded-xl shadow-lg p-8 text-center border border-dashed border-slate-200/60">
+        <div className="mt-8 bg-card rounded-xl shadow-lg p-8 text-center border border-dashed border-gray-300">
           <Building className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
           <p className="text-muted-foreground mb-6">

@@ -257,7 +257,7 @@ export function ObligationBreakdownModal({
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2 p-4 bg-red-50 border border-gray-300 rounded-lg">
             <AlertCircle className="h-5 w-5 text-red-600" />
             <span className="text-red-700">{error}</span>
           </div>
@@ -266,21 +266,21 @@ export function ObligationBreakdownModal({
         {data && (
           <div className="space-y-6">
             {/* Σύνοψη */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="bg-blue-50 p-4 rounded-lg border border-gray-300">
               <h3 className="font-semibold text-blue-800 mb-2">
                 Σύνοψη για {data.building_name}
               </h3>
               
               {/* Ενημερωτικό μήνυμα για εκτιμήσεις */}
               {data.debt_summary?.estimated_debts && data.debt_summary.estimated_debts > 0 && (
-                <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+                <div className="mb-3 p-2 bg-orange-50 border border-gray-300 rounded text-xs text-orange-700">
                   <strong>Σημείωση:</strong> {data.debt_summary.estimated_debts} από τις {data.apartments_with_debt} οφειλές δείχνουν εκτιμώμενες ημερομηνίες 
                   καθώς δεν υπάρχει διαθέσιμο ιστορικό συναλλαγών. Οι εκτιμήσεις βασίζονται στο μέγεθος της οφειλής.
                 </div>
               )}
               
               {data.debt_summary?.has_transaction_history && (
-                <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                <div className="mb-3 p-2 bg-green-50 border border-gray-300 rounded text-xs text-green-700">
                   <strong>✓ Ενημερωμένο κτίριο:</strong> Διαθέσιμο ιστορικό συναλλαγών για ακριβείς ημερομηνίες οφειλών.
                 </div>
               )}
@@ -338,7 +338,7 @@ export function ObligationBreakdownModal({
                 {data.apartment_debts.length > 0 ? (
                   <div className="space-y-3">
                     {data.apartment_debts.map((apt, index) => (
-                      <div key={index} className="p-4 bg-red-50 rounded-lg border border-red-100">
+                      <div key={index} className="p-4 bg-red-50 rounded-lg border border-gray-300">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
@@ -476,7 +476,7 @@ export function ObligationBreakdownModal({
             </div>
 
             {/* Συνολικός Υπολογισμός */}
-            <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+            <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-300">
               <h3 className="font-semibold text-gray-800 mb-3">Συνολικός Υπολογισμός</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -503,7 +503,7 @@ export function ObligationBreakdownModal({
             <div className="space-y-3 pt-4 border-t">
               {/* Bulk Payment Actions */}
               {data.apartment_debts.length > 0 && (
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="bg-blue-50 p-3 rounded-lg border border-gray-300">
                   <h4 className="font-medium text-blue-800 mb-2 text-sm">Μαζικές Ενέργειες</h4>
                   <div className="flex gap-2">
                     <Button
@@ -658,7 +658,7 @@ export function ObligationBreakdownModal({
                 </div>
               </div>
               
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="mt-4 p-3 bg-yellow-50 border border-gray-300 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι πληρωμές που έχουν καταχωρηθεί για αυτό το διαμέρισμα.
                 </p>

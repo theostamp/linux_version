@@ -96,7 +96,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
             onClick={() => router.push(action.link)}
             className={cn(
               "cursor-pointer rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-[1.02]",
-              "bg-[hsl(var(--card))] border border-[hsl(var(--border))]"
+              "bg-[hsl(var(--card))] border border-gray-300"
             )}
           >
             {/* Icon & Arrow */}

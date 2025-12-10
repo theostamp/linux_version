@@ -366,7 +366,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
         ) : (
           <div className="space-y-6">
             {/* Main Amount Overview */}
-            <Card className="border-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <Card className="border-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -438,7 +438,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       </div>
 
                       {/* Συνολικό Υπόλοιπο */}
-                      <div className="pt-2 border-t border-gray-200">
+                      <div className="pt-2 border-t border-gray-300">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-gray-800">Καθαρό Υπόλοιπο:</span>
                           <span className={`font-bold text-lg ${displayAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -504,7 +504,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       </div>
                       
                       {/* Συνολικές τρέχουσες υποχρεώσεις */}
-                      <div className="pt-2 border-t border-gray-200">
+                      <div className="pt-2 border-t border-gray-300">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-gray-800">Συνολικές τρέχουσες υποχρεώσεις:</span>
                           <span className="font-bold text-lg text-red-600">
@@ -570,7 +570,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       </div>
                       
                       {/* Συνολικές παλαιότερες οφειλές */}
-                      <div className="pt-2 border-t border-gray-200">
+                      <div className="pt-2 border-t border-gray-300">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-gray-800">Συνολικές παλαιότερες οφειλές:</span>
                           <span className="font-bold text-lg text-purple-600">
@@ -590,7 +590,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
             {/* Financial Summary Cards */}
             {summary && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-green-200 bg-green-50">
+                <Card className="border-gray-300 bg-green-50">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <ArrowUpRight className="h-5 w-5 text-green-600" />
@@ -606,7 +606,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                   </CardContent>
                 </Card>
 
-                <Card className="border-red-200 bg-red-50">
+                <Card className="border-gray-300 bg-red-50">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <ArrowDownRight className="h-5 w-5 text-red-600" />
@@ -622,7 +622,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                   </CardContent>
                 </Card>
 
-                <Card className="border-blue-200 bg-blue-50">
+                <Card className="border-gray-300 bg-blue-50">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Activity className="h-5 w-5 text-blue-600" />
@@ -770,7 +770,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
 
                 {/* Amount Source Information */}
                 {allTransactions.length === 0 && (
-                  <Card className="border-yellow-200 bg-yellow-50">
+                  <Card className="border-gray-300 bg-yellow-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <Info className="h-5 w-5 text-yellow-600" />

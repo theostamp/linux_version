@@ -35,7 +35,7 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
       )}
       
       {/* Key Metrics Grid */}
-      <div className="rounded-2xl border border-border bg-card/50 p-4 md:p-6">
+      <div className="rounded-2xl border border-gray-300 bg-card/50 p-4 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricsCard
             title="Κτίρια"

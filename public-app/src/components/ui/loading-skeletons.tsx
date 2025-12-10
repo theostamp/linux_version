@@ -8,10 +8,10 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
         <Skeleton className="h-8 w-[200px]" />
         <Skeleton className="h-8 w-[100px]" />
       </div>
-      <div className="rounded-md border border-slate-200/60">
-        <div className="h-12 border-b border-slate-200/50 bg-muted/30 px-4" />
+      <div className="rounded-md border border-gray-300">
+        <div className="h-12 border-b border-gray-300 bg-muted/30 px-4" />
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between p-4 border-b border-slate-200/50 last:border-0">
+          <div key={i} className="flex items-center justify-between p-4 border-b border-gray-300 last:border-0">
             {Array.from({ length: columns }).map((_, j) => (
               <Skeleton key={j} className="h-4 w-[20%]" />
             ))}

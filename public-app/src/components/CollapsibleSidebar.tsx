@@ -477,14 +477,14 @@ export default function CollapsibleSidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-gray-300"
         >
           <Menu className="w-5 h-5 text-muted-foreground" />
         </button>
 
         {/* Loading Sidebar */}
         <aside
-          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col justify-center items-center z-40 bg-card transition-colors duration-300"
+          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-gray-300 flex-col justify-center items-center z-40 bg-gray-50 transition-colors duration-300"
           style={{
             width: '80px',
           }}
@@ -512,8 +512,9 @@ export default function CollapsibleSidebar() {
           if (!isPinned) setIsExpanded(false);
         }}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-border flex-col z-40 overflow-hidden text-card-foreground",
-          "transition-all duration-300 ease-in-out"
+          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-gray-300 flex-col z-40 overflow-hidden text-card-foreground",
+          "transition-all duration-300 ease-in-out",
+          !isExpanded ? "bg-gray-50" : "bg-card"
         )}
         style={{
           width: isExpanded ? '256px' : '80px',
@@ -522,7 +523,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Header */}
         <div 
-          className="p-4 border-b border-border/50 flex items-center gap-3 min-h-[64px]"
+          className="p-4 border-b border-gray-300 flex items-center gap-3 min-h-[64px]"
         >
           <div 
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-primary text-primary-foreground"
@@ -553,7 +554,7 @@ export default function CollapsibleSidebar() {
               setIsPinned((prev) => !prev);
               setIsExpanded((prev) => !prev);
             }}
-            className="ml-auto p-2 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted transition"
+            className="ml-auto p-2 rounded-lg border border-gray-300 bg-muted/30 hover:bg-muted transition"
             aria-label={isExpanded ? 'Σύμπτυξη sidebar' : 'Άνοιγμα sidebar'}
           >
             <ChevronRight
@@ -676,7 +677,7 @@ export default function CollapsibleSidebar() {
                           {!isExpanded && (
                             <TooltipContent
                               side="right"
-                              className="z-50 bg-popover text-popover-foreground border-border shadow-lg"
+                              className="z-50 bg-popover text-popover-foreground border-gray-300 shadow-lg"
                               sideOffset={10}
                             >
                               <p className="text-xs font-semibold">{link.label}</p>
@@ -697,7 +698,7 @@ export default function CollapsibleSidebar() {
 
         {/* Calculator Tool */}
         <div 
-          className="p-3 border-t border-border/50"
+          className="p-3 border-t border-gray-300"
         >
           <CalculatorModal>
             <button 
@@ -727,7 +728,7 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-border flex flex-col z-50 bg-card text-card-foreground",
+          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-gray-300 flex flex-col z-50 bg-card text-card-foreground",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -737,7 +738,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-border/50 flex items-center justify-between"
+          className="p-4 border-b border-gray-300 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <div 
