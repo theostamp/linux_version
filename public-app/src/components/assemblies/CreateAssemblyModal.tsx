@@ -325,15 +325,16 @@ export default function CreateAssemblyModal({
       const assemblyDate = new Date(formData.scheduled_date);
       
       if (!preVotingStartDate) {
+        // Default: voting starts 7 days before assembly
         const startDate = new Date(assemblyDate);
         startDate.setDate(startDate.getDate() - 7);
         preVotingStartDate = startDate.toISOString().split('T')[0];
       }
       
       if (!preVotingEndDate) {
-        // Default: voting closes 3 days AFTER assembly (to allow late votes)
+        // Default: voting closes 1 day BEFORE assembly (backend requirement)
         const endDate = new Date(assemblyDate);
-        endDate.setDate(endDate.getDate() + 3);
+        endDate.setDate(endDate.getDate() - 1);
         preVotingEndDate = endDate.toISOString().split('T')[0];
       }
     }
