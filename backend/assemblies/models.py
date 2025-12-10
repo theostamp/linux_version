@@ -13,6 +13,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from datetime import timedelta
 from decimal import Decimal
 import uuid
 
@@ -257,13 +258,15 @@ class Assembly(models.Model):
     
     @property
     def is_pre_voting_active(self):
-        """Είναι ενεργό το pre-voting"""
+        """Είναι ενεργό το pre-voting (πριν ή μετά τη συνέλευση)"""
         if not self.pre_voting_enabled:
             return False
         today = timezone.now().date()
         start = self.pre_voting_start_date or self.scheduled_date
-        end = self.pre_voting_end_date or self.scheduled_date
-        return start <= today <= end and self.status in ['scheduled', 'convened']
+        # Default end: 3 days after assembly
+        end = self.pre_voting_end_date or (self.scheduled_date + timedelta(days=3))
+        # Allow voting before, during, and after assembly (until end date)
+        return start <= today <= end and self.status in ['scheduled', 'convened', 'in_progress', 'completed']
     
     def check_quorum(self):
         """Ελέγχει και ενημερώνει την απαρτία"""

@@ -295,8 +295,9 @@ function CreateAssemblyContent() {
       }
       
       if (!preVotingEndDate) {
+        // Default: voting closes 3 days AFTER assembly (to allow late votes)
         const endDate = new Date(assemblyDate);
-        endDate.setDate(endDate.getDate() - 1);
+        endDate.setDate(endDate.getDate() + 3);
         preVotingEndDate = endDate.toISOString().split('T')[0];
       }
     }
@@ -541,9 +542,9 @@ function CreateAssemblyContent() {
                 value={formData.pre_voting_end_date}
                 onChange={(e) => setFormData({ ...formData, pre_voting_end_date: e.target.value })}
                 className="mt-1"
-                placeholder="1 ημέρα πριν"
+                placeholder="3 ημέρες μετά"
               />
-              <p className="text-xs text-indigo-500 mt-1">Αφήστε κενό για 1 ημέρα πριν</p>
+              <p className="text-xs text-indigo-500 mt-1">Αφήστε κενό για 3 ημέρες μετά τη συνέλευση</p>
             </div>
           </div>
         )}
