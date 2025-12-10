@@ -855,7 +855,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             onClick={handleExpenseCancel}
           >
             <div 
-              className="bg-card border border-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl"
+              className="bg-white border border-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">

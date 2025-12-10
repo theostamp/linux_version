@@ -814,7 +814,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   return (
-    <Card>
+    <Card className="bg-white">
       <CardHeader>
         <CardTitle className={typography.cardTitle}>Νέα Είσπραξη</CardTitle>
       </CardHeader>

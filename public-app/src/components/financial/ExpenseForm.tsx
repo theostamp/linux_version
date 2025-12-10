@@ -359,7 +359,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information Section */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Info className="w-5 h-5 text-blue-600" />
@@ -440,7 +440,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
         </Card>
 
         {/* Financial Details Section */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Info className="w-5 h-5 text-green-600" />
@@ -629,7 +629,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
         </Card>
 
         {/* Supplier Section */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Info className="w-5 h-5 text-purple-600" />
@@ -705,7 +705,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
         </Card>
 
         {/* Notes Section */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Info className="w-5 h-5 text-orange-600" />

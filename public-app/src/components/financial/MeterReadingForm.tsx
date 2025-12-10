@@ -135,7 +135,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto bg-white">
       <CardHeader>
         <CardTitle>
           {reading ? 'Επεξεργασία Μετρήσης' : 'Νέα Μετρήση'}
