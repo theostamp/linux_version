@@ -91,11 +91,16 @@ export default function VoteDetailPage() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const isActive = vote.start_date <= today && today <= vote.end_date;
+  // Handle null/invalid end_date - treat as no expiry
+  const hasValidEndDate = vote.end_date && vote.end_date !== '1970-01-01' && !vote.end_date.startsWith('1970');
+  const isActive = vote.start_date <= today && (!hasValidEndDate || today <= vote.end_date);
   const hasVoted = !!myVote;
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('el-GR', {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr || dateStr.startsWith('1970')) return 'Χωρίς ημερομηνία λήξης';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime()) || date.getFullYear() <= 1970) return 'Χωρίς ημερομηνία λήξης';
+    return date.toLocaleDateString('el-GR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long', 
@@ -129,14 +134,15 @@ export default function VoteDetailPage() {
     }
     
     if (!isActive) {
+      const notStarted = vote.start_date > today;
       return {
         icon: Clock,
-        status: vote.start_date > today ? 'Δεν έχει ξεκινήσει' : 'Έχει λήξει',
-        color: vote.start_date > today ? 'blue' : 'gray',
+        status: notStarted ? 'Δεν έχει ξεκινήσει' : 'Έχει λήξει',
+        color: notStarted ? 'blue' : 'gray',
         canVote: false,
-        message: vote.start_date > today ? 
+        message: notStarted ? 
           `Ξεκινά ${formatDate(vote.start_date)}` : 
-          `Έληξε ${formatDate(vote.end_date)}`
+          (hasValidEndDate ? `Έληξε ${formatDate(vote.end_date)}` : 'Η ψηφοφορία έκλεισε')
       };
     }
 
@@ -263,7 +269,8 @@ export default function VoteDetailPage() {
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               <span>
-                {new Date(vote.start_date).toLocaleDateString('el-GR')} - {new Date(vote.end_date).toLocaleDateString('el-GR')}
+                {new Date(vote.start_date).toLocaleDateString('el-GR')}
+                {hasValidEndDate ? ` - ${new Date(vote.end_date).toLocaleDateString('el-GR')}` : ' - Ανοικτή'}
               </span>
             </div>
             {voteWithExtras.days_remaining !== null && voteWithExtras.days_remaining !== undefined && voteWithExtras.days_remaining > 0 && (

@@ -47,10 +47,17 @@ interface VoteItemContentProps {
   readonly index: number;
 }
 
-const formatDate = (value: string) => {
+const isValidDate = (value: string | null | undefined): boolean => {
+  if (!value) return false;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '—';
+  return !Number.isNaN(date.getTime()) && date.getFullYear() > 1970;
+};
+
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return 'Ανοικτή';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime()) || date.getFullYear() <= 1970) {
+    return 'Ανοικτή';
   }
   return date.toLocaleDateString('el-GR', {
     day: '2-digit',
@@ -59,15 +66,20 @@ const formatDate = (value: string) => {
   });
 };
 
-const isActive = (startDate: string, endDate: string): boolean => {
+const isActive = (startDate: string, endDate: string | null | undefined): boolean => {
   const now = new Date();
   const start = new Date(startDate);
-  const end = new Date(endDate);
   
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+  if (Number.isNaN(start.getTime())) {
     return false;
   }
   
+  // If no valid end date, consider it always active (after start)
+  if (!isValidDate(endDate)) {
+    return now >= start;
+  }
+  
+  const end = new Date(endDate!);
   return now >= start && now <= end;
 };
 
