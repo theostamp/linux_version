@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { 
   useAssembly, useAssemblyAttendees, useAgendaItems, 
   useStartAgendaItem, useEndAgendaItem, useAttendeeCheckIn,
@@ -205,6 +206,7 @@ function LiveAssemblyContent() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const assemblyId = params.id as string;
 
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
@@ -217,7 +219,7 @@ function LiveAssemblyContent() {
 
   const canManage = hasInternalManagerAccess(user);
 
-  if (isLoading) {
+  if (isLoading || buildingLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
@@ -232,6 +234,20 @@ function LiveAssemblyContent() {
         <h2 className="text-xl font-semibold text-gray-900">Δεν βρέθηκε η συνέλευση</h2>
         <Button variant="outline" onClick={() => router.push('/assemblies')} className="mt-4">
           Επιστροφή
+        </Button>
+      </div>
+    );
+  }
+
+  // Check if assembly belongs to selected building
+  if (selectedBuilding && assembly.building !== selectedBuilding.id) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <Building2 className="w-12 h-12 text-amber-400 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900">Διαφορετικό κτίριο</h2>
+        <p className="text-gray-500 mt-2">Η συνέλευση ανήκει στο κτίριο: {assembly.building_name}</p>
+        <Button variant="outline" onClick={() => router.push('/assemblies')} className="mt-4">
+          Επιστροφή στις Συνελεύσεις
         </Button>
       </div>
     );

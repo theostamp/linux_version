@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { 
   useAssembly, 
   useSendAssemblyInvitation,
@@ -242,6 +243,7 @@ function AssemblyDetailContent() {
   const params = useParams();
   const router = useRouter();
   const { user, isAuthReady } = useAuth();
+  const { selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const [activeTab, setActiveTab] = useState<'overview' | 'vote'>('overview');
 
   const assemblyId = params.id as string;
@@ -256,7 +258,7 @@ function AssemblyDetailContent() {
   // Find current user's attendee record
   const myAttendee = assembly?.attendees.find(a => a.user === user?.id) || null;
 
-  if (!isAuthReady || isLoading) {
+  if (!isAuthReady || isLoading || buildingLoading) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
@@ -267,6 +269,20 @@ function AssemblyDetailContent() {
             <div className="h-64 bg-gray-100 rounded-xl"></div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Check if assembly belongs to selected building
+  if (assembly && selectedBuilding && assembly.building !== selectedBuilding.id) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <Building2 className="w-12 h-12 text-amber-400 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900">Διαφορετικό κτίριο</h2>
+        <p className="text-gray-500 mt-2">Η συνέλευση ανήκει στο κτίριο: {assembly.building_name}</p>
+        <Button variant="outline" onClick={() => router.push('/assemblies')} className="mt-4">
+          Επιστροφή στις Συνελεύσεις
+        </Button>
       </div>
     );
   }
