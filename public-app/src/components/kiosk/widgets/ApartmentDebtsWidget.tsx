@@ -15,6 +15,7 @@ interface ApartmentDebt {
   previous_balance: number;
   resident_expenses?: number;
   owner_expenses?: number;
+  month_payments?: number; // New field from backend
   status: string;
 }
 
@@ -192,10 +193,16 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   }
 
   const totalExpenses = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance || 0), 0);
-  // Calculate payment coverage - use summary data from API
-  const totalObligations = summary?.total_obligations || 0; // Unpaid debt (current_balance > 0)
-  const totalPayments = summary?.total_payments || 0;     // Paid this month (month_payments)
   
+  // Calculate total payments from individual debts if summary is 0 or missing
+  const debtsTotalPayments = debts.reduce((sum, apt) => sum + (apt.month_payments || 0), 0);
+  
+  // Use summary data if available and non-zero, otherwise fallback to debts sum
+  const totalObligations = summary?.total_obligations || 0; // Unpaid debt
+  const totalPayments = (summary?.total_payments && summary.total_payments > 0) 
+    ? summary.total_payments 
+    : debtsTotalPayments;
+
   // Coverage = Paid / (Paid + Unpaid)
   const totalRequirements = totalPayments + totalObligations;
   const paymentCoveragePercentage = totalRequirements > 0 ? (totalPayments / totalRequirements) * 100 : 0;
@@ -381,7 +388,10 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
               </span>
             </div>
             {/* Progress Bar */}
-            <div className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30">
+            <div 
+              className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30"
+              title={`Εισπράξεις: €${totalPayments.toFixed(2)} / Σύνολο: €${totalRequirements.toFixed(2)}`}
+            >
               <div 
                 className={`h-full rounded-full transition-all duration-1000 ${
                   paymentCoveragePercentage >= 75 
