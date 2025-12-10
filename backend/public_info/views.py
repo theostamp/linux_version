@@ -322,11 +322,13 @@ def building_info(request, building_id: int):
                 apartment_balances = dashboard_service.get_apartment_balances(month=requested_month)
 
                 total_obligations_amount = 0.0
+                total_payments_amount = 0.0
                 apartment_balances_payload = []
 
                 for balance in apartment_balances:
                     raw_current_balance = balance.get('current_balance') or 0
                     raw_net_obligation = balance.get('net_obligation') or 0
+                    raw_month_payments = balance.get('month_payments') or 0
 
                     try:
                         current_balance_value = float(raw_current_balance)
@@ -338,6 +340,11 @@ def building_info(request, building_id: int):
                     except (TypeError, ValueError):
                         net_obligation_value = 0.0
 
+                    try:
+                        month_payments_value = float(raw_month_payments)
+                    except (TypeError, ValueError):
+                        month_payments_value = 0.0
+
                     # FinancialDashboardService returns positive balances for debts in current view.
                     debt_amount = net_obligation_value if net_obligation_value > 0 else 0.0
                     if debt_amount == 0.0 and current_balance_value > 0:
@@ -345,11 +352,15 @@ def building_info(request, building_id: int):
 
                     if debt_amount:
                         total_obligations_amount += debt_amount
+                    
+                    # Sum monthly payments
+                    total_payments_amount += month_payments_value
 
                     apartment_balances_payload.append({
                         'apartment_number': balance.get('apartment_number') or balance.get('number'),
                         'net_obligation': debt_amount,
                         'current_balance': current_balance_value,
+                        'month_payments': month_payments_value,
                         'owner_name': balance.get('owner_name'),
                         'tenant_name': balance.get('tenant_name'),
                         'occupant_name': balance.get('occupant_name') or balance.get('tenant_name') or balance.get('owner_name'),
@@ -368,8 +379,14 @@ def building_info(request, building_id: int):
                 financial_data.update({
                     'total_obligations': round(total_obligations_amount, 2),
                     'current_obligations': round(total_obligations_amount, 2),
+                    'total_payments': round(total_payments_amount, 2),
                     'apartment_balances': apartment_balances_payload,
                     'top_debtors': top_debtors,
+                    # Add summary object for frontend compatibility
+                    'summary': {
+                        'total_obligations': round(total_obligations_amount, 2),
+                        'total_payments': round(total_payments_amount, 2),
+                    },
                 })
             except Exception as balance_error:
                 print(f"[public_info] Unable to load apartment balances: {balance_error}")
