@@ -523,7 +523,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Header */}
         <div 
-          className="p-4 border-b border-gray-300 flex items-center gap-3 min-h-[64px]"
+          className="p-4 border-b border-gray-300 flex items-center gap-3 min-h-[64px] bg-card"
         >
           <div 
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-primary text-primary-foreground"
@@ -738,7 +738,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-gray-300 flex items-center justify-between"
+          className="p-4 border-b border-gray-300 flex items-center justify-between bg-card"
         >
           <div className="flex items-center gap-3">
             <div 
