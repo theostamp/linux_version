@@ -512,7 +512,7 @@ export default function CollapsibleSidebar() {
           if (!isPinned) setIsExpanded(false);
         }}
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-gray-300 flex-col z-40 overflow-hidden text-card-foreground",
+          "hidden lg:flex sticky top-0 h-screen shadow-xl border-r border-gray-300 flex-col z-40 overflow-hidden text-card-foreground shrink-0",
           "transition-all duration-300 ease-in-out",
           !isExpanded ? "bg-gray-50" : "bg-card"
         )}

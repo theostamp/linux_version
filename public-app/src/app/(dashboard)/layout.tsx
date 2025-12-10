@@ -44,12 +44,12 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
       {/* Collapsible Sidebar - Gets user from AuthContext */}
       <CollapsibleSidebar />
 
-      {/* Main Content - Adjusted padding for collapsed sidebar (80px) + margin (20px) */}
-      <div className="lg:pl-[100px]">
+      {/* Main Content - Flex grow to take remaining space */}
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out">
         {/* Header */}
         <GlobalHeader />
 
@@ -61,4 +61,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
