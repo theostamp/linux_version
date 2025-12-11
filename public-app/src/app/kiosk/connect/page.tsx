@@ -68,9 +68,11 @@ function KioskConnectContent() {
   // Check auth state on mount
   useEffect(() => {
     const state = checkAuth();
+    console.log('[KioskConnect] Initial auth check:', state);
+    console.log('[KioskConnect] URL params:', { buildingId, token: token ? 'present' : 'missing' });
     setAuthState(state);
     setAuthChecked(true);
-  }, []);
+  }, [buildingId, token]);
 
   // Fetch building info on mount
   useEffect(() => {
