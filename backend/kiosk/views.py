@@ -15,7 +15,7 @@ from .serializers import (
     WidgetPlacementSerializer
 )
 from buildings.models import Building
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
@@ -71,8 +71,8 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
 
         # Create widget
         widget_data = request.data.copy()
-        widget_data['building'] = building.id if building else None
-        widget_data['created_by'] = request.user.id
+        widget_data['building'] = building.pk if building else None
+        widget_data['created_by'] = request.user.pk
         
         serializer = self.get_serializer(data=widget_data)
         serializer.is_valid(raise_exception=True)
@@ -137,8 +137,8 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
                 widget.save()
             except KioskWidget.DoesNotExist:
                 # Create new widget
-                widget_data['building'] = building.id if building else None
-                widget_data['created_by'] = request.user.id
+                widget_data['building'] = building.pk if building else None
+                widget_data['created_by'] = request.user.pk
                 widget = KioskWidget.from_dict(widget_data, request.user, building)
                 widget.save()
             
@@ -889,6 +889,11 @@ def kiosk_register(request):
     6. User completes registration (sets password)
     7. User is automatically linked to their apartment
     """
+    # #region agent log
+    import json as _json
+    with open('/home/theo/project/.cursor/debug.log', 'a') as _f:
+        _f.write(_json.dumps({'location':'kiosk/views.py:kiosk_register:START','message':'Kiosk registration started','data':{'email':request.data.get('email',''),'building_id':request.data.get('building_id'),'has_token':bool(request.data.get('token')),'phone':request.data.get('phone','')[:4]+'***'},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1-H5'})+'\n')
+    # #endregion
     email = request.data.get('email', '').strip().lower()
     building_id = request.data.get('building_id')
     token = request.data.get('token', '')
@@ -997,6 +1002,11 @@ def kiosk_register(request):
     
     # Check if user already exists
     existing_user = CustomUser.objects.filter(email=email).first()
+    # #region agent log
+    import json as _json2
+    with open('/home/theo/project/.cursor/debug.log', 'a') as _f2:
+        _f2.write(_json2.dumps({'location':'kiosk/views.py:kiosk_register:EXISTING_USER_CHECK','message':'Checking if user exists','data':{'email':email,'user_exists':bool(existing_user),'user_id':existing_user.pk if existing_user else None,'user_tenant':str(existing_user.tenant.schema_name) if existing_user and hasattr(existing_user,'tenant') and existing_user.tenant else None},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H4'})+'\n')
+    # #endregion
     if existing_user:
         # User exists - ensure they have access to this building and ALL their apartments
         kiosk_logger.info(f"User {email} already exists, ensuring building access for {len(all_matches)} apartment(s)")
@@ -1010,8 +1020,8 @@ def kiosk_register(request):
             tenant = None
             if hasattr(existing_user, 'tenant') and existing_user.tenant:
                 tenant = existing_user.tenant
-            elif hasattr(connection, 'tenant') and connection.tenant:
-                tenant = connection.tenant
+            elif hasattr(connection, 'tenant') and getattr(connection, 'tenant', None):
+                tenant = getattr(connection, 'tenant')
             
             if tenant:
                 with schema_context(tenant.schema_name):
@@ -1158,6 +1168,11 @@ def kiosk_register(request):
     try:
         # Get current tenant schema for cross-domain invitation acceptance
         current_tenant_schema = getattr(connection, 'schema_name', None)
+        # #region agent log
+        import json as _json3
+        with open('/home/theo/project/.cursor/debug.log', 'a') as _f3:
+            _f3.write(_json3.dumps({'location':'kiosk/views.py:kiosk_register:TENANT_SCHEMA','message':'Creating invitation with tenant schema','data':{'current_tenant_schema_raw':current_tenant_schema,'connection_schema':getattr(connection,'schema_name',None),'building_id':building_id,'apartment_id':apartment.id if apartment else None},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1'})+'\n')
+        # #endregion
         if current_tenant_schema == 'public':
             current_tenant_schema = None  # Don't store 'public' as tenant
         
@@ -1173,7 +1188,7 @@ def kiosk_register(request):
             auto_approved=True,
             invited_by=invited_by,
             tenant_schema_name=current_tenant_schema,  # Store tenant for cross-domain acceptance
-            expires_at=timezone.now() + timezone.timedelta(days=7)
+            expires_at=timezone.now() + timedelta(days=7)
         )
         
         kiosk_logger.info(f"Created kiosk invitation for {email} with tenant_schema_name: {current_tenant_schema}")
@@ -1246,7 +1261,7 @@ def kiosk_register(request):
             scenes_count = KioskScene.objects.filter(building=building).count()
             
             return Response({
-                'buildingId': building.id,
+                'buildingId': building.pk,
                 'buildingName': building.name,
                 'scenesExist': scenes_count > 0,
                 'scenesCount': scenes_count
@@ -1322,7 +1337,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
             scenes_count = KioskScene.objects.filter(building=building).count()
             
             return Response({
-                'buildingId': building.id,
+                'buildingId': building.pk,
                 'buildingName': building.name,
                 'scenesExist': scenes_count > 0,
                 'scenesCount': scenes_count

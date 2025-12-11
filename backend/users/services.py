@@ -1090,6 +1090,11 @@ class InvitationService:
             logger.info(f"[INVITATION] Assigned tenant {user_tenant.schema_name} to user {user.email}")
         else:
             logger.warning(f"[INVITATION] No tenant found for user {user.email} - BuildingMembership may not be created!")
+        # #region agent log
+        import json as _json_inv
+        with open('/home/theo/project/.cursor/debug.log', 'a') as _f_inv:
+            _f_inv.write(_json_inv.dumps({'location':'users/services.py:accept_invitation:TENANT_ASSIGNED','message':'User tenant assignment','data':{'user_email':user.email,'user_id':user.id,'user_tenant':str(user_tenant.schema_name) if user_tenant else None,'invitation_tenant_schema_name':invitation.tenant_schema_name,'invitation_building_id':invitation.building_id,'invitation_apartment_id':invitation.apartment_id},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1-H2'})+'\n')
+        # #endregion
         
         # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
@@ -1107,6 +1112,11 @@ class InvitationService:
         # Δημιουργία building membership και σύνδεση με apartment
         if invitation.building_id:
             logger.info(f"Creating building membership for user {user.email} in building {invitation.building_id}")
+            # #region agent log
+            import json as _json_bm
+            with open('/home/theo/project/.cursor/debug.log', 'a') as _f_bm:
+                _f_bm.write(_json_bm.dumps({'location':'users/services.py:accept_invitation:BUILDING_MEMBERSHIP_START','message':'Starting building membership creation','data':{'user_email':user.email,'building_id':invitation.building_id,'has_user_tenant':bool(user.tenant),'user_tenant_schema':str(user.tenant.schema_name) if user.tenant else None},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H2'})+'\n')
+            # #endregion
             
             try:
                 from buildings.models import Building, BuildingMembership
@@ -1182,6 +1192,11 @@ class InvitationService:
                             except Exception as e:
                                 logger.error(f"❌ Failed to link user to apartment {apartment.number}: {e}")
                         
+                        # #region agent log
+                        import json as _json_link
+                        with open('/home/theo/project/.cursor/debug.log', 'a') as _f_link:
+                            _f_link.write(_json_link.dumps({'location':'users/services.py:accept_invitation:APARTMENT_LINK_RESULT','message':'Apartment linking result','data':{'user_email':user.email,'linked_count':linked_count,'matching_apartments_count':len(list(matching_apartments)),'building_name':building.name,'apartment_id_from_invitation':invitation.apartment_id},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H3'})+'\n')
+                        # #endregion
                         if linked_count > 0:
                             logger.info(f"✅ Linked user {user.email} to {linked_count} apartment(s) in building {building.name}")
                         elif invitation.apartment_id:

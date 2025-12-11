@@ -180,6 +180,10 @@ function KioskConnectContent() {
         message: data.message,
         error: data.error
       });
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/910d1ab3-939d-4b8f-b8f2-09d337bdabce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'kiosk/connect/page.tsx:handleSubmit:RESPONSE',message:'Kiosk connect API response received',data:{responseStatus:response.status,dataStatus:data.status,hasAccessToken:!!data.access_token,hasTenantUrl:!!data.tenant_url,hasUser:!!data.user,apartment:data.apartment,apartments:data.apartments},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4-H5'})}).catch(()=>{});
+      // #endregion
 
       if (response.ok) {
         // Store building context from QR scan for all success cases
@@ -208,18 +212,13 @@ function KioskConnectContent() {
           setPhone('');
           
           // Redirect to my-apartment after brief delay
-          // Use tenant subdomain if available for cross-domain redirect
+          // NOTE: Temporarily disabled cross-domain redirect for debugging
           setTimeout(() => {
-            // Safety check: only do cross-domain redirect if we have valid token
-            if (data.tenant_url && data.access_token) {
-              // Cross-subdomain redirect with tokens - include building context
-              const targetUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(data.access_token)}&refresh=&redirect=${encodeURIComponent('/my-apartment')}&building=${buildingId}`;
-              console.log('[KioskConnect] Cross-domain redirect to:', targetUrl);
-              window.location.href = targetUrl;
-            } else {
-              console.log('[KioskConnect] Local redirect to /my-apartment');
-              router.push('/my-apartment');
-            }
+            console.log('[KioskConnect] Redirecting to /my-apartment (tokens stored locally)');
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/910d1ab3-939d-4b8f-b8f2-09d337bdabce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'kiosk/connect/page.tsx:handleSubmit:EXISTING_USER_REDIRECT',message:'Existing user - redirecting to my-apartment WITH token',data:{hasAccessToken:!!data.access_token,hasTenantUrl:!!data.tenant_url,userEmail:data.user?.email,apartment:data.apartment,apartments:data.apartments},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
+            // #endregion
+            router.push('/my-apartment');
           }, 1500);
         } else if (data.status === 'existing_user') {
           // Fallback: email was sent
@@ -229,6 +228,9 @@ function KioskConnectContent() {
           setPhone('');
         } else {
           // New user - registration email sent
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/910d1ab3-939d-4b8f-b8f2-09d337bdabce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'kiosk/connect/page.tsx:handleSubmit:NEW_USER_SUCCESS',message:'New user registration - email sent, NO redirect',data:{dataStatus:data.status,apartment:data.apartment,message:data.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+          // #endregion
           setStatus('success');
           setMessage(data.message || 'Ελέγξτε το email σας για να συνεχίσετε!');
           setEmail('');

@@ -95,6 +95,10 @@ function AcceptInvitationForm() {
       });
 
       const data = await response.json();
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/910d1ab3-939d-4b8f-b8f2-09d337bdabce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'accept-invitation/page.tsx:handleSubmit:RESPONSE',message:'Accept invitation API response',data:{responseOk:response.ok,responseStatus:response.status,hasTokens:!!data.tokens,hasUser:!!data.user,userRole:data.user?.role,tenantUrl:data.tenant_url,redirectPath:data.redirect_path,error:data.error},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
 
       if (!response.ok) {
         throw new Error(data.error || data.detail || 'Σφάλμα αποδοχής πρόσκλησης');
