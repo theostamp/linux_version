@@ -95,10 +95,6 @@ function AcceptInvitationForm() {
       });
 
       const data = await response.json();
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/910d1ab3-939d-4b8f-b8f2-09d337bdabce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'accept-invitation/page.tsx:handleSubmit:RESPONSE',message:'Accept invitation API response',data:{responseOk:response.ok,responseStatus:response.status,hasTokens:!!data.tokens,hasUser:!!data.user,userRole:data.user?.role,tenantUrl:data.tenant_url,redirectPath:data.redirect_path,error:data.error},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
 
       if (!response.ok) {
         throw new Error(data.error || data.detail || 'Σφάλμα αποδοχής πρόσκλησης');
@@ -126,7 +122,19 @@ function AcceptInvitationForm() {
       setTimeout(() => {
         // Check if user data indicates they are a resident
         const isResident = data.user?.role === 'resident';
-        router.push(isResident ? '/my-apartment' : '/dashboard');
+        const targetPath = isResident ? '/my-apartment' : '/dashboard';
+        
+        // Handle cross-subdomain redirect if tenant_url is provided
+        if (data.tenant_url) {
+          // Build redirect URL with tokens for cross-subdomain auth
+          const accessToken = localStorage.getItem('access_token') || '';
+          const refreshToken = localStorage.getItem('refresh_token') || '';
+          const redirectUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(accessToken)}&refresh=${encodeURIComponent(refreshToken)}&redirect=${encodeURIComponent(targetPath)}`;
+          console.log('[AcceptInvitation] Cross-subdomain redirect to:', redirectUrl);
+          window.location.href = redirectUrl;
+        } else {
+          router.push(targetPath);
+        }
       }, 2000);
       
     } catch (error) {

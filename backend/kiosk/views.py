@@ -1006,16 +1006,25 @@ def kiosk_register(request):
             from buildings.models import BuildingMembership
             from rest_framework_simplejwt.tokens import RefreshToken
             
-            # Get tenant from current connection or user
+            # Get tenant - priority: user.tenant > connection.tenant
             tenant = None
             if hasattr(existing_user, 'tenant') and existing_user.tenant:
                 tenant = existing_user.tenant
+                kiosk_logger.info(f"Using tenant from user: {tenant.schema_name}")
             elif hasattr(connection, 'tenant') and getattr(connection, 'tenant', None):
                 tenant = getattr(connection, 'tenant')
+                kiosk_logger.info(f"Using tenant from connection: {tenant.schema_name}")
+                # Also update user's tenant if not set
+                if not existing_user.tenant:
+                    existing_user.tenant = tenant
+                    existing_user.save(update_fields=['tenant'])
+                    kiosk_logger.info(f"Updated user {email} tenant to {tenant.schema_name}")
+            
+            linked_apartments = []
             
             if tenant:
                 with schema_context(tenant.schema_name):
-                    # Check/Create BuildingMembership
+                    # Check/Create BuildingMembership for THIS building
                     membership, created = BuildingMembership.objects.get_or_create(
                         resident=existing_user,
                         building=building,
@@ -1024,8 +1033,7 @@ def kiosk_register(request):
                     if created:
                         kiosk_logger.info(f"Created BuildingMembership for {email} in building {building.name}")
                     
-                    # Link user to ALL matching apartments
-                    linked_apartments = []
+                    # Link user to ALL matching apartments in this building
                     for match in all_matches:
                         apt = match['apartment']
                         apt_match_type = match['match_type']
@@ -1043,6 +1051,45 @@ def kiosk_register(request):
                                 apt.save(update_fields=['tenant_user', 'is_rented'])
                                 kiosk_logger.info(f"Linked {email} as tenant_user of apartment {apt.number}")
                             linked_apartments.append(apt.number)
+                    
+                    # AUTO-DISCOVER: Find and link user to OTHER buildings where their email appears
+                    from apartments.models import Apartment
+                    from django.db.models import Q
+                    
+                    other_buildings_with_user = Building.objects.filter(
+                        Q(apartments__owner_email__iexact=email) | 
+                        Q(apartments__tenant_email__iexact=email)
+                    ).exclude(pk=building.pk).distinct()
+                    
+                    for other_building in other_buildings_with_user:
+                        # Create membership for other building
+                        other_membership, other_created = BuildingMembership.objects.get_or_create(
+                            resident=existing_user,
+                            building=other_building,
+                            defaults={'role': 'resident'}
+                        )
+                        if other_created:
+                            kiosk_logger.info(f"AUTO-DISCOVERED: Created BuildingMembership for {email} in building {other_building.name}")
+                        
+                        # Link to apartments in other building
+                        other_apartments = Apartment.objects.filter(
+                            building=other_building
+                        ).filter(
+                            Q(owner_email__iexact=email) | Q(tenant_email__iexact=email)
+                        )
+                        
+                        for apt in other_apartments:
+                            if apt.owner_email and apt.owner_email.lower() == email.lower():
+                                if apt.owner_user != existing_user:
+                                    apt.owner_user = existing_user
+                                    apt.save(update_fields=['owner_user'])
+                                    kiosk_logger.info(f"AUTO-DISCOVERED: Linked {email} as owner of apt {apt.number} in {other_building.name}")
+                            elif apt.tenant_email and apt.tenant_email.lower() == email.lower():
+                                if apt.tenant_user != existing_user:
+                                    apt.tenant_user = existing_user
+                                    apt.is_rented = True
+                                    apt.save(update_fields=['tenant_user', 'is_rented'])
+                                    kiosk_logger.info(f"AUTO-DISCOVERED: Linked {email} as tenant of apt {apt.number} in {other_building.name}")
             else:
                 kiosk_logger.warning(f"No tenant found for user {email}, skipping building/apartment linking")
                 linked_apartments = [apartment.number]
@@ -1156,10 +1203,33 @@ def kiosk_register(request):
     
     # Create auto-approved invitation (verified by apartment matching)
     try:
-        # Get current tenant schema for cross-domain invitation acceptance
-        current_tenant_schema = getattr(connection, 'schema_name', None)
-        if current_tenant_schema == 'public':
-            current_tenant_schema = None  # Don't store 'public' as tenant
+        # Get tenant schema for cross-domain invitation acceptance
+        # Priority: 1) invited_by.tenant, 2) connection.tenant, 3) connection.schema_name
+        current_tenant_schema = None
+        
+        # First: Try from invited_by user (most reliable)
+        if invited_by and hasattr(invited_by, 'tenant') and invited_by.tenant:
+            current_tenant_schema = invited_by.tenant.schema_name
+            kiosk_logger.info(f"Got tenant from invited_by: {current_tenant_schema}")
+        
+        # Second: Try from connection.tenant object
+        conn_tenant = getattr(connection, 'tenant', None)
+        if not current_tenant_schema and conn_tenant:
+            current_tenant_schema = conn_tenant.schema_name
+            kiosk_logger.info(f"Got tenant from connection.tenant: {current_tenant_schema}")
+        
+        # Third: Fallback to schema_name (but not 'public')
+        if not current_tenant_schema:
+            schema_name = getattr(connection, 'schema_name', None)
+            if schema_name and schema_name != 'public':
+                current_tenant_schema = schema_name
+                kiosk_logger.info(f"Got tenant from schema_name: {current_tenant_schema}")
+        
+        if not current_tenant_schema:
+            kiosk_logger.warning(f"Could not determine tenant for kiosk registration of {email}")
+        
+        # Store all apartment IDs that match this phone (for multi-apartment owners)
+        all_apartment_ids = [m['apartment'].id for m in all_matches]
         
         invitation = UserInvitation.objects.create(
             email=email,
@@ -1167,7 +1237,7 @@ def kiosk_register(request):
             last_name=last_name,
             invitation_type=UserInvitation.InvitationType.KIOSK_REGISTRATION,
             building_id=building_id,
-            apartment_id=apartment.id,  # Link to verified apartment
+            apartment_id=apartment.id,  # Primary apartment (first match)
             assigned_role='resident',
             source=UserInvitation.InvitationSource.KIOSK,
             auto_approved=True,
@@ -1176,7 +1246,7 @@ def kiosk_register(request):
             expires_at=timezone.now() + timedelta(days=7)
         )
         
-        kiosk_logger.info(f"Created kiosk invitation for {email} with tenant_schema_name: {current_tenant_schema}")
+        kiosk_logger.info(f"Created kiosk invitation for {email} with tenant_schema_name: {current_tenant_schema}, apartments: {all_apartment_ids}")
         
         kiosk_logger.info(f"Created kiosk registration invitation for {email} ({match_type}) in apt {apartment.number}")
         

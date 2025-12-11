@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { Building } from '@/lib/api';
-import { fetchAllBuildingsPublic } from '@/lib/api';
+import { fetchAllBuildingsPublic, fetchMyBuildings } from '@/lib/api';
+import { useAuth } from '@/components/contexts/AuthContext';
 import { Search, Building as BuildingIcon, Check, X, MapPin } from 'lucide-react';
 
 interface BuildingSelectorProps {
@@ -22,6 +23,7 @@ export default function BuildingSelector({
   currentBuilding,
   onManualBuildingSelect,
 }: BuildingSelectorProps) {
+  const { user } = useAuth();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,17 +31,34 @@ export default function BuildingSelector({
   const [manualId, setManualId] = useState<string>('');
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // Determine if user should only see their own buildings (via BuildingMembership)
+  // Residents and internal_managers see only their buildings
+  // Managers, admins, and office_staff see all buildings in the tenant
+  const managerRoles = ['manager', 'admin', 'office_staff'];
+  const isManagerOrAdmin = user?.role && managerRoles.includes(user.role);
+  const shouldUseMyBuildings = !isManagerOrAdmin;
+
   // Load buildings when modal opens
   useEffect(() => {
     if (isOpen) {
       loadBuildings();
     }
-  }, [isOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, shouldUseMyBuildings]);
 
   const loadBuildings = async () => {
     setIsLoading(true);
     try {
-      const buildingsData = await fetchAllBuildingsPublic();
+      // Residents and internal_managers see only their buildings
+      // Managers, admins, office_staff see all buildings in tenant
+      let buildingsData: Building[];
+      if (shouldUseMyBuildings) {
+        console.log('[BuildingSelector] Loading user buildings (resident/internal_manager mode)');
+        buildingsData = await fetchMyBuildings();
+      } else {
+        console.log('[BuildingSelector] Loading all buildings (manager/admin mode)');
+        buildingsData = await fetchAllBuildingsPublic();
+      }
       console.log('[BuildingSelector] Loaded buildings:', buildingsData.length);
       setBuildings(buildingsData);
     } catch (error) {
@@ -156,7 +175,8 @@ export default function BuildingSelector({
               autoFocus
             />
           </div>
-          {onManualBuildingSelect && (
+          {/* Manual ID input - only for managers/admins/office_staff */}
+          {onManualBuildingSelect && !shouldUseMyBuildings && (
             <div className="mt-3 flex items-center gap-2">
               <input
                 type="number"
@@ -193,29 +213,40 @@ export default function BuildingSelector({
             </div>
           ) : (
             <>
-              {/* Επιλογή "Όλα" */}
-              <div
-                onClick={() => handleBuildingSelect(null)}
-                className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
-                  selectedBuilding === null ? 'bg-primary/5 border-r-4 border-primary' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm text-primary-foreground">
-                    <BuildingIcon className="w-4 h-4" />
+              {/* Επιλογή "Όλα" - Hidden for residents/internal_managers with single building */}
+              {(!shouldUseMyBuildings || buildings.length > 1) && (
+                <>
+                  <div
+                    onClick={() => handleBuildingSelect(null)}
+                    className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      selectedBuilding === null ? 'bg-primary/5 border-r-4 border-primary' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm text-primary-foreground">
+                        <BuildingIcon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {shouldUseMyBuildings ? 'Όλες οι ιδιοκτησίες μου' : 'Όλα τα Κτίρια'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {shouldUseMyBuildings 
+                            ? `Προβολή και των ${buildings.length} κτιρίων`
+                            : 'Προβολή όλων των κτιρίων'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    {selectedBuilding === null && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
                   </div>
-                  <div>
-                    <div className="font-medium text-foreground">Όλα τα Κτίρια</div>
-                    <div className="text-sm text-muted-foreground">Προβολή όλων των κτιρίων</div>
-                  </div>
-                </div>
-                {selectedBuilding === null && (
-                  <Check className="w-5 h-5 text-primary" />
-                )}
-              </div>
 
-              {/* Διαχωριστική γραμμή */}
-              <div className="border-t border-slate-200/50 mx-4"></div>
+                  {/* Διαχωριστική γραμμή */}
+                  <div className="border-t border-slate-200/50 mx-4"></div>
+                </>
+              )}
 
               {/* Τρέχον κτίριο (αν υπάρχει) */}
               {currentBuilding && (
@@ -259,7 +290,10 @@ export default function BuildingSelector({
               {/* Λίστα κτιρίων */}
               <div className="px-4 py-2 bg-muted border-b border-slate-200/50">
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Άλλα κτίρια
+                  {shouldUseMyBuildings 
+                    ? (currentBuilding ? 'Άλλες ιδιοκτησίες' : 'Οι ιδιοκτησίες μου')
+                    : 'Άλλα κτίρια'
+                  }
                 </div>
               </div>
               {filteredBuildings.length === 0 ? (
@@ -300,7 +334,13 @@ export default function BuildingSelector({
         {/* Footer */}
         <div className="p-4 border-t border-slate-200/50 bg-muted">
           <div className="text-sm text-muted-foreground">
-            Επιλέξτε ένα κτίριο για φιλτράρισμα ή "Όλα τα Κτίρια" για προβολή όλων
+            {shouldUseMyBuildings 
+              ? (buildings.length > 1 
+                  ? 'Επιλέξτε ένα κτίριο για προβολή ή "Όλες οι ιδιοκτησίες" για συνολική εικόνα'
+                  : 'Εμφανίζονται μόνο τα κτίρια στα οποία έχετε πρόσβαση'
+                )
+              : 'Επιλέξτε ένα κτίριο για φιλτράρισμα ή "Όλα τα Κτίρια" για προβολή όλων'
+            }
           </div>
         </div>
         </div>

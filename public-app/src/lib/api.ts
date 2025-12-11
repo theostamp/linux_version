@@ -1073,6 +1073,37 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
   }
 }
 
+/**
+ * Fetch buildings that belong to the current user (via BuildingMembership)
+ * Uses /api/buildings/my-buildings/ endpoint
+ * This is used for residents to see only their buildings
+ */
+export async function fetchMyBuildings(): Promise<Building[]> {
+  try {
+    console.log('[API CALL] Fetching user buildings from /buildings/my-buildings/');
+    const data = await apiGet<Building[]>('/buildings/my-buildings/');
+    
+    // The endpoint returns an array directly (not paginated)
+    if (Array.isArray(data)) {
+      console.log('[API CALL] Found', data.length, 'user buildings');
+      return data;
+    }
+    
+    // Handle if it returns paginated response
+    if ('results' in data && Array.isArray((data as Paginated<Building>).results)) {
+      const buildings = (data as Paginated<Building>).results;
+      console.log('[API CALL] Found', buildings.length, 'user buildings (paginated)');
+      return buildings;
+    }
+    
+    console.warn('[API CALL] Unexpected response format from my-buildings:', data);
+    return [];
+  } catch (error) {
+    console.error('[API CALL] Error fetching user buildings:', error);
+    return [];
+  }
+}
+
 export async function fetchBuildings(page: number = 1, pageSize: number = 50): Promise<BuildingsResponse> {
   const params = { page, page_size: pageSize };
   const paths = ['/buildings/', '/buildings/public/'];

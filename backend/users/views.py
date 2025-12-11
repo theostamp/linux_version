@@ -1023,6 +1023,13 @@ def accept_invitation_view(request):
                 if getattr(user, 'role', None) == 'resident':
                     redirect_path = '/my-apartment'
             
+            # Get building_id from the invitation for frontend context
+            invitation = UserInvitation.objects.filter(
+                email=user.email,
+                status=UserInvitation.InvitationStatus.ACCEPTED
+            ).order_by('-accepted_at').first()
+            building_id = invitation.building_id if invitation else None
+            
             return Response({
                 'message': 'Πρόσκληση αποδεχτή επιτυχώς.',
                 'user': {
@@ -1030,6 +1037,7 @@ def accept_invitation_view(request):
                     'email': user.email,
                     'first_name': user.first_name,
                     'last_name': user.last_name,
+                    'role': getattr(user, 'role', None),
                 },
                 'tokens': {
                     'access': access_token,
@@ -1037,6 +1045,7 @@ def accept_invitation_view(request):
                 },
                 'tenant_url': tenant_url,
                 'redirect_path': redirect_path,
+                'building_id': building_id,
             }, status=status.HTTP_201_CREATED)
             
         except ValueError as e:

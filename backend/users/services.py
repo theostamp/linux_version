@@ -1090,11 +1090,6 @@ class InvitationService:
             logger.info(f"[INVITATION] Assigned tenant {user_tenant.schema_name} to user {user.email}")
         else:
             logger.warning(f"[INVITATION] No tenant found for user {user.email} - BuildingMembership may not be created!")
-        # #region agent log
-        import json as _json_inv
-        with open('/home/theo/project/.cursor/debug.log', 'a') as _f_inv:
-            _f_inv.write(_json_inv.dumps({'location':'users/services.py:accept_invitation:TENANT_ASSIGNED','message':'User tenant assignment','data':{'user_email':user.email,'user_id':user.id,'user_tenant':str(user_tenant.schema_name) if user_tenant else None,'invitation_tenant_schema_name':invitation.tenant_schema_name,'invitation_building_id':invitation.building_id,'invitation_apartment_id':invitation.apartment_id},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H1-H2'})+'\n')
-        # #endregion
         
         # Ορισμός user.role από assigned_role
         if invitation.assigned_role:
@@ -1112,11 +1107,6 @@ class InvitationService:
         # Δημιουργία building membership και σύνδεση με apartment
         if invitation.building_id:
             logger.info(f"Creating building membership for user {user.email} in building {invitation.building_id}")
-            # #region agent log
-            import json as _json_bm
-            with open('/home/theo/project/.cursor/debug.log', 'a') as _f_bm:
-                _f_bm.write(_json_bm.dumps({'location':'users/services.py:accept_invitation:BUILDING_MEMBERSHIP_START','message':'Starting building membership creation','data':{'user_email':user.email,'building_id':invitation.building_id,'has_user_tenant':bool(user.tenant),'user_tenant_schema':str(user.tenant.schema_name) if user.tenant else None},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H2'})+'\n')
-            # #endregion
             
             try:
                 from buildings.models import Building, BuildingMembership
@@ -1192,11 +1182,6 @@ class InvitationService:
                             except Exception as e:
                                 logger.error(f"❌ Failed to link user to apartment {apartment.number}: {e}")
                         
-                        # #region agent log
-                        import json as _json_link
-                        with open('/home/theo/project/.cursor/debug.log', 'a') as _f_link:
-                            _f_link.write(_json_link.dumps({'location':'users/services.py:accept_invitation:APARTMENT_LINK_RESULT','message':'Apartment linking result','data':{'user_email':user.email,'linked_count':linked_count,'matching_apartments_count':len(list(matching_apartments)),'building_name':building.name,'apartment_id_from_invitation':invitation.apartment_id},'timestamp':__import__('time').time()*1000,'sessionId':'debug-session','hypothesisId':'H3'})+'\n')
-                        # #endregion
                         if linked_count > 0:
                             logger.info(f"✅ Linked user {user.email} to {linked_count} apartment(s) in building {building.name}")
                         elif invitation.apartment_id:
@@ -1219,6 +1204,56 @@ class InvitationService:
                                 logger.error(f"❌ Apartment with ID {invitation.apartment_id} not found")
                             except Exception as e:
                                 logger.error(f"❌ Failed to link user to apartment: {e}", exc_info=True)
+                        
+                        # ═══════════════════════════════════════════════════════════════════
+                        # MULTI-BUILDING AUTO-DISCOVERY
+                        # Αν ο χρήστης έχει διαμερίσματα σε ΑΛΛΕΣ πολυκατοικίες του tenant,
+                        # δημιούργησε BuildingMembership και σύνδεσε και αυτά.
+                        # ═══════════════════════════════════════════════════════════════════
+                        try:
+                            other_buildings_with_user = Building.objects.filter(
+                                Q(apartments__owner_email__iexact=user_email_lower) | 
+                                Q(apartments__tenant_email__iexact=user_email_lower)
+                            ).exclude(id=building.id).distinct()
+                            
+                            for other_building in other_buildings_with_user:
+                                # Δημιουργία membership για άλλη πολυκατοικία
+                                other_membership, other_created = BuildingMembership.objects.get_or_create(
+                                    resident=user,
+                                    building=other_building,
+                                    defaults={'role': 'resident'}
+                                )
+                                if other_created:
+                                    logger.info(f"🏢 AUTO-DISCOVERED: Created BuildingMembership for {user.email} in building {other_building.name}")
+                                
+                                # Σύνδεση με διαμερίσματα στην άλλη πολυκατοικία
+                                other_apartments = Apartment.objects.filter(
+                                    building=other_building
+                                ).filter(
+                                    Q(owner_email__iexact=user_email_lower) | 
+                                    Q(tenant_email__iexact=user_email_lower)
+                                )
+                                
+                                for apt in other_apartments:
+                                    try:
+                                        if apt.owner_email and apt.owner_email.lower() == user_email_lower:
+                                            if apt.owner_user != user:
+                                                apt.owner_user = user
+                                                apt.save(update_fields=['owner_user'])
+                                                logger.info(f"🏢 AUTO-DISCOVERED: Linked {user.email} as owner of apt {apt.number} in {other_building.name}")
+                                        elif apt.tenant_email and apt.tenant_email.lower() == user_email_lower:
+                                            if apt.tenant_user != user:
+                                                apt.tenant_user = user
+                                                apt.is_rented = True
+                                                apt.save(update_fields=['tenant_user', 'is_rented'])
+                                                logger.info(f"🏢 AUTO-DISCOVERED: Linked {user.email} as tenant of apt {apt.number} in {other_building.name}")
+                                    except Exception as e:
+                                        logger.error(f"Failed to link user to discovered apartment {apt.number}: {e}")
+                            
+                            if other_buildings_with_user.exists():
+                                logger.info(f"✅ Multi-building discovery complete: {user.email} linked to {other_buildings_with_user.count()} additional building(s)")
+                        except Exception as e:
+                            logger.error(f"Error during multi-building discovery: {e}")
                     
             except Building.DoesNotExist:
                 logger.error(f"Building with ID {invitation.building_id} not found in current tenant schema")
