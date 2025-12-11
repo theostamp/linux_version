@@ -85,9 +85,11 @@ function KioskConnectContent() {
       const response = await fetch(`/api/public-info/${id}/`);
       if (response.ok) {
         const data = await response.json();
+        // Backend returns building_info object, not building
+        const info = data.building_info || data.building || data;
         setBuildingInfo({
-          name: data.building?.name || data.name || `Κτίριο #${id}`,
-          address: data.building?.address || data.address || ''
+          name: info?.name || `Κτίριο #${id}`,
+          address: info?.address || ''
         });
       } else {
         // Fallback to generic info
@@ -105,8 +107,30 @@ function KioskConnectContent() {
     }
   };
 
-  // Handle authenticated user going to their apartment
-  const handleGoToMyApartment = () => {
+  // Handle authenticated user going to their apartment/dashboard
+  const handleGoToMySpace = () => {
+    // Store building context from QR scan
+    if (buildingId) {
+      localStorage.setItem('selectedBuildingId', buildingId);
+      localStorage.setItem('activeBuildingId', buildingId);
+      console.log(`[KioskConnect] Set active building from QR: ${buildingId}`);
+    }
+    
+    // Get user role to determine destination
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        // Managers go to dashboard, residents go to my-apartment
+        if (user.role === 'manager' || user.role === 'office_staff' || user.role === 'admin') {
+          router.push('/dashboard');
+          return;
+        }
+      }
+    } catch {
+      // If parsing fails, default to my-apartment
+    }
+    
     router.push('/my-apartment');
   };
 
@@ -269,13 +293,13 @@ function KioskConnectContent() {
 
           {/* Options */}
           <div className="space-y-4">
-            {/* Go to My Apartment */}
+            {/* Go to App */}
             <button
-              onClick={handleGoToMyApartment}
+              onClick={handleGoToMySpace}
               className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
             >
               <Home className="w-5 h-5" />
-              <span>Πήγαινε στο διαμέρισμά μου</span>
+              <span>Συνέχεια στην εφαρμογή</span>
               <ArrowRight className="w-5 h-5" />
             </button>
 
