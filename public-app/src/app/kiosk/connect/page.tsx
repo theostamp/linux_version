@@ -170,6 +170,13 @@ function KioskConnectContent() {
       const data = await response.json();
 
       if (response.ok) {
+        // Store building context from QR scan for all success cases
+        if (buildingId) {
+          localStorage.setItem('selectedBuildingId', buildingId);
+          localStorage.setItem('activeBuildingId', buildingId);
+          console.log(`[KioskConnect] Set active building from registration: ${buildingId}`);
+        }
+        
         // Check if this is an existing user with instant login token
         if (data.status === 'existing_user' && data.access_token) {
           // Instant login - store token and redirect immediately
@@ -192,8 +199,8 @@ function KioskConnectContent() {
           // Use tenant subdomain if available for cross-domain redirect
           setTimeout(() => {
             if (data.tenant_url) {
-              // Cross-subdomain redirect with tokens
-              const targetUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(data.access_token)}&refresh=&redirect=${encodeURIComponent('/my-apartment')}`;
+              // Cross-subdomain redirect with tokens - include building context
+              const targetUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(data.access_token)}&refresh=&redirect=${encodeURIComponent('/my-apartment')}&building=${buildingId}`;
               window.location.href = targetUrl;
             } else {
               router.push('/my-apartment');

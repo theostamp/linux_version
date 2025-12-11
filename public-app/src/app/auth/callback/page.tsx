@@ -43,8 +43,16 @@ function OAuthCallback() {
             const access = hashParams.get('access');
             const refresh = hashParams.get('refresh');
             const redirectPath = hashParams.get('redirect') || '/dashboard';
+            const buildingId = hashParams.get('building');
             
             if (access) {
+              // Store building context if provided (from QR scan)
+              if (buildingId) {
+                localStorage.setItem('selectedBuildingId', buildingId);
+                localStorage.setItem('activeBuildingId', buildingId);
+                console.log(`[AuthCallback] Set building context from redirect: ${buildingId}`);
+              }
+              
               // Store refresh token first
               if (refresh) {
                 localStorage.setItem('refresh_token', refresh);
