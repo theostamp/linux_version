@@ -210,11 +210,14 @@ function KioskConnectContent() {
           // Redirect to my-apartment after brief delay
           // Use tenant subdomain if available for cross-domain redirect
           setTimeout(() => {
-            if (data.tenant_url) {
+            // Safety check: only do cross-domain redirect if we have valid token
+            if (data.tenant_url && data.access_token) {
               // Cross-subdomain redirect with tokens - include building context
               const targetUrl = `https://${data.tenant_url}/auth/callback#access=${encodeURIComponent(data.access_token)}&refresh=&redirect=${encodeURIComponent('/my-apartment')}&building=${buildingId}`;
+              console.log('[KioskConnect] Cross-domain redirect to:', targetUrl);
               window.location.href = targetUrl;
             } else {
+              console.log('[KioskConnect] Local redirect to /my-apartment');
               router.push('/my-apartment');
             }
           }, 1500);
