@@ -232,6 +232,13 @@ function KioskConnectContent() {
     );
   }
 
+  // Handle "not me" - switch to new user registration
+  const handleNotMe = () => {
+    // Clear existing auth state and show registration form
+    setAuthState({ isAuthenticated: false });
+    setViewMode('register');
+  };
+
   // === AUTHENTICATED USER VIEW ===
   if (authState.isAuthenticated && viewMode === 'initial') {
     return (
@@ -246,7 +253,7 @@ function KioskConnectContent() {
               Καλώς ήρθατε!
             </h1>
             {authState.userEmail && (
-              <p className="text-white/60 text-sm mb-2">
+              <p className="text-slate-300 text-sm mb-2">
                 Συνδεδεμένος ως: <span className="text-emerald-400">{authState.userEmail}</span>
               </p>
             )}
@@ -254,7 +261,7 @@ function KioskConnectContent() {
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mt-4">
                 <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
                 {buildingInfo.address && (
-                  <p className="text-sm text-white/60 mt-1">{buildingInfo.address}</p>
+                  <p className="text-sm text-slate-400 mt-1">{buildingInfo.address}</p>
                 )}
               </div>
             )}
@@ -282,9 +289,22 @@ function KioskConnectContent() {
             </Link>
           </div>
 
+          {/* Not Me - Different User Registration */}
+          <div className="text-center mt-6 pt-6 border-t border-white/10">
+            <p className="text-slate-400 text-sm mb-3">
+              Δεν είστε {authState.userEmail}?
+            </p>
+            <button
+              onClick={handleNotMe}
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors underline underline-offset-2"
+            >
+              Εγγραφή ως νέος χρήστης
+            </button>
+          </div>
+
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} New Concierge. All rights reserved.
             </p>
           </div>
@@ -310,11 +330,11 @@ function KioskConnectContent() {
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mb-4">
                 <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
                 {buildingInfo.address && (
-                  <p className="text-sm text-white/60 mt-1">{buildingInfo.address}</p>
+                  <p className="text-sm text-slate-400 mt-1">{buildingInfo.address}</p>
                 )}
               </div>
             )}
-            <p className="text-white/70 text-sm">
+            <p className="text-slate-300 text-sm">
               Τι θα θέλατε να κάνετε;
             </p>
           </div>
@@ -331,7 +351,7 @@ function KioskConnectContent() {
               </div>
               <div className="flex-1">
                 <span className="block text-lg font-bold">Είμαι ιδιοκτήτης / ένοικος</span>
-                <span className="text-sm text-white/70">
+                <span className="text-sm text-slate-300">
                   Σύνδεση ή εγγραφή στην εφαρμογή
                 </span>
               </div>
@@ -348,7 +368,7 @@ function KioskConnectContent() {
               </div>
               <div className="flex-1">
                 <span className="block text-lg font-semibold">Θέλω να μάθω περισσότερα</span>
-                <span className="text-sm text-white/60">
+                <span className="text-sm text-slate-400">
                   Τι είναι η εφαρμογή New Concierge
                 </span>
               </div>
@@ -358,7 +378,7 @@ function KioskConnectContent() {
 
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} New Concierge. All rights reserved.
             </p>
           </div>
@@ -380,7 +400,7 @@ function KioskConnectContent() {
             <h1 className="text-3xl font-bold text-white mb-2">
               New Concierge
             </h1>
-            <p className="text-white/70 text-sm">
+            <p className="text-slate-300 text-sm">
               Ο Ψηφιακός Θυρωρός της πολυκατοικίας
             </p>
           </div>
@@ -391,7 +411,7 @@ function KioskConnectContent() {
               <p className="text-xs text-emerald-300 uppercase tracking-wider mb-1">Αυτή η οθόνη ανήκει στο</p>
               <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
               {buildingInfo.address && (
-                <p className="text-sm text-white/60">{buildingInfo.address}</p>
+                <p className="text-sm text-slate-400">{buildingInfo.address}</p>
               )}
             </div>
           )}
@@ -400,7 +420,7 @@ function KioskConnectContent() {
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl mb-6">
             <h2 className="text-lg font-bold text-white mb-4">Τι είναι το New Concierge;</h2>
             
-            <div className="space-y-4 text-white/80">
+            <div className="space-y-4 text-slate-200">
               <p className="text-sm leading-relaxed">
                 Μια σύγχρονη πλατφόρμα διαχείρισης πολυκατοικιών που φέρνει 
                 <span className="text-emerald-400 font-medium"> διαφάνεια, οργάνωση και συνεργασία</span> στις κοινότητες.
@@ -463,7 +483,7 @@ function KioskConnectContent() {
 
           {/* Footer */}
           <div className="text-center mt-8">
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} New Concierge. All rights reserved.
             </p>
           </div>
@@ -489,7 +509,7 @@ function KioskConnectContent() {
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mb-2">
               <p className="text-lg font-semibold text-white">{buildingInfo.name}</p>
               {buildingInfo.address && (
-                <p className="text-sm text-white/60 mt-1">{buildingInfo.address}</p>
+                <p className="text-sm text-slate-400 mt-1">{buildingInfo.address}</p>
               )}
             </div>
           )}
@@ -505,7 +525,7 @@ function KioskConnectContent() {
                 <Check className="w-8 h-8 text-green-400" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Επιτυχία!</h3>
-              <p className="text-white/80 leading-relaxed mb-4">{message}</p>
+              <p className="text-slate-200 leading-relaxed mb-4">{message}</p>
               
               {/* Info about next steps */}
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
@@ -513,14 +533,14 @@ function KioskConnectContent() {
                   <Mail className="w-5 h-5" />
                   <span className="font-medium">Επόμενο βήμα</span>
                 </div>
-                <p className="text-sm text-white/70">
+                <p className="text-sm text-slate-300">
                   Ελέγξτε το email σας και ακολουθήστε τον σύνδεσμο για να ολοκληρώσετε την εγγραφή.
                 </p>
               </div>
               
               <button
                 onClick={() => setViewMode('initial')}
-                className="mt-6 text-white/60 hover:text-white text-sm transition-colors"
+                className="mt-6 text-slate-400 hover:text-white text-sm transition-colors"
               >
                 ← Πίσω στην αρχή
               </button>
@@ -534,7 +554,7 @@ function KioskConnectContent() {
                 <UserCheck className="w-8 h-8 text-emerald-400" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Καλώς ήρθατε! 🎉</h3>
-              <p className="text-white/80 leading-relaxed mb-4">{message}</p>
+              <p className="text-slate-200 leading-relaxed mb-4">{message}</p>
               
               {/* Loading indicator for redirect */}
               <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mt-4">
@@ -552,7 +572,7 @@ function KioskConnectContent() {
 
               {/* Phone Input */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-200 mb-2">
                   Τηλέφωνο *
                 </label>
                 <div className="relative">
@@ -568,14 +588,14 @@ function KioskConnectContent() {
                     className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                <p className="text-xs text-white/40 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Το τηλέφωνο που είναι καταχωρημένο στο κτίριο
                 </p>
               </div>
 
               {/* Email Input */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-2">
                   Email *
                 </label>
                 <div className="relative">
@@ -622,7 +642,7 @@ function KioskConnectContent() {
 
               {/* Info Text */}
               <div className="text-center">
-                <p className="text-xs text-white/50 leading-relaxed">
+                <p className="text-xs text-slate-400 leading-relaxed">
                   Θα αναζητηθεί το τηλέφωνό σας στα στοιχεία του κτιρίου.
                   <br />
                   Αν βρεθεί, θα λάβετε email για σύνδεση ή ολοκλήρωση εγγραφής.
@@ -633,7 +653,7 @@ function KioskConnectContent() {
               <button
                 type="button"
                 onClick={() => setViewMode('initial')}
-                className="w-full text-white/60 hover:text-white text-sm transition-colors py-2"
+                className="w-full text-slate-400 hover:text-white text-sm transition-colors py-2"
               >
                 ← Πίσω
               </button>
@@ -643,7 +663,7 @@ function KioskConnectContent() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} New Concierge. All rights reserved.
           </p>
         </div>
@@ -658,7 +678,7 @@ function KioskConnectLoading() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-        <p className="text-white/70">Φόρτωση...</p>
+        <p className="text-slate-300">Φόρτωση...</p>
       </div>
     </div>
   );

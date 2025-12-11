@@ -172,7 +172,7 @@ function CompleteRegistrationContent() {
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-white/70">Επαλήθευση συνδέσμου...</p>
+          <p className="text-slate-300">Επαλήθευση συνδέσμου...</p>
         </div>
       </div>
     );
@@ -186,7 +186,7 @@ function CompleteRegistrationContent() {
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Μη Έγκυρος Σύνδεσμος</h2>
           <p className="text-red-200 mb-6">{verificationError}</p>
-          <p className="text-white/60 text-sm">
+          <p className="text-slate-400 text-sm">
             Παρακαλώ σαρώστε ξανά το QR code στο kiosk του κτιρίου σας.
           </p>
         </div>
@@ -244,7 +244,7 @@ function CompleteRegistrationContent() {
             </button>
           </div>
           
-          <p className="text-white/40 text-xs mt-6">
+          <p className="text-slate-500 text-xs mt-6">
             Μπορείτε να αποκτήσετε πρόσβαση σε όλες τις υπηρεσίες του κτιρίου σας.
           </p>
         </div>
@@ -268,7 +268,7 @@ function CompleteRegistrationContent() {
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 mb-2">
               <p className="text-lg font-semibold text-white">{invitationDetails.building_name}</p>
               {invitationDetails.building_address && (
-                <p className="text-sm text-white/60 mt-1">{invitationDetails.building_address}</p>
+                <p className="text-sm text-slate-400 mt-1">{invitationDetails.building_address}</p>
               )}
               <p className="text-sm text-blue-300 mt-2">{invitationDetails.email}</p>
             </div>
@@ -282,7 +282,7 @@ function CompleteRegistrationContent() {
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="firstName" className="block text-sm font-medium text-slate-200 mb-2">
                   Όνομα *
                 </label>
                 <div className="relative">
@@ -300,7 +300,7 @@ function CompleteRegistrationContent() {
                 </div>
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="lastName" className="block text-sm font-medium text-slate-200 mb-2">
                   Επώνυμο *
                 </label>
                 <input
@@ -318,7 +318,7 @@ function CompleteRegistrationContent() {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-200 mb-2">
                 Κωδικός *
               </label>
               <div className="relative">
@@ -346,7 +346,7 @@ function CompleteRegistrationContent() {
 
             {/* Confirm Password Field */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-200 mb-2">
                 Επιβεβαίωση Κωδικού *
               </label>
               <div className="relative">
@@ -400,7 +400,7 @@ function CompleteRegistrationContent() {
 
             {/* Info Text */}
             <div className="text-center">
-              <p className="text-xs text-white/50 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 Με την εγγραφή σας αποδέχεστε τους όρους χρήσης της υπηρεσίας.
               </p>
             </div>
@@ -409,7 +409,7 @@ function CompleteRegistrationContent() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} New Concierge. All rights reserved.
           </p>
         </div>
@@ -424,7 +424,7 @@ function CompleteRegistrationLoading() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-        <p className="text-white/70">Φόρτωση...</p>
+        <p className="text-slate-300">Φόρτωση...</p>
       </div>
     </div>
   );
