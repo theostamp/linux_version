@@ -168,6 +168,16 @@ function KioskConnectContent() {
       });
 
       const data = await response.json();
+      
+      // Debug logging
+      console.log('[KioskConnect] API Response:', {
+        status: response.status,
+        dataStatus: data.status,
+        hasAccessToken: !!data.access_token,
+        hasTenantUrl: !!data.tenant_url,
+        message: data.message,
+        error: data.error
+      });
 
       if (response.ok) {
         // Store building context from QR scan for all success cases
@@ -265,7 +275,14 @@ function KioskConnectContent() {
 
   // Handle "not me" - switch to new user registration
   const handleNotMe = () => {
-    // Clear existing auth state and show registration form
+    // Clear existing auth tokens to start fresh registration
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    console.log('[KioskConnect] Cleared existing tokens for new registration');
+    
+    // Clear auth state and show registration form
     setAuthState({ isAuthenticated: false });
     setViewMode('register');
   };
