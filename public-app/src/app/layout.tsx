@@ -58,7 +58,10 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${play.variable} antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} ${play.variable} antialiased`}
+      >
         <GoogleMapsScript apiKey={googleMapsApiKey} />
         <ReactQueryProvider>
           <AppProviders>{children}</AppProviders>

@@ -47,10 +47,17 @@ def send_myapartment_link_view(request):
     # Build link on the current host/subdomain
     link_url = request.build_absolute_uri("/m")
 
-    ok = EmailService.send_my_apartment_link_email(user, link_url)
+    try:
+        ok = EmailService.send_my_apartment_link_email(user, link_url)
+    except Exception:
+        ok = False
+
     if not ok:
+        # Keep response stable for frontend parsing; log details in EmailService
         return Response(
-            {"error": "Αποτυχία αποστολής email. Παρακαλώ δοκιμάστε ξανά αργότερα."},
+            {
+                "error": "Αποτυχία αποστολής email. Παρακαλώ δοκιμάστε ξανά αργότερα ή επικοινωνήστε με την υποστήριξη."
+            },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 

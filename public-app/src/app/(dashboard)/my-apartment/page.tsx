@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { apiGet } from '@/lib/api';
@@ -26,16 +26,13 @@ import {
   Building2,
   AlertCircle,
   CheckCircle2,
-  Copy,
   Laptop,
   Mail,
-  QrCode,
   Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import AuthGate from '@/components/AuthGate';
-import QRCodeLib from 'qrcode';
 import { toast } from 'sonner';
 import { sendMyApartmentLinkEmail } from '@/lib/api';
 
@@ -168,31 +165,8 @@ function translatePaymentMethod(method: string): string {
 function MyApartmentContent() {
   const { user } = useAuth();
   const [selectedApartmentIndex, setSelectedApartmentIndex] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
-  const shareUrl = useMemo(() => {
-    // Short, easy-to-remember entrypoint; it redirects to /my-apartment
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/m`;
-  }, []);
-
-  // Render QR for the short link
-  useEffect(() => {
-    if (!shareUrl || !qrCanvasRef.current) return;
-    QRCodeLib.toCanvas(
-      qrCanvasRef.current,
-      shareUrl,
-      {
-        width: 120,
-        margin: 1,
-        color: { dark: '#0f172a', light: '#ffffff' }, // slate-900 on white
-        errorCorrectionLevel: 'H',
-      },
-      () => {
-        // ignore callback errors here; QR is best-effort
-      }
-    );
-  }, [shareUrl]);
+  const [isSendingLinkEmail, setIsSendingLinkEmail] = useState(false);
+  const supportUrl = useMemo(() => '/users', []);
   
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['my-apartment'],
@@ -277,7 +251,7 @@ function MyApartmentContent() {
         <StatusBadge status={apartment.summary.status} />
       </div>
 
-      {/* Open on laptop (easy link + QR) */}
+      {/* Open on laptop (email only) */}
       <Card className="border-border/60">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
@@ -285,81 +259,64 @@ function MyApartmentContent() {
             Άνοιγμα σε υπολογιστή
           </CardTitle>
           <CardDescription>
-            Για να το ανοίξετε εύκολα και σε laptop, πληκτρολογήστε τον σύντομο σύνδεσμο ή σαρώστε το QR.
+            Θα σας στείλουμε email με έναν σύνδεσμο για να ανοίξετε τη σελίδα σε laptop.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <div className="text-sm text-muted-foreground">Σύντομος σύνδεσμος</div>
-            <div className="mt-1 font-mono text-sm break-all">
-              {shareUrl || '...'}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                className="gap-2"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(shareUrl);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  } catch {
-                    // no-op
+        <CardContent className="flex flex-col gap-3">
+          <div className="text-sm text-muted-foreground">
+            Θα σταλεί στο: <span className="font-medium text-foreground">{data.user?.email || user?.email || 'το email σας'}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              className="gap-2"
+              disabled={isSendingLinkEmail}
+              onClick={async () => {
+                setIsSendingLinkEmail(true);
+                try {
+                  const res = await sendMyApartmentLinkEmail();
+                  toast.success(res?.message || 'Στάλθηκε email με τον σύνδεσμο.');
+                } catch (e) {
+                  const err = e as { status?: number; response?: { body?: string }; message?: string };
+                  const status = err?.status;
+                  const body = err?.response?.body || '';
+
+                  if (status === 429 || body.includes('throttled')) {
+                    toast.error('Έχετε φτάσει το όριο: 2 emails ανά ημέρα.');
+                    return;
                   }
-                }}
-                disabled={!shareUrl}
-              >
-                <Copy className="w-4 h-4" />
-                {copied ? 'Αντιγράφηκε' : 'Αντιγραφή'}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="gap-2"
-                onClick={async () => {
+                  if (status === 401) {
+                    toast.error('Η συνεδρία σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
+                    return;
+                  }
+
+                  // If backend returned JSON {error: "..."} show it
                   try {
-                    const res = await sendMyApartmentLinkEmail();
-                    toast.success(res?.message || 'Στάλθηκε email με τον σύνδεσμο.');
-                  } catch (e) {
-                    // Attempt to show rate-limit friendly message
-                    const msg = (e as Error)?.message || '';
-                    if (msg.includes('429')) {
-                      toast.error('Έχετε φτάσει το όριο: 2 emails ανά ημέρα.');
+                    const parsed = JSON.parse(body);
+                    if (parsed?.error) {
+                      toast.error(String(parsed.error));
                       return;
                     }
-                    toast.error('Αποτυχία αποστολής email. Δοκιμάστε ξανά αργότερα.');
-                  }
-                }}
-              >
-                <Mail className="w-4 h-4" />
-                Στείλε στο email μου
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2"
-                onClick={async () => {
-                  try {
-                    if (!('share' in navigator)) return;
-                    // @ts-expect-error - navigator.share exists in supporting browsers
-                    await navigator.share({ title: 'New Concierge', url: shareUrl });
                   } catch {
-                    // no-op
+                    // ignore JSON parse errors
                   }
-                }}
-                disabled={!shareUrl || !('share' in navigator)}
-              >
-                <QrCode className="w-4 h-4" />
-                Κοινοποίηση
-              </Button>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-start sm:justify-end">
-            <div className="rounded-xl border bg-white p-3 shadow-sm">
-              <canvas ref={qrCanvasRef} width={120} height={120} className="block" />
-            </div>
+                  toast.error('Αποτυχία αποστολής email. Δοκιμάστε ξανά αργότερα.');
+                } finally {
+                  setIsSendingLinkEmail(false);
+                }
+              }}
+            >
+              {isSendingLinkEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Στείλε στο email μου
+            </Button>
+            <Button type="button" variant="outline" asChild>
+              <a href={supportUrl}>Διαχείριση λογαριασμού</a>
+            </Button>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Αν δεν το βρείτε, ελέγξτε και τον φάκελο ανεπιθύμητης αλληλογραφίας (spam).
           </div>
         </CardContent>
       </Card>

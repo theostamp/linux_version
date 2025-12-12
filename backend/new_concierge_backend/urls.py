@@ -6,6 +6,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
+from django.http import HttpResponse
+from django.shortcuts import redirect
 from core.media_views import serve_media
 from health_check import HealthCheckView, ReadinessCheckView, LivenessCheckView
 
@@ -16,6 +18,15 @@ from api import kiosk_views as kiosk_bill_views
 urlpatterns = [
     # Django Admin
     path('admin/', admin.site.urls),
+
+    # Dev convenience: avoid confusing 404 on backend root.
+    path(
+        '',
+        lambda request: redirect(getattr(settings, "FRONTEND_URL", "/admin/"))
+        if settings.DEBUG
+        else HttpResponse(status=404),
+        name='tenant-root',
+    ),
     
     # Health checks (production monitoring)
     path('health/', HealthCheckView.as_view(), name='health-check'),

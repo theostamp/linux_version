@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from core.media_views import serve_media
 
 
@@ -25,8 +26,15 @@ urlpatterns = [
     # Admin panel (μόνο για public tenant)
     path('admin/', admin.site.urls),
     
-    # Root URL removed - now handled by Public App (Next.js)
-    # path('', home, name='home'),
+    # Dev convenience: avoid confusing 404 on backend root.
+    # In production the public root is handled by the Next.js app.
+    path(
+        '',
+        lambda request: redirect(getattr(settings, "FRONTEND_URL", "/admin/"))
+        if settings.DEBUG
+        else HttpResponse(status=404),
+        name='public-root',
+    ),
     
     # Authentication & User endpoints (διαθέσιμο και στο public tenant)
     path('api/users/', include('users.urls')),
