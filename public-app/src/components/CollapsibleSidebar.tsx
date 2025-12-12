@@ -728,7 +728,10 @@ export default function CollapsibleSidebar() {
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-gray-300 flex flex-col z-50 bg-card text-card-foreground",
+          // Mobile drawer background: ensure it's opaque and readable (avoid transparent look)
+          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-border flex flex-col z-50 text-card-foreground",
+          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80",
+          "dark:bg-slate-950/95 dark:supports-[backdrop-filter]:bg-slate-950/80",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -738,7 +741,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-gray-300 flex items-center justify-between bg-card"
+          className="p-4 border-b border-border flex items-center justify-between bg-transparent"
         >
           <div className="flex items-center gap-3">
             <div 

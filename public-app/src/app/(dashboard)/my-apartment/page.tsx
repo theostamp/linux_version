@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { apiGet } from '@/lib/api';
@@ -22,17 +22,19 @@ import {
   Receipt, 
   History, 
   Euro, 
-  Calendar,
   User,
   Building2,
   AlertCircle,
   CheckCircle2,
-  Clock,
+  Copy,
+  Laptop,
+  QrCode,
   Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import AuthGate from '@/components/AuthGate';
+import QRCodeLib from 'qrcode';
 
 // Types
 interface PaymentHistory {
@@ -163,6 +165,31 @@ function translatePaymentMethod(method: string): string {
 function MyApartmentContent() {
   const { user } = useAuth();
   const [selectedApartmentIndex, setSelectedApartmentIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const shareUrl = useMemo(() => {
+    // Short, easy-to-remember entrypoint; it redirects to /my-apartment
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}/m`;
+  }, []);
+
+  // Render QR for the short link
+  useEffect(() => {
+    if (!shareUrl || !qrCanvasRef.current) return;
+    QRCodeLib.toCanvas(
+      qrCanvasRef.current,
+      shareUrl,
+      {
+        width: 120,
+        margin: 1,
+        color: { dark: '#0f172a', light: '#ffffff' }, // slate-900 on white
+        errorCorrectionLevel: 'H',
+      },
+      () => {
+        // ignore callback errors here; QR is best-effort
+      }
+    );
+  }, [shareUrl]);
   
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['my-apartment'],
@@ -246,6 +273,71 @@ function MyApartmentContent() {
         </div>
         <StatusBadge status={apartment.summary.status} />
       </div>
+
+      {/* Open on laptop (easy link + QR) */}
+      <Card className="border-border/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Laptop className="w-4 h-4 text-primary" />
+            Άνοιγμα σε υπολογιστή
+          </CardTitle>
+          <CardDescription>
+            Για να το ανοίξετε εύκολα και σε laptop, πληκτρολογήστε τον σύντομο σύνδεσμο ή σαρώστε το QR.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="text-sm text-muted-foreground">Σύντομος σύνδεσμος</div>
+            <div className="mt-1 font-mono text-sm break-all">
+              {shareUrl || '...'}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="gap-2"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  } catch {
+                    // no-op
+                  }
+                }}
+                disabled={!shareUrl}
+              >
+                <Copy className="w-4 h-4" />
+                {copied ? 'Αντιγράφηκε' : 'Αντιγραφή'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={async () => {
+                  try {
+                    if (!('share' in navigator)) return;
+                    // @ts-expect-error - navigator.share exists in supporting browsers
+                    await navigator.share({ title: 'New Concierge', url: shareUrl });
+                  } catch {
+                    // no-op
+                  }
+                }}
+                disabled={!shareUrl || !('share' in navigator)}
+              >
+                <QrCode className="w-4 h-4" />
+                Κοινοποίηση
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-start sm:justify-end">
+            <div className="rounded-xl border bg-white p-3 shadow-sm">
+              <canvas ref={qrCanvasRef} width={120} height={120} className="block" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Multiple apartments overview */}
       {data.apartments_count > 1 && (
@@ -298,26 +390,51 @@ function MyApartmentContent() {
               </div>
               
               {/* Apartments list with quick info */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {data.apartments.map((apt, index) => (
-                  <Button
-                    key={apt.id}
-                    variant={index === selectedApartmentIndex ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedApartmentIndex(index)}
-                    className="flex items-center gap-2"
-                  >
-                    <span>Δ.{apt.number}</span>
-                    {apt.current_balance > 0 && (
-                      <Badge variant="destructive" className="text-xs px-1">
-                        {formatCurrency(apt.current_balance)}
-                      </Badge>
-                    )}
-                    {apt.current_balance <= 0 && (
-                      <CheckCircle2 className="w-3 h-3 text-green-500" />
-                    )}
-                  </Button>
-                ))}
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Επιλέξτε ποιο διαμέρισμα θέλετε να δείτε. Η επιλογή αλλάζει τα στοιχεία οφειλών, πληρωμών και χρεώσεων.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {data.apartments.map((apt, index) => {
+                    const isSelected = index === selectedApartmentIndex;
+                    const hasDebt = apt.current_balance > 0;
+                    return (
+                      <button
+                        key={apt.id}
+                        type="button"
+                        onClick={() => setSelectedApartmentIndex(index)}
+                        className={[
+                          'w-full text-left rounded-lg border px-3 py-3 transition-colors',
+                          'bg-background hover:bg-muted/50',
+                          isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border',
+                        ].join(' ')}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">
+                              Διαμέρισμα {apt.number}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate mt-0.5">
+                              {apt.building?.name}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {hasDebt ? (
+                              <Badge variant="destructive" className="text-xs">
+                                {formatCurrency(apt.current_balance)}
+                              </Badge>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                ΟΚ
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>
