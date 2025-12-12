@@ -602,7 +602,10 @@ export default function CollapsibleSidebar() {
                                 'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
                                 isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
                                 isActive && 'shadow-md',
-                                isActive ? colorClasses.active : `text-muted-foreground ${colorClasses.hover} hover:text-foreground`
+                                // Ensure readable text in dark mode (some themes map muted-foreground too dark)
+                                isActive
+                                  ? colorClasses.active
+                                  : `text-muted-foreground dark:text-slate-200 ${colorClasses.hover} hover:text-foreground`
                               )}
                               style={{
                                 fontSize: designSystem.typography.fontSize.sm,
@@ -639,7 +642,9 @@ export default function CollapsibleSidebar() {
                                       }}
                                       className={cn(
                                         "ml-auto p-1 rounded transition-colors flex-shrink-0",
-                                        isActive ? "hover:bg-white/10 text-white/80" : "hover:bg-muted text-muted-foreground"
+                                        isActive
+                                          ? "hover:bg-white/10 text-white/80"
+                                          : "hover:bg-muted text-muted-foreground dark:text-slate-200"
                                       )}
                                     >
                                       <Info className="w-3.5 h-3.5" />
@@ -797,7 +802,10 @@ export default function CollapsibleSidebar() {
                           onClick={() => handleNavigation(link.href)}
                           className={cn(
                             "flex items-center flex-1 px-3 py-2.5 rounded-lg font-medium transition-all duration-200",
-                            isActive ? colorClasses.active : `text-muted-foreground ${colorClasses.hover} hover:text-foreground`
+                            // Ensure readable text in dark mode (some themes map muted-foreground too dark)
+                            isActive
+                              ? colorClasses.active
+                              : `text-muted-foreground dark:text-slate-200 ${colorClasses.hover} hover:text-foreground`
                           )}
                           style={{
                             fontSize: designSystem.typography.fontSize.sm,
@@ -818,7 +826,9 @@ export default function CollapsibleSidebar() {
                                 }}
                                 className={cn(
                                   "p-1 rounded transition-colors flex-shrink-0 ml-2",
-                                  isActive ? "hover:bg-white/10 text-white/80" : "hover:bg-muted text-muted-foreground"
+                                  isActive
+                                    ? "hover:bg-white/10 text-white/80"
+                                    : "hover:bg-muted text-muted-foreground dark:text-slate-200"
                                 )}
                               >
                                 <Info className="w-3.5 h-3.5" />
