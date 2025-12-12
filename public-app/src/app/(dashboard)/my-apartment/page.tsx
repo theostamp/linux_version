@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   Copy,
   Laptop,
+  Mail,
   QrCode,
   Loader2
 } from 'lucide-react';
@@ -35,6 +36,8 @@ import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import AuthGate from '@/components/AuthGate';
 import QRCodeLib from 'qrcode';
+import { toast } from 'sonner';
+import { sendMyApartmentLinkEmail } from '@/lib/api';
 
 // Types
 interface PaymentHistory {
@@ -309,6 +312,28 @@ function MyApartmentContent() {
               >
                 <Copy className="w-4 h-4" />
                 {copied ? 'Αντιγράφηκε' : 'Αντιγραφή'}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="gap-2"
+                onClick={async () => {
+                  try {
+                    const res = await sendMyApartmentLinkEmail();
+                    toast.success(res?.message || 'Στάλθηκε email με τον σύνδεσμο.');
+                  } catch (e) {
+                    // Attempt to show rate-limit friendly message
+                    const msg = (e as Error)?.message || '';
+                    if (msg.includes('429')) {
+                      toast.error('Έχετε φτάσει το όριο: 2 emails ανά ημέρα.');
+                      return;
+                    }
+                    toast.error('Αποτυχία αποστολής email. Δοκιμάστε ξανά αργότερα.');
+                  }
+                }}
+              >
+                <Mail className="w-4 h-4" />
+                Στείλε στο email μου
               </Button>
               <Button
                 type="button"

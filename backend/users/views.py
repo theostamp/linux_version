@@ -25,10 +25,39 @@ from django.db import connection
 from django_tenants.utils import schema_context, get_public_schema_name
 from core.throttles import (
     LoginThrottle, RegistrationThrottle, PasswordResetThrottle,
-    InvitationThrottle, EmailVerificationThrottle, AuthEndpointThrottle
+    InvitationThrottle, EmailVerificationThrottle, AuthEndpointThrottle,
+    MyApartmentLinkEmailUserThrottle, MyApartmentLinkEmailIPThrottle,
 )
 
 User = get_user_model()
+
+
+@api_view(["POST"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+@throttle_classes([MyApartmentLinkEmailUserThrottle, MyApartmentLinkEmailIPThrottle])
+def send_myapartment_link_view(request):
+    """
+    POST /api/users/send-myapartment-link/
+    Sends a short "open on laptop" link to the authenticated user's own email.
+    Rate limited (2/day per user + additional IP throttle).
+    """
+    user = request.user
+
+    # Build link on the current host/subdomain
+    link_url = request.build_absolute_uri("/m")
+
+    ok = EmailService.send_my_apartment_link_email(user, link_url)
+    if not ok:
+        return Response(
+            {"error": "Αποτυχία αποστολής email. Παρακαλώ δοκιμάστε ξανά αργότερα."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        {"message": "Στάλθηκε email με τον σύνδεσμο.", "link_url": link_url},
+        status=status.HTTP_200_OK,
+    )
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """

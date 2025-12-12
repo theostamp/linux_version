@@ -59,4 +59,30 @@ class EmailVerificationThrottle(AnonRateThrottle):
     rate = '5/min'  # 5 verification requests per minute
 
 
+class MyApartmentLinkEmailUserThrottle(UserRateThrottle):
+    """
+    Rate limiting for sending the "open on laptop" link email from my-apartment.
+    2 emails per day per authenticated user.
+    """
+    scope = 'my_apartment_link_email_user'
+    rate = '2/day'
+
+
+class MyApartmentLinkEmailIPThrottle(AnonRateThrottle):
+    """
+    Additional rate limiting keyed by IP (even for authenticated users) to reduce abuse.
+    """
+    scope = 'my_apartment_link_email_ip'
+    rate = '10/day'
+
+    def get_cache_key(self, request, view):
+        ident = self.get_ident(request)
+        if not ident:
+            return None
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': ident,
+        }
+
+
 

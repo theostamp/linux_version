@@ -1,0 +1,26 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Άνοιγμα σε υπολογιστή{% endblock %}
+
+{% block content %}
+<div class="success">
+  <h2>💻 Άνοιγμα σε υπολογιστή</h2>
+  <p>Γεια σας{% if user.first_name %} <strong>{{ user.first_name }}</strong>{% endif %},</p>
+  <p>Πατήστε το κουμπί για να ανοίξετε το New Concierge σε υπολογιστή:</p>
+</div>
+
+<div style="text-align: center; margin: 26px 0;">
+  <a href="{{ link_url }}" class="button">Άνοιγμα στο Laptop</a>
+</div>
+
+<div class="warning">
+  <p style="margin: 0;"><strong>Σημείωση:</strong> Αν δεν είστε ήδη συνδεδεμένος/η, θα σας ζητηθεί σύνδεση.</p>
+</div>
+
+<p style="font-size: 12px; color: #666;">
+  Αν δεν μπορείτε να κάνετε κλικ, αντιγράψτε αυτόν τον σύνδεσμο στο πρόγραμμα περιήγησής σας:<br>
+  <a href="{{ link_url }}">{{ link_url }}</a>
+</p>
+{% endblock %}
+
+

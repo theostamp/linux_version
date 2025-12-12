@@ -216,6 +216,44 @@ class EmailService:
         except Exception as e:
             print(f"Error sending password reset email: {e}")
             return False
+
+    @staticmethod
+    def send_my_apartment_link_email(user, link_url: str) -> bool:
+        """
+        Sends a simple email to the authenticated user with a short link to open the app on laptop.
+        Important: This does NOT include any auth tokens.
+        """
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Άνοιγμα σε υπολογιστή"
+
+        try:
+            from django.core.mail import EmailMultiAlternatives
+
+            html_content = render_to_string('emails/my_apartment_link.html', {
+                'user': user,
+                'link_url': link_url,
+            })
+
+            message = f"""
+            Γεια σας {user.first_name or ''},
+
+            Για να ανοίξετε το New Concierge σε υπολογιστή, χρησιμοποιήστε τον παρακάτω σύνδεσμο:
+            {link_url}
+
+            Σημείωση: Αν δεν είστε ήδη συνδεδεμένος/η, θα σας ζητηθεί σύνδεση.
+            """
+
+            msg = EmailMultiAlternatives(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            return True
+        except Exception as e:
+            logger.error(f"Error sending my-apartment link email: {e}", exc_info=True)
+            return False
     
     @staticmethod
     def send_welcome_email(user):

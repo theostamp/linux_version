@@ -2199,6 +2199,11 @@ export async function acceptInvitation(token: string, password: string): Promise
   return await apiPost<{ access: string; refresh: string }>('/users/accept-invitation/', { token, password });
 }
 
+export async function sendMyApartmentLinkEmail(): Promise<{ message: string; link_url?: string }> {
+  // Empty body, but POST required for throttling and consistent API patterns
+  return await apiPost<{ message: string; link_url?: string }>('/users/send-myapartment-link/', {});
+}
+
 export type ResendInvitationPayload = {
   invitation_id?: number;
   email?: string;
