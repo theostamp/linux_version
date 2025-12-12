@@ -1423,8 +1423,8 @@ export type Apartment = {
   tenant_user?: number;
   tenant_user_email?: string;
   is_rented: boolean;
-  rent_start_date?: string;
-  rent_end_date?: string;
+  rent_start_date?: string | null;
+  rent_end_date?: string | null;
   square_meters?: number;
   bedrooms?: number;
   notes: string;
@@ -1549,8 +1549,8 @@ export type UpdateTenantData = {
   tenant_email?: string;
   is_rented?: boolean;
   is_closed?: boolean;
-  rent_start_date?: string;
-  rent_end_date?: string;
+  rent_start_date?: string | null;
+  rent_end_date?: string | null;
 };
 
 export async function updateApartmentTenant(apartmentId: number, tenantData: UpdateTenantData): Promise<ApartmentList> {
@@ -1572,9 +1572,9 @@ export type UpdateOwnerData = {
   owner_phone2?: string;
   owner_email?: string;
   identifier?: string;
-  participation_mills?: number;
-  heating_mills?: number;
-  elevator_mills?: number;
+  participation_mills?: number | null;
+  heating_mills?: number | null;
+  elevator_mills?: number | null;
 };
 
 export async function updateApartmentOwner(apartmentId: number, ownerData: UpdateOwnerData): Promise<ApartmentList> {

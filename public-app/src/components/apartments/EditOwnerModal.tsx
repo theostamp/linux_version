@@ -71,14 +71,15 @@ export default function EditOwnerModal({ open, onOpenChange, apartment, onSucces
 
     try {
       const ownerData: UpdateOwnerData = {
-        owner_name: ownerName.trim() || undefined,
-        owner_phone: ownerPhone.trim() || undefined,
-        owner_phone2: ownerPhone2.trim() || undefined,
-        owner_email: ownerEmail.trim() || undefined,
-        identifier: identifier.trim() || undefined,
-        participation_mills: participationMills !== '' ? Number(participationMills) : undefined,
-        heating_mills: heatingMills !== '' ? Number(heatingMills) : undefined,
-        elevator_mills: elevatorMills !== '' ? Number(elevatorMills) : undefined,
+        // NOTE: Send empty strings to allow clearing fields (undefined would be omitted from JSON)
+        owner_name: ownerName.trim(),
+        owner_phone: ownerPhone.trim(),
+        owner_phone2: ownerPhone2.trim(),
+        owner_email: ownerEmail.trim(),
+        identifier: identifier.trim(),
+        participation_mills: participationMills !== '' ? Number(participationMills) : null,
+        heating_mills: heatingMills !== '' ? Number(heatingMills) : null,
+        elevator_mills: elevatorMills !== '' ? Number(elevatorMills) : null,
       };
 
       await updateApartmentOwner(apartment.id, ownerData);

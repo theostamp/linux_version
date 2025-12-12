@@ -72,14 +72,15 @@ export default function EditTenantModal({ open, onOpenChange, apartment, onSucce
 
     try {
       const tenantData: UpdateTenantData = {
-        tenant_name: tenantName.trim() || undefined,
-        tenant_phone: tenantPhone.trim() || undefined,
-        tenant_phone2: tenantPhone2.trim() || undefined,
-        tenant_email: tenantEmail.trim() || undefined,
+        // NOTE: Send empty strings to allow clearing fields (undefined would be omitted from JSON)
+        tenant_name: tenantName.trim(),
+        tenant_phone: tenantPhone.trim(),
+        tenant_phone2: tenantPhone2.trim(),
+        tenant_email: tenantEmail.trim(),
         is_rented: isRented,
         is_closed: isClosed,
-        rent_start_date: rentStartDate || undefined,
-        rent_end_date: rentEndDate || undefined,
+        rent_start_date: rentStartDate || null,
+        rent_end_date: rentEndDate || null,
       };
 
       await updateApartmentTenant(apartment.id, tenantData);

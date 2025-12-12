@@ -845,34 +845,34 @@ const ApartmentsPageContent = () => {
                                   <div className="flex items-center justify-end gap-2">
                                     {canManage && (
                                       <>
-                                        {apartment.owner_name && (
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            onClick={() => {
-                                              setSelectedApartment(apartment);
-                                              setEditOwnerModalOpen(true);
-                                            }}
-                                            title="Ενημέρωση ιδιοκτήτη"
-                                          >
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          onClick={() => {
+                                            setSelectedApartment(apartment);
+                                            setEditOwnerModalOpen(true);
+                                          }}
+                                          title={apartment.owner_name ? "Επεξεργασία ιδιοκτήτη" : "Προσθήκη ιδιοκτήτη"}
+                                        >
+                                          {apartment.owner_name ? <Edit className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          onClick={() => {
+                                            setSelectedApartment(apartment);
+                                            setEditTenantModalOpen(true);
+                                          }}
+                                          title={(apartment.tenant_name || apartment.is_rented || apartment.is_closed) ? "Επεξεργασία ενοίκου/κατάστασης" : "Προσθήκη ενοίκου ή ορισμός κατάστασης"}
+                                        >
+                                          {(apartment.tenant_name || apartment.is_rented || apartment.is_closed) ? (
                                             <Edit className="w-3 h-3" />
-                                          </Button>
-                                        )}
-                                        {(apartment.tenant_name || apartment.is_rented) && (
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            onClick={() => {
-                                              setSelectedApartment(apartment);
-                                              setEditTenantModalOpen(true);
-                                            }}
-                                            title="Ενημέρωση ενοίκου"
-                                          >
-                                            <Edit className="w-3 h-3" />
-                                          </Button>
-                                        )}
+                                          ) : (
+                                            <UserPlus className="w-3 h-3" />
+                                          )}
+                                        </Button>
                                       </>
                                     )}
                                     <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
@@ -986,34 +986,34 @@ const ApartmentsPageContent = () => {
                             <div className="flex gap-2">
                               {canManage && (
                                 <>
-                                  {apartment.owner_name && (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => {
-                                        setSelectedApartment(apartment);
-                                        setEditOwnerModalOpen(true);
-                                      }}
-                                      title="Ενημέρωση ιδιοκτήτη"
-                                    >
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      setSelectedApartment(apartment);
+                                      setEditOwnerModalOpen(true);
+                                    }}
+                                    title={apartment.owner_name ? "Επεξεργασία ιδιοκτήτη" : "Προσθήκη ιδιοκτήτη"}
+                                  >
+                                    {apartment.owner_name ? <Edit className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      setSelectedApartment(apartment);
+                                      setEditTenantModalOpen(true);
+                                    }}
+                                    title={(apartment.tenant_name || apartment.is_rented || apartment.is_closed) ? "Επεξεργασία ενοίκου/κατάστασης" : "Προσθήκη ενοίκου ή ορισμός κατάστασης"}
+                                  >
+                                    {(apartment.tenant_name || apartment.is_rented || apartment.is_closed) ? (
                                       <Edit className="w-4 h-4" />
-                                    </Button>
-                                  )}
-                                  {(apartment.tenant_name || apartment.is_rented) && (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => {
-                                        setSelectedApartment(apartment);
-                                        setEditTenantModalOpen(true);
-                                      }}
-                                      title="Ενημέρωση ενοίκου"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </Button>
-                                  )}
+                                    ) : (
+                                      <UserPlus className="w-4 h-4" />
+                                    )}
+                                  </Button>
                                 </>
                               )}
                               <Link href={`/buildings/${buildingId}/dashboard?highlight=${apartment.id}`}>
