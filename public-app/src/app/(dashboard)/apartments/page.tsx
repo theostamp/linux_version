@@ -2,10 +2,10 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, Edit, Send, Shield } from 'lucide-react';
+import { Search, Filter, RefreshCw, Grid, List, Home, MapPin, ArrowRight, Phone, Mail, Building2, AlertTriangle, UserCheck, UserPlus, UserX, Edit, Send, Shield } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { fetchApartments, ApartmentList, resendInvitation } from '@/lib/api';
+import { fetchApartments, ApartmentList, resendInvitation, vacateApartment } from '@/lib/api';
 import { toast } from 'sonner';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -91,7 +91,8 @@ const EmailWithStatus = ({
   buildingId,
   apartmentId,
   canInvite,
-  isTenant = false
+  isTenant = false,
+  onChanged
 }: { 
   email: string; 
   isRegistered: boolean;
@@ -99,8 +100,10 @@ const EmailWithStatus = ({
   apartmentId?: number;
   canInvite?: boolean;
   isTenant?: boolean;
+  onChanged?: () => void;
 }) => {
   const [isResending, setIsResending] = useState(false);
+  const [isVacating, setIsVacating] = useState(false);
 
   const handleResend = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -154,6 +157,31 @@ const EmailWithStatus = ({
     }
   };
 
+  const handleVacate = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!canInvite || !apartmentId) return;
+
+    const label = isTenant ? 'ένοικο' : 'ιδιοκτήτη';
+    const ok = window.confirm(
+      `Θέλεις σίγουρα να αφαιρέσεις την πρόσβαση/σύνδεση του ${label} (${email}) από αυτό το διαμέρισμα;`
+    );
+    if (!ok) return;
+
+    setIsVacating(true);
+    try {
+      const result = await vacateApartment(apartmentId, isTenant ? 'tenant' : 'owner');
+      toast.success(result.message || 'Η πρόσβαση αφαιρέθηκε');
+      onChanged?.();
+    } catch (err) {
+      const error = err as { message?: string; response?: { data?: { error?: string } } };
+      toast.error(error?.response?.data?.error || error?.message || 'Αποτυχία αφαίρεσης πρόσβασης');
+    } finally {
+      setIsVacating(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1.5">
       <a href={`mailto:${email}`} className="flex items-center gap-1 text-primary hover:underline">
@@ -161,7 +189,23 @@ const EmailWithStatus = ({
         {email}
       </a>
       {isRegistered ? (
-        <UserCheck className="w-3.5 h-3.5 text-success" title="Καταχωρημένος χρήστης" />
+        <div className="flex items-center gap-1">
+          <UserCheck className="w-3.5 h-3.5 text-success" title="Υπάρχει λογαριασμός χρήστη" />
+          {canInvite && apartmentId && (
+            <button
+              onClick={handleVacate}
+              disabled={isVacating}
+              className="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Αφαίρεση πρόσβασης (μετακόμιση)"
+            >
+              {isVacating ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <UserX className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
       ) : canInvite ? (
         <div className="flex items-center gap-1">
           <Link 
@@ -199,10 +243,12 @@ const renderContactBlock = (
   phone?: string, 
   email?: string,
   isRegistered?: boolean,
+  hasAccess?: boolean,
   buildingId?: number,
   apartmentId?: number,
   canInvite?: boolean,
-  isTenant?: boolean
+  isTenant?: boolean,
+  onChanged?: () => void
 ) => (
   <div>
     <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">{label}</p>
@@ -211,10 +257,10 @@ const renderContactBlock = (
       {isRegistered && (
         <span
           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium"
-          title="Καταχωρημένος χρήστης (η πρόσκληση αφορά μόνο την εγγραφή)"
+          title={hasAccess ? 'Έχει πρόσβαση στην εφαρμογή' : 'Υπάρχει λογαριασμός, αλλά δεν έχει πρόσβαση σε αυτό το κτίριο'}
         >
           <UserCheck className="w-3 h-3" />
-          Καταχωρημένος
+          {hasAccess ? 'Πρόσβαση' : 'Χωρίς πρόσβαση'}
         </span>
       )}
     </p>
@@ -233,6 +279,7 @@ const renderContactBlock = (
           apartmentId={apartmentId}
           canInvite={canInvite}
           isTenant={isTenant}
+          onChanged={onChanged}
         />
       )}
       {!phone && !email && <span>Χωρίς στοιχεία επικοινωνίας</span>}
@@ -691,11 +738,16 @@ const ApartmentsPageContent = () => {
                                       {apartment.owner_name || '—'}
                                       {apartment.owner_user && (
                                         <span
-                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium"
-                                          title="Καταχωρημένος χρήστης (η πρόσκληση αφορά μόνο την εγγραφή)"
+                                          className={cn(
+                                            "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
+                                            apartment.owner_has_access
+                                              ? "bg-green-100 text-green-700"
+                                              : "bg-amber-100 text-amber-800"
+                                          )}
+                                          title={apartment.owner_has_access ? "Έχει πρόσβαση στην εφαρμογή" : "Υπάρχει λογαριασμός, αλλά δεν έχει πρόσβαση σε αυτό το κτίριο"}
                                         >
                                           <UserCheck className="w-3 h-3" />
-                                          Καταχωρημένος
+                                          {apartment.owner_has_access ? "Πρόσβαση" : "Χωρίς πρόσβαση"}
                                         </span>
                                       )}
                                     </p>
@@ -713,6 +765,7 @@ const ApartmentsPageContent = () => {
                                           buildingId={buildingId}
                                           apartmentId={apartment.id}
                                           canInvite={canManage}
+                                          onChanged={loadApartments}
                                         />
                                       )}
                                     </div>
@@ -724,11 +777,16 @@ const ApartmentsPageContent = () => {
                                       {apartment.tenant_name || apartment.occupant_name || '—'}
                                       {apartment.tenant_user && (
                                         <span
-                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium"
-                                          title="Καταχωρημένος χρήστης (η πρόσκληση αφορά μόνο την εγγραφή)"
+                                          className={cn(
+                                            "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
+                                            apartment.tenant_has_access
+                                              ? "bg-green-100 text-green-700"
+                                              : "bg-amber-100 text-amber-800"
+                                          )}
+                                          title={apartment.tenant_has_access ? "Έχει πρόσβαση στην εφαρμογή" : "Υπάρχει λογαριασμός, αλλά δεν έχει πρόσβαση σε αυτό το κτίριο"}
                                         >
                                           <UserCheck className="w-3 h-3" />
-                                          Καταχωρημένος
+                                          {apartment.tenant_has_access ? "Πρόσβαση" : "Χωρίς πρόσβαση"}
                                         </span>
                                       )}
                                     </p>
@@ -747,6 +805,7 @@ const ApartmentsPageContent = () => {
                                           apartmentId={apartment.id}
                                           canInvite={canManage}
                                           isTenant={true}
+                                          onChanged={loadApartments}
                                         />
                                       )}
                                     </div>
@@ -879,9 +938,12 @@ const ApartmentsPageContent = () => {
                               apartment.owner_phone, 
                               apartment.owner_email,
                               !!apartment.owner_user,
+                              !!apartment.owner_has_access,
                               buildingId,
                               apartment.id,
-                              canManage
+                              canManage,
+                              false,
+                              loadApartments
                             )}
                             {renderContactBlock(
                               'Ένοικος / Χρήστης',
@@ -889,10 +951,12 @@ const ApartmentsPageContent = () => {
                               apartment.tenant_phone || apartment.occupant_phone,
                               apartment.tenant_email || apartment.occupant_email,
                               !!apartment.tenant_user,
+                              !!apartment.tenant_has_access,
                               buildingId,
                               apartment.id,
                               canManage,
-                              true // isTenant
+                              true, // isTenant
+                              loadApartments
                             )}
                           </div>
                           <div className="grid grid-cols-3 gap-4 text-sm">

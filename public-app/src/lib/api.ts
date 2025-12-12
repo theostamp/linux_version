@@ -1449,6 +1449,7 @@ export type ApartmentList = {
   owner_phone2: string;
   owner_email: string;
   owner_user?: number | null;  // User ID αν ο ιδιοκτήτης είναι καταχωρημένος
+  owner_has_access?: boolean; // Membership στο κτίριο + ενεργός λογαριασμός
   ownership_percentage?: number;
   participation_mills?: number;
   heating_mills?: number;
@@ -1458,6 +1459,7 @@ export type ApartmentList = {
   tenant_phone2: string;
   tenant_email: string;
   tenant_user?: number | null;  // User ID αν ο ένοικος είναι καταχωρημένος
+  tenant_has_access?: boolean; // Membership στο κτίριο + ενεργός λογαριασμός
   occupant_name: string;
   occupant_phone: string;
   occupant_phone2: string;
@@ -1469,6 +1471,17 @@ export type ApartmentList = {
   created_at: string;
   updated_at: string;
 };
+
+export async function vacateApartment(apartmentId: number, type: 'tenant' | 'owner'): Promise<{
+  message: string;
+  removed_membership: boolean;
+  removed_internal_manager: boolean;
+}> {
+  return await apiPost<{ message: string; removed_membership: boolean; removed_internal_manager: boolean }>(
+    `/apartments/${apartmentId}/vacate/`,
+    { type }
+  );
+}
 
 export async function fetchApartments(buildingId: number): Promise<ApartmentList[]> {
   try {

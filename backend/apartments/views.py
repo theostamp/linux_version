@@ -73,6 +73,7 @@ class ApartmentViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Λίστα διαμερισμάτων με προαιρετικό φιλτράρισμα"""
         queryset = self.filter_queryset(self.get_queryset())
+        building_id = request.query_params.get('building')
         
         # Ταξινόμηση
         ordering = request.query_params.get('ordering', 'number')
@@ -87,9 +88,106 @@ class ApartmentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_rented=False, owner_name__isnull=False)
         elif status_filter == 'empty':
             queryset = queryset.filter(owner_name='', tenant_name='')
-        
-        serializer = self.get_serializer(queryset, many=True)
+
+        # Για το UI του γραφείου: "έχει πρόσβαση" = membership στο κτίριο + ενεργός λογαριασμός.
+        # Το υπολογίζουμε χωρίς N+1 queries, μόνο όταν έχουμε building filter.
+        membership_user_ids: set[int] = set()
+        if building_id:
+            from buildings.models import BuildingMembership
+            # Συλλέγουμε όλους τους user ids που εμφανίζονται σε owner_user / tenant_user στη λίστα
+            pairs = list(queryset.values_list('owner_user_id', 'tenant_user_id'))
+            user_ids = {uid for pair in pairs for uid in pair if uid}
+            if user_ids:
+                membership_user_ids = set(
+                    BuildingMembership.objects.filter(
+                        building_id=building_id,
+                        resident_id__in=user_ids
+                    ).values_list('resident_id', flat=True)
+                )
+
+        ctx = self.get_serializer_context()
+        ctx['membership_user_ids'] = membership_user_ids
+        serializer = self.get_serializer(queryset, many=True, context=ctx)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='vacate')
+    def vacate(self, request, pk=None):
+        """
+        POST /api/apartments/{id}/vacate/
+        Αφαίρεση πρόσβασης/σύνδεσης χρήστη από διαμέρισμα όταν κάποιος μετακομίζει.
+
+        Body:
+          - type: "tenant" | "owner"   (required)
+          - deactivate_user: boolean    (optional, default false)
+        """
+        apartment = self.get_object()
+        resident_type = request.data.get('type')
+        deactivate_user = bool(request.data.get('deactivate_user', False))
+
+        if resident_type not in ['tenant', 'owner']:
+            return Response({'error': 'Μη έγκυρος τύπος. Επιτρεπτά: tenant, owner'}, status=status.HTTP_400_BAD_REQUEST)
+
+        building = apartment.building
+        user = apartment.tenant_user if resident_type == 'tenant' else apartment.owner_user
+
+        # 1) Καθαρισμός στοιχείων στο διαμέρισμα + unlink user
+        if resident_type == 'tenant':
+            apartment.tenant_name = ''
+            apartment.tenant_phone = ''
+            apartment.tenant_phone2 = ''
+            apartment.tenant_email = ''
+            apartment.tenant_user = None
+            apartment.is_rented = False
+            apartment.rent_start_date = None
+            apartment.rent_end_date = None
+        else:  # owner
+            apartment.owner_name = ''
+            apartment.owner_phone = ''
+            apartment.owner_phone2 = ''
+            apartment.owner_email = ''
+            apartment.owner_user = None
+
+        apartment.save()
+
+        removed_membership = False
+        removed_internal_manager = False
+
+        # 2) Αφαίρεση membership από το κτίριο, μόνο αν ο χρήστης δεν έχει άλλο linked apartment στο ίδιο κτίριο
+        if user:
+            from buildings.models import BuildingMembership
+
+            other_apts_count = Apartment.objects.filter(building=building).exclude(pk=apartment.pk).filter(
+                Q(owner_user=user) | Q(tenant_user=user)
+            ).count()
+
+            if other_apts_count == 0:
+                deleted, _ = BuildingMembership.objects.filter(building=building, resident=user).delete()
+                removed_membership = deleted > 0
+
+            # Αν ήταν internal_manager στο κτίριο, καθαρίζουμε και το πεδίο στο Building
+            if getattr(building, 'internal_manager_id', None) == user.id:
+                building.internal_manager = None
+                building.save(update_fields=['internal_manager'])
+                removed_internal_manager = True
+
+            # 3) Προαιρετικό: απενεργοποίηση λογαριασμού (global) αν δεν έχει memberships πουθενά
+            if deactivate_user:
+                remaining = BuildingMembership.objects.filter(resident=user).exists()
+                if not remaining:
+                    try:
+                        from django_tenants.utils import schema_context, get_public_schema_name
+                        from users.models import CustomUser
+                        with schema_context(get_public_schema_name()):
+                            CustomUser.objects.filter(id=user.id).update(is_active=False)
+                    except Exception:
+                        # Δεν μπλοκάρουμε το vacate για αυτό
+                        pass
+
+        return Response({
+            'message': 'Ο χρήστης αφαιρέθηκε από το διαμέρισμα.',
+            'removed_membership': removed_membership,
+            'removed_internal_manager': removed_internal_manager
+        }, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request):

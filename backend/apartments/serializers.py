@@ -67,9 +67,14 @@ class ApartmentListSerializer(serializers.ModelSerializer):
     occupant_email = serializers.CharField(read_only=True)
     status_display = serializers.CharField(read_only=True)
     
-    # Πεδία για έλεγχο αν ο χρήστης είναι καταχωρημένος
+    # Πεδία για έλεγχο αν υπάρχει συνδεδεμένος χρήστης
     owner_user = serializers.PrimaryKeyRelatedField(read_only=True)
     tenant_user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    # ✅ Σήμανση πραγματικής πρόσβασης στην εφαρμογή:
+    # πρόσβαση = (υπάρχει membership στο κτίριο) ΚΑΙ (user is_active)
+    owner_has_access = serializers.SerializerMethodField()
+    tenant_has_access = serializers.SerializerMethodField()
     
     class Meta:
         model = Apartment
@@ -85,6 +90,7 @@ class ApartmentListSerializer(serializers.ModelSerializer):
             'owner_phone2',
             'owner_email',
             'owner_user',
+            'owner_has_access',
             'ownership_percentage',
             'participation_mills',
             'heating_mills',
@@ -94,6 +100,7 @@ class ApartmentListSerializer(serializers.ModelSerializer):
             'tenant_phone2',
             'tenant_email',
             'tenant_user',
+            'tenant_has_access',
             'occupant_name',
             'occupant_phone',
             'occupant_phone2',
@@ -102,6 +109,28 @@ class ApartmentListSerializer(serializers.ModelSerializer):
             'is_rented',
             'is_closed'
         ]
+
+    def _membership_user_ids(self) -> set[int]:
+        ids = self.context.get('membership_user_ids')
+        if isinstance(ids, set):
+            return ids
+        if isinstance(ids, list):
+            return set(ids)
+        return set()
+
+    def get_owner_has_access(self, obj) -> bool:
+        membership_ids = self._membership_user_ids()
+        user = getattr(obj, 'owner_user', None)
+        if not user:
+            return False
+        return bool(getattr(user, 'is_active', True)) and (user.id in membership_ids)
+
+    def get_tenant_has_access(self, obj) -> bool:
+        membership_ids = self._membership_user_ids()
+        user = getattr(obj, 'tenant_user', None)
+        if not user:
+            return False
+        return bool(getattr(user, 'is_active', True)) and (user.id in membership_ids)
 
 
 class CreateApartmentSerializer(serializers.ModelSerializer):
