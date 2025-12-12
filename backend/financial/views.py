@@ -2115,6 +2115,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             total_balance = 0
             pending_obligations = 0
             pending_expenses = 0
+            total_month_payments = 0.0
             
             # 📝 ΔΙΟΡΘΩΣΗ 2025-12-03: Χρήση τρέχοντος μήνα για consistent data με Financial Page
             # Η Financial Page χρησιμοποιεί net_obligation (previous + current - payments)
@@ -2145,6 +2146,14 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         if float(apt.get('net_obligation', 0)) > 0  # Θετικά net_obligation = Οφειλές
                     )
                     pending_obligations += building_obligations
+
+                    # Συνολικές πληρωμές τρέχοντος μήνα (για σωστό collection rate)
+                    # month_payments είναι το ποσό πληρωμών του μήνα που αφαιρείται από το net_obligation.
+                    building_month_payments = sum(
+                        float(apt.get('month_payments', 0) or 0)
+                        for apt in apt_balances
+                    )
+                    total_month_payments += building_month_payments
                     
                     buildings_data.append({
                         'id': building.id,
@@ -2267,9 +2276,11 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     'total_pending_expenses': pending_expenses,
                     'total_pending_obligations': pending_obligations,
                     'collection_rate': (
-                        ((total_balance / (total_balance + pending_obligations)) * 100) 
-                        if (total_balance + pending_obligations) > 0 
-                        else 100
+                        # Collection rate = πληρωμές / (πληρωμές + ανεξόφλητες οφειλές)
+                        # Αυτό δίνει σωστό αποτέλεσμα π.χ. 60/(60+540)=10%.
+                        (min(100.0, (total_month_payments / (total_month_payments + pending_obligations)) * 100)
+                         if (total_month_payments + pending_obligations) > 0
+                         else 100.0)
                     )
                 },
                 'recent_activity': recent_activity,
