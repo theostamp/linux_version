@@ -1,34 +1,132 @@
-﻿﻿iled to load resource: the server responded with a status of 404 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/assembly-attend…b558-fa93ab6e3f8a:1 
- Failed to load resource: the server responded with a status of 500 ()
-/assemblies/13abeb88…a/edit?_rsc=jfqps:1 
- Failed to load resource: the server responded with a status of 404 ()
-
-/api/votes/3/results:1 
- Failed to load resource: the server responded with a status of 500 ()
-/api/votes/3/my-submission:1 
- Failed to load resource: the server responded with a status of 404 ()
-/assemblies/13abeb88…a/edit?_rsc=jfqps:1 
- Failed to load resource: the server responded with a status of 404 ()
-/api/assemblies:1 
- Failed to load resource: the server responded with a status of 400 ()
+﻿﻿GET
+/api/todos/notifications/
+200
+172 ms
+GET
+/api/todos/notifications/
+200
+171 ms
+PATCH
+/api/buildings/list/2/
+200
+182 ms
+GET
+/api/buildings/list/2/
+200
+177 ms
+GET
+/api/kiosk/public/scenes/active/
+200
+173 ms
+GET
+/api/assemblies/upcoming/
+404
+168 ms
+GET
+/api/public-info/2/
+200
+701 ms
+GET
+/api/announcements/
+200
+169 ms
+GET
+/api/todos/notifications/
+200
+171 ms
+GET
+/api/todos/notifications/
+200
+172 ms
+GET
+/api/todos/notifications/
+200
+174 ms
+OPTIONS
+/api/users/login/
+200
+141 ms
+POST
+/api/users/login/
+200
+383 ms
+GET
+/api/users/me/
+200
+174 ms
+GET
+/api/todos/notifications/
+200
+170 ms
+GET
+/api/buildings/list/
+200
+178 ms
+GET
+/api/todos/notifications/
+200
+171 ms
+GET
+/api/financial/my-apartment/
+200
+219 ms
+GET
+/api/todos/notifications/
+200
+172 ms
+GET
+/api/buildings/current-context/
+200
+175 ms
+POST
+/api/users/send-myapartment-link/
+500
+192 ms
+GET
+/api/users/me/
+200
+175 ms
+GET
+/api/todos/notifications/
+200
+171 ms
+GET
+/api/todos/notifications/
+200
+171 ms
+GET
+/api/buildings/list/
+200
+178 ms
+GET
+/api/todos/notifications/
+200
+179 ms
+GET
+/api/buildings/current-context/
+200
+176 ms
+GET
+/api/financial/my-apartment/
+200
+219 ms
+POST
+/api/users/send-myapartment-link/
+500
+174 ms
+GET
+/api/kiosk/public/scenes/active/
+200
+171 ms
+GET
+/api/assemblies/upcoming/
+404
+166 ms
+GET
+/api/public-info/2/
+200
+638 ms
+GET
+/api/announcements/
+200
+173 ms

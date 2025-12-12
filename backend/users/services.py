@@ -249,7 +249,14 @@ class EmailService:
                 [user.email],
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
+            sent = msg.send(fail_silently=False)
+            if not sent:
+                logger.error(
+                    "My-apartment link email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    user.email,
+                )
+                return False
             return True
         except Exception as e:
             logger.error(f"Error sending my-apartment link email: {e}", exc_info=True)

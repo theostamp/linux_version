@@ -47,6 +47,24 @@ def send_myapartment_link_view(request):
     # Build link on the current host/subdomain
     link_url = request.build_absolute_uri("/m")
 
+    # Quick config sanity checks (no secrets exposed)
+    try:
+        import os
+        from django.conf import settings
+        email_backend = getattr(settings, 'EMAIL_BACKEND', '')
+        if 'mailersend' in (email_backend or '').lower():
+            if not os.getenv('MAILERSEND_API_KEY'):
+                return Response(
+                    {
+                        "error": "Το σύστημα αποστολής email δεν είναι ρυθμισμένο σωστά (λείπει MailerSend API key).",
+                        "error_code": "EMAIL_NOT_CONFIGURED",
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+    except Exception:
+        # Don't block sending because of a config check failure
+        pass
+
     try:
         ok = EmailService.send_my_apartment_link_email(user, link_url)
     except Exception:
