@@ -209,9 +209,12 @@ const renderContactBlock = (
     <p className="text-sm font-medium text-foreground flex items-center gap-1.5 flex-wrap">
       {name || 'Δεν έχει οριστεί'}
       {isRegistered && (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium" title="Ενεργός χρήστης">
+        <span
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium"
+          title="Καταχωρημένος χρήστης (η πρόσκληση αφορά μόνο την εγγραφή)"
+        >
           <UserCheck className="w-3 h-3" />
-          Ενεργός
+          Καταχωρημένος
         </span>
       )}
     </p>
@@ -687,9 +690,12 @@ const ApartmentsPageContent = () => {
                                     <p className="font-medium text-foreground flex items-center gap-1.5">
                                       {apartment.owner_name || '—'}
                                       {apartment.owner_user && (
-                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium" title="Ενεργός χρήστης">
+                                        <span
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium"
+                                          title="Καταχωρημένος χρήστης (η πρόσκληση αφορά μόνο την εγγραφή)"
+                                        >
                                           <UserCheck className="w-3 h-3" />
-                                          Ενεργός
+                                          Καταχωρημένος
                                         </span>
                                       )}
                                     </p>
@@ -717,9 +723,12 @@ const ApartmentsPageContent = () => {
                                     <p className="font-medium text-foreground flex items-center gap-1.5">
                                       {apartment.tenant_name || apartment.occupant_name || '—'}
                                       {apartment.tenant_user && (
-                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium" title="Ενεργός χρήστης">
+                                        <span
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium"
+                                          title="Καταχωρημένος χρήστης (η πρόσκληση αφορά μόνο την εγγραφή)"
+                                        >
                                           <UserCheck className="w-3 h-3" />
-                                          Ενεργός
+                                          Καταχωρημένος
                                         </span>
                                       )}
                                     </p>
