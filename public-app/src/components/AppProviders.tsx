@@ -74,13 +74,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     return (
       <ThemeProvider>
         <LoadingProvider>
-          {/* Provide contexts to avoid crashes when kiosk pages render shared components that use them */}
-          <AuthProvider>
-            <BuildingProvider>
-              {children}
-              <Toaster position="top-right" richColors closeButton />
-            </BuildingProvider>
-          </AuthProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
         </LoadingProvider>
       </ThemeProvider>
     );

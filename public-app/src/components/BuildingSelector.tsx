@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Building } from '@/lib/api';
 import { fetchAllBuildingsPublic, fetchMyBuildings } from '@/lib/api';
-import { useAuth } from '@/components/contexts/AuthContext';
 import { Search, Building as BuildingIcon, Check, X, MapPin } from 'lucide-react';
 
 interface BuildingSelectorProps {
@@ -23,7 +22,7 @@ export default function BuildingSelector({
   currentBuilding,
   onManualBuildingSelect,
 }: BuildingSelectorProps) {
-  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,12 +30,28 @@ export default function BuildingSelector({
   const [manualId, setManualId] = useState<string>('');
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // Read role from localStorage so this component can be used on public routes (e.g. /kiosk-display)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) {
+        setUserRole(null);
+        return;
+      }
+      const parsed = JSON.parse(raw) as { role?: string };
+      setUserRole(typeof parsed?.role === 'string' ? parsed.role : null);
+    } catch {
+      setUserRole(null);
+    }
+  }, []);
+
   // Determine if user should only see their own buildings (via BuildingMembership)
   // Residents and internal_managers see only their buildings
   // Managers, admins, and office_staff see all buildings in the tenant
   const managerRoles = ['manager', 'admin', 'office_staff'];
-  const isManagerOrAdmin = user?.role && managerRoles.includes(user.role);
-  const shouldUseMyBuildings = !isManagerOrAdmin;
+  const isManagerOrAdmin = !!userRole && managerRoles.includes(userRole);
+  // If role is unknown (public routes), default to all buildings
+  const shouldUseMyBuildings = !!userRole && !isManagerOrAdmin;
 
   // Load buildings when modal opens
   useEffect(() => {
@@ -54,9 +69,14 @@ export default function BuildingSelector({
       let buildingsData: Building[];
       if (shouldUseMyBuildings) {
         console.log('[BuildingSelector] Loading user buildings (resident/internal_manager mode)');
-        buildingsData = await fetchMyBuildings();
+        try {
+          buildingsData = await fetchMyBuildings();
+        } catch (e) {
+          console.warn('[BuildingSelector] Failed to load my-buildings; falling back to public buildings', e);
+          buildingsData = await fetchAllBuildingsPublic();
+        }
       } else {
-        console.log('[BuildingSelector] Loading all buildings (manager/admin mode)');
+        console.log('[BuildingSelector] Loading all buildings (public/manager mode)');
         buildingsData = await fetchAllBuildingsPublic();
       }
       console.log('[BuildingSelector] Loaded buildings:', buildingsData.length);
