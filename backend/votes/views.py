@@ -113,7 +113,11 @@ class VoteViewSet(viewsets.ModelViewSet):
             ser = VoteSubmissionSerializer(sub)
             return Response(ser.data)
         except VoteSubmission.DoesNotExist:
-            return Response({'choice': None})
+            # Important: when there's no submission, return 404 so the frontend can treat it as "not voted"
+            return Response(
+                {"detail": "No submission found for this user and vote."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
     @action(detail=True, methods=['get'], url_path='results')
     def results(self, request, pk=None):

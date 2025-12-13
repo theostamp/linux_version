@@ -1274,7 +1274,8 @@ export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
 
 export async function fetchMyVote(voteId: number): Promise<VoteSubmission | null> {
   try {
-    return await apiGet<VoteSubmission>(`/votes/${voteId}/my-vote/`);
+    // VoteViewSet exposes /api/votes/{id}/my-submission/
+    return await apiGet<VoteSubmission>(`/votes/${voteId}/my-submission/`);
   } catch (error: unknown) {
     const apiError = error as { status?: number };
     if (apiError.status === 404) {

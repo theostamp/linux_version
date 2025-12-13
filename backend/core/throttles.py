@@ -63,10 +63,10 @@ class EmailVerificationThrottle(AnonRateThrottle):
 class MyApartmentLinkEmailUserThrottle(UserRateThrottle):
     """
     Rate limiting for sending the "open on laptop" link email from my-apartment.
-    2 emails per day per authenticated user.
+    50 emails per day per authenticated user. (Temporary increase)
     """
     scope = 'my_apartment_link_email_user'
-    rate = '2/day'
+    rate = '50/day'
     # Use a safe local cache alias so throttling never 500s if Redis is down/misconfigured.
     cache = caches['throttles']
 

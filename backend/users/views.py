@@ -40,7 +40,7 @@ def send_myapartment_link_view(request):
     """
     POST /api/users/send-myapartment-link/
     Sends a short "open on laptop" link to the authenticated user's own email.
-    Rate limited (2/day per user + additional IP throttle).
+    Rate limited (50/day per user + additional IP throttle).
     """
     user = request.user
 
