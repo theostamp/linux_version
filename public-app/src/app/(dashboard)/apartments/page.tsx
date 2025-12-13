@@ -543,13 +543,6 @@ const ApartmentsPageContent = () => {
           icon={<Home className="w-5 h-5" />}
           color="success"
         />
-        <StatCard
-          title="Μέσο μέγεθος"
-          value={stats.avgSize || '—'}
-          subtitle="τετραγωνικά μέτρα"
-          icon={<Grid className="w-5 h-5" />}
-          color="default"
-        />
       </BentoGrid>
 
       {/* Main Content Area - Filters & Table */}

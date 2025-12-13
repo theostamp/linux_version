@@ -46,25 +46,25 @@ export function StatCard({
   };
 
   const content = (
-    <div className="flex flex-col h-full justify-between">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-muted-foreground">{title}</span>
-        <div className={cn("p-2 rounded-lg", colorClasses[color])}>
-          {icon}
-        </div>
+    <div className="flex items-center gap-3">
+      <div className={cn("p-2 rounded-lg shrink-0", colorClasses[color])}>
+        {icon}
       </div>
-      <div>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
-        {(description || subtitle) && (
-          <p className="text-xs text-muted-foreground mt-1">{description || subtitle}</p>
-        )}
+      <div className="min-w-0 flex-1">
+        <span className="text-xs font-medium text-muted-foreground">{title}</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xl font-bold text-foreground">{value}</span>
+          {(description || subtitle) && (
+            <span className="text-xs text-muted-foreground truncate">{description || subtitle}</span>
+          )}
+        </div>
       </div>
     </div>
   );
 
   const cardClasses = cn(
-        "p-4 rounded-xl border border-gray-300 bg-card shadow-sm transition-all duration-200 hover:shadow-md",
-    href && "cursor-pointer hover:border-primary/50",
+    "px-4 py-3 rounded-xl bg-card/80 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] ring-1 ring-black/[0.03] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:ring-black/[0.05]",
+    href && "cursor-pointer",
     className
   );
 
