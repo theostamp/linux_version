@@ -44,8 +44,11 @@ def send_myapartment_link_view(request):
     """
     user = request.user
 
-    # Build link on the current host/subdomain
-    link_url = request.build_absolute_uri("/m")
+    # Build link on the *public* tenant host (not the internal Railway domain).
+    # Our Tenant middleware sets/uses X-Tenant-Host (e.g. theo.newconcierge.app).
+    tenant_host = request.headers.get('X-Tenant-Host') or request.get_host()
+    proto = request.headers.get('X-Forwarded-Proto') or ('https' if request.is_secure() else 'http')
+    link_url = f"{proto}://{tenant_host}/m"
 
     # Quick config sanity checks (no secrets exposed)
     try:
