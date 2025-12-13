@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import ErrorMessage from '@/components/ErrorMessage';
 import Pagination from '@/components/Pagination';
-import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -518,10 +517,8 @@ const ApartmentsPageContent = () => {
 
       <BuildingFilterIndicator />
 
-      {/* Bento Grid Layout - Stats Only */}
-      <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4 mb-8">
-        
-        {/* Stats Row */}
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard
           title="Σύνολο"
           value={stats.total}
@@ -543,7 +540,7 @@ const ApartmentsPageContent = () => {
           icon={<Home className="w-5 h-5" />}
           color="success"
         />
-      </BentoGrid>
+      </div>
 
       {/* Main Content Area - Filters & Table */}
       <div className="space-y-6">
