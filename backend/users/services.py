@@ -19,6 +19,21 @@ class EmailService:
     """
     Service για την αποστολή emails
     """
+
+    @staticmethod
+    def _log_not_sent(kind: str, to_email: str, extra: dict | None = None) -> None:
+        """
+        Some backends return 0 without raising when an email wasn't sent (e.g. missing API key).
+        This helper standardizes logging for easier debugging.
+        """
+        payload: dict = {
+            "kind": kind,
+            "backend": getattr(settings, "EMAIL_BACKEND", None),
+            "to": to_email,
+        }
+        if extra:
+            payload.update(extra)
+        logger.error("[EMAIL] Not sent (send() returned 0): %s", payload)
     
     @staticmethod
     def send_verification_email(user):
@@ -72,11 +87,17 @@ class EmailService:
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
-            
+            sent = msg.send(fail_silently=False)
+            if not sent:
+                EmailService._log_not_sent(
+                    "verification",
+                    user.email,
+                    {"user_id": getattr(user, "id", None)},
+                )
+                return False
             return True
         except Exception as e:
-            print(f"Error sending verification email: {e}")
+            logger.error("Error sending verification email to %s: %s", user.email, e, exc_info=True)
             return False
     
     @staticmethod
@@ -159,11 +180,17 @@ class EmailService:
                 [invitation.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
-            
+            sent = msg.send(fail_silently=False)
+            if not sent:
+                EmailService._log_not_sent(
+                    "invitation",
+                    invitation.email,
+                    {"invitation_id": getattr(invitation, "id", None)},
+                )
+                return False
             return True
         except Exception as e:
-            print(f"Error sending invitation email: {e}")
+            logger.error("Error sending invitation email to %s: %s", invitation.email, e, exc_info=True)
             return False
     
     @staticmethod
@@ -210,11 +237,17 @@ class EmailService:
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
-            
+            sent = msg.send(fail_silently=False)
+            if not sent:
+                EmailService._log_not_sent(
+                    "password_reset",
+                    user.email,
+                    {"user_id": getattr(user, "id", None), "reset_token_id": getattr(reset_token, "id", None)},
+                )
+                return False
             return True
         except Exception as e:
-            print(f"Error sending password reset email: {e}")
+            logger.error("Error sending password reset email to %s: %s", user.email, e, exc_info=True)
             return False
 
     @staticmethod
@@ -306,11 +339,17 @@ class EmailService:
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
-            
+            sent = msg.send(fail_silently=False)
+            if not sent:
+                EmailService._log_not_sent(
+                    "welcome",
+                    user.email,
+                    {"user_id": getattr(user, "id", None)},
+                )
+                return False
             return True
         except Exception as e:
-            print(f"Error sending welcome email: {e}")
+            logger.error("Error sending welcome email to %s: %s", user.email, e, exc_info=True)
             return False
     
     @staticmethod
@@ -353,16 +392,23 @@ class EmailService:
         """
 
         try:
-            send_mail(
+            sent = send_mail(
                 subject,
                 message,
                 settings.DEFAULT_FROM_EMAIL,
                 [user.email],
                 fail_silently=False,
             )
+            if not sent:
+                EmailService._log_not_sent(
+                    "workspace_welcome",
+                    user.email,
+                    {"tenant_domain": tenant_domain, "user_id": getattr(user, "id", None)},
+                )
+                return False
             return True
         except Exception as e:
-            print(f"Error sending workspace welcome email: {e}")
+            logger.error("Error sending workspace welcome email to %s: %s", user.email, e, exc_info=True)
             return False
 
     @staticmethod
@@ -778,7 +824,7 @@ Email: {invitation.email}
         """
         
         try:
-            send_mail(
+            sent = send_mail(
                 subject=subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -786,6 +832,13 @@ Email: {invitation.email}
                 html_message=html_content,
                 fail_silently=False,
             )
+            if not sent:
+                EmailService._log_not_sent(
+                    "login_reminder",
+                    user.email,
+                    {"user_id": getattr(user, "id", None), "building_id": getattr(building, "id", None)},
+                )
+                return False
             logger.info(f"Sent login reminder email to {user.email}")
             return True
         except Exception as e:
@@ -879,7 +932,7 @@ Email: {invitation.email}
         """
         
         try:
-            send_mail(
+            sent = send_mail(
                 subject=subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -887,6 +940,13 @@ Email: {invitation.email}
                 html_message=html_content,
                 fail_silently=False,
             )
+            if not sent:
+                EmailService._log_not_sent(
+                    "magic_login",
+                    user.email,
+                    {"user_id": getattr(user, "id", None), "building_id": getattr(building, "id", None)},
+                )
+                return False
             logger.info(f"Sent magic login email to {user.email} for building {building.name}")
             return True
         except Exception as e:
