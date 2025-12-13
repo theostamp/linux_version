@@ -213,6 +213,14 @@ CACHES = {
         'KEY_PREFIX': f"{TENANT_SCHEMA_NAME}_cache",
         'TIMEOUT': 300,  # 5 minutes default
     }
+    ,
+    # Throttling must never 500 if Redis is down/misconfigured.
+    # LocMem is per-process but safe; it preserves basic anti-abuse behavior.
+    'throttles': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'throttles',
+        'TIMEOUT': None,
+    },
 }
 
  

@@ -1,6 +1,7 @@
 # core/throttles.py
 
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+from django.core.cache import caches
 
 
 class AuthEndpointThrottle(UserRateThrottle):
@@ -66,6 +67,8 @@ class MyApartmentLinkEmailUserThrottle(UserRateThrottle):
     """
     scope = 'my_apartment_link_email_user'
     rate = '2/day'
+    # Use a safe local cache alias so throttling never 500s if Redis is down/misconfigured.
+    cache = caches['throttles']
 
 
 class MyApartmentLinkEmailIPThrottle(AnonRateThrottle):
@@ -74,6 +77,8 @@ class MyApartmentLinkEmailIPThrottle(AnonRateThrottle):
     """
     scope = 'my_apartment_link_email_ip'
     rate = '10/day'
+    # Use a safe local cache alias so throttling never 500s if Redis is down/misconfigured.
+    cache = caches['throttles']
 
     def get_cache_key(self, request, view):
         ident = self.get_ident(request)
