@@ -355,6 +355,22 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
+
+    // ✅ Multi-tenant routing support when running on a shared public domain.
+    // Prefer an explicit tenant host derived from the cached user (public schema) if available.
+    // This allows backend proxy routes to forward the correct tenant host to Django.
+    try {
+      const cached = localStorage.getItem("user");
+      if (cached) {
+        const parsed = JSON.parse(cached) as { tenant?: { schema_name?: string } | null };
+        const schema = parsed?.tenant?.schema_name;
+        if (schema && typeof schema === "string" && schema.trim()) {
+          headers["X-Tenant-Host"] = `${schema}.newconcierge.app`;
+        }
+      }
+    } catch {
+      // ignore parsing errors
+    }
     
     // Add CSRF token for mutation requests
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {

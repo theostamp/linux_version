@@ -64,6 +64,11 @@ const buildTargetUrl = (request: NextRequest) => {
 const createForwardHeaders = (request: NextRequest) => {
   const forwardHeaders = new Headers(request.headers);
   
+  // ✅ If the client explicitly provides a tenant host, prefer it.
+  // This enables multi-tenant routing even when the app is served from a single public domain.
+  const explicitTenantHost =
+    request.headers.get("x-tenant-host") || request.headers.get("X-Tenant-Host");
+  
   // Get the public hostname - prioritize Origin header over Host header
   // Vercel sends x-forwarded-host as the internal Railway URL, not the public domain
   // The Origin header is the most reliable source for the public domain in CORS requests
@@ -74,10 +79,10 @@ const createForwardHeaders = (request: NextRequest) => {
   
   // Priority: Origin > Referer > Host header > x-forwarded-host
   // Origin header is the most reliable source for the public domain
-  let publicHostname = requestHost;
+  let publicHostname = explicitTenantHost || requestHost;
   
   // First, try Origin header (most reliable for CORS requests)
-  if (origin) {
+  if (!explicitTenantHost && origin) {
     try {
       const originUrl = new URL(origin);
       publicHostname = originUrl.host;
@@ -88,7 +93,7 @@ const createForwardHeaders = (request: NextRequest) => {
   }
   
   // If Host header looks like internal Vercel/Railway URL, try referer
-  if ((publicHostname.includes("railway.app") || publicHostname.includes("vercel.app")) && referer) {
+  if (!explicitTenantHost && (publicHostname.includes("railway.app") || publicHostname.includes("vercel.app")) && referer) {
     try {
       const refererUrl = new URL(referer);
       publicHostname = refererUrl.host;
@@ -99,7 +104,7 @@ const createForwardHeaders = (request: NextRequest) => {
   }
   
   // Only use x-forwarded-host if it's a public domain (not Railway/Vercel internal)
-  if (forwardedHost && 
+  if (!explicitTenantHost && forwardedHost && 
       !forwardedHost.includes("railway.app") && 
       !forwardedHost.includes("vercel.app")) {
     publicHostname = forwardedHost;
