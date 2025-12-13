@@ -131,24 +131,35 @@ export default function GlobalHeader() {
                 </div>
                   </>
                 ) : (
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 min-w-0">
                     {/* Building Info */}
                     <div className="flex flex-col justify-center min-w-0">
                       <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
                         {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
                       </h1>
-                      <p className="text-xs text-muted-foreground leading-tight truncate">
+                      <p className="text-xs text-muted-foreground leading-tight truncate hidden sm:block">
                         {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
                       </p>
                     </div>
                     
-                    {/* Building Selector for residents with multiple buildings */}
+                    {/* Building Selector for residents with multiple buildings - Desktop */}
                     {canSelectBuilding && hasMultipleBuildings && (
                       <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                         <BuildingSelectorButton
                           onBuildingSelect={setSelectedBuilding}
                           selectedBuilding={selectedBuilding}
                           className="min-w-[140px]"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Building Selector for residents with multiple buildings - Mobile */}
+                    {canSelectBuilding && hasMultipleBuildings && (
+                      <div className="sm:hidden">
+                        <BuildingSelectorButton
+                          onBuildingSelect={setSelectedBuilding}
+                          selectedBuilding={selectedBuilding}
+                          className="text-xs py-1 px-2"
                         />
                       </div>
                     )}
