@@ -13,6 +13,7 @@ from votes.models import Vote
 from buildings.models import Building
 from financial.models import Transaction, Expense
 from maintenance.models import MaintenanceTicket
+from assemblies.models import Assembly
 from .serializers import AnnouncementPublicSerializer, VotePublicSerializer
 from tenants.models import Domain as TenantDomain
 from financial.services import FinancialDashboardService
@@ -433,10 +434,57 @@ def building_info(request, building_id: int):
                 'active_tasks': []
             }
 
+        # Get upcoming assemblies (within 7 days)
+        try:
+            upcoming_assembly = Assembly.objects.filter(
+                building_id=building_id,
+                status__in=['scheduled', 'convened', 'in_progress'],
+                scheduled_date__gte=today,
+                scheduled_date__lte=today + timedelta(days=7)
+            ).select_related('building').prefetch_related(
+                'agenda_items'
+            ).order_by('scheduled_date', 'scheduled_time').first()
+            
+            assembly_data = None
+            if upcoming_assembly:
+                # Serialize agenda items
+                agenda_items = []
+                for item in upcoming_assembly.agenda_items.order_by('order'):
+                    agenda_items.append({
+                        'id': str(item.id),
+                        'order': item.order,
+                        'title': item.title,
+                        'item_type': item.item_type,
+                        'estimated_duration': item.estimated_duration,
+                    })
+                
+                assembly_data = {
+                    'id': str(upcoming_assembly.id),
+                    'title': upcoming_assembly.title,
+                    'scheduled_date': upcoming_assembly.scheduled_date.isoformat(),
+                    'scheduled_time': upcoming_assembly.scheduled_time.strftime('%H:%M') if upcoming_assembly.scheduled_time else None,
+                    'location': upcoming_assembly.location,
+                    'is_online': upcoming_assembly.is_online,
+                    'is_physical': upcoming_assembly.is_physical,
+                    'meeting_link': upcoming_assembly.meeting_link if upcoming_assembly.is_online else None,
+                    'status': upcoming_assembly.status,
+                    'building_name': upcoming_assembly.building.name if upcoming_assembly.building else '',
+                    'is_pre_voting_active': upcoming_assembly.is_pre_voting_active,
+                    'quorum_percentage': upcoming_assembly.quorum_percentage,
+                    'agenda_items': agenda_items,
+                }
+                logger.info(f"[public_info] Found upcoming assembly for building {building_id}: {upcoming_assembly.title}")
+            else:
+                logger.info(f"[public_info] No upcoming assembly found for building {building_id}")
+        except Exception as e:
+            logger.error(f"[public_info] Error fetching assemblies for building {building_id}: {str(e)}")
+            assembly_data = None
+
         return Response({
             'announcements': AnnouncementPublicSerializer(announcements, many=True).data,
             'votes': VotePublicSerializer(votes, many=True).data,
             'building_info': building_info,
             'financial': financial_data,
             'maintenance': maintenance_data,
+            'upcoming_assembly': assembly_data,
         })

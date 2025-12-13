@@ -101,51 +101,32 @@ interface AssemblyAPIData {
   agenda_items?: Array<{ id: string; title: string; item_type: string }>;
 }
 
-// Compact Assembly Reminder - Fetches from /api/assemblies/upcoming
+// Compact Assembly Reminder - Gets data from public-info (data prop)
 // ONLY shows on the day of the assembly
-const CompactAssemblyBanner = ({ buildingId }: { buildingId?: number | null }) => {
+const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number | null; kioskData?: KioskData | null }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [assembly, setAssembly] = useState<AssemblyAPIData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch assembly data from API
-  useEffect(() => {
-    if (!buildingId) {
-      setIsLoading(false);
-      return;
+  // Get assembly from public-info data (no separate API call needed!)
+  const rawAssembly = kioskData?.upcoming_assembly as AssemblyAPIData | null;
+
+  // Check if assembly is today
+  const assembly = useMemo(() => {
+    if (!rawAssembly) return null;
+    
+    const assemblyDate = new Date(rawAssembly.scheduled_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    assemblyDate.setHours(0, 0, 0, 0);
+    
+    // Only show if assembly is today
+    if (assemblyDate.getTime() === today.getTime()) {
+      console.log('[CompactAssemblyBanner] Showing assembly for TODAY:', rawAssembly.title);
+      return rawAssembly;
     }
-
-    const fetchAssembly = async () => {
-      try {
-        const response = await fetch(`/api/assemblies/upcoming?building_id=${buildingId}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.assembly) {
-            // Check if assembly is TODAY
-            const assemblyDate = new Date(data.assembly.scheduled_date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            assemblyDate.setHours(0, 0, 0, 0);
-            
-            if (assemblyDate.getTime() === today.getTime()) {
-              setAssembly(data.assembly);
-            } else {
-              setAssembly(null); // Not today, don't show
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[CompactAssemblyBanner] Failed to fetch assembly:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAssembly();
-    // Re-fetch every 5 minutes
-    const interval = setInterval(fetchAssembly, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [buildingId]);
+    
+    console.log('[CompactAssemblyBanner] Assembly not today, hiding. Date:', rawAssembly.scheduled_date);
+    return null;
+  }, [rawAssembly]);
 
   // Update every second for live countdown
   useEffect(() => {
@@ -153,8 +134,13 @@ const CompactAssemblyBanner = ({ buildingId }: { buildingId?: number | null }) =
     return () => clearInterval(interval);
   }, []);
 
-  // If loading or no assembly today, don't show anything
-  if (isLoading || !assembly) return null;
+  // Debug log
+  useEffect(() => {
+    console.log('[CompactAssemblyBanner] kioskData has upcoming_assembly:', !!kioskData?.upcoming_assembly);
+  }, [kioskData]);
+
+  // If no assembly today, don't show anything
+  if (!assembly) return null;
 
   // Parse assembly date and time
   let assemblyDateTime = new Date(assembly.scheduled_date);
@@ -350,7 +336,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
       </div>
 
       {/* Assembly Reminder Banner - Top Right (only shows on assembly day) */}
-      <CompactAssemblyBanner buildingId={effectiveBuildingId} />
+      <CompactAssemblyBanner buildingId={effectiveBuildingId} kioskData={data} />
 
       {/* Sidebar - Teal/Cyan theme with better visibility */}
       <aside className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col bg-gradient-to-b from-teal-800/95 via-teal-900/95 to-cyan-900/95 backdrop-blur-xl border-r border-teal-400/20 shadow-2xl">

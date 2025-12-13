@@ -31,43 +31,9 @@ interface AssemblyAnnouncementWidgetProps {
 
 export default function AssemblyAnnouncementWidget({ data, isLoading: propLoading, error: propError, buildingId }: AssemblyAnnouncementWidgetProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [assembly, setAssembly] = useState<AssemblyAPIData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Get building ID from props or data
-  const effectiveBuildingId = buildingId ?? data?.building_info?.id ?? 1;
-
-  // Fetch assembly data from API
-  useEffect(() => {
-    const fetchAssembly = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/assemblies/upcoming?building_id=${effectiveBuildingId}`);
-        if (response.ok) {
-          const result = await response.json();
-          if (result.assembly) {
-            setAssembly(result.assembly);
-            console.log('[AssemblyWidget] Fetched assembly:', result.assembly.title);
-          } else {
-            setAssembly(null);
-          }
-        } else {
-          setError('Αδυναμία φόρτωσης');
-        }
-      } catch (err) {
-        console.error('[AssemblyWidget] Failed to fetch assembly:', err);
-        setError('Σφάλμα σύνδεσης');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAssembly();
-    // Re-fetch every 5 minutes
-    const interval = setInterval(fetchAssembly, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [effectiveBuildingId]);
+  // Get assembly from public-info data (no separate API call needed!)
+  const assembly: AssemblyAPIData | null = data?.upcoming_assembly || null;
 
   // Update time every minute for countdown
   useEffect(() => {
@@ -77,7 +43,16 @@ export default function AssemblyAnnouncementWidget({ data, isLoading: propLoadin
     return () => clearInterval(interval);
   }, []);
 
-  if (isLoading || propLoading) {
+  // Debug log
+  useEffect(() => {
+    if (assembly) {
+      console.log('[AssemblyWidget] Got assembly from public-info:', assembly.title);
+    } else {
+      console.log('[AssemblyWidget] No upcoming_assembly in data:', !!data);
+    }
+  }, [assembly, data]);
+
+  if (propLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-300"></div>
@@ -85,12 +60,12 @@ export default function AssemblyAnnouncementWidget({ data, isLoading: propLoadin
     );
   }
 
-  if (error || propError) {
+  if (propError) {
     return (
       <div className="flex items-center justify-center h-full text-red-300">
         <div className="text-center">
           <div className="text-2xl mb-2">⚠️</div>
-          <p className="text-sm">{error || propError}</p>
+          <p className="text-sm">{propError}</p>
         </div>
       </div>
     );
