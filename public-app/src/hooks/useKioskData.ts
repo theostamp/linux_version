@@ -143,6 +143,22 @@ export interface KioskData {
   financial: KioskFinancialInfo;
   maintenance: KioskMaintenanceInfo;
   urgent_priorities: KioskUrgentPriority[];
+  upcoming_assembly?: {
+    id: string;
+    title: string;
+    scheduled_date: string;
+    scheduled_time: string | null;
+    location?: string | null;
+    status?: string;
+    is_pre_voting_active?: boolean;
+    agenda_items?: Array<{
+      id: string;
+      order?: number;
+      title: string;
+      item_type: string;
+      estimated_duration?: number | null;
+    }>;
+  } | null;
   statistics: {
     total_apartments: number;
     occupied: number;
@@ -237,6 +253,7 @@ interface PublicInfoResponse {
   financial?: PublicFinancialInfo;
   financial_info?: PublicFinancialInfo;
   maintenance?: PublicMaintenanceInfo;
+  upcoming_assembly?: KioskData['upcoming_assembly'];
 }
 
 export const useKioskData = (buildingId: number | null = 1) => {
@@ -269,6 +286,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         buildingId: buildingId,
         requestedBuildingId: buildingId,
         announcementsCount: publicData.announcements?.length || 0,
+        hasUpcomingAssembly: !!publicData.upcoming_assembly,
         announcements: publicData.announcements?.map(a => ({ 
           id: a.id, 
           title: a.title?.substring(0, 30) 
@@ -471,6 +489,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         financial: financialResult,
         maintenance: maintenanceInfo,
         urgent_priorities: urgentPriorities.slice(0, 6), // Max 6 urgent items
+        upcoming_assembly: publicData.upcoming_assembly ?? null,
         statistics: {
           total_apartments: totalApartments || 10,
           occupied: (buildingInfo.occupied ?? totalApartments) || 10,

@@ -121,6 +121,40 @@ export async function GET(
     }
 
     const data = await response.json();
+
+    // If backend public-info doesn't include upcoming assembly yet, enrich it here
+    // so kiosk widgets can still work reliably.
+    if (!('upcoming_assembly' in data)) {
+      try {
+        const assemblyUrl = `${normalizedBase}/api/assemblies/upcoming/?building_id=${buildingId}`;
+        console.log('[PUBLIC-INFO API] Enriching with assembly from:', assemblyUrl);
+
+        const assemblyController = new AbortController();
+        const assemblyTimeoutId = setTimeout(() => assemblyController.abort(), 3500);
+
+        const assemblyResp = await fetch(assemblyUrl, {
+          headers,
+          signal: assemblyController.signal,
+        });
+
+        clearTimeout(assemblyTimeoutId);
+
+        if (assemblyResp.ok) {
+          const assemblyJson = await assemblyResp.json();
+          const assembly = assemblyJson?.assembly ?? null;
+          (data as any).upcoming_assembly = assembly;
+          console.log('[PUBLIC-INFO API] Assembly enrichment:', assembly ? 'FOUND' : 'NONE');
+        } else {
+          const txt = await assemblyResp.text();
+          console.warn('[PUBLIC-INFO API] Assembly enrichment failed:', assemblyResp.status, txt);
+          (data as any).upcoming_assembly = null;
+        }
+      } catch (e) {
+        console.warn('[PUBLIC-INFO API] Assembly enrichment error:', e);
+        (data as any).upcoming_assembly = null;
+      }
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
