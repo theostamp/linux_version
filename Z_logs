@@ -1,132 +1,73 @@
-﻿﻿GET
-/api/todos/notifications/
-200
-172 ms
-GET
-/api/todos/notifications/
-200
-171 ms
-PATCH
-/api/buildings/list/2/
-200
-182 ms
-GET
-/api/buildings/list/2/
-200
-177 ms
-GET
-/api/kiosk/public/scenes/active/
-200
-173 ms
-GET
-/api/assemblies/upcoming/
-404
-168 ms
-GET
-/api/public-info/2/
-200
-701 ms
-GET
-/api/announcements/
-200
-169 ms
-GET
-/api/todos/notifications/
-200
-171 ms
-GET
-/api/todos/notifications/
-200
-172 ms
-GET
-/api/todos/notifications/
-200
-174 ms
-OPTIONS
-/api/users/login/
-200
-141 ms
-POST
-/api/users/login/
-200
-383 ms
-GET
-/api/users/me/
-200
-174 ms
-GET
-/api/todos/notifications/
-200
-170 ms
-GET
-/api/buildings/list/
-200
-178 ms
-GET
-/api/todos/notifications/
-200
-171 ms
-GET
-/api/financial/my-apartment/
-200
-219 ms
-GET
-/api/todos/notifications/
-200
-172 ms
-GET
-/api/buildings/current-context/
-200
-175 ms
-POST
-/api/users/send-myapartment-link/
-500
-192 ms
-GET
-/api/users/me/
-200
-175 ms
-GET
-/api/todos/notifications/
-200
-171 ms
-GET
-/api/todos/notifications/
-200
-171 ms
-GET
-/api/buildings/list/
-200
-178 ms
-GET
-/api/todos/notifications/
-200
-179 ms
-GET
-/api/buildings/current-context/
-200
-176 ms
-GET
-/api/financial/my-apartment/
-200
-219 ms
-POST
-/api/users/send-myapartment-link/
-500
-174 ms
-GET
-/api/kiosk/public/scenes/active/
-200
-171 ms
-GET
-/api/assemblies/upcoming/
-404
-166 ms
-GET
-/api/public-info/2/
-200
-638 ms
-GET
-/api/announcements/
-200
-173 ms
+﻿﻿
+﻿
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Current pathname: /kiosk-display
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Dashboard: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Kiosk Mode: true
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Info Screen: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is No Sidebar Route: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:7 [ReactQueryProvider] Setting up global refresh system
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [Global Refresh] Query client registered
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [Global Refresh] Initializing global refresh system
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskSceneRenderer] 🏗️ Building IDs: 
+{buildingIdOverride: 1, selectedBuildingId: undefined, selectedBuildingName: undefined, effectiveBuildingId: 1, finalBuildingIdForKioskData: 1}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [useKioskData] 🏢 Fetching data for building ID: 1
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [useKioskData] 📡 API URL: /api/public-info/1/?month=2025-12
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskDisplay] 🔍 URL buildingParam: 2
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskDisplay] ✅ Setting effectiveBuildingId from URL: 2
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskSceneRenderer] 🏗️ Building IDs: 
+{buildingIdOverride: 2, selectedBuildingId: undefined, selectedBuildingName: undefined, effectiveBuildingId: 2, finalBuildingIdForKioskData: 2}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [useKioskData] 🏢 Fetching data for building ID: 2
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [useKioskData] 📡 API URL: /api/public-info/2/?month=2025-12
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskSceneRenderer] 🏗️ Building IDs: 
+{buildingIdOverride: 2, selectedBuildingId: undefined, selectedBuildingName: undefined, effectiveBuildingId: 2, finalBuildingIdForKioskData: 2}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskSceneRenderer] 🏗️ Building IDs: 
+{buildingIdOverride: 2, selectedBuildingId: undefined, selectedBuildingName: undefined, effectiveBuildingId: 2, finalBuildingIdForKioskData: 2}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [ManagementOfficeWidget] Building info: 
+{office_logo_raw: undefined, office_logo_url: null, management_office_name: undefined, management_office_phone: undefined, management_office_email: undefined, …}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 🔄 Fetching news from API...
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [useKioskData] 📦 API response: 
+{buildingId: 1, requestedBuildingId: 1, announcementsCount: 0, announcements: Array(0)}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [useKioskData] 📦 API response: 
+{buildingId: 2, requestedBuildingId: 2, announcementsCount: 0, announcements: Array(0)}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [KioskSceneRenderer] 🏗️ Building IDs: 
+{buildingIdOverride: 2, selectedBuildingId: undefined, selectedBuildingName: undefined, effectiveBuildingId: 2, finalBuildingIdForKioskData: 2}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 [ManagementOfficeWidget] Building info: 
+{office_logo_raw: null, office_logo_url: null, management_office_name: null, management_office_phone: null, management_office_email: null, …}
+cb7b7c0fef110886.js?…33Kfd1A8hEdWaMaFJ:1 📰 Received 50 news items from fresh-news-api
+
+
+﻿
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [AuthContext] loadUserOnMount starting...
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+759d84b629f8a00b.js?…33Kfd1A8hEdWaMaFJ:1 [API CALL] Attempting to fetch /api/users/me/
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [AuthContext] Token check interval disabled to debug hanging issue
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Current pathname: /assemblies
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Dashboard: true
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Kiosk Mode: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Info Screen: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is No Sidebar Route: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:7 [ReactQueryProvider] Setting up global refresh system
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [Global Refresh] Query client registered
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [Global Refresh] Initializing global refresh system
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [AuthContext] Component unmounted during initialization, resetting flag
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [AuthContext] loadUserOnMount starting...
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+759d84b629f8a00b.js?…33Kfd1A8hEdWaMaFJ:1 [API CALL] getCurrentUser already in progress, returning existing promise
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [AuthContext] Token check interval disabled to debug hanging issue
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 AuthContext: Refreshed user data: etherm2021@gmail.com
+759d84b629f8a00b.js?…33Kfd1A8hEdWaMaFJ:1 [API DEDUP] Returning in-flight request for https://theo.newconcierge.app/api/todos/notifications/?is_read=false_{"is_read":"false"}
+759d84b629f8a00b.js?…33Kfd1A8hEdWaMaFJ:1 [API CALL] Fetching buildings from /buildings/
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [AuthContext] Token check interval disabled to debug hanging issue
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] Loaded buildings: 2 buildings
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] Restored stored building: Βουλής 6 -Demo (ID: 2)
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] ✓ Auto-selected building: Βουλής 6 -Demo (ID: 2)
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] Building changed to 2, invalidating queries...
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] ✓ Queries invalidated for building 2
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] Fetching context for building 2...
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:1 [BuildingContext] Building context loaded: 
+{id: 2, name: 'Βουλής 6 -Demo', permissions: {…}}
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Current pathname: /assemblies/0d73f130-d4a5-471a-9484-f836e16eae46
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Dashboard: true
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Kiosk Mode: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is Info Screen: false
+682d093ca68a4250.js?…33Kfd1A8hEdWaMaFJ:5 [AppProviders] Is No Sidebar Route: false

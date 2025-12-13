@@ -652,6 +652,12 @@ class UpcomingAssemblyView(APIView):
         
         today = timezone.now().date()
         
+        # Debug: Log all assemblies for this building
+        all_assemblies = Assembly.objects.filter(building_id=building_id)
+        print(f"[UpcomingAssembly] Building {building_id}: Found {all_assemblies.count()} total assemblies")
+        for a in all_assemblies:
+            print(f"  - ID: {a.id}, Title: {a.title[:30]}, Status: {a.status}, Date: {a.scheduled_date}")
+        
         # Get assembly for today or upcoming (within 7 days)
         assembly = Assembly.objects.filter(
             building_id=building_id,
@@ -662,6 +668,8 @@ class UpcomingAssemblyView(APIView):
             'agenda_items',
             'attendees'
         ).order_by('scheduled_date', 'scheduled_time').first()
+        
+        print(f"[UpcomingAssembly] Today: {today}, Found assembly: {assembly}")
         
         if not assembly:
             return Response({'assembly': None})
