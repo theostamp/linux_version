@@ -63,7 +63,7 @@ export function StatCard({
   );
 
   const cardClasses = cn(
-    "px-4 py-3 rounded-xl bg-card/80 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] ring-1 ring-black/[0.03] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:ring-black/[0.05]",
+    "px-4 py-3 rounded-xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
     href && "cursor-pointer",
     className
   );

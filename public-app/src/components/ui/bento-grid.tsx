@@ -10,7 +10,7 @@ export const BentoGrid = ({
   return (
     <div
       className={cn(
-        "grid w-full grid-cols-1 md:auto-rows-[minmax(18rem,auto)] md:grid-cols-3 gap-4 md:gap-5 lg:gap-6 max-w-7xl mx-auto",
+        "grid w-full grid-cols-1 auto-rows-auto md:grid-cols-3 gap-4 md:gap-5 lg:gap-6 max-w-7xl mx-auto",
         className
       )}
     >
@@ -37,8 +37,8 @@ export const BentoGridItem = ({
   return (
     <div
       className={cn(
-        "row-span-1 rounded-2xl group/bento bg-[hsl(var(--card)/0.8)] backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] ring-1 ring-black/[0.03] transition-all duration-200 p-5 sm:p-6 flex flex-col gap-5",
-        "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:ring-black/[0.06]",
+        "row-span-1 rounded-2xl group/bento bg-[hsl(var(--card))] shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 p-5 sm:p-6 flex flex-col gap-5",
+        "hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
         className
       )}
     >

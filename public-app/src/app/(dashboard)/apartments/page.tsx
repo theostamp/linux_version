@@ -548,7 +548,7 @@ const ApartmentsPageContent = () => {
       {/* Main Content Area - Filters & Table */}
       <div className="space-y-6">
               {/* Filters Bar */}
-              <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+              <div className="bg-card rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
