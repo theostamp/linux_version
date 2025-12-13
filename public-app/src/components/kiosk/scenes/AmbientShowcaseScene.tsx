@@ -89,10 +89,63 @@ function hasVoting(announcement: KioskAnnouncement): boolean {
          descLower.includes('θέματα ημερήσιας διάταξης');
 }
 
-// Compact Assembly Reminder - ONLY shows on the day of the assembly
-const CompactAssemblyBanner = ({ announcements }: { announcements: KioskAnnouncement[] }) => {
+// Assembly data from API
+interface AssemblyAPIData {
+  id: string;
+  title: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  location?: string;
+  status: string;
+  is_pre_voting_active?: boolean;
+  agenda_items?: Array<{ id: string; title: string; item_type: string }>;
+}
+
+// Compact Assembly Reminder - Fetches from /api/assemblies/upcoming
+// ONLY shows on the day of the assembly
+const CompactAssemblyBanner = ({ buildingId }: { buildingId?: number | null }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [assembly, setAssembly] = useState<AssemblyAPIData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch assembly data from API
+  useEffect(() => {
+    if (!buildingId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchAssembly = async () => {
+      try {
+        const response = await fetch(`/api/assemblies/upcoming?building_id=${buildingId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.assembly) {
+            // Check if assembly is TODAY
+            const assemblyDate = new Date(data.assembly.scheduled_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            assemblyDate.setHours(0, 0, 0, 0);
+            
+            if (assemblyDate.getTime() === today.getTime()) {
+              setAssembly(data.assembly);
+            } else {
+              setAssembly(null); // Not today, don't show
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[CompactAssemblyBanner] Failed to fetch assembly:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAssembly();
+    // Re-fetch every 5 minutes
+    const interval = setInterval(fetchAssembly, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [buildingId]);
 
   // Update every second for live countdown
   useEffect(() => {
@@ -100,56 +153,28 @@ const CompactAssemblyBanner = ({ announcements }: { announcements: KioskAnnounce
     return () => clearInterval(interval);
   }, []);
 
-  // Filter for assembly/vote announcements that are TODAY only
-  const todayAssembly = announcements
-    .filter((ann) => {
-      const isAssemblyOrVote = ann.title?.toLowerCase().includes('συνέλευση') || 
-                               ann.title?.toLowerCase().includes('σύγκληση') ||
-                               ann.title?.toLowerCase().includes('ψηφοφορ');
-      
-      if (!isAssemblyOrVote) return false;
-      
-      // Only show if it's TODAY
-      if (ann.start_date) {
-        const eventDate = parseISO(ann.start_date);
-        const today = startOfDay(new Date());
-        const eventDay = startOfDay(eventDate);
-        // Must be exactly today (not before, not after)
-        return eventDay.getTime() === today.getTime();
-      }
-      return false;
-    })
-    .sort((a, b) => {
-      const dateA = a.start_date ? parseISO(a.start_date) : new Date();
-      const dateB = b.start_date ? parseISO(b.start_date) : new Date();
-      return dateA.getTime() - dateB.getTime();
-    })[0]; // Get the first (nearest) one
+  // If loading or no assembly today, don't show anything
+  if (isLoading || !assembly) return null;
 
-  // If no assembly today, don't show anything
-  if (!todayAssembly) return null;
-
-  let assemblyDateTime = todayAssembly.start_date 
-    ? parseISO(todayAssembly.start_date) 
-    : new Date();
-  
-  const time = extractTime(todayAssembly.description || '');
-  const location = extractLocation(todayAssembly.description || '');
-  const includesVoting = hasVoting(todayAssembly);
-  
-  // Set the time if found in description
-  if (time) {
-    const [hours, minutes] = time.split(':').map(Number);
-    assemblyDateTime = new Date(assemblyDateTime);
+  // Parse assembly date and time
+  let assemblyDateTime = new Date(assembly.scheduled_date);
+  if (assembly.scheduled_time) {
+    const [hours, minutes] = assembly.scheduled_time.split(':').map(Number);
     assemblyDateTime.setHours(hours, minutes, 0, 0);
   }
+  
+  const location = assembly.location;
+  const hasVotingItems = assembly.agenda_items?.some(item => item.item_type === 'voting') || false;
+  const isPreVotingActive = assembly.is_pre_voting_active || false;
   
   // Calculate time remaining
   const diffMs = assemblyDateTime.getTime() - currentTime.getTime();
   const isPast = diffMs < 0;
   const isHappeningNow = isPast && diffMs > -3 * 60 * 60 * 1000; // Within last 3 hours
+  const isInProgress = assembly.status === 'in_progress';
   
-  // If assembly was more than 3 hours ago, don't show
-  if (isPast && !isHappeningNow) return null;
+  // If assembly was more than 3 hours ago and not in progress, don't show
+  if (isPast && !isHappeningNow && !isInProgress) return null;
   
   // Calculate countdown components
   const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
@@ -175,11 +200,11 @@ const CompactAssemblyBanner = ({ announcements }: { announcements: KioskAnnounce
         {/* Title */}
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-orange-200" />
-          <span className="text-white font-bold text-base">Γενική Συνέλευση</span>
+          <span className="text-white font-bold text-sm leading-tight">{assembly.title || 'Γενική Συνέλευση'}</span>
         </div>
 
         {/* Countdown or "Σε εξέλιξη" */}
-        {isHappeningNow ? (
+        {isHappeningNow || isInProgress ? (
           <div className="bg-emerald-500/40 rounded-xl p-3 text-center border border-emerald-400/50">
             <div className="flex items-center justify-center gap-2">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
@@ -214,10 +239,10 @@ const CompactAssemblyBanner = ({ announcements }: { announcements: KioskAnnounce
 
         {/* Time & Location */}
         <div className="flex flex-wrap gap-2 text-xs">
-          {time && (
+          {assembly.scheduled_time && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/30 text-orange-100">
               <Clock className="w-3 h-3" />
-              <span>Ώρα: {time}</span>
+              <span>Ώρα: {assembly.scheduled_time.slice(0, 5)}</span>
             </div>
           )}
           {location && (
@@ -229,7 +254,7 @@ const CompactAssemblyBanner = ({ announcements }: { announcements: KioskAnnounce
         </div>
 
         {/* E-Voting Notice */}
-        {includesVoting && (
+        {(hasVotingItems || isPreVotingActive) && (
           <div className="pt-2 border-t border-orange-400/30">
             <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs bg-emerald-500/30 text-emerald-100">
               <Smartphone className="w-3.5 h-3.5 flex-shrink-0" />
@@ -324,10 +349,8 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
         <div className="absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-teal-900/90 via-teal-800/70 to-transparent" />
       </div>
 
-      {/* Assembly Announcement Banner - Top Right */}
-      {data?.announcements && data.announcements.length > 0 && (
-        <CompactAssemblyBanner announcements={data.announcements} />
-      )}
+      {/* Assembly Reminder Banner - Top Right (only shows on assembly day) */}
+      <CompactAssemblyBanner buildingId={effectiveBuildingId} />
 
       {/* Sidebar - Teal/Cyan theme with better visibility */}
       <aside className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col bg-gradient-to-b from-teal-800/95 via-teal-900/95 to-cyan-900/95 backdrop-blur-xl border-r border-teal-400/20 shadow-2xl">
