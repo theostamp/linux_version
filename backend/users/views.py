@@ -746,6 +746,102 @@ def resend_verification_view(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_magic_link_view(request):
+    """
+    POST /api/users/request-magic-link/
+    Αποστολή magic link για passwordless login (για residents/ενοίκους).
+    
+    Ο χρήστης εισάγει μόνο το email του και λαμβάνει link για αυτόματη σύνδεση.
+    
+    Request:
+        - email: str (required)
+    
+    Response:
+        - message: str (επιτυχία ή γενικό μήνυμα για ασφάλεια)
+    """
+    email = request.data.get('email', '').strip().lower()
+    
+    if not email:
+        return Response({
+            'error': 'Το email είναι υποχρεωτικό.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Για λόγους ασφαλείας, πάντα επιστρέφουμε το ίδιο μήνυμα
+    # ανεξάρτητα αν βρέθηκε ο χρήστης ή όχι
+    success_message = 'Αν υπάρχει λογαριασμός με αυτό το email, θα λάβετε σύνδεσμο σύνδεσης.'
+    
+    try:
+        from django_tenants.utils import schema_context
+        from buildings.models import Building, BuildingMembership
+        from apartments.models import Apartment
+        from django.db.models import Q
+        
+        # Αναζήτηση χρήστη στο public schema
+        with schema_context('public'):
+            user = CustomUser.objects.filter(email=email).first()
+            
+            if not user:
+                # Χρήστης δεν βρέθηκε - επιστροφή γενικού μηνύματος
+                return Response({
+                    'message': success_message
+                }, status=status.HTTP_200_OK)
+            
+            # Ελέγχουμε αν ο χρήστης είναι resident
+            if user.role not in ['resident', None, '']:
+                # Δεν είναι resident - δεν στέλνουμε magic link, αλλά δεν το αποκαλύπτουμε
+                return Response({
+                    'message': success_message
+                }, status=status.HTTP_200_OK)
+            
+            # Βρες το building του χρήστη
+            building = None
+            apartment = None
+            
+            if user.tenant:
+                with schema_context(user.tenant.schema_name):
+                    # Βρες το πρώτο building που έχει πρόσβαση ο χρήστης
+                    membership = BuildingMembership.objects.filter(resident=user).first()
+                    if membership:
+                        building = membership.building
+                        
+                        # Προσπάθεια να βρούμε το διαμέρισμα
+                        apt = Apartment.objects.filter(
+                            Q(owner_user=user) | Q(tenant_user=user),
+                            building=building
+                        ).first()
+                        if apt:
+                            apartment = apt
+            
+            if not building:
+                # Ο χρήστης δεν έχει building - δεν μπορούμε να στείλουμε magic link
+                return Response({
+                    'message': success_message
+                }, status=status.HTTP_200_OK)
+            
+            # Αποστολή magic link email
+            if user.tenant:
+                with schema_context(user.tenant.schema_name):
+                    EmailService.send_magic_login_email(user, building, apartment)
+            else:
+                EmailService.send_magic_login_email(user, building, apartment)
+            
+            return Response({
+                'message': success_message
+            }, status=status.HTTP_200_OK)
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in request_magic_link_view: {e}")
+        
+        # Πάντα επιστρέφουμε το ίδιο μήνυμα για ασφάλεια
+        return Response({
+            'message': success_message
+        }, status=status.HTTP_200_OK)
+
+
 # ===== INVITATION ENDPOINTS =====
 
 @api_view(['POST'])

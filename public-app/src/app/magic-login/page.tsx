@@ -2,142 +2,174 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle, Home } from 'lucide-react';
 import Link from 'next/link';
+import { Loader2, CheckCircle, XCircle, Home, ArrowRight } from 'lucide-react';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 function MagicLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  const redirect = searchParams.get('redirect'); // Optional custom redirect destination
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [error, setError] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    const performMagicLogin = async () => {
-      if (!token) {
-        setStatus('error');
-        setError('Δεν βρέθηκε token στο URL');
-        return;
-      }
+    if (!token) {
+      setStatus('error');
+      setErrorMessage('Λείπει το token σύνδεσης. Παρακαλώ ζητήστε νέο σύνδεσμο.');
+      return;
+    }
 
+    // Αποθήκευση του token στο localStorage
+    localStorage.setItem('access_token', token);
+    
+    // Επαλήθευση του token με κλήση στο /me
+    const verifyToken = async () => {
       try {
-        // Get backend URL for cross-domain API call
         let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
-        if (coreApiUrl && !coreApiUrl.startsWith('http')) {
+        if (!coreApiUrl) {
+          throw new Error('Backend API not configured');
+        }
+
+        // Ensure URL has protocol
+        if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
           coreApiUrl = `https://${coreApiUrl}`;
         }
-        coreApiUrl = coreApiUrl?.replace(/\/$/, '') || '';
+        
+        // Remove trailing slash
+        coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
-        // Verify the token by calling the API
-        const response = await fetch('/api/users/me/', {
+        const response = await fetch(`${coreApiUrl}/api/users/me/`, {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
 
-        if (response.ok) {
-          const userData = await response.json();
-          
-          // Store the token in localStorage (both keys for compatibility)
-          localStorage.setItem('access_token', token);
-          localStorage.setItem('access', token);
-          
-          // Store user data
-          localStorage.setItem('user', JSON.stringify(userData));
-          
-          setStatus('success');
-          
-          // Determine redirect destination (default to my-apartment for residents)
-          const destination = redirect || '/my-apartment';
-          
-          // Check if user has tenant and we need cross-subdomain redirect
-          const tenantSchema = userData.tenant?.schema_name;
-          const currentHost = window.location.hostname;
-          const expectedHost = tenantSchema ? `${tenantSchema}.newconcierge.app` : null;
-          
-          console.log('[Magic Login] Tenant check:', { tenantSchema, currentHost, expectedHost });
-          
-          // Redirect after a brief delay
-          setTimeout(() => {
-            if (expectedHost && currentHost !== expectedHost) {
-              // Cross-subdomain redirect needed - pass tokens via URL hash
-              const targetUrl = `https://${expectedHost}/auth/callback#access=${encodeURIComponent(token)}&redirect=${encodeURIComponent(destination)}`;
-              console.log('[Magic Login] Cross-subdomain redirect to:', targetUrl);
-              window.location.href = targetUrl;
-            } else {
-              // Same domain redirect
-              router.push(destination);
-            }
-          }, 1500);
-        } else {
-          setStatus('error');
-          setError('Ο σύνδεσμος έχει λήξει ή δεν είναι έγκυρος. Παρακαλώ δοκιμάστε να σκανάρετε ξανά το QR code.');
+        if (!response.ok) {
+          // Token is invalid or expired
+          localStorage.removeItem('access_token');
+          throw new Error('Ο σύνδεσμος έληξε ή δεν είναι έγκυρος. Παρακαλώ ζητήστε νέο.');
         }
+
+        const userData = await response.json();
+        
+        // Αποθήκευση user data
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        setStatus('success');
+        
+        // Countdown για redirect
+        let count = 3;
+        const interval = setInterval(() => {
+          count--;
+          setCountdown(count);
+          if (count === 0) {
+            clearInterval(interval);
+            // Redirect to my-apartment for residents
+            router.push('/my-apartment');
+          }
+        }, 1000);
+
+        return () => clearInterval(interval);
+        
       } catch (err) {
-        console.error('Magic login error:', err);
+        console.error('Magic login verification error:', err);
         setStatus('error');
-        setError('Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά.');
+        setErrorMessage(err instanceof Error ? err.message : 'Σφάλμα επαλήθευσης. Παρακαλώ δοκιμάστε ξανά.');
       }
     };
 
-    performMagicLogin();
-  }, [token, redirect, router]);
+    verifyToken();
+  }, [token, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full text-center border border-white/20 shadow-2xl">
-        {status === 'loading' && (
-          <>
-            <div className="flex justify-center mb-6">
-              <Loader2 className="w-16 h-16 text-blue-400 animate-spin" />
+    <div className="min-h-screen bg-slate-950 relative flex items-center justify-center">
+      <BuildingRevealBackground />
+      
+      <div className="max-w-md w-full mx-4">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 backdrop-blur-sm">
+          {status === 'loading' && (
+            <div className="text-center py-8">
+              <Loader2 className="h-16 w-16 text-emerald-400 animate-spin mx-auto mb-6" />
+              <h1 className="text-2xl font-bold text-slate-50 mb-2">
+                Σύνδεση...
+              </h1>
+              <p className="text-slate-400">
+                Παρακαλώ περιμένετε ενώ επαληθεύουμε τα στοιχεία σας
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Σύνδεση...</h1>
-            <p className="text-white/60">Παρακαλώ περιμένετε</p>
-          </>
-        )}
+          )}
 
-        {status === 'success' && (
-          <>
-            <div className="flex justify-center mb-6">
-              <CheckCircle className="w-16 h-16 text-green-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Επιτυχής Σύνδεση! 🎉</h1>
-            <p className="text-white/60 mb-4">Μεταφέρεστε στο διαμέρισμά σας...</p>
-            <div className="flex justify-center">
-              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-            </div>
-          </>
-        )}
-
-        {status === 'error' && (
-          <>
-            <div className="flex justify-center mb-6">
-              <XCircle className="w-16 h-16 text-red-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Σφάλμα Σύνδεσης</h1>
-            <p className="text-white/60 mb-6">{error}</p>
-            
-            <div className="flex flex-col gap-3">
-              <Link 
-                href="/login"
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                Σύνδεση με Email & Κωδικό
-              </Link>
+          {status === 'success' && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-10 w-10 text-emerald-400" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-50 mb-2">
+                Επιτυχής σύνδεση! 🎉
+              </h1>
+              <p className="text-slate-400 mb-6">
+                Καλώς ήρθατε πίσω στο New Concierge
+              </p>
               
-              <Link 
-                href="/"
-                className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+              <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-slate-400">
+                  Ανακατεύθυνση σε <span className="text-emerald-400 font-bold">{countdown}</span> δευτερόλεπτα...
+                </p>
+              </div>
+
+              <button
+                onClick={() => router.push('/my-apartment')}
+                className="inline-flex items-center gap-2 bg-emerald-500 text-slate-950 py-3 px-6 rounded-xl font-semibold hover:bg-emerald-400 transition-colors"
               >
-                <Home className="w-5 h-5" />
-                Αρχική Σελίδα
-              </Link>
+                <Home className="h-5 w-5" />
+                Το Διαμέρισμά μου
+                <ArrowRight className="h-5 w-5" />
+              </button>
             </div>
-          </>
-        )}
+          )}
+
+          {status === 'error' && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
+                <XCircle className="h-10 w-10 text-red-400" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-50 mb-2">
+                Σφάλμα σύνδεσης
+              </h1>
+              <p className="text-slate-400 mb-6">
+                {errorMessage}
+              </p>
+              
+              <div className="space-y-3">
+                <Link
+                  href="/login/resident"
+                  className="block w-full bg-emerald-500 text-slate-950 py-3 px-6 rounded-xl font-semibold hover:bg-emerald-400 transition-colors text-center"
+                >
+                  Ζητήστε νέο σύνδεσμο
+                </Link>
+                
+                <Link
+                  href="/login"
+                  className="block w-full bg-slate-700 text-slate-200 py-3 px-6 rounded-xl font-medium hover:bg-slate-600 transition-colors text-center"
+                >
+                  Επιστροφή στη σύνδεση
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-xs text-slate-500">
+            Χρειάζεστε βοήθεια; Επικοινωνήστε με τον διαχειριστή της πολυκατοικίας σας.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -146,15 +178,11 @@ function MagicLoginContent() {
 export default function MagicLoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full text-center border border-white/20">
-          <Loader2 className="w-16 h-16 text-blue-400 animate-spin mx-auto" />
-          <p className="text-white/60 mt-4">Φόρτωση...</p>
-        </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="h-12 w-12 text-emerald-400 animate-spin" />
       </div>
     }>
       <MagicLoginContent />
     </Suspense>
   );
 }
-
