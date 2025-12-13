@@ -105,31 +105,36 @@ def _filter_for_internal_manager(base_queryset, user, building_param, building_f
             return base_queryset.filter(**{f"{building_field}": None})
 
 def _filter_for_resident(base_queryset, user, building_param, building_field):
+    """
+    Residents are linked to buildings via BuildingMembership (tenant schema),
+    not via a user.profile.building field (which may not exist in this project).
+    """
     try:
-        profile = getattr(user, "profile", None)
-        if not profile or not getattr(profile, "building", None):
-            print("Resident: profile ή building δεν υπάρχει")
-            # Even if resident has no building, they should see global items
+        from buildings.models import BuildingMembership
+
+        resident_building_ids = list(
+            BuildingMembership.objects.filter(resident=user).values_list("building_id", flat=True)
+        )
+        print(f"Resident building ids (memberships): {resident_building_ids}")
+
+        # If resident has no memberships, still allow global items
+        if not resident_building_ids:
             return base_queryset.filter(**{f"{building_field}": None})
-        resident_building_id = profile.building.id
-        print(f"Resident building id: {resident_building_id}")
-        if building_param and building_param != 'null':
+
+        if building_param and building_param != "null":
             building_id = _validate_building_param(building_param)
-            if building_id == resident_building_id:
-                # Include both specific building and global items (building=null)
+            if building_id in resident_building_ids:
                 return base_queryset.filter(
                     Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
                 )
-            else:
-                print("Resident δεν ανήκει σε αυτό το κτήριο.")
-                return base_queryset.none()
-        else:
-            # Αν building_param είναι null ή 'null', επιστρέφουμε το κτίριο του resident + global
-            print("Resident: showing only their building + global")
-            return base_queryset.filter(
-                Q(**{f"{building_field}_id": resident_building_id}) | Q(**{f"{building_field}": None})
-            )
-    except (AttributeError, ObjectDoesNotExist) as e:
+            print("Resident δεν ανήκει σε αυτό το κτήριο.")
+            return base_queryset.none()
+
+        # No building param: show all resident buildings + global
+        return base_queryset.filter(
+            Q(**{f"{building_field}_id__in": resident_building_ids}) | Q(**{f"{building_field}": None})
+        )
+    except Exception as e:
         print(f"Exception in resident filter: {e}")
         # In case of error, still show global items
         return base_queryset.filter(**{f"{building_field}": None})
