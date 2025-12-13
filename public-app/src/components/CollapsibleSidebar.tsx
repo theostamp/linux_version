@@ -8,7 +8,8 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
-import { getEffectiveRole } from '@/lib/roleUtils';
+import { getEffectiveRole, isResident } from '@/lib/roleUtils';
+import BuildingSelectorButton from './BuildingSelectorButton';
 import { designSystem } from '@/lib/design-system';
 import {
   Home,
@@ -326,8 +327,14 @@ export default function CollapsibleSidebar() {
   const {
     buildings,
     currentBuilding,
+    selectedBuilding,
+    setSelectedBuilding,
     isLoading: buildingsIsLoading,
   } = useBuilding();
+  
+  // Check if resident has multiple buildings
+  const isResidentUser = isResident(user);
+  const hasMultipleBuildings = buildings && buildings.length > 1;
   const { navigateWithLoading } = useNavigationWithLoading();
 
   // Close mobile menu when route changes
@@ -774,6 +781,18 @@ export default function CollapsibleSidebar() {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Mobile Building Selector for residents with multiple buildings */}
+        {isResidentUser && hasMultipleBuildings && (
+          <div className="px-4 py-3 border-b border-border bg-muted/30">
+            <p className="text-xs text-muted-foreground mb-2 font-medium">Επιλέξτε Πολυκατοικία:</p>
+            <BuildingSelectorButton
+              onBuildingSelect={setSelectedBuilding}
+              selectedBuilding={selectedBuilding}
+              className="w-full justify-between"
+            />
+          </div>
+        )}
 
         {/* Mobile Navigation */}
         <nav className="flex-1 p-3 space-y-4 overflow-y-auto">

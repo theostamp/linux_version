@@ -15,12 +15,18 @@ import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAcces
 
 export default function GlobalHeader() {
   const { user } = useAuth();
-  const { selectedBuilding, setSelectedBuilding } = useBuilding();
+  const { selectedBuilding, setSelectedBuilding, buildings } = useBuilding();
   const isAdminLevel = hasOfficeAdminAccess(user);
   const isResidentUser = isResident(user);
   const isInternalManager = getEffectiveRole(user) === 'internal_manager';
-  // Επιτρέπουμε αλλαγή κτιρίου σε διαχειριστές και εσωτερικούς διαχειριστές
-  const canSelectBuilding = isAdminLevel || isInternalManager;
+  
+  // Επιτρέπουμε αλλαγή κτιρίου σε:
+  // 1. Διαχειριστές (office admins)
+  // 2. Εσωτερικούς διαχειριστές (internal managers)
+  // 3. Residents που έχουν πρόσβαση σε 2+ πολυκατοικίες
+  const hasMultipleBuildings = buildings && buildings.length > 1;
+  const canSelectBuilding = isAdminLevel || isInternalManager || (isResidentUser && hasMultipleBuildings);
+  
   const roleLabel = getRoleLabel(user);
   // Show office details for admins AND internal managers
   const showOfficeDetails = isAdminLevel || isInternalManager;
@@ -125,13 +131,27 @@ export default function GlobalHeader() {
                 </div>
                   </>
                 ) : (
-                  <div className="flex flex-col justify-center min-w-0">
-                    <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
-                      {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
-                    </h1>
-                    <p className="text-xs text-muted-foreground leading-tight truncate">
-                      {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
-                    </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
+                    {/* Building Info */}
+                    <div className="flex flex-col justify-center min-w-0">
+                      <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
+                        {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
+                      </h1>
+                      <p className="text-xs text-muted-foreground leading-tight truncate">
+                        {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
+                      </p>
+                    </div>
+                    
+                    {/* Building Selector for residents with multiple buildings */}
+                    {canSelectBuilding && hasMultipleBuildings && (
+                      <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                        <BuildingSelectorButton
+                          onBuildingSelect={setSelectedBuilding}
+                          selectedBuilding={selectedBuilding}
+                          className="min-w-[140px]"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
