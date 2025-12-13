@@ -586,7 +586,7 @@ const ApartmentsPageContent = () => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-border">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-border/30">
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Ταξινόμηση:</span>
@@ -646,14 +646,14 @@ const ApartmentsPageContent = () => {
 
               {/* Results */}
               {isLoading ? (
-                <div className="bg-card rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+                <div className="bg-card rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-12 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-4">
                     <RefreshCw className="w-8 h-8 animate-spin text-primary" />
                     <p>Φόρτωση διαμερισμάτων...</p>
                   </div>
                 </div>
               ) : filteredApartments.length === 0 ? (
-                <div className="bg-card rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+                <div className="bg-card rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-12 text-center text-muted-foreground">
                   <Home className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
                   <p className="font-medium mb-2">Δεν βρέθηκαν διαμερίσματα με τα τρέχοντα φίλτρα.</p>
                   {searchTerm || occupancyFilter !== 'all' || statusFilter !== 'all' ? (
@@ -891,7 +891,7 @@ const ApartmentsPageContent = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {paginatedApartments.map((apartment) => (
-                        <div key={apartment.id} className={`bg-card rounded-xl shadow-sm border p-5 space-y-4 hover:shadow-md transition-shadow ${
+                        <div key={apartment.id} className={`bg-card rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-5 space-y-4 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-shadow ${
                           isInternalManagerApartment(apartment, internalManagerApartment) ? 'ring-2 ring-amber-500/50' : ''
                         }`}>
                           <div className="flex items-start justify-between">
@@ -921,7 +921,7 @@ const ApartmentsPageContent = () => {
                               {getStatusBadge(apartment)}
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-border py-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-border/30 py-4">
                             {renderContactBlock(
                               'Ιδιοκτήτης', 
                               apartment.owner_name, 
@@ -969,7 +969,7 @@ const ApartmentsPageContent = () => {
                               <p className="font-semibold text-foreground">{formatDate(apartment.updated_at)}</p>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center pt-2 border-t border-border mt-2">
+                          <div className="flex justify-between items-center pt-2 border-t border-border/30 mt-2">
                             <p className="text-xs text-muted-foreground">
                               Δημιουργήθηκε: {formatDate(apartment.created_at)}
                             </p>
