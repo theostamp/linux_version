@@ -471,18 +471,24 @@ export default function AssemblyCountdownScene({
             ))}
           </div>
 
-          {/* QR code prompt */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10 text-center"
-          >
-            <Vote className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
-            <p className="text-white/80 text-sm">
-              Σαρώστε το QR code στο διαμέρισμά σας για να ψηφίσετε ηλεκτρονικά
-            </p>
-          </motion.div>
+          {/* E-Voting prompt */}
+          {votingItemsCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="mt-8 p-4 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl border border-emerald-400/30 text-center"
+            >
+              <Vote className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+              <p className="text-emerald-100 font-semibold text-sm mb-1">
+                Ψηφοφορία διαθέσιμη!
+              </p>
+              <p className="text-white/70 text-xs leading-relaxed">
+                Μπορείτε να ψηφίσετε ηλεκτρονικά μέσω της εφαρμογής<br />
+                ή σαρώνοντας το QR code στο διαμέρισμά σας
+              </p>
+            </motion.div>
+          )}
         </div>
       </div>
 

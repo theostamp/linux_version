@@ -18,10 +18,11 @@ interface KioskSceneRendererProps {
 // Fallback scene rotator component
 function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: number | null }) {
   const [fallbackSceneIndex, setFallbackSceneIndex] = useState(0);
-  const [hasTodayAssembly, setHasTodayAssembly] = useState(false);
+  const [hasUpcomingAssembly, setHasUpcomingAssembly] = useState(false);
+  const [assemblyIsToday, setAssemblyIsToday] = useState(false);
   const [isCheckingAssembly, setIsCheckingAssembly] = useState(true);
 
-  // Check for today's assembly
+  // Check for upcoming assembly (within 3 days)
   useEffect(() => {
     if (!buildingId) {
       setIsCheckingAssembly(false);
@@ -34,14 +35,20 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
         if (response.ok) {
           const data = await response.json();
           if (data.assembly) {
-            // Check if assembly is today or within 24 hours
+            // Check if assembly is within 3 days
             const assemblyDate = new Date(data.assembly.scheduled_date);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             assemblyDate.setHours(0, 0, 0, 0);
             
             const diffDays = Math.floor((assemblyDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            setHasTodayAssembly(diffDays <= 0); // Today or past (but assembly scene handles past)
+            
+            // Show assembly scene if within 3 days (today, tomorrow, or in 2-3 days)
+            setHasUpcomingAssembly(diffDays >= 0 && diffDays <= 3);
+            setAssemblyIsToday(diffDays === 0);
+          } else {
+            setHasUpcomingAssembly(false);
+            setAssemblyIsToday(false);
           }
         }
       } catch (error) {
@@ -62,10 +69,16 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
     { name: 'Ambient Showcase', Component: AmbientShowcaseScene },
   ];
 
-  // If there's an assembly today, show only assembly scene
-  const scenesToShow = hasTodayAssembly 
+  // If there's an assembly today, show ONLY assembly scene
+  // If assembly is within 3 days (but not today), include it in rotation
+  const scenesToShow = assemblyIsToday 
     ? [{ name: 'Συνέλευση Σήμερα', Component: AssemblyCountdownScene }]
-    : fallbackScenes;
+    : hasUpcomingAssembly
+      ? [
+          { name: 'Επερχόμενη Συνέλευση', Component: AssemblyCountdownScene },
+          ...fallbackScenes
+        ]
+      : fallbackScenes;
 
   // Auto-rotate fallback scenes every 30 seconds
   useEffect(() => {
@@ -81,7 +94,7 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   // Reset index if scenes change
   useEffect(() => {
     setFallbackSceneIndex(0);
-  }, [hasTodayAssembly]);
+  }, [hasUpcomingAssembly, assemblyIsToday]);
 
   if (isCheckingAssembly) {
     return (

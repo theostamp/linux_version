@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, MapPin, Clock, FileText, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, FileText, AlertCircle, Smartphone } from 'lucide-react';
 import { format, parseISO, differenceInDays, differenceInHours, isPast, isToday as isTodayDate, isBefore, startOfDay } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
@@ -139,6 +139,13 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
           const isAssembly = announcement.title?.toLowerCase().includes('συνέλευση') || 
                             announcement.title?.toLowerCase().includes('σύγκληση');
           
+          // Check if it includes voting
+          const hasVoting = announcement.title?.toLowerCase().includes('ψηφοφορ') ||
+                           announcement.title?.toLowerCase().includes('ψήφ') ||
+                           announcement.description?.toLowerCase().includes('ψηφοφορ') ||
+                           announcement.description?.toLowerCase().includes('ψήφ') ||
+                           announcement.description?.toLowerCase().includes('θέματα ημερήσιας διάταξης');
+          
           return (
             <div 
               key={announcement.id}
@@ -224,6 +231,24 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
                           </div>
                         )}
                       </div>
+                      
+                      {/* E-Voting Notice */}
+                      {hasVoting && (
+                        <div className={`
+                          mt-2 pt-2 border-t 
+                          ${isToday ? 'border-orange-400/30' : 'border-purple-400/30'}
+                        `}>
+                          <div className={`
+                            flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px]
+                            ${isToday ? 'bg-emerald-500/30 text-emerald-100' : 'bg-emerald-500/20 text-emerald-200'}
+                          `}>
+                            <Smartphone className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="leading-tight">
+                              Μπορείτε να ψηφίσετε ηλεκτρονικά μέσω της εφαρμογής!
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     // Past event or detailed view

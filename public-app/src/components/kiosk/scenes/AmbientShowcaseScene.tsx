@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { Clock, Thermometer, Smartphone, Building2, CloudSun, Check } from 'lucide-react';
-import type { KioskData } from '@/hooks/useKioskData';
+import { Clock, Thermometer, Smartphone, Building2, CloudSun, Check, Calendar, AlertCircle, MapPin, Users } from 'lucide-react';
+import type { KioskData, KioskAnnouncement } from '@/hooks/useKioskData';
 import { useKioskWeather, type KioskWeatherData } from '@/hooks/useKioskWeather';
 import QRCodeLib from 'qrcode';
+import { format, parseISO, differenceInDays, differenceInHours, isBefore, startOfDay } from 'date-fns';
+import { el } from 'date-fns/locale';
 import {
   AmbientBrandingConfig,
   resolveAmbientBranding,
@@ -45,6 +47,201 @@ const extractTemperature = (weatherData: KioskWeatherData | null): number | null
 
 const extractWeatherCondition = (weatherData: KioskWeatherData | null): string | null => {
   return weatherData?.current?.condition || null;
+};
+
+// Helper functions to extract assembly info from description
+function extractTime(description: string): string | null {
+  if (!description) return null;
+  const patterns = [
+    /[ώω]ρα[:\s]+(\d{1,2}:\d{2})/i,
+    /[ώω]ρα[:\s]+(\d{1,2}\.\d{2})/i,
+    /στις\s+(\d{1,2}:\d{2})/i,
+  ];
+  for (const pattern of patterns) {
+    const match = description.match(pattern);
+    if (match) return match[1].trim().replace('.', ':');
+  }
+  return null;
+}
+
+function extractLocation(description: string): string | null {
+  if (!description) return null;
+  const patterns = [
+    /τοποθεσ[ίι]α[:\s]+([^\n]+)/i,
+    /χ[ώω]ρος[:\s]+([^\n]+)/i,
+    /αίθουσα[:\s]+([^\n]+)/i,
+  ];
+  for (const pattern of patterns) {
+    const match = description.match(pattern);
+    if (match) return match[1].trim();
+  }
+  return null;
+}
+
+// Helper to check if announcement has voting
+function hasVoting(announcement: KioskAnnouncement): boolean {
+  const titleLower = announcement.title?.toLowerCase() || '';
+  const descLower = announcement.description?.toLowerCase() || '';
+  return titleLower.includes('ψηφοφορ') || 
+         titleLower.includes('ψήφ') ||
+         descLower.includes('ψηφοφορ') || 
+         descLower.includes('ψήφ') ||
+         descLower.includes('θέματα ημερήσιας διάταξης');
+}
+
+// Compact Assembly Reminder - ONLY shows on the day of the assembly
+const CompactAssemblyBanner = ({ announcements }: { announcements: KioskAnnouncement[] }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+
+  // Update every second for live countdown
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter for assembly/vote announcements that are TODAY only
+  const todayAssembly = announcements
+    .filter((ann) => {
+      const isAssemblyOrVote = ann.title?.toLowerCase().includes('συνέλευση') || 
+                               ann.title?.toLowerCase().includes('σύγκληση') ||
+                               ann.title?.toLowerCase().includes('ψηφοφορ');
+      
+      if (!isAssemblyOrVote) return false;
+      
+      // Only show if it's TODAY
+      if (ann.start_date) {
+        const eventDate = parseISO(ann.start_date);
+        const today = startOfDay(new Date());
+        const eventDay = startOfDay(eventDate);
+        // Must be exactly today (not before, not after)
+        return eventDay.getTime() === today.getTime();
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      const dateA = a.start_date ? parseISO(a.start_date) : new Date();
+      const dateB = b.start_date ? parseISO(b.start_date) : new Date();
+      return dateA.getTime() - dateB.getTime();
+    })[0]; // Get the first (nearest) one
+
+  // If no assembly today, don't show anything
+  if (!todayAssembly) return null;
+
+  let assemblyDateTime = todayAssembly.start_date 
+    ? parseISO(todayAssembly.start_date) 
+    : new Date();
+  
+  const time = extractTime(todayAssembly.description || '');
+  const location = extractLocation(todayAssembly.description || '');
+  const includesVoting = hasVoting(todayAssembly);
+  
+  // Set the time if found in description
+  if (time) {
+    const [hours, minutes] = time.split(':').map(Number);
+    assemblyDateTime = new Date(assemblyDateTime);
+    assemblyDateTime.setHours(hours, minutes, 0, 0);
+  }
+  
+  // Calculate time remaining
+  const diffMs = assemblyDateTime.getTime() - currentTime.getTime();
+  const isPast = diffMs < 0;
+  const isHappeningNow = isPast && diffMs > -3 * 60 * 60 * 1000; // Within last 3 hours
+  
+  // If assembly was more than 3 hours ago, don't show
+  if (isPast && !isHappeningNow) return null;
+  
+  // Calculate countdown components
+  const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return (
+    <div className="absolute top-4 right-4 max-w-[340px] z-20 bg-gradient-to-br from-orange-600/95 to-red-600/95 border-orange-400 backdrop-blur-xl rounded-2xl border-2 shadow-2xl overflow-hidden animate-pulse">
+      {/* Header - ΥΠΕΝΘΥΜΙΣΗ */}
+      <div className="px-4 py-2 flex items-center gap-2 bg-orange-500/40">
+        <AlertCircle className="w-5 h-5 text-white animate-bounce" />
+        <span className="text-white font-extrabold text-sm uppercase tracking-wider">
+          ⚠️ Υπενθύμιση
+        </span>
+        <span className="ml-auto px-2 py-0.5 bg-white/25 rounded-full text-[10px] text-white font-bold uppercase">
+          ΣΗΜΕΡΑ
+        </span>
+      </div>
+      
+      {/* Content */}
+      <div className="px-4 py-3 space-y-3">
+        {/* Title */}
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-orange-200" />
+          <span className="text-white font-bold text-base">Γενική Συνέλευση</span>
+        </div>
+
+        {/* Countdown or "Σε εξέλιξη" */}
+        {isHappeningNow ? (
+          <div className="bg-emerald-500/40 rounded-xl p-3 text-center border border-emerald-400/50">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="text-emerald-100 font-bold text-lg uppercase">Σε Εξέλιξη</span>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-black/30 rounded-xl p-3 text-center">
+            <p className="text-orange-200 text-xs mb-2 uppercase tracking-wider">Αντίστροφη Μέτρηση</p>
+            <div className="flex items-center justify-center gap-2">
+              {hours > 0 && (
+                <>
+                  <div className="bg-white/15 rounded-lg px-3 py-2 min-w-[50px]">
+                    <span className="text-2xl font-bold text-white tabular-nums">{String(hours).padStart(2, '0')}</span>
+                    <p className="text-[9px] text-orange-200 uppercase">Ώρες</p>
+                  </div>
+                  <span className="text-white/50 text-xl">:</span>
+                </>
+              )}
+              <div className="bg-white/15 rounded-lg px-3 py-2 min-w-[50px]">
+                <span className="text-2xl font-bold text-white tabular-nums">{String(minutes).padStart(2, '0')}</span>
+                <p className="text-[9px] text-orange-200 uppercase">Λεπτά</p>
+              </div>
+              <span className="text-white/50 text-xl">:</span>
+              <div className="bg-white/15 rounded-lg px-3 py-2 min-w-[50px]">
+                <span className="text-2xl font-bold text-white tabular-nums">{String(seconds).padStart(2, '0')}</span>
+                <p className="text-[9px] text-orange-200 uppercase">Δεύτ.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Time & Location */}
+        <div className="flex flex-wrap gap-2 text-xs">
+          {time && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/30 text-orange-100">
+              <Clock className="w-3 h-3" />
+              <span>Ώρα: {time}</span>
+            </div>
+          )}
+          {location && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-500/30 text-orange-100 max-w-full">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{location}</span>
+            </div>
+          )}
+        </div>
+
+        {/* E-Voting Notice */}
+        {includesVoting && (
+          <div className="pt-2 border-t border-orange-400/30">
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs bg-emerald-500/30 text-emerald-100">
+              <Smartphone className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="leading-tight">
+                Μπορείτε να ψηφίσετε ηλεκτρονικά μέσω της εφαρμογής!
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 // Compact QR Code component for sidebar
@@ -126,6 +323,11 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
         {/* Gradient overlay for sidebar area */}
         <div className="absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-teal-900/90 via-teal-800/70 to-transparent" />
       </div>
+
+      {/* Assembly Announcement Banner - Top Right */}
+      {data?.announcements && data.announcements.length > 0 && (
+        <CompactAssemblyBanner announcements={data.announcements} />
+      )}
 
       {/* Sidebar - Teal/Cyan theme with better visibility */}
       <aside className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col bg-gradient-to-b from-teal-800/95 via-teal-900/95 to-cyan-900/95 backdrop-blur-xl border-r border-teal-400/20 shadow-2xl">
