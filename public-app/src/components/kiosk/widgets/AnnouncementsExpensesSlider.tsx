@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { BaseWidgetProps } from '@/types/kiosk';
+import AnnouncementsVotesCarousel from './AnnouncementsVotesCarousel';
 import CurrentMonthExpensesWidget from './CurrentMonthExpensesWidget';
 import HeatingChartWidget from './HeatingChartWidget';
 
@@ -23,6 +24,11 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
   // Filter widgets based on heating season
   const widgets = useMemo(() => {
     const baseWidgets = [
+      {
+        id: 'announcements-votes',
+        name: 'Ανακοινώσεις & Ψηφοφορίες',
+        Component: AnnouncementsVotesCarousel,
+      },
       {
         id: 'expenses',
         name: 'Δαπάνες Τρέχοντος Μήνα',
