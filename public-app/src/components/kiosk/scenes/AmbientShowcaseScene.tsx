@@ -11,6 +11,7 @@ import {
   AmbientBrandingConfig,
   resolveAmbientBranding,
 } from '@/components/kiosk/scenes/branding';
+import ActiveVoteWidget from '@/components/kiosk/widgets/ActiveVoteWidget';
 
 interface AmbientShowcaseSceneProps {
   data?: KioskData | null;
@@ -337,6 +338,9 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
       {/* Assembly Reminder Banner - Top Right (only shows on assembly day) */}
       <CompactAssemblyBanner buildingId={effectiveBuildingId} kioskData={data} />
+      
+      {/* Active Vote Widget - Shows when there's an ongoing vote */}
+      <ActiveVoteWidget data={data} variant="banner" />
 
       {/* Sidebar - Teal/Cyan theme with better visibility */}
       <aside className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col bg-gradient-to-b from-teal-800/95 via-teal-900/95 to-cyan-900/95 backdrop-blur-xl border-r border-teal-400/20 shadow-2xl">

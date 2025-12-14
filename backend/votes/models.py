@@ -88,30 +88,63 @@ class Vote(models.Model):
         return self.submissions.count()
 
     @property
+    def total_mills_voted(self):
+        """Συνολικά χιλιοστά που έχουν ψηφίσει"""
+        from django.db.models import Sum
+        return self.submissions.aggregate(total=Sum('mills'))['total'] or 0
+    
+    @property
+    def total_building_mills(self):
+        """Συνολικά χιλιοστά κτιρίου"""
+        return self._get_total_building_mills()
+    
+    @property
     def participation_percentage(self):
-        """Ποσοστό συμμετοχής"""
-        total_eligible = self._get_eligible_voters_count()
+        """Ποσοστό συμμετοχής βάσει χιλιοστών"""
+        total_mills = self._get_total_building_mills()
         
-        if total_eligible == 0:
+        if total_mills == 0:
             return 0
-        return round((self.total_votes / total_eligible) * 100, 1)
+        return round((self.total_mills_voted / total_mills) * 100, 1)
     
     @property
     def eligible_voters_count(self):
-        """Αριθμός δικαιούχων ψήφου"""
+        """Αριθμός δικαιούχων ψήφου (διαμερίσματα)"""
         return self._get_eligible_voters_count()
+    
+    def _get_total_building_mills(self):
+        """
+        Υπολογίζει τα συνολικά χιλιοστά του κτιρίου.
+        """
+        if self.building is None:
+            # For global votes, sum all mills from all apartments
+            from apartments.models import Apartment
+            from django.db.models import Sum
+            return Apartment.objects.aggregate(total=Sum('participation_mills'))['total'] or 1000
+        
+        # Try to sum participation_mills from apartments
+        try:
+            from apartments.models import Apartment
+            from django.db.models import Sum
+            total = Apartment.objects.filter(
+                building=self.building
+            ).aggregate(total=Sum('participation_mills'))['total']
+            if total and total > 0:
+                return total
+        except Exception:
+            pass
+        
+        # Fallback to 1000 (standard building mills)
+        return 1000
     
     def _get_eligible_voters_count(self):
         """
-        Υπολογίζει τους δικαιούχους ψήφου.
-        Χρησιμοποιεί apartments (ιδιοκτήτες/ενοίκους) αντί για το Resident model.
+        Υπολογίζει τους δικαιούχους ψήφου (αριθμός διαμερισμάτων).
         """
         if self.building is None:
-            # For global votes, count all apartments from all buildings
             from apartments.models import Apartment
             return Apartment.objects.count()
         
-        # Try apartments first (preferred)
         try:
             apartment_count = self.building.apartments.count()
             if apartment_count > 0:
@@ -119,16 +152,8 @@ class Vote(models.Model):
         except Exception:
             pass
         
-        # Fallback to apartments_count field
         if hasattr(self.building, 'apartments_count') and self.building.apartments_count > 0:
             return self.building.apartments_count
-        
-        # Last fallback: BuildingMembership
-        try:
-            from buildings.models import BuildingMembership
-            return BuildingMembership.objects.filter(building=self.building).count()
-        except Exception:
-            pass
         
         return 0
 
@@ -151,19 +176,46 @@ class Vote(models.Model):
 
     def get_results(self):
         """Επιστρέφει τα αποτελέσματα της ψηφοφορίας με breakdown ανά πηγή"""
+        from django.db.models import Sum
+        
         results = {}
+        
+        # Vote counts
         for choice, _ in VoteSubmission.CHOICES:
             results[choice] = self.submissions.filter(choice=choice).count()
+        
+        # Mills per choice
+        results['mills'] = {}
+        for choice, _ in VoteSubmission.CHOICES:
+            mills = self.submissions.filter(choice=choice).aggregate(total=Sum('mills'))['total'] or 0
+            results['mills'][choice] = mills
+        
         results['total'] = self.total_votes
+        results['total_mills_voted'] = self.total_mills_voted
+        results['total_building_mills'] = self.total_building_mills
         results['eligible_voters'] = self.eligible_voters_count
         results['participation_percentage'] = self.participation_percentage
         results['is_valid'] = self.is_valid_result
+        
+        # Percentages by mills (not count)
+        total_bld_mills = self.total_building_mills or 1
+        results['percentages_by_mills'] = {}
+        for choice, _ in VoteSubmission.CHOICES:
+            choice_mills = results['mills'].get(choice, 0)
+            results['percentages_by_mills'][choice] = round((choice_mills / total_bld_mills) * 100, 1)
         
         # Breakdown by vote source
         results['by_source'] = {
             'electronic': self.submissions.filter(vote_source__in=['app', 'email', 'pre_vote']).count(),
             'physical': self.submissions.filter(vote_source='live').count(),
             'proxy': self.submissions.filter(vote_source='proxy').count(),
+        }
+        
+        # Mills by source
+        results['mills_by_source'] = {
+            'electronic': self.submissions.filter(vote_source__in=['app', 'email', 'pre_vote']).aggregate(total=Sum('mills'))['total'] or 0,
+            'physical': self.submissions.filter(vote_source='live').aggregate(total=Sum('mills'))['total'] or 0,
+            'proxy': self.submissions.filter(vote_source='proxy').aggregate(total=Sum('mills'))['total'] or 0,
         }
         
         # Detailed breakdown
@@ -201,6 +253,11 @@ class VoteSubmission(models.Model):
     vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='submissions')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     choice = models.CharField(max_length=50, choices=CHOICES)
+    mills = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Χιλιοστά",
+        help_text="Χιλιοστά συμμετοχής του διαμερίσματος"
+    )
     vote_source = models.CharField(
         max_length=20, 
         choices=SOURCE_CHOICES, 

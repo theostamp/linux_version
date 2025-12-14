@@ -56,6 +56,9 @@ def sync_assembly_vote_to_vote_submission(sender, instance, created, **kwargs):
         }
         vote_source = source_mapping.get(instance.vote_source, 'app')
         
+        # Get mills from attendee
+        mills = instance.mills or instance.attendee.mills or 0
+        
         # Create or update VoteSubmission
         from votes.models import VoteSubmission
         
@@ -64,6 +67,7 @@ def sync_assembly_vote_to_vote_submission(sender, instance, created, **kwargs):
             user=user,
             defaults={
                 'choice': choice,
+                'mills': mills,
                 'vote_source': vote_source,
             }
         )

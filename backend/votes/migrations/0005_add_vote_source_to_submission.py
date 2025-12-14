@@ -1,4 +1,4 @@
-# Generated migration for adding vote_source to VoteSubmission
+# Generated migration for adding vote_source and mills to VoteSubmission
 
 from django.db import migrations, models
 
@@ -24,6 +24,15 @@ class Migration(migrations.Migration):
                 default='app',
                 max_length=20,
                 verbose_name='Τρόπος Ψηφοφορίας'
+            ),
+        ),
+        migrations.AddField(
+            model_name='votesubmission',
+            name='mills',
+            field=models.PositiveIntegerField(
+                default=0,
+                verbose_name='Χιλιοστά',
+                help_text='Χιλιοστά συμμετοχής του διαμερίσματος'
             ),
         ),
     ]
