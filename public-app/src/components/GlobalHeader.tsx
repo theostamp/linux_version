@@ -51,6 +51,7 @@ export default function GlobalHeader() {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-full">
+            {/* On mobile, allow a 2nd row so the building selector never overlaps other header actions */}
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6 lg:gap-8 py-3 sm:h-20">
               {/* Left Section - Logo */}
               <div className="flex-shrink-0">
@@ -156,16 +157,7 @@ export default function GlobalHeader() {
                       </div>
                     )}
                     
-                    {/* Building Selector for residents with multiple buildings - Mobile */}
-                    {canSelectBuilding && hasMultipleBuildings && (
-                      <div className="sm:hidden mt-2">
-                        <BuildingSelectorButton
-                          onBuildingSelect={setSelectedBuilding}
-                          selectedBuilding={selectedBuilding}
-                          className="w-full text-xs py-1.5 px-2"
-                        />
-                      </div>
-                    )}
+                    {/* Mobile selector moved to its own row (see below) */}
                   </div>
                 )}
               </div>
@@ -300,6 +292,17 @@ export default function GlobalHeader() {
               {/* Logout Button */}
               <LogoutButton className="text-sm" />
             </div>
+
+              {/* Mobile-only: building selector as a full-width second row to avoid crowding/overlap */}
+              {canSelectBuilding && hasMultipleBuildings && !showOfficeDetails && (
+                <div className="sm:hidden col-span-3 pt-1">
+                  <BuildingSelectorButton
+                    onBuildingSelect={setSelectedBuilding}
+                    selectedBuilding={selectedBuilding}
+                    className="w-full text-xs py-1.5 px-2"
+                  />
+                </div>
+              )}
           </div>
         </div>
       </div>

@@ -158,11 +158,11 @@ export default function BuildingSelector({
   return (
     <>
       <div 
-        className="fixed top-20 left-0 right-0 bottom-0 bg-black/50 z-30 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
         onClick={handleBackdropClick}
       />
       <div 
-        className="fixed top-20 left-0 right-0 bottom-0 flex items-start justify-center z-50 p-4 pointer-events-none"
+        className="fixed inset-0 flex items-start justify-center z-50 p-4 pt-24 pointer-events-none"
       >
         <div 
           ref={modalRef}
