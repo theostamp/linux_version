@@ -484,9 +484,10 @@ export default function CollapsibleSidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-gray-300"
+          className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-card rounded-lg shadow-lg"
+          aria-label="Άνοιγμα μενού"
         >
-          <Menu className="w-5 h-5 text-muted-foreground" />
+          <Menu className="w-5 h-5 text-foreground" />
         </button>
 
         {/* Loading Sidebar */}
@@ -507,9 +508,10 @@ export default function CollapsibleSidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
+        className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-card rounded-lg shadow-lg"
+        aria-label="Άνοιγμα μενού"
       >
-        <Menu className="w-5 h-5 text-muted-foreground" />
+        <Menu className="w-5 h-5 text-foreground" />
       </button>
 
       {/* Desktop Sidebar - Collapsible */}
@@ -741,7 +743,7 @@ export default function CollapsibleSidebar() {
       <aside
         className={cn(
           // Mobile drawer background: ensure it's opaque and readable (avoid transparent look)
-          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl border-r border-border flex flex-col z-50 text-card-foreground",
+          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl flex flex-col z-[70] text-card-foreground",
           "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80",
           "dark:bg-slate-950/95 dark:supports-[backdrop-filter]:bg-slate-950/80",
           "transform transition-transform duration-300",
@@ -875,7 +877,7 @@ export default function CollapsibleSidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 bg-black/50 z-[65] backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
