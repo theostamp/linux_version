@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Vote, Clock, Users, CheckCircle2, XCircle, MinusCircle, Smartphone } from 'lucide-react';
 import type { KioskData } from '@/hooks/useKioskData';
-import { format, parseISO, differenceInDays, differenceInHours } from 'date-fns';
+import { format, parseISO, differenceInDays, differenceInHours, startOfDay, endOfDay } from 'date-fns';
 import { el } from 'date-fns/locale';
 
 interface KioskVote {
@@ -46,6 +46,8 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
     
     // Find the first active vote
     const now = new Date();
+    const todayStart = startOfDay(now);
+    
     const active = votes.find(v => {
       // First check is_active flag from backend
       if (v.is_active === false) {
@@ -59,15 +61,20 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
         return false;
       }
       
-      const start = parseISO(v.start_date);
-      const end = v.end_date ? parseISO(v.end_date) : null;
-      const isInRange = start <= now && (!end || end >= now);
+      // Parse dates and compare at day level (not time)
+      const startDate = startOfDay(parseISO(v.start_date));
+      // For end_date, use end of day so the vote is active until midnight
+      const endDate = v.end_date ? endOfDay(parseISO(v.end_date)) : null;
+      
+      const isInRange = startDate <= now && (!endDate || endDate >= now);
       
       console.log('[ActiveVoteWidget] Vote', v.id, ':', v.title?.substring(0, 30), {
         start_date: v.start_date,
         end_date: v.end_date,
         is_active: v.is_active,
         isInRange,
+        startDate: startDate.toISOString(),
+        endDate: endDate?.toISOString(),
         now: now.toISOString()
       });
       
