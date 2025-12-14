@@ -10,16 +10,20 @@ interface MyVote {
   created_at: string;
 }
 
-export function useMyVote(voteId?: number) {
+export function useMyVote(voteId?: number, buildingId?: number | null) {
   return useQuery<MyVote | null>({
-    queryKey: ['myVote', voteId],
+    queryKey: ['myVote', voteId, buildingId],
     queryFn: async () => {
       try {
         // Backend returns:
         // - 200 + VoteSubmission payload when user has voted
         // - 404 when no submission exists
         // Older backend versions returned 200 with { choice: null } so we guard for that too.
-        const data = await apiGet<unknown>(`/votes/${voteId}/my-submission/`);
+        const params: Record<string, number> = {};
+        if (typeof buildingId === 'number') {
+          params.building = buildingId;
+        }
+        const data = await apiGet<unknown>(`/votes/${voteId}/my-submission/`, params);
         if (!data || typeof data !== 'object') return null;
         const record = data as Partial<MyVote> & { choice?: unknown };
         if (!record.id) return null;

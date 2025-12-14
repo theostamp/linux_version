@@ -24,13 +24,16 @@ export default function VoteDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const voteId = Number(id);
-  const { buildings, isLoading: buildingsLoading } = useBuilding();
+  const { buildings, selectedBuilding, currentBuilding, isLoading: buildingsLoading } = useBuilding();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: vote, isLoading: loadingVote, error } = useVoteDetail(voteId);
-  const { data: myVote, refetch: refetchMyVote } = useMyVote(voteId);
-  const { data: results, refetch: refetchResults } = useVoteResults(voteId);
+  const buildingId =
+    selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
+
+  const { data: vote, isLoading: loadingVote, error } = useVoteDetail(voteId, buildingId);
+  const { data: myVote, refetch: refetchMyVote } = useMyVote(voteId, buildingId);
+  const { data: results, refetch: refetchResults } = useVoteResults(voteId, buildingId);
 
   const canDelete = hasOfficeAdminAccess(user);
 
@@ -58,7 +61,16 @@ export default function VoteDetailPage() {
     }
   };
 
-  if (error) return <ErrorMessage message="Αποτυχία φόρτωσης ψηφοφορίας." />;
+  if (error) {
+    const err = error as { status?: number; response?: { status?: number } };
+    const status = err?.status ?? err?.response?.status;
+    if (status === 404 && selectedBuilding && voteId) {
+      return (
+        <ErrorMessage message="Η ψηφοφορία δεν ανήκει στο επιλεγμένο κτίριο. Αλλάξτε κτίριο από τον selector ή επιλέξτε «Όλα»." />
+      );
+    }
+    return <ErrorMessage message="Αποτυχία φόρτωσης ψηφοφορίας." />;
+  }
   if (loadingVote || !vote || buildingsLoading) {
     return (
       <div className="p-6 animate-pulse">

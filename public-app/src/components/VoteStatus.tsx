@@ -7,6 +7,7 @@ import VoteMiniResults from '@/components/votes/VoteMiniResults';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Check, ArrowRight, Clock, Eye } from 'lucide-react';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface Props {
   readonly voteId: number;
@@ -14,8 +15,12 @@ interface Props {
 }
 
 export default function VoteStatus({ voteId, isActive }: Props) {
-  const { data: myVote, isLoading: loadingMyVote } = useMyVote(voteId);
-  const { data: results, isLoading: loadingResults } = useVoteResults(voteId);
+  const { selectedBuilding, currentBuilding } = useBuilding();
+  const buildingId =
+    selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
+
+  const { data: myVote, isLoading: loadingMyVote } = useMyVote(voteId, buildingId);
+  const { data: results, isLoading: loadingResults } = useVoteResults(voteId, buildingId);
 
   if (loadingMyVote || loadingResults) {
     return (

@@ -1288,10 +1288,14 @@ export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
   }
 }
 
-export async function fetchMyVote(voteId: number): Promise<VoteSubmission | null> {
+export async function fetchMyVote(voteId: number, buildingId?: number | null): Promise<VoteSubmission | null> {
   try {
     // VoteViewSet exposes /api/votes/{id}/my-submission/
-    return await apiGet<VoteSubmission>(`/votes/${voteId}/my-submission/`);
+    const params: Record<string, number> = {};
+    if (typeof buildingId === 'number') {
+      params.building = buildingId;
+    }
+    return await apiGet<VoteSubmission>(`/votes/${voteId}/my-submission/`, params);
   } catch (error: unknown) {
     const apiError = error as { status?: number };
     if (apiError.status === 404) {
@@ -1305,8 +1309,12 @@ export async function submitVote(voteId: number, choice: string): Promise<VoteSu
   return apiPost<VoteSubmission>(`/votes/${voteId}/submit/`, { choice });
 }
 
-export async function fetchVoteResults(voteId: number): Promise<VoteResultsData> {
-  return apiGet<VoteResultsData>(`/votes/${voteId}/results/`);
+export async function fetchVoteResults(voteId: number, buildingId?: number | null): Promise<VoteResultsData> {
+  const params: Record<string, number> = {};
+  if (typeof buildingId === 'number') {
+    params.building = buildingId;
+  }
+  return apiGet<VoteResultsData>(`/votes/${voteId}/results/`, params);
 }
 
 export async function createVote(payload: CreateVotePayload): Promise<Vote> {

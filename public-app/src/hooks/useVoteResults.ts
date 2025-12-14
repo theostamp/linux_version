@@ -15,11 +15,11 @@ export interface VoteResultsResponse {
   total: number;
 }
 
-export function useVoteResults(voteId?: number) {
+export function useVoteResults(voteId?: number, buildingId?: number | null) {
   return useQuery<VoteResultsResponse>({
-    queryKey: ['vote-results', voteId],
+    queryKey: ['vote-results', voteId, buildingId],
     queryFn: async () => {
-      return await fetchVoteResults(voteId!);
+      return await fetchVoteResults(voteId!, buildingId);
     },
     enabled: !!voteId,
   });
