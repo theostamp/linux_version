@@ -122,9 +122,14 @@ export async function GET(
 
     const data = await response.json();
 
-    // If backend public-info doesn't include upcoming assembly yet, enrich it here
-    // so kiosk widgets can still work reliably.
-    if (!('upcoming_assembly' in data)) {
+    // If backend public-info doesn't include upcoming assembly (or doesn't include stats yet),
+    // enrich it here so kiosk widgets can still work reliably.
+    const existingAssembly = (data as any)?.upcoming_assembly;
+    const needsAssemblyEnrichment =
+      !('upcoming_assembly' in data) ||
+      (existingAssembly && typeof existingAssembly === 'object' && !('stats' in existingAssembly));
+
+    if (needsAssemblyEnrichment) {
       try {
         const assemblyUrl = `${normalizedBase}/api/assemblies/upcoming/?building_id=${buildingId}`;
         console.log('[PUBLIC-INFO API] Enriching with assembly from:', assemblyUrl);
@@ -147,11 +152,16 @@ export async function GET(
         } else {
           const txt = await assemblyResp.text();
           console.warn('[PUBLIC-INFO API] Assembly enrichment failed:', assemblyResp.status, txt);
-          (data as any).upcoming_assembly = null;
+          // Don't override existing upcoming_assembly if backend already provided one
+          if (!('upcoming_assembly' in data)) {
+            (data as any).upcoming_assembly = null;
+          }
         }
       } catch (e) {
         console.warn('[PUBLIC-INFO API] Assembly enrichment error:', e);
-        (data as any).upcoming_assembly = null;
+        if (!('upcoming_assembly' in data)) {
+          (data as any).upcoming_assembly = null;
+        }
       }
     }
 
