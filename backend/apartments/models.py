@@ -165,6 +165,9 @@ class Apartment(models.Model):
         verbose_name='Χρήστης Ιδιοκτήτης'
     )
     
+    # ΣΗΜΑΝΤΙΚΟ: tenant_user = ενοικιαστής ΔΙΑΜΕΡΙΣΜΑΤΟΣ (νοικάρης)
+    # ΟΧΙ django-tenants tenant (που είναι το schema/οργανισμός)
+    # Alias: resident_user (property παρακάτω)
     tenant_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -173,6 +176,16 @@ class Apartment(models.Model):
         related_name='rented_apartments',
         verbose_name='Χρήστης Ενοίκου'
     )
+    
+    @property
+    def resident_user(self):
+        """Alias για tenant_user - πιο ξεκάθαρο όνομα για τον ενοικιαστή διαμερίσματος"""
+        return self.tenant_user
+    
+    @resident_user.setter
+    def resident_user(self, value):
+        """Setter για το alias resident_user"""
+        self.tenant_user = value
     
     # Επιπλέον πληροφορίες
     square_meters = models.PositiveIntegerField(

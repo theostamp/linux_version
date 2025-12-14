@@ -107,13 +107,15 @@ class VoteViewSet(viewsets.ModelViewSet):
         mills = 0
         try:
             from apartments.models import Apartment
-            # Find apartment where user is owner or tenant
+            # Find apartment where user is owner OR resident (renter)
+            # Note: tenant_user = ενοικιαστής διαμερίσματος, ΟΧΙ django-tenants tenant
             apartment = Apartment.objects.filter(
                 Q(owner_user=request.user) | Q(tenant_user=request.user),
                 building=vote.building
             ).first()
             if apartment:
                 mills = apartment.participation_mills or 0
+                logger.info(f"User {request.user.id} voting with {mills} mills from apartment {apartment.id}")
         except Exception as e:
             logger.warning(f"Could not get mills for user {request.user.id}: {e}")
         
