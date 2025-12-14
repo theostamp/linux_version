@@ -35,19 +35,23 @@ class VoteViewSet(viewsets.ModelViewSet):
         Φέρνει μόνο τα votes που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
         """
         qs = Vote.objects.select_related('creator', 'building').order_by('-created_at')
-        
-        # Debug logging
-        building_param = self.request.query_params.get('building')
-        logger.info(f"[VoteViewSet.get_queryset] Building param: {building_param}")
-        logger.info(f"[VoteViewSet.get_queryset] User: {self.request.user}, is_superuser: {self.request.user.is_superuser}")
-        logger.info(f"[VoteViewSet.get_queryset] Total votes before filtering: {qs.count()}")
-        
+
+        # IMPORTANT: Avoid evaluating the queryset here (e.g. qs.count()).
+        # Any DB issue/migration mismatch would surface as a 500 *before* filtering,
+        # and it also adds unnecessary load on every request.
         try:
-            filtered_qs = filter_queryset_by_user_and_building(self.request, qs)
-            logger.info(f"[VoteViewSet.get_queryset] Votes after filtering: {filtered_qs.count()}")
-            return filtered_qs
-        except Exception as e:
-            logger.error(f"Error in get_queryset: {e}")
+            building_param = self.request.query_params.get('building')
+            logger.info(f"[VoteViewSet.get_queryset] Building param: {building_param}")
+            logger.info(
+                "[VoteViewSet.get_queryset] User: %s, is_superuser: %s, is_staff: %s",
+                getattr(self.request, "user", None),
+                getattr(getattr(self.request, "user", None), "is_superuser", None),
+                getattr(getattr(self.request, "user", None), "is_staff", None),
+            )
+
+            return filter_queryset_by_user_and_building(self.request, qs)
+        except Exception:
+            logger.exception("Error in VoteViewSet.get_queryset")
             # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
             return Vote.objects.none()
 
@@ -149,8 +153,8 @@ class VoteViewSet(viewsets.ModelViewSet):
             results = vote.get_results()
             results['min_participation'] = vote.min_participation
             return Response(results)
-        except Exception as e:
-            logger.error(f"Error fetching vote results: {e}")
+        except Exception:
+            logger.exception("Error fetching vote results")
             return Response(
                 {"error": "Αποτυχία φόρτωσης αποτελεσμάτων"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

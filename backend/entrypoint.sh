@@ -52,6 +52,17 @@ echo "⏳ Waiting 5 seconds for Postgres to fully initialize..."
 sleep 5
 echo "✅ Postgres ready!"
 
+# 1.5. Run schema migrations (django-tenants)
+# Railway uses Docker CMD/entrypoint, not Procfile "release" step, so we must ensure
+# migrations are applied here; otherwise tenant schemas can miss columns and cause 500s
+# (e.g. votes_votesubmission.mills).
+echo ""
+echo "🧩 Running django-tenants migrations..."
+echo "   (shared + all tenant schemas)"
+python manage.py migrate_schemas --shared --noinput
+python manage.py migrate_schemas --tenant --noinput
+echo "✅ Migrations completed"
+
 # 2. Cleanup database if requested
 if [ "${CLEANUP_DATABASE:-false}" = "true" ]; then
   echo ""

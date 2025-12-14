@@ -131,7 +131,10 @@ class VoteSerializer(serializers.ModelSerializer):
         return obj.status_display
 
     def get_creator_name(self, obj):
-        return obj.creator.get_full_name() or obj.creator.email if obj.creator else "Άγνωστος"
+        # NOTE: Be careful with Python operator precedence: the conditional expression has
+        # lower precedence than `or`, so without parentheses we'd evaluate `obj.creator`
+        # even when it's None and crash with AttributeError.
+        return (obj.creator.get_full_name() or obj.creator.email) if obj.creator else "Άγνωστος"
     
     def get_project_title(self, obj):
         return obj.project.title if obj.project else None
@@ -206,7 +209,7 @@ class VoteListSerializer(serializers.ModelSerializer):
         ]
 
     def get_creator_name(self, obj):
-        return obj.creator.get_full_name() or obj.creator.email if obj.creator else "Άγνωστος"
+        return (obj.creator.get_full_name() or obj.creator.email) if obj.creator else "Άγνωστος"
 
     def get_building_name(self, obj):
         return obj.building.name if obj.building else "Όλα τα κτίρια"
