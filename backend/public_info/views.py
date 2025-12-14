@@ -442,7 +442,8 @@ def building_info(request, building_id: int):
                 scheduled_date__gte=today,
                 scheduled_date__lte=today + timedelta(days=7)
             ).select_related('building').prefetch_related(
-                'agenda_items'
+                'agenda_items',
+                'attendees'
             ).order_by('scheduled_date', 'scheduled_time').first()
             
             assembly_data = None
@@ -472,6 +473,17 @@ def building_info(request, building_id: int):
                     'is_pre_voting_active': upcoming_assembly.is_pre_voting_active,
                     'quorum_percentage': upcoming_assembly.quorum_percentage,
                     'agenda_items': agenda_items,
+                    'stats': {
+                        'total_apartments_invited': upcoming_assembly.attendees.count(),
+                        'pre_voted_count': upcoming_assembly.attendees.filter(has_pre_voted=True).count(),
+                        'pre_voted_percentage': round(
+                            (upcoming_assembly.attendees.filter(has_pre_voted=True).count() / upcoming_assembly.attendees.count() * 100)
+                            if upcoming_assembly.attendees.count() > 0
+                            else 0,
+                            1
+                        ),
+                        'voting_items_count': upcoming_assembly.agenda_items.filter(item_type='voting', allows_pre_voting=True).count(),
+                    },
                 }
                 logger.info(f"[public_info] Found upcoming assembly for building {building_id}: {upcoming_assembly.title}")
             else:

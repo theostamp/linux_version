@@ -95,6 +95,7 @@ export default function AssemblyAnnouncementWidget({ data, isLoading: propLoadin
   let hasVotingItems = false;
   let isPreVotingActive = false;
   let remainingLabel: string | null = null;
+  const preVotingStats = assembly?.stats;
 
   if (assembly) {
     assemblyDate = new Date(assembly.scheduled_date);
@@ -188,6 +189,21 @@ export default function AssemblyAnnouncementWidget({ data, isLoading: propLoadin
 
               {(hasVotingItems || isPreVotingActive) && (
                 <div className={`mt-2 pt-2 border-t ${isToday ? 'border-orange-400/30' : 'border-purple-400/30'}`}>
+                  {isPreVotingActive && preVotingStats?.total_apartments_invited != null && (
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between text-[11px] text-white/80">
+                        <span>
+                          Προ-ψηφοφορία: {preVotingStats.pre_voted_count ?? 0}/{preVotingStats.total_apartments_invited} (
+                          {(preVotingStats.pre_voted_percentage ?? 0).toFixed(1)}%)
+                        </span>
+                        {preVotingStats.voting_items_count != null && preVotingStats.voting_items_count > 0 && (
+                          <span className="text-white/60">
+                            {preVotingStats.voting_items_count} θέματα
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] ${
                     isToday ? 'bg-emerald-500/30 text-emerald-100' : 'bg-emerald-500/20 text-emerald-200'
                   }`}>

@@ -167,6 +167,12 @@ export interface KioskData {
     location?: string | null;
     status?: string;
     is_pre_voting_active?: boolean;
+    stats?: {
+      total_apartments_invited?: number;
+      pre_voted_count?: number;
+      pre_voted_percentage?: number;
+      voting_items_count?: number;
+    };
     agenda_items?: Array<{
       id: string;
       order?: number;
