@@ -54,6 +54,18 @@ export interface KioskAnnouncement {
   priority?: PriorityLevel;
 }
 
+export interface KioskVote {
+  id: number;
+  title: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  created_at?: string;
+  is_urgent?: boolean;
+  min_participation?: number;
+  total_votes?: number;
+}
+
 export interface KioskFinancialInfo {
   collection_rate: number;
   reserve_fund: number;
@@ -140,6 +152,7 @@ export interface KioskUrgentPriority {
 export interface KioskData {
   building_info: KioskBuildingInfo;
   announcements: KioskAnnouncement[];
+  votes?: KioskVote[];
   financial: KioskFinancialInfo;
   maintenance: KioskMaintenanceInfo;
   urgent_priorities: KioskUrgentPriority[];
@@ -249,7 +262,17 @@ interface PublicBuildingInfo extends KioskBuildingInfo {
 interface PublicInfoResponse {
   building_info?: PublicBuildingInfo;
   announcements?: PublicAnnouncement[];
-  votes?: unknown[];
+  votes?: Array<{
+    id: number;
+    title?: string;
+    description?: string;
+    start_date?: string;
+    end_date?: string;
+    is_urgent?: boolean;
+    min_participation?: number;
+    created_at?: string;
+    total_votes?: number;
+  }>;
   financial?: PublicFinancialInfo;
   financial_info?: PublicFinancialInfo;
   maintenance?: PublicMaintenanceInfo;
@@ -287,6 +310,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         requestedBuildingId: buildingId,
         announcementsCount: publicData.announcements?.length || 0,
         hasUpcomingAssembly: !!publicData.upcoming_assembly,
+        votesCount: publicData.votes?.length || 0,
         announcements: publicData.announcements?.map(a => ({ 
           id: a.id, 
           title: a.title?.substring(0, 30) 
@@ -362,6 +386,19 @@ export const useKioskData = (buildingId: number | null = 1) => {
           console.debug('[useKioskData] Fallback announcements fetch failed (non-critical):', fallbackError instanceof Error ? fallbackError.message : String(fallbackError));
         }
       }
+
+      // Transform votes (public-info already filters to active window, but keep as-is)
+      const votesResult: KioskVote[] = (publicData.votes || []).map((vote) => ({
+        id: vote.id,
+        title: vote.title || 'Ψηφοφορία',
+        description: vote.description,
+        start_date: vote.start_date,
+        end_date: vote.end_date,
+        created_at: vote.created_at || vote.start_date || new Date().toISOString(),
+        is_urgent: vote.is_urgent,
+        min_participation: vote.min_participation,
+        total_votes: vote.total_votes ?? 0,
+      }));
 
       // Use real financial data from backend
       const financialSource = publicData.financial || publicData.financial_info;
@@ -486,6 +523,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
           internal_manager_phone: buildingInfo.internal_manager_phone ?? null
         },
         announcements: announcementsResult.slice(0, 5), // Limit to 5 most recent
+        votes: votesResult,
         financial: financialResult,
         maintenance: maintenanceInfo,
         urgent_priorities: urgentPriorities.slice(0, 6), // Max 6 urgent items
