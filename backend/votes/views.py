@@ -105,6 +105,11 @@ class VoteViewSet(viewsets.ModelViewSet):
         serializer.save(vote=vote, user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], url_path='submit')
+    def submit(self, request, pk=None):
+        """Alias for vote action - used by frontend"""
+        return self.vote(request, pk)
+
     @action(detail=True, methods=['get'], url_path='my-submission')
     def my_submission(self, request, pk=None):
         vote = self.get_object()
