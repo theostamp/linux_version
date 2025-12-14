@@ -43,7 +43,13 @@ class ApartmentViewSet(viewsets.ModelViewSet):
         """Φιλτράρισμα με βάση το κτίριο και τα δικαιώματα χρήστη"""
         queryset = self.queryset
         user = self.request.user
-        building_id = self.request.query_params.get('building')
+        building_param = self.request.query_params.get('building')
+        building_id = None
+        if building_param:
+            try:
+                building_id = int(building_param)
+            except (TypeError, ValueError):
+                building_id = None
         
         # Φιλτράρισμα ανά κτίριο
         if building_id:
@@ -64,11 +70,40 @@ class ApartmentViewSet(viewsets.ModelViewSet):
             # Το προσωπικό γραφείου βλέπει όλα τα διαμερίσματα του tenant (τρέχον schema)
             # Δεν χρειάζεται φιλτράρισμα ανά manager_id γιατί όλα τα κτίρια στο schema ανήκουν στο γραφείο
             return queryset
-        else:
-            # Κανονικοί χρήστες βλέπουν μόνο τα διαμερίσματά τους
-            return queryset.filter(
-                Q(owner_user=user) | Q(tenant_user=user)
+
+        # Εσωτερικός διαχειριστής: βλέπει όλα τα διαμερίσματα ΜΟΝΟ για τα κτίρια που διαχειρίζεται
+        from buildings.models import BuildingMembership
+        is_internal_manager_for_building = False
+        if building_id:
+            is_internal_manager_for_building = (
+                Building.objects.filter(id=building_id, internal_manager_id=user.id).exists() or
+                BuildingMembership.objects.filter(
+                    building_id=building_id,
+                    resident_id=user.id,
+                    role='internal_manager'
+                ).exists()
             )
+        else:
+            managed_building_ids = set(
+                Building.objects.filter(internal_manager_id=user.id).values_list('id', flat=True)
+            )
+            membership_building_ids = set(
+                BuildingMembership.objects.filter(
+                    resident_id=user.id,
+                    role='internal_manager'
+                ).values_list('building_id', flat=True)
+            )
+            allowed_building_ids = managed_building_ids | membership_building_ids
+            if allowed_building_ids:
+                return queryset.filter(building_id__in=allowed_building_ids)
+
+        if is_internal_manager_for_building:
+            return queryset
+
+        # Κανονικοί χρήστες βλέπουν μόνο τα διαμερίσματά τους
+        return queryset.filter(
+            Q(owner_user=user) | Q(tenant_user=user)
+        )
     
     def list(self, request, *args, **kwargs):
         """Λίστα διαμερισμάτων με προαιρετικό φιλτράρισμα"""
