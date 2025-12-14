@@ -291,15 +291,48 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
   }
 
   if (!assembly.is_pre_voting_active) {
+    const formatShortDate = (iso?: string | null) => {
+      if (!iso) return '';
+      // Ensure we always parse as a date-only value (avoid timezone shifts)
+      const d = new Date(`${iso}T00:00:00`);
+      return isNaN(d.getTime()) ? iso : d.toLocaleDateString('el-GR');
+    };
+
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate()
+    ).padStart(2, '0')}`;
+
+    const addDaysIso = (iso: string, days: number) => {
+      const d = new Date(`${iso}T00:00:00`);
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const startIso = assembly.pre_voting_start_date || assembly.scheduled_date || null;
+    const endIso =
+      assembly.pre_voting_end_date ||
+      (assembly.scheduled_date ? addDaysIso(assembly.scheduled_date, 3) : null);
+
+    let message = 'Η ψηφοφορία θα γίνει κατά τη διάρκεια της συνέλευσης';
+    if (assembly.pre_voting_enabled) {
+      if (startIso && todayIso < startIso) {
+        message = `Το pre-voting ξεκινά στις ${formatShortDate(startIso)}${endIso ? ` και λήγει στις ${formatShortDate(endIso)}` : ''}`;
+      } else if (endIso && todayIso > endIso) {
+        message = `Το pre-voting έληξε στις ${formatShortDate(endIso)}`;
+      } else if (startIso && endIso) {
+        message = `Το pre-voting είναι διαθέσιμο από ${formatShortDate(startIso)} έως ${formatShortDate(endIso)}`;
+      } else if (startIso) {
+        message = `Το pre-voting ξεκίνησε στις ${formatShortDate(startIso)}`;
+      }
+    }
+
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
         <Clock className="w-10 h-10 text-gray-400 mx-auto mb-3" />
         <h4 className="font-semibold text-gray-700">Το pre-voting δεν είναι ενεργό</h4>
         <p className="text-sm text-gray-500 mt-1">
-          {assembly.pre_voting_enabled 
-            ? `Το pre-voting ξεκινά στις ${new Date(assembly.pre_voting_start_date!).toLocaleDateString('el-GR')}`
-            : 'Η ψηφοφορία θα γίνει κατά τη διάρκεια της συνέλευσης'
-          }
+          {message}
         </p>
       </div>
     );
