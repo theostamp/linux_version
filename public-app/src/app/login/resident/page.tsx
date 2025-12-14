@@ -23,19 +23,30 @@ function ResidentLoginForm() {
   const searchParams = useSearchParams();
   const explicitRedirect = searchParams.get('redirect');
   
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Detect if input looks like email or phone
-  const isEmail = identifier.includes('@');
-  const placeholderText = 'Email ή τηλέφωνο';
+  const validateEmail = (email: string) => {
+    return /\S+@\S+\.\S+/.test(email);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!identifier.trim()) {
-      setError('Παρακαλώ εισάγετε email ή τηλέφωνο');
+    if (!email.trim()) {
+      setError('Παρακαλώ εισάγετε το email σας');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Το email δεν είναι έγκυρο');
+      return;
+    }
+
+    if (!phone.trim()) {
+      setError('Παρακαλώ εισάγετε το τηλέφωνό σας');
       return;
     }
 
@@ -61,7 +72,8 @@ function ResidentLoginForm() {
         },
         credentials: 'include',
         body: JSON.stringify({ 
-          identifier: identifier.trim()
+          email: email.trim().toLowerCase(),
+          phone: phone.trim()
         }),
       });
 
@@ -141,18 +153,14 @@ function ResidentLoginForm() {
               Σύνδεση Ενοίκου
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
-              Εισάγετε το email ή το τηλέφωνο με το οποίο είστε καταχωρημένος στην πολυκατοικία σας.
+              Εισάγετε το email και το τηλέφωνο με τα οποία είστε καταχωρημένος στην πολυκατοικία σας.
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                {isEmail ? (
-                  <Mail className="h-8 w-8 text-emerald-400" />
-                ) : (
-                  <Phone className="h-8 w-8 text-emerald-400" />
-                )}
+                <Home className="h-8 w-8 text-emerald-400" />
               </div>
               <h1 className="text-2xl font-bold text-slate-50 mb-2">
                 Καλώς ήρθατε
@@ -169,30 +177,52 @@ function ResidentLoginForm() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Field */}
               <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-slate-300 mb-2">
-                  Email ή Τηλέφωνο
+                <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                  Email
                 </label>
                 <div className="relative">
-                  {isEmail ? (
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
-                  ) : (
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
-                  )}
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
                   <input
-                    type="text"
-                    id="identifier"
-                    name="identifier"
-                    value={identifier}
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={email}
                     onChange={(e) => {
-                      setIdentifier(e.target.value);
+                      setEmail(e.target.value);
                       if (error) setError('');
                     }}
-                    autoComplete="email tel"
+                    autoComplete="email"
                     className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                      error ? 'border-red-500/50' : 'border-slate-700'
+                      error && !email ? 'border-red-500/50' : 'border-slate-700'
                     }`}
-                    placeholder={placeholderText}
+                    placeholder="το-email-σας@example.com"
+                  />
+                </div>
+              </div>
+
+              {/* Phone Field */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-300 mb-2">
+                  Τηλέφωνο
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (error) setError('');
+                    }}
+                    autoComplete="tel"
+                    className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
+                      error && !phone ? 'border-red-500/50' : 'border-slate-700'
+                    }`}
+                    placeholder="69xxxxxxxx"
                   />
                 </div>
                 <p className="mt-2 text-xs text-slate-500">

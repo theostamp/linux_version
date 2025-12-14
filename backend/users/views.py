@@ -847,13 +847,14 @@ def request_magic_link_view(request):
 def resident_login_view(request):
     """
     POST /api/users/resident-login/
-    Σύνδεση ενοίκου με email ή τηλέφωνο (χωρίς password).
+    Σύνδεση ενοίκου με email ΚΑΙ τηλέφωνο (χωρίς password).
     
-    Ο χρήστης εισάγει email ή τηλέφωνο και αν είναι καταχωρημένος
-    σε κάποιο διαμέρισμα, συνδέεται απευθείας.
+    Ο χρήστης εισάγει και τα δύο στοιχεία και αν είναι καταχωρημένος
+    σε κάποιο διαμέρισμα με αυτά, συνδέεται απευθείας.
     
     Request:
-        - identifier: str (email ή τηλέφωνο)
+        - email: str
+        - phone: str
     
     Response:
         - access: JWT access token
@@ -864,29 +865,33 @@ def resident_login_view(request):
     import logging
     logger = logging.getLogger(__name__)
     
-    identifier = request.data.get('identifier', '').strip()
+    email = request.data.get('email', '').strip().lower()
+    phone = request.data.get('phone', '').strip()
     
-    if not identifier:
+    if not email:
         return Response({
-            'error': 'Παρακαλώ εισάγετε email ή τηλέφωνο.'
+            'error': 'Παρακαλώ εισάγετε το email σας.'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Καθορισμός αν είναι email ή τηλέφωνο
+    if not phone:
+        return Response({
+            'error': 'Παρακαλώ εισάγετε το τηλέφωνό σας.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Validate email format
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    is_email = bool(re.match(email_pattern, identifier))
+    if not re.match(email_pattern, email):
+        return Response({
+            'error': 'Το email δεν είναι έγκυρο.'
+        }, status=status.HTTP_400_BAD_REQUEST)
     
     # Καθαρισμός τηλεφώνου (αφαίρεση κενών, παύλων κλπ)
-    if not is_email:
-        identifier = re.sub(r'[\s\-\.\(\)]', '', identifier)
-    else:
-        identifier = identifier.lower()
+    phone_clean = re.sub(r'[\s\-\.\(\)]', '', phone)
     
     try:
         from django_tenants.utils import schema_context
         from apartments.models import Apartment
-        from buildings.models import BuildingMembership
         from tenants.models import Client
-        from django.db.models import Q
         
         user = None
         building = None
@@ -899,62 +904,44 @@ def resident_login_view(request):
         
         for t in tenants:
             with schema_context(t.schema_name):
-                # Αναζήτηση στο Apartment model
-                if is_email:
-                    # Ψάξε με email
-                    apt = Apartment.objects.filter(
-                        Q(owner_email__iexact=identifier) | Q(tenant_email__iexact=identifier)
-                    ).select_related('building').first()
-                else:
-                    # Ψάξε με τηλέφωνο (αφαιρώντας και από τα αποθηκευμένα)
-                    # Δημιουργούμε variations του τηλεφώνου για καλύτερο matching
-                    apts = Apartment.objects.all()
-                    apt = None
-                    for a in apts:
-                        # Καθαρίζουμε τα αποθηκευμένα τηλέφωνα
-                        stored_phones = [
-                            re.sub(r'[\s\-\.\(\)]', '', a.owner_phone or ''),
-                            re.sub(r'[\s\-\.\(\)]', '', a.owner_phone2 or ''),
-                            re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone or ''),
-                            re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone2 or ''),
-                        ]
-                        if identifier in stored_phones:
-                            apt = a
+                # Αναζήτηση στο Apartment model - πρέπει να ταιριάζουν ΚΑΙ τα δύο
+                apts = Apartment.objects.all()
+                
+                for a in apts:
+                    # Καθαρίζουμε τα αποθηκευμένα τηλέφωνα
+                    owner_phones = [
+                        re.sub(r'[\s\-\.\(\)]', '', a.owner_phone or ''),
+                        re.sub(r'[\s\-\.\(\)]', '', a.owner_phone2 or ''),
+                    ]
+                    tenant_phones = [
+                        re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone or ''),
+                        re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone2 or ''),
+                    ]
+                    
+                    # Έλεγχος αν ταιριάζουν email + τηλέφωνο για owner
+                    if a.owner_email and a.owner_email.lower() == email:
+                        if phone_clean in owner_phones and phone_clean:
+                            apartment = a
+                            building = a.building
+                            tenant = t
+                            user = a.owner_user
+                            break
+                    
+                    # Έλεγχος αν ταιριάζουν email + τηλέφωνο για tenant
+                    if a.tenant_email and a.tenant_email.lower() == email:
+                        if phone_clean in tenant_phones and phone_clean:
+                            apartment = a
+                            building = a.building
+                            tenant = t
+                            user = a.tenant_user
                             break
                 
-                if apt:
-                    apartment = apt
-                    building = apt.building
-                    tenant = t
-                    
-                    # Βρες τον αντίστοιχο user
-                    if is_email:
-                        if apt.owner_email and apt.owner_email.lower() == identifier:
-                            user = apt.owner_user
-                        elif apt.tenant_email and apt.tenant_email.lower() == identifier:
-                            user = apt.tenant_user
-                    else:
-                        # Για τηλέφωνο, ελέγχουμε ποιο πεδίο ταίριαξε
-                        owner_phones = [
-                            re.sub(r'[\s\-\.\(\)]', '', apt.owner_phone or ''),
-                            re.sub(r'[\s\-\.\(\)]', '', apt.owner_phone2 or ''),
-                        ]
-                        tenant_phones = [
-                            re.sub(r'[\s\-\.\(\)]', '', apt.tenant_phone or ''),
-                            re.sub(r'[\s\-\.\(\)]', '', apt.tenant_phone2 or ''),
-                        ]
-                        
-                        if identifier in owner_phones:
-                            user = apt.owner_user
-                        elif identifier in tenant_phones:
-                            user = apt.tenant_user
-                    
-                    if user:
-                        break
+                if user:
+                    break
         
         if not user:
             return Response({
-                'error': 'Δεν βρέθηκε λογαριασμός με αυτά τα στοιχεία. Βεβαιωθείτε ότι είστε καταχωρημένος στην πολυκατοικία σας.'
+                'error': 'Δεν βρέθηκε λογαριασμός με αυτά τα στοιχεία. Βεβαιωθείτε ότι το email και το τηλέφωνο είναι σωστά καταχωρημένα στην πολυκατοικία σας.'
             }, status=status.HTTP_404_NOT_FOUND)
         
         # Έλεγχος αν ο χρήστης είναι active
@@ -970,7 +957,7 @@ def resident_login_view(request):
         user.last_login = timezone.now()
         user.save(update_fields=['last_login'])
         
-        logger.info(f"Resident login successful for user {user.email} via {'email' if is_email else 'phone'}")
+        logger.info(f"Resident login successful for user {user.email} with email+phone verification")
         
         # Επιστροφή response
         response_data = {
