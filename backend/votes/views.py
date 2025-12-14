@@ -99,7 +99,7 @@ class VoteViewSet(viewsets.ModelViewSet):
         vote = self.get_object()
         serializer = VoteSubmissionSerializer(
             data=request.data,
-            context={'request': request}
+            context={'request': request, 'vote': vote}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save(vote=vote, user=request.user)

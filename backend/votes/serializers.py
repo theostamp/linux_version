@@ -150,19 +150,20 @@ class VoteSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoteSubmission
         fields = ['id', 'vote', 'user', 'user_name', 'choice', 'submitted_at', 'updated_at']
-        read_only_fields = ['id', 'user', 'user_name', 'submitted_at', 'updated_at']
+        read_only_fields = ['id', 'vote', 'user', 'user_name', 'submitted_at', 'updated_at']
 
     def validate(self, data):
-        """Validation για την ψήφο"""
-        vote = data.get('vote')
+        """Validation για την ψήφο - το vote object περνιέται από το view context"""
+        vote = self.context.get('vote')
         user = self.context['request'].user
 
-        if not vote.is_currently_active:
-            raise serializers.ValidationError("Η ψηφοφορία δεν είναι ενεργή αυτή τη στιγμή")
+        if vote:
+            if not vote.is_currently_active:
+                raise serializers.ValidationError("Η ψηφοφορία δεν είναι ενεργή αυτή τη στιγμή")
 
-        # Έλεγχος αν ο χρήστης έχει ήδη ψηφίσει
-        if VoteSubmission.objects.filter(vote=vote, user=user).exists():
-            raise serializers.ValidationError("Έχετε ήδη ψηφίσει σε αυτή τη ψηφοφορία")
+            # Έλεγχος αν ο χρήστης έχει ήδη ψηφίσει
+            if VoteSubmission.objects.filter(vote=vote, user=user).exists():
+                raise serializers.ValidationError("Έχετε ήδη ψηφίσει σε αυτή τη ψηφοφορία")
 
         return data
 
