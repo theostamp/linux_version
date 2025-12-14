@@ -13,6 +13,10 @@ class VotePublicSerializer(serializers.ModelSerializer):
     participation_percentage = serializers.SerializerMethodField()
     is_valid = serializers.SerializerMethodField()
     min_participation = serializers.IntegerField()
+    is_urgent = serializers.BooleanField()
+    is_active = serializers.BooleanField()
+    eligible_voters_count = serializers.SerializerMethodField()
+    total_building_mills = serializers.SerializerMethodField()
 
     def get_results(self, obj: Vote):
         try:
@@ -28,6 +32,12 @@ class VotePublicSerializer(serializers.ModelSerializer):
 
     def get_is_valid(self, obj: Vote):
         return getattr(obj, 'is_valid_result', False)
+    
+    def get_eligible_voters_count(self, obj: Vote):
+        return getattr(obj, 'eligible_voters_count', 0)
+    
+    def get_total_building_mills(self, obj: Vote):
+        return getattr(obj, 'total_building_mills', 1000)
 
     class Meta:
         model = Vote
@@ -41,5 +51,9 @@ class VotePublicSerializer(serializers.ModelSerializer):
             'total_votes',
             'participation_percentage',
             'is_valid',
+            'is_urgent',
+            'is_active',
+            'eligible_voters_count',
+            'total_building_mills',
             'results',
         ]
