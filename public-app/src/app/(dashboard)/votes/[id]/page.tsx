@@ -207,10 +207,11 @@ export default function VoteDetailPage() {
   const currentStatusColors = statusColors[statusInfo.color as keyof typeof statusColors];
   const StatusIcon = statusInfo.icon;
 
-  // Calculate total eligible voters (for participation meter)
-  const totalEligible = voteWithExtras.participation_percentage && voteWithExtras.total_votes 
-    ? Math.round((voteWithExtras.total_votes * 100) / voteWithExtras.participation_percentage)
-    : 0;
+  // Get total eligible voters from backend (or fallback calculation)
+  const totalEligible = (voteWithExtras as { eligible_voters_count?: number }).eligible_voters_count 
+    || (voteWithExtras.participation_percentage && voteWithExtras.total_votes 
+      ? Math.round((voteWithExtras.total_votes * 100) / voteWithExtras.participation_percentage)
+      : 0);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
