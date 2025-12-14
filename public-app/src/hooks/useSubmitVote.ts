@@ -7,8 +7,15 @@ export function useSubmitVote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ voteId, option }: { voteId: number; option: string }) =>
-      submitVote(voteId, option),
+    mutationFn: ({
+      voteId,
+      option,
+      buildingId,
+    }: {
+      voteId: number;
+      option: string;
+      buildingId?: number | null;
+    }) => submitVote(voteId, option, buildingId),
     onSuccess: async (_, { voteId }) => {
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['votes'] });

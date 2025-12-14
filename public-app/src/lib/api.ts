@@ -1305,8 +1305,14 @@ export async function fetchMyVote(voteId: number, buildingId?: number | null): P
   }
 }
 
-export async function submitVote(voteId: number, choice: string): Promise<VoteSubmission> {
-  return apiPost<VoteSubmission>(`/votes/${voteId}/submit/`, { choice });
+export async function submitVote(
+  voteId: number,
+  choice: string,
+  buildingId?: number | null,
+): Promise<VoteSubmission> {
+  // Backend endpoint is `/api/votes/{id}/vote/` (not `/submit/`)
+  const query = typeof buildingId === 'number' ? `?building=${buildingId}` : '';
+  return apiPost<VoteSubmission>(`/votes/${voteId}/vote/${query}`, { choice });
 }
 
 export async function fetchVoteResults(voteId: number, buildingId?: number | null): Promise<VoteResultsData> {

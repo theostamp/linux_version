@@ -8,6 +8,7 @@ interface Props {
   voteId: number;
   choices: string[];
   isActive: boolean;
+  buildingId?: number | null;
   initialChoice?: string | null;
   onSubmitted?: () => void;
 }
@@ -16,6 +17,7 @@ export default function VoteSubmitForm({
   voteId,
   choices,
   isActive,
+  buildingId = null,
   initialChoice = null,
   onSubmitted,
 }: Readonly<Props>) {
@@ -34,7 +36,7 @@ export default function VoteSubmitForm({
     }
 
     submitVote(
-      { voteId, option: selected },
+      { voteId, option: selected, buildingId },
       {
         onSuccess: () => {
           toast.success('Η ψήφος σας καταχωρήθηκε!');

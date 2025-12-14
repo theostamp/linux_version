@@ -369,6 +369,7 @@ export default function VoteDetailPage() {
                   voteId={vote.id}
                   choices={voteWithExtras.choices}
                   isActive={true}
+                  buildingId={buildingId}
                   initialChoice={null}
                   onSubmitted={async () => {
                     await refetchMyVote();
