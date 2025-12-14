@@ -67,28 +67,22 @@ const formatDate = (value: string | null | undefined) => {
 };
 
 const isActive = (startDate: string, endDate: string | null | undefined): boolean => {
-  const now = new Date();
+  // Use ISO date string comparison (YYYY-MM-DD) to avoid timezone/time-of-day issues
+  // Previously: new Date() vs new Date(endDate) caused "today 08:04 > endDate 00:00" = false
+  const today = new Date().toISOString().split('T')[0]; // e.g. "2025-12-14"
   
-  // Parse start date - set to start of day in local timezone
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-  
-  if (Number.isNaN(start.getTime())) {
+  // start_date is required and must be valid
+  if (!startDate || startDate < '1971-01-01') {
     return false;
   }
   
   // If no valid end date, consider it always active (after start)
   if (!isValidDate(endDate)) {
-    return now >= start;
+    return today >= startDate;
   }
   
-  // Parse end date - set to END of day (23:59:59.999) in local timezone
-  // This fixes timezone issues where "2025-12-14" as end date 
-  // should include the entire day of 14/12, not just midnight UTC
-  const end = new Date(endDate!);
-  end.setHours(23, 59, 59, 999);
-  
-  return now >= start && now <= end;
+  // Compare ISO date strings directly (inclusive of end date)
+  return today >= startDate && today <= endDate!;
 };
 
 function VoteItemContent({

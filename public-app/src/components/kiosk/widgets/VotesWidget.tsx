@@ -42,13 +42,18 @@ export default function VotesWidget({ widget, data, isLoading, error, settings }
     );
   }
 
-  const activeVotes = data.votes.filter((vote: any) => 
-    new Date(vote.end_date) > new Date()
-  );
+  // Use ISO date string comparison to include votes that end TODAY as active
+  const today = new Date().toISOString().split('T')[0]; // e.g. "2025-12-14"
+  
+  const activeVotes = data.votes.filter((vote: any) => {
+    if (!vote.end_date || vote.end_date < '1971-01-01') return true; // No end date = always active
+    return vote.end_date >= today; // Include today's end date as active
+  });
 
-  const completedVotes = data.votes.filter((vote: any) => 
-    new Date(vote.end_date) <= new Date()
-  );
+  const completedVotes = data.votes.filter((vote: any) => {
+    if (!vote.end_date || vote.end_date < '1971-01-01') return false; // No end date = never completed
+    return vote.end_date < today; // Only past dates are completed
+  });
 
   return (
     <div className="h-full overflow-hidden">
