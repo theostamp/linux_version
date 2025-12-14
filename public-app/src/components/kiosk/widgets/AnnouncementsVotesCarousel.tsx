@@ -36,7 +36,7 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
       type: 'vote',
       title: vote.title,
       content: vote.description,
-      date: vote.created_at,
+      date: vote.created_at || vote.start_date || new Date().toISOString(),
       icon: Vote,
       bgColor: 'from-purple-600/20 to-purple-800/20',
       borderColor: 'border-purple-500/30'

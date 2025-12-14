@@ -84,15 +84,34 @@ def public_info(request, building_id=None):
         if building_id and building_id != 0:  # 0 means "all buildings"
             qs_votes = qs_votes.filter(building_id=building_id)
         
-        votes_data = list(
-            qs_votes.filter(
-                start_date__lte=timezone.now().date(),
-                end_date__gte=timezone.now().date()
-            ).order_by('-is_urgent', '-created_at')[:5].values(
-                'id', 'title', 'description', 'start_date', 'end_date',
-                'is_urgent', 'min_participation', 'created_at'
-            )
-        )
+        today_date = timezone.now().date()
+        active_votes_qs = qs_votes.filter(
+            Q(start_date__lte=today_date) | Q(start_date__isnull=True)
+        ).filter(
+            Q(end_date__gte=today_date) | Q(end_date__isnull=True)
+        ).order_by('-is_urgent', '-created_at')[:5]
+
+        votes_data = []
+        for v in active_votes_qs:
+            try:
+                results = v.get_results()
+            except Exception:
+                results = None
+
+            votes_data.append({
+                'id': v.id,
+                'title': v.title,
+                'description': v.description,
+                'start_date': v.start_date,
+                'end_date': v.end_date,
+                'created_at': v.created_at,
+                'is_urgent': v.is_urgent,
+                'min_participation': v.min_participation,
+                'total_votes': getattr(v, 'total_votes', 0),
+                'participation_percentage': getattr(v, 'participation_percentage', 0),
+                'is_valid': getattr(v, 'is_valid_result', False),
+                'results': results,
+            })
         
         # Get building information
         building_info = None
