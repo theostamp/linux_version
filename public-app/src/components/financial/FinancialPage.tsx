@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -27,6 +28,7 @@ import {
   Calendar,
   DollarSign,
   History,
+  HelpCircle,
   PieChart,
   Plus, 
   RefreshCw,
@@ -524,63 +526,71 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const currentBuildingName = (selectedBuilding || currentBuilding)?.name || 'Άγνωστο Κτίριο';
   
   return (
-    <div className="space-y-6" key={`financial-${activeBuildingId}`}>
-      {/* Enhanced Header with Building & Month Context */}
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold font-condensed">Οικονομική Διαχείριση</h1>
-          </div>
-          <Button
-            onClick={async () => {
-              // ✅ Clear API cache FIRST, then React Query cache
-              invalidateApiCache(/\/financial\//);
-              
-              // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
-              await queryClient.invalidateQueries({ 
-                queryKey: ['financial'] 
-              });
-              await queryClient.invalidateQueries({ 
-                queryKey: ['apartment-balances'] 
-              });
-              await queryClient.invalidateQueries({ 
-                queryKey: ['expenses'] 
-              });
-              await queryClient.invalidateQueries({ 
-                queryKey: ['transactions'] 
-              });
-              await queryClient.refetchQueries({ 
-                queryKey: ['financial'] 
-              });
-              await queryClient.refetchQueries({ 
-                queryKey: ['apartment-balances'] 
-              });
-              await queryClient.refetchQueries({ 
-                queryKey: ['expenses'] 
-              });
-              await queryClient.refetchQueries({ 
-                queryKey: ['transactions'] 
-              });
-              
-              console.log(`🧹 FinancialPage: API cache and React Query cache cleared, data refetched`);
-              
-              // Refresh components
-              if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
-              if (expenseListRef.current) expenseListRef.current.refresh();
-              
-              // Show success message
-              toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
-                description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
-              });
-            }}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Ενημέρωση Δεδομένων
-          </Button>
-        </div>
+	    <div className="space-y-6" key={`financial-${activeBuildingId}`}>
+	      {/* Enhanced Header with Building & Month Context */}
+	      <div className="flex flex-col space-y-4">
+	        <div className="flex items-center justify-between">
+	          <div>
+	            <h1 className="text-2xl font-bold font-condensed">Οικονομική Διαχείριση</h1>
+	          </div>
+	          <div className="flex items-center gap-2">
+	            <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
+	              <Link href="/help#financial--overview">
+	                <HelpCircle className="h-4 w-4" />
+	                Βοήθεια
+	              </Link>
+	            </Button>
+	            <Button
+	              onClick={async () => {
+	                // ✅ Clear API cache FIRST, then React Query cache
+	                invalidateApiCache(/\/financial\//);
+	                
+	                // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
+	                await queryClient.invalidateQueries({ 
+	                  queryKey: ['financial'] 
+	                });
+	                await queryClient.invalidateQueries({ 
+	                  queryKey: ['apartment-balances'] 
+	                });
+	                await queryClient.invalidateQueries({ 
+	                  queryKey: ['expenses'] 
+	                });
+	                await queryClient.invalidateQueries({ 
+	                  queryKey: ['transactions'] 
+	                });
+	                await queryClient.refetchQueries({ 
+	                  queryKey: ['financial'] 
+	                });
+	                await queryClient.refetchQueries({ 
+	                  queryKey: ['apartment-balances'] 
+	                });
+	                await queryClient.refetchQueries({ 
+	                  queryKey: ['expenses'] 
+	                });
+	                await queryClient.refetchQueries({ 
+	                  queryKey: ['transactions'] 
+	                });
+	                
+	                console.log(`🧹 FinancialPage: API cache and React Query cache cleared, data refetched`);
+	                
+	                // Refresh components
+	                if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
+	                if (expenseListRef.current) expenseListRef.current.refresh();
+	                
+	                // Show success message
+	                toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
+	                  description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
+	                });
+	              }}
+	              variant="outline"
+	              size="sm"
+	              className="flex items-center gap-2"
+	            >
+	              <RefreshCw className="h-4 w-4" />
+	              Ενημέρωση Δεδομένων
+	            </Button>
+	          </div>
+	        </div>
         
         {/* Context Banner - Building & Month */}
         <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-500/10 rounded-lg shadow-md">

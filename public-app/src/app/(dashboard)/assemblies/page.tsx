@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { 
   Users, Plus, Calendar, Clock, MapPin, Video, 
   CheckCircle, XCircle, AlertCircle, Play, 
-  FileText, Send, Building2, Timer, Percent
+  FileText, Send, Building2, Timer, Percent, HelpCircle
 } from 'lucide-react';
 
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -277,14 +277,22 @@ function AssembliesPageContent() {
             Οργάνωση, διαχείριση και παρακολούθηση συνελεύσεων
           </p>
         </div>
-        {canManage && (
-          <Button asChild className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
-            <Link href="/assemblies/new">
-              <Plus className="w-4 h-4 mr-2" />
-              Νέα Συνέλευση
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link href="/help#assemblies--overview">
+              <HelpCircle className="w-4 h-4" />
+              Βοήθεια
             </Link>
           </Button>
-        )}
+          {canManage && (
+            <Button asChild className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
+              <Link href="/assemblies/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Νέα Συνέλευση
+              </Link>
+            </Button>
+          )}
+        </div>
       </motion.div>
 
       <BuildingFilterIndicator className="mb-2" />
@@ -409,4 +417,3 @@ export default function AssembliesPage() {
     </AuthGate>
   );
 }
-

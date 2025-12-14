@@ -17,7 +17,8 @@ import {
   Building2, 
   Zap,
   Users,
-  ChevronRight 
+  ChevronRight,
+  HelpCircle
 } from 'lucide-react';
 import { deleteVote } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
@@ -386,14 +387,22 @@ function VotesPageContent() {
             Συμμετοχή στη λήψη αποφάσεων της πολυκατοικίας
           </p>
         </div>
-        {canCreateVote && (
-          <Button asChild className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
-            <Link href="/votes/new">
-              <Plus className="w-4 h-4 mr-2" />
-              Νέα Ψηφοφορία
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link href="/help#votes--overview">
+              <HelpCircle className="w-4 h-4" />
+              Βοήθεια
             </Link>
           </Button>
-        )}
+          {canCreateVote && (
+            <Button asChild className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
+              <Link href="/votes/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Νέα Ψηφοφορία
+              </Link>
+            </Button>
+          )}
+        </div>
       </motion.div>
 
       <BuildingFilterIndicator className="mb-2" />
