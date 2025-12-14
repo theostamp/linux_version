@@ -115,9 +115,9 @@ function VoteItemContent({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className={cn(
-        'group relative rounded-xl border bg-card p-5 shadow-sm transition-all duration-300',
-        'hover:shadow-md hover:border-indigo-500/30',
-        vote.is_urgent && 'border-destructive/30 bg-destructive/5'
+        'group relative rounded-2xl bg-gradient-to-br from-card/90 to-muted/10 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20 transition-all duration-300',
+        'hover:shadow-md hover:ring-primary/20',
+        vote.is_urgent && 'bg-destructive/5 ring-destructive/20'
       )}
     >
       {/* Urgent indicator */}
@@ -374,14 +374,16 @@ function VotesPageContent() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-card/60 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
               <VoteIcon className="w-5 h-5" />
             </span>
-            Ψηφοφορίες
+            <span className="bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
+              Ψηφοφορίες
+            </span>
           </h1>
           <p className="text-muted-foreground mt-1 ml-13">
             Συμμετοχή στη λήψη αποφάσεων της πολυκατοικίας
@@ -411,7 +413,7 @@ function VotesPageContent() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-card rounded-2xl border-2 border-dashed border-border p-12 text-center"
+          className="bg-card/60 backdrop-blur-sm rounded-3xl p-12 text-center shadow-sm ring-1 ring-border/20"
         >
           <div className="w-20 h-20 bg-muted rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
             <VoteIcon className="w-10 h-10 text-muted-foreground" />

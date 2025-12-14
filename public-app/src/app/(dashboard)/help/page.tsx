@@ -106,24 +106,26 @@ export default function HelpPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+    <div className="space-y-8">
+      <div className="rounded-3xl bg-card/60 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Κέντρο Βοήθειας</h1>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
+              Κέντρο Βοήθειας
+            </h1>
             <p className="text-muted-foreground">
               Οδηγίες, συμβουλές και απαντήσεις για τη χρήση της εφαρμογής.
             </p>
           </div>
 
           <div className="w-full sm:max-w-md">
-            <div className="relative">
+            <div className="relative rounded-xl bg-background/40 ring-1 ring-border/20 shadow-sm">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Αναζήτηση (π.χ. κοινόχρηστα, απαρτία, ψηφοφορία)"
-                className="pl-9 pr-9"
+                className="h-11 border-0 bg-transparent pl-9 pr-9 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 aria-label="Αναζήτηση βοήθειας"
               />
               {query.length > 0 && (
@@ -149,7 +151,7 @@ export default function HelpPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredChapters.length === 0 ? (
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 ring-1 ring-border/20 bg-gradient-to-b from-card to-muted/10">
             <CardHeader>
               <CardTitle>Δεν βρέθηκαν αποτελέσματα</CardTitle>
               <CardDescription>Δοκιμάστε διαφορετικούς όρους αναζήτησης.</CardDescription>
@@ -166,14 +168,19 @@ export default function HelpPage() {
             const allOpen = chapterSectionIds.length > 0 && chapterSectionIds.every((id) => openSections.has(id));
 
             return (
-              <Card key={chapter.id} className="flex flex-col h-full">
+              <Card
+                key={chapter.id}
+                className="flex flex-col h-full ring-1 ring-border/20 bg-gradient-to-b from-card to-muted/10"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                       <chapter.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <CardTitle>{chapter.title}</CardTitle>
+                      <CardTitle className="bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                        {chapter.title}
+                      </CardTitle>
                     </div>
                     {chapter.sections.length > 1 && (
                       <Button
@@ -236,7 +243,10 @@ function HelpSectionItem({
 }) {
   const contentId = `${anchorId}--content`;
   return (
-    <div id={anchorId} className="border rounded-md px-3 py-2 bg-muted/30 scroll-mt-24">
+    <div
+      id={anchorId}
+      className="rounded-xl px-4 py-3 bg-card/60 backdrop-blur-sm shadow-sm ring-1 ring-border/20 hover:shadow-md transition-shadow scroll-mt-24"
+    >
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -265,7 +275,7 @@ function HelpSectionItem({
       </div>
       
       {isOpen && (
-        <div id={contentId} className="pt-3 pb-1 text-sm text-muted-foreground space-y-2 border-t mt-2">
+        <div id={contentId} className="pt-3 pb-1 text-sm text-muted-foreground space-y-2 border-t border-border/20 mt-2">
           {content.map((paragraph, idx) => (
             <p key={idx} className="leading-relaxed">
               {paragraph}

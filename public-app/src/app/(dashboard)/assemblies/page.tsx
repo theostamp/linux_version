@@ -69,9 +69,9 @@ function AssemblyCard({
       transition={{ duration: 0.3, delay: index * 0.05 }}
       onClick={() => router.push(`/assemblies/${assembly.id}`)}
       className={cn(
-        'group relative rounded-xl border bg-card p-5 shadow-sm transition-all duration-300 cursor-pointer',
-        'hover:shadow-md hover:border-indigo-500/30',
-        isLive && 'border-emerald-500/50 bg-emerald-500/5 ring-2 ring-emerald-500/30'
+        'group relative rounded-2xl bg-gradient-to-br from-card/90 to-muted/10 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20 transition-all duration-300 cursor-pointer',
+        'hover:shadow-md hover:ring-primary/20',
+        isLive && 'bg-emerald-500/5 ring-2 ring-emerald-500/30'
       )}
     >
       {/* Live indicator */}
@@ -264,14 +264,16 @@ function AssembliesPageContent() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-card/60 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
               <Users className="w-5 h-5" />
             </span>
-            Γενικές Συνελεύσεις
+            <span className="bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
+              Γενικές Συνελεύσεις
+            </span>
           </h1>
           <p className="text-muted-foreground mt-1 ml-13">
             Οργάνωση, διαχείριση και παρακολούθηση συνελεύσεων
@@ -301,7 +303,7 @@ function AssembliesPageContent() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-card rounded-2xl border-2 border-dashed border-border p-12 text-center"
+          className="bg-card/60 backdrop-blur-sm rounded-3xl p-12 text-center shadow-sm ring-1 ring-border/20"
         >
           <div className="w-20 h-20 bg-muted rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
             <Users className="w-10 h-10 text-muted-foreground" />
