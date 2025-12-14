@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.utils import timezone  
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from datetime import datetime, date
 from decimal import Decimal
 import logging
@@ -276,12 +276,23 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
             logger.info(f"User is a manager. Found buildings: {building_ids} for manager ID: {user.id}")
             return queryset
 
-        # Residents -> μόνο τα κτίρια στα οποία ανήκουν
-        if BuildingMembership.objects.filter(resident=user).exists():
-            # Use 'memberships' related_name (not default 'buildingmembership')
-            queryset = Building.objects.filter(memberships__resident=user).order_by('id')
+        # Residents -> κτίρια στα οποία ανήκουν (membership) ή έχουν διαμέρισμα ως owner/tenant (legacy fallback)
+        try:
+            from apartments.models import Apartment
+            has_apartment_links = Apartment.objects.filter(
+                Q(owner_user=user) | Q(tenant_user=user)
+            ).exists()
+        except Exception:
+            has_apartment_links = False
+
+        if BuildingMembership.objects.filter(resident=user).exists() or has_apartment_links:
+            queryset = Building.objects.filter(
+                Q(memberships__resident=user) |
+                Q(apartments__owner_user=user) |
+                Q(apartments__tenant_user=user)
+            ).distinct().order_by('id')
             building_ids = list(queryset.values_list('id', flat=True))
-            logger.info(f"User is a resident. Found buildings by membership: {building_ids}")
+            logger.info(f"User is a resident. Found buildings by membership/apartment link: {building_ids}")
             return queryset
 
         # Αν δεν υπάρχει ρόλος ή δεν υπάρχει αντιστοίχιση

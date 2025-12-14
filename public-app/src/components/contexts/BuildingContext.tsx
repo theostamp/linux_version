@@ -11,7 +11,7 @@ import React, {
   useMemo,
 } from 'react';
 import type { Building } from '@/lib/api';
-import { fetchAllBuildings, api } from '@/lib/api';
+import { fetchAllBuildings, fetchMyBuildings, api } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -160,9 +160,17 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       setIsLoadingBuildings(true);
-      // For now, use fetchAllBuildings to maintain backward compatibility
-      // Later we can implement pagination in the UI
-      const data = await fetchAllBuildings();
+      
+      // IMPORTANT:
+      // Residents/internal managers should see ONLY their buildings (via BuildingMembership / apartment links).
+      // Office admins/staff can see all buildings in the tenant.
+      const role = (user as unknown as { role?: string })?.role;
+      const isManagementStaff =
+        !!(user as any)?.is_staff ||
+        !!(user as any)?.is_superuser ||
+        (typeof role === 'string' && ['manager', 'admin', 'office_staff', 'staff'].includes(role));
+
+      const data = isManagementStaff ? await fetchAllBuildings() : await fetchMyBuildings();
       console.log('[BuildingContext] Loaded buildings:', data.length, 'buildings');
       setBuildings(data);
       

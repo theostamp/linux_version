@@ -24,6 +24,7 @@ import threading
 from typing import Optional, List, Dict
 from django.core.exceptions import PermissionDenied, ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from django.db.models import Q
 from .models import Building, BuildingMembership
 from .dto import BuildingDTO
 
@@ -219,10 +220,19 @@ class BuildingService:
                 return True
         
         # Resident check (BuildingMembership via related_name='memberships')
-        return BuildingMembership.objects.filter(
-            building=building,
-            resident=user
-        ).exists()
+        if BuildingMembership.objects.filter(building=building, resident=user).exists():
+            return True
+
+        # Fallback: allow access if the user is linked to any apartment in this building
+        # (owner or tenant). This keeps access consistent with /financial/my-apartment/
+        # even when legacy data missed creating BuildingMembership rows.
+        try:
+            from apartments.models import Apartment
+            return Apartment.objects.filter(building=building).filter(
+                Q(owner_user=user) | Q(tenant_user=user)
+            ).exists()
+        except Exception:
+            return False
     
     @staticmethod
     def user_has_access_bulk(user, building_ids: List[int]) -> Dict[int, bool]:
@@ -273,7 +283,7 @@ class BuildingService:
             for bid in manager_buildings:
                 access_map[bid] = True
         
-        # Resident check - single query
+        # Resident check - single query (memberships)
         resident_buildings = set(
             BuildingMembership.objects.filter(
                 building_id__in=building_ids,
@@ -282,6 +292,19 @@ class BuildingService:
         )
         for bid in resident_buildings:
             access_map[bid] = True
+
+        # Apartment-link fallback (owner/tenant) - single query
+        try:
+            from apartments.models import Apartment
+            apartment_buildings = set(
+                Apartment.objects.filter(building_id__in=building_ids).filter(
+                    Q(owner_user=user) | Q(tenant_user=user)
+                ).values_list('building_id', flat=True)
+            )
+            for bid in apartment_buildings:
+                access_map[bid] = True
+        except Exception:
+            pass
         
         return access_map
     
@@ -334,10 +357,12 @@ class BuildingService:
         elif hasattr(user, 'is_manager') and user.is_manager:
             buildings = base_queryset.filter(manager_id=user.id).order_by('name')
         
-        # Residents: τα κτίρια στα οποία ανήκουν (via related_name='memberships')
+        # Residents: buildings via BuildingMembership OR apartment ownership/tenancy (fallback for legacy data)
         else:
             buildings = base_queryset.filter(
-                memberships__resident=user
+                Q(memberships__resident=user) |
+                Q(apartments__owner_user=user) |
+                Q(apartments__tenant_user=user)
             ).distinct().order_by('name')
         
         # Convert to DTOs if requested
