@@ -885,8 +885,35 @@ def resident_login_view(request):
             'error': 'Το email δεν είναι έγκυρο.'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Καθαρισμός τηλεφώνου (αφαίρεση κενών, παύλων κλπ)
-    phone_clean = re.sub(r'[\s\-\.\(\)]', '', phone)
+    def normalize_phone(phone_str):
+        """
+        Κανονικοποίηση τηλεφώνου - αφαίρεση κωδικών χώρας και ειδικών χαρακτήρων.
+        Υποστηρίζει: +30, 0030, 30 (για Ελλάδα) και άλλους κωδικούς.
+        Επιστρέφει τα τελευταία 10 ψηφία (ελληνικό κινητό) ή όλο τον αριθμό.
+        """
+        if not phone_str:
+            return ''
+        # Αφαίρεση κενών, παύλων, τελειών, παρενθέσεων
+        cleaned = re.sub(r'[\s\-\.\(\)]', '', phone_str)
+        # Αφαίρεση + στην αρχή
+        cleaned = cleaned.lstrip('+')
+        # Αφαίρεση κωδικού χώρας Ελλάδας (30 ή 0030)
+        if cleaned.startswith('0030'):
+            cleaned = cleaned[4:]
+        elif cleaned.startswith('30') and len(cleaned) > 10:
+            cleaned = cleaned[2:]
+        # Αφαίρεση αρχικού 0 αν υπάρχει (π.χ. 0694... -> 694...)
+        if cleaned.startswith('0') and len(cleaned) > 10:
+            cleaned = cleaned[1:]
+        return cleaned
+    
+    # Κανονικοποίηση τηλεφώνου εισόδου
+    phone_clean = normalize_phone(phone)
+    
+    if not phone_clean or len(phone_clean) < 10:
+        return Response({
+            'error': 'Το τηλέφωνο δεν είναι έγκυρο. Παρακαλώ εισάγετε έγκυρο αριθμό.'
+        }, status=status.HTTP_400_BAD_REQUEST)
     
     try:
         from django_tenants.utils import schema_context
@@ -908,14 +935,14 @@ def resident_login_view(request):
                 apts = Apartment.objects.all()
                 
                 for a in apts:
-                    # Καθαρίζουμε τα αποθηκευμένα τηλέφωνα
+                    # Καθαρίζουμε τα αποθηκευμένα τηλέφωνα με την ίδια λογική
                     owner_phones = [
-                        re.sub(r'[\s\-\.\(\)]', '', a.owner_phone or ''),
-                        re.sub(r'[\s\-\.\(\)]', '', a.owner_phone2 or ''),
+                        normalize_phone(a.owner_phone),
+                        normalize_phone(a.owner_phone2),
                     ]
                     tenant_phones = [
-                        re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone or ''),
-                        re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone2 or ''),
+                        normalize_phone(a.tenant_phone),
+                        normalize_phone(a.tenant_phone2),
                     ]
                     
                     # Έλεγχος αν ταιριάζουν email + τηλέφωνο για owner
