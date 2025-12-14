@@ -25,7 +25,7 @@ class VoteViewSet(viewsets.ModelViewSet):
     serializer_class = VoteSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'my_submission', 'results', 'vote']:
+        if self.action in ['list', 'retrieve', 'my_submission', 'results', 'vote', 'submit']:
             return [permissions.IsAuthenticated()]
         # create, update, destroy: επιτρέπεται σε office managers και internal managers
         return [permissions.IsAuthenticated(), IsOfficeManagerOrInternalManager()]
@@ -57,7 +57,7 @@ class VoteViewSet(viewsets.ModelViewSet):
             return VoteListSerializer
         elif self.action in ['retrieve', 'results']:
             return VoteSerializer
-        elif self.action in ['vote', 'my_submission']:
+        elif self.action in ['vote', 'my_submission', 'submit']:
             return VoteSubmissionSerializer
         return super().get_serializer_class()
 
