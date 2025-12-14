@@ -24,6 +24,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/plans',
     '/payment',
     '/auth/callback',
+    '/auth/verify-email',
     '/logout',
     '/verify-payment',
     '/forgot-password',
@@ -36,6 +37,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/signup',
     '/forgot-password',
     '/accept-invitation',
+    '/auth/verify-email',
     '/'
   ];
   
