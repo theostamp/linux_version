@@ -768,6 +768,55 @@ def get_current_context_view(request):
     return _get_current_context_logic(request)
 
 
+# Standalone view function for my-buildings endpoint at /api/buildings/my-buildings/
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_buildings_view(request):
+    """
+    Standalone view function for /api/buildings/my-buildings/ endpoint.
+    Returns all buildings the user has access to with permissions.
+    
+    Query params:
+        - lightweight (optional): If true, returns minimal data for dropdowns
+    
+    Returns:
+        List of buildings with permissions
+    """
+    from .services import BuildingService
+    from .serializers import BuildingContextSerializer, BuildingContextListSerializer
+    
+    try:
+        # Get all user buildings
+        buildings = BuildingService.get_user_buildings(request.user, as_dto=True)
+        
+        # Choose serializer based on query param
+        lightweight = request.query_params.get('lightweight', 'false').lower() == 'true'
+        
+        if lightweight:
+            serializer = BuildingContextListSerializer(
+                [b.to_dict() for b in buildings],
+                many=True
+            )
+        else:
+            serializer = BuildingContextSerializer(
+                [b.to_dict() for b in buildings],
+                many=True
+            )
+        
+        return Response(serializer.data)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in get_my_buildings_view: {e}", exc_info=True)
+        return Response(
+            {
+                'error': str(e),
+                'code': 'MY_BUILDINGS_ERROR'
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_user_to_building(request):

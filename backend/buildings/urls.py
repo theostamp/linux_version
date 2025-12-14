@@ -5,6 +5,7 @@ from .views import (
     BuildingViewSet, 
     ServicePackageViewSet, 
     get_current_context_view,
+    get_my_buildings_view,
     add_user_to_building,
     remove_membership
 )
@@ -32,6 +33,9 @@ urlpatterns = [
     
     path('current-context/', get_current_context_view, name='building-current-context'),
     path('current-context', get_current_context_view, name='building-current-context-no-slash'),
+    
+    path('my-buildings/', get_my_buildings_view, name='building-my-buildings'),
+    path('my-buildings', get_my_buildings_view, name='building-my-buildings-no-slash'),
     
     # Router URLs last
     path('', include(router.urls)),
