@@ -6,8 +6,73 @@ Assembly Signals
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+import logging
 
-from .models import Assembly, AgendaItem, AssemblyAttendee
+from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
+
+logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=AssemblyVote)
+def sync_assembly_vote_to_vote_submission(sender, instance, created, **kwargs):
+    """
+    Συγχρονισμός AssemblyVote -> VoteSubmission (linked vote)
+    Όταν κάποιος ψηφίζει σε θέμα συνέλευσης, η ψήφος καταγράφεται 
+    και στο linked Vote για ενιαία αποτελέσματα.
+    """
+    if not created:
+        return
+    
+    try:
+        agenda_item = instance.agenda_item
+        linked_vote = agenda_item.linked_vote
+        
+        if not linked_vote:
+            logger.debug(f"No linked vote for agenda item {agenda_item.id}, skipping sync")
+            return
+        
+        # Get user from attendee
+        user = instance.attendee.user
+        if not user:
+            logger.warning(f"No user for attendee {instance.attendee.id}, skipping VoteSubmission sync")
+            return
+        
+        # Map AssemblyVote.vote -> VoteSubmission.choice
+        vote_mapping = {
+            'approve': 'ΝΑΙ',
+            'reject': 'ΟΧΙ',
+            'abstain': 'ΛΕΥΚΟ',
+        }
+        choice = vote_mapping.get(instance.vote)
+        if not choice:
+            logger.warning(f"Unknown vote value '{instance.vote}', skipping sync")
+            return
+        
+        # Map vote_source
+        source_mapping = {
+            'pre_vote': 'pre_vote',
+            'live': 'live',
+            'proxy': 'proxy',
+        }
+        vote_source = source_mapping.get(instance.vote_source, 'app')
+        
+        # Create or update VoteSubmission
+        from votes.models import VoteSubmission
+        
+        submission, was_created = VoteSubmission.objects.update_or_create(
+            vote=linked_vote,
+            user=user,
+            defaults={
+                'choice': choice,
+                'vote_source': vote_source,
+            }
+        )
+        
+        action = "Created" if was_created else "Updated"
+        logger.info(f"{action} VoteSubmission for user {user.email} on vote {linked_vote.id} ({choice}, {vote_source})")
+        
+    except Exception as e:
+        logger.error(f"Error syncing AssemblyVote {instance.id} to VoteSubmission: {e}")
 
 
 @receiver(post_save, sender=AgendaItem)

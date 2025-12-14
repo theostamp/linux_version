@@ -150,7 +150,7 @@ class Vote(models.Model):
             return "🔒 Κλειστή"
 
     def get_results(self):
-        """Επιστρέφει τα αποτελέσματα της ψηφοφορίας"""
+        """Επιστρέφει τα αποτελέσματα της ψηφοφορίας με breakdown ανά πηγή"""
         results = {}
         for choice, _ in VoteSubmission.CHOICES:
             results[choice] = self.submissions.filter(choice=choice).count()
@@ -158,6 +158,23 @@ class Vote(models.Model):
         results['eligible_voters'] = self.eligible_voters_count
         results['participation_percentage'] = self.participation_percentage
         results['is_valid'] = self.is_valid_result
+        
+        # Breakdown by vote source
+        results['by_source'] = {
+            'electronic': self.submissions.filter(vote_source__in=['app', 'email', 'pre_vote']).count(),
+            'physical': self.submissions.filter(vote_source='live').count(),
+            'proxy': self.submissions.filter(vote_source='proxy').count(),
+        }
+        
+        # Detailed breakdown
+        results['source_details'] = {
+            'app': self.submissions.filter(vote_source='app').count(),
+            'email': self.submissions.filter(vote_source='email').count(),
+            'pre_vote': self.submissions.filter(vote_source='pre_vote').count(),
+            'live': self.submissions.filter(vote_source='live').count(),
+            'proxy': self.submissions.filter(vote_source='proxy').count(),
+        }
+        
         return results
 
     def get_absolute_url(self):
@@ -172,10 +189,24 @@ class VoteSubmission(models.Model):
         ("ΟΧΙ", "ΟΧΙ"),
         ("ΛΕΥΚΟ", "ΛΕΥΚΟ"),
     ]
+    
+    SOURCE_CHOICES = [
+        ('app', 'Εφαρμογή'),
+        ('email', 'Email Link'),
+        ('pre_vote', 'Ηλεκτρονικά (Pre-voting)'),
+        ('live', 'Φυσική Παρουσία'),
+        ('proxy', 'Εξουσιοδότηση'),
+    ]
 
     vote = models.ForeignKey(Vote, on_delete=models.CASCADE, related_name='submissions')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     choice = models.CharField(max_length=50, choices=CHOICES)
+    vote_source = models.CharField(
+        max_length=20, 
+        choices=SOURCE_CHOICES, 
+        default='app',
+        verbose_name="Τρόπος Ψηφοφορίας"
+    )
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

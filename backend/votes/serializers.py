@@ -151,11 +151,12 @@ class VoteSerializer(serializers.ModelSerializer):
 class VoteSubmissionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     user_name = serializers.SerializerMethodField()
+    vote_source_display = serializers.CharField(source='get_vote_source_display', read_only=True)
 
     class Meta:
         model = VoteSubmission
-        fields = ['id', 'vote', 'user', 'user_name', 'choice', 'submitted_at', 'updated_at']
-        read_only_fields = ['id', 'vote', 'user', 'user_name', 'submitted_at', 'updated_at']
+        fields = ['id', 'vote', 'user', 'user_name', 'choice', 'vote_source', 'vote_source_display', 'submitted_at', 'updated_at']
+        read_only_fields = ['id', 'vote', 'user', 'user_name', 'vote_source_display', 'submitted_at', 'updated_at']
 
     def validate(self, data):
         """Validation για την ψήφο - το vote object περνιέται από το view context"""
@@ -185,6 +186,8 @@ class VoteResultsSerializer(serializers.Serializer):
     participation_percentage = serializers.FloatField()
     is_valid = serializers.BooleanField()
     min_participation = serializers.IntegerField()
+    by_source = serializers.DictField(required=False)
+    source_details = serializers.DictField(required=False)
 
 class VoteListSerializer(serializers.ModelSerializer):
     """Simplified serializer for list views"""

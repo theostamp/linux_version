@@ -3,13 +3,30 @@
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { cn } from '@/lib/utils';
+import { Smartphone, Mail, Monitor, Users, UserCheck } from 'lucide-react';
+
+interface BySource {
+  electronic?: number;
+  physical?: number;
+  proxy?: number;
+}
+
+interface SourceDetails {
+  app?: number;
+  email?: number;
+  pre_vote?: number;
+  live?: number;
+  proxy?: number;
+}
 
 interface VoteResultsDisplayProps {
   results: {
     ΝΑΙ: number;
     ΟΧΙ: number;
     ΛΕΥΚΟ: number;
-    [key: string]: number;
+    by_source?: BySource;
+    source_details?: SourceDetails;
+    [key: string]: number | BySource | SourceDetails | undefined;
   };
   total: number;
   participationPercentage?: number;
@@ -291,6 +308,108 @@ export default function VoteResultsDisplay({
           </div>
         </div>
       </motion.div>
+
+      {/* Breakdown by voting method */}
+      {results.by_source && total > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-white rounded-xl p-4 border border-gray-200"
+        >
+          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Τρόπος Ψηφοφορίας
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Electronic votes */}
+            {((results.by_source as BySource).electronic ?? 0) > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Monitor className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-blue-700">
+                    {(results.by_source as BySource).electronic}
+                  </p>
+                  <p className="text-xs text-blue-600">Ηλεκτρονικά</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Physical presence votes */}
+            {((results.by_source as BySource).physical ?? 0) > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <UserCheck className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-emerald-700">
+                    {(results.by_source as BySource).physical}
+                  </p>
+                  <p className="text-xs text-emerald-600">Φυσική παρουσία</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Proxy votes */}
+            {((results.by_source as BySource).proxy ?? 0) > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-purple-700">
+                    {(results.by_source as BySource).proxy}
+                  </p>
+                  <p className="text-xs text-purple-600">Εξουσιοδότηση</p>
+                </div>
+              </div>
+            )}
+
+            {/* Show "No breakdown data" if all are 0 */}
+            {((results.by_source as BySource).electronic ?? 0) === 0 && 
+             ((results.by_source as BySource).physical ?? 0) === 0 && 
+             ((results.by_source as BySource).proxy ?? 0) === 0 && (
+              <div className="col-span-full text-center text-gray-500 text-sm py-2">
+                Δεν υπάρχουν διαθέσιμα στοιχεία ανάλυσης
+              </div>
+            )}
+          </div>
+
+          {/* Detailed breakdown (optional) */}
+          {results.source_details && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500 flex flex-wrap gap-x-4 gap-y-1">
+                {(results.source_details as SourceDetails).app ? (
+                  <span className="flex items-center gap-1">
+                    <Smartphone className="w-3 h-3" />
+                    {(results.source_details as SourceDetails).app} από εφαρμογή
+                  </span>
+                ) : null}
+                {(results.source_details as SourceDetails).email ? (
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3 h-3" />
+                    {(results.source_details as SourceDetails).email} από email
+                  </span>
+                ) : null}
+                {(results.source_details as SourceDetails).pre_vote ? (
+                  <span className="flex items-center gap-1">
+                    <Monitor className="w-3 h-3" />
+                    {(results.source_details as SourceDetails).pre_vote} pre-voting
+                  </span>
+                ) : null}
+                {(results.source_details as SourceDetails).live ? (
+                  <span className="flex items-center gap-1">
+                    <UserCheck className="w-3 h-3" />
+                    {(results.source_details as SourceDetails).live} στη συνέλευση
+                  </span>
+                ) : null}
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
