@@ -249,10 +249,37 @@ function ResidentLoginForm() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-slate-700">
-              <p className="text-xs text-slate-500 text-center">
-                Δεν έχετε λογαριασμό; Σαρώστε το QR code στην είσοδο της πολυκατοικίας σας για να εγγραφείτε.
+            {/* Help Section */}
+            <div className="mt-6 pt-6 border-t border-slate-700 space-y-4">
+              <p className="text-sm font-medium text-slate-300 text-center">
+                Δεν μπορείτε να συνδεθείτε;
               </p>
+              
+              <div className="space-y-3 text-xs text-slate-400">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">1.</span>
+                  <p>
+                    <strong className="text-slate-300">Δεν έχετε καταχωρηθεί;</strong> Σαρώστε το QR code 
+                    στην είσοδο της πολυκατοικίας σας (αν υπάρχει) για αυτόματη εγγραφή.
+                  </p>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">2.</span>
+                  <p>
+                    <strong className="text-slate-300">Δεν υπάρχει QR code;</strong> Ζητήστε από τη διαχείριση 
+                    να σας στείλει πρόσκληση στο email σας για να ολοκληρώσετε την εγγραφή.
+                  </p>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">3.</span>
+                  <p>
+                    <strong className="text-slate-300">Τα στοιχεία δεν αναγνωρίζονται;</strong> Επικοινωνήστε 
+                    με τη διαχείριση της πολυκατοικίας σας για επιβεβαίωση των καταχωρημένων στοιχείων.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
