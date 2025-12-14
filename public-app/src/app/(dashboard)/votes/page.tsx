@@ -68,7 +68,10 @@ const formatDate = (value: string | null | undefined) => {
 
 const isActive = (startDate: string, endDate: string | null | undefined): boolean => {
   const now = new Date();
+  
+  // Parse start date - set to start of day in local timezone
   const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
   
   if (Number.isNaN(start.getTime())) {
     return false;
@@ -79,7 +82,12 @@ const isActive = (startDate: string, endDate: string | null | undefined): boolea
     return now >= start;
   }
   
+  // Parse end date - set to END of day (23:59:59.999) in local timezone
+  // This fixes timezone issues where "2025-12-14" as end date 
+  // should include the entire day of 14/12, not just midnight UTC
   const end = new Date(endDate!);
+  end.setHours(23, 59, 59, 999);
+  
   return now >= start && now <= end;
 };
 

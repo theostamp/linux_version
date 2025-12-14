@@ -102,7 +102,9 @@ export default function VoteDetailPage() {
     return <ErrorMessage message="Δεν έχετε δικαίωμα πρόσβασης σε αυτή την ψηφοφορία." />;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date (not UTC) for comparison - toISOString() returns UTC which can be wrong timezone
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   // Handle null/invalid end_date - treat as no expiry
   const hasValidEndDate = vote.end_date && vote.end_date !== '1970-01-01' && !vote.end_date.startsWith('1970');
   const isActive = vote.start_date <= today && (!hasValidEndDate || today <= vote.end_date);
