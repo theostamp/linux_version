@@ -39,6 +39,7 @@ export async function GET(
 
   const backendUrl =
     process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_CORE_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_DJANGO_API_URL ||
     'https://linuxversion-production.up.railway.app';

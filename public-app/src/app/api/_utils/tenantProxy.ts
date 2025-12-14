@@ -61,7 +61,9 @@ const stripHopByHopHeaders = (headers: Headers) => {
 const resolveBackendBase = () => {
   const base =
     process.env.API_BASE_URL ??
+    process.env.NEXT_PUBLIC_CORE_API_URL ??
     process.env.NEXT_PUBLIC_API_URL ??
+    process.env.NEXT_PUBLIC_DJANGO_API_URL ??
     process.env.API_URL ??
     process.env.BACKEND_URL ??
     "https://linuxversion-production.up.railway.app";
