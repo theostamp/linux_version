@@ -68,7 +68,8 @@ function ProjectsDashboardContent() {
   const { currentBuilding, selectedBuilding } = useBuilding();
   
   // Use same logic as announcements and votes pages for consistency
-  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
+  const buildingId =
+    selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
   
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');

@@ -269,7 +269,12 @@ function VotesPageContent() {
     }
   }, [selectedBuilding, currentBuilding, searchParams, router]);
 
-  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
+  // IMPORTANT:
+  // - selectedBuilding === null means "All buildings" (or "All my properties" for residents)
+  // - selectedBuilding (object) means an explicit building filter
+  // - only if no explicit selection exists, fall back to currentBuilding
+  const buildingId =
+    selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
   const canDelete = hasOfficeAdminAccess(user);
   const canCreateVote = hasInternalManagerAccess(user);
 

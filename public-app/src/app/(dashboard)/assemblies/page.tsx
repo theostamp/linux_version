@@ -192,7 +192,8 @@ function AssembliesPageContent() {
   const searchParams = useSearchParams();
   const deleteAssembly = useDeleteAssembly();
 
-  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
+  const buildingId =
+    selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
   const canManage = hasInternalManagerAccess(user);
 
   const {

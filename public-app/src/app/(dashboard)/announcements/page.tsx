@@ -27,7 +27,8 @@ function AnnouncementsPageContent() {
   const canCreateAnnouncement = hasInternalManagerAccess(user);
 
   // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
-  const buildingId = currentBuilding?.id ?? selectedBuilding?.id ?? null;
+  const buildingId =
+    selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
 
   const {
     data: announcements = [],

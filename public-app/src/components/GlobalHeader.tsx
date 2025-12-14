@@ -45,10 +45,13 @@ export default function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b-0" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)' }}>
+      <header
+        className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border"
+        style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)' }}
+      >
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-full">
-            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-8 h-20 py-3">
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6 lg:gap-8 py-3 sm:h-20">
               {/* Left Section - Logo */}
               <div className="flex-shrink-0">
                 {(() => {
@@ -155,11 +158,11 @@ export default function GlobalHeader() {
                     
                     {/* Building Selector for residents with multiple buildings - Mobile */}
                     {canSelectBuilding && hasMultipleBuildings && (
-                      <div className="sm:hidden">
+                      <div className="sm:hidden mt-2">
                         <BuildingSelectorButton
                           onBuildingSelect={setSelectedBuilding}
                           selectedBuilding={selectedBuilding}
-                          className="text-xs py-1 px-2"
+                          className="w-full text-xs py-1.5 px-2"
                         />
                       </div>
                     )}
