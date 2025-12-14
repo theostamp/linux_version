@@ -72,17 +72,25 @@ const isActive = (startDate: string, endDate: string | null | undefined): boolea
   const today = new Date().toISOString().split('T')[0]; // e.g. "2025-12-14"
   
   // start_date is required and must be valid
-  if (!startDate || startDate < '1971-01-01') {
+  // Use isValidDate to properly validate instead of raw string comparison
+  // (raw string comparison fails for non-ISO formats like "12-14-2025")
+  if (!isValidDate(startDate)) {
     return false;
   }
   
+  // Normalize startDate to ISO format for reliable string comparison
+  const normalizedStartDate = new Date(startDate).toISOString().split('T')[0];
+  
   // If no valid end date, consider it always active (after start)
   if (!isValidDate(endDate)) {
-    return today >= startDate;
+    return today >= normalizedStartDate;
   }
   
+  // Normalize endDate to ISO format for reliable string comparison
+  const normalizedEndDate = new Date(endDate!).toISOString().split('T')[0];
+  
   // Compare ISO date strings directly (inclusive of end date)
-  return today >= startDate && today <= endDate!;
+  return today >= normalizedStartDate && today <= normalizedEndDate;
 };
 
 function VoteItemContent({
