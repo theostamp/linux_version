@@ -102,7 +102,22 @@ class VoteViewSet(viewsets.ModelViewSet):
             context={'request': request, 'vote': vote}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(vote=vote, user=request.user)
+        
+        # Calculate mills from user's apartment
+        mills = 0
+        try:
+            from apartments.models import Apartment
+            # Find apartment where user is owner or tenant
+            apartment = Apartment.objects.filter(
+                Q(owner_user=request.user) | Q(tenant_user=request.user),
+                building=vote.building
+            ).first()
+            if apartment:
+                mills = apartment.participation_mills or 0
+        except Exception as e:
+            logger.warning(f"Could not get mills for user {request.user.id}: {e}")
+        
+        serializer.save(vote=vote, user=request.user, mills=mills)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], url_path='submit')
