@@ -212,13 +212,13 @@ function AgendaItemCard({
 function CreateAssemblyContent() {
   const router = useRouter();
   const { user } = useAuth();
-  const { currentBuilding, buildings } = useBuilding();
+  const { currentBuilding, selectedBuilding, buildings } = useBuilding();
   const createAssembly = useCreateAssembly();
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    building: currentBuilding?.id || 0,
+    building: (selectedBuilding?.id ?? currentBuilding?.id) || 0,
     scheduled_date: '',
     scheduled_time: '19:00',
     estimated_duration: 60,
@@ -230,6 +230,16 @@ function CreateAssemblyContent() {
     pre_voting_start_date: '',
     pre_voting_end_date: '',
   });
+
+  const [userTouchedBuilding, setUserTouchedBuilding] = useState(false);
+
+  // Auto-fill building once we know the current/selected building, unless user already chose manually
+  useEffect(() => {
+    const ctxBuildingId = (selectedBuilding?.id ?? currentBuilding?.id) || 0;
+    if (!userTouchedBuilding && ctxBuildingId && (!formData.building || formData.building === 0)) {
+      setFormData((prev) => ({ ...prev, building: ctxBuildingId }));
+    }
+  }, [selectedBuilding?.id, currentBuilding?.id, userTouchedBuilding, formData.building]);
 
   const [agendaItems, setAgendaItems] = useState<AgendaItemForm[]>([
     {
@@ -388,7 +398,10 @@ function CreateAssemblyContent() {
               <Label htmlFor="building">Κτίριο</Label>
               <Select
                 value={formData.building.toString()}
-                onValueChange={(v) => setFormData({ ...formData, building: parseInt(v) })}
+                onValueChange={(v) => {
+                  setUserTouchedBuilding(true);
+                  setFormData({ ...formData, building: parseInt(v) });
+                }}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Επιλέξτε κτίριο" />

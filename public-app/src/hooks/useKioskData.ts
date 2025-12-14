@@ -64,6 +64,9 @@ export interface KioskVote {
   is_urgent?: boolean;
   min_participation?: number;
   total_votes?: number;
+  participation_percentage?: number;
+  is_valid?: boolean;
+  results?: Record<string, any> | null;
 }
 
 export interface KioskFinancialInfo {
@@ -272,6 +275,9 @@ interface PublicInfoResponse {
     min_participation?: number;
     created_at?: string;
     total_votes?: number;
+    participation_percentage?: number;
+    is_valid?: boolean;
+    results?: Record<string, any> | null;
   }>;
   financial?: PublicFinancialInfo;
   financial_info?: PublicFinancialInfo;
@@ -398,6 +404,9 @@ export const useKioskData = (buildingId: number | null = 1) => {
         is_urgent: vote.is_urgent,
         min_participation: vote.min_participation,
         total_votes: vote.total_votes ?? 0,
+        participation_percentage: vote.participation_percentage,
+        is_valid: vote.is_valid,
+        results: vote.results ?? null,
       }));
 
       // Use real financial data from backend

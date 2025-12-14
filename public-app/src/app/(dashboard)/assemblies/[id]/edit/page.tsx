@@ -214,7 +214,7 @@ function EditAssemblyContent() {
   const assemblyId = params.id as string;
   
   const { user } = useAuth();
-  const { buildings } = useBuilding();
+  const { buildings, currentBuilding, selectedBuilding } = useBuilding();
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
   const updateAssembly = useUpdateAssembly();
 
@@ -236,6 +236,7 @@ function EditAssemblyContent() {
 
   const [agendaItems, setAgendaItems] = useState<AgendaItemForm[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [userTouchedBuilding, setUserTouchedBuilding] = useState(false);
 
   // Pre-fill form with assembly data
   useEffect(() => {
@@ -275,6 +276,14 @@ function EditAssemblyContent() {
       setIsInitialized(true);
     }
   }, [assembly, isInitialized]);
+
+  // If assembly has no building set (0/null), auto-fill from current/selected building unless user picked manually
+  useEffect(() => {
+    const ctxBuildingId = (selectedBuilding?.id ?? currentBuilding?.id) || 0;
+    if (!userTouchedBuilding && ctxBuildingId && (!formData.building || formData.building === 0)) {
+      setFormData((prev) => ({ ...prev, building: ctxBuildingId }));
+    }
+  }, [selectedBuilding?.id, currentBuilding?.id, userTouchedBuilding, formData.building]);
 
   const canManage = hasInternalManagerAccess(user);
 
@@ -441,7 +450,10 @@ function EditAssemblyContent() {
               <Label htmlFor="building">Κτίριο</Label>
               <Select
                 value={formData.building.toString()}
-                onValueChange={(v) => setFormData({ ...formData, building: parseInt(v) })}
+                onValueChange={(v) => {
+                  setUserTouchedBuilding(true);
+                  setFormData({ ...formData, building: parseInt(v) });
+                }}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Επιλέξτε κτίριο" />

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
+import VoteResultsBannerWidget from '@/components/kiosk/widgets/VoteResultsBannerWidget';
 import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
 import AnnouncementsExpensesSlider from '@/components/kiosk/widgets/AnnouncementsExpensesSlider';
@@ -115,8 +116,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
             className="flex-shrink-0 h-[35%] backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
             style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
           >
-            <div className="h-full overflow-y-auto p-3">
-              <AssemblyAnnouncementWidget data={data} isLoading={false} error={null} />
+            <div className="h-full p-3 flex flex-col gap-3">
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <AssemblyAnnouncementWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <VoteResultsBannerWidget data={data} isLoading={false} error={null} />
+              </div>
             </div>
           </div>
 
