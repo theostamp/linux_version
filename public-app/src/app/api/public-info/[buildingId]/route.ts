@@ -155,6 +155,54 @@ export async function GET(
       }
     }
 
+    // Enrich votes with public results for kiosk banner (percentages, thresholds)
+    try {
+      const votes = Array.isArray((data as any).votes) ? (data as any).votes : [];
+      const votesNeedingResults = votes.filter((v: any) => v && typeof v === 'object' && !('results' in v));
+
+      if (votesNeedingResults.length > 0) {
+        const toEnrich = votesNeedingResults.slice(0, 3); // keep latency bounded
+
+        await Promise.all(
+          toEnrich.map(async (v: any) => {
+            const voteId = v?.id;
+            if (!voteId) return;
+
+            const voteUrl = `${normalizedBase}/api/votes/public/${voteId}/results/`;
+            const voteController = new AbortController();
+            const voteTimeoutId = setTimeout(() => voteController.abort(), 2500);
+
+            try {
+              const resp = await fetch(voteUrl, {
+                headers,
+                signal: voteController.signal,
+              });
+              clearTimeout(voteTimeoutId);
+
+              if (!resp.ok) {
+                const txt = await resp.text();
+                console.warn('[PUBLIC-INFO API] Vote results enrichment failed:', resp.status, txt);
+                return;
+              }
+
+              const json = await resp.json();
+              // inject fields onto the vote object
+              v.results = json?.results ?? null;
+              v.min_participation = json?.min_participation ?? v.min_participation;
+              v.total_votes = json?.total_votes ?? v.total_votes;
+              v.participation_percentage = json?.participation_percentage ?? v.participation_percentage;
+              v.is_valid = json?.is_valid ?? v.is_valid;
+            } catch (e) {
+              clearTimeout(voteTimeoutId);
+              console.warn('[PUBLIC-INFO API] Vote results enrichment error:', e);
+            }
+          })
+        );
+      }
+    } catch (e) {
+      console.warn('[PUBLIC-INFO API] Vote enrichment wrapper error:', e);
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
