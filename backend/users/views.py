@@ -842,6 +842,175 @@ def request_magic_link_view(request):
         }, status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resident_login_view(request):
+    """
+    POST /api/users/resident-login/
+    Σύνδεση ενοίκου με email ή τηλέφωνο (χωρίς password).
+    
+    Ο χρήστης εισάγει email ή τηλέφωνο και αν είναι καταχωρημένος
+    σε κάποιο διαμέρισμα, συνδέεται απευθείας.
+    
+    Request:
+        - identifier: str (email ή τηλέφωνο)
+    
+    Response:
+        - access: JWT access token
+        - refresh: JWT refresh token
+        - user: User data
+    """
+    import re
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    identifier = request.data.get('identifier', '').strip()
+    
+    if not identifier:
+        return Response({
+            'error': 'Παρακαλώ εισάγετε email ή τηλέφωνο.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Καθορισμός αν είναι email ή τηλέφωνο
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    is_email = bool(re.match(email_pattern, identifier))
+    
+    # Καθαρισμός τηλεφώνου (αφαίρεση κενών, παύλων κλπ)
+    if not is_email:
+        identifier = re.sub(r'[\s\-\.\(\)]', '', identifier)
+    else:
+        identifier = identifier.lower()
+    
+    try:
+        from django_tenants.utils import schema_context
+        from apartments.models import Apartment
+        from buildings.models import BuildingMembership
+        from tenants.models import Client
+        from django.db.models import Q
+        
+        user = None
+        building = None
+        apartment = None
+        tenant = None
+        
+        # Ψάχνουμε σε όλα τα tenant schemas
+        with schema_context('public'):
+            tenants = Client.objects.exclude(schema_name='public')
+        
+        for t in tenants:
+            with schema_context(t.schema_name):
+                # Αναζήτηση στο Apartment model
+                if is_email:
+                    # Ψάξε με email
+                    apt = Apartment.objects.filter(
+                        Q(owner_email__iexact=identifier) | Q(tenant_email__iexact=identifier)
+                    ).select_related('building').first()
+                else:
+                    # Ψάξε με τηλέφωνο (αφαιρώντας και από τα αποθηκευμένα)
+                    # Δημιουργούμε variations του τηλεφώνου για καλύτερο matching
+                    apts = Apartment.objects.all()
+                    apt = None
+                    for a in apts:
+                        # Καθαρίζουμε τα αποθηκευμένα τηλέφωνα
+                        stored_phones = [
+                            re.sub(r'[\s\-\.\(\)]', '', a.owner_phone or ''),
+                            re.sub(r'[\s\-\.\(\)]', '', a.owner_phone2 or ''),
+                            re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone or ''),
+                            re.sub(r'[\s\-\.\(\)]', '', a.tenant_phone2 or ''),
+                        ]
+                        if identifier in stored_phones:
+                            apt = a
+                            break
+                
+                if apt:
+                    apartment = apt
+                    building = apt.building
+                    tenant = t
+                    
+                    # Βρες τον αντίστοιχο user
+                    if is_email:
+                        if apt.owner_email and apt.owner_email.lower() == identifier:
+                            user = apt.owner_user
+                        elif apt.tenant_email and apt.tenant_email.lower() == identifier:
+                            user = apt.tenant_user
+                    else:
+                        # Για τηλέφωνο, ελέγχουμε ποιο πεδίο ταίριαξε
+                        owner_phones = [
+                            re.sub(r'[\s\-\.\(\)]', '', apt.owner_phone or ''),
+                            re.sub(r'[\s\-\.\(\)]', '', apt.owner_phone2 or ''),
+                        ]
+                        tenant_phones = [
+                            re.sub(r'[\s\-\.\(\)]', '', apt.tenant_phone or ''),
+                            re.sub(r'[\s\-\.\(\)]', '', apt.tenant_phone2 or ''),
+                        ]
+                        
+                        if identifier in owner_phones:
+                            user = apt.owner_user
+                        elif identifier in tenant_phones:
+                            user = apt.tenant_user
+                    
+                    if user:
+                        break
+        
+        if not user:
+            return Response({
+                'error': 'Δεν βρέθηκε λογαριασμός με αυτά τα στοιχεία. Βεβαιωθείτε ότι είστε καταχωρημένος στην πολυκατοικία σας.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Έλεγχος αν ο χρήστης είναι active
+        if not user.is_active:
+            return Response({
+                'error': 'Ο λογαριασμός σας δεν είναι ενεργός. Παρακαλώ επικοινωνήστε με τη διαχείριση.'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Δημιουργία JWT tokens
+        refresh = RefreshToken.for_user(user)
+        
+        # Ενημέρωση last_login
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
+        
+        logger.info(f"Resident login successful for user {user.email} via {'email' if is_email else 'phone'}")
+        
+        # Επιστροφή response
+        response_data = {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+            },
+            'building': {
+                'id': building.id if building else None,
+                'name': building.name if building else None,
+            } if building else None,
+            'apartment': {
+                'id': apartment.id if apartment else None,
+                'number': apartment.number if apartment else None,
+            } if apartment else None,
+        }
+        
+        # Προσθήκη tenant URL αν υπάρχει
+        if tenant and hasattr(tenant, 'get_primary_domain'):
+            try:
+                domain = tenant.get_primary_domain()
+                if domain:
+                    response_data['tenant_url'] = domain.domain
+            except Exception:
+                pass
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error in resident_login_view: {e}", exc_info=True)
+        return Response({
+            'error': 'Προέκυψε σφάλμα. Παρακαλώ δοκιμάστε ξανά.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # ===== INVITATION ENDPOINTS =====
 
 @api_view(['POST'])
