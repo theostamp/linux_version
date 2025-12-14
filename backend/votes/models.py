@@ -90,16 +90,47 @@ class Vote(models.Model):
     @property
     def participation_percentage(self):
         """Ποσοστό συμμετοχής"""
-        if self.building is None:
-            # For global votes, calculate based on all residents from all buildings
-            from residents.models import Resident
-            total_residents = Resident.objects.count()
-        else:
-            total_residents = self.building.residents.count()
+        total_eligible = self._get_eligible_voters_count()
         
-        if total_residents == 0:
+        if total_eligible == 0:
             return 0
-        return round((self.total_votes / total_residents) * 100, 1)
+        return round((self.total_votes / total_eligible) * 100, 1)
+    
+    @property
+    def eligible_voters_count(self):
+        """Αριθμός δικαιούχων ψήφου"""
+        return self._get_eligible_voters_count()
+    
+    def _get_eligible_voters_count(self):
+        """
+        Υπολογίζει τους δικαιούχους ψήφου.
+        Χρησιμοποιεί apartments (ιδιοκτήτες/ενοίκους) αντί για το Resident model.
+        """
+        if self.building is None:
+            # For global votes, count all apartments from all buildings
+            from apartments.models import Apartment
+            return Apartment.objects.count()
+        
+        # Try apartments first (preferred)
+        try:
+            apartment_count = self.building.apartments.count()
+            if apartment_count > 0:
+                return apartment_count
+        except Exception:
+            pass
+        
+        # Fallback to apartments_count field
+        if hasattr(self.building, 'apartments_count') and self.building.apartments_count > 0:
+            return self.building.apartments_count
+        
+        # Last fallback: BuildingMembership
+        try:
+            from buildings.models import BuildingMembership
+            return BuildingMembership.objects.filter(building=self.building).count()
+        except Exception:
+            pass
+        
+        return 0
 
     @property
     def is_valid_result(self):
@@ -124,6 +155,7 @@ class Vote(models.Model):
         for choice, _ in VoteSubmission.CHOICES:
             results[choice] = self.submissions.filter(choice=choice).count()
         results['total'] = self.total_votes
+        results['eligible_voters'] = self.eligible_voters_count
         results['participation_percentage'] = self.participation_percentage
         results['is_valid'] = self.is_valid_result
         return results

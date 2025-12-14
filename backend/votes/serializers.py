@@ -24,6 +24,7 @@ class VoteSerializer(serializers.ModelSerializer):
     building_name = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
     total_votes = serializers.SerializerMethodField()
+    eligible_voters_count = serializers.SerializerMethodField()
     participation_percentage = serializers.SerializerMethodField()
 
     class Meta:
@@ -50,6 +51,7 @@ class VoteSerializer(serializers.ModelSerializer):
             'days_remaining',
             'status_display',
             'total_votes',
+            'eligible_voters_count',
             'participation_percentage',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'creator', 'creator_name', 'project_title']
@@ -140,6 +142,9 @@ class VoteSerializer(serializers.ModelSerializer):
     def get_total_votes(self, obj):
         return obj.total_votes
 
+    def get_eligible_voters_count(self, obj):
+        return obj.eligible_voters_count
+
     def get_participation_percentage(self, obj):
         return obj.participation_percentage
 
@@ -176,6 +181,7 @@ class VoteResultsSerializer(serializers.Serializer):
     ΟΧΙ = serializers.IntegerField()
     ΛΕΥΚΟ = serializers.IntegerField()
     total = serializers.IntegerField()
+    eligible_voters = serializers.IntegerField()
     participation_percentage = serializers.FloatField()
     is_valid = serializers.BooleanField()
     min_participation = serializers.IntegerField()
@@ -185,14 +191,15 @@ class VoteListSerializer(serializers.ModelSerializer):
     creator_name = serializers.SerializerMethodField()
     building_name = serializers.SerializerMethodField()
     total_votes = serializers.SerializerMethodField()
+    eligible_voters_count = serializers.SerializerMethodField()
     days_remaining = serializers.SerializerMethodField()
     
     class Meta:
         model = Vote
         fields = [
             'id', 'title', 'created_at', 'is_urgent', 'is_currently_active',
-            'creator_name', 'building_name', 'total_votes', 'days_remaining',
-            'is_active'
+            'creator_name', 'building_name', 'total_votes', 'eligible_voters_count',
+            'days_remaining', 'is_active'
         ]
 
     def get_creator_name(self, obj):
@@ -203,6 +210,9 @@ class VoteListSerializer(serializers.ModelSerializer):
 
     def get_total_votes(self, obj):
         return obj.total_votes
+    
+    def get_eligible_voters_count(self, obj):
+        return obj.eligible_voters_count
         
     def get_days_remaining(self, obj):
         return obj.days_remaining
