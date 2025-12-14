@@ -33,7 +33,7 @@ interface KioskVote {
 
 interface ActiveVoteWidgetProps {
   data: KioskData | null;
-  variant?: 'banner' | 'sidebar' | 'full';
+  variant?: 'banner' | 'sidebar' | 'full' | 'ambient';
 }
 
 export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVoteWidgetProps) {
@@ -194,6 +194,120 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
         <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-200">
           <Smartphone className="w-3 h-3" />
           <span>Ψηφίστε από την εφαρμογή!</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Ambient variant (for kiosk ambient display - bottom right corner)
+  if (variant === 'ambient') {
+    return (
+      <div className="absolute bottom-6 right-6 z-30 max-w-[420px] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="relative bg-gradient-to-br from-indigo-600/95 via-purple-600/95 to-pink-600/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+          {/* Animated pulse ring for urgent votes */}
+          {activeVote.is_urgent && (
+            <div className="absolute inset-0 rounded-2xl animate-pulse ring-2 ring-red-400/50" />
+          )}
+          
+          {/* Header */}
+          <div className="px-5 py-3 bg-gradient-to-r from-white/10 to-transparent flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <Vote className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/70 uppercase tracking-wider font-semibold">
+                    🗳️ Ψηφοφορία σε εξέλιξη
+                  </span>
+                  {activeVote.is_urgent && (
+                    <span className="text-[10px] bg-red-500/40 text-red-100 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                      ⚡ ΕΠΕΙΓΟΥΣΑ
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            {daysRemaining !== null && (
+              <div className="flex items-center gap-1.5 text-white/80 text-sm bg-white/10 px-3 py-1 rounded-full">
+                <Clock className="w-3.5 h-3.5" />
+                <span className="font-medium">
+                  {daysRemaining > 0 
+                    ? `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}` 
+                    : hoursRemaining && hoursRemaining > 0 
+                      ? `${hoursRemaining}ω`
+                      : 'Σήμερα!'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="px-5 py-4">
+            {/* Title */}
+            <h3 className="text-white font-bold text-lg mb-4 line-clamp-2 leading-snug">
+              {activeVote.title}
+            </h3>
+
+            {/* Results */}
+            {totalVotes > 0 ? (
+              <div className="space-y-3">
+                {/* Vote counts grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-emerald-500/20 rounded-xl p-2.5 text-center border border-emerald-400/20">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
+                    <p className="text-emerald-100 text-xl font-bold">{yesPercent}%</p>
+                    <p className="text-emerald-200/60 text-[10px] uppercase font-medium">ΝΑΙ</p>
+                  </div>
+                  <div className="bg-rose-500/20 rounded-xl p-2.5 text-center border border-rose-400/20">
+                    <XCircle className="w-5 h-5 text-rose-400 mx-auto mb-1" />
+                    <p className="text-rose-100 text-xl font-bold">{noPercent}%</p>
+                    <p className="text-rose-200/60 text-[10px] uppercase font-medium">ΟΧΙ</p>
+                  </div>
+                  <div className="bg-gray-500/20 rounded-xl p-2.5 text-center border border-gray-400/20">
+                    <MinusCircle className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                    <p className="text-gray-100 text-xl font-bold">{abstainPercent}%</p>
+                    <p className="text-gray-200/60 text-[10px] uppercase font-medium">ΛΕΥΚΟ</p>
+                  </div>
+                </div>
+
+                {/* Participation bar */}
+                <div className="bg-white/10 rounded-lg p-3">
+                  <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Συμμετοχή (βάσει χιλιοστών)</span>
+                    </span>
+                    <span className="font-bold text-white">{participationPercent}%</span>
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.min(participationPercent, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/50 mt-1.5 text-center">
+                    {totalVotes} {totalVotes === 1 ? 'ψήφος' : 'ψήφοι'} έχουν καταχωρηθεί
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-white/10 flex items-center justify-center">
+                  <Vote className="w-6 h-6 text-white/50" />
+                </div>
+                <p className="text-white/60 text-sm">Αναμονή για τις πρώτες ψήφους...</p>
+              </div>
+            )}
+          </div>
+
+          {/* CTA Footer */}
+          <div className="px-5 py-3 bg-gradient-to-r from-emerald-600/30 to-teal-600/30 border-t border-white/10">
+            <div className="flex items-center justify-center gap-2 text-emerald-200 text-sm">
+              <Smartphone className="w-4 h-4" />
+              <span className="font-medium">Ψηφίστε από την εφαρμογή New Concierge!</span>
+            </div>
+          </div>
         </div>
       </div>
     );
