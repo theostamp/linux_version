@@ -13,10 +13,13 @@ interface KioskVote {
   start_date?: string;
   end_date?: string;
   is_urgent?: boolean;
+  is_active?: boolean;
   min_participation?: number;
   total_votes?: number;
   participation_percentage?: number;
   is_valid?: boolean;
+  eligible_voters_count?: number;
+  total_building_mills?: number;
   results?: {
     ΝΑΙ: number;
     ΟΧΙ: number;
@@ -39,14 +42,40 @@ interface ActiveVoteWidgetProps {
 export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVoteWidgetProps) {
   const activeVote = useMemo(() => {
     const votes = (data?.votes || []) as KioskVote[];
+    console.log('[ActiveVoteWidget] 🗳️ Looking for active vote in:', votes.length, 'votes');
+    
     // Find the first active vote
     const now = new Date();
-    return votes.find(v => {
-      if (!v.start_date) return false;
+    const active = votes.find(v => {
+      // First check is_active flag from backend
+      if (v.is_active === false) {
+        console.log('[ActiveVoteWidget] Vote', v.id, 'is_active=false, skipping');
+        return false;
+      }
+      
+      // Then check date range
+      if (!v.start_date) {
+        console.log('[ActiveVoteWidget] Vote', v.id, 'has no start_date');
+        return false;
+      }
+      
       const start = parseISO(v.start_date);
       const end = v.end_date ? parseISO(v.end_date) : null;
-      return start <= now && (!end || end >= now);
+      const isInRange = start <= now && (!end || end >= now);
+      
+      console.log('[ActiveVoteWidget] Vote', v.id, ':', v.title?.substring(0, 30), {
+        start_date: v.start_date,
+        end_date: v.end_date,
+        is_active: v.is_active,
+        isInRange,
+        now: now.toISOString()
+      });
+      
+      return isInRange;
     });
+    
+    console.log('[ActiveVoteWidget] Found active vote:', active?.id, active?.title?.substring(0, 30));
+    return active;
   }, [data?.votes]);
 
   if (!activeVote) return null;

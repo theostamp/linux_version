@@ -62,10 +62,13 @@ export interface KioskVote {
   end_date?: string;
   created_at?: string;
   is_urgent?: boolean;
+  is_active?: boolean;
   min_participation?: number;
   total_votes?: number;
   participation_percentage?: number;
   is_valid?: boolean;
+  eligible_voters_count?: number;
+  total_building_mills?: number;
   results?: Record<string, any> | null;
 }
 
@@ -408,12 +411,25 @@ export const useKioskData = (buildingId: number | null = 1) => {
         end_date: vote.end_date,
         created_at: vote.created_at || vote.start_date || new Date().toISOString(),
         is_urgent: vote.is_urgent,
+        is_active: (vote as any).is_active ?? true, // Default to active if not specified
         min_participation: vote.min_participation,
         total_votes: vote.total_votes ?? 0,
         participation_percentage: vote.participation_percentage,
         is_valid: vote.is_valid,
+        eligible_voters_count: (vote as any).eligible_voters_count,
+        total_building_mills: (vote as any).total_building_mills,
         results: vote.results ?? null,
       }));
+      
+      console.log('[useKioskData] 🗳️ Transformed votes:', votesResult.map(v => ({
+        id: v.id,
+        title: v.title?.substring(0, 30),
+        is_active: v.is_active,
+        start_date: v.start_date,
+        end_date: v.end_date,
+        total_votes: v.total_votes,
+        participation_percentage: v.participation_percentage
+      })));
 
       // Use real financial data from backend
       const financialSource = publicData.financial || publicData.financial_info;
