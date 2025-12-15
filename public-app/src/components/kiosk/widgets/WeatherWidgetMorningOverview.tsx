@@ -2,7 +2,6 @@
 
 import { BaseWidgetProps } from '@/types/kiosk';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 type MorningWeatherData = {
@@ -68,6 +67,37 @@ const uniqueTips = (tips: string[]) => {
   return result;
 };
 
+type Season = 'winter' | 'spring' | 'summer' | 'autumn';
+type TimeOfDay = 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
+
+const getCurrentSeason = (): Season => {
+  const month = new Date().getMonth(); // 0-11
+  if (month >= 2 && month <= 4) return 'spring';    // Μάρτιος-Μάιος
+  if (month >= 5 && month <= 8) return 'summer';    // Ιούνιος-Σεπτέμβριος
+  if (month >= 9 && month <= 10) return 'autumn';   // Οκτώβριος-Νοέμβριος
+  return 'winter';                                   // Δεκέμβριος-Φεβρουάριος
+};
+
+const getTimeOfDay = (): TimeOfDay => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'morning';     // 05:00-11:59
+  if (hour >= 12 && hour < 14) return 'noon';       // 12:00-13:59
+  if (hour >= 14 && hour < 18) return 'afternoon';  // 14:00-17:59
+  if (hour >= 18 && hour < 22) return 'evening';    // 18:00-21:59
+  return 'night';                                    // 22:00-04:59
+};
+
+const getGreeting = (): string => {
+  const timeOfDay = getTimeOfDay();
+  switch (timeOfDay) {
+    case 'morning': return 'Καλημέρα';
+    case 'noon': return 'Καλό μεσημέρι';
+    case 'afternoon': return 'Καλό απόγευμα';
+    case 'evening': return 'Καλησπέρα';
+    case 'night': return 'Καληνύχτα';
+  }
+};
+
 const buildTipPool = ({
   kind,
   temperature,
@@ -79,58 +109,150 @@ const buildTipPool = ({
   precipitationProbability?: number;
   windSpeed?: number;
 }) => {
-  const tips: string[] = [
-    'Δείτε αναλυτικά την πρόγνωση στην εφαρμογή.',
-    'Καλημέρα! Καλή συνέχεια στην ημέρα σας.',
-  ];
+  const tips: string[] = [];
+  const season = getCurrentSeason();
+  const timeOfDay = getTimeOfDay();
+  const greeting = getGreeting();
+  const isRainyOrCloudy = kind === 'rain' || kind === 'storm' || kind === 'cloudy' || kind === 'fog';
+  const isSunny = kind === 'clear' || kind === 'partly_cloudy';
+  const willRain = typeof precipitationProbability === 'number' && precipitationProbability >= 50;
+  const isDaytime = timeOfDay === 'morning' || timeOfDay === 'noon' || timeOfDay === 'afternoon';
 
-  if (kind === 'rain') {
-    tips.push('Σήμερα θα χρειαστεί ομπρέλα.');
-    tips.push('Πήρες την ομπρέλα σου σήμερα;');
-    tips.push('Προσοχή στις γλιστερές επιφάνειες στην είσοδο.');
-    tips.push('Άφησε λίγο παραπάνω χρόνο για τη μετακίνηση.');
+  // ===== ΒΡΟΧΗ / ΚΑΤΑΙΓΙΔΑ =====
+  if (kind === 'rain' || willRain) {
+    tips.push('Μη ξεχάσεις την ομπρέλα σου!');
+    tips.push('Βροχερή μέρα – πάρε αδιάβροχο ή ομπρέλα.');
+    tips.push('Προσοχή στις γλιστερές επιφάνειες.');
+    if (isDaytime) {
+      tips.push('Άφησε λίγο παραπάνω χρόνο για τη μετακίνηση.');
+    }
+    if (temperature <= 10) {
+      tips.push('Κρύο και βροχή – ντύσου ζεστά και πάρε ομπρέλα.');
+    }
   }
 
   if (kind === 'storm') {
-    tips.push('Πιθανή καταιγίδα: απόφυγε άσκοπες μετακινήσεις αν δυναμώσει ο καιρός.');
-    tips.push('Κλείσε καλά πόρτες και παράθυρα πριν φύγεις.');
-    tips.push('Ασφάλισε αντικείμενα στο μπαλκόνι.');
+    tips.push('Αναμένεται καταιγίδα – απόφυγε άσκοπες μετακινήσεις.');
+    tips.push('Κλείσε καλά πόρτες και παράθυρα.');
+    tips.push('Ασφάλισε τα αντικείμενα στο μπαλκόνι.');
   }
 
+  // ===== ΧΙΟΝΙ =====
   if (kind === 'snow') {
-    tips.push('Ντύσου ζεστά σήμερα.');
-    tips.push('Προσοχή στον πάγο και στις γλιστερές επιφάνειες.');
-    tips.push('Προτίμησε αντιολισθητικά παπούτσια αν μπορείς.');
+    tips.push('Χιονίζει! Ντύσου πολύ ζεστά.');
+    tips.push('Προσοχή στον πάγο – φόρεσε αντιολισθητικά παπούτσια.');
+    tips.push('Πρόσεχε τις παγωμένες επιφάνειες στην είσοδο.');
   }
 
+  // ===== ΟΜΙΧΛΗ =====
   if (kind === 'fog') {
-    tips.push('Χαμηλή ορατότητα: κράτα αποστάσεις και προσοχή στην οδήγηση.');
-    tips.push('Χρησιμοποίησε φώτα πορείας όπου χρειάζεται.');
+    tips.push('Χαμηλή ορατότητα λόγω ομίχλης – προσοχή στην οδήγηση.');
+    if (isDaytime) {
+      tips.push('Χρησιμοποίησε τα φώτα ομίχλης αν οδηγείς.');
+    }
   }
 
-  if (kind === 'clear' || kind === 'partly_cloudy') {
-    tips.push('Γυαλιά ηλίου και καλή διάθεση.');
-    tips.push('Αν θα είσαι έξω, ένα αντηλιακό βοηθάει.');
+  // ===== ΗΛΙΟΦΑΝΕΙΑ - ΑΝΑΛΟΓΑ ΜΕ ΕΠΟΧΗ ΚΑΙ ΘΕΡΜΟΚΡΑΣΙΑ =====
+  if (isSunny && !willRain) {
+    // Καλοκαίρι με ζέστη
+    if (season === 'summer' && temperature >= 25 && isDaytime) {
+      tips.push('Πάρε αντηλιακό και γυαλιά ηλίου!');
+      tips.push('Προτίμησε ελαφριά ρούχα σε ανοιχτά χρώματα.');
+      if (temperature >= 30) {
+        tips.push('Ιδανική μέρα για παραλία – μη ξεχάσεις το καπέλο.');
+      }
+    } else if (season === 'summer' && temperature >= 20 && isDaytime) {
+      tips.push('Ευχάριστη ζέστη – ιδανική μέρα για βόλτα.');
+      tips.push('Μη ξεχάσεις τα γυαλιά ηλίου σου!');
+    }
+    // Άνοιξη
+    else if (season === 'spring') {
+      if (temperature >= 20 && isDaytime) {
+        tips.push('Ανοιξιάτικη μέρα – ιδανική για βόλτα!');
+        tips.push('Ο ήλιος λάμπει – πάρε τα γυαλιά σου.');
+      } else if (temperature >= 14) {
+        tips.push('Καλός καιρός αλλά μπορεί να δροσίσει – πάρε μια ζακέτα.');
+        tips.push('Απολαύστε την ανοιξιάτικη μέρα!');
+      } else {
+        tips.push('Ηλιοφάνεια αλλά κρύο – ντύσου σε στρώσεις.');
+      }
+    }
+    // Φθινόπωρο
+    else if (season === 'autumn') {
+      if (temperature >= 18 && isDaytime) {
+        tips.push('Φθινοπωρινή ζέστη – απόλαυσε τον ήλιο.');
+        tips.push('Καλή μέρα για περπάτημα στη φύση!');
+      } else if (temperature >= 12) {
+        tips.push('Ηλιοφάνεια αλλά δροσιά – πάρε μια ζακέτα.');
+      } else {
+        tips.push('Ήλιος αλλά κρύο – φόρεσε κάτι ζεστό.');
+      }
+    }
+    // Χειμώνας με ηλιοφάνεια
+    else if (season === 'winter') {
+      if (temperature >= 12 && isDaytime) {
+        tips.push('Σπάνια ζεστή χειμωνιάτικη μέρα – βγες για λίγο έξω!');
+        tips.push('Λιακάδα τον χειμώνα – απόλαυσέ την!');
+      } else if (temperature >= 5) {
+        tips.push('Ηλιοφάνεια αλλά κρύο – μην ξεγελαστείς, φόρεσε μπουφάν.');
+        tips.push('Ο ήλιος βγήκε αλλά κάνει κρύο – ντύσου ζεστά.');
+      } else {
+        tips.push('Πολύ κρύο παρά τον ήλιο – ντύσου με γάντια και σκούφο.');
+        tips.push('Παγωνιά σήμερα – φόρεσε πολλά στρώματα ρούχων.');
+      }
+    }
   }
 
-  if (temperature >= 30) {
-    tips.push('Ζέστη σήμερα: πιες νερό και προτίμησε σκιά.');
-    tips.push('Απόφυγε έκθεση στον ήλιο 12:00–16:00.');
-  } else if (temperature <= 8) {
-    tips.push('Κρύο σήμερα: πάρε ζακέτα ή μπουφάν.');
-    tips.push('Ένα ζεστό ρόφημα πριν φύγεις κάνει τη διαφορά.');
-  } else if (temperature <= 14) {
-    tips.push('Πιθανόν να χρειαστεί μια ελαφριά ζακέτα.');
+  // ===== ΣΥΝΝΕΦΙΑ ΧΩΡΙΣ ΒΡΟΧΗ =====
+  if (kind === 'cloudy' && !willRain) {
+    if (season === 'winter') {
+      tips.push('Συννεφιασμένος χειμωνιάτικος ουρανός – ντύσου ζεστά.');
+    } else if (season === 'summer' && isDaytime) {
+      tips.push('Συννεφιά σήμερα – ιδανικό αν θες να αποφύγεις τη ζέστη.');
+    } else {
+      tips.push('Συννεφιά αλλά χωρίς βροχή – καλή συνέχεια!');
+    }
   }
 
-  if (typeof precipitationProbability === 'number' && precipitationProbability >= 60) {
-    tips.push('Μεγάλη πιθανότητα βροχής: πάρε ομπρέλα ή αδιάβροχο.');
+  // ===== ΘΕΡΜΟΚΡΑΣΙΑ – ΓΕΝΙΚΑ =====
+  if (temperature >= 35 && isDaytime) {
+    tips.push('Καύσωνας! Πιες πολύ νερό και απόφυγε τον ήλιο 12:00–17:00.');
+    tips.push('Πολύ μεγάλη ζέστη – προτίμησε κλιματιζόμενους χώρους.');
+  } else if (temperature >= 30 && isDaytime) {
+    tips.push('Ζεστά σήμερα – πιες αρκετό νερό.');
+    tips.push('Απόφυγε την έκθεση στον ήλιο τις μεσημεριανές ώρες.');
+  } else if (temperature <= 5) {
+    tips.push('Παγωνιά! Μη ξεχάσεις γάντια, κασκόλ και σκούφο.');
+    tips.push('Πολύ κρύο – ένα ζεστό ρόφημα θα σε βοηθήσει.');
+  } else if (temperature <= 10 && !isRainyOrCloudy) {
+    tips.push('Κρύο σήμερα – πάρε ένα ζεστό μπουφάν.');
+    if (timeOfDay === 'morning') {
+      tips.push('Ξεκίνα τη μέρα σου με κάτι ζεστό.');
+    }
+  } else if (temperature <= 15 && season !== 'summer') {
+    tips.push('Δροσερά σήμερα – μια ελαφριά ζακέτα θα χρειαστεί.');
   }
 
-  if (typeof windSpeed === 'number' && windSpeed >= 30) {
-    tips.push('Έχει αρκετό αέρα: κράτα καλά την πόρτα στην είσοδο.');
-    tips.push('Στερέωσε ό,τι είναι ελαφρύ σε μπαλκόνι/βεράντα.');
+  // ===== ΑΝΕΜΟΣ =====
+  if (typeof windSpeed === 'number') {
+    if (windSpeed >= 50) {
+      tips.push('Θυελλώδεις άνεμοι! Απόφυγε τις εξόδους αν δεν είναι απαραίτητες.');
+      tips.push('Μάζεψε τα ελαφριά αντικείμενα από το μπαλκόνι.');
+    } else if (windSpeed >= 35) {
+      tips.push('Δυνατός αέρας – κράτα καλά τις πόρτες.');
+      tips.push('Στερέωσε ό,τι είναι ελαφρύ στο μπαλκόνι.');
+    } else if (windSpeed >= 25) {
+      tips.push('Έχει αρκετό αέρα σήμερα.');
+    }
   }
+
+  // ===== FALLBACK με χαιρετισμό =====
+  if (tips.length === 0) {
+    tips.push(`${greeting}! Να έχετε μια όμορφη μέρα.`);
+  }
+
+  // Προσθήκη γενικού χαιρετισμού
+  tips.push(`${greeting}! Καλή συνέχεια στην ημέρα σας.`);
 
   return uniqueTips(tips);
 };
@@ -336,26 +458,39 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
     );
   }
 
-  const displayedTip = currentTip || tipPool[0] || 'Δείτε αναλυτικά την πρόγνωση στην εφαρμογή.';
+  const displayedTip = currentTip || tipPool[0] || 'Καλή συνέχεια στην ημέρα σας!';
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-[11px] uppercase tracking-[0.14em] text-blue-200/80">ΚΑΙΡΟΣ ΣΗΜΕΡΑ</p>
-          <div className="mt-2 flex items-end gap-4">
-            <div className={`text-[84px] font-extrabold leading-none tracking-tight bg-gradient-to-b ${temperatureTone} bg-clip-text text-transparent tabular-nums`}>
-              {weather.temperature}°
+          <div className="mt-2 flex items-center gap-5">
+            {/* Θερμοκρασία και Emoji */}
+            <div className="flex items-end gap-3 flex-shrink-0">
+              <div className={`text-[84px] font-extrabold leading-none tracking-tight bg-gradient-to-b ${temperatureTone} bg-clip-text text-transparent tabular-nums`}>
+                {weather.temperature}°
+              </div>
+              <div className="pb-2">
+                <div className="text-[54px] leading-none">{getWeatherEmoji(weather.weathercode)}</div>
+              </div>
             </div>
-            <div className="pb-2">
-              <div className="text-[54px] leading-none">{getWeatherEmoji(weather.weathercode)}</div>
+            
+            {/* Συμβουλή δίπλα από τη θερμοκρασία */}
+            <div className="flex-1 min-w-0 self-center">
+              <div key={tipAnimationKey} className="tipFadeIn text-xl text-blue-50 font-medium leading-relaxed">
+                {displayedTip}
+              </div>
             </div>
           </div>
-          <div className="mt-1 text-base text-blue-100 font-semibold leading-tight">{weather.description}</div>
-          <div className="text-sm text-blue-300 truncate">{weather.location}</div>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="text-base text-blue-100 font-semibold leading-tight">{weather.description}</div>
+            <span className="text-blue-400/50">•</span>
+            <div className="text-sm text-blue-300 truncate">{weather.location}</div>
+          </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
           {summaryChips.length > 0 && (
             <div className="flex flex-col gap-2">
               {summaryChips.slice(0, 3).map((chip) => (
@@ -369,23 +504,7 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
               ))}
             </div>
           )}
-          <div className="text-[11px] text-blue-300/80">Ανανέωση κάθε 15’</div>
-        </div>
-      </div>
-
-      <div className="mt-auto pt-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-400/25 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-blue-200" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-white">Μικρή συμβουλή</div>
-              <div key={tipAnimationKey} className="tipFadeIn text-sm text-blue-100 leading-snug">
-                {displayedTip}
-              </div>
-            </div>
-          </div>
+          <div className="text-[11px] text-blue-300/80">Ανανέωση κάθε 15'</div>
         </div>
       </div>
 
