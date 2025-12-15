@@ -16,6 +16,12 @@ function pct(part: number, total: number) {
 }
 
 export default function VoteResultsBannerWidget({ data, isLoading, error }: Props) {
+  const votes: KioskVote[] = Array.isArray(data?.votes) ? data.votes : [];
+  const activeVotes = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return votes.filter((v) => !v.end_date || v.end_date >= today);
+  }, [votes]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -34,12 +40,6 @@ export default function VoteResultsBannerWidget({ data, isLoading, error }: Prop
       </div>
     );
   }
-
-  const votes: KioskVote[] = Array.isArray(data?.votes) ? data.votes : [];
-  const activeVotes = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return votes.filter((v) => !v.end_date || v.end_date >= today);
-  }, [votes]);
 
   if (activeVotes.length === 0) {
     return (
@@ -129,5 +129,4 @@ export default function VoteResultsBannerWidget({ data, isLoading, error }: Prop
     </div>
   );
 }
-
 

@@ -123,6 +123,21 @@ export async function GET(
 
     const data = await response.json();
 
+    // Privacy: never expose per-apartment balances or names via the public kiosk endpoint.
+    try {
+      const financial = (data as any)?.financial;
+      if (financial && typeof financial === 'object') {
+        if (Array.isArray((financial as any).apartment_balances)) {
+          (financial as any).apartment_balances = [];
+        }
+        if (Array.isArray((financial as any).top_debtors)) {
+          (financial as any).top_debtors = [];
+        }
+      }
+    } catch (e) {
+      console.warn('[PUBLIC-INFO API] Sanitization error:', e);
+    }
+
     // If backend public-info doesn't include upcoming assembly (or doesn't include stats yet),
     // enrich it here so kiosk widgets can still work reliably.
     const existingAssembly = (data as any)?.upcoming_assembly;

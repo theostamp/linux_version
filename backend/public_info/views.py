@@ -1,5 +1,4 @@
 import logging
-import re
 from datetime import datetime, timedelta
 
 from rest_framework.decorators import api_view, permission_classes
@@ -324,7 +323,6 @@ def building_info(request, building_id: int):
 
                 total_obligations_amount = 0.0
                 total_payments_amount = 0.0
-                apartment_balances_payload = []
 
                 for balance in apartment_balances:
                     raw_current_balance = balance.get('current_balance') or 0
@@ -357,32 +355,10 @@ def building_info(request, building_id: int):
                     # Sum monthly payments
                     total_payments_amount += month_payments_value
 
-                    apartment_balances_payload.append({
-                        'apartment_number': balance.get('apartment_number') or balance.get('number'),
-                        'net_obligation': debt_amount,
-                        'current_balance': current_balance_value,
-                        'month_payments': month_payments_value,
-                        'owner_name': balance.get('owner_name'),
-                        'tenant_name': balance.get('tenant_name'),
-                        'occupant_name': balance.get('occupant_name') or balance.get('tenant_name') or balance.get('owner_name'),
-                        'status': balance.get('status'),
-                    })
-
-                def sort_key(item):
-                    number = item.get('apartment_number') or ''
-                    return tuple(int(part) if part.isdigit() else part for part in re.split(r'(\d+)', number))
-
-                top_debtors = sorted(
-                    [apt for apt in apartment_balances_payload],
-                    key=sort_key
-                )
-
                 financial_data.update({
                     'total_obligations': round(total_obligations_amount, 2),
                     'current_obligations': round(total_obligations_amount, 2),
                     'total_payments': round(total_payments_amount, 2),
-                    'apartment_balances': apartment_balances_payload,
-                    'top_debtors': top_debtors,
                     # Add summary object for frontend compatibility
                     'summary': {
                         'total_obligations': round(total_obligations_amount, 2),

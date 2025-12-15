@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
+import WeatherWidgetMorningOverview from '@/components/kiosk/widgets/WeatherWidgetMorningOverview';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
 import VoteResultsBannerWidget from '@/components/kiosk/widgets/VoteResultsBannerWidget';
@@ -173,13 +173,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
             </div>
           </div>
 
-          {/* Weather Widget - Middle (compact, with forecast) */}
+          {/* Weather Widget - Morning Overview */}
           <div
             className="h-[39%] backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
             style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
           >
             <div className="h-full p-4">
-              <WeatherWidget data={data} isLoading={false} error={undefined} />
+              <WeatherWidgetMorningOverview data={data} isLoading={false} error={undefined} />
             </div>
           </div>
 
@@ -198,8 +198,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         <div className="w-[23%] min-w-[320px] p-4 flex flex-col space-y-3">
           <div className="flex items-center justify-between px-1">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Οφειλές</p>
-              <p className="text-sm font-semibold text-white">Υπόλοιπα ανά διαμέρισμα</p>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">Κοινόχρηστα</p>
+              <p className="text-sm font-semibold text-white">Πορεία εισπράξεων</p>
             </div>
             <div className="flex items-center text-[11px] text-indigo-200/70">
               <Building2 className="w-3.5 h-3.5 mr-1" />

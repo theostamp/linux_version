@@ -1,165 +1,80 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Euro, Check, Calendar } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useBuilding } from '@/components/contexts/BuildingContext';
+import { Calendar, Euro, Info, TrendingUp } from 'lucide-react';
+import { useMemo } from 'react';
 
-interface ApartmentDebt {
-  apartment_id: number;
-  apartment_number: string;
-  owner_name: string | null;
-  tenant_name?: string | null;
-  net_obligation: number;
-  current_balance: number;
-  previous_balance: number;
-  resident_expenses?: number;
-  owner_expenses?: number;
-  month_payments?: number; // New field from backend
-  status: string;
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('el-GR', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(value);
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+function SummaryMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: { bg: string; border: string; value: string; label: string };
+}) {
+  return (
+    <div className={`rounded-xl border p-2.5 ${tone.bg} ${tone.border}`}>
+      <div className={`text-[11px] ${tone.label}`}>{label}</div>
+      <div className={`mt-1 text-sm font-semibold tracking-tight ${tone.value}`}>{value}</div>
+    </div>
+  );
 }
 
-export default function ApartmentDebtsWidget({ data, isLoading, error, settings, buildingId }: BaseWidgetProps & { buildingId?: number | null }) {
-  const { currentBuilding, selectedBuilding } = useBuilding();
-  const building = selectedBuilding || currentBuilding;
-  const effectiveBuildingId = buildingId || building?.id;
-  const [debts, setDebts] = useState<ApartmentDebt[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState<string | null>(null);
-  interface ApartmentBalancesSummary {
-    total_balance?: number;
-    total_obligations?: number;
-    total_payments?: number;
-    [key: string]: unknown;
-  }
-  const [summary, setSummary] = useState<ApartmentBalancesSummary | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
-
-  const resolveMonthParam = () => {
-    if (settings?.month) {
-      return settings.month;
-    }
+export default function ApartmentDebtsWidget({ data, isLoading, error, settings }: BaseWidgetProps) {
+  const monthParam = useMemo(() => {
+    if (settings?.month) return settings.month;
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  };
-  const monthParam = resolveMonthParam();
+  }, [settings?.month]);
 
-  useEffect(() => {
-    // If kioskData already contains financial balances (public kiosk), use them directly
-    if (data?.financial?.apartment_balances && data.financial.apartment_balances.length > 0) {
-      const apartmentExpenses = data.financial.apartment_balances
-        .map((apt: ApartmentDebt) => ({
-          ...apt,
-          displayAmount: apt.net_obligation || apt.current_balance || 0
-        }))
-        .sort((a: ApartmentDebt, b: ApartmentDebt) => 
-          parseInt(a.apartment_number) - parseInt(b.apartment_number)
-        );
-
-      setDebts(apartmentExpenses);
-      setSummary(data.financial.summary ?? null);
-      setApiError(null);
-      setLoading(false);
-      return;
+  const formattedMonth = useMemo(() => {
+    if (!monthParam) return null;
+    const parts = monthParam.split('-');
+    if (parts.length === 2) {
+      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString('el-GR', { month: 'short', year: 'numeric' });
+      }
     }
+    return monthParam;
+  }, [monthParam]);
 
-    const fetchDebts = async () => {
-      if (!effectiveBuildingId) {
-        setLoading(false);
-        return;
-      }
+  const rawTotalObligations =
+    (typeof data?.financial?.total_obligations === 'number' && data.financial.total_obligations) ||
+    (typeof data?.financial?.summary?.total_obligations === 'number' && data.financial.summary.total_obligations) ||
+    0;
+  const rawTotalPayments =
+    (typeof data?.financial?.total_payments === 'number' && data.financial.total_payments) ||
+    (typeof data?.financial?.summary?.total_payments === 'number' && data.financial.summary.total_payments) ||
+    0;
 
-      try {
-        setLoading(true);
-        // Use the dashboard API that shows correct net_obligation values
-        const monthQuery = monthParam ? `&month=${monthParam}` : '';
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}${monthQuery}`;
-        const response = await fetch(apiUrl, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+  const totalObligations = Math.max(0, rawTotalObligations);
+  const totalPayments = Math.max(0, rawTotalPayments);
+  const totalRequirements = totalPayments + totalObligations;
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Unauthorized');
-          }
-          throw new Error('Failed to fetch apartment debts');
-        }
+  const derivedCoveragePercentage = totalRequirements > 0 ? (totalPayments / totalRequirements) * 100 : undefined;
+  const fallbackCoveragePercentage =
+    typeof data?.financial?.collection_rate === 'number' ? data.financial.collection_rate : undefined;
+  const paymentCoveragePercentage = clamp(
+    typeof derivedCoveragePercentage === 'number' ? derivedCoveragePercentage : fallbackCoveragePercentage ?? 0,
+    0,
+    100
+  );
 
-        const result = await response.json();
-        
-        // Εμφανίζουμε όλα τα διαμερίσματα με τα κοινόχρηστα του τρέχοντος μήνα
-        const apartmentExpenses = (result.apartments || [])
-          .map((apt: ApartmentDebt) => ({
-            ...apt,
-            displayAmount: apt.net_obligation || apt.current_balance || 0
-          }))
-          .sort((a: ApartmentDebt, b: ApartmentDebt) => 
-            // Ταξινόμηση: αριθμητικά (1, 2, 3, 10) όχι αλφαβητικά
-            parseInt(a.apartment_number) - parseInt(b.apartment_number)
-          );
-        
-        setDebts(apartmentExpenses);
-        setApiError(null);
-      } catch (err) {
-        console.error('Error fetching apartment debts:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setApiError(errorMessage);
-        
-        // Auto-retry mechanism (skip for auth errors)
-        if (retryCount < 3 && errorMessage !== 'Unauthorized') {
-          console.log(`Retrying fetch... (${retryCount + 1}/3)`);
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-            fetchDebts();
-          }, 2000 * (retryCount + 1)); // Exponential backoff: 2s, 4s, 6s
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  const hasFinancialData = totalRequirements > 0 || typeof fallbackCoveragePercentage === 'number';
+  const showWarning = totalRequirements > 0 && paymentCoveragePercentage < 75 && new Date().getDate() >= 15;
 
-    fetchDebts();
-    
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchDebts, 300000);
-    return () => clearInterval(interval);
-  }, [effectiveBuildingId, retryCount, monthParam, data?.financial]);
-
-  // Fetch summary data separately ONLY if not already loaded from public-info
-  // This is needed for authenticated dashboard views, but kiosk gets data from public-info
-  useEffect(() => {
-    // Skip if summary already loaded from public-info (kiosk mode)
-    if (summary && (summary.total_obligations !== undefined || summary.total_payments !== undefined)) {
-      return;
-    }
-    
-    const fetchSummary = async () => {
-      if (!effectiveBuildingId) return;
-      
-      try {
-        const monthQuery = monthParam ? `&month=${monthParam}` : '';
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}${monthQuery}`;
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-          const result = await response.json();
-          setSummary(result.summary);
-        }
-      } catch (err) {
-        console.error('Error fetching summary:', err);
-      }
-    };
-    
-    fetchSummary();
-    
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchSummary, 300000);
-    return () => clearInterval(interval);
-  }, [effectiveBuildingId, monthParam, summary]);
-
-  if (isLoading || loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-300"></div>
@@ -167,91 +82,26 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     );
   }
 
-  if (error || apiError) {
-    const handleRetry = () => {
-      setRetryCount(0);
-      setApiError(null);
-      setLoading(true);
-      // Trigger re-fetch by updating a dependency
-      setDebts([]);
-    };
-
+  if (error) {
     return (
       <div className="flex items-center justify-center h-full text-red-300">
         <div className="text-center">
           <div className="text-2xl mb-2">⚠️</div>
-          <p className="text-sm mb-3">{error || apiError}</p>
-          {retryCount > 0 && (
-            <p className="text-xs text-red-400 mb-3">
-              Προσπάθεια επαναφόρτωσης: {retryCount}/3
-            </p>
-          )}
-          <button
-            onClick={handleRetry}
-            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
-            disabled={loading}
-          >
-            {loading ? 'Φόρτωση...' : 'Επαναφόρτωση'}
-          </button>
+          <p className="text-sm">{error}</p>
         </div>
       </div>
     );
   }
 
-  // Calculate totals from debts data (most reliable source)
-  const debtsTotalObligations = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.net_obligation || 0), 0);
-  const debtsTotalPayments = debts.reduce((sum, apt) => sum + (apt.month_payments || 0), 0);
-  
-  // totalExpenses for display (used in header)
-  const totalExpenses = debts.reduce((sum, apt: ApartmentDebt) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance || 0), 0);
-  
-  // Use summary data if available and non-zero, otherwise fallback to debts calculation
-  const totalObligations = (summary?.total_obligations && summary.total_obligations > 0) 
-    ? summary.total_obligations 
-    : debtsTotalObligations;
-  const totalPayments = (summary?.total_payments && summary.total_payments > 0) 
-    ? summary.total_payments 
-    : debtsTotalPayments;
-
-  // Coverage = Paid / (Paid + Unpaid)
-  const totalRequirements = totalPayments + totalObligations;
-  const paymentCoveragePercentage = totalRequirements > 0 ? (totalPayments / totalRequirements) * 100 : 0;
-  
-  const showWarning = paymentCoveragePercentage < 75;
-  const currentDay = new Date().getDate();
-  const formattedMonth = (() => {
-    if (!monthParam) return null;
-    const parts = monthParam.split('-');
-    if (parts.length === 2) {
-      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString('el-GR', { month: 'short', year: 'numeric' });
-      }
-    }
-    return monthParam;
-  })();
-
-  // GDPR: Mask occupant name (first name + first letter of surname + ***)
-  const maskOccupant = (name: string | null | undefined): string => {
-    if (!name) return 'Μη καταχωρημένος';
-    
-    const parts = name.trim().split(' ');
-    if (parts.length === 1) return `${parts[0]} ***`;
-    
-    return `${parts[0]} ${parts[1][0]}***`;
-  };
-
   return (
-    <>
-      <div className="h-full overflow-hidden flex flex-col">
-      {/* Header */}
+    <div className="h-full overflow-hidden flex flex-col">
       <div className="mb-3 pb-2 border-b border-indigo-400/30">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Euro className="w-5 h-5 text-indigo-300" />
+            <TrendingUp className="w-5 h-5 text-indigo-300" />
             <div>
-              <h2 className="text-base font-bold text-white">Οφειλές & Υπόλοιπα</h2>
-              <p className="text-[11px] text-indigo-200/80">Σύνοψη ανά διαμέρισμα</p>
+              <h2 className="text-base font-bold text-white">Πορεία Εισπράξεων</h2>
+              <p className="text-[11px] text-indigo-200/80">Συγκεντρωτικά κοινόχρηστα (χωρίς προσωπικά δεδομένα)</p>
             </div>
           </div>
           <div className="text-right space-y-1">
@@ -261,167 +111,106 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
                 {formattedMonth}
               </div>
             )}
-            <div className="text-xs text-indigo-200">Σύνολο €{totalExpenses.toFixed(0)}</div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Expenses List - auto marquee when many items */}
-      <div className="flex-1 relative overflow-hidden">
-        {debts.length > 12 ? (
-          <div
-            className="absolute inset-0 space-y-2"
-            style={{
-              animation: `scroll-vertical ${Math.max(20, debts.length * 2.2)}s linear infinite`,
-            }}
-          >
-            {[...debts, ...debts].map((apt: ApartmentDebt, idx: number) => {
-              const amount = apt.net_obligation || apt.displayAmount || apt.current_balance || 0;
-              const hasDebt = (apt.net_obligation || 0) > 0;
-              const hasZeroBalance = (apt.net_obligation || 0) === 0;
-              const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
-              const statusLabel = hasZeroBalance ? 'Ενήμερο' : hasDebt ? 'Οφειλή' : 'Υπόλοιπο';
-              const statusClass = hasZeroBalance
-                ? 'bg-green-500/15 text-green-300 border-green-500/30'
-                : hasDebt
-                  ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
-                  : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30';
-
-              return (
-                <div
-                  key={`${apt.apartment_id}-${idx}`}
-                  className="bg-indigo-900/20 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
-                      <span className="text-xs text-white truncate font-medium leading-tight">
-                        {occupant}
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 flex items-center gap-2">
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusClass}`}>
-                        {statusLabel}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {hasZeroBalance && (
-                          <Check className="w-4 h-4 text-green-400" />
-                        )}
-                        <span className={`text-sm font-semibold whitespace-nowrap ${
-                          hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
-                        }`}>
-                          €{amount.toFixed(0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="space-y-2 pr-1">
-            {debts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-purple-300">
-                <Euro className="w-12 h-12 mb-3 opacity-60" />
-                <p className="text-sm font-medium">Δεν υπάρχουν δεδομένα</p>
-                <p className="text-xs text-purple-400 mt-1">Κανένα κοινόχρηστο για τον τρέχοντα μήνα</p>
-              </div>
-            ) : (
-              debts.map((apt: ApartmentDebt) => {
-                const amount = apt.net_obligation || apt.displayAmount || apt.current_balance || 0;
-                // Green if zero balance, orange if has debt - check the net_obligation from dashboard API
-                const hasDebt = (apt.net_obligation || 0) > 0;
-                const hasZeroBalance = (apt.net_obligation || 0) === 0;
-                // Use tenant_name with fallback to owner_name
-                const occupant = maskOccupant(apt.tenant_name || apt.owner_name);
-                const statusLabel = hasZeroBalance ? 'Ενήμερο' : hasDebt ? 'Οφειλή' : 'Υπόλοιπο';
-                const statusClass = hasZeroBalance
-                  ? 'bg-green-500/15 text-green-300 border-green-500/30'
-                  : hasDebt
-                    ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
-                    : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30';
-                
-                
-
-                return (
-                  <div
-                    key={apt.apartment_id}
-                    className="bg-indigo-900/20 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
-                        <span className="text-xs text-white truncate font-medium leading-tight">
-                          {occupant}
-                        </span>
-                      </div>
-                      <div className="flex-shrink-0 flex items-center gap-2">
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusClass}`}>
-                          {statusLabel}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {hasZeroBalance && (
-                            <Check className="w-4 h-4 text-green-400" />
-                          )}
-                          <span className={`text-sm font-semibold whitespace-nowrap ${
-                            hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
-                          }`}>
-                            €{amount.toFixed(0)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+            {hasFinancialData && (
+              <div className="text-xs text-indigo-200">Κάλυψη {paymentCoveragePercentage.toFixed(0)}%</div>
             )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Footer - Payment Coverage Chart */}
-      {debts.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-indigo-400/30">
-          {/* Warning if after 15th and coverage < 75% */}
-          {showWarning && (
-            <div className="mb-2 bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
-              <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη</p>
+      <div className="flex-1 flex flex-col gap-3">
+        {!hasFinancialData ? (
+          <div className="flex flex-col items-center justify-center flex-1 text-purple-300">
+            <Euro className="w-12 h-12 mb-3 opacity-60" />
+            <p className="text-sm font-medium">Δεν υπάρχουν διαθέσιμα στοιχεία</p>
+            <p className="text-xs text-purple-400 mt-1">Δείτε αναλυτικά τα κοινόχρηστα στην εφαρμογή</p>
+          </div>
+        ) : (
+          <>
+            {showWarning && (
+              <div className="bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
+                <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη Εισπράξεων</p>
+              </div>
+            )}
+
+            <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-indigo-300 font-medium">Κάλυψη Μήνα</span>
+                <span className={`font-bold ${paymentCoveragePercentage < 75 ? 'text-orange-300' : 'text-white'}`}>
+                  {paymentCoveragePercentage.toFixed(1)}%
+                </span>
+              </div>
+              <div
+                className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30"
+                title={
+                  totalRequirements > 0
+                    ? `Εισπραχθέντα: ${formatCurrency(totalPayments)} / Σύνολο: ${formatCurrency(totalRequirements)}`
+                    : undefined
+                }
+              >
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    paymentCoveragePercentage >= 75
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-lg shadow-green-500/50'
+                      : 'bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/50'
+                  }`}
+                  style={{ width: `${paymentCoveragePercentage}%` }}
+                />
+              </div>
             </div>
-          )}
-          
-          <div className="mb-2">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-indigo-300 font-medium">Κάλυψη Μήνα</span>
-              <span className={`font-bold ${paymentCoveragePercentage < 75 ? 'text-orange-300' : 'text-white'}`}>
-                {paymentCoveragePercentage.toFixed(1)}%
-              </span>
+
+            <div className="grid grid-cols-3 gap-2">
+              <SummaryMetric
+                label="Εισπραχθέντα"
+                value={formatCurrency(totalPayments)}
+                tone={{
+                  bg: 'bg-emerald-500/10',
+                  border: 'border-emerald-400/25',
+                  value: 'text-emerald-200',
+                  label: 'text-emerald-200/80',
+                }}
+              />
+              <SummaryMetric
+                label="Υπόλοιπο"
+                value={formatCurrency(totalObligations)}
+                tone={{
+                  bg: 'bg-orange-500/10',
+                  border: 'border-orange-400/25',
+                  value: 'text-orange-200',
+                  label: 'text-orange-200/80',
+                }}
+              />
+              <SummaryMetric
+                label="Σύνολο"
+                value={formatCurrency(totalRequirements)}
+                tone={{
+                  bg: 'bg-indigo-500/10',
+                  border: 'border-indigo-400/25',
+                  value: 'text-indigo-100',
+                  label: 'text-indigo-200/80',
+                }}
+              />
             </div>
-            {/* Progress Bar */}
-            <div 
-              className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30"
-              title={`Εισπράξεις: €${totalPayments.toFixed(2)} / Σύνολο: €${totalRequirements.toFixed(2)}`}
-            >
-              <div 
-                className={`h-full rounded-full transition-all duration-1000 ${
-                  paymentCoveragePercentage >= 75 
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-lg shadow-green-500/50'
-                    : 'bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/50'
-                }`}
-                style={{ width: `${paymentCoveragePercentage}%` }}
-              ></div>
+          </>
+        )}
+
+        <div className="mt-auto">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-indigo-200 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs text-white font-semibold">Αναλυτικά στην εφαρμογή</p>
+                <p className="text-[11px] text-indigo-200/80">
+                  Για το προσωπικό σας υπόλοιπο και αναλυτικές χρεώσεις/πληρωμές, συνδεθείτε από το QR στο πλάι.
+                </p>
+              </div>
             </div>
           </div>
-          
+          <p className="mt-2 text-[10px] text-white/45">
+            Σημείωση: εμφανίζονται μόνο συγκεντρωτικά στοιχεία, χωρίς ονόματα ή αναφορά σε διαμερίσματα.
+          </p>
         </div>
-      )}
+      </div>
     </div>
-    <style jsx>{`
-      @keyframes scroll-vertical {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(-50%); }
-      }
-    `}</style>
-    </>
   );
 }
