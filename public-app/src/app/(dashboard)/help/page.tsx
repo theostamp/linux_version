@@ -151,7 +151,7 @@ export default function HelpPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredChapters.length === 0 ? (
-          <Card className="md:col-span-2 ring-1 ring-border/20 bg-gradient-to-b from-card to-muted/10">
+          <Card className="md:col-span-2 ring-1 ring-border/25 bg-gradient-to-b from-card to-muted/10 shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.10)]">
             <CardHeader>
               <CardTitle>Δεν βρέθηκαν αποτελέσματα</CardTitle>
               <CardDescription>Δοκιμάστε διαφορετικούς όρους αναζήτησης.</CardDescription>
@@ -170,7 +170,7 @@ export default function HelpPage() {
             return (
               <Card
                 key={chapter.id}
-                className="flex flex-col h-full ring-1 ring-border/20 bg-gradient-to-b from-card to-muted/10"
+                className="flex flex-col h-full ring-1 ring-border/25 bg-gradient-to-b from-card to-muted/10 shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_32px_rgba(0,0,0,0.10)]"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3 mb-2">
@@ -178,7 +178,7 @@ export default function HelpPage() {
                       <chapter.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                      <CardTitle className="text-lg sm:text-xl leading-tight bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                         {chapter.title}
                       </CardTitle>
                     </div>
@@ -194,7 +194,9 @@ export default function HelpPage() {
                       </Button>
                     )}
                   </div>
-                  <CardDescription>{chapter.description}</CardDescription>
+                  <CardDescription className="text-[13px] sm:text-sm font-medium text-primary/80 leading-relaxed">
+                    {chapter.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1">
                   <div className="space-y-4">
@@ -245,13 +247,13 @@ function HelpSectionItem({
   return (
     <div
       id={anchorId}
-      className="rounded-xl px-4 py-3 bg-card/60 backdrop-blur-sm shadow-sm ring-1 ring-border/20 hover:shadow-md transition-shadow scroll-mt-24"
+      className="rounded-xl px-4 py-3 bg-card/60 backdrop-blur-sm ring-1 ring-border/25 shadow-[0_2px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.09)] transition-shadow scroll-mt-24"
     >
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onToggle}
-          className="flex flex-1 min-w-0 items-center justify-between gap-3 text-left font-medium text-sm py-1 hover:text-primary transition-colors"
+          className="flex flex-1 min-w-0 items-center justify-between gap-3 text-left font-semibold text-sm py-1 hover:text-primary transition-colors"
           aria-expanded={isOpen}
           aria-controls={contentId}
         >
@@ -273,7 +275,7 @@ function HelpSectionItem({
           <Link2 className="h-3.5 w-3.5" />
         </button>
       </div>
-      
+
       {isOpen && (
         <div id={contentId} className="pt-3 pb-1 text-sm text-muted-foreground space-y-2 border-t border-border/20 mt-2">
           {content.map((paragraph, idx) => (
