@@ -78,12 +78,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = [
-    { id: 'qr', name: 'QR Code', Component: QRCodeWidget },
     { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
   ];
 
   // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
   useEffect(() => {
+    if (sidebarWidgets.length <= 1) return;
+
     const interval = setInterval(() => {
       setCurrentSidebarWidget((prev) => (prev + 1) % sidebarWidgets.length);
     }, 10000);
@@ -206,12 +207,23 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
               {data?.building_info?.name || 'Κτίριο'}
             </div>
           </div>
-          <div
-            className="flex-1 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
-            style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
-          >
-            <div className="h-full w-full p-4">
-              <ApartmentDebtsWidget data={data} isLoading={false} error={undefined} />
+          <div className="flex-1 min-h-0 flex flex-col gap-3">
+            <div
+              className="flex-[1.1] min-h-0 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
+              style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
+            >
+              <div className="h-full w-full p-4">
+                <ApartmentDebtsWidget data={data} isLoading={false} error={undefined} />
+              </div>
+            </div>
+
+            <div
+              className="flex-[0.9] min-h-0 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
+              style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
+            >
+              <div className="h-full w-full p-4">
+                <QRCodeWidget data={data} isLoading={false} error={undefined} />
+              </div>
             </div>
           </div>
         </div>

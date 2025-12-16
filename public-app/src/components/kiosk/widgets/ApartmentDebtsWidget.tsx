@@ -2,7 +2,7 @@
 
 import { BaseWidgetProps } from '@/types/kiosk';
 import { AlertTriangle, CheckCircle2, Euro, Info } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('el-GR', {
@@ -91,17 +91,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
 
   const pendingApartments = useMemo(() => apartmentStatuses.filter((apt) => apt.has_pending), [apartmentStatuses]);
   const okApartments = useMemo(() => apartmentStatuses.filter((apt) => !apt.has_pending), [apartmentStatuses]);
-
-  const [activeTab, setActiveTab] = useState<'pending' | 'ok'>(() => (pendingApartments.length > 0 ? 'pending' : 'ok'));
-
-  useEffect(() => {
-    if (activeTab === 'pending' && pendingApartments.length === 0 && okApartments.length > 0) {
-      setActiveTab('ok');
-    }
-    if (activeTab === 'ok' && okApartments.length === 0 && pendingApartments.length > 0) {
-      setActiveTab('pending');
-    }
-  }, [activeTab, okApartments.length, pendingApartments.length]);
 
   if (isLoading) {
     return (
@@ -200,65 +189,20 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
           {apartmentStatuses.length > 0 && (
             <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('pending')}
-                  className={`rounded-xl border px-3 py-2 text-left transition-colors ${
-                    activeTab === 'pending'
-                      ? 'bg-orange-500/15 border-orange-400/35'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
-                >
+                <div className="rounded-xl border px-3 py-2 text-left bg-orange-500/10 border-orange-400/25">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-orange-300" />
                     <span className="text-xs font-semibold text-white">Εκκρεμότητες</span>
                   </div>
                   <div className="text-[11px] text-white/70">{pendingApartments.length} διαμερίσματα</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('ok')}
-                  className={`rounded-xl border px-3 py-2 text-left transition-colors ${
-                    activeTab === 'ok'
-                      ? 'bg-emerald-500/15 border-emerald-400/35'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
-                >
+                </div>
+                <div className="rounded-xl border px-3 py-2 text-left bg-emerald-500/10 border-emerald-400/25">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-300" />
                     <span className="text-xs font-semibold text-white">Ενημερωμένα</span>
                   </div>
                   <div className="text-[11px] text-white/70">{okApartments.length} διαμερίσματα</div>
-                </button>
-              </div>
-
-              <div className="mt-3 max-h-44 overflow-auto pr-1 grid grid-cols-2 gap-2">
-                {(activeTab === 'pending' ? pendingApartments : okApartments).length === 0 ? (
-                  <div className="col-span-2 text-center text-xs text-white/60 py-6">
-                    {activeTab === 'pending' ? 'Δεν υπάρχουν εκκρεμότητες' : 'Δεν υπάρχουν ενημερωμένα διαμερίσματα'}
-                  </div>
-                ) : (
-                  (activeTab === 'pending' ? pendingApartments : okApartments).map((apt) => (
-                    <div
-                      key={`${activeTab}-${apt.apartment_number}`}
-                      className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 ${
-                        apt.has_pending
-                          ? 'bg-orange-500/10 border-orange-400/25'
-                          : 'bg-emerald-500/10 border-emerald-400/25'
-                      }`}
-                    >
-                      <span className="text-xs font-semibold text-white truncate">{apt.apartment_number}</span>
-                      {apt.has_pending ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-orange-400/25 bg-orange-500/10 text-orange-200">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          Εκκρεμότητα
-                        </span>
-                      ) : (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-                      )}
-                    </div>
-                  ))
-                )}
+                </div>
               </div>
             </div>
           )}
@@ -272,7 +216,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
             <div className="min-w-0">
               <p className="text-xs text-white font-semibold">Αναλυτικά στην εφαρμογή</p>
               <p className="text-[11px] text-indigo-200/80">
-                Για το προσωπικό σας υπόλοιπο και αναλυτικές χρεώσεις/πληρωμές, συνδεθείτε από το QR στο πλάι.
+                Για το προσωπικό σας υπόλοιπο και αναλυτικές χρεώσεις/πληρωμές, συνδεθείτε από το QR code.
               </p>
             </div>
           </div>
