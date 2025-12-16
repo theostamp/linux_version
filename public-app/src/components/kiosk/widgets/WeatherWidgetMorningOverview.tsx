@@ -87,14 +87,18 @@ const getTimeOfDay = (): TimeOfDay => {
   return 'night';                                    // 22:00-04:59
 };
 
-const getGreeting = (): string => {
-  const timeOfDay = getTimeOfDay();
+const getGreeting = (timeOfDay: TimeOfDay): string => {
   switch (timeOfDay) {
-    case 'morning': return 'Καλημέρα';
-    case 'noon': return 'Καλό μεσημέρι';
-    case 'afternoon': return 'Καλό απόγευμα';
-    case 'evening': return 'Καλησπέρα';
-    case 'night': return 'Καληνύχτα';
+    case 'morning':
+      return 'Καλημέρα';
+    case 'noon':
+      return 'Καλό μεσημέρι';
+    case 'afternoon':
+      return 'Καλό απόγευμα';
+    case 'evening':
+      return 'Καλησπέρα';
+    case 'night':
+      return 'Καληνύχτα';
   }
 };
 
@@ -103,20 +107,25 @@ const buildTipPool = ({
   temperature,
   precipitationProbability,
   windSpeed,
+  season,
+  timeOfDay,
+  hour,
 }: {
   kind: WeatherKind;
   temperature: number;
   precipitationProbability?: number;
   windSpeed?: number;
+  season: Season;
+  timeOfDay: TimeOfDay;
+  hour: number;
 }) => {
   const tips: string[] = [];
-  const season = getCurrentSeason();
-  const timeOfDay = getTimeOfDay();
-  const greeting = getGreeting();
+  const greeting = getGreeting(timeOfDay);
   const isRainyOrCloudy = kind === 'rain' || kind === 'storm' || kind === 'cloudy' || kind === 'fog';
   const isSunny = kind === 'clear' || kind === 'partly_cloudy';
   const willRain = typeof precipitationProbability === 'number' && precipitationProbability >= 50;
   const isDaytime = timeOfDay === 'morning' || timeOfDay === 'noon' || timeOfDay === 'afternoon';
+  const isEarlyMorning = timeOfDay === 'morning' && hour < 9;
 
   // ===== ΒΡΟΧΗ / ΚΑΤΑΙΓΙΔΑ =====
   if (kind === 'rain' || willRain) {
@@ -215,22 +224,41 @@ const buildTipPool = ({
   }
 
   // ===== ΘΕΡΜΟΚΡΑΣΙΑ – ΓΕΝΙΚΑ =====
+  const isWindy = typeof windSpeed === 'number' && windSpeed >= 25;
+
   if (temperature >= 35 && isDaytime) {
     tips.push('Καύσωνας! Πιες πολύ νερό και απόφυγε τον ήλιο 12:00–17:00.');
     tips.push('Πολύ μεγάλη ζέστη – προτίμησε κλιματιζόμενους χώρους.');
   } else if (temperature >= 30 && isDaytime) {
     tips.push('Ζεστά σήμερα – πιες αρκετό νερό.');
     tips.push('Απόφυγε την έκθεση στον ήλιο τις μεσημεριανές ώρες.');
-  } else if (temperature <= 5) {
-    tips.push('Παγωνιά! Μη ξεχάσεις γάντια, κασκόλ και σκούφο.');
-    tips.push('Πολύ κρύο – ένα ζεστό ρόφημα θα σε βοηθήσει.');
-  } else if (temperature <= 10 && !isRainyOrCloudy) {
-    tips.push('Κρύο σήμερα – πάρε ένα ζεστό μπουφάν.');
-    if (timeOfDay === 'morning') {
-      tips.push('Ξεκίνα τη μέρα σου με κάτι ζεστό.');
+  } else if (temperature <= 0) {
+    tips.push('Θερμοκρασίες κάτω από το μηδέν – πιθανός παγετός.');
+    tips.push('Προσοχή σε πάγο σε είσοδο/σκαλιά και στα πεζοδρόμια.');
+  } else if (temperature <= 3) {
+    tips.push('Πολύ κρύο σήμερα – κοντά στους 0–3°C υπάρχει κίνδυνος παγετού.');
+    tips.push('Προσοχή σε γλιστερές επιφάνειες (σκαλιά/είσοδος).');
+    if (timeOfDay === 'night' || isEarlyMorning) {
+      tips.push('Αν οδηγείς, δώσε χρόνο για ξεθάμπωμα και πιθανό πάγο στο παρμπρίζ.');
     }
-  } else if (temperature <= 15 && season !== 'summer') {
-    tips.push('Δροσερά σήμερα – μια ελαφριά ζακέτα θα χρειαστεί.');
+  } else if (temperature <= 7) {
+    tips.push('Κρύο σήμερα – μπουφάν, κασκόλ και ζεστό ντύσιμο.');
+    if (isEarlyMorning) {
+      tips.push('Πρωινό κρύο: ένα επιπλέον στρώμα ρούχων θα βοηθήσει.');
+    }
+    if (isWindy) {
+      tips.push('Με τον αέρα θα το νιώσεις πιο κρύο.');
+    }
+  } else if (temperature <= 12 && season !== 'summer') {
+    tips.push('Ψύχρα σήμερα – ζακέτα ή ελαφρύ μπουφάν θα χρειαστεί.');
+    if (isEarlyMorning && !isRainyOrCloudy) {
+      tips.push('Το πρωί θα το νιώσεις πιο κρύο, ειδικά στη σκιά.');
+    }
+    if (isWindy) {
+      tips.push('Με τον αέρα, η αίσθηση μπορεί να είναι χαμηλότερη.');
+    }
+  } else if (temperature <= 16 && season !== 'summer') {
+    tips.push('Δροσερά – μια ζακέτα είναι καλή ιδέα.');
   }
 
   // ===== ΑΝΕΜΟΣ =====
@@ -246,13 +274,19 @@ const buildTipPool = ({
     }
   }
 
-  // ===== FALLBACK με χαιρετισμό =====
-  if (tips.length === 0) {
-    tips.push(`${greeting}! Να έχετε μια όμορφη μέρα.`);
+  // ===== ΦΙΛΙΚΟΣ ΧΑΙΡΕΤΙΣΜΟΣ (ανά ώρα) =====
+  if (timeOfDay === 'night') {
+    tips.push(`${greeting}! Καλή ξεκούραση.`);
+    tips.push('Καλό βράδυ!');
+  } else if (timeOfDay === 'evening') {
+    tips.push(`${greeting}! Καλό βράδυ.`);
+    tips.push('Καλή συνέχεια!');
+  } else if (timeOfDay === 'morning') {
+    tips.push(`${greeting}! Καλή αρχή.`);
+    tips.push(`${greeting}! Καλή συνέχεια στην ημέρα σας.`);
+  } else {
+    tips.push(`${greeting}! Καλή συνέχεια.`);
   }
-
-  // Προσθήκη γενικού χαιρετισμού
-  tips.push(`${greeting}! Καλή συνέχεια στην ημέρα σας.`);
 
   return uniqueTips(tips);
 };
@@ -271,6 +305,10 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
   const building = data?.building;
 
   const city = data?.building_info?.city || building?.city || 'Αθήνα';
+  const timeOfDay = getTimeOfDay();
+  const season = getCurrentSeason();
+  const hour = new Date().getHours();
+  const greeting = getGreeting(timeOfDay);
 
   const parsedLatitude =
     typeof building?.latitude === 'number'
@@ -388,8 +426,11 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
         temperature: weather.temperature,
         precipitationProbability: weather.precipitation_probability,
         windSpeed: weather.wind_speed,
+        season,
+        timeOfDay,
+        hour,
       }),
-    [kind, weather.temperature, weather.precipitation_probability, weather.wind_speed]
+    [kind, weather.temperature, weather.precipitation_probability, weather.wind_speed, season, timeOfDay, hour]
   );
 
   const [currentTip, setCurrentTip] = useState('');
@@ -409,12 +450,7 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
     return () => clearInterval(interval);
   }, [tipPool]);
 
-  const temperatureTone =
-    weather.temperature >= 30
-      ? 'from-amber-200 to-rose-200'
-      : weather.temperature <= 8
-        ? 'from-sky-200 to-indigo-200'
-        : 'from-white to-blue-100';
+  const temperatureTone = 'from-lime-200 via-lime-300 to-lime-400';
 
   const hasPrecipitation =
     typeof weather.precipitation_probability === 'number' && weather.precipitation_probability > 0;
@@ -458,7 +494,14 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
     );
   }
 
-  const displayedTip = currentTip || tipPool[0] || 'Καλή συνέχεια στην ημέρα σας!';
+  const fallbackTip =
+    timeOfDay === 'night'
+      ? `${greeting}! Καλή ξεκούραση.`
+      : timeOfDay === 'evening'
+        ? `${greeting}! Καλό βράδυ.`
+        : `${greeting}! Καλή συνέχεια στην ημέρα σας.`;
+
+  const displayedTip = currentTip || tipPool[0] || fallbackTip;
 
   return (
     <div className="h-full flex flex-col">
@@ -478,7 +521,7 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
             
             {/* Συμβουλή δίπλα από τη θερμοκρασία */}
             <div className="flex-1 min-w-0 self-center">
-              <div key={tipAnimationKey} className="tipFadeIn text-xl text-blue-50 font-medium leading-relaxed">
+              <div key={tipAnimationKey} className="tipFadeIn text-xl text-orange-200 font-medium leading-relaxed">
                 {displayedTip}
               </div>
             </div>
