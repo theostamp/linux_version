@@ -119,6 +119,10 @@ export interface KioskFinancialInfo {
     tenant_name?: string | null;
     status?: string;
   }>;
+  apartment_statuses?: Array<{
+    apartment_number?: string;
+    has_pending?: boolean;
+  }>;
   current_month_period?: {
     start?: string;
     end?: string;
@@ -249,6 +253,10 @@ interface PublicFinancialInfo {
     owner_name?: string | null;
     tenant_name?: string | null;
     status?: string;
+  }>;
+  apartment_statuses?: Array<{
+    apartment_number?: string;
+    has_pending?: boolean;
   }>;
 }
 
@@ -436,6 +444,9 @@ export const useKioskData = (buildingId: number | null = 1) => {
       const apartmentBalancesSource = Array.isArray(financialSource?.apartment_balances)
         ? financialSource?.apartment_balances
         : [];
+      const apartmentStatusesSource = Array.isArray(financialSource?.apartment_statuses)
+        ? financialSource?.apartment_statuses
+        : [];
       const topDebtorsSource = Array.isArray(financialSource?.top_debtors)
         ? financialSource?.top_debtors
         : [];
@@ -472,6 +483,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         total_obligations: financialSource?.total_obligations || 0,
         current_obligations: financialSource?.current_obligations || financialSource?.pending_payments || 0,
         apartment_balances: apartmentBalancesSource,
+        apartment_statuses: apartmentStatusesSource,
         top_debtors: topDebtorsSource,
       };
 

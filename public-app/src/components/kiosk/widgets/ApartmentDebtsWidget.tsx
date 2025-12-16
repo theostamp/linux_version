@@ -1,7 +1,7 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Calendar, Euro, Info, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle2, Euro, Info, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
 
 const formatCurrency = (value: number) =>
@@ -12,6 +12,20 @@ const formatCurrency = (value: number) =>
   }).format(value);
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+type ApartmentStatus = {
+  apartment_number: string;
+  has_pending: boolean;
+};
+
+const apartmentSortKey = (value: string) => {
+  const raw = value.trim();
+  const digitsMatch = raw.match(/\d+/);
+  const digits = digitsMatch?.[0] ?? '';
+  const num = digits ? Number(digits) : Number.POSITIVE_INFINITY;
+  const prefix = raw.replace(/\d+/g, '').trim().toLowerCase();
+  return { prefix, num, raw: raw.toLowerCase() };
+};
 
 function SummaryMetric({
   label,
@@ -74,6 +88,30 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
   const hasFinancialData = totalRequirements > 0 || typeof fallbackCoveragePercentage === 'number';
   const showWarning = totalRequirements > 0 && paymentCoveragePercentage < 75 && new Date().getDate() >= 15;
 
+  const apartmentStatuses = useMemo<ApartmentStatus[]>(() => {
+    const source = data?.financial?.apartment_statuses;
+    if (!Array.isArray(source)) return [];
+
+    return source
+      .map((item: any) => ({
+        apartment_number: typeof item?.apartment_number === 'string' ? item.apartment_number : String(item?.apartment_number ?? ''),
+        has_pending: Boolean(item?.has_pending),
+      }))
+      .filter((item: ApartmentStatus) => item.apartment_number.trim().length > 0)
+      .sort((a, b) => {
+        const ka = apartmentSortKey(a.apartment_number);
+        const kb = apartmentSortKey(b.apartment_number);
+        if (ka.prefix !== kb.prefix) return ka.prefix.localeCompare(kb.prefix);
+        if (ka.num !== kb.num) return ka.num - kb.num;
+        return ka.raw.localeCompare(kb.raw);
+      });
+  }, [data?.financial?.apartment_statuses]);
+
+  const pendingApartmentsCount = useMemo(
+    () => apartmentStatuses.filter((apt) => apt.has_pending).length,
+    [apartmentStatuses]
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -101,7 +139,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
             <TrendingUp className="w-5 h-5 text-indigo-300" />
             <div>
               <h2 className="text-base font-bold text-white">Πορεία Εισπράξεων</h2>
-              <p className="text-[11px] text-indigo-200/80">Συγκεντρωτικά κοινόχρηστα (χωρίς προσωπικά δεδομένα)</p>
+              <p className="text-[11px] text-indigo-200/80">Συγκεντρωτικά κοινόχρηστα (χωρίς ονόματα/ποσά)</p>
             </div>
           </div>
           <div className="text-right space-y-1">
@@ -179,7 +217,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
                   value: 'text-orange-200',
                   label: 'text-orange-200/80',
                 }}
-              />
+                  />
               <SummaryMetric
                 label="Σύνολο"
                 value={formatCurrency(totalRequirements)}
@@ -191,6 +229,49 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
                 }}
               />
             </div>
+
+            {apartmentStatuses.length > 0 && (
+              <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-white">Κατάσταση διαμερισμάτων</p>
+                  <p className="text-[11px] text-indigo-200/70">
+                    {pendingApartmentsCount} εκκρεμότητες
+                  </p>
+                </div>
+                <div className="mt-2 flex items-center gap-3 text-[10px] text-white/65">
+                  <span className="inline-flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5 text-orange-300" />
+                    Εκκρεμότητα
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                    Ενήμερο / Υπόλοιπο
+                  </span>
+                </div>
+                <div className="mt-3 max-h-44 overflow-auto pr-1 grid grid-cols-2 gap-2">
+                  {apartmentStatuses.map((apt) => (
+                    <div
+                      key={apt.apartment_number}
+                      className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 ${
+                        apt.has_pending
+                          ? 'bg-orange-500/10 border-orange-400/25'
+                          : 'bg-emerald-500/10 border-emerald-400/25'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold text-white truncate">{apt.apartment_number}</span>
+                      {apt.has_pending ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-orange-400/25 bg-orange-500/10 text-orange-200">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          Εκκρεμότητα
+                        </span>
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-300 flex-shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -207,7 +288,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
             </div>
           </div>
           <p className="mt-2 text-[10px] text-white/45">
-            Σημείωση: εμφανίζονται μόνο συγκεντρωτικά στοιχεία, χωρίς ονόματα ή αναφορά σε διαμερίσματα.
+            Σημείωση: δεν εμφανίζονται ονόματα ή ποσά· μόνο ένδειξη κατάστασης ανά διαμέρισμα.
           </p>
         </div>
       </div>

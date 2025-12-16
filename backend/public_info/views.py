@@ -284,6 +284,7 @@ def building_info(request, building_id: int):
                 'current_obligations': 0,
                 'apartment_balances': [],
                 'top_debtors': [],
+                'apartment_statuses': [],
             }
         except Exception as e:
             logger = logging.getLogger('django')
@@ -314,6 +315,7 @@ def building_info(request, building_id: int):
                 'current_obligations': 0,
                 'apartment_balances': [],
                 'top_debtors': [],
+                'apartment_statuses': [],
             }
 
         if building_info:
@@ -323,6 +325,7 @@ def building_info(request, building_id: int):
 
                 total_obligations_amount = 0.0
                 total_payments_amount = 0.0
+                apartment_statuses_payload = []
 
                 for balance in apartment_balances:
                     raw_current_balance = balance.get('current_balance') or 0
@@ -355,10 +358,31 @@ def building_info(request, building_id: int):
                     # Sum monthly payments
                     total_payments_amount += month_payments_value
 
+                    apartment_number = balance.get('apartment_number') or balance.get('number')
+                    if apartment_number is not None:
+                        apartment_statuses_payload.append({
+                            'apartment_number': str(apartment_number),
+                            'has_pending': bool(debt_amount > 0),
+                        })
+
+                def sort_key(item):
+                    raw = item.get('apartment_number') or ''
+                    raw_str = str(raw)
+                    prefix = ''.join(ch for ch in raw_str if not ch.isdigit()).strip().lower()
+                    digits = ''.join(ch for ch in raw_str if ch.isdigit())
+                    try:
+                        num = int(digits) if digits else 10**9
+                    except Exception:
+                        num = 10**9
+                    return (prefix, num, raw_str.lower())
+
+                apartment_statuses_payload.sort(key=sort_key)
+
                 financial_data.update({
                     'total_obligations': round(total_obligations_amount, 2),
                     'current_obligations': round(total_obligations_amount, 2),
                     'total_payments': round(total_payments_amount, 2),
+                    'apartment_statuses': apartment_statuses_payload,
                     # Add summary object for frontend compatibility
                     'summary': {
                         'total_obligations': round(total_obligations_amount, 2),

@@ -17,6 +17,7 @@ const buildFallbackResponse = (buildingId: string) => ({
     collection_rate: 0,
     reserve_fund: 0,
     recent_expenses: [],
+    apartment_statuses: [],
   },
   maintenance: {
     pending_requests: 0,
@@ -132,6 +133,14 @@ export async function GET(
         }
         if (Array.isArray((financial as any).top_debtors)) {
           (financial as any).top_debtors = [];
+        }
+        if (Array.isArray((financial as any).apartment_statuses)) {
+          (financial as any).apartment_statuses = (financial as any).apartment_statuses
+            .map((item: any) => ({
+              apartment_number: typeof item?.apartment_number === 'string' ? item.apartment_number : String(item?.apartment_number ?? ''),
+              has_pending: Boolean(item?.has_pending),
+            }))
+            .filter((item: any) => item.apartment_number);
         }
       }
     } catch (e) {
