@@ -1,7 +1,7 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { AlertTriangle, CheckCircle2, Euro, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Euro } from 'lucide-react';
 import { useMemo } from 'react';
 
 const formatCurrency = (value: number) =>
@@ -44,7 +44,7 @@ function SummaryMetric({
   );
 }
 
-export default function ApartmentDebtsWidget({ data, isLoading, error, settings }: BaseWidgetProps) {
+export default function ApartmentDebtsWidget({ data, isLoading, error }: BaseWidgetProps) {
   const rawTotalObligations =
     (typeof data?.financial?.total_obligations === 'number' && data.financial.total_obligations) ||
     (typeof data?.financial?.summary?.total_obligations === 'number' && data.financial.summary.total_obligations) ||
@@ -209,19 +209,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
         </>
       )}
 
-      <div className="mt-auto">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-indigo-200 mt-0.5" />
-            <div className="min-w-0">
-              <p className="text-xs text-white font-semibold">Αναλυτικά στην εφαρμογή</p>
-              <p className="text-[11px] text-indigo-200/80">
-                Για το προσωπικό σας υπόλοιπο και αναλυτικές χρεώσεις/πληρωμές, συνδεθείτε από το QR code.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
