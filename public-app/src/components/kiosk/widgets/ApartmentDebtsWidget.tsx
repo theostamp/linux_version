@@ -1,8 +1,8 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { AlertTriangle, Calendar, CheckCircle2, Euro, Info, TrendingUp } from 'lucide-react';
-import { useMemo } from 'react';
+import { AlertTriangle, CheckCircle2, Euro, Info } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('el-GR', {
@@ -45,24 +45,6 @@ function SummaryMetric({
 }
 
 export default function ApartmentDebtsWidget({ data, isLoading, error, settings }: BaseWidgetProps) {
-  const monthParam = useMemo(() => {
-    if (settings?.month) return settings.month;
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  }, [settings?.month]);
-
-  const formattedMonth = useMemo(() => {
-    if (!monthParam) return null;
-    const parts = monthParam.split('-');
-    if (parts.length === 2) {
-      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-      if (!Number.isNaN(date.getTime())) {
-        return date.toLocaleDateString('el-GR', { month: 'short', year: 'numeric' });
-      }
-    }
-    return monthParam;
-  }, [monthParam]);
-
   const rawTotalObligations =
     (typeof data?.financial?.total_obligations === 'number' && data.financial.total_obligations) ||
     (typeof data?.financial?.summary?.total_obligations === 'number' && data.financial.summary.total_obligations) ||
@@ -107,10 +89,19 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
       });
   }, [data?.financial?.apartment_statuses]);
 
-  const pendingApartmentsCount = useMemo(
-    () => apartmentStatuses.filter((apt) => apt.has_pending).length,
-    [apartmentStatuses]
-  );
+  const pendingApartments = useMemo(() => apartmentStatuses.filter((apt) => apt.has_pending), [apartmentStatuses]);
+  const okApartments = useMemo(() => apartmentStatuses.filter((apt) => !apt.has_pending), [apartmentStatuses]);
+
+  const [activeTab, setActiveTab] = useState<'pending' | 'ok'>(() => (pendingApartments.length > 0 ? 'pending' : 'ok'));
+
+  useEffect(() => {
+    if (activeTab === 'pending' && pendingApartments.length === 0 && okApartments.length > 0) {
+      setActiveTab('ok');
+    }
+    if (activeTab === 'ok' && okApartments.length === 0 && pendingApartments.length > 0) {
+      setActiveTab('pending');
+    }
+  }, [activeTab, okApartments.length, pendingApartments.length]);
 
   if (isLoading) {
     return (
@@ -132,126 +123,124 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
   }
 
   return (
-    <div className="h-full overflow-hidden flex flex-col">
-      <div className="mb-3 pb-2 border-b border-indigo-400/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-indigo-300" />
-            <div>
-              <h2 className="text-base font-bold text-white">Πορεία Εισπράξεων</h2>
-              <p className="text-[11px] text-indigo-200/80">Συγκεντρωτικά κοινόχρηστα (χωρίς ονόματα/ποσά)</p>
-            </div>
-          </div>
-          <div className="text-right space-y-1">
-            {formattedMonth && (
-              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-900/50 border border-indigo-500/30 text-[11px] text-indigo-200">
-                <Calendar className="w-3 h-3" />
-                {formattedMonth}
-              </div>
-            )}
-            {hasFinancialData && (
-              <div className="text-xs text-indigo-200">Κάλυψη {paymentCoveragePercentage.toFixed(0)}%</div>
-            )}
-          </div>
+    <div className="h-full overflow-hidden flex flex-col gap-3">
+      {!hasFinancialData ? (
+        <div className="flex flex-col items-center justify-center flex-1 text-purple-300">
+          <Euro className="w-12 h-12 mb-3 opacity-60" />
+          <p className="text-sm font-medium">Δεν υπάρχουν διαθέσιμα στοιχεία</p>
+          <p className="text-xs text-purple-400 mt-1">Δείτε αναλυτικά τα κοινόχρηστα στην εφαρμογή</p>
         </div>
-      </div>
+      ) : (
+        <>
+          {showWarning && (
+            <div className="bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
+              <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη Εισπράξεων</p>
+            </div>
+          )}
 
-      <div className="flex-1 flex flex-col gap-3">
-        {!hasFinancialData ? (
-          <div className="flex flex-col items-center justify-center flex-1 text-purple-300">
-            <Euro className="w-12 h-12 mb-3 opacity-60" />
-            <p className="text-sm font-medium">Δεν υπάρχουν διαθέσιμα στοιχεία</p>
-            <p className="text-xs text-purple-400 mt-1">Δείτε αναλυτικά τα κοινόχρηστα στην εφαρμογή</p>
-          </div>
-        ) : (
-          <>
-            {showWarning && (
-              <div className="bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
-                <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη Εισπράξεων</p>
-              </div>
-            )}
-
-            <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-indigo-300 font-medium">Κάλυψη Μήνα</span>
-                <span className={`font-bold ${paymentCoveragePercentage < 75 ? 'text-orange-300' : 'text-white'}`}>
-                  {paymentCoveragePercentage.toFixed(1)}%
-                </span>
-              </div>
+          <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-indigo-300 font-medium">Κάλυψη Μήνα</span>
+              <span className={`font-bold ${paymentCoveragePercentage < 75 ? 'text-orange-300' : 'text-white'}`}>
+                {paymentCoveragePercentage.toFixed(1)}%
+              </span>
+            </div>
+            <div
+              className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30"
+              title={
+                totalRequirements > 0
+                  ? `Εισπραχθέντα: ${formatCurrency(totalPayments)} / Σύνολο: ${formatCurrency(totalRequirements)}`
+                  : undefined
+              }
+            >
               <div
-                className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30"
-                title={
-                  totalRequirements > 0
-                    ? `Εισπραχθέντα: ${formatCurrency(totalPayments)} / Σύνολο: ${formatCurrency(totalRequirements)}`
-                    : undefined
-                }
-              >
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ${
-                    paymentCoveragePercentage >= 75
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-lg shadow-green-500/50'
-                      : 'bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/50'
+                className={`h-full rounded-full transition-all duration-1000 ${
+                  paymentCoveragePercentage >= 75
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-lg shadow-green-500/50'
+                    : 'bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/50'
+                }`}
+                style={{ width: `${paymentCoveragePercentage}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <SummaryMetric
+              label="Εισπραχθέντα"
+              value={formatCurrency(totalPayments)}
+              tone={{
+                bg: 'bg-emerald-500/10',
+                border: 'border-emerald-400/25',
+                value: 'text-emerald-200',
+                label: 'text-emerald-200/80',
+              }}
+            />
+            <SummaryMetric
+              label="Υπόλοιπο"
+              value={formatCurrency(totalObligations)}
+              tone={{
+                bg: 'bg-orange-500/10',
+                border: 'border-orange-400/25',
+                value: 'text-orange-200',
+                label: 'text-orange-200/80',
+              }}
+            />
+            <SummaryMetric
+              label="Σύνολο"
+              value={formatCurrency(totalRequirements)}
+              tone={{
+                bg: 'bg-indigo-500/10',
+                border: 'border-indigo-400/25',
+                value: 'text-indigo-100',
+                label: 'text-indigo-200/80',
+              }}
+            />
+          </div>
+
+          {apartmentStatuses.length > 0 && (
+            <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('pending')}
+                  className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                    activeTab === 'pending'
+                      ? 'bg-orange-500/15 border-orange-400/35'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
                   }`}
-                  style={{ width: `${paymentCoveragePercentage}%` }}
-                />
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-300" />
+                    <span className="text-xs font-semibold text-white">Εκκρεμότητες</span>
+                  </div>
+                  <div className="text-[11px] text-white/70">{pendingApartments.length} διαμερίσματα</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('ok')}
+                  className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                    activeTab === 'ok'
+                      ? 'bg-emerald-500/15 border-emerald-400/35'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    <span className="text-xs font-semibold text-white">Ενημερωμένα</span>
+                  </div>
+                  <div className="text-[11px] text-white/70">{okApartments.length} διαμερίσματα</div>
+                </button>
               </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <SummaryMetric
-                label="Εισπραχθέντα"
-                value={formatCurrency(totalPayments)}
-                tone={{
-                  bg: 'bg-emerald-500/10',
-                  border: 'border-emerald-400/25',
-                  value: 'text-emerald-200',
-                  label: 'text-emerald-200/80',
-                }}
-              />
-              <SummaryMetric
-                label="Υπόλοιπο"
-                value={formatCurrency(totalObligations)}
-                tone={{
-                  bg: 'bg-orange-500/10',
-                  border: 'border-orange-400/25',
-                  value: 'text-orange-200',
-                  label: 'text-orange-200/80',
-                }}
-                  />
-              <SummaryMetric
-                label="Σύνολο"
-                value={formatCurrency(totalRequirements)}
-                tone={{
-                  bg: 'bg-indigo-500/10',
-                  border: 'border-indigo-400/25',
-                  value: 'text-indigo-100',
-                  label: 'text-indigo-200/80',
-                }}
-              />
-            </div>
-
-            {apartmentStatuses.length > 0 && (
-              <div className="bg-indigo-900/20 backdrop-blur-sm rounded-xl border border-indigo-500/20 p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-white">Κατάσταση διαμερισμάτων</p>
-                  <p className="text-[11px] text-indigo-200/70">
-                    {pendingApartmentsCount} εκκρεμότητες
-                  </p>
-                </div>
-                <div className="mt-2 flex items-center gap-3 text-[10px] text-white/65">
-                  <span className="inline-flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-orange-300" />
-                    Εκκρεμότητα
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-                    Ενήμερο / Υπόλοιπο
-                  </span>
-                </div>
-                <div className="mt-3 max-h-44 overflow-auto pr-1 grid grid-cols-2 gap-2">
-                  {apartmentStatuses.map((apt) => (
+              <div className="mt-3 max-h-44 overflow-auto pr-1 grid grid-cols-2 gap-2">
+                {(activeTab === 'pending' ? pendingApartments : okApartments).length === 0 ? (
+                  <div className="col-span-2 text-center text-xs text-white/60 py-6">
+                    {activeTab === 'pending' ? 'Δεν υπάρχουν εκκρεμότητες' : 'Δεν υπάρχουν ενημερωμένα διαμερίσματα'}
+                  </div>
+                ) : (
+                  (activeTab === 'pending' ? pendingApartments : okApartments).map((apt) => (
                     <div
-                      key={apt.apartment_number}
+                      key={`${activeTab}-${apt.apartment_number}`}
                       className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 ${
                         apt.has_pending
                           ? 'bg-orange-500/10 border-orange-400/25'
@@ -268,28 +257,25 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
                         <CheckCircle2 className="w-4 h-4 text-emerald-300 flex-shrink-0" />
                       )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        <div className="mt-auto">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-indigo-200 mt-0.5" />
-              <div className="min-w-0">
-                <p className="text-xs text-white font-semibold">Αναλυτικά στην εφαρμογή</p>
-                <p className="text-[11px] text-indigo-200/80">
-                  Για το προσωπικό σας υπόλοιπο και αναλυτικές χρεώσεις/πληρωμές, συνδεθείτε από το QR στο πλάι.
-                </p>
+                  ))
+                )}
               </div>
             </div>
+          )}
+        </>
+      )}
+
+      <div className="mt-auto">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-indigo-200 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs text-white font-semibold">Αναλυτικά στην εφαρμογή</p>
+              <p className="text-[11px] text-indigo-200/80">
+                Για το προσωπικό σας υπόλοιπο και αναλυτικές χρεώσεις/πληρωμές, συνδεθείτε από το QR στο πλάι.
+              </p>
+            </div>
           </div>
-          <p className="mt-2 text-[10px] text-white/45">
-            Σημείωση: δεν εμφανίζονται ονόματα ή ποσά· μόνο ένδειξη κατάστασης ανά διαμέρισμα.
-          </p>
         </div>
       </div>
     </div>
