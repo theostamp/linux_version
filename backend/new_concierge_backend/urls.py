@@ -59,6 +59,9 @@ urlpatterns = [
     
     # Financial management
     path('api/financial/', include('financial.urls')),
+
+    # Online payments (Stripe charges)
+    path('api/online-payments/', include('online_payments.urls')),
     
     # Public info
     path('api/public-info/', legacy_api_views.public_info, name='public-info'),

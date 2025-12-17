@@ -47,6 +47,9 @@ urlpatterns = [
     
     # Billing endpoints (shared across all tenants)
     path('api/billing/', include('billing.urls')),
+
+    # Online payments webhooks (public schema)
+    path('api/webhooks/', include('online_payments_public.urls')),
     
     # Office Staff Management (shared across all tenants)
     path('api/office/', include('office_staff.urls')),

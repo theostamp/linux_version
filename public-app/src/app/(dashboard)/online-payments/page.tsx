@@ -1,11 +1,14 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   CreditCard, 
   Euro, 
@@ -22,6 +25,8 @@ import {
   Zap
 } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import type { CheckoutResponse, OnlineCharge } from '@/types/online-payments';
 
 // Types
 interface MyApartmentResponse {
@@ -42,6 +47,14 @@ async function fetchMyApartmentData(): Promise<MyApartmentResponse> {
   return apiGet<MyApartmentResponse>('/financial/my-apartment/');
 }
 
+async function fetchCharges(buildingId?: number, period?: string, status?: string): Promise<OnlineCharge[]> {
+  const params: Record<string, string | number> = {};
+  if (buildingId) params.building = buildingId;
+  if (period) params.period = period;
+  if (status && status !== 'all') params.status = status;
+  return apiGet<OnlineCharge[]>('/online-payments/charges/', params);
+}
+
 // Format currency
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('el-GR', {
@@ -52,6 +65,11 @@ function formatCurrency(amount: number): string {
 
 function OnlinePaymentsContent() {
   const { user } = useAuth();
+  const { selectedBuilding } = useBuilding();
+  const buildingId = selectedBuilding?.id;
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(''); // YYYY-MM
+  const [selectedStatus, setSelectedStatus] = useState<string>('pending');
+  const [isStartingCheckout, setIsStartingCheckout] = useState<string | null>(null);
   
   const { data, isLoading, isError } = useQuery({
     queryKey: ['my-apartment-payments'],
@@ -59,8 +77,32 @@ function OnlinePaymentsContent() {
     enabled: !!user,
   });
 
+  const { data: charges, isLoading: chargesLoading, refetch: refetchCharges } = useQuery({
+    queryKey: ['online-charges', buildingId, selectedPeriod, selectedStatus],
+    queryFn: () => fetchCharges(buildingId, selectedPeriod || undefined, selectedStatus),
+    enabled: !!user,
+    refetchInterval: 8000, // keep UI fresh while webhooks land
+  });
+
   const hasBalance = data?.apartments?.some(apt => apt.current_balance > 0);
   const totalBalance = data?.apartments?.reduce((sum, apt) => sum + (apt.current_balance > 0 ? apt.current_balance : 0), 0) || 0;
+  const totalPendingCharges = useMemo(() => {
+    const list = charges || [];
+    const sum = list.reduce((acc, c) => acc + Number(c.amount || 0), 0);
+    return isNaN(sum) ? 0 : sum;
+  }, [charges]);
+
+  const startCheckout = async (chargeId: string) => {
+    try {
+      setIsStartingCheckout(chargeId);
+      const res = await apiPost<CheckoutResponse>('/online-payments/checkout/', { charge_id: chargeId });
+      if (res?.checkout_url) {
+        window.location.href = res.checkout_url;
+      }
+    } finally {
+      setIsStartingCheckout(null);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -97,27 +139,101 @@ function OnlinePaymentsContent() {
         </div>
       </div>
 
-      {/* Coming Soon Banner */}
-      <Card className="border-2 border-dashed border-amber-500/30 bg-amber-500/5">
-        <CardContent className="py-8">
-          <div className="flex flex-col items-center text-center">
-            <div className="p-4 bg-amber-100 dark:bg-amber-900/40 rounded-full mb-4">
-              <Clock className="w-10 h-10 text-amber-600 dark:text-amber-400" />
+      {/* Charges List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Euro className="w-5 h-5" />
+            Οφειλές για Online Πληρωμή
+          </CardTitle>
+          <CardDescription>
+            Επιλέξτε οφειλή και συνεχίστε σε ασφαλές Checkout. Η τελική κατάσταση ενημερώνεται από webhook.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Κτίριο</div>
+              <div className="text-sm font-medium">
+                {selectedBuilding?.name || '—'}
+              </div>
             </div>
-            <Badge variant="outline" className="mb-3 border-amber-500 text-amber-700 dark:text-amber-400">
-              Έρχεται Σύντομα
-            </Badge>
-            <h2 className="text-2xl font-bold mb-2">Σύστημα Online Πληρωμών</h2>
-            <p className="text-muted-foreground max-w-md mb-6">
-              Η δυνατότητα πληρωμής κοινοχρήστων online θα είναι διαθέσιμη σύντομα. 
-              Θα μπορείτε να πληρώνετε με κάρτα, τραπεζική μεταφορά ή ηλεκτρονικό πορτοφόλι.
-            </p>
-            <Button disabled size="lg" className="gap-2">
-              <CreditCard className="w-5 h-5" />
-              Πληρωμή με Κάρτα
-              <ArrowRight className="w-4 h-4" />
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Περίοδος</div>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                placeholder="YYYY-MM (π.χ. 2025-12)"
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+              />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Κατάσταση</div>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Σε εξέλιξη</SelectItem>
+                  <SelectItem value="unpaid">Ανεξόφλητο</SelectItem>
+                  <SelectItem value="paid">Πληρωμένο</SelectItem>
+                  <SelectItem value="failed">Απέτυχε</SelectItem>
+                  <SelectItem value="cancelled">Ακυρώθηκε</SelectItem>
+                  <SelectItem value="all">Όλα</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Σύνολο (τρέχον φίλτρο): <span className="font-semibold text-foreground">{formatCurrency(totalPendingCharges)}</span>
+            </div>
+            <Button variant="outline" onClick={() => refetchCharges()} disabled={chargesLoading}>
+              Ανανέωση
             </Button>
           </div>
+
+          {chargesLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Φόρτωση οφειλών...</span>
+            </div>
+          ) : (charges?.length ? (
+            <div className="space-y-3">
+              {charges.map((c) => (
+                <div key={c.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/40">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{c.period}</span>
+                      <Badge variant="secondary">{c.category}</Badge>
+                      <Badge variant="outline">{c.status}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{c.description || '—'}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="font-semibold">{formatCurrency(Number(c.amount || 0))}</div>
+                      <div className="text-xs text-muted-foreground">{c.routed_to}</div>
+                    </div>
+                    <Button
+                      onClick={() => startCheckout(c.id)}
+                      disabled={isStartingCheckout === c.id || c.status === 'paid'}
+                      className="gap-2"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {c.status === 'paid' ? 'Πληρώθηκε' : (isStartingCheckout === c.id ? 'Μετάβαση…' : 'Πληρωμή')}
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              Δεν βρέθηκαν οφειλές για τα επιλεγμένα φίλτρα.
+            </div>
+          ))}
         </CardContent>
       </Card>
 
