@@ -102,6 +102,15 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   const palette = useMemo(() => getScenePalette(paletteHour), [paletteHour]);
   const collectionRate = data?.financial?.collection_rate;
   const collectionStatus = useMemo(() => getCollectionStatus(collectionRate), [collectionRate]);
+  const todayIso = new Date().toISOString().split('T')[0];
+  const votes = useMemo(() => (Array.isArray(data?.votes) ? data.votes : []), [data?.votes]);
+  const activeVotes = useMemo(
+    () => votes.filter((vote: any) => !vote?.end_date || vote.end_date >= todayIso),
+    [votes, todayIso]
+  );
+  const showImportantAssembly = Boolean(data?.upcoming_assembly) || votes.length > 0;
+  const showImportantVoteResults = activeVotes.length > 0;
+  const showImportantBlock = showImportantAssembly || showImportantVoteResults;
 
   return (
     <div
@@ -113,19 +122,25 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         {/* Left Sidebar - 23% */}
         <div className="w-[23%] min-w-[300px] flex flex-col space-y-4 p-4">
           {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
-          <div
-            className="flex-shrink-0 h-[35%] backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
-            style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
-          >
-            <div className="h-full p-3 flex flex-col gap-3">
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <AssemblyAnnouncementWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
-              </div>
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <VoteResultsBannerWidget data={data} isLoading={false} error={null} />
+          {showImportantBlock && (
+            <div
+              className="flex-shrink-0 h-[35%] backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
+              style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
+            >
+              <div className="h-full p-3 flex flex-col gap-3">
+                {showImportantAssembly && (
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <AssemblyAnnouncementWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
+                  </div>
+                )}
+                {showImportantVoteResults && (
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <VoteResultsBannerWidget data={data} isLoading={false} error={null} />
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Auto-Scrolling Widgets Area - Slide Animation */}
           <div
