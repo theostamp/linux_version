@@ -55,6 +55,7 @@ SHARED_APPS = [
     'users',
     'office_staff',         # Office Staff Management (shared - relates to users)
     'billing',              # Subscription & Billing System (shared across tenants)
+    'online_payments_public',  # Online payments webhooks/idempotency (public schema)
 
     'corsheaders',
     'django.contrib.contenttypes',
@@ -89,6 +90,9 @@ TENANT_APPS = [
     
     # 💰 Οικονομικό σύστημα
     'financial',
+
+    # 💳 Online payments (Stripe charges) - tenant schema
+    'online_payments',
     
     # 👥 Διαχείριση Ομάδων, Προμηθευτών & Συνεργατών
     'teams',
