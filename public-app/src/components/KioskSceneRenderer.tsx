@@ -50,27 +50,6 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   return (
     <div className="relative">
       <CurrentFallbackScene data={data} buildingId={buildingId} />
-
-      {/* Scene indicator */}
-      {scenesToShow.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
-          {scenesToShow.map((scene, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex
-                  ? 'w-8 bg-gradient-to-r from-purple-400 to-pink-400'
-                  : 'w-2 bg-gray-600'
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Scene name overlay */}
-      <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
-        <p className="text-white text-sm font-medium">{scenesToShow[currentIndex].name}</p>
-      </div>
     </div>
   );
 }
@@ -252,27 +231,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
         }`}
       >
         <MorningOverviewSceneCustom data={kioskData} buildingId={effectiveBuildingId} />
-        
-        {/* Scene indicator */}
-        {scenes.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-50">
-            {scenes.map((scene, index) => (
-              <div
-                key={scene.id}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentSceneIndex 
-                    ? 'w-8 bg-purple-400' 
-                    : 'w-2 bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-        
-        {/* Scene name overlay */}
-        <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg z-50">
-          <p className="text-white text-sm font-medium">{currentScene.name}</p>
-        </div>
       </div>
     );
   }
@@ -290,21 +248,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
           buildingId={effectiveBuildingId}
           brandingConfig={ambientBrandingFromScene ?? undefined}
         />
-
-        {scenes.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform">
-            <div className="flex gap-2">
-              {scenes.map((scene, index) => (
-                <div
-                  key={scene.id}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index === currentSceneIndex ? 'w-10 bg-white' : 'w-2 bg-white/40'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -321,21 +264,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
           data={kioskData}
           buildingId={effectiveBuildingId}
         />
-
-        {scenes.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform z-50">
-            <div className="flex gap-2">
-              {scenes.map((scene, index) => (
-                <div
-                  key={scene.id}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index === currentSceneIndex ? 'w-10 bg-white' : 'w-2 bg-white/40'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -373,27 +301,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
             {renderWidget(placement)}
           </div>
         ))}
-      </div>
-
-      {/* Scene indicator (optional - can be removed) */}
-      {scenes.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-          {scenes.map((scene, index) => (
-            <div
-              key={scene.id}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentSceneIndex 
-                  ? 'w-8 bg-blue-400' 
-                  : 'w-2 bg-gray-600'
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Scene name overlay (fades in/out) */}
-      <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg">
-        <p className="text-white text-sm font-medium">{currentScene.name}</p>
       </div>
     </div>
   );

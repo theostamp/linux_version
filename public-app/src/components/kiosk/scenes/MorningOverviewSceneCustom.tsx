@@ -59,19 +59,6 @@ const getScenePalette = (hour: number): ScenePalette => {
   };
 };
 
-const getCollectionStatus = (value?: number) => {
-  if (typeof value !== 'number') {
-    return { label: 'Παρακολούθηση σε εξέλιξη', tone: 'text-white/80 border-white/20 bg-white/5' };
-  }
-  if (value >= 90) {
-    return { label: `Είσπραξη ${value.toFixed(0)}%`, tone: 'text-emerald-200 border-emerald-400/40 bg-emerald-500/10' };
-  }
-  if (value >= 75) {
-    return { label: `Είσπραξη ${value.toFixed(0)}%`, tone: 'text-amber-200 border-amber-400/40 bg-amber-500/10' };
-  }
-  return { label: `Είσπραξη ${value.toFixed(0)}%`, tone: 'text-rose-200 border-rose-400/40 bg-rose-500/10' };
-};
-
 export default function MorningOverviewSceneCustom({ data, buildingId }: MorningOverviewSceneCustomProps) {
   const [currentSidebarWidget, setCurrentSidebarWidget] = useState(0);
   const [paletteHour, setPaletteHour] = useState(() => new Date().getHours());
@@ -100,8 +87,6 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   }, []);
 
   const palette = useMemo(() => getScenePalette(paletteHour), [paletteHour]);
-  const collectionRate = data?.financial?.collection_rate;
-  const collectionStatus = useMemo(() => getCollectionStatus(collectionRate), [collectionRate]);
   const todayIso = new Date().toISOString().split('T')[0];
   const votes = useMemo(() => (Array.isArray(data?.votes) ? data.votes : []), [data?.votes]);
   const activeVotes = useMemo(
@@ -181,11 +166,6 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           >
             <div className="h-full">
               <ManagementOfficeWidget data={data} isLoading={false} error={undefined} />
-            </div>
-            <div
-              className={`absolute -right-2 top-4 px-4 py-1 text-xs font-semibold tracking-wide rounded-full border backdrop-blur ${collectionStatus.tone}`}
-            >
-              {collectionStatus.label}
             </div>
           </div>
 
