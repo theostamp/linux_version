@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response  
 from django.utils import timezone
 from django.db.models import Q
+from django.http import Http404
 import logging
 
 from .models import Vote, VoteSubmission
@@ -100,7 +101,15 @@ class VoteViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='vote')
     def vote(self, request, pk=None):
-        vote = self.get_object()
+        try:
+            vote = self.get_object()
+        except Http404:
+            logger.warning(f"Vote {pk} not found in filtered queryset for user {request.user}")
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση σε αυτήν."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         serializer = VoteSubmissionSerializer(
             data=request.data,
             context={'request': request, 'vote': vote}
@@ -133,7 +142,15 @@ class VoteViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='my-submission')
     def my_submission(self, request, pk=None):
-        vote = self.get_object()
+        try:
+            vote = self.get_object()
+        except Http404:
+            logger.warning(f"Vote {pk} not found in filtered queryset for user {request.user}")
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση σε αυτήν."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         try:
             sub = VoteSubmission.objects.get(vote=vote, user=request.user)
             ser = VoteSubmissionSerializer(sub)
@@ -153,6 +170,13 @@ class VoteViewSet(viewsets.ModelViewSet):
             results = vote.get_results()
             results['min_participation'] = vote.min_participation
             return Response(results)
+        except Http404:
+            # Το vote δεν βρέθηκε στο filtered queryset (πιθανώς δεν έχει πρόσβαση ο χρήστης)
+            logger.warning(f"Vote {pk} not found in filtered queryset for user {request.user}")
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση σε αυτήν."},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except Exception:
             logger.exception("Error fetching vote results")
             return Response(
@@ -201,7 +225,15 @@ class VoteViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='activate')
     def activate(self, request, pk=None):
         """Ενεργοποίηση ψηφοφορίας"""
-        vote = self.get_object()
+        try:
+            vote = self.get_object()
+        except Http404:
+            logger.warning(f"Vote {pk} not found in filtered queryset for user {request.user}")
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση σε αυτήν."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         vote.is_active = True
         vote.save()
         logger.info(f"Vote activated: {vote.title} by {request.user}")
@@ -210,7 +242,15 @@ class VoteViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='deactivate')
     def deactivate(self, request, pk=None):
         """Απενεργοποίηση ψηφοφορίας"""
-        vote = self.get_object()
+        try:
+            vote = self.get_object()
+        except Http404:
+            logger.warning(f"Vote {pk} not found in filtered queryset for user {request.user}")
+            return Response(
+                {"error": "Η ψηφοφορία δεν βρέθηκε ή δεν έχετε πρόσβαση σε αυτήν."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         vote.is_active = False
         vote.save()
         logger.info(f"Vote deactivated: {vote.title} by {request.user}")
