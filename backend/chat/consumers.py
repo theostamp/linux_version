@@ -457,9 +457,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chat_room = ChatRoom.objects.get(building_id=building_id)
             user = self.scope["user"]
             
-            # Έλεγχος αν ο χρήστης είναι διαχειριστής ή κάτοικος του κτιρίου
+            # Έλεγχος πρόσβασης (office/internal/residents)
             building = chat_room.building
-            return user.is_manager_of(building) or user.is_resident_of(building)
+            return user.can_access_building(building)
         except (ValueError, ChatRoom.DoesNotExist):
             return False
 
@@ -555,12 +555,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         chat_room = ChatRoom.objects.get(building_id=building_id)
         building = chat_room.building
         
-        if sender.is_manager_of(building):
+        # UI badges: treat office-level as manager, internal_manager separately, else resident.
+        if getattr(sender, "is_office_level", False) or sender.is_manager_of(building):
             return "manager"
-        elif sender.is_resident_of(building):
+        if hasattr(sender, "is_internal_manager_of") and sender.is_internal_manager_of(building):
+            return "internal_manager"
+        if sender.is_resident_of(building):
             return "resident"
-        else:
-            return "other"
+        return "other"
 
     @database_sync_to_async
     def mark_message_as_read(self, message_id):

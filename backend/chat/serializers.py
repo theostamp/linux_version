@@ -266,9 +266,9 @@ class ChatRoomJoinSerializer(serializers.Serializer):
             chat_room = ChatRoom.objects.get(id=value)
             user = self.context['request'].user
             
-            # Έλεγχος αν ο χρήστης είναι κάτοικος ή διαχειριστής του κτιρίου
+            # Έλεγχος πρόσβασης (office/internal/residents)
             building = chat_room.building
-            if not (user.is_manager_of(building) or user.is_resident_of(building)):
+            if not user.can_access_building(building):
                 raise serializers.ValidationError(
                     "Δεν έχετε πρόσβαση σε αυτό το chat room"
                 )
@@ -291,9 +291,9 @@ class ChatMessageReadSerializer(serializers.Serializer):
             chat_room = ChatRoom.objects.get(id=data['chat_room_id'])
             user = self.context['request'].user
             
-            # Έλεγχος αν ο χρήστης είναι κάτοικος ή διαχειριστής του κτιρίου
+            # Έλεγχος πρόσβασης (office/internal/residents)
             building = chat_room.building
-            if not (user.is_manager_of(building) or user.is_resident_of(building)):
+            if not user.can_access_building(building):
                 raise serializers.ValidationError(
                     "Δεν έχετε πρόσβαση σε αυτό το chat room"
                 )
@@ -499,11 +499,11 @@ class CreateDirectConversationSerializer(serializers.Serializer):
         
         # Check if sender has access to building
         sender = request.user
-        if not (sender.is_manager_of(building) or sender.is_resident_of(building) or sender.is_superuser):
+        if not sender.can_access_building(building):
             raise serializers.ValidationError("Δεν έχετε πρόσβαση σε αυτό το κτίριο")
         
         # Check if recipient has access to building
-        if not (recipient.is_manager_of(building) or recipient.is_resident_of(building) or recipient.is_superuser):
+        if not recipient.can_access_building(building):
             raise serializers.ValidationError("Ο παραλήπτης δεν έχει πρόσβαση σε αυτό το κτίριο")
         
         # Can't message yourself
@@ -527,8 +527,8 @@ class OnlineUsersListSerializer(serializers.Serializer):
             request = self.context.get('request')
             user = request.user
             
-            # Check access
-            if not (user.is_manager_of(building) or user.is_resident_of(building) or user.is_superuser):
+            # Check access (office/internal/residents)
+            if not user.can_access_building(building):
                 raise serializers.ValidationError("Δεν έχετε πρόσβαση σε αυτό το κτίριο")
             
             return value

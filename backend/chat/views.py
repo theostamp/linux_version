@@ -62,8 +62,9 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         try:
             user = self.request.user
             
-            # Για superusers, επιστρέφει όλα τα chat rooms
-            if user.is_superuser:
+            # Για superusers/office-level, επιστρέφει όλα τα chat rooms του tenant
+            # (office managers/staff έχουν πρόσβαση σε όλα τα κτίρια του tenant).
+            if user.is_superuser or getattr(user, "is_office_level", False) or user.is_staff:
                 return self.queryset
             
             # Για άλλους χρήστες, επιστρέφει μόνο τα chat rooms των κτιρίων τους
@@ -115,8 +116,8 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         
         user = request.user
         
-        # Έλεγχος πρόσβασης
-        if not (user.is_manager_of(building) or user.is_resident_of(building) or user.is_superuser):
+        # Έλεγχος πρόσβασης (consistent με το υπόλοιπο σύστημα δικαιωμάτων)
+        if not user.can_access_building(building):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτό το κτίριο"},
                 status=status.HTTP_403_FORBIDDEN
@@ -161,7 +162,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         
         # Έλεγχος αν ο χρήστης έχει πρόσβαση στο chat room
         building = chat_room.building
-        if not (user.is_manager_of(building) or user.is_resident_of(building)):
+        if not user.can_access_building(building):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτό το chat room"},
                 status=status.HTTP_403_FORBIDDEN
@@ -272,8 +273,8 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         
-        # Για superusers, επιστρέφει όλα τα μηνύματα
-        if user.is_superuser:
+        # Για superusers/office-level, επιστρέφει όλα τα μηνύματα του tenant
+        if user.is_superuser or getattr(user, "is_office_level", False) or user.is_staff:
             return self.queryset
         
         # Για άλλους χρήστες, επιστρέφει μόνο τα μηνύματα των chat rooms τους
