@@ -167,7 +167,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     if (!WidgetComponent) {
       console.warn(`[KioskSceneRenderer] Widget component not found: ${widget.component}`);
       return (
-        <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg border border-gray-700">
+        <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg border border-gray-300 shadow-sm">
           <div className="text-center p-4">
             <p className="text-gray-400 text-sm mb-2">Widget not available</p>
             <p className="text-gray-500 text-xs">{widget.component}</p>

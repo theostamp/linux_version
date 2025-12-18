@@ -476,6 +476,15 @@ export function getBorderClass(variant: 'default' | 'light' | 'medium' | 'dashed
   return variants[variant];
 }
 
+/**
+ * Get standard border class with shadow (soft border with subtle shadow)
+ * Use this for containers, cards, and elements that need a softer appearance
+ */
+export function getBorderWithShadowClass(variant: 'default' | 'light' | 'medium' | 'dashed' = 'default'): string {
+  const borderClass = getBorderClass(variant);
+  return `${borderClass} shadow-sm`;
+}
+
 // ============================================================================
 // EXPORT ALL
 // ============================================================================
@@ -499,6 +508,7 @@ export const designSystem = {
   getSemanticBgClasses,
   getStatusBadgeClasses,
   getBorderClass,
+  getBorderWithShadowClass,
 } as const;
 
 export default designSystem;

@@ -188,7 +188,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-slate-800 last:border-b-0">
+    <div className="border-b border-gray-300 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-emerald-400"
@@ -243,7 +243,7 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       {/* NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-gray-300 bg-slate-950/80 backdrop-blur-xl shadow-sm">
         <nav className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
@@ -271,7 +271,7 @@ export default function LandingPage() {
             </a>
             <Link
               href="/login"
-              className="rounded-full border border-slate-700 px-5 py-2 text-sm font-medium text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
+              className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800 shadow-sm"
             >
               Σύνδεση
             </Link>
@@ -286,7 +286,7 @@ export default function LandingPage() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 md:hidden shadow-sm"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>

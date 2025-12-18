@@ -91,7 +91,7 @@ function MagicLoginContent() {
       <BuildingRevealBackground />
       
       <div className="max-w-md w-full mx-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 backdrop-blur-sm">
+        <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-8 backdrop-blur-sm shadow-sm">
           {status === 'loading' && (
             <div className="text-center py-8">
               <Loader2 className="h-16 w-16 text-emerald-400 animate-spin mx-auto mb-6" />

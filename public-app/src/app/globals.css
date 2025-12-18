@@ -267,3 +267,128 @@ body {
 .data-table--compact thead th {
   padding: 0.5rem 1rem;
 }
+
+/* ========================================
+   BORDER OVERRIDES - Soft Gray Borders
+   ======================================== */
+
+/* Override dark borders with soft gray borders + shadow */
+/* This applies to all dark border classes (border-slate-700, border-slate-800, border-gray-700, border-gray-800, border-black/10) */
+
+/* Base border override - replaces dark borders with soft gray */
+/* Using attribute selector to catch all instances, including those with escaped slashes */
+[class*="border-slate-700"],
+[class*="border-slate-800"],
+[class*="border-gray-700"],
+[class*="border-gray-800"],
+[class*="border-black/10"],
+.border-slate-700,
+.border-slate-800,
+.border-gray-700,
+.border-gray-800,
+.border-black\/10 {
+  border-color: rgb(203 213 225) !important; /* gray-300 */
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important; /* shadow-sm */
+}
+
+/* Border width variants with override */
+/* Using both class selectors and attribute selectors for maximum coverage */
+[class*="border-b"][class*="border-slate-700"],
+[class*="border-b"][class*="border-slate-800"],
+[class*="border-b"][class*="border-gray-700"],
+[class*="border-b"][class*="border-gray-800"],
+.border-b.border-slate-700,
+.border-b.border-slate-800,
+.border-b.border-gray-700,
+.border-b.border-gray-800,
+.border-b.border-black\/10 {
+  border-bottom-color: rgb(203 213 225) !important;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
+}
+
+[class*="border-t"][class*="border-slate-700"],
+[class*="border-t"][class*="border-slate-800"],
+[class*="border-t"][class*="border-gray-700"],
+[class*="border-t"][class*="border-gray-800"],
+.border-t.border-slate-700,
+.border-t.border-slate-800,
+.border-t.border-gray-700,
+.border-t.border-gray-800,
+.border-t.border-black\/10 {
+  border-top-color: rgb(203 213 225) !important;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
+}
+
+[class*="border-l"][class*="border-slate-700"],
+[class*="border-l"][class*="border-slate-800"],
+[class*="border-l"][class*="border-gray-700"],
+[class*="border-l"][class*="border-gray-800"],
+.border-l.border-slate-700,
+.border-l.border-slate-800,
+.border-l.border-gray-700,
+.border-l.border-gray-800,
+.border-l.border-black\/10 {
+  border-left-color: rgb(203 213 225) !important;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
+}
+
+[class*="border-r"][class*="border-slate-700"],
+[class*="border-r"][class*="border-slate-800"],
+[class*="border-r"][class*="border-gray-700"],
+[class*="border-r"][class*="border-gray-800"],
+.border-r.border-slate-700,
+.border-r.border-slate-800,
+.border-r.border-gray-700,
+.border-r.border-gray-800,
+.border-r.border-black\/10 {
+  border-right-color: rgb(203 213 225) !important;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
+}
+
+/* Thick borders (border-2, border-t-2, etc.) */
+[class*="border-2"][class*="border-slate-700"],
+[class*="border-2"][class*="border-slate-800"],
+[class*="border-2"][class*="border-gray-700"],
+[class*="border-2"][class*="border-gray-800"],
+[class*="border-t-2"][class*="border-slate-700"],
+[class*="border-t-2"][class*="border-slate-800"],
+[class*="border-t-2"][class*="border-gray-700"],
+[class*="border-t-2"][class*="border-gray-800"],
+[class*="border-b-2"][class*="border-slate-700"],
+[class*="border-b-2"][class*="border-slate-800"],
+[class*="border-b-2"][class*="border-gray-700"],
+[class*="border-b-2"][class*="border-gray-800"],
+.border-2.border-slate-700,
+.border-2.border-slate-800,
+.border-2.border-gray-700,
+.border-2.border-gray-800,
+.border-t-2.border-slate-700,
+.border-t-2.border-slate-800,
+.border-t-2.border-gray-700,
+.border-t-2.border-gray-800,
+.border-b-2.border-slate-700,
+.border-b-2.border-slate-800,
+.border-b-2.border-gray-700,
+.border-b-2.border-gray-800 {
+  border-color: rgb(203 213 225) !important;
+  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
+}
+
+/* Preserve error states, focus states, and hover states */
+.border-red-500\/50,
+.border-red-500,
+.focus\:border-indigo-500:focus,
+.focus\:border-emerald-500:focus,
+.focus\:border-blue-500:focus,
+.hover\:border-emerald-500\/50:hover,
+.hover\:border-blue-500\/50:hover,
+.hover\:border-slate-500:hover,
+.hover\:border-slate-600:hover {
+  box-shadow: inherit !important;
+}
+
+/* Spinner borders - keep original color but make softer */
+.border-slate-950.border-t-transparent {
+  border-color: rgb(203 213 225) !important;
+  border-top-color: transparent !important;
+}

@@ -42,7 +42,7 @@ export function BaseWidget({
   return (
     <div
       className={cn(
-        'relative overflow-hidden transition-all duration-200 hover:shadow-lg',
+        'relative overflow-hidden transition-all duration-200 shadow-sm hover:shadow-lg',
         sizeClasses[gridSize as keyof typeof sizeClasses],
         className
       )}
@@ -54,7 +54,7 @@ export function BaseWidget({
     >
       {/* Title */}
       {showTitle && title && (
-        <div className="px-4 py-3 border-b border-black/10">
+        <div className="px-4 py-3 border-b border-gray-300">
           <h3 className="font-semibold text-lg leading-tight">
             {title}
           </h3>

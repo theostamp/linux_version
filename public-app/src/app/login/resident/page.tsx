@@ -119,7 +119,7 @@ function ResidentLoginForm() {
       <BuildingRevealBackground />
       
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-300 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/login" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
@@ -157,7 +157,7 @@ function ResidentLoginForm() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
+          <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-8 shadow-sm">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                 <Home className="h-8 w-8 text-emerald-400" />
@@ -195,7 +195,7 @@ function ResidentLoginForm() {
                     }}
                     autoComplete="email"
                     className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                      error && !email ? 'border-red-500/50' : 'border-slate-700'
+                      error && !email ? 'border-red-500/50' : 'border-gray-300'
                     }`}
                     placeholder="το-email-σας@example.com"
                   />
@@ -220,7 +220,7 @@ function ResidentLoginForm() {
                     }}
                     autoComplete="tel"
                     className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                      error && !phone ? 'border-red-500/50' : 'border-slate-700'
+                      error && !phone ? 'border-red-500/50' : 'border-gray-300'
                     }`}
                     placeholder="69xxxxxxxx"
                   />
@@ -250,7 +250,7 @@ function ResidentLoginForm() {
             </form>
 
             {/* Help Section */}
-            <div className="mt-6 pt-6 border-t border-slate-700 space-y-4">
+            <div className="mt-6 pt-6 border-t border-gray-300 space-y-4">
               <p className="text-sm font-medium text-slate-300 text-center">
                 Δεν μπορείτε να συνδεθείτε;
               </p>

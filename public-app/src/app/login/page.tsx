@@ -10,7 +10,7 @@ export default function LoginSelectPage() {
       <BuildingRevealBackground />
       
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-300 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
@@ -53,7 +53,7 @@ export default function LoginSelectPage() {
             {/* Office Manager Card */}
             <Link 
               href="/login/office"
-              className="group rounded-2xl border border-slate-700 bg-slate-900/70 p-8 hover:border-blue-500/50 hover:bg-slate-800/70 transition-all duration-300"
+              className="group rounded-2xl border border-gray-300 bg-slate-900/70 p-8 shadow-sm hover:border-blue-500/50 hover:bg-slate-800/70 transition-all duration-300"
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center mb-6 group-hover:bg-blue-500/30 transition-colors">
@@ -75,7 +75,7 @@ export default function LoginSelectPage() {
             {/* Resident Card */}
             <Link 
               href="/login/resident"
-              className="group rounded-2xl border border-slate-700 bg-slate-900/70 p-8 hover:border-emerald-500/50 hover:bg-slate-800/70 transition-all duration-300"
+              className="group rounded-2xl border border-gray-300 bg-slate-900/70 p-8 shadow-sm hover:border-emerald-500/50 hover:bg-slate-800/70 transition-all duration-300"
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-6 group-hover:bg-emerald-500/30 transition-colors">

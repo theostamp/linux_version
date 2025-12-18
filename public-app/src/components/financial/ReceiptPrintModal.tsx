@@ -266,9 +266,9 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
           </div>
 
           {/* Receipt Content */}
-          <div ref={printRef} className="bg-white p-6 border rounded-lg">
+          <div ref={printRef} className="bg-white p-6 border border-gray-300 rounded-lg shadow-sm">
             {/* Header */}
-            <div className="text-center border-b-2 border-gray-800 pb-5 mb-8">
+            <div className="text-center border-b-2 border-gray-300 pb-5 mb-8">
               <div className="flex justify-between items-start mb-5">
                 <div className="flex items-center gap-4">
                   <div className="flex-shrink-0">
@@ -418,12 +418,12 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             {/* Signature Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12 mb-8">
               <div className="text-center">
-                <div className="border-t-2 border-gray-800 pt-3 mt-12">
+                <div className="border-t-2 border-gray-300 pt-3 mt-12">
                   <strong>Υπογραφή Ενοίκου</strong>
                 </div>
               </div>
               <div className="text-center">
-                <div className="border-t-2 border-gray-800 pt-3 mt-12">
+                <div className="border-t-2 border-gray-300 pt-3 mt-12">
                   <strong>Υπογραφή & Σφραγίδα Διαχειριστή</strong>
                 </div>
               </div>

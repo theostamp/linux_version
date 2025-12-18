@@ -319,7 +319,7 @@ function SignupForm() {
     <div className="min-h-screen bg-slate-950 relative">
       <BuildingRevealBackground />
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-300 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
@@ -373,13 +373,13 @@ function SignupForm() {
             {/* Left: Plan Selection & Pricing */}
             <div className="lg:col-span-2 space-y-6">
               {/* Apartment Counter */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+              <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-6 shadow-sm">
                 <h3 className="text-sm font-medium text-slate-400 mb-4">Διαμερίσματα στην πολυκατοικία</h3>
                 <div className="flex items-center justify-center gap-4">
                   <button
                     type="button"
                     onClick={() => handleApartmentChange(-1)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                     disabled={apartments <= 1}
                   >
                     <Minus className="h-4 w-4" />
@@ -398,7 +398,7 @@ function SignupForm() {
                   <button
                     type="button"
                     onClick={() => handleApartmentChange(1)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                     disabled={apartments >= 100}
                   >
                     <Plus className="h-4 w-4" />
@@ -408,7 +408,7 @@ function SignupForm() {
 
               {/* Plan Selection */}
               {apartments > 7 && (
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+                <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-6 shadow-sm">
                   <h3 className="text-sm font-medium text-slate-400 mb-4">Επιλέξτε πακέτο</h3>
                   <div className="space-y-3">
                     <button
@@ -417,7 +417,7 @@ function SignupForm() {
                       className={`w-full flex items-center justify-between rounded-xl border p-4 transition-all ${
                         selectedPlan === 'cloud'
                           ? 'border-emerald-500 bg-emerald-500/10'
-                          : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                          : 'border-gray-300 bg-slate-800/50 hover:border-slate-600'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -438,7 +438,7 @@ function SignupForm() {
                       className={`w-full flex items-center justify-between rounded-xl border p-4 transition-all relative ${
                         selectedPlan === 'kiosk'
                           ? 'border-emerald-500 bg-emerald-500/10'
-                          : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                          : 'border-gray-300 bg-slate-800/50 hover:border-slate-600'
                       }`}
                     >
                       <span className="absolute -top-2 right-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
@@ -508,7 +508,7 @@ function SignupForm() {
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-800">
+                <div className="mt-4 pt-4 border-t border-gray-300">
                   <p className="text-xs font-medium text-slate-400 mb-2">
                     {PLANS[effectivePlan].name} περιλαμβάνει:
                   </p>
@@ -526,7 +526,7 @@ function SignupForm() {
 
             {/* Right: Signup Form */}
             <div className="lg:col-span-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 sm:p-8">
+              <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-6 sm:p-8 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-50 mb-6">Στοιχεία Λογαριασμού</h2>
                 
                 {errors.general && (
@@ -539,7 +539,7 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={handleGoogleAuth}
-                  className="w-full bg-slate-800 border border-slate-700 text-slate-200 py-3 px-6 rounded-xl font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-3 mb-6"
+                  className="w-full bg-slate-800 border border-gray-300 text-slate-200 py-3 px-6 rounded-xl font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-3 mb-6 shadow-sm"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -552,7 +552,7 @@ function SignupForm() {
 
                 <div className="relative mb-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-700"></div>
+                    <div className="w-full border-t border-gray-300"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
                     <span className="px-3 bg-slate-900 text-slate-500">ή με email</span>
@@ -576,7 +576,7 @@ function SignupForm() {
                           onChange={handleInputChange}
                           autoComplete="given-name"
                           className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.firstName ? 'border-red-500/50' : 'border-slate-700'
+                            errors.firstName ? 'border-red-500/50' : 'border-gray-300'
                           }`}
                           placeholder="Γιώργος"
                         />
@@ -600,7 +600,7 @@ function SignupForm() {
                           onChange={handleInputChange}
                           autoComplete="family-name"
                           className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.lastName ? 'border-red-500/50' : 'border-slate-700'
+                            errors.lastName ? 'border-red-500/50' : 'border-gray-300'
                           }`}
                           placeholder="Παπαδόπουλος"
                         />
@@ -626,7 +626,7 @@ function SignupForm() {
                         onChange={handleInputChange}
                         autoComplete="email"
                         className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                          errors.email ? 'border-red-500/50' : 'border-slate-700'
+                          errors.email ? 'border-red-500/50' : 'border-gray-300'
                         }`}
                         placeholder="email@example.com"
                       />
@@ -650,7 +650,7 @@ function SignupForm() {
                         value={formData.tenantSubdomain}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                          errors.tenantSubdomain ? 'border-red-500/50' : 'border-slate-700'
+                          errors.tenantSubdomain ? 'border-red-500/50' : 'border-gray-300'
                         }`}
                         placeholder="my-building"
                       />
@@ -679,7 +679,7 @@ function SignupForm() {
                           onChange={handleInputChange}
                           autoComplete="new-password"
                           className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.password ? 'border-red-500/50' : 'border-slate-700'
+                            errors.password ? 'border-red-500/50' : 'border-gray-300'
                           }`}
                           placeholder="••••••••"
                         />
@@ -710,7 +710,7 @@ function SignupForm() {
                           onChange={handleInputChange}
                           autoComplete="new-password"
                           className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.confirmPassword ? 'border-red-500/50' : 'border-slate-700'
+                            errors.confirmPassword ? 'border-red-500/50' : 'border-gray-300'
                           }`}
                           placeholder="••••••••"
                         />
@@ -736,7 +736,7 @@ function SignupForm() {
                   >
                     {isLoading ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-slate-950 border-t-transparent mr-2"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent mr-2"></div>
                         Δημιουργία...
                       </>
                     ) : (
