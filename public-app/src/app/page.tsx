@@ -330,23 +330,37 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-slate-950 to-slate-950" />
         <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
-        <div className="relative flex w-full flex-col gap-12 py-16 md:flex-row md:items-stretch md:py-24">
-          {/* Left content */}
-          <div className="relative z-10 flex w-full flex-1 flex-col space-y-6 px-4 sm:px-6 md:justify-center lg:px-16">
-            <AnimatedSection>
+        <div className="relative flex w-full flex-col">
+          {/* Full width image */}
+          <AnimatedSection>
+            <div className="relative w-full h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
+              <Image
+                src="/entrance.webp"
+                alt="Είσοδος πολυκατοικίας"
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+              />
+              {/* Overlay gradient for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+            </div>
+          </AnimatedSection>
+
+          {/* Content below image */}
+          <div className="relative z-10 flex w-full flex-col space-y-6 px-4 py-12 sm:px-6 md:py-16 lg:px-16">
+            <AnimatedSection delay={100}>
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
                 Με επίκεντρο τον ένοικο • Info Point
               </span>
             </AnimatedSection>
             
-            <AnimatedSection delay={100}>
-              <h1 className="text-balance text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl xl:text-6xl">
-                Η πολυκατοικία σου γίνεται
+            <AnimatedSection delay={150}>
+              <h1 className="text-balance text-4xl font-bold leading-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
+                <span className="text-white">Η πολυκατοικία σου γίνεται</span>
                 <br />
-                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                  κοινότητα.
-                </span>
+                <span className="text-emerald-400">κοινότητα.</span>
               </h1>
             </AnimatedSection>
             
@@ -410,44 +424,6 @@ export default function LandingPage() {
               </div>
             </AnimatedSection>
           </div>
-
-          {/* Right side: full-width Info Point visual */}
-          <AnimatedSection
-            delay={300}
-            className="relative w-full px-4 sm:px-6 md:flex-1 md:self-stretch md:px-0 md:pl-8 lg:pl-12"
-          >
-            <div className="relative h-[420px] w-full overflow-hidden rounded-[40px] border border-slate-800 bg-gradient-to-b from-slate-900/90 via-slate-950/90 to-slate-950 shadow-2xl shadow-emerald-500/20 sm:h-[520px] md:h-full md:min-h-[560px] lg:min-h-[640px]">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/15 via-transparent to-transparent" />
-              <div className="relative flex h-full flex-col rounded-[32px] border border-slate-800 bg-slate-900/80">
-                {/* Info Point header */}
-                <div className="border-b border-slate-800 bg-slate-900/80 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
-                      <span className="text-xs font-medium text-slate-300">Σημείο Ενημέρωσης</span>
-                    </div>
-                    <span className="text-xs text-slate-500">12:45</span>
-                  </div>
-                </div>
-                {/* Info Point content */}
-                <div className="relative flex-1 overflow-hidden">
-                  <Image
-                    src="/screen_eisodos.jpg"
-                    alt="Info Point - Σημείο ενημέρωσης στην είσοδο"
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
-                  />
-                </div>
-              </div>
-              {/* Badge */}
-              <div className="absolute -right-3 -top-3 rounded-full bg-emerald-500 px-5 py-1.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/40">
-                Info Point
-              </div>
-              {/* Glow effect */}
-              <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[48px] bg-emerald-500/20 blur-3xl" />
-            </div>
-          </AnimatedSection>
         </div>
       </section>
 
