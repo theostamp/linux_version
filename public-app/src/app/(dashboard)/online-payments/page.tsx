@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -47,12 +46,26 @@ async function fetchMyApartmentData(): Promise<MyApartmentResponse> {
   return apiGet<MyApartmentResponse>('/financial/my-apartment/');
 }
 
+function normalizeChargesResponse(payload: unknown): OnlineCharge[] {
+  if (Array.isArray(payload)) return payload as OnlineCharge[];
+  if (payload && typeof payload === 'object') {
+    const obj = payload as Record<string, unknown>;
+    // Common DRF pagination shape
+    if (Array.isArray(obj.results)) return obj.results as OnlineCharge[];
+    // Generic wrappers we sometimes use
+    if (Array.isArray(obj.data)) return obj.data as OnlineCharge[];
+    if (Array.isArray(obj.charges)) return obj.charges as OnlineCharge[];
+  }
+  return [];
+}
+
 async function fetchCharges(buildingId?: number, period?: string, status?: string): Promise<OnlineCharge[]> {
   const params: Record<string, string | number> = {};
   if (buildingId) params.building = buildingId;
   if (period) params.period = period;
   if (status && status !== 'all') params.status = status;
-  return apiGet<OnlineCharge[]>('/online-payments/charges/', params);
+  const response = await apiGet<unknown>('/online-payments/charges/', params);
+  return normalizeChargesResponse(response);
 }
 
 // Format currency
@@ -84,13 +97,14 @@ function OnlinePaymentsContent() {
     refetchInterval: 8000, // keep UI fresh while webhooks land
   });
 
+  const chargeList = useMemo(() => (Array.isArray(charges) ? charges : []), [charges]);
+
   const hasBalance = data?.apartments?.some(apt => apt.current_balance > 0);
   const totalBalance = data?.apartments?.reduce((sum, apt) => sum + (apt.current_balance > 0 ? apt.current_balance : 0), 0) || 0;
   const totalPendingCharges = useMemo(() => {
-    const list = charges || [];
-    const sum = list.reduce((acc, c) => acc + Number(c.amount || 0), 0);
+    const sum = chargeList.reduce((acc, c) => acc + Number(c.amount || 0), 0);
     return isNaN(sum) ? 0 : sum;
-  }, [charges]);
+  }, [chargeList]);
 
   const startCheckout = async (chargeId: string) => {
     try {
@@ -199,9 +213,9 @@ function OnlinePaymentsContent() {
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm">Φόρτωση οφειλών...</span>
             </div>
-          ) : (charges?.length ? (
+          ) : (chargeList.length ? (
             <div className="space-y-3">
-              {charges.map((c) => (
+              {chargeList.map((c) => (
                 <div key={c.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/40">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -400,4 +414,3 @@ export default function OnlinePaymentsPage() {
     </AuthGate>
   );
 }
-
