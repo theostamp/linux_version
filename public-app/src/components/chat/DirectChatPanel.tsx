@@ -465,6 +465,7 @@ function DirectChatView({
 
 /**
  * Direct Message Bubble Component
+ * Συννεφάκια με διαφορετικά χρώματα για κάθε συνομιλητή
  */
 function DirectMessageBubble({
   message,
@@ -476,34 +477,67 @@ function DirectMessageBubble({
   showTime: boolean;
 }) {
   return (
-    <div className={cn('flex flex-col', isOwn ? 'items-end' : 'items-start')}>
+    <motion.div 
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.2 }}
+      className={cn('flex flex-col', isOwn ? 'items-end' : 'items-start')}
+    >
+      {/* Sender name for received messages */}
+      {!isOwn && showTime && (
+        <span className="text-xs font-medium text-teal-700 mb-1 ml-2">
+          {message.sender_name}
+        </span>
+      )}
+      
       <div className={cn(
-        'max-w-[80%] px-4 py-2 rounded-2xl',
+        'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-sm',
+        'transition-all duration-200',
         isOwn 
-          ? 'bg-primary text-white rounded-br-md' 
-          : 'bg-slate-100 text-slate-800 rounded-bl-md'
+          ? [
+              // Δικά μου μηνύματα - Μπλε gradient
+              'bg-gradient-to-br from-blue-500 to-blue-600',
+              'text-white',
+              'rounded-br-md',
+              'shadow-blue-500/20',
+            ]
+          : [
+              // Μηνύματα άλλου - Teal/Cyan 
+              'bg-gradient-to-br from-teal-50 to-cyan-50',
+              'text-slate-800',
+              'rounded-bl-md',
+              'border border-teal-100',
+              'shadow-teal-500/10',
+            ]
       )}>
-        <p className="text-sm whitespace-pre-wrap break-words">
+        <p className={cn(
+          'text-sm whitespace-pre-wrap break-words leading-relaxed',
+          isOwn ? 'text-white' : 'text-slate-800'
+        )}>
           {message.content}
         </p>
       </div>
       
+      {/* Time & Read status */}
       <div className={cn(
-        'flex items-center gap-1 mt-1 px-1',
+        'flex items-center gap-1.5 mt-1 px-2',
         isOwn ? 'flex-row-reverse' : ''
       )}>
         {showTime && (
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-slate-400 font-medium">
             {formatMessageTime(message.created_at)}
           </span>
         )}
         {isOwn && (
-          message.is_read 
-            ? <CheckCheck className="w-3 h-3 text-primary" />
-            : <Check className="w-3 h-3 text-slate-400" />
+          <span className="flex items-center">
+            {message.is_read 
+              ? <CheckCheck className="w-3.5 h-3.5 text-blue-400" />
+              : <Check className="w-3.5 h-3.5 text-slate-300" />
+            }
+          </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

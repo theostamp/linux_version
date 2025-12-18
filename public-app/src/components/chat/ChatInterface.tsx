@@ -213,12 +213,24 @@ function ChatMessageItem({
           </div>
         )}
         
-        {/* Message bubble */}
+        {/* Message bubble - Συννεφάκια με διαφορετικά χρώματα */}
         <div className={cn(
-          'relative px-3 py-2 shadow-sm',
+          'relative px-3.5 py-2.5 shadow-sm transition-all duration-200',
           isOwn 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-card text-foreground border border-border',
+            ? [
+                // Δικά μου μηνύματα - Μπλε gradient
+                'bg-gradient-to-br from-blue-500 to-blue-600',
+                'text-white',
+                'shadow-blue-500/20',
+              ]
+            : [
+                // Μηνύματα άλλων - Subtle gradient με καλό contrast
+                'bg-gradient-to-br from-slate-50 to-slate-100',
+                'dark:from-slate-800 dark:to-slate-700',
+                'text-slate-800 dark:text-slate-100',
+                'border border-slate-200 dark:border-slate-600',
+                'shadow-slate-500/10',
+              ],
           // Border radius based on position in group
           isFirstInGroup && isLastInGroup && 'rounded-2xl',
           isFirstInGroup && !isLastInGroup && (isOwn ? 'rounded-2xl rounded-br-md' : 'rounded-2xl rounded-bl-md'),
