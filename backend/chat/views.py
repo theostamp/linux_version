@@ -813,9 +813,9 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         """
         Επιστρέφει όλους τους χρήστες ενός κτιρίου με την κατάσταση σύνδεσής τους.
         """
-        from buildings.models import Building
-        from apartments.models import Membership
+        from buildings.models import Building, BuildingMembership
         from django.contrib.auth import get_user_model
+        from django_tenants.utils import schema_context
         import logging
         
         logger = logging.getLogger(__name__)
@@ -846,49 +846,72 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
             )
         
         try:
-            # Get all users in building
-            manager_ids = list(building.managers.values_list('id', flat=True))
-            resident_ids = list(Membership.objects.filter(
+            # Collect user IDs from building
+            # 1. Get manager_id from building (cross-schema reference)
+            manager_ids = [building.manager_id] if building.manager_id else []
+            
+            # 2. Get internal_manager if exists
+            if building.internal_manager_id:
+                manager_ids.append(building.internal_manager_id)
+            
+            # 3. Get resident IDs from BuildingMembership (tenant schema)
+            resident_ids = list(BuildingMembership.objects.filter(
                 building=building
-            ).values_list('user_id', flat=True))
+            ).values_list('resident_id', flat=True))
             
             all_user_ids = list(set(manager_ids + resident_ids))
             
-            # Get users with their online status
+            if not all_user_ids:
+                return Response({
+                    "building_id": building_id,
+                    "building_name": building.name,
+                    "users": [],
+                    "online_count": 0,
+                    "total_count": 0
+                })
+            
+            # Get users from PUBLIC schema (users are in SHARED_APPS)
+            with schema_context('public'):
+                users_queryset = User.objects.filter(id__in=all_user_ids)
+                users_dict = {u.id: u for u in users_queryset}
+            
+            # Get online statuses from TENANT schema (chat is in TENANT_APPS)
+            online_statuses = {}
+            try:
+                statuses = OnlineStatus.objects.filter(user_id__in=all_user_ids)
+                online_statuses = {os.user_id: os for os in statuses}
+            except Exception:
+                # OnlineStatus table might not exist yet
+                pass
+            
+            # Build users data
             users_data = []
             for user_id in all_user_ids:
-                try:
-                    u = User.objects.get(id=user_id)
-                    
-                    # Try to get online status, but don't fail if table doesn't exist
-                    try:
-                        online_status = OnlineStatus.objects.filter(user=u).first()
-                        is_online = online_status.is_online if online_status else False
-                        last_activity = online_status.last_activity.isoformat() if online_status and online_status.last_activity else None
-                        status_message = online_status.status_message if online_status else None
-                    except Exception:
-                        # OnlineStatus table might not exist yet
-                        is_online = False
-                        last_activity = None
-                        status_message = None
-                    
-                    # Determine role
-                    if u.id in manager_ids:
-                        role = 'manager'
-                    else:
-                        role = 'resident'
-                    
-                    users_data.append({
-                        'id': u.id,
-                        'name': u.get_full_name() or u.email,
-                        'email': u.email,
-                        'role': role,
-                        'is_online': is_online,
-                        'last_activity': last_activity,
-                        'status_message': status_message,
-                    })
-                except User.DoesNotExist:
+                u = users_dict.get(user_id)
+                if not u:
                     continue
+                
+                # Get online status
+                online_status = online_statuses.get(user_id)
+                is_online = online_status.is_online if online_status else False
+                last_activity = online_status.last_activity.isoformat() if online_status and online_status.last_activity else None
+                status_message = online_status.status_message if online_status else None
+                
+                # Determine role
+                if user_id in manager_ids:
+                    role = 'manager'
+                else:
+                    role = 'resident'
+                
+                users_data.append({
+                    'id': u.id,
+                    'name': u.get_full_name() or u.email,
+                    'email': u.email,
+                    'role': role,
+                    'is_online': is_online,
+                    'last_activity': last_activity,
+                    'status_message': status_message,
+                })
             
             # Sort: online users first, then by name
             users_data.sort(key=lambda x: (not x['is_online'], x['name'].lower()))
@@ -901,7 +924,7 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                 "total_count": len(users_data)
             })
         except Exception as e:
-            logger.error(f"Error in building_users: {e}")
+            logger.error(f"Error in building_users: {e}", exc_info=True)
             return Response(
                 {"error": f"Σφάλμα: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
