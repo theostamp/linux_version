@@ -287,100 +287,102 @@ export default function LandingPage() {
 
         <div className="relative">
           {/* Sticky hero image (full height) */}
-          <div className="sticky top-0 z-0 h-[100svh] w-full overflow-hidden">
-            <Image
-              src="/entrance.webp"
-              alt="Είσοδος πολυκατοικίας"
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-slate-950/10 to-slate-950" />
-          </div>
+	          <div className="sticky top-0 z-0 h-[100svh] w-full overflow-hidden">
+	            <Image
+	              src="/entrance.webp"
+	              alt="Είσοδος πολυκατοικίας"
+	              fill
+	              className="object-cover"
+	              sizes="100vw"
+	              priority
+	            />
+	            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-slate-950/40 to-slate-950" />
+	          </div>
 
-          {/* Hero content overlays the sticky image */}
-          <div className="relative -mt-[100svh]">
-            <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col space-y-8 px-4 pb-14 pt-24 sm:px-6 sm:pb-16 sm:pt-28 lg:px-8">
-              <AnimatedSection delay={100}>
-                <div className="flex justify-center">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                    Με επίκεντρο τον ένοικο • Info Point
-                  </span>
-                </div>
-              </AnimatedSection>
-              
-              <AnimatedSection delay={150}>
-                <h1 className="mx-auto max-w-5xl text-balance text-center text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-                  <span className="text-white">Η πολυκατοικία σου γίνεται</span>
-                  <br />
-                  <span className="text-emerald-400">κοινότητα.</span>
-                </h1>
-              </AnimatedSection>
-              
-              <AnimatedSection delay={200}>
-                <p className="mx-auto max-w-4xl text-center text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl lg:text-2xl">
-                  Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
-                  συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
-                </p>
-              </AnimatedSection>
+	          {/* Hero content overlays the sticky image */}
+	          <div className="relative -mt-[100svh]">
+	            <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col justify-center px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+	              <div className="mx-auto w-full max-w-5xl space-y-8 rounded-3xl border border-slate-800/60 bg-slate-950/75 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-md sm:p-8 lg:p-10">
+	                <AnimatedSection delay={100}>
+	                  <div className="flex justify-center">
+	                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
+	                      <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+	                      Με επίκεντρο τον ένοικο • Info Point
+	                    </span>
+	                  </div>
+	                </AnimatedSection>
+	                
+	                <AnimatedSection delay={150}>
+	                  <h1 className="mx-auto max-w-5xl text-balance text-center text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+	                    <span className="text-white">Η πολυκατοικία σου γίνεται</span>
+	                    <br />
+	                    <span className="text-emerald-400">κοινότητα.</span>
+	                  </h1>
+	                </AnimatedSection>
+	                
+	                <AnimatedSection delay={200}>
+	                  <p className="mx-auto max-w-4xl text-center text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl lg:text-2xl">
+	                    Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
+	                    συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
+	                  </p>
+	                </AnimatedSection>
 
-              <AnimatedSection delay={300}>
-                <ul className="mx-auto grid max-w-5xl gap-3 text-base text-slate-300 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
-                  {[
-                    "Ενημέρωση για όλους (είσοδος & κινητό)",
-                    "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
-                    "Ψηφοφορίες με καταγραφή και διαφάνεια",
-                    "Αιτήματα / βλάβες με παρακολούθηση εξέλιξης",
-                    "Διαφάνεια σε κοινόχρηστα & οικονομικά",
-                    "Επικοινωνία χωρίς παρεξηγήσεις",
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
-                        ✓
-                      </span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </AnimatedSection>
+	                <AnimatedSection delay={300}>
+	                  <ul className="mx-auto grid max-w-5xl gap-3 text-base text-slate-300 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+	                    {[
+	                      "Ενημέρωση για όλους (είσοδος & κινητό)",
+	                      "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
+	                      "Ψηφοφορίες με καταγραφή και διαφάνεια",
+	                      "Αιτήματα / βλάβες με παρακολούθηση εξέλιξης",
+	                      "Διαφάνεια σε κοινόχρηστα & οικονομικά",
+	                      "Επικοινωνία χωρίς παρεξηγήσεις",
+	                    ].map((item) => (
+	                      <li key={item} className="flex items-start gap-3">
+	                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+	                          ✓
+	                        </span>
+	                        <span>{item}</span>
+	                      </li>
+	                    ))}
+	                  </ul>
+	                </AnimatedSection>
 
-              <AnimatedSection delay={400}>
-                <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-                  <a
-                    href="#cta"
-                    className="group inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-105"
-                  >
-                    Ζήτησε παρουσίαση
-                    <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </a>
-                  <a
-                    href="#pricing"
-                    className="rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
-                  >
-                    Δες τις τιμές
-                  </a>
-                </div>
-              </AnimatedSection>
-              
-              {/* Stats counter */}
-              <AnimatedSection delay={500}>
-                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-6">
-                  {stats.map((stat) => (
-                    <div key={stat.label} className="text-center">
-                      <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">{stat.value}</p>
-                      <p className="mt-1 text-sm text-slate-400">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </AnimatedSection>
-            </div>
-          </div>
-        </div>
-      </section>
+	                <AnimatedSection delay={400}>
+	                  <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+	                    <a
+	                      href="#cta"
+	                      className="group inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-105"
+	                    >
+	                      Ζήτησε παρουσίαση
+	                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+	                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+	                      </svg>
+	                    </a>
+	                    <a
+	                      href="#pricing"
+	                      className="rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
+	                    >
+	                      Δες τις τιμές
+	                    </a>
+	                  </div>
+	                </AnimatedSection>
+	                
+	                {/* Stats counter */}
+	                <AnimatedSection delay={500}>
+	                  <div className="flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-6">
+	                    {stats.map((stat) => (
+	                      <div key={stat.label} className="text-center">
+	                        <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">{stat.value}</p>
+	                        <p className="mt-1 text-sm text-slate-400">{stat.label}</p>
+	                      </div>
+	                    ))}
+	                  </div>
+	                </AnimatedSection>
+	              </div>
+	            </div>
+	          </div>
+	        </div>
+	      </section>
 
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="border-b border-slate-800 bg-slate-950">
