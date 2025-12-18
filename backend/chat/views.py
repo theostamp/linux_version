@@ -70,9 +70,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             # Για άλλους χρήστες, επιστρέφει μόνο τα chat rooms των κτιρίων τους
             building_ids = []
             
-            # Κτίρια που διαχειρίζεται
+            # Κτίρια που διαχειρίζεται (manager_id is integer, not FK)
             try:
-                managed_ids = list(user.managed_buildings.values_list('id', flat=True))
+                from buildings.models import Building
+                managed_ids = list(Building.objects.filter(manager_id=user.id).values_list('id', flat=True))
                 building_ids.extend(managed_ids)
             except Exception as e:
                 logger.warning(f"Error getting managed buildings: {e}")
@@ -278,17 +279,19 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
             return self.queryset
         
         # Για άλλους χρήστες, επιστρέφει μόνο τα μηνύματα των chat rooms τους
-        user_buildings = []
+        from buildings.models import Building
         
-        # Κτίρια που διαχειρίζεται
-        managed_buildings = user.managed_buildings.all()
-        user_buildings.extend(managed_buildings)
+        building_ids = []
+        
+        # Κτίρια που διαχειρίζεται (manager_id is integer, not FK)
+        managed_ids = list(Building.objects.filter(manager_id=user.id).values_list('id', flat=True))
+        building_ids.extend(managed_ids)
         
         # Κτίρια που κατοικεί
-        resident_buildings = [m.building for m in user.memberships.all()]
-        user_buildings.extend(resident_buildings)
+        resident_ids = list(user.memberships.values_list('building_id', flat=True))
+        building_ids.extend(resident_ids)
         
-        building_ids = [b.id for b in user_buildings]
+        building_ids = list(set(building_ids))
         return self.queryset.filter(chat_room__building_id__in=building_ids)
 
     def perform_create(self, serializer):
@@ -511,17 +514,19 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
             return Response({"unread_count": 0})
         
         # Για άλλους χρήστες, υπολογίζει τα μη διαβασμένα μηνύματα
-        user_buildings = []
+        from buildings.models import Building
         
-        # Κτίρια που διαχειρίζεται
-        managed_buildings = user.managed_buildings.all()
-        user_buildings.extend(managed_buildings)
+        building_ids = []
+        
+        # Κτίρια που διαχειρίζεται (manager_id is integer, not FK)
+        managed_ids = list(Building.objects.filter(manager_id=user.id).values_list('id', flat=True))
+        building_ids.extend(managed_ids)
         
         # Κτίρια που κατοικεί
-        resident_buildings = [m.building for m in user.memberships.all()]
-        user_buildings.extend(resident_buildings)
+        resident_ids = list(user.memberships.values_list('building_id', flat=True))
+        building_ids.extend(resident_ids)
         
-        building_ids = [b.id for b in user_buildings]
+        building_ids = list(set(building_ids))
         
         total_unread = ChatNotification.objects.filter(
             chat_room__building_id__in=building_ids,
