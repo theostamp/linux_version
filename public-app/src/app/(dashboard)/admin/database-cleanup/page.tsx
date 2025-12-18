@@ -368,7 +368,7 @@ export default function DatabaseCleanupPage() {
                   🔮 Μελλοντικές Δαπάνες (προεπισκόπηση)
                 </h3>
                 <p className="text-sm text-purple-600 mt-1">
-                  Δαπάνες με ημερομηνία στο μέλλον που επηρεάζουν τον υπολογισμό αποθεματικού
+                  Δαπάνες με ημερομηνία μετά το τέλος του τρέχοντος μήνα που επηρεάζουν τον υπολογισμό αποθεματικού
                 </p>
               </div>
               <div className="overflow-x-auto">
@@ -597,4 +597,3 @@ export default function DatabaseCleanupPage() {
     </div>
   );
 }
-

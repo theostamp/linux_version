@@ -6,7 +6,9 @@ from django.db.models import Count, Sum, Q
 
 from .models import (
     ChatRoom, ChatMessage, ChatParticipant, ChatNotification,
-    DirectConversation, DirectMessage, OnlineStatus
+    DirectConversation, DirectMessage, OnlineStatus,
+    MessageReaction, DirectMessageReaction,
+    PushSubscription, ChatNotificationPreference
 )
 from .serializers import (
     ChatRoomSerializer,
@@ -20,7 +22,12 @@ from .serializers import (
     DirectConversationSerializer,
     DirectMessageSerializer,
     OnlineStatusSerializer,
-    CreateDirectConversationSerializer
+    CreateDirectConversationSerializer,
+    MessageReactionSerializer,
+    DirectMessageReactionSerializer,
+    PushSubscriptionSerializer,
+    ChatNotificationPreferenceSerializer,
+    SubscribePushSerializer
 )
 from core.permissions import IsManagerOrSuperuser
 
@@ -318,11 +325,147 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Έλεγχος αν το μήνυμα έχει διαγραφεί
+        if message.is_deleted:
+            return Response(
+                {"error": "Δεν μπορείτε να επεξεργαστείτε διαγραμμένο μήνυμα"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = ChatMessageUpdateSerializer(message, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(ChatMessageSerializer(message).data)
+            return Response(ChatMessageSerializer(message, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def delete_message(self, request, pk=None):
+        """
+        Soft delete μηνύματος.
+        """
+        message = self.get_object()
+        user = request.user
+        
+        # Έλεγχος αν ο χρήστης είναι ο αποστολέας του μηνύματος
+        if message.sender != user:
+            return Response(
+                {"error": "Μπορείτε να διαγράψετε μόνο τα δικά σας μηνύματα"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if message.is_deleted:
+            return Response(
+                {"error": "Το μήνυμα έχει ήδη διαγραφεί"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        message.is_deleted = True
+        message.deleted_at = timezone.now()
+        message.save(update_fields=['is_deleted', 'deleted_at'])
+        
+        return Response({
+            "message": "Το μήνυμα διαγράφηκε επιτυχώς",
+            "data": ChatMessageSerializer(message, context={'request': request}).data
+        })
+
+    @action(detail=True, methods=['post'])
+    def add_reaction(self, request, pk=None):
+        """
+        Προσθήκη reaction σε μήνυμα.
+        """
+        message = self.get_object()
+        user = request.user
+        emoji = request.data.get('emoji', '').strip()
+        
+        if not emoji:
+            return Response(
+                {"error": "Απαιτείται emoji"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if message.is_deleted:
+            return Response(
+                {"error": "Δεν μπορείτε να αντιδράσετε σε διαγραμμένο μήνυμα"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Toggle reaction - αν υπάρχει διαγραφή, αλλιώς δημιουργία
+        reaction, created = MessageReaction.objects.get_or_create(
+            message=message,
+            user=user,
+            emoji=emoji
+        )
+        
+        if not created:
+            # Αν υπάρχει ήδη, αφαίρεσέ το (toggle)
+            reaction.delete()
+            return Response({
+                "action": "removed",
+                "message": f"Αφαιρέθηκε το {emoji}",
+                "reactions": self._get_message_reactions(message, user)
+            })
+        
+        return Response({
+            "action": "added",
+            "message": f"Προστέθηκε το {emoji}",
+            "reactions": self._get_message_reactions(message, user)
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'])
+    def remove_reaction(self, request, pk=None):
+        """
+        Αφαίρεση reaction από μήνυμα.
+        """
+        message = self.get_object()
+        user = request.user
+        emoji = request.query_params.get('emoji', '').strip()
+        
+        if not emoji:
+            return Response(
+                {"error": "Απαιτείται emoji"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            reaction = MessageReaction.objects.get(
+                message=message,
+                user=user,
+                emoji=emoji
+            )
+            reaction.delete()
+            return Response({
+                "message": f"Αφαιρέθηκε το {emoji}",
+                "reactions": self._get_message_reactions(message, user)
+            })
+        except MessageReaction.DoesNotExist:
+            return Response(
+                {"error": "Δεν βρέθηκε reaction"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def _get_message_reactions(self, message, current_user):
+        """Helper για να πάρουμε τα reactions ενός μηνύματος"""
+        reactions = message.reactions.select_related('user').all()
+        
+        emoji_groups = {}
+        for reaction in reactions:
+            emoji = reaction.emoji
+            if emoji not in emoji_groups:
+                emoji_groups[emoji] = {
+                    'emoji': emoji,
+                    'count': 0,
+                    'users': [],
+                    'has_reacted': False
+                }
+            emoji_groups[emoji]['count'] += 1
+            emoji_groups[emoji]['users'].append({
+                'id': reaction.user.id,
+                'name': reaction.user.get_full_name() or reaction.user.email
+            })
+            if reaction.user.id == current_user.id:
+                emoji_groups[emoji]['has_reacted'] = True
+        
+        return list(emoji_groups.values())
 
     @action(detail=False, methods=['post'])
     def mark_as_read(self, request):
@@ -590,6 +733,62 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         return OnlineStatus.objects.select_related('user').all()
 
     @action(detail=False, methods=['post'])
+    def heartbeat(self, request):
+        """
+        Heartbeat endpoint - ενημέρωση last_activity για REST API mode.
+        Ο client πρέπει να καλεί αυτό κάθε 15-30 δευτερόλεπτα.
+        """
+        user = request.user
+        
+        online_status, created = OnlineStatus.objects.update_or_create(
+            user=user,
+            defaults={'is_online': True}
+        )
+        # Force update last_activity
+        online_status.save()
+        
+        return Response({
+            'status': 'ok',
+            'timestamp': timezone.now().isoformat()
+        })
+
+    @action(detail=False, methods=['post'])
+    def go_offline(self, request):
+        """
+        Σήμανση χρήστη ως offline (π.χ. όταν κλείνει το tab).
+        """
+        user = request.user
+        
+        OnlineStatus.objects.filter(user=user).update(is_online=False)
+        
+        return Response({
+            'status': 'offline',
+            'timestamp': timezone.now().isoformat()
+        })
+
+    @action(detail=False, methods=['post'])
+    def cleanup_stale(self, request):
+        """
+        Cleanup stale users - σήμανση ως offline αν δεν υπάρχει activity για 60 δευτερόλεπτα.
+        Αυτό μπορεί να κληθεί περιοδικά από admin ή scheduled task.
+        """
+        from datetime import timedelta
+        
+        stale_threshold = timezone.now() - timedelta(seconds=60)
+        
+        # Mark stale users as offline
+        stale_count = OnlineStatus.objects.filter(
+            is_online=True,
+            last_activity__lt=stale_threshold
+        ).update(is_online=False)
+        
+        return Response({
+            'stale_users_marked_offline': stale_count,
+            'threshold_seconds': 60,
+            'timestamp': timezone.now().isoformat()
+        })
+
+    @action(detail=False, methods=['post'])
     def update_status(self, request):
         """
         Ενημέρωση κατάστασης σύνδεσης του τρέχοντα χρήστη.
@@ -705,4 +904,143 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": f"Σφάλμα: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            ) 
+            )
+
+
+# =============================================================================
+# PUSH NOTIFICATIONS ViewSets
+# =============================================================================
+
+class PushSubscriptionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση push notification subscriptions.
+    """
+    queryset = PushSubscription.objects.all()
+    serializer_class = PushSubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Επιστρέφει μόνο τα subscriptions του τρέχοντα χρήστη."""
+        return PushSubscription.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['post'])
+    def subscribe(self, request):
+        """
+        Εγγραφή σε push notifications.
+        """
+        serializer = SubscribePushSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        endpoint = serializer.validated_data['endpoint']
+        keys = serializer.validated_data['keys']
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        # Create or update subscription
+        subscription, created = PushSubscription.objects.update_or_create(
+            user=request.user,
+            endpoint=endpoint,
+            defaults={
+                'p256dh': keys['p256dh'],
+                'auth': keys['auth'],
+                'user_agent': user_agent,
+                'is_active': True
+            }
+        )
+        
+        return Response({
+            'message': 'Εγγραφή επιτυχής' if created else 'Subscription ενημερώθηκε',
+            'subscription': PushSubscriptionSerializer(subscription).data
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def unsubscribe(self, request):
+        """
+        Απεγγραφή από push notifications.
+        """
+        endpoint = request.data.get('endpoint')
+        
+        if not endpoint:
+            return Response(
+                {'error': 'Απαιτείται endpoint'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            subscription = PushSubscription.objects.get(
+                user=request.user,
+                endpoint=endpoint
+            )
+            subscription.is_active = False
+            subscription.save()
+            
+            return Response({'message': 'Απεγγραφή επιτυχής'})
+        except PushSubscription.DoesNotExist:
+            return Response(
+                {'error': 'Subscription δεν βρέθηκε'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=['get'])
+    def vapid_public_key(self, request):
+        """
+        Επιστρέφει το VAPID public key για εγγραφή.
+        """
+        from django.conf import settings
+        
+        vapid_key = getattr(settings, 'VAPID_PUBLIC_KEY', None)
+        
+        if not vapid_key:
+            return Response(
+                {'error': 'VAPID key δεν έχει ρυθμιστεί'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({'public_key': vapid_key})
+
+
+class ChatNotificationPreferenceViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση προτιμήσεων ειδοποιήσεων chat.
+    """
+    queryset = ChatNotificationPreference.objects.all()
+    serializer_class = ChatNotificationPreferenceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Επιστρέφει μόνο τις προτιμήσεις του τρέχοντα χρήστη."""
+        return ChatNotificationPreference.objects.filter(user=self.request.user)
+
+    def get_object(self):
+        """
+        Επιστρέφει ή δημιουργεί τις προτιμήσεις του τρέχοντα χρήστη.
+        """
+        obj, created = ChatNotificationPreference.objects.get_or_create(
+            user=self.request.user
+        )
+        return obj
+
+    @action(detail=False, methods=['get', 'put', 'patch'])
+    def my_preferences(self, request):
+        """
+        Λήψη ή ενημέρωση των προτιμήσεων του χρήστη.
+        """
+        preferences, created = ChatNotificationPreference.objects.get_or_create(
+            user=request.user
+        )
+        
+        if request.method == 'GET':
+            return Response(ChatNotificationPreferenceSerializer(preferences).data)
+        
+        serializer = ChatNotificationPreferenceSerializer(
+            preferences, 
+            data=request.data, 
+            partial=(request.method == 'PATCH')
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

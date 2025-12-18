@@ -1,81 +1,214 @@
-// public-app/src/hooks/usePushNotifications.ts
-import { useState, useEffect } from 'react';
-import { requestForToken, onMessageListener } from '../lib/firebase';
-import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+'use client';
 
-// Define the API call to register device
-const registerDeviceToken = async (token: string) => {
-  // Replace with your actual API endpoint
-  // Assuming axios instance with auth interceptor is used in real app, 
-  // here using plain axios with assumption of global config or adjustment needed.
-  // Ideally import your configured axios instance.
-  // import api from '@/lib/api'; 
-  // return api.post('/notifications/devices/', { token, platform: 'web' });
-  
-  // Using relative path assuming proxy or base URL set
-  const response = await axios.post('/api/notifications/devices/', {
-    token,
-    platform: 'web',
-    device_name: navigator.userAgent
-  });
-  return response.data;
-};
+import { useState, useEffect, useCallback } from 'react';
+import { apiGet, apiPost } from '@/lib/api';
 
-export const usePushNotifications = () => {
-  const [notification, setNotification] = useState<any>(null);
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
-  const [permission, setPermission] = useState<string>('default');
+type PushPermissionState = 'prompt' | 'granted' | 'denied' | 'unsupported';
 
-  // Mutation to send token to backend
-  const { mutate: sendToken } = useMutation({
-    mutationFn: registerDeviceToken,
-    onSuccess: () => {
-      console.log('Device token registered successfully');
-    },
-    onError: (error) => {
-      console.error('Error registering device token:', error);
-    }
-  });
+interface UsePushNotificationsReturn {
+  isSupported: boolean;
+  permission: PushPermissionState;
+  isSubscribed: boolean;
+  isLoading: boolean;
+  error: string | null;
+  subscribe: () => Promise<boolean>;
+  unsubscribe: () => Promise<boolean>;
+  requestPermission: () => Promise<NotificationPermission>;
+}
 
+/**
+ * Hook για διαχείριση push notifications
+ */
+export function usePushNotifications(): UsePushNotificationsReturn {
+  const [isSupported, setIsSupported] = useState(false);
+  const [permission, setPermission] = useState<PushPermissionState>('prompt');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check if push notifications are supported
   useEffect(() => {
-    // Check if supported
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setPermission(Notification.permission);
-    }
-  }, []);
-
-  const requestPermission = async () => {
-    try {
-      const token = await requestForToken();
-      if (token) {
-        setFcmToken(token);
-        // Send token to backend
-        sendToken(token);
+    const checkSupport = async () => {
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error requesting permission:', error);
-    }
-  };
 
-  useEffect(() => {
-    const unsubscribe = onMessageListener().then((payload) => {
-      setNotification(payload);
-      // You can show a toast here if you want
-    });
-    
-    // Cleanup if necessary (onMessageListener returns a promise that resolves to payload, 
-    // real implementation might need a proper unsubscribe if using onMessage directly)
-    return () => {
-      // Cleanup logic if applicable
+      const supported = 
+        'serviceWorker' in navigator && 
+        'PushManager' in window &&
+        'Notification' in window;
+
+      setIsSupported(supported);
+
+      if (supported) {
+        setPermission(Notification.permission as PushPermissionState);
+        
+        // Check if already subscribed
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
+          setIsSubscribed(!!subscription);
+        } catch (err) {
+          console.error('[usePushNotifications] Error checking subscription:', err);
+        }
+      } else {
+        setPermission('unsupported');
+      }
+
+      setIsLoading(false);
     };
+
+    checkSupport();
   }, []);
+
+  // Request notification permission
+  const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
+    if (!isSupported) {
+      return 'denied';
+    }
+
+    try {
+      const result = await Notification.requestPermission();
+      setPermission(result as PushPermissionState);
+      return result;
+    } catch (err) {
+      console.error('[usePushNotifications] Error requesting permission:', err);
+      setError('Σφάλμα κατά την αίτηση άδειας');
+      return 'denied';
+    }
+  }, [isSupported]);
+
+  // Subscribe to push notifications
+  const subscribe = useCallback(async (): Promise<boolean> => {
+    if (!isSupported) {
+      setError('Push notifications δεν υποστηρίζονται');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Request permission if not granted
+      if (Notification.permission !== 'granted') {
+        const perm = await requestPermission();
+        if (perm !== 'granted') {
+          setError('Η άδεια για ειδοποιήσεις απορρίφθηκε');
+          setIsLoading(false);
+          return false;
+        }
+      }
+
+      // Register service worker
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+
+      // Get VAPID public key from server
+      let vapidPublicKey: string;
+      try {
+        const response = await apiGet<{ public_key: string }>('/chat/push-subscriptions/vapid_public_key/');
+        vapidPublicKey = response.public_key;
+      } catch (err) {
+        // Use a placeholder key for development
+        console.warn('[usePushNotifications] Could not get VAPID key, using default');
+        vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+        
+        if (!vapidPublicKey) {
+          setError('VAPID key δεν έχει ρυθμιστεί');
+          setIsLoading(false);
+          return false;
+        }
+      }
+
+      // Convert VAPID key to Uint8Array
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+        
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      };
+
+      // Subscribe to push
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+
+      // Send subscription to server
+      const subscriptionData = subscription.toJSON();
+      await apiPost('/chat/push-subscriptions/subscribe/', {
+        endpoint: subscriptionData.endpoint,
+        keys: subscriptionData.keys
+      });
+
+      setIsSubscribed(true);
+      setIsLoading(false);
+      return true;
+    } catch (err) {
+      console.error('[usePushNotifications] Error subscribing:', err);
+      setError('Σφάλμα κατά την εγγραφή');
+      setIsLoading(false);
+      return false;
+    }
+  }, [isSupported, requestPermission]);
+
+  // Unsubscribe from push notifications
+  const unsubscribe = useCallback(async (): Promise<boolean> => {
+    if (!isSupported) {
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      if (subscription) {
+        // Notify server
+        try {
+          await apiPost('/chat/push-subscriptions/unsubscribe/', {
+            endpoint: subscription.endpoint
+          });
+        } catch (err) {
+          console.warn('[usePushNotifications] Server unsubscribe failed:', err);
+        }
+
+        // Unsubscribe locally
+        await subscription.unsubscribe();
+      }
+
+      setIsSubscribed(false);
+      setIsLoading(false);
+      return true;
+    } catch (err) {
+      console.error('[usePushNotifications] Error unsubscribing:', err);
+      setError('Σφάλμα κατά την απεγγραφή');
+      setIsLoading(false);
+      return false;
+    }
+  }, [isSupported]);
 
   return {
-    notification,
-    fcmToken,
-    requestPermission,
-    permission
+    isSupported,
+    permission,
+    isSubscribed,
+    isLoading,
+    error,
+    subscribe,
+    unsubscribe,
+    requestPermission
   };
-};
+}
 
+export default usePushNotifications;

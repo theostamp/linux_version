@@ -64,20 +64,27 @@ export function OnlineUsersList({ buildingId, onStartChat, className }: OnlineUs
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Header */}
-      <div className="p-4 border-b border-slate-200">
+      <div className="p-4 border-b border-slate-200 dark:border-border">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="font-semibold text-slate-800">Χρήστες Κτιρίου</h3>
-            <p className="text-xs text-slate-500">
-              {onlineCount} online / {totalCount} σύνολο
+            <h3 className="font-semibold text-slate-800 dark:text-foreground flex items-center gap-2">
+              Χρήστες Κτιρίου
+              {/* Live indicator */}
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded text-[10px] font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                LIVE
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-muted-foreground">
+              <span className="text-green-600 dark:text-green-400 font-medium">{onlineCount}</span> online / {totalCount} σύνολο
             </p>
           </div>
           <button
             onClick={refetch}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-muted rounded-lg transition-colors"
             title="Ανανέωση"
           >
-            <RefreshCw className={cn('w-4 h-4 text-slate-500', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('w-4 h-4 text-slate-500 dark:text-muted-foreground', isLoading && 'animate-spin')} />
           </button>
         </div>
         

@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .models import (
     ChatRoom, ChatMessage, ChatParticipant, ChatNotification,
-    DirectConversation, DirectMessage, OnlineStatus
+    DirectConversation, DirectMessage, OnlineStatus,
+    MessageReaction, DirectMessageReaction,
+    PushSubscription, ChatNotificationPreference
 )
 from buildings.serializers import BuildingSerializer
 from users.serializers import UserSerializer
@@ -34,23 +36,98 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return 0
 
 
+class MessageReactionSerializer(serializers.ModelSerializer):
+    """Serializer για MessageReaction"""
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+
+    class Meta:
+        model = MessageReaction
+        fields = ['id', 'emoji', 'user_id', 'user_name', 'created_at']
+        read_only_fields = ['id', 'user_id', 'user_name', 'created_at']
+
+
+class ReactionSummarySerializer(serializers.Serializer):
+    """Serializer για συνοπτική εμφάνιση reactions"""
+    emoji = serializers.CharField()
+    count = serializers.IntegerField()
+    users = serializers.ListField(child=serializers.DictField())
+    has_reacted = serializers.BooleanField()
+
+
+class ReplyToSerializer(serializers.ModelSerializer):
+    """Simplified serializer για reply_to reference"""
+    sender_name = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = ChatMessage
+        fields = ['id', 'sender_name', 'content', 'message_type', 'is_deleted']
+
+
 class ChatMessageSerializer(serializers.ModelSerializer):
     """Serializer για ChatMessage"""
     sender = UserSerializer(read_only=True)
     sender_name = serializers.CharField(read_only=True)
     sender_role = serializers.CharField(read_only=True)
     chat_room = ChatRoomSerializer(read_only=True)
+    reactions = serializers.SerializerMethodField()
+    reply_to_data = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatMessage
         fields = [
             'id', 'chat_room', 'sender', 'sender_name', 'sender_role',
             'message_type', 'content', 'file_url', 'file_name', 'file_size',
-            'is_edited', 'edited_at', 'created_at', 'updated_at'
+            'reply_to', 'reply_to_data', 'reactions',
+            'is_edited', 'edited_at', 'is_deleted', 'deleted_at',
+            'created_at', 'updated_at'
         ]
         read_only_fields = [
-            'id', 'sender', 'sender_name', 'sender_role', 'created_at', 'updated_at'
+            'id', 'sender', 'sender_name', 'sender_role', 
+            'is_deleted', 'deleted_at', 'created_at', 'updated_at'
         ]
+
+    def get_reactions(self, obj):
+        """Επιστρέφει reactions ομαδοποιημένα ανά emoji"""
+        if obj.is_deleted:
+            return []
+        
+        reactions = obj.reactions.select_related('user').all()
+        request = self.context.get('request')
+        current_user_id = request.user.id if request else None
+        
+        # Group by emoji
+        emoji_groups = {}
+        for reaction in reactions:
+            emoji = reaction.emoji
+            if emoji not in emoji_groups:
+                emoji_groups[emoji] = {
+                    'emoji': emoji,
+                    'count': 0,
+                    'users': [],
+                    'has_reacted': False
+                }
+            emoji_groups[emoji]['count'] += 1
+            emoji_groups[emoji]['users'].append({
+                'id': reaction.user.id,
+                'name': reaction.user.get_full_name() or reaction.user.email
+            })
+            if reaction.user.id == current_user_id:
+                emoji_groups[emoji]['has_reacted'] = True
+        
+        return list(emoji_groups.values())
+
+    def get_reply_to_data(self, obj):
+        """Επιστρέφει δεδομένα του μηνύματος στο οποίο απαντά"""
+        if obj.reply_to:
+            return {
+                'id': obj.reply_to.id,
+                'sender_name': obj.reply_to.sender_name,
+                'content': obj.reply_to.content[:100] + '...' if len(obj.reply_to.content) > 100 else obj.reply_to.content,
+                'message_type': obj.reply_to.message_type,
+                'is_deleted': obj.reply_to.is_deleted
+            }
+        return None
 
     def create(self, validated_data):
         """Αυτόματη ανάθεση του αποστολέα"""
@@ -60,15 +137,61 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 class ChatMessageListSerializer(serializers.ModelSerializer):
     """Simplified serializer για λίστα μηνυμάτων"""
+    sender_id = serializers.IntegerField(source='sender.id', read_only=True)
     sender_name = serializers.CharField(read_only=True)
     sender_role = serializers.CharField(read_only=True)
+    reactions = serializers.SerializerMethodField()
+    reply_to_data = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatMessage
         fields = [
-            'id', 'sender_name', 'sender_role', 'message_type', 'content',
-            'file_url', 'file_name', 'is_edited', 'created_at'
+            'id', 'sender_id', 'sender_name', 'sender_role', 'message_type', 'content',
+            'file_url', 'file_name', 'reply_to', 'reply_to_data', 'reactions',
+            'is_edited', 'edited_at', 'is_deleted', 'deleted_at', 'created_at'
         ]
+
+    def get_reactions(self, obj):
+        """Επιστρέφει reactions ομαδοποιημένα ανά emoji"""
+        if obj.is_deleted:
+            return []
+        
+        reactions = obj.reactions.select_related('user').all()
+        request = self.context.get('request')
+        current_user_id = request.user.id if request else None
+        
+        # Group by emoji
+        emoji_groups = {}
+        for reaction in reactions:
+            emoji = reaction.emoji
+            if emoji not in emoji_groups:
+                emoji_groups[emoji] = {
+                    'emoji': emoji,
+                    'count': 0,
+                    'users': [],
+                    'has_reacted': False
+                }
+            emoji_groups[emoji]['count'] += 1
+            emoji_groups[emoji]['users'].append({
+                'id': reaction.user.id,
+                'name': reaction.user.get_full_name() or reaction.user.email
+            })
+            if reaction.user.id == current_user_id:
+                emoji_groups[emoji]['has_reacted'] = True
+        
+        return list(emoji_groups.values())
+
+    def get_reply_to_data(self, obj):
+        """Επιστρέφει δεδομένα του μηνύματος στο οποίο απαντά"""
+        if obj.reply_to:
+            return {
+                'id': obj.reply_to.id,
+                'sender_name': obj.reply_to.sender_name,
+                'content': obj.reply_to.content[:100] + '...' if len(obj.reply_to.content) > 100 else obj.reply_to.content,
+                'message_type': obj.reply_to.message_type,
+                'is_deleted': obj.reply_to.is_deleted
+            }
+        return None
 
 
 class ChatParticipantSerializer(serializers.ModelSerializer):
@@ -212,6 +335,17 @@ class OnlineStatusSerializer(serializers.ModelSerializer):
         return 'resident'
 
 
+class DirectMessageReactionSerializer(serializers.ModelSerializer):
+    """Serializer για DirectMessageReaction"""
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+
+    class Meta:
+        model = DirectMessageReaction
+        fields = ['id', 'emoji', 'user_id', 'user_name', 'created_at']
+        read_only_fields = ['id', 'user_id', 'user_name', 'created_at']
+
+
 class DirectMessageSerializer(serializers.ModelSerializer):
     """Serializer για DirectMessage"""
     sender_id = serializers.IntegerField(source='sender.id', read_only=True)
@@ -219,19 +353,22 @@ class DirectMessageSerializer(serializers.ModelSerializer):
     sender_email = serializers.CharField(source='sender.email', read_only=True)
     recipient_id = serializers.SerializerMethodField()
     recipient_name = serializers.SerializerMethodField()
+    reactions = serializers.SerializerMethodField()
+    reply_to_data = serializers.SerializerMethodField()
 
     class Meta:
         model = DirectMessage
         fields = [
             'id', 'conversation', 'sender_id', 'sender_name', 'sender_email',
             'recipient_id', 'recipient_name', 'message_type', 'content',
-            'file_url', 'file_name', 'is_read', 'read_at', 'is_edited',
-            'created_at', 'updated_at'
+            'file_url', 'file_name', 'reply_to', 'reply_to_data', 'reactions',
+            'is_read', 'read_at', 'is_edited', 'edited_at',
+            'is_deleted', 'deleted_at', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'sender_id', 'sender_name', 'sender_email',
             'recipient_id', 'recipient_name', 'is_read', 'read_at',
-            'created_at', 'updated_at'
+            'is_deleted', 'deleted_at', 'created_at', 'updated_at'
         ]
 
     def get_recipient_id(self, obj):
@@ -241,6 +378,46 @@ class DirectMessageSerializer(serializers.ModelSerializer):
     def get_recipient_name(self, obj):
         recipient = obj.recipient
         return recipient.get_full_name() if recipient else None
+
+    def get_reactions(self, obj):
+        """Επιστρέφει reactions ομαδοποιημένα ανά emoji"""
+        if obj.is_deleted:
+            return []
+        
+        reactions = obj.reactions.select_related('user').all()
+        request = self.context.get('request')
+        current_user_id = request.user.id if request else None
+        
+        emoji_groups = {}
+        for reaction in reactions:
+            emoji = reaction.emoji
+            if emoji not in emoji_groups:
+                emoji_groups[emoji] = {
+                    'emoji': emoji,
+                    'count': 0,
+                    'users': [],
+                    'has_reacted': False
+                }
+            emoji_groups[emoji]['count'] += 1
+            emoji_groups[emoji]['users'].append({
+                'id': reaction.user.id,
+                'name': reaction.user.get_full_name() or reaction.user.email
+            })
+            if reaction.user.id == current_user_id:
+                emoji_groups[emoji]['has_reacted'] = True
+        
+        return list(emoji_groups.values())
+
+    def get_reply_to_data(self, obj):
+        """Επιστρέφει δεδομένα του μηνύματος στο οποίο απαντά"""
+        if obj.reply_to:
+            return {
+                'id': obj.reply_to.id,
+                'sender_name': obj.reply_to.sender.get_full_name(),
+                'content': obj.reply_to.content[:100] + '...' if len(obj.reply_to.content) > 100 else obj.reply_to.content,
+                'is_deleted': obj.reply_to.is_deleted
+            }
+        return None
 
     def create(self, validated_data):
         validated_data['sender'] = self.context['request'].user
@@ -357,3 +534,61 @@ class OnlineUsersListSerializer(serializers.Serializer):
             return value
         except Building.DoesNotExist:
             raise serializers.ValidationError("Το κτίριο δεν βρέθηκε")
+
+
+# =============================================================================
+# PUSH NOTIFICATIONS Serializers
+# =============================================================================
+
+class PushSubscriptionSerializer(serializers.ModelSerializer):
+    """Serializer για PushSubscription"""
+    
+    class Meta:
+        model = PushSubscription
+        fields = ['id', 'endpoint', 'p256dh', 'auth', 'user_agent', 'is_active', 'created_at']
+        read_only_fields = ['id', 'is_active', 'created_at']
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        # Update or create - same endpoint should be updated
+        subscription, created = PushSubscription.objects.update_or_create(
+            user=validated_data['user'],
+            endpoint=validated_data['endpoint'],
+            defaults={
+                'p256dh': validated_data['p256dh'],
+                'auth': validated_data['auth'],
+                'user_agent': validated_data.get('user_agent', ''),
+                'is_active': True
+            }
+        )
+        return subscription
+
+
+class ChatNotificationPreferenceSerializer(serializers.ModelSerializer):
+    """Serializer για ChatNotificationPreference"""
+    
+    class Meta:
+        model = ChatNotificationPreference
+        fields = [
+            'chat_notifications', 'dm_notifications', 'sound_enabled',
+            'quiet_hours_start', 'quiet_hours_end'
+        ]
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        preferences, created = ChatNotificationPreference.objects.update_or_create(
+            user=validated_data['user'],
+            defaults=validated_data
+        )
+        return preferences
+
+
+class SubscribePushSerializer(serializers.Serializer):
+    """Serializer για εγγραφή σε push notifications"""
+    endpoint = serializers.CharField()
+    keys = serializers.DictField()
+    
+    def validate_keys(self, value):
+        if 'p256dh' not in value or 'auth' not in value:
+            raise serializers.ValidationError("Απαιτούνται τα keys p256dh και auth")
+        return value

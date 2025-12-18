@@ -171,6 +171,23 @@ def get_month_first_day(year: int, month: int) -> date:
     return date(year, month, 1)
 
 
+def get_next_month_start(reference_date: date) -> date:
+    """
+    Get the first day of the next month for a given date.
+    
+    Args:
+        reference_date: Reference date
+        
+    Returns:
+        date: First day of the next month
+        
+    Example:
+        >>> get_next_month_start(date(2025, 12, 18))
+        datetime.date(2026, 1, 1)
+    """
+    return (reference_date.replace(day=1) + relativedelta(months=1))
+
+
 def months_between(start_date: date, end_date: date) -> int:
     """
     Calculate the number of months between two dates.
@@ -190,5 +207,4 @@ def months_between(start_date: date, end_date: date) -> int:
         Months: 5
     """
     return (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
-
 

@@ -31,6 +31,27 @@ export type ChatMessageType = 'text' | 'image' | 'file' | 'system';
 export type SenderRole = 'manager' | 'resident' | 'internal_manager' | 'other';
 
 /**
+ * Message Reaction - Emoji reaction σε μήνυμα
+ */
+export type MessageReaction = {
+  emoji: string;
+  count: number;
+  users: { id: number; name: string }[];
+  has_reacted: boolean;
+};
+
+/**
+ * Reply To Data - Δεδομένα για το μήνυμα που απαντάει
+ */
+export type ReplyToData = {
+  id: number;
+  sender_name: string;
+  content: string;
+  message_type?: ChatMessageType;
+  is_deleted?: boolean;
+};
+
+/**
  * Chat Message - Μήνυμα στο chat
  */
 export type ChatMessage = {
@@ -50,8 +71,16 @@ export type ChatMessage = {
   file_url?: string | null;
   file_name?: string | null;
   file_size?: number | null;
+  // Reply functionality
+  reply_to?: number | null;
+  reply_to_data?: ReplyToData | null;
+  // Reactions
+  reactions?: MessageReaction[];
+  // Edit/Delete
   is_edited: boolean;
   edited_at?: string | null;
+  is_deleted?: boolean;
+  deleted_at?: string | null;
   created_at: string;
   updated_at?: string;
 };
@@ -89,6 +118,11 @@ export type WebSocketMessageType =
   | 'user_leave' 
   | 'typing_indicator' 
   | 'read_receipt'
+  | 'message_reaction'
+  | 'message_edited'
+  | 'message_deleted'
+  | 'presence_update'
+  | 'heartbeat_ack'
   | 'event';
 
 /**
@@ -105,6 +139,18 @@ export type WebSocketIncomingMessage = {
   file_url?: string;
   file_name?: string;
   file_size?: number;
+  // Reply data
+  reply_to?: number;
+  reply_to_data?: ReplyToData;
+  // Reaction data
+  emoji?: string;
+  action?: 'added' | 'removed';
+  reactions?: MessageReaction[];
+  // Edit data
+  edited_at?: string;
+  // Delete data
+  deleted_at?: string;
+  // User data
   user_id?: number;
   user_name?: string;
   is_typing?: boolean;
@@ -117,13 +163,18 @@ export type WebSocketIncomingMessage = {
  * WebSocket Outgoing Message (to server)
  */
 export type WebSocketOutgoingMessage = {
-  type: 'message' | 'typing' | 'read';
+  type: 'message' | 'typing' | 'read' | 'reaction' | 'edit' | 'delete' | 'heartbeat' | 'presence';
   message?: string;
   message_type?: ChatMessageType;
   file_url?: string;
   file_name?: string;
   file_size?: number;
+  reply_to?: number;
+  emoji?: string;
+  content?: string;
   is_typing?: boolean;
+  is_online?: boolean;
+  status_message?: string;
   message_id?: number;
 };
 
@@ -167,15 +218,19 @@ export type ChatState = {
   participants: ChatParticipant[];
   typingUsers: Map<number, string>; // user_id -> user_name
   unreadCount: number;
+  onlineUsers: Map<number, { name: string; isOnline: boolean }>; // user_id -> presence
 };
 
 /**
  * Chat Actions
  */
 export type ChatActions = {
-  sendMessage: (content: string, messageType?: ChatMessageType) => void;
+  sendMessage: (content: string, messageType?: ChatMessageType, replyToId?: number) => void;
   sendTypingIndicator: (isTyping: boolean) => void;
   markAsRead: (messageId?: number) => void;
+  toggleReaction: (messageId: number, emoji: string) => void;
+  editMessage: (messageId: number, newContent: string) => void;
+  deleteMessage: (messageId: number) => void;
   connect: () => void;
   disconnect: () => void;
 };

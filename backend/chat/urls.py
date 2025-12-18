@@ -5,7 +5,9 @@ from .views import (
     ChatMessageViewSet,
     DirectConversationViewSet,
     DirectMessageViewSet,
-    OnlineStatusViewSet
+    OnlineStatusViewSet,
+    PushSubscriptionViewSet,
+    ChatNotificationPreferenceViewSet
 )
 
 # Use trailing_slash=False to support both /path and /path/ URLs
@@ -19,6 +21,9 @@ router.register(r'direct', DirectConversationViewSet, basename='direct-conversat
 router.register(r'direct-messages', DirectMessageViewSet, basename='direct-message')
 # Online status
 router.register(r'online', OnlineStatusViewSet, basename='online-status')
+# Push notifications
+router.register(r'push-subscriptions', PushSubscriptionViewSet, basename='push-subscription')
+router.register(r'notification-preferences', ChatNotificationPreferenceViewSet, basename='notification-preference')
 
 urlpatterns = [
     path('', include(router.urls)),

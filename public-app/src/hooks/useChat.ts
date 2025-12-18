@@ -11,6 +11,7 @@ import type {
   ChatMessageType,
   SenderRole,
   UseChatReturn,
+  MessageReaction,
 } from '@/types/chat';
 
 /**
@@ -32,7 +33,11 @@ export function useChat(buildingId: number | null): UseChatReturn {
   const maxReconnectAttempts = 5;
   const typingTimeoutRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPollingMode = useRef(false);
+  
+  // Online users tracking
+  const [onlineUsers, setOnlineUsers] = useState<Map<number, { name: string; isOnline: boolean }>>(new Map());
 
   /**
    * Φόρτωση αρχικών μηνυμάτων από REST API
@@ -140,6 +145,21 @@ export function useChat(buildingId: number | null): UseChatReturn {
             loadMessages();
           }, 5000);
           
+          // Start heartbeat interval for REST mode (every 20 seconds)
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+          }
+          heartbeatIntervalRef.current = setInterval(async () => {
+            try {
+              await apiPost('/chat/online/heartbeat/', {});
+            } catch (err) {
+              console.log('[useChat] Heartbeat failed:', err);
+            }
+          }, 20000);
+          
+          // Send initial heartbeat
+          apiPost('/chat/online/heartbeat/', {}).catch(() => {});
+          
           return;
         }
       } else {
@@ -160,6 +180,16 @@ export function useChat(buildingId: number | null): UseChatReturn {
         
         // Φόρτωσε τα υπάρχοντα μηνύματα
         loadMessages();
+        
+        // Start heartbeat interval (every 20 seconds)
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+        }
+        heartbeatIntervalRef.current = setInterval(() => {
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'heartbeat' }));
+          }
+        }, 20000);
       };
       
       ws.onmessage = (event) => {
@@ -179,7 +209,11 @@ export function useChat(buildingId: number | null): UseChatReturn {
                 file_url: data.file_url,
                 file_name: data.file_name,
                 file_size: data.file_size,
+                reply_to: data.reply_to,
+                reply_to_data: data.reply_to_data,
+                reactions: [],
                 is_edited: false,
+                is_deleted: false,
                 created_at: data.timestamp || new Date().toISOString(),
               };
               setMessages(prev => [...prev, newMessage]);
@@ -240,6 +274,64 @@ export function useChat(buildingId: number | null): UseChatReturn {
               // Ενημέρωση αν ο χρήστης διάβασε τα μηνύματα
               console.log('[useChat] Απόδειξη ανάγνωσης από:', data.user_name);
               break;
+              
+            case 'message_reaction':
+              // Ενημέρωση reactions σε μήνυμα
+              if (data.message_id && data.reactions) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === data.message_id 
+                    ? { ...msg, reactions: data.reactions as MessageReaction[] }
+                    : msg
+                ));
+              }
+              break;
+              
+            case 'message_edited':
+              // Ενημέρωση περιεχομένου μηνύματος
+              if (data.message_id) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === data.message_id 
+                    ? { ...msg, content: data.content!, is_edited: true, edited_at: data.edited_at }
+                    : msg
+                ));
+              }
+              break;
+              
+            case 'message_deleted':
+              // Σήμανση μηνύματος ως διαγραμμένο
+              if (data.message_id) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === data.message_id 
+                    ? { ...msg, is_deleted: true, deleted_at: data.deleted_at }
+                    : msg
+                ));
+              }
+              break;
+              
+            case 'presence_update':
+              // Ενημέρωση online status χρήστη
+              if (data.user_id) {
+                setOnlineUsers(prev => {
+                  const newMap = new Map(prev);
+                  newMap.set(data.user_id!, {
+                    name: data.user_name || 'Unknown',
+                    isOnline: data.is_typing !== false // default true
+                  });
+                  return newMap;
+                });
+                // Ενημέρωση και του participants list
+                setParticipants(prev => prev.map(p => 
+                  p.user?.id === data.user_id
+                    ? { ...p, is_online: data.is_typing !== false }
+                    : p
+                ));
+              }
+              break;
+              
+            case 'heartbeat_ack':
+              // Heartbeat acknowledged - connection is healthy
+              console.log('[useChat] Heartbeat acknowledged');
+              break;
           }
         } catch (err) {
           console.error('[useChat] Σφάλμα ανάλυσης μηνύματος:', err);
@@ -289,6 +381,18 @@ export function useChat(buildingId: number | null): UseChatReturn {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
+    
+    // Clear heartbeat interval
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
+    
+    // Send go offline signal (fire and forget)
+    if (isPollingMode.current) {
+      apiPost('/chat/online/go_offline/', {}).catch(() => {});
+    }
+    
     isPollingMode.current = false;
     
     if (wsRef.current) {
@@ -298,6 +402,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
     
     setIsConnected(false);
     setIsConnecting(false);
+    setOnlineUsers(new Map());
     
     // Clear typing timeouts
     typingTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
@@ -307,7 +412,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
   /**
    * Αποστολή μηνύματος
    */
-  const sendMessage = useCallback((content: string, messageType: ChatMessageType = 'text') => {
+  const sendMessage = useCallback((content: string, messageType: ChatMessageType = 'text', replyToId?: number) => {
     if (!content.trim()) return;
     
     // In polling mode or when WebSocket is not open, use REST API
@@ -326,6 +431,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
               chat_room: response.chat_room.id,
               content: content.trim(),
               message_type: messageType,
+              reply_to: replyToId,
             });
             // Reload messages after sending
             loadMessages();
@@ -341,10 +447,89 @@ export function useChat(buildingId: number | null): UseChatReturn {
         type: 'message',
         message: content.trim(),
         message_type: messageType,
+        reply_to: replyToId,
       };
       wsRef.current.send(JSON.stringify(outgoingMessage));
     }
   }, [buildingId, loadMessages]);
+
+  /**
+   * Toggle reaction σε μήνυμα
+   */
+  const toggleReaction = useCallback((messageId: number, emoji: string) => {
+    if (isPollingMode.current || wsRef.current?.readyState !== WebSocket.OPEN) {
+      // Use REST API
+      (async () => {
+        try {
+          await apiPost(`/chat/messages/${messageId}/add_reaction/`, { emoji });
+          loadMessages();
+        } catch (err) {
+          console.error('[useChat] Σφάλμα reaction:', err);
+        }
+      })();
+    } else {
+      // Send via WebSocket
+      const outgoingMessage: WebSocketOutgoingMessage = {
+        type: 'reaction',
+        message_id: messageId,
+        emoji,
+      };
+      wsRef.current.send(JSON.stringify(outgoingMessage));
+    }
+  }, [loadMessages]);
+
+  /**
+   * Επεξεργασία μηνύματος
+   */
+  const editMessage = useCallback((messageId: number, newContent: string) => {
+    if (!newContent.trim()) return;
+    
+    if (isPollingMode.current || wsRef.current?.readyState !== WebSocket.OPEN) {
+      // Use REST API
+      (async () => {
+        try {
+          await apiPost(`/chat/messages/${messageId}/edit/`, { content: newContent.trim() });
+          loadMessages();
+        } catch (err) {
+          console.error('[useChat] Σφάλμα επεξεργασίας:', err);
+          setError('Αποτυχία επεξεργασίας μηνύματος');
+        }
+      })();
+    } else {
+      // Send via WebSocket
+      const outgoingMessage: WebSocketOutgoingMessage = {
+        type: 'edit',
+        message_id: messageId,
+        content: newContent.trim(),
+      };
+      wsRef.current.send(JSON.stringify(outgoingMessage));
+    }
+  }, [loadMessages]);
+
+  /**
+   * Διαγραφή μηνύματος (soft delete)
+   */
+  const deleteMessage = useCallback((messageId: number) => {
+    if (isPollingMode.current || wsRef.current?.readyState !== WebSocket.OPEN) {
+      // Use REST API
+      (async () => {
+        try {
+          await apiPost(`/chat/messages/${messageId}/delete_message/`, {});
+          loadMessages();
+        } catch (err) {
+          console.error('[useChat] Σφάλμα διαγραφής:', err);
+          setError('Αποτυχία διαγραφής μηνύματος');
+        }
+      })();
+    } else {
+      // Send via WebSocket
+      const outgoingMessage: WebSocketOutgoingMessage = {
+        type: 'delete',
+        message_id: messageId,
+      };
+      wsRef.current.send(JSON.stringify(outgoingMessage));
+    }
+  }, [loadMessages]);
 
   /**
    * Αποστολή δείκτη πληκτρολόγησης
@@ -394,9 +579,13 @@ export function useChat(buildingId: number | null): UseChatReturn {
     participants,
     typingUsers,
     unreadCount,
+    onlineUsers,
     sendMessage,
     sendTypingIndicator,
     markAsRead,
+    toggleReaction,
+    editMessage,
+    deleteMessage,
     connect,
     disconnect,
   };
@@ -524,8 +713,8 @@ export function useBuildingUsers(buildingId: number | null) {
   useEffect(() => {
     loadUsers();
     
-    // Poll every 30 seconds for online status updates
-    const interval = setInterval(loadUsers, 30000);
+    // Poll every 10 seconds for online status updates (more frequent for real-time feel)
+    const interval = setInterval(loadUsers, 10000);
     return () => clearInterval(interval);
   }, [loadUsers]);
 

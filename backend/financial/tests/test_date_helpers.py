@@ -18,6 +18,7 @@ from financial.utils.date_helpers import (
     get_month_date_range,
     is_date_in_reserve_fund_timeline,
     get_month_first_day,
+    get_next_month_start,
     months_between
 )
 
@@ -310,4 +311,22 @@ class TestMonthsBetween(TestCase):
         result = months_between(start, end)
         self.assertEqual(result, 12)
 
+
+class TestGetNextMonthStart(TestCase):
+    """Test suite for get_next_month_start function"""
+    
+    def test_next_month_mid_month(self):
+        """Test next month start from a mid-month date"""
+        result = get_next_month_start(date(2025, 12, 18))
+        self.assertEqual(result, date(2026, 1, 1))
+    
+    def test_next_month_from_first_day(self):
+        """Test next month start when already on first day"""
+        result = get_next_month_start(date(2025, 10, 1))
+        self.assertEqual(result, date(2025, 11, 1))
+    
+    def test_next_month_year_boundary(self):
+        """Test next month start across year boundary"""
+        result = get_next_month_start(date(2025, 12, 31))
+        self.assertEqual(result, date(2026, 1, 1))
 

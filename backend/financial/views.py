@@ -4180,7 +4180,7 @@ def database_cleanup(request):
                     {
                         'id': 'future_expenses',
                         'name': 'Μελλοντικές Δαπάνες',
-                        'description': 'Διαγραφή δαπανών με ημερομηνία στο μέλλον (management fees, αποθεματικό κλπ)',
+                        'description': 'Διαγραφή δαπανών με ημερομηνία μετά το τέλος του τρέχοντος μήνα (management fees, αποθεματικό κλπ)',
                         'danger_level': 'medium',
                         'affects': 'Αποθεματικό, υπολογισμοί'
                     },
@@ -4260,6 +4260,7 @@ def _scan_database_for_cleanup():
     """Σαρώνει τη βάση για θέματα που χρειάζονται cleanup"""
     from decimal import Decimal
     from datetime import date
+    from .utils.date_helpers import get_next_month_start
     
     today = date.today()
     
@@ -4306,7 +4307,8 @@ def _scan_database_for_cleanup():
     
     # 2. Scan for future expenses (management fees, reserve fund etc. with future dates)
     # 📝 ΠΡΟΣΘΗΚΗ 2025-12-05: Σάρωση μελλοντικών δαπανών που προκαλούν σύγχυση
-    future_expenses = Expense.objects.filter(date__gt=today).select_related('building')
+    next_month_start = get_next_month_start(today)
+    future_expenses = Expense.objects.filter(date__gte=next_month_start).select_related('building')
     
     for exp in future_expenses[:15]:  # Limit preview
         results['future_expenses']['items'].append({
@@ -4426,7 +4428,7 @@ def _cleanup_orphan_transactions(user, search_term, building_id):
 
 def _cleanup_future_expenses(user, building_id=None):
     """
-    Διαγραφή δαπανών με ημερομηνία στο μέλλον
+    Διαγραφή δαπανών με ημερομηνία μετά το τέλος του τρέχοντος μήνα
     
     📝 ΠΡΟΣΘΗΚΗ 2025-12-05: Οι μελλοντικές δαπάνες (management fees, αποθεματικό κλπ)
     που δημιουργήθηκαν αυτόματα προκαλούσαν σύγχυση στον υπολογισμό του αποθεματικού
@@ -4434,12 +4436,14 @@ def _cleanup_future_expenses(user, building_id=None):
     import logging
     from datetime import date
     from django.db.models import Sum
+    from .utils.date_helpers import get_next_month_start
     
     logger = logging.getLogger(__name__)
     today = date.today()
+    next_month_start = get_next_month_start(today)
     
     # Build query for future expenses
-    future_expenses = Expense.objects.filter(date__gt=today)
+    future_expenses = Expense.objects.filter(date__gte=next_month_start)
     
     if building_id:
         future_expenses = future_expenses.filter(building_id=building_id)

@@ -38,6 +38,9 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { OnlineUsersList } from './OnlineUsersList';
 import { DirectChatPanel } from './DirectChatPanel';
+import { EmojiPicker, MessageReactionsDisplay, QuickReactions } from './EmojiPicker';
+import { ReplyPreview } from './ReplyPreview';
+import { MessageContextMenu, MessageEditMode } from './MessageContextMenu';
 import type { ChatMessage, ChatRoom, ChatParticipant, SenderRole, BuildingUser } from '@/types/chat';
 
 // Tab types for the chat interface
@@ -108,25 +111,72 @@ function ChatMessageItem({
   showAvatar,
   isFirstInGroup,
   isLastInGroup,
+  onReply,
+  onEdit,
+  onDelete,
+  onReact,
+  onScrollToMessage,
 }: { 
   message: ChatMessage;
   isOwn: boolean;
   showAvatar: boolean;
   isFirstInGroup: boolean;
   isLastInGroup: boolean;
+  onReply: (message: ChatMessage) => void;
+  onEdit: (message: ChatMessage) => void;
+  onDelete: (messageId: number) => void;
+  onReact: (messageId: number, emoji: string) => void;
+  onScrollToMessage?: (messageId: number) => void;
 }) {
   const roleInfo = roleConfig[message.sender_role] || roleConfig.other;
+  const [isEditing, setIsEditing] = useState(false);
+  const [showQuickReactions, setShowQuickReactions] = useState(false);
+  
+  // Handle edit save
+  const handleEditSave = (newContent: string) => {
+    onEdit({ ...message, content: newContent });
+    setIsEditing(false);
+  };
+  
+  // Handle copy
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content);
+  };
+
+  // If message is deleted, show placeholder
+  if (message.is_deleted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          'flex gap-2',
+          isOwn ? 'flex-row-reverse' : 'flex-row',
+          isLastInGroup && 'mb-3'
+        )}
+      >
+        <div className={cn('w-8 h-8 flex-shrink-0', !showAvatar && 'invisible')} />
+        <div className={cn(
+          'px-3 py-2 rounded-2xl italic text-sm',
+          'bg-muted/50 text-muted-foreground border border-dashed border-border'
+        )}>
+          Αυτό το μήνυμα διαγράφηκε
+        </div>
+      </motion.div>
+    );
+  }
   
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'flex gap-2',
+        'flex gap-2 group relative',
         isOwn ? 'flex-row-reverse' : 'flex-row',
         !isLastInGroup && 'mb-0.5',
         isLastInGroup && 'mb-3'
       )}
+      data-message-id={message.id}
     >
       {/* Avatar */}
       <div className={cn('w-8 h-8 flex-shrink-0', !showAvatar && 'invisible')}>
@@ -175,6 +225,18 @@ function ChatMessageItem({
           !isFirstInGroup && isLastInGroup && (isOwn ? 'rounded-2xl rounded-tr-md' : 'rounded-2xl rounded-tl-md'),
           !isFirstInGroup && !isLastInGroup && (isOwn ? 'rounded-l-2xl rounded-r-md' : 'rounded-r-2xl rounded-l-md')
         )}>
+          {/* Reply quote */}
+          {message.reply_to_data && (
+            <ReplyPreview
+              message={message.reply_to_data}
+              variant="message"
+              onClick={() => onScrollToMessage?.(message.reply_to_data!.id)}
+              className={cn(
+                isOwn ? 'bg-white/10' : 'bg-black/5 dark:bg-white/5'
+              )}
+            />
+          )}
+          
           {/* File attachment */}
           {message.file_url && (
             <a 
@@ -197,39 +259,71 @@ function ChatMessageItem({
             </a>
           )}
           
-          {/* Text content */}
-          <p className="text-sm whitespace-pre-wrap break-words">
-            {message.content}
-          </p>
+          {/* Text content or edit mode */}
+          {isEditing ? (
+            <MessageEditMode
+              content={message.content}
+              onSave={handleEditSave}
+              onCancel={() => setIsEditing(false)}
+            />
+          ) : (
+            <p className="text-sm whitespace-pre-wrap break-words">
+              {message.content}
+            </p>
+          )}
           
           {/* Time and status */}
-          <div className={cn(
-            'flex items-center gap-1 mt-1',
-            isOwn ? 'justify-end' : 'justify-start'
-          )}>
-            <span className={cn(
-              'text-[10px]',
-              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+          {!isEditing && (
+            <div className={cn(
+              'flex items-center gap-1 mt-1',
+              isOwn ? 'justify-end' : 'justify-start'
             )}>
-              {formatMessageTime(message.created_at)}
-            </span>
-            {message.is_edited && (
               <span className={cn(
                 'text-[10px]',
                 isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
               )}>
-                (επεξεργασμένο)
+                {formatMessageTime(message.created_at)}
               </span>
-            )}
-          </div>
+              {message.is_edited && (
+                <span className={cn(
+                  'text-[10px]',
+                  isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                )}>
+                  (επεξεργασμένο)
+                </span>
+              )}
+            </div>
+          )}
         </div>
+        
+        {/* Reactions display */}
+        {message.reactions && message.reactions.length > 0 && (
+          <MessageReactionsDisplay
+            reactions={message.reactions}
+            onReactionClick={(emoji) => onReact(message.id, emoji)}
+            className="mt-1"
+          />
+        )}
       </div>
+      
+      {/* Context menu (shows on hover) */}
+      {!isEditing && (
+        <MessageContextMenu
+          message={message}
+          isOwn={isOwn}
+          onReply={() => onReply(message)}
+          onEdit={() => setIsEditing(true)}
+          onDelete={() => onDelete(message.id)}
+          onReact={(emoji) => onReact(message.id, emoji)}
+          onCopy={handleCopy}
+        />
+      )}
     </motion.div>
   );
 }
 
 /**
- * Typing Indicator Component
+ * Typing Indicator Component - Animated typing dots
  */
 function TypingIndicator({ users }: { users: Map<number, string> }) {
   if (users.size === 0) return null;
@@ -246,29 +340,33 @@ function TypingIndicator({ users }: { users: Map<number, string> }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className="flex items-center gap-2 px-4 py-2"
+      className="flex items-center gap-3 px-4 py-3"
     >
-      <div className="flex gap-1">
+      <div className="flex items-center gap-1 px-3 py-2 bg-muted/50 rounded-full">
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}
-            className="w-2 h-2 bg-muted-foreground/50 rounded-full"
-            animate={{ scale: [1, 1.2, 1] }}
+            className="w-1.5 h-1.5 bg-primary/60 rounded-full"
+            animate={{ 
+              y: [-2, 2, -2],
+              opacity: [0.4, 1, 0.4]
+            }}
             transition={{
-              duration: 0.6,
+              duration: 0.8,
               repeat: Infinity,
-              delay: i * 0.2,
+              delay: i * 0.15,
+              ease: "easeInOut"
             }}
           />
         ))}
       </div>
-      <span className="text-xs text-muted-foreground">{text}</span>
+      <span className="text-xs text-muted-foreground font-medium">{text}</span>
     </motion.div>
   );
 }
 
 /**
- * Chat Room List Item
+ * Chat Room List Item - Modern card design
  */
 function ChatRoomItem({ 
   room, 
@@ -280,20 +378,27 @@ function ChatRoomItem({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       className={cn(
-        'w-full flex items-center gap-3 p-3 rounded-xl transition-all',
+        'w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200',
         isActive 
-          ? 'bg-primary text-primary-foreground shadow-md' 
-          : 'hover:bg-muted/50'
+          ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25' 
+          : 'hover:bg-muted/70 dark:hover:bg-muted/50'
       )}
     >
       <div className={cn(
-        'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-        isActive ? 'bg-white/20' : 'bg-muted'
+        'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all',
+        isActive 
+          ? 'bg-white/20 shadow-inner' 
+          : 'bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10'
       )}>
-        <Building2 className="w-6 h-6" />
+        <Building2 className={cn(
+          'w-6 h-6',
+          isActive ? 'text-white' : 'text-primary'
+        )} />
       </div>
       
       <div className="flex-1 min-w-0 text-left">
@@ -305,24 +410,29 @@ function ChatRoomItem({
             {room.building.name}
           </h3>
           {room.unread_count > 0 && (
-            <span className={cn(
-              'flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold flex items-center justify-center',
-              isActive 
-                ? 'bg-white text-primary' 
-                : 'bg-primary text-white'
-            )}>
+            <motion.span 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className={cn(
+                'flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold flex items-center justify-center',
+                isActive 
+                  ? 'bg-white text-primary shadow-sm' 
+                  : 'bg-primary text-white shadow-sm shadow-primary/20'
+              )}
+            >
               {room.unread_count > 99 ? '99+' : room.unread_count}
-            </span>
+            </motion.span>
           )}
         </div>
         <p className={cn(
-          'text-xs truncate',
-          isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
+          'text-xs truncate mt-0.5',
+          isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
         )}>
+          <Users className="w-3 h-3 inline mr-1" />
           {room.participants_count} συμμετέχοντες
         </p>
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -443,7 +553,11 @@ export default function ChatInterface() {
   const [activeTab, setActiveTab] = useState<ChatTab>('group');
   const [selectedUserForDM, setSelectedUserForDM] = useState<BuildingUser | null>(null);
   
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -467,6 +581,9 @@ export default function ChatInterface() {
     sendMessage,
     sendTypingIndicator,
     markAsRead,
+    toggleReaction,
+    editMessage,
+    deleteMessage,
   } = useChat(activeBuildingId);
 
   // Group messages by date
@@ -476,6 +593,44 @@ export default function ChatInterface() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Handlers for message actions
+  const handleReply = useCallback((message: ChatMessage) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyingTo(null);
+  }, []);
+
+  const handleEdit = useCallback((message: ChatMessage) => {
+    editMessage(message.id, message.content);
+  }, [editMessage]);
+
+  const handleDelete = useCallback((messageId: number) => {
+    if (confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το μήνυμα;')) {
+      deleteMessage(messageId);
+    }
+  }, [deleteMessage]);
+
+  const handleReact = useCallback((messageId: number, emoji: string) => {
+    toggleReaction(messageId, emoji);
+  }, [toggleReaction]);
+
+  const handleScrollToMessage = useCallback((messageId: number) => {
+    const messageElement = messagesContainerRef.current?.querySelector(
+      `[data-message-id="${messageId}"]`
+    );
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight effect
+      messageElement.classList.add('bg-primary/10');
+      setTimeout(() => {
+        messageElement.classList.remove('bg-primary/10');
+      }, 2000);
+    }
+  }, []);
 
   // Mark as read when viewing
   useEffect(() => {
@@ -506,14 +661,15 @@ export default function ChatInterface() {
   const handleSend = useCallback(() => {
     if (!inputValue.trim()) return;
     
-    sendMessage(inputValue);
+    sendMessage(inputValue, 'text', replyingTo?.id);
     setInputValue('');
+    setReplyingTo(null);
     sendTypingIndicator(false);
     
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-  }, [inputValue, sendMessage, sendTypingIndicator]);
+  }, [inputValue, sendMessage, sendTypingIndicator, replyingTo]);
 
   // Handle key press (Enter to send)
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -647,43 +803,43 @@ export default function ChatInterface() {
       <div className="flex-1 flex flex-col relative">
         {activeBuildingId ? (
           <>
-            {/* Chat Header */}
-            <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            {/* Chat Header - Glassmorphism style */}
+            <div className="bg-white/80 dark:bg-card/80 backdrop-blur-lg border-b border-slate-200/50 dark:border-border/50 px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowRoomList(!showRoomList)}
-                  className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="md:hidden p-2 hover:bg-slate-100 dark:hover:bg-muted rounded-lg transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                  <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-muted-foreground" />
                 </button>
                 
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-slate-600" />
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/20 flex items-center justify-center shadow-sm">
+                  <Building2 className="w-5 h-5 text-primary" />
                 </div>
                 
                 <div>
-                  <h2 className="font-semibold text-slate-800">
+                  <h2 className="font-bold text-slate-800 dark:text-foreground">
                     {activeRoom?.building.name || currentBuilding?.name || 'Chat'}
                   </h2>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs">
                     {isConnected ? (
-                      <>
-                        <Wifi className="w-3 h-3 text-green-500" />
-                        <span className="text-green-600">Συνδεδεμένος</span>
-                      </>
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        Συνδεδεμένος
+                      </span>
                     ) : isConnecting ? (
-                      <>
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400">
                         <RefreshCw className="w-3 h-3 animate-spin" />
-                        <span>Σύνδεση...</span>
-                      </>
+                        Σύνδεση...
+                      </span>
                     ) : (
-                      <>
-                        <WifiOff className="w-3 h-3 text-red-500" />
-                        <span className="text-red-600">Αποσυνδεδεμένος</span>
-                      </>
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400">
+                        <WifiOff className="w-3 h-3" />
+                        Αποσυνδεδεμένος
+                      </span>
                     )}
-                    <span className="mx-1">•</span>
-                    <span>{participants.length} συμμετέχοντες</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{participants.length} μέλη</span>
                   </div>
                 </div>
               </div>
@@ -692,10 +848,10 @@ export default function ChatInterface() {
                 <button
                   onClick={() => setShowParticipants(!showParticipants)}
                   className={cn(
-                    'p-2 rounded-lg transition-colors',
+                    'p-2.5 rounded-xl transition-all duration-200',
                     showParticipants 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'hover:bg-slate-100 text-slate-600'
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' 
+                      : 'hover:bg-slate-100 dark:hover:bg-muted text-slate-600 dark:text-muted-foreground'
                   )}
                   title="Συμμετέχοντες"
                 >
@@ -807,16 +963,19 @@ export default function ChatInterface() {
                   className="flex-1 flex flex-col overflow-hidden"
                 >
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50 to-white">
+            <div 
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background"
+            >
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                    <MessageCircle className="w-10 h-10 text-slate-300" />
+                  <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-muted flex items-center justify-center mb-4">
+                    <MessageCircle className="w-10 h-10 text-slate-300 dark:text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold text-slate-600 mb-2">
+                  <h3 className="font-semibold text-slate-600 dark:text-foreground mb-2">
                     Ξεκινήστε μια συνομιλία
                   </h3>
-                  <p className="text-sm text-slate-400 max-w-xs">
+                  <p className="text-sm text-slate-400 dark:text-muted-foreground max-w-xs">
                     Επικοινωνήστε με τους διαχειριστές και τους κατοίκους του κτιρίου σε πραγματικό χρόνο.
                   </p>
                 </div>
@@ -826,7 +985,7 @@ export default function ChatInterface() {
                     <div key={dateKey}>
                       {/* Date separator */}
                       <div className="flex items-center justify-center my-4">
-                        <div className="px-3 py-1 bg-white rounded-full shadow-sm border border-slate-200 text-xs font-medium text-slate-500">
+                        <div className="px-3 py-1 bg-white dark:bg-muted rounded-full shadow-sm border border-slate-200 dark:border-border text-xs font-medium text-slate-500 dark:text-muted-foreground">
                           {formatMessageDate(dayMessages[0].created_at)}
                         </div>
                       </div>
@@ -848,6 +1007,11 @@ export default function ChatInterface() {
                             showAvatar={isLastInGroup}
                             isFirstInGroup={isFirstInGroup}
                             isLastInGroup={isLastInGroup}
+                            onReply={handleReply}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onReact={handleReact}
+                            onScrollToMessage={handleScrollToMessage}
                           />
                         );
                       })}
@@ -864,17 +1028,29 @@ export default function ChatInterface() {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-slate-200 p-4">
+            <div className="bg-white dark:bg-card border-t border-slate-200 dark:border-border">
               {error && (
-                <div className="mb-3 px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                <div className="mx-4 mt-4 px-4 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
                   {error}
                 </div>
               )}
               
-              <div className="flex items-end gap-3">
+              {/* Reply Preview */}
+              <AnimatePresence>
+                {replyingTo && (
+                  <ReplyPreview
+                    message={replyingTo}
+                    onCancel={handleCancelReply}
+                    variant="input"
+                    className="mt-4"
+                  />
+                )}
+              </AnimatePresence>
+              
+              <div className="flex items-end gap-3 p-4">
                 {/* Attachment button */}
                 <button
-                  className="p-2.5 hover:bg-slate-100 rounded-xl transition-colors text-slate-500"
+                  className="p-2.5 hover:bg-slate-100 dark:hover:bg-muted rounded-xl transition-colors text-slate-500 dark:text-muted-foreground"
                   title="Επισύναψη αρχείου"
                 >
                   <Paperclip className="w-5 h-5" />
@@ -887,19 +1063,18 @@ export default function ChatInterface() {
                     value={inputValue}
                     onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
-                    placeholder="Γράψτε ένα μήνυμα..."
+                    placeholder={replyingTo ? `Απάντηση σε ${replyingTo.sender_name}...` : "Γράψτε ένα μήνυμα..."}
                     rows={1}
-                    className="w-full px-4 py-3 bg-slate-100 rounded-2xl text-sm resize-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all border-0 pr-12"
+                    className="w-full px-4 py-3 bg-slate-100 dark:bg-muted rounded-2xl text-sm resize-none focus:ring-2 focus:ring-primary/30 focus:bg-white dark:focus:bg-background transition-all border-0 pr-12"
                     style={{ maxHeight: '120px' }}
                   />
                   
-                  {/* Emoji button */}
-                  <button
-                    className="absolute right-3 bottom-3 p-1 hover:bg-slate-200 rounded-lg transition-colors text-slate-400"
-                    title="Emoji"
-                  >
-                    <Smile className="w-5 h-5" />
-                  </button>
+                  {/* Emoji Picker */}
+                  <div className="absolute right-2 bottom-2">
+                    <EmojiPicker 
+                      onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
+                    />
+                  </div>
                 </div>
                 
                 {/* Send button */}
@@ -910,7 +1085,7 @@ export default function ChatInterface() {
                     'p-3 rounded-xl transition-all',
                     inputValue.trim() && isConnected
                       ? 'bg-primary text-primary-foreground shadow-md hover:shadow-lg hover:scale-105'
-                      : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-100 dark:bg-muted text-slate-400 dark:text-muted-foreground cursor-not-allowed'
                   )}
                 >
                   <Send className="w-5 h-5" />
@@ -929,24 +1104,47 @@ export default function ChatInterface() {
             </AnimatePresence>
           </>
         ) : (
-          // No building selected
-          <div className="flex flex-col items-center justify-center h-full text-center px-8">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6">
-              <MessageCircle className="w-12 h-12 text-primary/60" />
+          // No building selected - Beautiful empty state
+          <div className="flex flex-col items-center justify-center h-full text-center px-8 bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background">
+            {/* Decorative background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-3xl" />
+              <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-3xl" />
             </div>
-            <h3 className="font-bold text-xl text-slate-700 mb-3">
-              Καλώς ήρθατε στο Chat
-            </h3>
-            <p className="text-slate-500 max-w-sm mb-6">
-              Επιλέξτε ένα κτίριο από τη λίστα για να ξεκινήσετε να επικοινωνείτε με τους διαχειριστές και τους κατοίκους.
-            </p>
-            <button
-              onClick={() => setShowRoomList(true)}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium shadow-md hover:shadow-lg hover:scale-105 transition-all inline-flex items-center gap-2"
+            
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative z-10"
             >
-              <Building2 className="w-5 h-5" />
-              Επιλογή Κτιρίου
-            </button>
+              <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center mb-6 shadow-xl shadow-primary/10">
+                <MessageCircle className="w-14 h-14 text-primary" />
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="relative z-10"
+            >
+              <h3 className="font-bold text-2xl text-slate-800 dark:text-foreground mb-3">
+                Καλώς ήρθατε στο Chat
+              </h3>
+              <p className="text-slate-500 dark:text-muted-foreground max-w-sm mb-8">
+                Επιλέξτε ένα κτίριο από τη λίστα για να ξεκινήσετε να επικοινωνείτε με τους διαχειριστές και τους κατοίκους.
+              </p>
+              
+              <motion.button
+                onClick={() => setShowRoomList(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-8 py-4 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-2xl font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all inline-flex items-center gap-3"
+              >
+                <Building2 className="w-5 h-5" />
+                Επιλογή Κτιρίου
+              </motion.button>
+            </motion.div>
           </div>
         )}
       </div>

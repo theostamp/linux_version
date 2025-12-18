@@ -23,6 +23,7 @@ from django.db import transaction
 from django.db.models import Count
 
 from financial.models import Expense
+from financial.utils.date_helpers import get_next_month_start
 from buildings.models import Building
 
 
@@ -54,17 +55,19 @@ class Command(BaseCommand):
         category = options.get('category', 'all')
         
         today = date.today()
+        next_month_start = get_next_month_start(today)
         
         self.stdout.write(self.style.NOTICE(
             f"\n{'='*60}\n"
             f"🗑️  ΔΙΑΓΡΑΦΗ ΜΕΛΛΟΝΤΙΚΩΝ ΔΑΠΑΝΩΝ\n"
             f"{'='*60}\n"
             f"Σημερινή ημερομηνία: {today}\n"
+            f"Μελλοντικές δαπάνες: ημερομηνία ≥ {next_month_start} (επόμενος μήνας και μετά)\n"
             f"{'Dry run: ΝΑΙ (δεν θα γίνει διαγραφή)' if dry_run else 'ΠΡΟΣΟΧΗ: Θα γίνει ΠΡΑΓΜΑΤΙΚΗ διαγραφή!'}\n"
         ))
         
         # Βασικό query για μελλοντικές δαπάνες
-        future_expenses = Expense.objects.filter(date__gt=today)
+        future_expenses = Expense.objects.filter(date__gte=next_month_start)
         
         # Φίλτρο κτιρίου
         if building_id:
@@ -132,4 +135,3 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(
                     f"\n✅ Διαγράφηκαν επιτυχώς {deleted_count} μελλοντικές δαπάνες!\n"
                 ))
-

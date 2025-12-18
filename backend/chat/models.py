@@ -93,6 +93,17 @@ class ChatMessage(models.Model):
         null=True,
         verbose_name=_("Μέγεθος Αρχείου (bytes)")
     )
+    # Reply/Quote functionality
+    reply_to = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='replies',
+        verbose_name=_("Απάντηση σε"),
+        help_text=_("Το μήνυμα στο οποίο απαντά αυτό το μήνυμα")
+    )
+    # Edit/Delete functionality
     is_edited = models.BooleanField(
         default=False,
         verbose_name=_("Επεξεργασμένο"),
@@ -102,6 +113,16 @@ class ChatMessage(models.Model):
         blank=True,
         null=True,
         verbose_name=_("Ημερομηνία Επεξεργασίας")
+    )
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name=_("Διαγραμμένο"),
+        help_text=_("Soft delete - το μήνυμα εμφανίζεται ως διαγραμμένο")
+    )
+    deleted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Ημερομηνία Διαγραφής")
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -305,6 +326,15 @@ class DirectMessage(models.Model):
         null=True,
         verbose_name=_("Όνομα Αρχείου")
     )
+    # Reply functionality
+    reply_to = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='replies',
+        verbose_name=_("Απάντηση σε")
+    )
     is_read = models.BooleanField(
         default=False,
         verbose_name=_("Διαβάστηκε")
@@ -317,6 +347,20 @@ class DirectMessage(models.Model):
     is_edited = models.BooleanField(
         default=False,
         verbose_name=_("Επεξεργασμένο")
+    )
+    edited_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Ημερομηνία Επεξεργασίας")
+    )
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name=_("Διαγραμμένο")
+    )
+    deleted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Ημερομηνία Διαγραφής")
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -401,3 +445,204 @@ class OnlineStatus(models.Model):
             user_id__in=user_ids,
             is_online=True
         ).select_related('user')
+
+
+class MessageReaction(models.Model):
+    """
+    Emoji reaction σε μήνυμα.
+    Κάθε χρήστης μπορεί να έχει μία αντίδραση ανά emoji ανά μήνυμα.
+    """
+    COMMON_EMOJIS = [
+        ('👍', 'thumbs_up'),
+        ('❤️', 'heart'),
+        ('😂', 'laugh'),
+        ('😮', 'wow'),
+        ('😢', 'sad'),
+        ('🎉', 'celebrate'),
+        ('👏', 'clap'),
+        ('🔥', 'fire'),
+    ]
+
+    message = models.ForeignKey(
+        ChatMessage,
+        on_delete=models.CASCADE,
+        related_name='reactions',
+        verbose_name=_("Μήνυμα")
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='message_reactions',
+        verbose_name=_("Χρήστης")
+    )
+    emoji = models.CharField(
+        max_length=10,
+        verbose_name=_("Emoji"),
+        help_text=_("Το emoji της αντίδρασης")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Message Reaction")
+        verbose_name_plural = _("Message Reactions")
+        unique_together = ['message', 'user', 'emoji']
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} reacted {self.emoji} to message {self.message.id}"
+
+
+class DirectMessageReaction(models.Model):
+    """
+    Emoji reaction σε ιδιωτικό μήνυμα.
+    """
+    message = models.ForeignKey(
+        DirectMessage,
+        on_delete=models.CASCADE,
+        related_name='reactions',
+        verbose_name=_("Μήνυμα")
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='dm_reactions',
+        verbose_name=_("Χρήστης")
+    )
+    emoji = models.CharField(
+        max_length=10,
+        verbose_name=_("Emoji")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Direct Message Reaction")
+        verbose_name_plural = _("Direct Message Reactions")
+        unique_together = ['message', 'user', 'emoji']
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} reacted {self.emoji}"
+
+
+class PushSubscription(models.Model):
+    """
+    Web Push subscription για ειδοποιήσεις.
+    Αποθηκεύει τα subscription details για κάθε χρήστη/συσκευή.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='push_subscriptions',
+        verbose_name=_("Χρήστης")
+    )
+    endpoint = models.TextField(
+        verbose_name=_("Endpoint URL"),
+        help_text=_("Push service endpoint URL")
+    )
+    p256dh = models.CharField(
+        max_length=255,
+        verbose_name=_("P256DH Key"),
+        help_text=_("Client public key for encryption")
+    )
+    auth = models.CharField(
+        max_length=255,
+        verbose_name=_("Auth Secret"),
+        help_text=_("Authentication secret")
+    )
+    user_agent = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name=_("User Agent"),
+        help_text=_("Browser user agent string")
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Ενεργό"),
+        help_text=_("Αν το subscription είναι ακόμα ενεργό")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Push Subscription")
+        verbose_name_plural = _("Push Subscriptions")
+        unique_together = ['user', 'endpoint']
+
+    def __str__(self):
+        return f"Push subscription for {self.user.get_full_name()}"
+
+
+class ChatNotificationPreference(models.Model):
+    """
+    Προτιμήσεις ειδοποιήσεων χρήστη για chat.
+    """
+    NOTIFICATION_TYPES = [
+        ('all', _('Όλα τα μηνύματα')),
+        ('mentions', _('Μόνο αναφορές')),
+        ('dm_only', _('Μόνο ιδιωτικά μηνύματα')),
+        ('none', _('Καμία ειδοποίηση')),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='chat_notification_preferences',
+        verbose_name=_("Χρήστης")
+    )
+    chat_notifications = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPES,
+        default='all',
+        verbose_name=_("Ειδοποιήσεις Chat"),
+        help_text=_("Πότε να λαμβάνετε ειδοποιήσεις για μηνύματα")
+    )
+    dm_notifications = models.BooleanField(
+        default=True,
+        verbose_name=_("Ειδοποιήσεις Ιδιωτικών"),
+        help_text=_("Λήψη ειδοποιήσεων για ιδιωτικά μηνύματα")
+    )
+    sound_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Ήχος"),
+        help_text=_("Αναπαραγωγή ήχου για νέα μηνύματα")
+    )
+    quiet_hours_start = models.TimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Ώρα Έναρξης Ησυχίας"),
+        help_text=_("Από ποια ώρα να μην στέλνονται ειδοποιήσεις")
+    )
+    quiet_hours_end = models.TimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Ώρα Λήξης Ησυχίας"),
+        help_text=_("Μέχρι ποια ώρα να μην στέλνονται ειδοποιήσεις")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Chat Notification Preference")
+        verbose_name_plural = _("Chat Notification Preferences")
+
+    def __str__(self):
+        return f"Chat notification preferences for {self.user.get_full_name()}"
+
+    def should_notify(self):
+        """
+        Ελέγχει αν πρέπει να σταλεί ειδοποίηση βάσει quiet hours.
+        """
+        from datetime import datetime
+        
+        if not self.quiet_hours_start or not self.quiet_hours_end:
+            return True
+        
+        current_time = datetime.now().time()
+        
+        if self.quiet_hours_start <= self.quiet_hours_end:
+            # Normal case: e.g., 22:00 - 08:00
+            return not (self.quiet_hours_start <= current_time <= self.quiet_hours_end)
+        else:
+            # Overnight case: e.g., 22:00 - 08:00 the next day
+            return self.quiet_hours_end <= current_time <= self.quiet_hours_start
