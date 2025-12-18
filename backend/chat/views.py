@@ -837,9 +837,9 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Check access
+        # Check access using the unified can_access_building method
         user = request.user
-        if not (user.is_manager_of(building) or user.is_resident_of(building) or user.is_superuser):
+        if not user.can_access_building(building):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτό το κτίριο"},
                 status=status.HTTP_403_FORBIDDEN

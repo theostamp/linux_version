@@ -326,8 +326,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def is_manager_of(self, building):
         """
         Επιστρέφει True αν ο χρήστης είναι ο manager του δοσμένου κτιρίου.
+        Συγκρίνει τα IDs για cross-schema compatibility.
         """
-        return hasattr(building, "manager") and building.manager == self
+        if not hasattr(building, "manager_id") or not building.manager_id:
+            return False
+        return building.manager_id == self.id
 
     def is_internal_manager_of(self, building):
         """
