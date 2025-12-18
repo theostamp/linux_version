@@ -365,19 +365,25 @@ export default function LandingPage() {
             </AnimatedSection>
             
             <AnimatedSection delay={200}>
-              <p className="max-w-xl text-base text-slate-400 sm:text-lg">
-                Ένα σημείο ενημέρωσης με οθόνη στην είσοδο και μια πλατφόρμα για όλους τους ενοίκους.
-                Διαφάνεια, συνεργασία και ομαλή επικοινωνία – χωρίς χαρτιά, χωρίς εντάσεις.
+              <p className="mx-auto max-w-4xl text-center text-lg text-slate-300 sm:text-xl md:text-2xl lg:text-3xl leading-relaxed">
+                Η διαχείριση πολυκατοικιών και κτιρίων περνάει σε μια νέα εποχή. Με πλήρη διαφάνεια και ενημέρωση για όλους, 
+                συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
               </p>
             </AnimatedSection>
 
             <AnimatedSection delay={300}>
-              <ul className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
+              <ul className="grid gap-3 text-base text-slate-300 sm:grid-cols-2 lg:grid-cols-3">
                 {[
                   "Όλοι ενημερωμένοι, κανείς απ' έξω",
                   "Ψηφοφορίες με διαφάνεια για όλους",
                   "Ομαλή συνεργασία ενοίκων",
-                  "Κοινότητα, όχι απλά πολυκατοικία",
+                  "Online ανακοινώσεις σε πραγματικό χρόνο",
+                  "Ηλεκτρονικά αιτήματα ενοίκων",
+                  "Τηλεδιάσκεψη συνελεύσεων",
+                  "Συνομιλία ενοίκων με ενσωματωμένη επικοινωνία",
+                  "Διαχείριση κοινόχρηστων και οικονομικών",
+                  "Online πληρωμές και αποδείξεις",
+                  "Διαχείριση συντηρήσεων και αιτημάτων",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
