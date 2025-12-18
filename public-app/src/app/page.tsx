@@ -3,72 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Users, Heart, Check, Home, Monitor } from "lucide-react";
+import { Building, ChevronDown, Menu, X, MessageCircle, Phone, Star, Check, Home, Monitor } from "lucide-react";
 import { PricingCalculator } from "@/components/pricing";
-
-const pricingPlans = [
-  {
-    id: "free",
-    name: "Free",
-    priceMonthly: "0€",
-    upfrontCost: null as string | null,
-    highlight: false,
-    badge: null as string | null,
-    target: "Εσωτερικοί διαχειριστές που θέλουν μια πρώτη γνωριμία με την πλατφόρμα",
-    features: [
-      "1 πολυκατοικία, έως 12 διαμερίσματα",
-      "Βασική διαχείριση κοινοχρήστων",
-      "Ενημέρωση όλων των ενοίκων",
-      "Βασικές ανακοινώσεις στην πλατφόρμα",
-    ],
-  },
-  {
-    id: "cloud",
-    name: "Concierge Cloud",
-    priceMonthly: "από 25€",
-    upfrontCost: null as string | null,
-    highlight: false,
-    badge: null as string | null,
-    target: "Πολυκατοικίες που θέλουν πλήρη ψηφιακή διαχείριση χωρίς Info Point",
-    features: [
-      "Πλήρης πλατφόρμα για όλους τους ενοίκους",
-      "Απεριόριστες ανακοινώσεις, αιτήματα και ψηφοφορίες",
-      "Πρόσβαση ενοίκων μέσω web / κινητού",
-      "Ιδανικό για δοκιμή πριν το Info Point",
-    ],
-  },
-  {
-    id: "kiosk_all_in",
-    name: "Info Point – All In",
-    priceMonthly: "από 39€",
-    upfrontCost: null as string | null,
-    highlight: true,
-    badge: "Προτεινόμενο",
-    target: "Πολυκατοικίες που θέλουν σημείο ενημέρωσης στην είσοδο",
-    features: [
-      "Οθόνη ενημέρωσης στην είσοδο της πολυκατοικίας",
-      "Εγκατάσταση & αρχική παραμετροποίηση",
-      "Πλήρης πρόσβαση στην πλατφόρμα για όλους",
-      "Σύνδεση στο internet περιλαμβάνεται",
-      "Υποστήριξη & ενημερώσεις",
-    ],
-  },
-  {
-    id: "kiosk_upfront",
-    name: "Info Point – Office",
-    priceMonthly: "25€",
-    upfrontCost: "250€ εφάπαξ",
-    highlight: false,
-    badge: null as string | null,
-    target: "Γραφεία διαχείρισης με πολλές πολυκατοικίες",
-    features: [
-      "Σημείο ενημέρωσης ανά πολυκατοικία",
-      "Χαμηλότερο μηνιαίο πάγιο",
-      "Ενοποιημένη διαχείριση πολυκατοικιών",
-      "Υποστήριξη & αναβαθμίσεις",
-    ],
-  },
-];
 
 const faqs = [
   {
@@ -104,6 +40,7 @@ const testimonials = [
     role: "Διαχειρίστρια πολυκατοικίας",
     location: "Γλυφάδα",
     avatar: "ΜΚ",
+    imageSrc: "/mar1.jpg",
     rating: 5,
     text: "Η κοινότητά μας άλλαξε εντελώς. Από τότε που βάλαμε το σημείο ενημέρωσης στην είσοδο, οι ένοικοι νιώθουν ότι συμμετέχουν. Σταμάτησαν οι φωνές, ξεκίνησε η συνεργασία.",
   },
@@ -112,6 +49,7 @@ const testimonials = [
     role: "Ιδιοκτήτης γραφείου διαχείρισης",
     location: "Αθήνα",
     avatar: "ΓΠ",
+    imageSrc: "/mar2.jpg",
     rating: 5,
     text: "Διαχειριζόμαστε 35 πολυκατοικίες. Με το newconcierge βλέπω όλα τα αιτήματα σε ένα dashboard. Οι ένοικοι είναι πιο ικανοποιημένοι γιατί νιώθουν ότι τους ακούμε.",
   },
@@ -120,6 +58,7 @@ const testimonials = [
     role: "Πρόεδρος Δ.Σ. πολυκατοικίας",
     location: "Θεσσαλονίκη",
     avatar: "ΔΑ",
+    imageSrc: "/mar3.jpg",
     rating: 5,
     text: "Οι ψηφοφορίες γίνονται πλέον με διαφάνεια. Κάθε ένοικος έχει φωνή, τα αποτελέσματα είναι ξεκάθαρα. Η κοινότητά μας λειτουργεί πιο ομαλά από ποτέ.",
   },
@@ -128,6 +67,7 @@ const testimonials = [
     role: "Ένοικος",
     location: "Πειραιάς",
     avatar: "ΕΜ",
+    imageSrc: "/mar4.jpg",
     rating: 5,
     text: "Νιώθω ότι είμαι μέρος της πολυκατοικίας. Βλέπω τι αποφασίστηκε, ψηφίζω για θέματα που με αφορούν, ενημερώνομαι χωρίς να κυνηγάω τον διαχειριστή. Επιτέλους!",
   },
@@ -188,7 +128,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-gray-300 last:border-b-0">
+    <div className="border-b border-slate-800 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-emerald-400"
@@ -222,11 +162,23 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
             <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
           ))}
         </div>
-        <p className="mb-6 text-sm leading-relaxed text-slate-300">"{testimonial.text}"</p>
+        <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">"{testimonial.text}"</p>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white">
-            {testimonial.avatar}
-          </div>
+          {testimonial.imageSrc ? (
+            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-slate-700/60 bg-slate-800">
+              <Image
+                src={testimonial.imageSrc}
+                alt={`Φωτογραφία μαρτυρίας: ${testimonial.name}`}
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white">
+              {testimonial.avatar}
+            </div>
+          )}
           <div>
             <p className="text-sm font-semibold text-slate-50">{testimonial.name}</p>
             <p className="text-xs text-slate-500">{testimonial.role} • {testimonial.location}</p>
@@ -243,8 +195,8 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       {/* NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-gray-300 bg-slate-950/80 backdrop-blur-xl shadow-sm">
-        <nav className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl shadow-sm">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
               <Building className="h-5 w-5 text-slate-950" />
@@ -271,7 +223,7 @@ export default function LandingPage() {
             </a>
             <Link
               href="/login"
-              className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800 shadow-sm"
+              className="rounded-full border border-slate-700 px-5 py-2 text-sm font-medium text-slate-200 shadow-sm transition-all hover:border-slate-500 hover:bg-slate-900"
             >
               Σύνδεση
             </Link>
@@ -286,7 +238,10 @@ export default function LandingPage() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 md:hidden shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 md:hidden shadow-sm"
+            aria-label={mobileMenuOpen ? "Κλείσιμο μενού" : "Άνοιγμα μενού"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -294,8 +249,8 @@ export default function LandingPage() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-slate-800 bg-slate-950 px-4 py-4 md:hidden">
-            <div className="flex flex-col gap-4">
+          <div id="mobile-menu" className="border-t border-slate-800 bg-slate-950 md:hidden">
+            <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
               <a href="#how-it-works" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
                 Πώς λειτουργεί
               </a>
@@ -324,111 +279,105 @@ export default function LandingPage() {
       {/* HERO SECTION */}
       <section
         id="hero"
-        className="relative overflow-hidden border-b border-slate-800"
+        className="relative border-b border-slate-800"
       >
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-slate-950 to-slate-950" />
         <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
-        <div className="relative flex w-full flex-col">
-          {/* Full width image */}
-          <AnimatedSection>
-            <div className="relative w-full h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
-              <Image
-                src="/entrance.webp"
-                alt="Είσοδος πολυκατοικίας"
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority
-              />
-              {/* Overlay gradient for better text readability */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
-            </div>
-          </AnimatedSection>
+        <div className="relative">
+          {/* Sticky hero image (full height) */}
+          <div className="sticky top-0 z-0 h-[100svh] w-full overflow-hidden">
+            <Image
+              src="/entrance.webp"
+              alt="Είσοδος πολυκατοικίας"
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-slate-950/10 to-slate-950" />
+          </div>
 
-          {/* Content below image */}
-          <div className="relative z-10 flex w-full flex-col space-y-6 px-4 py-12 sm:px-6 md:py-16 lg:px-16">
-            <AnimatedSection delay={100}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                Με επίκεντρο τον ένοικο • Info Point
-              </span>
-            </AnimatedSection>
-            
-            <AnimatedSection delay={150}>
-              <h1 className="text-balance text-4xl font-bold leading-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
-                <span className="text-white">Η πολυκατοικία σου γίνεται</span>
-                <br />
-                <span className="text-emerald-400">πολυκατοικία.</span>
-              </h1>
-            </AnimatedSection>
-            
-            <AnimatedSection delay={200}>
-              <p className="mx-auto max-w-4xl text-center text-lg text-slate-300 sm:text-xl md:text-2xl lg:text-3xl leading-relaxed">
-                Η διαχείριση πολυκατοικιών και κτιρίων περνάει σε μια νέα εποχή. Με πλήρη διαφάνεια και ενημέρωση για όλους, 
-                συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
-              </p>
-            </AnimatedSection>
+          {/* Hero content overlays the sticky image */}
+          <div className="relative -mt-[100svh]">
+            <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col space-y-8 px-4 pb-14 pt-24 sm:px-6 sm:pb-16 sm:pt-28 lg:px-8">
+              <AnimatedSection delay={100}>
+                <div className="flex justify-center">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                    Με επίκεντρο τον ένοικο • Info Point
+                  </span>
+                </div>
+              </AnimatedSection>
+              
+              <AnimatedSection delay={150}>
+                <h1 className="mx-auto max-w-5xl text-balance text-center text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+                  <span className="text-white">Η πολυκατοικία σου γίνεται</span>
+                  <br />
+                  <span className="text-emerald-400">κοινότητα.</span>
+                </h1>
+              </AnimatedSection>
+              
+              <AnimatedSection delay={200}>
+                <p className="mx-auto max-w-4xl text-center text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl lg:text-2xl">
+                  Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
+                  συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
+                </p>
+              </AnimatedSection>
 
-            <AnimatedSection delay={300}>
-              <ul className="grid gap-3 text-base text-slate-300 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  "Όλοι ενημερωμένοι, κανείς απ' έξω",
-                  "Ψηφοφορίες με διαφάνεια για όλους",
-                  "Ομαλή συνεργασία ενοίκων",
-                  "Online ανακοινώσεις σε πραγματικό χρόνο",
-                  "Ηλεκτρονικά αιτήματα ενοίκων",
-                  "Τηλεδιάσκεψη συνελεύσεων",
-                  "Συνομιλία ενοίκων με ενσωματωμένη επικοινωνία",
-                  "Διαχείριση κοινόχρηστων και οικονομικών",
-                  "Online πληρωμές και αποδείξεις",
-                  "Διαχείριση συντηρήσεων και αιτημάτων",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
-                      ✓
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </AnimatedSection>
+              <AnimatedSection delay={300}>
+                <ul className="mx-auto grid max-w-5xl gap-3 text-base text-slate-300 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                  {[
+                    "Ενημέρωση για όλους (είσοδος & κινητό)",
+                    "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
+                    "Ψηφοφορίες με καταγραφή και διαφάνεια",
+                    "Αιτήματα / βλάβες με παρακολούθηση εξέλιξης",
+                    "Διαφάνεια σε κοινόχρηστα & οικονομικά",
+                    "Επικοινωνία χωρίς παρεξηγήσεις",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+                        ✓
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </AnimatedSection>
 
-            <AnimatedSection delay={400}>
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                <a
-                  href="#cta"
-                  className="group inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-105"
-                >
-                  Ζήτησε demo
-                  <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </a>
-                <a
-                  href="#pricing"
-                  className="rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
-                >
-                  Δες τα πακέτα τιμών
-                </a>
-              </div>
-            </AnimatedSection>
-            
-            {/* Stats counter */}
-            <AnimatedSection delay={500}>
-              <div className="flex flex-wrap items-center gap-6 border-t border-slate-800 pt-6">
-                {stats.map((stat, index) => (
-                  <div key={stat.label} className="flex items-center gap-3">
-                    {index > 0 && <div className="hidden h-8 w-px bg-slate-800 sm:block" />}
-                    <div>
-                      <p className="text-2xl font-bold text-emerald-400">{stat.value}</p>
-                      <p className="text-xs text-slate-500">{stat.label}</p>
+              <AnimatedSection delay={400}>
+                <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+                  <a
+                    href="#cta"
+                    className="group inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-105"
+                  >
+                    Ζήτησε παρουσίαση
+                    <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                  <a
+                    href="#pricing"
+                    className="rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
+                  >
+                    Δες τις τιμές
+                  </a>
+                </div>
+              </AnimatedSection>
+              
+              {/* Stats counter */}
+              <AnimatedSection delay={500}>
+                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-6">
+                  {stats.map((stat) => (
+                    <div key={stat.label} className="text-center">
+                      <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">{stat.value}</p>
+                      <p className="mt-1 text-sm text-slate-400">{stat.label}</p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </AnimatedSection>
+                  ))}
+                </div>
+              </AnimatedSection>
+            </div>
           </div>
         </div>
       </section>
@@ -444,7 +393,7 @@ export default function LandingPage() {
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
                 Πώς λειτουργεί ο Ψηφιακός Θυρωρός
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
                 Από την είσοδο της πολυκατοικίας μέχρι το κινητό του κάθε ενοίκου – σε τρία απλά βήματα.
               </p>
             </div>
@@ -470,7 +419,7 @@ export default function LandingPage() {
                 step: "3",
                 title: "Κάθε ένοικος συμμετέχει",
                 description:
-                  "Στην οθόνη ή στο κινητό τους – κάθε ένοικος μένει ενήμερος και μπορεί να συμμετέχει στις αποφάσεις. πολυκατοικία με διαφάνεια.",
+                  "Στην οθόνη ή στο κινητό τους – κάθε ένοικος μένει ενήμερος και μπορεί να συμμετέχει στις αποφάσεις. Μια πολυκατοικία με διαφάνεια.",
                 placeholder: "Ένοικοι ενημερωμένοι παντού",
               },
             ].map((item, index) => (
@@ -480,7 +429,7 @@ export default function LandingPage() {
                     {item.step}
                   </div>
                   <div className="mb-4 pt-2 text-lg font-semibold text-emerald-400">{item.title}</div>
-                  <p className="mb-4 text-sm text-slate-300">{item.description}</p>
+                  <p className="mb-4 text-sm leading-relaxed text-slate-300 sm:text-base">{item.description}</p>
                   <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-4 text-center text-xs text-slate-500">
                     {item.placeholder}
                   </div>
@@ -506,7 +455,7 @@ export default function LandingPage() {
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
-              <p className="text-base text-slate-400">
+              <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
                 Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Είναι ένα εργαλείο που ενώνει την πολυκατοικία.
                 Ένα σημείο ενημέρωσης στην είσοδο και μια πλατφόρμα που δίνει φωνή σε κάθε ένοικο.
               </p>
@@ -525,7 +474,7 @@ export default function LandingPage() {
                     "Οι ψηφοφορίες γίνονται με διαφάνεια, τα αποτελέσματα είναι ξεκάθαρα. Λιγότερες εντάσεις στις συνελεύσεις, περισσότερη εμπιστοσύνη.",
                 },
                 {
-                  title: "πολυκατοικία με ταυτότητα",
+                  title: "Πολυκατοικία με ταυτότητα",
                   description:
                     "Η πολυκατοικία αποκτά χαρακτήρα. Μια είσοδος που δείχνει σεβασμό στους ενοίκους, οργάνωση και σύγχρονη διαχείριση.",
                 },
@@ -533,7 +482,7 @@ export default function LandingPage() {
                 <AnimatedSection key={item.title} delay={300 + index * 100}>
                   <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900">
                     <h3 className="mb-2 font-semibold text-emerald-400">{item.title}</h3>
-                    <p className="text-sm text-slate-400">{item.description}</p>
+                    <p className="text-sm leading-relaxed text-slate-400 sm:text-base">{item.description}</p>
                   </div>
                 </AnimatedSection>
               ))}
@@ -568,7 +517,7 @@ export default function LandingPage() {
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
                 Εργαλεία για μια δυνατή κοινότητα
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
                 Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να 
                 ενισχύουν τη συνεργασία και την επικοινωνία μεταξύ ενοίκων.
               </p>
@@ -611,7 +560,7 @@ export default function LandingPage() {
               <AnimatedSection key={feature.title} delay={index * 100}>
                 <div className="group h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
                   <h3 className="mb-3 text-lg font-semibold text-emerald-400">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{feature.description}</p>
+                  <p className="text-sm leading-relaxed text-slate-400 sm:text-base">{feature.description}</p>
                 </div>
               </AnimatedSection>
             ))}
@@ -630,7 +579,7 @@ export default function LandingPage() {
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
                 Τι λένε οι χρήστες μας
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
                 Ένοικοι, διαχειριστές και γραφεία διαχείρισης μοιράζονται πώς άλλαξε η συνεργασία στην πολυκατοικία τους.
               </p>
             </div>
@@ -655,7 +604,7 @@ export default function LandingPage() {
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
                 Απλή τιμολόγηση, χωρίς κρυφές χρεώσεις
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
                 Πληρώνεις ανάλογα με τον αριθμό διαμερισμάτων. Σύρε το slider για να δεις την τιμή σου.
                 <br />
                 <span className="text-xs text-slate-500">
@@ -668,14 +617,7 @@ export default function LandingPage() {
           {/* Pricing Calculator Section */}
           <AnimatedSection delay={100}>
             <div className="mb-12">
-              <PricingCalculator 
-                onSelectPlan={(plan, apartments, price) => {
-                  console.log('Selected plan:', plan, apartments, price);
-                  // TODO: Navigate to signup with selected plan
-                }} 
-                initialApartments={15}
-                showCTA={true}
-              />
+              <PricingCalculator initialApartments={15} showCTA />
             </div>
           </AnimatedSection>
 
@@ -759,7 +701,7 @@ export default function LandingPage() {
                 </div>
                 <ul className="space-y-2">
                   {["Έως 7 διαμερίσματα", "Βασικό φύλλο κοινοχρήστων", "1 πολυκατοικία"].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
                       <Check className="h-3 w-3 text-emerald-400" />
                       {f}
                     </li>
@@ -783,7 +725,7 @@ export default function LandingPage() {
                     "Web & mobile πρόσβαση",
                     "Έως 5 πολυκατοικίες"
                   ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
                       <Check className="h-3 w-3 text-emerald-400" />
                       {f}
                     </li>
@@ -810,7 +752,7 @@ export default function LandingPage() {
                     "Ενσωματωμένο internet",
                     "Τεχνική υποστήριξη 24/7"
                   ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
                       <Check className="h-3 w-3 text-emerald-400" />
                       {f}
                     </li>
@@ -824,7 +766,7 @@ export default function LandingPage() {
           <AnimatedSection delay={400}>
             <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
               <h3 className="mb-2 text-lg font-semibold text-slate-50">Γραφείο διαχείρισης με 5+ πολυκατοικίες;</h3>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Επικοινωνήστε μαζί μας για προσαρμοσμένη τιμολόγηση και ειδικές λειτουργίες για επαγγελματίες διαχειριστές.
               </p>
               <a
@@ -857,7 +799,7 @@ export default function LandingPage() {
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
-              <p className="text-base text-slate-400">
+              <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
                 Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα, τα email
                 και οι απορίες των ενοίκων. Με το newconcierge.app και τα Info Points, κάθε
                 πολυκατοικία ενημερώνεται αυτόματα – κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
@@ -865,7 +807,7 @@ export default function LandingPage() {
             </AnimatedSection>
 
             <AnimatedSection delay={300}>
-              <ul className="space-y-3 text-sm text-slate-300">
+              <ul className="space-y-3 text-sm text-slate-300 sm:text-base">
                 {[
                   "Κεντρικό dashboard για όλες τις πολυκατοικίες του γραφείου",
                   "Ενεργά αιτήματα & βλάβες σε μία οθόνη",
@@ -909,7 +851,7 @@ export default function LandingPage() {
                 Απορίες
               </span>
               <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">Συχνές ερωτήσεις</h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
                 Μερικές από τις πιο συχνές απορίες γύρω από το Info Point και την πλατφόρμα.
               </p>
             </div>
@@ -937,7 +879,7 @@ export default function LandingPage() {
                 <h2 className="text-center text-2xl font-bold sm:text-3xl lg:text-4xl">
                   Έτοιμοι να γίνετε κοινότητα;
                 </h2>
-                <p className="mx-auto mt-4 max-w-xl text-center text-base text-slate-300">
+                <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-slate-300 sm:text-lg">
                   Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών.
                 </p>
 
