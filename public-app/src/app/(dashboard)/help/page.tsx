@@ -45,9 +45,9 @@ export default function HelpPage() {
     [filteredChapters]
   );
 
-  // Generate alphabetical index of all sections
+  // Generate alphabetical index from FILTERED sections (synced with main content)
   const alphabeticalIndex = useMemo(() => {
-    const allSections = helpChapters.flatMap((chapter) =>
+    const filteredSections = filteredChapters.flatMap((chapter) =>
       chapter.sections.map((section) => ({
         title: section.title,
         anchorId: getAnchorId(chapter.id, section.id),
@@ -56,10 +56,10 @@ export default function HelpPage() {
       }))
     );
     
-    return allSections.sort((a, b) => 
+    return filteredSections.sort((a, b) => 
       a.title.localeCompare(b.title, 'el')
     );
-  }, []);
+  }, [filteredChapters]);
 
   const setSectionOpen = useCallback((anchorId: string, nextOpen: boolean) => {
     setOpenSections((prev) => {
@@ -364,15 +364,15 @@ export default function HelpPage() {
             </div>
           </div>
 
-          {/* Quick Stats */}
+          {/* Quick Stats - shows filtered counts when searching */}
           <div className="rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 p-5 shadow-lg ring-1 ring-teal-200/60 dark:ring-teal-700/40">
             <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-3">
-              Σύνοψη
+              {normalizedQuery ? 'Αποτελέσματα' : 'Σύνοψη'}
             </p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Κεφάλαια</span>
-                <span className="font-bold text-teal-700 dark:text-teal-300">{helpChapters.length}</span>
+                <span className="font-bold text-teal-700 dark:text-teal-300">{filteredChapters.length}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Ενότητες</span>
