@@ -100,34 +100,28 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
     
     return apartments.filter(apt => {
       // Parse values as numbers (they might come as strings from API)
-      const previousBalance = parseFloat(String(apt.previous_balance || 0));
-      const expenseShare = parseFloat(String(apt.expense_share || 0));
-      const totalPayments = parseFloat(String(apt.total_payments || 0));
-      const netObligation = parseFloat(String(apt.net_obligation || 0));
-      const currentBalance = parseFloat(String(apt.current_balance || 0));
+      // IMPORTANT: For current view (no month), only current_balance and status are reliable!
+      const currentBalance = parseFloat(String(apt.current_balance ?? 0));
+      const netObligation = parseFloat(String(apt.net_obligation ?? 0));
       
-      // Use net_obligation if available, else current_balance, else calculate
-      const debt = !isNaN(netObligation) && netObligation !== 0
-        ? netObligation 
-        : !isNaN(currentBalance) && currentBalance !== 0
-          ? currentBalance
-          : (previousBalance + expenseShare - totalPayments);
+      // Use current_balance as primary (always calculated correctly by backend)
+      // Fallback to net_obligation if current_balance is 0
+      const debt = currentBalance !== 0 ? currentBalance : netObligation;
       
-      // Also check status for 'Οφειλή' or 'overdue'
-      const status = apt.status?.toLowerCase() || '';
+      // Check status for debt indicators
+      const status = (apt.status || '').toLowerCase();
       const hasDebtStatus = status === 'οφειλή' || 
                            status === 'overdue' ||
                            status === 'κρίσιμο';
       
       // Debug log for first few apartments
-      if (apartments.indexOf(apt) < 3) {
+      if (apartments.indexOf(apt) < 5) {
         console.log(`[DebtReminderSender] Apt ${apt.number}:`, {
-          previousBalance, expenseShare, totalPayments, netObligation, currentBalance,
-          calculatedDebt: debt, status, hasDebtStatus
+          currentBalance, netObligation, debt, status, hasDebtStatus
         });
       }
       
-      // Apartment has debt if debt > 0 or status indicates debt
+      // Apartment has debt if current_balance > 0 or status indicates debt
       if (debt <= 0 && !hasDebtStatus) return false;
       
       const minAmount = minDebt === 'all' ? 0 : parseInt(minDebt);
@@ -137,16 +131,12 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
 
   // Get debt amount for display
   const getDebtAmount = (apt: ApartmentWithBalance): number => {
-    const previousBalance = parseFloat(String(apt.previous_balance || 0));
-    const expenseShare = parseFloat(String(apt.expense_share || 0));
-    const totalPayments = parseFloat(String(apt.total_payments || 0));
-    const netObligation = parseFloat(String(apt.net_obligation || 0));
-    const currentBalance = parseFloat(String(apt.current_balance || 0));
+    // For current view, current_balance is the reliable field
+    const currentBalance = parseFloat(String(apt.current_balance ?? 0));
+    const netObligation = parseFloat(String(apt.net_obligation ?? 0));
     
-    // Use net_obligation if available, else current_balance, else calculate
-    if (!isNaN(netObligation) && netObligation !== 0) return netObligation;
-    if (!isNaN(currentBalance) && currentBalance !== 0) return currentBalance;
-    return previousBalance + expenseShare - totalPayments;
+    // Prefer current_balance (always calculated by backend)
+    return currentBalance !== 0 ? currentBalance : netObligation;
   };
 
   const handleToggleApartment = (id: number) => {
