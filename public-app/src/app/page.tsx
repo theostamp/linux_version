@@ -291,7 +291,7 @@ export default function LandingPage() {
 
         <div className="relative">
           {/* Hero image */}
-          <div className="relative z-0 h-[55svh] w-full overflow-hidden sm:h-[60svh] lg:h-[70svh]">
+          <div className="relative z-0 h-[100svh] w-full overflow-hidden">
             <Image
               src="/entrance.webp"
               alt="Είσοδος πολυκατοικίας"
@@ -300,7 +300,8 @@ export default function LandingPage() {
               sizes="100vw"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-slate-950/40 to-slate-950" />
+            {/* Very light overlay (only to soften contrast) */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-slate-950/10" />
           </div>
 
           {/* Hero content κάτω από την εικόνα */}
