@@ -629,6 +629,9 @@ class NotificationViewSet(viewsets.ModelViewSet):
                 {'error': 'building_id is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Enforce building access (prevents accidental sends across buildings)
+        self._resolve_building(building_id)
         
         if not month_str:
             return Response(

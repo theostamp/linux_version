@@ -39,6 +39,7 @@ class CommonExpenseNotificationService:
         from financial.models import Expense
         
         # Find expenses for this building and month that have attachments
+        # NOTE: Expense uses `date` (not `month`).
         month_start = date(month.year, month.month, 1)
         if month.month == 12:
             month_end = date(month.year + 1, 1, 1)
@@ -46,12 +47,16 @@ class CommonExpenseNotificationService:
             month_end = date(month.year, month.month + 1, 1)
         
         # Get any expense with attachment for this month/building
-        expense_with_sheet = Expense.objects.filter(
-            building_id=building_id,
-            month__gte=month_start,
-            month__lt=month_end,
-            attachment__isnull=False
-        ).exclude(attachment='').first()
+        expense_with_sheet = (
+            Expense.objects.filter(
+                building_id=building_id,
+                date__gte=month_start,
+                date__lt=month_end,
+                attachment__isnull=False,
+            )
+            .exclude(attachment="")
+            .first()
+        )
         
         if expense_with_sheet and expense_with_sheet.attachment:
             return expense_with_sheet.attachment.url if hasattr(expense_with_sheet.attachment, 'url') else str(expense_with_sheet.attachment)
@@ -91,11 +96,11 @@ class CommonExpenseNotificationService:
             else:
                 month_end = date(month.year, month.month + 1, 1)
             
-            # Get expenses for this month
+            # Get expenses for this month (Expense uses `date`)
             expenses = Expense.objects.filter(
                 building_id=building_id,
-                month__gte=month_start,
-                month__lt=month_end
+                date__gte=month_start,
+                date__lt=month_end,
             )
             
             # Calculate apartment's share based on participation mills
