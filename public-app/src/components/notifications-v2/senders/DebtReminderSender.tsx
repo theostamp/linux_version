@@ -5,7 +5,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Wallet, Send, Eye } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { notificationsApi } from '@/lib/api/notifications';
-import { fetchApartments, type ApartmentList } from '@/lib/api';
+import { fetchApartmentsWithFinancialData } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,20 @@ import {
   generateEmailSignature 
 } from '../shared/buildingUtils';
 
+interface ApartmentWithBalance {
+  id: number;
+  number: string;
+  owner_name?: string;
+  tenant_name?: string;
+  // Financial fields from apartment_balances endpoint
+  previous_balance?: number;
+  expense_share?: number;
+  total_payments?: number;
+  net_obligation?: number;
+  current_balance?: number;
+  status?: string;
+}
+
 interface Props {
   onSuccess: () => void;
   onCancel: () => void;
@@ -52,21 +66,56 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
     [selectedBuilding_]
   );
 
-  // Fetch apartments with balance info
-  const { data: apartments = [], isLoading } = useQuery<ApartmentList[]>({
-    queryKey: ['apartments-debt', buildingId],
-    queryFn: () => (buildingId ? fetchApartments(buildingId) : Promise.resolve([])),
+  // Fetch apartments with FINANCIAL balance info (not just basic apartment data)
+  const { data: apartments = [], isLoading } = useQuery<ApartmentWithBalance[]>({
+    queryKey: ['apartments-debt-financial', buildingId],
+    queryFn: async () => {
+      if (!buildingId) return [];
+      // Use fetchApartmentsWithFinancialData which calls /financial/dashboard/apartment_balances/
+      // This returns balance data including previous_balance, expense_share, total_payments, net_obligation
+      const data = await fetchApartmentsWithFinancialData(buildingId);
+      return data as ApartmentWithBalance[];
+    },
     enabled: !!buildingId,
   });
 
-  // Filter apartments with debt
-  const apartmentsWithDebt = apartments.filter(apt => {
-    const balance = apt.current_balance || 0;
-    if (balance <= 0) return false; // No debt
+  // Filter apartments with debt - calculate net obligation properly
+  const apartmentsWithDebt = useMemo(() => {
+    return apartments.filter(apt => {
+      // Calculate the actual debt from financial data
+      // net_obligation = previous_balance + expense_share - total_payments
+      const previousBalance = apt.previous_balance || 0;
+      const expenseShare = apt.expense_share || 0;
+      const totalPayments = apt.total_payments || 0;
+      
+      // Use net_obligation if available, otherwise calculate
+      const debt = apt.net_obligation !== undefined 
+        ? apt.net_obligation 
+        : (previousBalance + expenseShare - totalPayments);
+      
+      // Also check status for 'Οφειλή' or 'overdue'
+      const hasDebtStatus = apt.status?.toLowerCase() === 'οφειλή' || 
+                           apt.status?.toLowerCase() === 'overdue' ||
+                           apt.status?.toLowerCase() === 'κρίσιμο';
+      
+      // Apartment has debt if net_obligation > 0 or status indicates debt
+      if (debt <= 0 && !hasDebtStatus) return false;
+      
+      const minAmount = minDebt === 'all' ? 0 : parseInt(minDebt);
+      return debt >= minAmount;
+    });
+  }, [apartments, minDebt]);
+
+  // Get debt amount for display
+  const getDebtAmount = (apt: ApartmentWithBalance): number => {
+    const previousBalance = apt.previous_balance || 0;
+    const expenseShare = apt.expense_share || 0;
+    const totalPayments = apt.total_payments || 0;
     
-    const minAmount = minDebt === 'all' ? 0 : parseInt(minDebt);
-    return balance >= minAmount;
-  });
+    return apt.net_obligation !== undefined 
+      ? apt.net_obligation 
+      : (previousBalance + expenseShare - totalPayments);
+  };
 
   const handleToggleApartment = (id: number) => {
     if (selectedIds.includes(id)) {
@@ -201,10 +250,13 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
 
             <div className="rounded-lg border border-gray-200 bg-gray-50">
               {isLoading ? (
-                <div className="text-center py-8 text-gray-500">Φόρτωση...</div>
+                <div className="text-center py-8 text-gray-500">Φόρτωση οικονομικών δεδομένων...</div>
               ) : apartmentsWithDebt.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   Δεν βρέθηκαν διαμερίσματα με οφειλή
+                  <p className="text-xs mt-2 text-gray-400">
+                    (Βεβαιωθείτε ότι υπάρχουν εκδομένα κοινόχρηστα)
+                  </p>
                 </div>
               ) : (
                 <div className="p-3 space-y-2">
@@ -223,30 +275,33 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
                     </span>
                   </div>
                   <div className="max-h-64 overflow-y-auto space-y-1">
-                    {apartmentsWithDebt.map((apt) => (
-                      <label
-                        key={apt.id}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-white cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={selectedIds.includes(apt.id)}
-                          onCheckedChange={() => handleToggleApartment(apt.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">
-                              Διαμέρισμα {apt.number}
-                            </span>
-                            <Badge variant="destructive" className="text-xs">
-                              {(apt.current_balance || 0).toFixed(2)}€
-                            </Badge>
+                    {apartmentsWithDebt.map((apt) => {
+                      const debtAmount = getDebtAmount(apt);
+                      return (
+                        <label
+                          key={apt.id}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={selectedIds.includes(apt.id)}
+                            onCheckedChange={() => handleToggleApartment(apt.id)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900">
+                                Διαμέρισμα {apt.number}
+                              </span>
+                              <Badge variant="destructive" className="text-xs">
+                                {debtAmount.toFixed(2)}€
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {apt.owner_name || apt.tenant_name || 'Χωρίς όνομα'}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {apt.owner_name || apt.tenant_name || 'Χωρίς όνομα'}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               )}
