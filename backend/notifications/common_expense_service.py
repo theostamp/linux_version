@@ -65,50 +65,88 @@ class CommonExpenseNotificationService:
         
         Returns a dict with all payment details for the apartment.
         """
-        from financial.services import FinancialCalculationService
+        from financial.balance_service import BalanceCalculationService
+        from financial.models import Expense, Transaction, Payment
         from apartments.models import Apartment
         from buildings.models import Building
+        from django.db.models import Sum
         
         try:
-            apartment = Apartment.objects.select_related('building', 'owner').get(
+            apartment = Apartment.objects.select_related('building', 'owner_user', 'tenant_user').get(
                 id=apartment_id,
                 building_id=building_id
             )
             building = apartment.building
             
-            # Use the financial calculation service to get balance data
-            # This is the same data used by the frontend modal
-            balance_data = FinancialCalculationService.calculate_apartment_balance(
-                apartment_id=apartment_id,
-                month=month
+            # Calculate previous balance (before current month)
+            month_start = date(month.year, month.month, 1)
+            previous_balance = BalanceCalculationService.calculate_historical_balance(
+                apartment, month_start, include_management_fees=True
             )
+            
+            # Calculate current month's expense share
+            if month.month == 12:
+                month_end = date(month.year + 1, 1, 1)
+            else:
+                month_end = date(month.year, month.month + 1, 1)
+            
+            # Get expenses for this month
+            expenses = Expense.objects.filter(
+                building_id=building_id,
+                month__gte=month_start,
+                month__lt=month_end
+            )
+            
+            # Calculate apartment's share based on participation mills
+            total_expense = expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            mills = apartment.participation_mills or apartment.participation_permilles or 0
+            expense_share = (total_expense * Decimal(mills)) / Decimal('1000') if mills else Decimal('0')
+            
+            # Get payments for this month
+            payments_this_month = Payment.objects.filter(
+                apartment=apartment,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            # Calculate net obligation
+            net_obligation = float(previous_balance) + float(expense_share) - float(payments_this_month)
+            
+            # Get expense breakdown
+            expense_breakdown = []
+            for expense in expenses:
+                share = (expense.amount * Decimal(mills)) / Decimal('1000') if mills else Decimal('0')
+                expense_breakdown.append({
+                    'expense_title': expense.title or expense.category,
+                    'share_amount': float(share)
+                })
             
             return {
                 'apartment_id': apartment_id,
                 'apartment_number': apartment.number,
                 'building_name': building.name,
                 'building_address': building.address,
-                'owner_name': apartment.owner.get_full_name() if apartment.owner else None,
-                'tenant_name': apartment.tenant.get_full_name() if hasattr(apartment, 'tenant') and apartment.tenant else None,
-                'participation_mills': apartment.participation_permilles or 0,
+                'owner_name': apartment.owner_user.get_full_name() if apartment.owner_user else apartment.owner_name or None,
+                'tenant_name': apartment.tenant_user.get_full_name() if apartment.tenant_user else apartment.tenant_name or None,
+                'participation_mills': mills,
                 'month': month.strftime('%B %Y'),
                 'month_display': month.strftime('%B %Y'),
                 
                 # Financial data
-                'previous_balance': balance_data.get('previous_balance', 0),
-                'expense_share': balance_data.get('expense_share', 0),
-                'total_payments': balance_data.get('total_payments', 0),
-                'net_obligation': balance_data.get('net_obligation', 0),
-                'resident_expenses': balance_data.get('resident_expenses', 0),
-                'owner_expenses': balance_data.get('owner_expenses', 0),
+                'previous_balance': float(previous_balance),
+                'expense_share': float(expense_share),
+                'total_payments': float(payments_this_month),
+                'net_obligation': net_obligation,
+                'resident_expenses': float(expense_share),
+                'owner_expenses': 0,
                 
                 # Breakdown
-                'expense_breakdown': balance_data.get('expense_breakdown', []),
-                'payment_breakdown': balance_data.get('payment_breakdown', []),
+                'expense_breakdown': expense_breakdown,
+                'payment_breakdown': [],
                 
                 # Status
-                'status': 'paid' if balance_data.get('net_obligation', 0) <= 0 else 
-                         'overdue' if balance_data.get('previous_balance', 0) > 0 else 'pending',
+                'status': 'paid' if net_obligation <= 0 else 
+                         'overdue' if float(previous_balance) > 0 else 'pending',
                 
                 # Payment deadline (15th of next month)
                 'payment_deadline': date(
@@ -121,7 +159,7 @@ class CommonExpenseNotificationService:
             logger.error(f"Apartment {apartment_id} not found in building {building_id}")
             return {}
         except Exception as e:
-            logger.error(f"Error getting apartment payment data: {e}")
+            logger.error(f"Error getting apartment payment data: {e}", exc_info=True)
             return {}
     
     @staticmethod
