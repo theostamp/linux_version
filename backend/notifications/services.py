@@ -737,14 +737,17 @@ class MonthlyTaskService:
     
     @staticmethod
     def configure_task(building, task_type, day_of_month, time_to_send, template, 
-                      auto_send_enabled=False, period_month=None):
+                      auto_send_enabled=False, period_month=None,
+                      recurrence_type='monthly', day_of_week=None):
         """
-        Configure or create a monthly notification task.
+        Configure or create a recurring notification task.
         
         Args:
             building: Building instance (or None for all buildings)
             task_type: Task type ('common_expense', 'balance_reminder', 'custom')
-            day_of_month: Day of month (1-31)
+            recurrence_type: How often to repeat ('once', 'weekly', 'biweekly', 'monthly')
+            day_of_week: Day of week for weekly/biweekly (0=Monday, 6=Sunday)
+            day_of_month: Day of month (1-31) - for monthly tasks
             time_to_send: Time to send (HH:MM format)
             template: NotificationTemplate instance
             auto_send_enabled: Whether to enable auto-send
@@ -765,29 +768,41 @@ class MonthlyTaskService:
             else:
                 period_month = date(now.year, now.month + 1, 1)
         
+        # Build defaults with recurrence settings
+        defaults = {
+            'template': template,
+            'recurrence_type': recurrence_type,
+            'day_of_week': day_of_week,
+            'day_of_month': day_of_month,
+            'time_to_send': time_to_send,
+            'auto_send_enabled': auto_send_enabled,
+            'status': 'pending_confirmation'
+        }
+        
         # Get or create task
         task, created = MonthlyNotificationTask.objects.get_or_create(
             building=building,
             task_type=task_type,
             period_month=period_month,
-            defaults={
-                'template': template,
-                'day_of_month': day_of_month,
-                'time_to_send': time_to_send,
-                'auto_send_enabled': auto_send_enabled,
-                'status': 'pending_confirmation'
-            }
+            defaults=defaults
         )
         
         if not created:
             # Update existing task
             task.template = template
+            task.recurrence_type = recurrence_type
+            task.day_of_week = day_of_week
             task.day_of_month = day_of_month
             task.time_to_send = time_to_send
             task.auto_send_enabled = auto_send_enabled
             task.save()
         
-        logger.info(f"{'Created' if created else 'Updated'} monthly task {task.id}")
+        # Calculate and set next scheduled time
+        if task.recurrence_type != 'once':
+            task.next_scheduled_at = task.calculate_next_scheduled_at()
+            task.save(update_fields=['next_scheduled_at'])
+        
+        logger.info(f"{'Created' if created else 'Updated'} recurring task {task.id} ({recurrence_type})")
         return task
     
     @staticmethod

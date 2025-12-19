@@ -55,6 +55,23 @@ const TASK_TYPES = [
   { value: 'balance_reminder', label: 'Υπενθύμιση Οφειλών' },
 ];
 
+const RECURRENCE_TYPES = [
+  { value: 'once', label: 'Μία Φορά' },
+  { value: 'weekly', label: 'Εβδομαδιαία' },
+  { value: 'biweekly', label: 'Κάθε 2 Εβδομάδες' },
+  { value: 'monthly', label: 'Μηνιαία' },
+];
+
+const DAYS_OF_WEEK = [
+  { value: '0', label: 'Δευτέρα' },
+  { value: '1', label: 'Τρίτη' },
+  { value: '2', label: 'Τετάρτη' },
+  { value: '3', label: 'Πέμπτη' },
+  { value: '4', label: 'Παρασκευή' },
+  { value: '5', label: 'Σάββατο' },
+  { value: '6', label: 'Κυριακή' },
+];
+
 export default function SettingsPanel() {
   const { buildings, selectedBuilding } = useBuilding();
   const queryClient = useQueryClient();
@@ -64,6 +81,8 @@ export default function SettingsPanel() {
   const [formData, setFormData] = useState({
     taskType: 'common_expense',
     buildingId: selectedBuilding?.id?.toString() ?? '',
+    recurrenceType: 'monthly' as 'once' | 'weekly' | 'biweekly' | 'monthly',
+    dayOfWeek: '0', // Monday default
     dayOfMonth: '1',
     timeToSend: '09:00',
     autoSend: false,
@@ -93,7 +112,9 @@ export default function SettingsPanel() {
     mutationFn: async (data: {
       task_type: 'common_expense' | 'balance_reminder' | 'custom';
       building?: number | null;
-      day_of_month: number;
+      recurrence_type: 'once' | 'weekly' | 'biweekly' | 'monthly';
+      day_of_week?: number | null;
+      day_of_month?: number | null;
       time_to_send: string;
       auto_send_enabled: boolean;
     }) => {
@@ -111,6 +132,8 @@ export default function SettingsPanel() {
       setFormData({
         taskType: 'common_expense',
         buildingId: selectedBuilding?.id?.toString() ?? '',
+        recurrenceType: 'monthly',
+        dayOfWeek: '0',
         dayOfMonth: '1',
         timeToSend: '09:00',
         autoSend: false,
@@ -122,13 +145,26 @@ export default function SettingsPanel() {
   });
 
   const handleCreateTask = () => {
+    const isWeekly = formData.recurrenceType === 'weekly' || formData.recurrenceType === 'biweekly';
+    
     createTaskMutation.mutate({
       task_type: formData.taskType as 'common_expense' | 'balance_reminder' | 'custom',
       building: formData.buildingId ? parseInt(formData.buildingId) : null,
-      day_of_month: parseInt(formData.dayOfMonth),
+      recurrence_type: formData.recurrenceType,
+      day_of_week: isWeekly ? parseInt(formData.dayOfWeek) : null,
+      day_of_month: !isWeekly ? parseInt(formData.dayOfMonth) : null,
       time_to_send: formData.timeToSend,
       auto_send_enabled: formData.autoSend,
     });
+  };
+  
+  const getRecurrenceLabel = (type: string) => {
+    return RECURRENCE_TYPES.find(t => t.value === type)?.label || type;
+  };
+  
+  const getDayOfWeekLabel = (day: number | null) => {
+    if (day === null) return null;
+    return DAYS_OF_WEEK.find(d => parseInt(d.value) === day)?.label || null;
   };
 
   const getTaskTypeLabel = (type: string) => {
@@ -224,10 +260,20 @@ export default function SettingsPanel() {
                           <Building2 className="h-4 w-4" />
                           <span>{task.building_name || 'Όλες οι πολυκατοικίες'}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Ημέρα {task.day_of_month}</span>
-                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {task.recurrence_type_display || getRecurrenceLabel(task.recurrence_type || 'monthly')}
+                        </Badge>
+                        {(task.recurrence_type === 'weekly' || task.recurrence_type === 'biweekly') && task.day_of_week !== null ? (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{task.day_of_week_display || getDayOfWeekLabel(task.day_of_week)}</span>
+                          </div>
+                        ) : task.day_of_month ? (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>Ημέρα {task.day_of_month}</span>
+                          </div>
+                        ) : null}
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
                           <span>{task.time_to_send}</span>
@@ -343,28 +389,80 @@ export default function SettingsPanel() {
               </Select>
             </div>
 
-            {/* Day of Month */}
+            {/* Recurrence Type */}
             <div className="space-y-2">
-              <Label htmlFor="dayOfMonth">Ημέρα του Μήνα</Label>
+              <Label htmlFor="recurrenceType">Συχνότητα Επανάληψης</Label>
               <Select
-                value={formData.dayOfMonth}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, dayOfMonth: value }))}
+                value={formData.recurrenceType}
+                onValueChange={(value: 'once' | 'weekly' | 'biweekly' | 'monthly') => 
+                  setFormData(prev => ({ ...prev, recurrenceType: value }))
+                }
               >
-                <SelectTrigger id="dayOfMonth">
-                  <SelectValue placeholder="Επιλέξτε ημέρα" />
+                <SelectTrigger id="recurrenceType">
+                  <SelectValue placeholder="Επιλέξτε συχνότητα" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                    <SelectItem key={day} value={day.toString()}>
-                      {day}η ημέρα
+                  {RECURRENCE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500">
-                Συστήνεται η επιλογή ημέρας έως 28 για αποφυγή προβλημάτων με μικρούς μήνες
+                {formData.recurrenceType === 'weekly' && 'Αποστολή κάθε εβδομάδα την επιλεγμένη ημέρα'}
+                {formData.recurrenceType === 'biweekly' && 'Αποστολή κάθε 2 εβδομάδες την επιλεγμένη ημέρα'}
+                {formData.recurrenceType === 'monthly' && 'Αποστολή μία φορά τον μήνα την επιλεγμένη ημέρα'}
+                {formData.recurrenceType === 'once' && 'Μία μόνο αποστολή'}
               </p>
             </div>
+
+            {/* Day of Week - for weekly/biweekly */}
+            {(formData.recurrenceType === 'weekly' || formData.recurrenceType === 'biweekly') && (
+              <div className="space-y-2">
+                <Label htmlFor="dayOfWeek">Ημέρα της Εβδομάδας</Label>
+                <Select
+                  value={formData.dayOfWeek}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, dayOfWeek: value }))}
+                >
+                  <SelectTrigger id="dayOfWeek">
+                    <SelectValue placeholder="Επιλέξτε ημέρα" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_OF_WEEK.map((day) => (
+                      <SelectItem key={day.value} value={day.value}>
+                        {day.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Day of Month - for monthly/once */}
+            {(formData.recurrenceType === 'monthly' || formData.recurrenceType === 'once') && (
+              <div className="space-y-2">
+                <Label htmlFor="dayOfMonth">Ημέρα του Μήνα</Label>
+                <Select
+                  value={formData.dayOfMonth}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, dayOfMonth: value }))}
+                >
+                  <SelectTrigger id="dayOfMonth">
+                    <SelectValue placeholder="Επιλέξτε ημέρα" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                      <SelectItem key={day} value={day.toString()}>
+                        {day}η ημέρα
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Συστήνεται η επιλογή ημέρας έως 28 για αποφυγή προβλημάτων με μικρούς μήνες
+                </p>
+              </div>
+            )}
 
             {/* Time to Send */}
             <div className="space-y-2">

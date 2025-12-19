@@ -742,7 +742,9 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
         task = MonthlyTaskService.configure_task(
             building=building,
             task_type=data['task_type'],
-            day_of_month=data['day_of_month'],
+            recurrence_type=data.get('recurrence_type', 'monthly'),
+            day_of_week=data.get('day_of_week'),
+            day_of_month=data.get('day_of_month', 1),
             time_to_send=data['time_to_send'],
             template=template,
             auto_send_enabled=data.get('auto_send_enabled', False),

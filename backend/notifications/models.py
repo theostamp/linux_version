@@ -293,8 +293,9 @@ class Notification(models.Model):
 
 class MonthlyNotificationTask(models.Model):
     """
-    Tracks monthly recurring notification tasks (e.g., common expense bills).
+    Tracks recurring notification tasks (e.g., common expense bills, debt reminders).
     Supports both manual confirmation and automatic sending.
+    Now supports multiple recurrence patterns: once, weekly, biweekly, monthly.
     """
 
     TASK_TYPE_CHOICES = [
@@ -309,6 +310,23 @@ class MonthlyNotificationTask(models.Model):
         ('sent', 'Απεσταλμένη'),
         ('skipped', 'Παραλήφθηκε'),
         ('auto_sent', 'Απεστάλη Αυτόματα'),
+    ]
+
+    RECURRENCE_CHOICES = [
+        ('once', 'Μία Φορά'),
+        ('weekly', 'Εβδομαδιαία'),
+        ('biweekly', 'Κάθε 2 Εβδομάδες'),
+        ('monthly', 'Μηνιαία'),
+    ]
+
+    DAY_OF_WEEK_CHOICES = [
+        (0, 'Δευτέρα'),
+        (1, 'Τρίτη'),
+        (2, 'Τετάρτη'),
+        (3, 'Πέμπτη'),
+        (4, 'Παρασκευή'),
+        (5, 'Σάββατο'),
+        (6, 'Κυριακή'),
     ]
 
     # Task configuration
@@ -332,14 +350,43 @@ class MonthlyNotificationTask(models.Model):
         blank=True
     )
 
+    # Recurrence settings
+    recurrence_type = models.CharField(
+        max_length=20,
+        choices=RECURRENCE_CHOICES,
+        default='monthly',
+        help_text="How often to repeat: once, weekly, biweekly, monthly"
+    )
+    day_of_week = models.IntegerField(
+        choices=DAY_OF_WEEK_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Day of week for weekly/biweekly tasks (0=Monday, 6=Sunday)"
+    )
+
     # Scheduling
     day_of_month = models.IntegerField(
         default=1,
-        help_text="Day of month to trigger (1-31)"
+        null=True,
+        blank=True,
+        help_text="Day of month to trigger (1-31) - used for monthly tasks"
     )
     time_to_send = models.TimeField(
         default='09:00',
         help_text="Time to send notification"
+    )
+    
+    # Recurrence tracking
+    last_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this recurring task was executed"
+    )
+    next_scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Next scheduled execution time"
     )
 
     # Automation settings
@@ -415,6 +462,93 @@ class MonthlyNotificationTask(models.Model):
             and self.status == 'pending_confirmation'
             and self.is_due
         )
+
+    def calculate_next_scheduled_at(self, from_date=None):
+        """
+        Calculate the next scheduled execution time based on recurrence settings.
+        
+        Args:
+            from_date: Starting date for calculation (defaults to now)
+            
+        Returns:
+            datetime: Next scheduled execution time
+        """
+        from datetime import timedelta
+        
+        if from_date is None:
+            from_date = timezone.now()
+        
+        # Combine date with time_to_send
+        def make_scheduled_datetime(dt):
+            return timezone.make_aware(
+                timezone.datetime.combine(dt.date() if hasattr(dt, 'date') else dt, self.time_to_send)
+            ) if timezone.is_naive(timezone.datetime.combine(dt.date() if hasattr(dt, 'date') else dt, self.time_to_send)) else timezone.datetime.combine(dt.date() if hasattr(dt, 'date') else dt, self.time_to_send)
+        
+        if self.recurrence_type == 'once':
+            # One-time task - use period_month with day_of_month
+            if self.day_of_month:
+                target_date = self.period_month.replace(day=min(self.day_of_month, 28))
+            else:
+                target_date = self.period_month
+            return make_scheduled_datetime(target_date)
+        
+        elif self.recurrence_type == 'weekly':
+            # Weekly - find next occurrence of day_of_week
+            if self.day_of_week is not None:
+                days_ahead = self.day_of_week - from_date.weekday()
+                if days_ahead <= 0:  # Target day already happened this week
+                    days_ahead += 7
+                next_date = from_date.date() + timedelta(days=days_ahead)
+                return make_scheduled_datetime(next_date)
+            return make_scheduled_datetime(from_date.date() + timedelta(days=7))
+        
+        elif self.recurrence_type == 'biweekly':
+            # Every 2 weeks
+            if self.day_of_week is not None:
+                days_ahead = self.day_of_week - from_date.weekday()
+                if days_ahead <= 0:
+                    days_ahead += 14
+                else:
+                    days_ahead += 7  # Add extra week for biweekly
+                next_date = from_date.date() + timedelta(days=days_ahead)
+                return make_scheduled_datetime(next_date)
+            return make_scheduled_datetime(from_date.date() + timedelta(days=14))
+        
+        elif self.recurrence_type == 'monthly':
+            # Monthly - find next occurrence of day_of_month
+            target_day = self.day_of_month or 1
+            current_date = from_date.date() if hasattr(from_date, 'date') else from_date
+            
+            # Try this month first
+            try:
+                next_date = current_date.replace(day=target_day)
+                if next_date <= current_date:
+                    # Move to next month
+                    if current_date.month == 12:
+                        next_date = current_date.replace(year=current_date.year + 1, month=1, day=target_day)
+                    else:
+                        next_date = current_date.replace(month=current_date.month + 1, day=target_day)
+            except ValueError:
+                # Day doesn't exist in month (e.g., Feb 30)
+                # Use last day of month
+                if current_date.month == 12:
+                    next_month = current_date.replace(year=current_date.year + 1, month=1, day=1)
+                else:
+                    next_month = current_date.replace(month=current_date.month + 1, day=1)
+                next_date = next_month - timedelta(days=1)
+            
+            return make_scheduled_datetime(next_date)
+        
+        # Fallback
+        return make_scheduled_datetime(from_date)
+
+    def update_next_scheduled(self):
+        """Update the next_scheduled_at field based on current settings."""
+        if self.recurrence_type != 'once':
+            self.next_scheduled_at = self.calculate_next_scheduled_at()
+        else:
+            self.next_scheduled_at = None
+        self.save(update_fields=['next_scheduled_at'])
 
 
 class NotificationEvent(models.Model):

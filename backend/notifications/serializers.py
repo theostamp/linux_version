@@ -276,10 +276,12 @@ class NotificationStatisticsSerializer(serializers.Serializer):
 
 
 class MonthlyNotificationTaskSerializer(serializers.ModelSerializer):
-    """Serializer for monthly notification tasks."""
+    """Serializer for recurring notification tasks."""
 
     task_type_display = serializers.CharField(source='get_task_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    recurrence_type_display = serializers.CharField(source='get_recurrence_type_display', read_only=True)
+    day_of_week_display = serializers.SerializerMethodField()
     building_name = serializers.CharField(source='building.name', read_only=True)
     template_name = serializers.CharField(source='template.name', read_only=True)
     is_due = serializers.BooleanField(read_only=True)
@@ -295,8 +297,16 @@ class MonthlyNotificationTaskSerializer(serializers.ModelSerializer):
             'building_name',
             'template',
             'template_name',
+            # Recurrence fields
+            'recurrence_type',
+            'recurrence_type_display',
+            'day_of_week',
+            'day_of_week_display',
             'day_of_month',
             'time_to_send',
+            'last_sent_at',
+            'next_scheduled_at',
+            # Settings
             'auto_send_enabled',
             'period_month',
             'status',
@@ -316,7 +326,16 @@ class MonthlyNotificationTaskSerializer(serializers.ModelSerializer):
             'confirmed_at',
             'sent_at',
             'confirmed_by',
+            'last_sent_at',
+            'next_scheduled_at',
         ]
+
+    def get_day_of_week_display(self, obj):
+        """Get human-readable day of week."""
+        if obj.day_of_week is not None:
+            days = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο', 'Κυριακή']
+            return days[obj.day_of_week] if 0 <= obj.day_of_week <= 6 else None
+        return None
 
 
 class MonthlyTaskConfirmSerializer(serializers.Serializer):
@@ -404,21 +423,37 @@ class SendDigestSerializer(serializers.Serializer):
 
 
 class MonthlyTaskConfigureSerializer(serializers.Serializer):
-    """Serializer for configuring monthly notification tasks."""
+    """Serializer for configuring recurring notification tasks."""
 
     task_type = serializers.ChoiceField(
         choices=['common_expense', 'balance_reminder', 'custom'],
-        help_text="Type of monthly task"
+        help_text="Type of task"
     )
     building = serializers.IntegerField(
         required=False,
         allow_null=True,
         help_text="Building ID (null = applies to all buildings)"
     )
+    
+    # Recurrence settings
+    recurrence_type = serializers.ChoiceField(
+        choices=['once', 'weekly', 'biweekly', 'monthly'],
+        default='monthly',
+        help_text="How often to repeat: once, weekly, biweekly, monthly"
+    )
+    day_of_week = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=0,
+        max_value=6,
+        help_text="Day of week for weekly/biweekly (0=Monday, 6=Sunday)"
+    )
     day_of_month = serializers.IntegerField(
+        required=False,
+        allow_null=True,
         min_value=1,
         max_value=31,
-        help_text="Day of month to send (1-31)"
+        help_text="Day of month to send (1-31) - for monthly tasks"
     )
     time_to_send = serializers.TimeField(
         help_text="Time to send notification (HH:MM format)"
@@ -436,6 +471,21 @@ class MonthlyTaskConfigureSerializer(serializers.Serializer):
         required=False,
         help_text="Period month (YYYY-MM-DD format, defaults to next month)"
     )
+
+    def validate(self, data):
+        """Validate recurrence settings."""
+        recurrence_type = data.get('recurrence_type', 'monthly')
+        
+        if recurrence_type in ['weekly', 'biweekly']:
+            if data.get('day_of_week') is None:
+                raise serializers.ValidationError({
+                    'day_of_week': 'Απαιτείται επιλογή ημέρας εβδομάδας για εβδομαδιαίες ειδοποιήσεις'
+                })
+        elif recurrence_type == 'monthly':
+            if data.get('day_of_month') is None:
+                data['day_of_month'] = 1  # Default to 1st of month
+        
+        return data
 
 
 class MonthlyTaskPreviewSerializer(serializers.Serializer):

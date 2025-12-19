@@ -149,7 +149,7 @@ export interface TemplatePreviewResponse {
   sms: string;
 }
 
-// Monthly Notification Tasks
+// Monthly/Recurring Notification Tasks
 export type MonthlyTaskType = 'common_expense' | 'balance_reminder' | 'custom';
 
 export type MonthlyTaskStatus =
@@ -159,6 +159,8 @@ export type MonthlyTaskStatus =
   | 'skipped'
   | 'auto_sent';
 
+export type RecurrenceType = 'once' | 'weekly' | 'biweekly' | 'monthly';
+
 export interface MonthlyNotificationTask {
   id: number;
   task_type: MonthlyTaskType;
@@ -167,8 +169,16 @@ export interface MonthlyNotificationTask {
   building_name: string;
   template: number | null;
   template_name: string;
-  day_of_month: number;
+  // Recurrence settings
+  recurrence_type: RecurrenceType;
+  recurrence_type_display: string;
+  day_of_week: number | null; // 0=Monday, 6=Sunday
+  day_of_week_display: string | null;
+  day_of_month: number | null;
   time_to_send: string;
+  last_sent_at: string | null;
+  next_scheduled_at: string | null;
+  // Settings
   auto_send_enabled: boolean;
   period_month: string; // YYYY-MM-DD format
   status: MonthlyTaskStatus;

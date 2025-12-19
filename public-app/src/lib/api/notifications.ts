@@ -379,14 +379,16 @@ export const monthlyTasksApi = {
   },
 
   /**
-   * Configure or create a monthly task
+   * Configure or create a recurring task
    */
   configure: async (data: {
     task_type: 'common_expense' | 'balance_reminder' | 'custom';
     building?: number | null;
-    day_of_month: number;
+    recurrence_type?: 'once' | 'weekly' | 'biweekly' | 'monthly';
+    day_of_week?: number | null; // 0=Monday, 6=Sunday
+    day_of_month?: number | null;
     time_to_send: string;
-    template: number;
+    template?: number;
     auto_send_enabled?: boolean;
     period_month?: string;
   }) => {
