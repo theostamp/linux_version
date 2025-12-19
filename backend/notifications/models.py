@@ -503,16 +503,22 @@ class MonthlyNotificationTask(models.Model):
             return make_scheduled_datetime(from_date.date() + timedelta(days=7))
         
         elif self.recurrence_type == 'biweekly':
-            # Every 2 weeks
+            # Every 2 weeks - schedule for next occurrence of day_of_week
+            # If last_sent_at exists, add 14 days from that; otherwise use next occurrence
             if self.day_of_week is not None:
-                days_ahead = self.day_of_week - from_date.weekday()
-                if days_ahead <= 0:
-                    days_ahead += 14
+                if self.last_sent_at:
+                    # Add exactly 14 days from last sent
+                    next_date = self.last_sent_at.date() + timedelta(days=14)
                 else:
-                    days_ahead += 7  # Add extra week for biweekly
-                next_date = from_date.date() + timedelta(days=days_ahead)
+                    # First time: find next occurrence of the target day
+                    days_ahead = self.day_of_week - from_date.weekday()
+                    if days_ahead < 0:  # Target day already passed this week
+                        days_ahead += 7  # Go to next week
+                    next_date = from_date.date() + timedelta(days=days_ahead)
                 return make_scheduled_datetime(next_date)
-            return make_scheduled_datetime(from_date.date() + timedelta(days=14))
+            # No specific day set - just add 14 days
+            base_date = self.last_sent_at.date() if self.last_sent_at else from_date.date()
+            return make_scheduled_datetime(base_date + timedelta(days=14))
         
         elif self.recurrence_type == 'monthly':
             # Monthly - find next occurrence of day_of_month
