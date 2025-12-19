@@ -277,7 +277,7 @@ function PlansContent() {
       <BuildingRevealBackground />
       
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-200 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
@@ -319,13 +319,13 @@ function PlansContent() {
             )}
 
             {/* Apartment Counter */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
               <h3 className="text-sm font-medium text-slate-400 mb-4">Διαμερίσματα στην πολυκατοικία</h3>
               <div className="flex items-center justify-center gap-4">
                 <button
                   type="button"
                   onClick={() => handleApartmentChange(-1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                   disabled={apartments <= 1}
                 >
                   <Minus className="h-4 w-4" />
@@ -344,7 +344,7 @@ function PlansContent() {
                 <button
                   type="button"
                   onClick={() => handleApartmentChange(1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                   disabled={apartments >= 100}
                 >
                   <Plus className="h-4 w-4" />
@@ -353,7 +353,7 @@ function PlansContent() {
             </div>
 
             {/* Plan Selection */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
               <h3 className="text-sm font-medium text-slate-400 mb-4">Επιλέξτε πακέτο</h3>
               <div className="grid gap-4 sm:grid-cols-3">
                 {/* Free Plan */}
@@ -365,8 +365,8 @@ function PlansContent() {
                     effectivePlan === 'free'
                       ? 'border-emerald-500 bg-emerald-500/10'
                       : apartments > 7
-                      ? 'border-slate-800 bg-slate-800/30 opacity-50 cursor-not-allowed'
-                      : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                      ? 'border-gray-200 bg-slate-800/30 opacity-50 cursor-not-allowed'
+                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
                   }`}
                 >
                   <Home className="h-8 w-8 text-slate-300 mb-2" />
@@ -384,8 +384,8 @@ function PlansContent() {
                     effectivePlan === 'cloud'
                       ? 'border-emerald-500 bg-emerald-500/10'
                       : apartments <= 7
-                      ? 'border-slate-800 bg-slate-800/30 opacity-50 cursor-not-allowed'
-                      : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                      ? 'border-gray-200 bg-slate-800/30 opacity-50 cursor-not-allowed'
+                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
                   }`}
                 >
                   <Building className="h-8 w-8 text-slate-300 mb-2" />
@@ -403,7 +403,7 @@ function PlansContent() {
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
                     selectedPlan === 'kiosk'
                       ? 'border-emerald-500 bg-emerald-500/10'
-                      : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
                   }`}
                 >
                   <span className="absolute -top-2 right-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
@@ -450,7 +450,7 @@ function PlansContent() {
             </div>
 
             {/* Subdomain Input */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
               <h3 className="text-sm font-medium text-slate-400 mb-4">Διεύθυνση Workspace</h3>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
@@ -460,7 +460,7 @@ function PlansContent() {
                       type="text"
                       value={subdomain}
                       onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-gray-200 rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
                       placeholder="my-building"
                     />
                   </div>
@@ -492,7 +492,7 @@ function PlansContent() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-800 pt-4">
+              <div className="border-t border-gray-200 pt-4">
                 <p className="text-xs font-medium text-slate-400 mb-2">Περιλαμβάνει:</p>
                 <ul className="space-y-1">
                   {PLANS[effectivePlan].features.map((feature) => (

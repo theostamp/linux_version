@@ -74,7 +74,7 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "50+", label: "Πολυκατοικίες" },
+  { value: "200+", label: "Πολυκατοικίες" },
   { value: "2.500+", label: "Διαμερίσματα" },
   { value: "98%", label: "Ικανοποίηση" },
 ];
@@ -128,7 +128,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-slate-800 last:border-b-0">
+    <div className="border-b border-gray-200 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-emerald-400"
@@ -156,10 +156,10 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 function TestimonialCard({ testimonial, index }: { testimonial: typeof testimonials[0]; index: number }) {
   return (
     <AnimatedSection delay={index * 100}>
-      <div className="group h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+      <div className="group h-full rounded-2xl border border-gray-200 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
         <div className="mb-5 flex items-center gap-4">
           {testimonial.imageSrc ? (
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-700/60 bg-slate-800 sm:h-16 sm:w-16">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-gray-200/60 bg-slate-800 sm:h-16 sm:w-16">
               <Image
                 src={testimonial.imageSrc}
                 alt={`Φωτογραφία μαρτυρίας: ${testimonial.name}`}
@@ -199,7 +199,7 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       {/* NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-gray-200/80 bg-slate-950/80 backdrop-blur-xl shadow-sm">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
@@ -227,7 +227,7 @@ export default function LandingPage() {
             </a>
             <Link
               href="/login"
-              className="rounded-full border border-slate-700 px-5 py-2 text-sm font-medium text-slate-200 shadow-sm transition-all hover:border-slate-500 hover:bg-slate-900"
+              className="rounded-full border border-gray-200 px-5 py-2 text-sm font-medium text-slate-200 shadow-sm transition-all hover:border-slate-500 hover:bg-slate-900"
             >
               Σύνδεση
             </Link>
@@ -242,7 +242,7 @@ export default function LandingPage() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 md:hidden shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 md:hidden shadow-sm"
             aria-label={mobileMenuOpen ? "Κλείσιμο μενού" : "Άνοιγμα μενού"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -253,7 +253,7 @@ export default function LandingPage() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div id="mobile-menu" className="border-t border-slate-800 bg-slate-950 md:hidden">
+          <div id="mobile-menu" className="border-t border-gray-200 bg-slate-950 md:hidden">
             <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
               <a href="#how-it-works" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
                 Πώς λειτουργεί
@@ -268,7 +268,7 @@ export default function LandingPage() {
                 Κριτικές
               </a>
               <div className="flex gap-3 pt-2">
-                <Link href="/login" className="flex-1 rounded-full border border-slate-700 px-4 py-2 text-center text-sm text-slate-200">
+                <Link href="/login" className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-center text-sm text-slate-200">
                   Σύνδεση
                 </Link>
                 <Link href="/signup" className="flex-1 rounded-full bg-emerald-500 px-4 py-2 text-center text-sm font-semibold text-slate-950">
@@ -283,7 +283,7 @@ export default function LandingPage() {
       {/* HERO SECTION */}
       <section
         id="hero"
-        className="relative border-b border-slate-800"
+        className="relative border-b border-gray-200"
       >
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-slate-950 to-slate-950" />
@@ -364,7 +364,7 @@ export default function LandingPage() {
                   </a>
                   <a
                     href="#pricing"
-                    className="rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
+                    className="rounded-full border border-gray-200 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
                   >
                     Δες τις τιμές
                   </a>
@@ -373,7 +373,7 @@ export default function LandingPage() {
 
               {/* Stats counter */}
               <AnimatedSection delay={500}>
-                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-6">
+                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-gray-200 pt-6">
                   {stats.map((stat) => (
                     <div key={stat.label} className="text-center">
                       <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">{stat.value}</p>
@@ -388,7 +388,7 @@ export default function LandingPage() {
 	      </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="border-b border-slate-800 bg-slate-950">
+      <section id="how-it-works" className="border-b border-gray-200 bg-slate-950">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -429,13 +429,13 @@ export default function LandingPage() {
               },
             ].map((item, index) => (
               <AnimatedSection key={item.step} delay={index * 150}>
-                <div className="group relative h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/50 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+                <div className="group relative h-full rounded-2xl border border-gray-200 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/50 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
                   <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition-transform group-hover:scale-110">
                     {item.step}
                   </div>
                   <div className="mb-4 pt-2 text-lg font-semibold text-emerald-400">{item.title}</div>
                   <p className="mb-4 text-sm leading-relaxed text-slate-300 sm:text-base">{item.description}</p>
-                  <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-4 text-center text-xs text-slate-500">
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-slate-900/50 p-4 text-center text-xs text-slate-500">
                     {item.placeholder}
                   </div>
                 </div>
@@ -446,7 +446,7 @@ export default function LandingPage() {
       </section>
 
       {/* COMMUNITY FOCUS */}
-      <section id="kiosk-focus" className="border-b border-slate-800 bg-slate-900/30">
+      <section id="kiosk-focus" className="border-b border-gray-200 bg-slate-900/30">
         <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
           <div className="flex-1 space-y-6">
             <AnimatedSection>
@@ -485,7 +485,7 @@ export default function LandingPage() {
                 },
               ].map((item, index) => (
                 <AnimatedSection key={item.title} delay={300 + index * 100}>
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900">
+                  <div className="rounded-xl border border-gray-200 bg-slate-900/50 p-4 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900">
                     <h3 className="mb-2 font-semibold text-emerald-400">{item.title}</h3>
                     <p className="text-sm leading-relaxed text-slate-400 sm:text-base">{item.description}</p>
                   </div>
@@ -496,8 +496,8 @@ export default function LandingPage() {
 
           {/* Info Point screenshot */}
           <AnimatedSection delay={200} className="flex-1">
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+            <div className="rounded-3xl border border-gray-200 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-slate-950">
                 <Image
                   src="/screen_eisodos.jpg"
                   alt="Screenshot από την οθόνη ενημέρωσης - ανακοινώσεις, ψηφοφορίες, αποτελέσματα"
@@ -512,7 +512,7 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="border-b border-slate-800 bg-slate-950">
+      <section id="features" className="border-b border-gray-200 bg-slate-950">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -563,7 +563,7 @@ export default function LandingPage() {
               },
             ].map((feature, index) => (
               <AnimatedSection key={feature.title} delay={index * 100}>
-                <div className="group h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+                <div className="group h-full rounded-2xl border border-gray-200 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
                   <h3 className="mb-3 text-lg font-semibold text-emerald-400">{feature.title}</h3>
                   <p className="text-sm leading-relaxed text-slate-400 sm:text-base">{feature.description}</p>
                 </div>
@@ -574,7 +574,7 @@ export default function LandingPage() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section id="testimonials" className="border-b border-slate-800 bg-slate-900/30">
+      <section id="testimonials" className="border-b border-gray-200 bg-slate-900/30">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -599,7 +599,7 @@ export default function LandingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="border-b border-slate-800 bg-slate-950">
+      <section id="pricing" className="border-b border-gray-200 bg-slate-950">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -628,13 +628,13 @@ export default function LandingPage() {
 
           {/* Quick Pricing Table */}
           <AnimatedSection delay={200}>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 overflow-x-auto">
+            <div className="rounded-2xl border border-gray-200 bg-slate-900/50 p-6 overflow-x-auto">
               <h3 className="mb-4 text-center text-lg font-semibold text-slate-50">
                 Γρήγορος οδηγός τιμολόγησης
               </h3>
               <table className="w-full min-w-[400px] text-sm">
                 <thead>
-                  <tr className="border-b border-slate-700">
+                  <tr className="border-b border-gray-200">
                     <th className="py-3 text-left text-slate-400 font-medium">Διαμερίσματα</th>
                     <th className="py-3 text-center text-slate-400 font-medium">
                       <div className="flex items-center justify-center gap-2">
@@ -657,7 +657,7 @@ export default function LandingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-slate-800/50">
+                  <tr className="border-b border-gray-200/50">
                     <td className="py-3 text-slate-300">1-7</td>
                     <td className="py-3 text-center">
                       <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-400 font-semibold">
@@ -667,13 +667,13 @@ export default function LandingPage() {
                     <td className="py-3 text-center text-slate-500">-</td>
                     <td className="py-3 text-center text-slate-500">-</td>
                   </tr>
-                  <tr className="border-b border-slate-800/50">
+                  <tr className="border-b border-gray-200/50">
                     <td className="py-3 text-slate-300">8-20</td>
                     <td className="py-3 text-center text-slate-500">-</td>
                     <td className="py-3 text-center text-emerald-400 font-semibold">€18/μήνα</td>
                     <td className="py-3 text-center text-emerald-400 font-semibold">€28/μήνα</td>
                   </tr>
-                  <tr className="border-b border-slate-800/50">
+                  <tr className="border-b border-gray-200/50">
                     <td className="py-3 text-slate-300">21-30</td>
                     <td className="py-3 text-center text-slate-500">-</td>
                     <td className="py-3 text-center text-emerald-400 font-semibold">€22/μήνα</td>
@@ -697,7 +697,7 @@ export default function LandingPage() {
           <AnimatedSection delay={300}>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {/* Free Features */}
-              <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
+              <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
                     <Home className="h-4 w-4 text-slate-400" />
@@ -715,7 +715,7 @@ export default function LandingPage() {
               </div>
 
               {/* Cloud Features */}
-              <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4">
+              <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
                     <Building className="h-4 w-4 text-emerald-400" />
@@ -769,7 +769,7 @@ export default function LandingPage() {
 
           {/* Custom plan note */}
           <AnimatedSection delay={400}>
-            <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
+            <div className="mt-8 rounded-2xl border border-gray-200 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
               <h3 className="mb-2 text-lg font-semibold text-slate-50">Γραφείο διαχείρισης με 5+ πολυκατοικίες;</h3>
               <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
                 Επικοινωνήστε μαζί μας για προσαρμοσμένη τιμολόγηση και ειδικές λειτουργίες για επαγγελματίες διαχειριστές.
@@ -790,7 +790,7 @@ export default function LandingPage() {
       </section>
 
       {/* FOR MANAGERS */}
-      <section id="for-managers" className="border-b border-slate-800 bg-slate-900/30">
+      <section id="for-managers" className="border-b border-gray-200 bg-slate-900/30">
         <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
           <div className="flex-1 space-y-6">
             <AnimatedSection>
@@ -832,8 +832,8 @@ export default function LandingPage() {
 
           {/* Dashboard screenshot */}
           <AnimatedSection delay={200} className="flex-1">
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+            <div className="rounded-3xl border border-gray-200 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-slate-950">
                 <Image
                   src="/phone_screenshot.jpg"
                   alt="Dashboard γραφείου διαχείρισης - πολλαπλές πολυκατοικίες"
@@ -848,7 +848,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="border-b border-slate-800 bg-slate-950">
+      <section id="faq" className="border-b border-gray-200 bg-slate-950">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -863,7 +863,7 @@ export default function LandingPage() {
           </AnimatedSection>
 
           <AnimatedSection delay={200}>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 px-6">
+            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 px-6">
               {faqs.map((item) => (
                 <FaqItem key={item.question} question={item.question} answer={item.answer} />
               ))}
@@ -901,7 +901,7 @@ export default function LandingPage() {
                   </a>
                   <a
                     href="tel:+302100000000"
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800"
                   >
                     <Phone className="h-4 w-4" />
                     210 000 0000
@@ -916,7 +916,7 @@ export default function LandingPage() {
                     <div className="sm:col-span-2">
                       <input
                         type="text"
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         placeholder="Όνομα *"
                         required
                       />
@@ -924,7 +924,7 @@ export default function LandingPage() {
                     <div>
                       <input
                         type="tel"
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         placeholder="Τηλέφωνο *"
                         required
                       />
@@ -932,12 +932,12 @@ export default function LandingPage() {
                     <div>
                       <input
                         type="email"
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         placeholder="Email"
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <select className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-50 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                      <select className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
                         <option value="">Είμαι...</option>
                         <option value="internal">Εσωτερικός διαχειριστής</option>
                         <option value="office">Γραφείο διαχείρισης</option>
@@ -970,7 +970,7 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-slate-800 bg-slate-950">
+      <footer className="border-t border-gray-200 bg-slate-950">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-4">
@@ -1025,7 +1025,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-8 sm:flex-row">
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row">
             <p className="text-sm text-slate-600">© 2025 newconcierge.app. Όλα τα δικαιώματα διατηρούνται.</p>
             <div className="flex gap-4 text-xs text-slate-600">
               <a href="#" className="transition-colors hover:text-emerald-400">Πολιτική απορρήτου</a>

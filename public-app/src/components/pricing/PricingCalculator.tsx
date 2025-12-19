@@ -172,7 +172,7 @@ export function PricingCalculator({
       </div>
 
       {/* Slider Section */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-sm">
+      <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6 backdrop-blur-sm">
         {/* Apartment Count Display */}
         <div className="mb-6 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2">
@@ -245,7 +245,7 @@ export function PricingCalculator({
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "cloud"
                     ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                    : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export function PricingCalculator({
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "kiosk"
                     ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                    : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
                 }`}
               >
                 {/* Badge */}
@@ -385,7 +385,7 @@ export function PricingCalculator({
 
       {/* Features Comparison (optional, show on full mode) */}
       {!compact && selectedPlan && !isFreeEligible && (
-        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+        <div className="mt-6 rounded-xl border border-gray-200 bg-slate-900/50 p-4">
           <p className="mb-3 text-sm font-medium text-slate-300">
             {selectedPlan === "kiosk" ? "Info Point" : "Cloud"} περιλαμβάνει:
           </p>

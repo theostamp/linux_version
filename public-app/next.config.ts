@@ -31,6 +31,17 @@ const nextConfig: NextConfig = {
   // Force deployment 2025-11-27 14:25 - Users API route fix deployed
   async headers() {
     return [
+      // Plasmic host: allow embedding in Plasmic Studio iframe
+      {
+        source: "/plasmic-host",
+        headers: [
+          // Content-Security-Policy frame-ancestors is the modern replacement for X-Frame-Options
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://studio.plasmic.app https://*.plasmic.app https://*.trycloudflare.com;",
+          },
+        ],
+      },
       {
         source: "/api/:path*",
         headers: [
@@ -83,7 +94,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  reactStrictMode: true,
+  // React Strict Mode στο dev μπορεί να κάνει double-mount που μπερδεύει το Plasmic host
+  // (π.χ. "__plasmicData has already been declared"). Το απενεργοποιούμε μόνο όταν
+  // τρέχουμε `npm run dev:plasmic` (PLASMIC_DEV=1).
+  reactStrictMode: process.env.PLASMIC_DEV ? false : true,
   productionBrowserSourceMaps: false,
   trailingSlash: false,
 };

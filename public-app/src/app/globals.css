@@ -1,89 +1,169 @@
 @import "tailwindcss";
 
+/* ========================================
+   KASPERSKY-INSPIRED THEME
+   Soft pastel colors, no dark borders
+   ======================================== */
+
 :root {
-  /* Light Mode · Landing palette derived */
-  --background: 224 24% 97%;         /* #F5F6F9 */
-  --foreground: 224 54% 9%;          /* #0B1225 */
+  /* Light Mode - Kaspersky Soft Palette */
+  --background: 216 28% 97%;           /* #F5F7FA - soft gray-blue */
+  --foreground: 224 54% 15%;           /* Dark text */
 
-  --primary: 160 100% 37%;           /* #00BC7D */
-  --primary-foreground: 224 24% 97%; /* Light on primary */
-  --primary-hover: 160 85% 33%;      /* #009A6B */
+  /* Primary - Teal (Kaspersky mint/teal accent) */
+  --primary: 174 63% 40%;              /* #26A69A - teal */
+  --primary-foreground: 0 0% 100%;     /* White on primary */
+  --primary-hover: 174 63% 35%;        /* Darker teal on hover */
 
-  --secondary: 217 25% 32%;          /* navy companion */
-  --secondary-foreground: 224 24% 97%;
+  /* Secondary - Soft navy */
+  --secondary: 217 25% 90%;            /* Soft gray-blue */
+  --secondary-foreground: 217 25% 25%;
 
-  --muted: 221 25% 90%;
-  --muted-foreground: 223 30% 40%;
+  /* Muted - Very soft backgrounds */
+  --muted: 210 20% 94%;                /* #EEF1F5 */
+  --muted-foreground: 215 16% 47%;     /* #6B7280 */
 
-  --accent: 161 52% 89%;             /* soft teal tint */
-  --accent-foreground: 224 54% 9%;
+  /* Accent - Mint tint (Kaspersky sidebar color) */
+  --accent: 168 34% 93%;               /* #E8F5F3 - soft mint */
+  --accent-foreground: 174 63% 30%;    /* Darker teal */
 
-  --border: 220 13% 70%;
-  --input: 220 13% 70%;
-  --ring: 160 100% 37%;
+  /* Soft borders - NO dark colors */
+  --border: 214 20% 88%;               /* #E0E4E8 - very soft gray */
+  --input: 214 20% 88%;
+  --ring: 174 63% 40%;                 /* Teal focus ring */
 
-  --destructive: 357 72% 55%;
-  --destructive-foreground: 224 24% 97%;
+  /* Semantic - Destructive */
+  --destructive: 0 72% 51%;            /* Red */
+  --destructive-foreground: 0 0% 100%;
   
-  --success: 160 100% 37%;
-  --success-foreground: 224 24% 97%;
+  /* Semantic - Success */
+  --success: 142 71% 45%;              /* #4CAF50 - green */
+  --success-foreground: 0 0% 100%;
 
+  /* Semantic - Warning */
+  --warning: 38 92% 50%;               /* #F5A623 - orange */
+  --warning-foreground: 0 0% 100%;
+
+  /* Cards - Pure white with soft shadow */
   --card: 0 0% 100%;
-  --card-foreground: 224 54% 9%;
+  --card-foreground: 224 54% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 224 54% 9%;
+  --popover-foreground: 224 54% 15%;
 
-  /* Radius */
-  --radius: 0.5rem;
-  --radius-sm: 0.3rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.8rem;
+  /* Sidebar - Soft mint background */
+  --sidebar: 168 34% 93%;              /* #E8F5F3 */
+  --sidebar-foreground: 217 25% 25%;
+  --sidebar-border: 168 20% 88%;       /* Very subtle mint border */
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(15 23 42 / 0.1), 0 1px 2px -1px rgb(15 23 42 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+  /* Category Cards - Kaspersky color coding */
+  --category-security: 207 90% 96%;    /* #E3F2FD - soft cyan */
+  --category-security-border: 207 50% 85%;
+  --category-security-text: 207 90% 35%;
+  
+  --category-performance: 291 47% 96%; /* #F3E5F5 - soft lavender */
+  --category-performance-border: 291 30% 85%;
+  --category-performance-text: 291 47% 35%;
+  
+  --category-privacy: 14 100% 96%;     /* #FBE9E7 - soft coral */
+  --category-privacy-border: 14 50% 85%;
+  --category-privacy-text: 14 70% 40%;
+  
+  --category-warning: 45 100% 94%;     /* #FFF8E1 - soft amber */
+  --category-warning-border: 45 60% 80%;
+  --category-warning-text: 45 80% 30%;
+
+  --category-info: 199 89% 95%;        /* Soft sky blue */
+  --category-info-border: 199 50% 82%;
+  --category-info-text: 199 89% 35%;
+
+  /* Radius - Rounded corners (Kaspersky style) */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  /* Shadows - Soft, subtle shadows (no hard borders) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow: 0 2px 8px 0 rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.08);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .dark {
-  /* Dark Mode · Redesigned Flat Palette v2 */
-  --background: 215 28% 14%;         /* Main BG - Soft Dark Grey (not black) */
-  --foreground: 0 0% 88%;            /* Primary Text */
+  /* Dark Mode - Soft dark palette */
+  --background: 220 20% 14%;           /* Soft dark gray (not pure black) */
+  --foreground: 0 0% 92%;              /* Light text */
 
-  --primary: 215 43% 51%;            /* Corporate Blue */
+  /* Primary - Teal (brighter in dark mode) */
+  --primary: 174 63% 50%;              /* Brighter teal */
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 215 43% 45%;
+  --primary-hover: 174 63% 55%;
 
-  --secondary: 215 25% 19%;          /* Secondary BG */
+  /* Secondary */
+  --secondary: 220 20% 20%;
   --secondary-foreground: 0 0% 88%;
 
-  --muted: 215 25% 19%;              /* Muted areas */
-  --muted-foreground: 212 11% 72%;
+  /* Muted */
+  --muted: 220 20% 18%;
+  --muted-foreground: 215 12% 65%;
 
-  --accent: 215 25% 24%;             /* Highlights */
-  --accent-foreground: 0 0% 95%;
+  /* Accent */
+  --accent: 220 20% 22%;
+  --accent-foreground: 174 63% 60%;
 
-  --border: 215 20% 22%;             /* Subtle Borders */
-  --input: 215 20% 22%;
-  --ring: 215 43% 51%;
+  /* Borders - Subtle in dark mode */
+  --border: 220 15% 25%;
+  --input: 220 15% 25%;
+  --ring: 174 63% 50%;
 
-  --card: 215 25% 19%;               /* Sidebar/Header - Lighter than BG */
-  --card-foreground: 0 0% 88%;
+  /* Cards */
+  --card: 220 20% 18%;
+  --card-foreground: 0 0% 92%;
+  --popover: 220 20% 18%;
+  --popover-foreground: 0 0% 92%;
+
+  /* Sidebar in dark mode */
+  --sidebar: 220 20% 16%;
+  --sidebar-foreground: 0 0% 88%;
+  --sidebar-border: 220 15% 22%;
+
+  /* Category Cards - Darker versions */
+  --category-security: 207 50% 18%;
+  --category-security-border: 207 40% 25%;
+  --category-security-text: 207 70% 70%;
   
-  --popover: 215 25% 19%;
-  --popover-foreground: 0 0% 88%;
+  --category-performance: 291 30% 18%;
+  --category-performance-border: 291 25% 25%;
+  --category-performance-text: 291 50% 70%;
+  
+  --category-privacy: 14 40% 18%;
+  --category-privacy-border: 14 35% 25%;
+  --category-privacy-text: 14 60% 70%;
+  
+  --category-warning: 45 50% 18%;
+  --category-warning-border: 45 40% 25%;
+  --category-warning-text: 45 70% 70%;
 
-  --destructive: 357 72% 55%;
+  --category-info: 199 50% 18%;
+  --category-info-border: 199 40% 25%;
+  --category-info-text: 199 70% 70%;
+
+  /* Destructive & Success (same as light mode) */
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-
-  --success: 160 100% 37%;
+  --success: 142 71% 45%;
   --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
   
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  /* Shadows in dark mode */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow: 0 2px 8px 0 rgb(0 0 0 / 0.25);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.35);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 @theme inline {
@@ -109,7 +189,12 @@
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
   
+  --radius-xl: var(--radius-xl);
   --radius-lg: var(--radius-lg);
   --radius-md: var(--radius-md);
   --radius-sm: var(--radius-sm);
@@ -120,21 +205,18 @@
   --shadow-lg: var(--shadow-lg);
 }
 
-/* Headings font inheritance */
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
 h1, h2, h3, h4 {
   font-family: inherit;
   font-weight: 600;
 }
 
-/* H1 specific styles - Centered with dark gray color */
-/* Exclude h1 in header/nav elements and those with explicit alignment classes */
 h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
   text-align: center;
-  color: rgb(31 41 55); /* gray-800 - Dark gray */
-}
-
-.dark h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
-  color: rgb(209 213 219); /* gray-300 - Lighter gray for dark mode */
+  color: hsl(var(--foreground));
 }
 
 body {
@@ -146,47 +228,90 @@ body {
 }
 
 /* ========================================
-   SHARED TABLE STYLES
+   SOFT CONTAINER STYLES (No hard borders)
    ======================================== */
 
-/* ========================================
-   MODERN CONTAINER STYLES (Soft Shadows)
-   ======================================== */
-
-/* Base soft container - replaces hard borders with shadows */
 .soft-container {
-  background-color: hsl(var(--card) / 0.8);
-  backdrop-filter: blur(8px);
+  background-color: hsl(var(--card));
   border-radius: var(--radius-lg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  ring: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-card);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .soft-container:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
-/* Dark mode adjustments */
-.dark .soft-container {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
-  ring: 1px solid rgba(255, 255, 255, 0.05);
-}
+/* ========================================
+   CATEGORY CARD STYLES (Kaspersky-inspired)
+   ======================================== */
 
-.dark .soft-container:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Base table container */
-.table-container {
-  background-color: hsl(var(--card) / 0.8);
-  backdrop-filter: blur(8px);
+.category-card {
   border-radius: var(--radius-lg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+}
+
+.category-card--security {
+  background-color: hsl(var(--category-security));
+  border: 1px solid hsl(var(--category-security-border));
+}
+
+.category-card--security .category-card__title {
+  color: hsl(var(--category-security-text));
+}
+
+.category-card--performance {
+  background-color: hsl(var(--category-performance));
+  border: 1px solid hsl(var(--category-performance-border));
+}
+
+.category-card--performance .category-card__title {
+  color: hsl(var(--category-performance-text));
+}
+
+.category-card--privacy {
+  background-color: hsl(var(--category-privacy));
+  border: 1px solid hsl(var(--category-privacy-border));
+}
+
+.category-card--privacy .category-card__title {
+  color: hsl(var(--category-privacy-text));
+}
+
+.category-card--warning {
+  background-color: hsl(var(--category-warning));
+  border: 1px solid hsl(var(--category-warning-border));
+}
+
+.category-card--warning .category-card__title {
+  color: hsl(var(--category-warning-text));
+}
+
+.category-card--info {
+  background-color: hsl(var(--category-info));
+  border: 1px solid hsl(var(--category-info-border));
+}
+
+.category-card--info .category-card__title {
+  color: hsl(var(--category-info-text));
+}
+
+/* ========================================
+   TABLE STYLES (Soft, no hard borders)
+   ======================================== */
+
+.table-container {
+  background-color: hsl(var(--card));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
-/* Table element */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -194,9 +319,8 @@ body {
   line-height: 1.5;
 }
 
-/* Table header */
 .data-table thead {
-  background-color: hsl(var(--muted) / 0.4);
+  background-color: hsl(var(--muted) / 0.5);
 }
 
 .data-table thead th {
@@ -207,7 +331,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: hsl(var(--muted-foreground));
-  border-bottom: 1px solid hsl(var(--border) / 0.3);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .data-table thead th:first-child {
@@ -218,48 +342,42 @@ body {
   border-top-right-radius: var(--radius-lg);
 }
 
-/* Table body */
 .data-table tbody {
-  background-color: hsl(var(--background));
+  background-color: hsl(var(--card));
 }
 
 .data-table tbody tr {
   transition: background-color 0.15s ease;
 }
 
-/* Zebra stripes - Adjusted for dark mode compatibility */
 .data-table tbody tr:nth-child(odd) {
-  background-color: hsl(var(--background));
+  background-color: hsl(var(--card));
 }
 
 .data-table tbody tr:nth-child(even) {
-  background-color: hsl(var(--muted) / 0.25);
+  background-color: hsl(var(--muted) / 0.3);
 }
 
-/* Hover state */
 .data-table tbody tr:hover {
-  background-color: hsl(var(--muted) / 0.5);
+  background-color: hsl(var(--accent) / 0.5);
 }
 
-/* Table cells */
 .data-table tbody td {
   padding: 1rem 1.25rem;
   vertical-align: top;
-  border-bottom: 1px solid hsl(var(--border) / 0.2);
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
 }
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Table footer */
 .table-footer {
   padding: 1rem 1.5rem;
-  background-color: hsl(var(--muted) / 0.2);
-  border-top: 1px solid hsl(var(--border) / 0.3);
+  background-color: hsl(var(--muted) / 0.3);
+  border-top: 1px solid hsl(var(--border) / 0.5);
 }
 
-/* Compact variant */
 .data-table--compact tbody td {
   padding: 0.625rem 1rem;
 }
@@ -269,126 +387,57 @@ body {
 }
 
 /* ========================================
-   BORDER OVERRIDES - Soft Gray Borders
+   GLOBAL SOFT BORDER OVERRIDE
+   Replace all dark borders with soft gray
    ======================================== */
 
-/* Override dark borders with soft gray borders + shadow */
-/* This applies to all dark border classes (border-slate-700, border-slate-800, border-gray-700, border-gray-800, border-black/10) */
-
-/* Base border override - replaces dark borders with soft gray */
-/* Using attribute selector to catch all instances, including those with escaped slashes */
+/* Override any remaining dark borders globally */
 [class*="border-slate-700"],
 [class*="border-slate-800"],
+[class*="border-slate-900"],
 [class*="border-gray-700"],
 [class*="border-gray-800"],
-[class*="border-black/10"],
-.border-slate-700,
-.border-slate-800,
-.border-gray-700,
-.border-gray-800,
-.border-black\/10 {
-  border-color: rgb(203 213 225) !important; /* gray-300 */
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important; /* shadow-sm */
+[class*="border-gray-900"],
+[class*="border-black"] {
+  border-color: hsl(var(--border)) !important;
 }
 
-/* Border width variants with override */
-/* Using both class selectors and attribute selectors for maximum coverage */
-[class*="border-b"][class*="border-slate-700"],
-[class*="border-b"][class*="border-slate-800"],
-[class*="border-b"][class*="border-gray-700"],
-[class*="border-b"][class*="border-gray-800"],
-.border-b.border-slate-700,
-.border-b.border-slate-800,
-.border-b.border-gray-700,
-.border-b.border-gray-800,
-.border-b.border-black\/10 {
-  border-bottom-color: rgb(203 213 225) !important;
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
-}
-
-[class*="border-t"][class*="border-slate-700"],
-[class*="border-t"][class*="border-slate-800"],
-[class*="border-t"][class*="border-gray-700"],
-[class*="border-t"][class*="border-gray-800"],
-.border-t.border-slate-700,
-.border-t.border-slate-800,
-.border-t.border-gray-700,
-.border-t.border-gray-800,
-.border-t.border-black\/10 {
-  border-top-color: rgb(203 213 225) !important;
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
-}
-
-[class*="border-l"][class*="border-slate-700"],
-[class*="border-l"][class*="border-slate-800"],
-[class*="border-l"][class*="border-gray-700"],
-[class*="border-l"][class*="border-gray-800"],
-.border-l.border-slate-700,
-.border-l.border-slate-800,
-.border-l.border-gray-700,
-.border-l.border-gray-800,
-.border-l.border-black\/10 {
-  border-left-color: rgb(203 213 225) !important;
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
-}
-
-[class*="border-r"][class*="border-slate-700"],
-[class*="border-r"][class*="border-slate-800"],
-[class*="border-r"][class*="border-gray-700"],
-[class*="border-r"][class*="border-gray-800"],
-.border-r.border-slate-700,
-.border-r.border-slate-800,
-.border-r.border-gray-700,
-.border-r.border-gray-800,
-.border-r.border-black\/10 {
-  border-right-color: rgb(203 213 225) !important;
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
-}
-
-/* Thick borders (border-2, border-t-2, etc.) */
-[class*="border-2"][class*="border-slate-700"],
-[class*="border-2"][class*="border-slate-800"],
-[class*="border-2"][class*="border-gray-700"],
-[class*="border-2"][class*="border-gray-800"],
-[class*="border-t-2"][class*="border-slate-700"],
-[class*="border-t-2"][class*="border-slate-800"],
-[class*="border-t-2"][class*="border-gray-700"],
-[class*="border-t-2"][class*="border-gray-800"],
-[class*="border-b-2"][class*="border-slate-700"],
-[class*="border-b-2"][class*="border-slate-800"],
-[class*="border-b-2"][class*="border-gray-700"],
-[class*="border-b-2"][class*="border-gray-800"],
-.border-2.border-slate-700,
-.border-2.border-slate-800,
-.border-2.border-gray-700,
-.border-2.border-gray-800,
-.border-t-2.border-slate-700,
-.border-t-2.border-slate-800,
-.border-t-2.border-gray-700,
-.border-t-2.border-gray-800,
-.border-b-2.border-slate-700,
-.border-b-2.border-slate-800,
-.border-b-2.border-gray-700,
-.border-b-2.border-gray-800 {
-  border-color: rgb(203 213 225) !important;
-  box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05) !important;
-}
-
-/* Preserve error states, focus states, and hover states */
-.border-red-500\/50,
-.border-red-500,
-.focus\:border-indigo-500:focus,
-.focus\:border-emerald-500:focus,
-.focus\:border-blue-500:focus,
-.hover\:border-emerald-500\/50:hover,
-.hover\:border-blue-500\/50:hover,
-.hover\:border-slate-500:hover,
-.hover\:border-slate-600:hover {
-  box-shadow: inherit !important;
-}
-
-/* Spinner borders - keep original color but make softer */
-.border-slate-950.border-t-transparent {
-  border-color: rgb(203 213 225) !important;
+/* Ensure spinner borders work correctly */
+.border-t-transparent {
   border-top-color: transparent !important;
+}
+
+/* Preserve semantic border colors */
+.border-red-500,
+.border-green-500,
+.border-blue-500,
+.border-yellow-500,
+.border-orange-500,
+.border-teal-500 {
+  box-shadow: none !important;
+}
+
+/* Focus states - use teal ring */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Soft shadow utility */
+.shadow-soft {
+  box-shadow: var(--shadow-card);
+}
+
+/* No border utility */
+.border-soft {
+  border-color: hsl(var(--border));
+}
+
+/* Sidebar background utility */
+.bg-sidebar {
+  background-color: hsl(var(--sidebar));
 }

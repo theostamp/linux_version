@@ -46,8 +46,7 @@ export default function GlobalHeader() {
   return (
     <>
       <header
-        className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border"
-        style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)' }}
+        className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
       >
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-full">
@@ -58,7 +57,7 @@ export default function GlobalHeader() {
                 {(() => {
                   const logoUrl = getOfficeLogoUrl(user?.office_logo);
                   return logoUrl && !logoError ? (
-                    <div className="w-12 h-12 rounded-md flex items-center justify-center shadow-md overflow-hidden bg-muted">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md overflow-hidden bg-gray-50 dark:bg-slate-800">
                       <img
                         src={logoUrl}
                         alt="Office Logo"
@@ -75,7 +74,7 @@ export default function GlobalHeader() {
                       />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center shadow-md">
+                    <div className="w-12 h-12 bg-teal-500 dark:bg-teal-600 rounded-xl flex items-center justify-center shadow-md">
                       <BuildingIcon className="w-6 h-6 text-white" />
                     </div>
                   );
@@ -176,7 +175,7 @@ export default function GlobalHeader() {
               {/* Help Button */}
               <Link
                 href="/help"
-                className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
                 title="Κέντρο Βοήθειας"
               >
                 <HelpCircle className="w-5 h-5" />
@@ -188,7 +187,7 @@ export default function GlobalHeader() {
                   const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
                   window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
                 }}
-                className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
                 title="Άνοιγμα Ημερολογίου σε νέο παράθυρο"
               >
                 <Calendar className="w-5 h-5" />
@@ -201,7 +200,7 @@ export default function GlobalHeader() {
               {isAdminLevel && (
                 <button
                   onClick={handleSettingsModalOpen}
-                  className="hidden sm:flex p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                  className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
                   title="Ρυθμίσεις Γραφείου Διαχείρισης"
                 >
                   <Settings className="w-5 h-5" />
@@ -211,7 +210,7 @@ export default function GlobalHeader() {
               {/* Help Button - Mobile */}
               <Link
                 href="/help"
-                className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                className="sm:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
                 title="Βοήθεια"
               >
                 <HelpCircle className="w-4 h-4" />
@@ -221,7 +220,7 @@ export default function GlobalHeader() {
               {isAdminLevel && (
                 <button
                   onClick={() => setIsSettingsModalOpen(true)}
-                  className="sm:hidden p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-all duration-200"
+                  className="sm:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
                   title="Ρυθμίσεις"
                 >
                   <Settings className="w-4 h-4" />
@@ -241,13 +240,13 @@ export default function GlobalHeader() {
 
               {/* User Info Card */}
               {user && (
-                <div className={`flex items-center gap-3 px-4 py-2 rounded-md shadow-sm transition-colors ${
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-xl shadow-sm transition-colors ${
                   isInternalManager 
-                    ? 'bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-500/30' 
-                    : 'bg-muted dark:bg-muted/50'
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30' 
+                    : 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-gray-200'
                 }`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isInternalManager ? 'bg-amber-500' : 'bg-muted-foreground'
+                    isInternalManager ? 'bg-amber-500' : 'bg-teal-500 dark:bg-teal-600'
                   }`}>
                     {isInternalManager ? (
                       <Shield className="w-4 h-4 text-white" />
@@ -257,7 +256,7 @@ export default function GlobalHeader() {
                   </div>
                   <div className="hidden sm:block">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground leading-tight">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight">
                         {user.first_name || user.last_name
                           ? `${user.first_name} ${user.last_name}`.trim()
                           : user.email}
@@ -269,14 +268,14 @@ export default function GlobalHeader() {
                       )}
                     </div>
                     <p className={`text-xs leading-tight mt-0.5 ${
-                      isInternalManager ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'
+                      isInternalManager ? 'text-amber-700 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'
                     }`}>
                       {roleLabel}
                     </p>
                   </div>
                   <div className="sm:hidden">
                     <div className="flex items-center gap-1">
-                      <p className="text-xs font-medium text-foreground leading-tight">
+                      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 leading-tight">
                         {user.first_name || user.last_name
                           ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
                           : user.email.split('@')[0]}

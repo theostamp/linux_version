@@ -420,7 +420,7 @@ export default function CollapsibleSidebar() {
     })
   })).filter(group => group.links.length > 0);
 
-  // Map color keys to Tailwind classes for Dark Mode support
+  // Map color keys to Tailwind classes - Kaspersky-inspired soft colors
   const getColorClasses = (colorKey: keyof typeof designSystem.colors) => {
     const colorMap: Record<string, {
       bg: string;
@@ -430,46 +430,54 @@ export default function CollapsibleSidebar() {
       active: string;
     }> = {
       primary: {
-        bg: "bg-indigo-50 dark:bg-transparent",
-        hover: "hover:bg-indigo-50 dark:hover:bg-indigo-400/10 dark:hover:text-indigo-200",
-        text: "text-indigo-700 dark:text-indigo-400",
-        icon: "text-indigo-600 dark:text-indigo-400",
-        active: "bg-indigo-100 text-indigo-900 dark:bg-indigo-500/20 dark:text-indigo-200",
-      },
-      success: {
-        bg: "bg-teal-50 dark:bg-transparent",
-        hover: "hover:bg-teal-50 dark:hover:bg-teal-400/10 dark:hover:text-teal-200",
+        bg: "bg-teal-50/80 dark:bg-teal-500/10",
+        hover: "hover:bg-teal-50 dark:hover:bg-teal-500/15 hover:text-teal-800 dark:hover:text-teal-300",
         text: "text-teal-700 dark:text-teal-400",
         icon: "text-teal-600 dark:text-teal-400",
-        active: "bg-teal-100 text-teal-900 dark:bg-teal-500/20 dark:text-teal-200",
+        active: "bg-teal-100 text-teal-900 dark:bg-teal-500/25 dark:text-teal-200 shadow-sm",
+      },
+      success: {
+        bg: "bg-emerald-50/80 dark:bg-emerald-500/10",
+        hover: "hover:bg-emerald-50 dark:hover:bg-emerald-500/15 hover:text-emerald-800 dark:hover:text-emerald-300",
+        text: "text-emerald-700 dark:text-emerald-400",
+        icon: "text-emerald-600 dark:text-emerald-400",
+        active: "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/25 dark:text-emerald-200 shadow-sm",
       },
       orange: {
-        bg: "bg-orange-50 dark:bg-transparent",
-        hover: "hover:bg-orange-50 dark:hover:bg-orange-400/10 dark:hover:text-orange-200",
-        text: "text-orange-700 dark:text-orange-400",
-        icon: "text-orange-600 dark:text-orange-400",
-        active: "bg-orange-100 text-orange-900 dark:bg-orange-500/20 dark:text-orange-200",
+        bg: "bg-amber-50/80 dark:bg-amber-500/10",
+        hover: "hover:bg-amber-50 dark:hover:bg-amber-500/15 hover:text-amber-800 dark:hover:text-amber-300",
+        text: "text-amber-700 dark:text-amber-400",
+        icon: "text-amber-600 dark:text-amber-400",
+        active: "bg-amber-100 text-amber-900 dark:bg-amber-500/25 dark:text-amber-200 shadow-sm",
       },
       info: {
-        bg: "bg-sky-50 dark:bg-transparent",
-        hover: "hover:bg-sky-50 dark:hover:bg-sky-400/10 dark:hover:text-sky-200",
-        text: "text-sky-700 dark:text-sky-400",
-        icon: "text-sky-600 dark:text-sky-400",
-        active: "bg-sky-100 text-sky-900 dark:bg-sky-500/20 dark:text-sky-200",
+        bg: "bg-cyan-50/80 dark:bg-cyan-500/10",
+        hover: "hover:bg-cyan-50 dark:hover:bg-cyan-500/15 hover:text-cyan-800 dark:hover:text-cyan-300",
+        text: "text-cyan-700 dark:text-cyan-400",
+        icon: "text-cyan-600 dark:text-cyan-400",
+        active: "bg-cyan-100 text-cyan-900 dark:bg-cyan-500/25 dark:text-cyan-200 shadow-sm",
       },
       purple: {
-        bg: "bg-purple-50 dark:bg-transparent",
-        hover: "hover:bg-purple-50 dark:hover:bg-purple-400/10 dark:hover:text-purple-200",
+        bg: "bg-purple-50/80 dark:bg-purple-500/10",
+        hover: "hover:bg-purple-50 dark:hover:bg-purple-500/15 hover:text-purple-800 dark:hover:text-purple-300",
         text: "text-purple-700 dark:text-purple-400",
         icon: "text-purple-600 dark:text-purple-400",
-        active: "bg-purple-100 text-purple-900 dark:bg-purple-500/20 dark:text-purple-200",
+        active: "bg-purple-100 text-purple-900 dark:bg-purple-500/25 dark:text-purple-200 shadow-sm",
       },
       danger: {
-        bg: "bg-rose-50 dark:bg-transparent",
-        hover: "hover:bg-rose-50 dark:hover:bg-rose-400/10 dark:hover:text-rose-200",
+        bg: "bg-rose-50/80 dark:bg-rose-500/10",
+        hover: "hover:bg-rose-50 dark:hover:bg-rose-500/15 hover:text-rose-800 dark:hover:text-rose-300",
         text: "text-rose-700 dark:text-rose-400",
         icon: "text-rose-600 dark:text-rose-400",
-        active: "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200",
+        active: "bg-rose-100 text-rose-900 dark:bg-rose-500/25 dark:text-rose-200 shadow-sm",
+      },
+      // Kaspersky category colors
+      cyan: {
+        bg: "bg-blue-50/80 dark:bg-blue-500/10",
+        hover: "hover:bg-blue-50 dark:hover:bg-blue-500/15 hover:text-blue-800 dark:hover:text-blue-300",
+        text: "text-blue-700 dark:text-blue-400",
+        icon: "text-blue-600 dark:text-blue-400",
+        active: "bg-blue-100 text-blue-900 dark:bg-blue-500/25 dark:text-blue-200 shadow-sm",
       },
     };
 
@@ -484,20 +492,20 @@ export default function CollapsibleSidebar() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-card rounded-lg shadow-lg"
+          className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-white dark:bg-slate-800 rounded-xl shadow-md"
           aria-label="Άνοιγμα μενού"
         >
           <Menu className="w-5 h-5 text-foreground" />
         </button>
 
-        {/* Loading Sidebar */}
+        {/* Loading Sidebar - Kaspersky mint style */}
         <aside
-          className="hidden lg:flex fixed left-0 top-0 h-full shadow-xl border-r border-gray-300 flex-col justify-center items-center z-40 bg-gray-50 transition-colors duration-300"
+          className="hidden lg:flex fixed left-0 top-0 h-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] flex-col justify-center items-center z-40 bg-[#e8f5f3] dark:bg-slate-900 transition-colors duration-300"
           style={{
             width: '80px',
           }}
         >
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-teal-600 dark:text-teal-400" />
         </aside>
       </>
     );
@@ -508,22 +516,26 @@ export default function CollapsibleSidebar() {
       {/* Mobile Menu Toggle */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-card rounded-lg shadow-lg"
+        className="lg:hidden fixed top-3 left-3 z-[60] p-2 bg-white dark:bg-slate-800 rounded-xl shadow-md"
         aria-label="Άνοιγμα μενού"
       >
         <Menu className="w-5 h-5 text-foreground" />
       </button>
 
-      {/* Desktop Sidebar - Collapsible */}
+      {/* Desktop Sidebar - Kaspersky mint style */}
       <aside
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => {
           if (!isPinned) setIsExpanded(false);
         }}
         className={cn(
-          "hidden lg:flex sticky top-0 h-screen shadow-xl border-r border-gray-300 flex-col z-40 overflow-hidden text-card-foreground shrink-0",
+          "hidden lg:flex sticky top-0 h-screen flex-col z-40 overflow-hidden shrink-0",
           "transition-all duration-300 ease-in-out",
-          !isExpanded ? "bg-gray-50" : "bg-card"
+          "shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
+          // Kaspersky mint background in light mode, dark slate in dark mode
+          !isExpanded 
+            ? "bg-[#e8f5f3] dark:bg-slate-900" 
+            : "bg-[#e8f5f3] dark:bg-slate-900"
         )}
         style={{
           width: isExpanded ? '256px' : '80px',
@@ -532,10 +544,10 @@ export default function CollapsibleSidebar() {
       >
         {/* Header */}
         <div 
-          className="p-4 border-b border-gray-300 flex items-center gap-3 min-h-[64px] bg-card"
+          className="p-4 border-b border-teal-100 dark:border-gray-200 flex items-center gap-3 min-h-[64px] bg-white/50 dark:bg-slate-800/50"
         >
           <div 
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-primary text-primary-foreground"
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-teal-500 dark:bg-teal-600 text-white"
           >
             <Building2 className="h-6 w-6" />
           </div>
@@ -563,12 +575,12 @@ export default function CollapsibleSidebar() {
               setIsPinned((prev) => !prev);
               setIsExpanded((prev) => !prev);
             }}
-            className="ml-auto p-2 rounded-lg border border-gray-300 bg-muted/30 hover:bg-muted transition"
+            className="ml-auto p-2 rounded-lg bg-white/60 dark:bg-slate-700/60 hover:bg-white dark:hover:bg-slate-700 transition shadow-sm"
             aria-label={isExpanded ? 'Σύμπτυξη sidebar' : 'Άνοιγμα sidebar'}
           >
             <ChevronRight
               className={cn(
-                "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                "w-4 h-4 text-teal-600 dark:text-teal-400 transition-transform duration-200",
                 isExpanded ? "rotate-180" : "rotate-0"
               )}
             />
@@ -691,12 +703,12 @@ export default function CollapsibleSidebar() {
                           {!isExpanded && (
                             <TooltipContent
                               side="right"
-                              className="z-50 bg-popover text-popover-foreground border-gray-300 shadow-lg"
+                              className="z-50 bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-slate-600 shadow-lg rounded-lg"
                               sideOffset={10}
                             >
                               <p className="text-xs font-semibold">{link.label}</p>
                               {link.tooltip && (
-                                <p className="text-xs mt-1 text-muted-foreground/80">{link.tooltip}</p>
+                                <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">{link.tooltip}</p>
                               )}
                             </TooltipContent>
                           )}
@@ -712,7 +724,7 @@ export default function CollapsibleSidebar() {
 
         {/* Calculator Tool */}
         <div 
-          className="p-3 border-t border-gray-300"
+          className="p-3 border-t border-teal-100 dark:border-gray-200 bg-white/30 dark:bg-slate-800/30"
         >
           <CalculatorModal>
             <button 
@@ -720,11 +732,11 @@ export default function CollapsibleSidebar() {
               className={cn(
                 'flex items-center w-full rounded-lg font-medium transition-all duration-200',
                 isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
-                'text-sm text-foreground hover:bg-muted'
+                'text-sm text-gray-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-slate-700/60'
               )}
             >
               <Calculator 
-                className={cn('w-5 h-5 transition-colors text-muted-foreground', isExpanded && 'mr-3')}
+                className={cn('w-5 h-5 transition-colors text-teal-600 dark:text-teal-400', isExpanded && 'mr-3')}
               />
               <span 
                 className={cn(
@@ -739,13 +751,13 @@ export default function CollapsibleSidebar() {
         </div>
       </aside>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - Kaspersky mint style */}
       <aside
         className={cn(
-          // Mobile drawer background: ensure it's opaque and readable (avoid transparent look)
-          "lg:hidden fixed left-0 top-0 h-full w-64 shadow-xl flex flex-col z-[70] text-card-foreground",
-          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80",
-          "dark:bg-slate-950/95 dark:supports-[backdrop-filter]:bg-slate-950/80",
+          "lg:hidden fixed left-0 top-0 h-full w-64 flex flex-col z-[70]",
+          "shadow-[0_4px_24px_rgba(0,0,0,0.12)]",
+          // Kaspersky mint background
+          "bg-[#e8f5f3] dark:bg-slate-900",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -755,22 +767,22 @@ export default function CollapsibleSidebar() {
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-border flex items-center justify-between bg-transparent"
+          className="p-4 border-b border-teal-100 dark:border-gray-200 flex items-center justify-between bg-white/50 dark:bg-slate-800/50"
         >
           <div className="flex items-center gap-3">
             <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-primary text-primary-foreground"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-teal-500 dark:bg-teal-600 text-white"
             >
               <Building2 className="h-6 w-6" />
             </div>
             <div>
               <h1 
-                className="font-bold tracking-tight text-sm text-foreground"
+                className="font-bold tracking-tight text-sm text-gray-800 dark:text-gray-100"
               >
                 Digital Concierge
               </h1>
               <p 
-                className="text-xs text-muted-foreground"
+                className="text-xs text-gray-500 dark:text-gray-400"
               >
                 Διαχείριση Κτιρίων
               </p>
@@ -778,7 +790,7 @@ export default function CollapsibleSidebar() {
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 text-muted-foreground hover:text-foreground"
+            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-white/60 dark:hover:bg-slate-700/60 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -786,8 +798,8 @@ export default function CollapsibleSidebar() {
 
         {/* Mobile Building Selector for residents with multiple buildings */}
         {isResidentUser && hasMultipleBuildings && (
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
-            <p className="text-xs text-muted-foreground mb-2 font-medium">Επιλέξτε Πολυκατοικία:</p>
+          <div className="px-4 py-3 border-b border-teal-100 dark:border-gray-200 bg-white/30 dark:bg-slate-800/30">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Επιλέξτε Πολυκατοικία:</p>
             <BuildingSelectorButton
               onBuildingSelect={setSelectedBuilding}
               selectedBuilding={selectedBuilding}
@@ -877,7 +889,7 @@ export default function CollapsibleSidebar() {
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-[65] backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 bg-black/30 z-[65] backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
