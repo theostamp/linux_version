@@ -40,7 +40,7 @@ const testimonials = [
     role: "Διαχειρίστρια πολυκατοικίας",
     location: "Γλυφάδα",
     avatar: "ΜΚ",
-    imageSrc: "/mar1.jpg",
+    imageSrc: "/mar3.jpg",
     rating: 5,
     text: "Η κοινότητά μας άλλαξε εντελώς. Από τότε που βάλαμε το σημείο ενημέρωσης στην είσοδο, οι ένοικοι νιώθουν ότι συμμετέχουν. Σταμάτησαν οι φωνές, ξεκίνησε η συνεργασία.",
   },
@@ -49,16 +49,16 @@ const testimonials = [
     role: "Ιδιοκτήτης γραφείου διαχείρισης",
     location: "Αθήνα",
     avatar: "ΓΠ",
-    imageSrc: "/mar2.jpg",
+    imageSrc: "/mar1.jpg",
     rating: 5,
     text: "Διαχειριζόμαστε 35 πολυκατοικίες. Με το newconcierge βλέπω όλα τα αιτήματα σε ένα dashboard. Οι ένοικοι είναι πιο ικανοποιημένοι γιατί νιώθουν ότι τους ακούμε.",
   },
   {
     name: "Δημήτρης Α.",
-    role: "Πρόεδρος Δ.Σ. πολυκατοικίας",
+    role: "Διαχειριστής πολυκατοικίας",
     location: "Θεσσαλονίκη",
     avatar: "ΔΑ",
-    imageSrc: "/mar3.jpg",
+    imageSrc: "/mar4.jpg",
     rating: 5,
     text: "Οι ψηφοφορίες γίνονται πλέον με διαφάνεια. Κάθε ένοικος έχει φωνή, τα αποτελέσματα είναι ξεκάθαρα. Η κοινότητά μας λειτουργεί πιο ομαλά από ποτέ.",
   },
@@ -67,7 +67,7 @@ const testimonials = [
     role: "Ένοικος",
     location: "Πειραιάς",
     avatar: "ΕΜ",
-    imageSrc: "/mar4.jpg",
+    imageSrc: "/mar2.jpg",
     rating: 5,
     text: "Νιώθω ότι είμαι μέρος της πολυκατοικίας. Βλέπω τι αποφασίστηκε, ψηφίζω για θέματα που με αφορούν, ενημερώνομαι χωρίς να κυνηγάω τον διαχειριστή. Επιτέλους!",
   },
@@ -157,33 +157,37 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
   return (
     <AnimatedSection delay={index * 100}>
       <div className="group h-full rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
-        <div className="mb-4 flex items-center gap-1">
-          {[...Array(testimonial.rating)].map((_, i) => (
-            <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-          ))}
-        </div>
-        <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">"{testimonial.text}"</p>
-        <div className="flex items-center gap-3">
+        <div className="mb-5 flex items-center gap-4">
           {testimonial.imageSrc ? (
-            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-slate-700/60 bg-slate-800">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-700/60 bg-slate-800 sm:h-16 sm:w-16">
               <Image
                 src={testimonial.imageSrc}
                 alt={`Φωτογραφία μαρτυρίας: ${testimonial.name}`}
                 fill
-                sizes="40px"
+                sizes="64px"
                 className="object-cover"
               />
             </div>
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-base font-bold text-white sm:h-16 sm:w-16">
               {testimonial.avatar}
             </div>
           )}
-          <div>
-            <p className="text-sm font-semibold text-slate-50">{testimonial.name}</p>
-            <p className="text-xs text-slate-500">{testimonial.role} • {testimonial.location}</p>
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-50 sm:text-base">{testimonial.name}</p>
+            <p className="text-xs text-slate-500 sm:text-sm">
+              {testimonial.role} • {testimonial.location}
+            </p>
+            <div className="mt-2 flex items-center gap-1">
+              {[...Array(testimonial.rating)].map((_, i) => (
+                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+              ))}
+            </div>
           </div>
         </div>
+
+        <p className="text-sm leading-relaxed text-slate-300 sm:text-base">"{testimonial.text}"</p>
       </div>
     </AnimatedSection>
   );
