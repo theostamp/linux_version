@@ -11,7 +11,7 @@ const cardVariants = cva(
         // Default - White with soft shadow
         default: "bg-white dark:bg-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)]",
         // Outline - Soft border instead of shadow
-        outline: "bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-200 hover:border-gray-300 dark:hover:border-slate-600",
+        outline: "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600",
         // Kaspersky category cards
         security: "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/30 hover:shadow-md",
         performance: "bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/30 hover:shadow-md",

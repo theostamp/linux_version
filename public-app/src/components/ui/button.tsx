@@ -12,7 +12,7 @@ const buttonVariants = cva(
         // Primary - Teal (Kaspersky style)
         default: 'bg-teal-500 text-white hover:bg-teal-600 shadow-sm hover:shadow-md dark:bg-teal-600 dark:hover:bg-teal-500',
         // Secondary - Soft gray
-        secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 shadow-sm dark:bg-slate-800 dark:text-gray-200 dark:border-gray-200 dark:hover:bg-slate-700',
+        secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 shadow-sm dark:bg-slate-800 dark:text-gray-200 dark:border-slate-700 dark:hover:bg-slate-700',
         // Destructive - Red
         destructive: 'bg-red-500 text-white hover:bg-red-600 shadow-sm hover:shadow-md dark:bg-red-600 dark:hover:bg-red-500',
         // Outline - Soft border

@@ -92,7 +92,7 @@ function Modal({
   if (!isOpen) return null;
   
   const headerStyles = {
-    default: 'border-slate-200/50 dark:border-gray-200/50 bg-slate-50/80 dark:bg-slate-800/80',
+    default: 'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-800/80',
     success: 'border-emerald-200/50 dark:border-emerald-700/50 bg-emerald-50/80 dark:bg-emerald-900/30',
     danger: 'border-rose-200/50 dark:border-rose-700/50 bg-rose-50/80 dark:bg-rose-900/30'
   };
@@ -667,7 +667,7 @@ function OfficeFinanceContent() {
               type="text"
               value={incomeForm.title}
               onChange={(e) => setIncomeForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               placeholder="π.χ. Αμοιβή διαχείρισης Ιανουαρίου"
               required
             />
@@ -684,7 +684,7 @@ function OfficeFinanceContent() {
                 step="0.01"
                 value={incomeForm.amount}
                 onChange={(e) => setIncomeForm(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
                 placeholder="0.00"
                 required
               />
@@ -698,7 +698,7 @@ function OfficeFinanceContent() {
                 type="date"
                 value={incomeForm.date}
                 onChange={(e) => setIncomeForm(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               />
             </div>
           </div>
@@ -726,7 +726,7 @@ function OfficeFinanceContent() {
               <select
                 value={incomeForm.building}
                 onChange={(e) => setIncomeForm(prev => ({ ...prev, building: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               >
                 <option value="">-- Επιλέξτε --</option>
                 {buildings?.map(b => (
@@ -742,12 +742,12 @@ function OfficeFinanceContent() {
               value={incomeForm.description}
               onChange={(e) => setIncomeForm(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm resize-none"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm resize-none"
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
           
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-gray-200">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setShowIncomeModal(false)}
@@ -778,7 +778,7 @@ function OfficeFinanceContent() {
               type="text"
               value={expenseForm.title}
               onChange={(e) => setExpenseForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
               placeholder="π.χ. Λογαριασμός ΔΕΗ"
               required
             />
@@ -795,7 +795,7 @@ function OfficeFinanceContent() {
                 step="0.01"
                 value={expenseForm.amount}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
                 placeholder="0.00"
                 required
               />
@@ -809,7 +809,7 @@ function OfficeFinanceContent() {
                 type="date"
                 value={expenseForm.date}
                 onChange={(e) => setExpenseForm(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
               />
             </div>
           </div>
@@ -835,7 +835,7 @@ function OfficeFinanceContent() {
               value={expenseForm.description}
               onChange={(e) => setExpenseForm(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm resize-none"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm resize-none"
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
@@ -853,7 +853,7 @@ function OfficeFinanceContent() {
             </label>
           </div>
           
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-gray-200">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setShowExpenseModal(false)}
@@ -892,7 +892,7 @@ function OfficeFinanceContent() {
               type="text"
               value={editIncomeForm.title}
               onChange={(e) => setEditIncomeForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               placeholder="π.χ. Αμοιβή διαχείρισης Ιανουαρίου"
               required
             />
@@ -909,7 +909,7 @@ function OfficeFinanceContent() {
                 step="0.01"
                 value={editIncomeForm.amount}
                 onChange={(e) => setEditIncomeForm(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
                 placeholder="0.00"
                 required
               />
@@ -923,7 +923,7 @@ function OfficeFinanceContent() {
                 type="date"
                 value={editIncomeForm.date}
                 onChange={(e) => setEditIncomeForm(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               />
             </div>
           </div>
@@ -951,7 +951,7 @@ function OfficeFinanceContent() {
               <select
                 value={editIncomeForm.building}
                 onChange={(e) => setEditIncomeForm(prev => ({ ...prev, building: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm"
               >
                 <option value="">-- Επιλέξτε --</option>
                 {buildings?.map(b => (
@@ -981,12 +981,12 @@ function OfficeFinanceContent() {
               value={editIncomeForm.description}
               onChange={(e) => setEditIncomeForm(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm resize-none"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-sm resize-none"
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
           
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-gray-200">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => {
@@ -1028,7 +1028,7 @@ function OfficeFinanceContent() {
               type="text"
               value={editExpenseForm.title}
               onChange={(e) => setEditExpenseForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
               placeholder="π.χ. Λογαριασμός ΔΕΗ"
               required
             />
@@ -1045,7 +1045,7 @@ function OfficeFinanceContent() {
                 step="0.01"
                 value={editExpenseForm.amount}
                 onChange={(e) => setEditExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
                 placeholder="0.00"
                 required
               />
@@ -1059,7 +1059,7 @@ function OfficeFinanceContent() {
                 type="date"
                 value={editExpenseForm.date}
                 onChange={(e) => setEditExpenseForm(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm"
               />
             </div>
           </div>
@@ -1085,7 +1085,7 @@ function OfficeFinanceContent() {
               value={editExpenseForm.description}
               onChange={(e) => setEditExpenseForm(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-gray-200 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm resize-none"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all shadow-sm resize-none"
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
@@ -1103,7 +1103,7 @@ function OfficeFinanceContent() {
             </label>
           </div>
           
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-gray-200">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => {

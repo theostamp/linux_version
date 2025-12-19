@@ -79,7 +79,7 @@ const categoryStyles: Record<CategoryType, {
   },
   default: {
     bg: 'bg-white dark:bg-slate-800',
-    border: 'border border-gray-200 dark:border-gray-200',
+    border: 'border border-gray-200 dark:border-slate-700',
     text: 'text-gray-800 dark:text-gray-200',
     icon: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400',
     label: 'text-gray-600 dark:text-gray-400',

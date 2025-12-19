@@ -243,7 +243,7 @@ export default function GlobalHeader() {
                 <div className={`flex items-center gap-3 px-4 py-2 rounded-xl shadow-sm transition-colors ${
                   isInternalManager 
                     ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30' 
-                    : 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-gray-200'
+                    : 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'
                 }`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     isInternalManager ? 'bg-amber-500' : 'bg-teal-500 dark:bg-teal-600'
