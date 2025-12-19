@@ -83,8 +83,19 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
   const apartmentsWithDebt = useMemo(() => {
     // Debug: Log first apartment to see data structure
     if (apartments.length > 0) {
-      console.log('[DebtReminderSender] First apartment raw data:', apartments[0]);
-      console.log('[DebtReminderSender] Available fields:', Object.keys(apartments[0]));
+      const apt = apartments[0];
+      console.log('[DebtReminderSender] First apartment RAW VALUES:', {
+        id: apt.id,
+        number: apt.number,
+        status: apt.status,
+        current_balance: apt.current_balance,
+        previous_balance: apt.previous_balance,
+        expense_share: apt.expense_share,
+        net_obligation: apt.net_obligation,
+        total_payments: apt.total_payments,
+        month_payments: apt.month_payments,
+      });
+      console.log('[DebtReminderSender] Full object:', JSON.stringify(apt, null, 2));
     }
     
     return apartments.filter(apt => {
