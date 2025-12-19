@@ -142,7 +142,8 @@ def verify_previous_balance():
         print(f"💾 Current balance από DB: {current_system_balance}€")
         print(f"🧮 Υπολογισμένο καθολικό: {global_balance}€")
         
-        if abs(current_system_balance - global_balance) < Decimal("0.01")  # TODO: Use configuration instead of hardcoded:
+        # TODO: Use configuration instead of hardcoded threshold
+        if abs(current_system_balance - global_balance) < Decimal("0.01"):
             print("✅ Τα υπόλοιπα ταιριάζουν!")
         else:
             print(f"❌ Διαφορά: {abs(current_system_balance - global_balance)}€")
@@ -151,7 +152,8 @@ def verify_previous_balance():
         print("🎯 ΣΥΜΠΕΡΑΣΜΑΤΑ")
         
         # Ελέγχει αν το προηγούμενο υπόλοιπο είναι 38,13€ όπως υποπτεύεται ο χρήστης
-        if abs(previous_balance - Decimal("38.13")  # TODO: Use configuration instead of hardcoded) < Decimal("0.01")  # TODO: Use configuration instead of hardcoded:
+        # TODO: Use configuration instead of hardcoded expected value/threshold
+        if abs(previous_balance - Decimal("38.13")) < Decimal("0.01"):
             print(f"✅ Το προηγούμενο υπόλοιπο είναι όντως 38,13€")
         else:
             print(f"❌ Το προηγούμενο υπόλοιπο ΔΕΝ είναι 38,13€, είναι {previous_balance}€")

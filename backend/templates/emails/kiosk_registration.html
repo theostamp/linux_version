@@ -1,0 +1,26 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Ολοκλήρωση εγγραφής{% endblock %}
+
+{% block content %}
+<h2>Ολοκληρώστε την εγγραφή σας</h2>
+<p>Σκανάρατε το QR code στο kiosk του κτιρίου και είστε ένα βήμα μακριά από την πλήρη πρόσβαση.</p>
+
+<div style="background-color:#f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+  <p style="margin:0;"><strong>Email:</strong> {{ invitation.email }}</p>
+  <p style="margin:0;"><strong>Κτίριο:</strong> {{ building.name }}</p>
+  {% if apartment %}<p style="margin:0;"><strong>Διαμέρισμα:</strong> {{ apartment.number }}</p>{% endif %}
+  {% if building.address %}<p style="margin:0;"><strong>Διεύθυνση:</strong> {{ building.address }}</p>{% endif %}
+</div>
+
+<p style="text-align:center; margin: 24px 0;">
+  <a class="button" href="{{ registration_url }}">Ολοκλήρωση Εγγραφής</a>
+</p>
+
+<p class="muted" style="font-size: 12px;">
+  Αυτός ο σύνδεσμος είναι έγκυρος για 7 ημέρες.
+  Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+</p>
+{% endblock %}
+
+

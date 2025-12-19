@@ -16,7 +16,8 @@ class UserAuthTests(APITestCase):
         self.me_url = reverse('me')
 
         self.user_data = {
-            'email': 'test@example.com'  # TODO: Use test fixture,
+            # TODO: Use test fixture
+            'email': 'test@example.com',
             'first_name': 'Test',
             'last_name': 'User',
             'password': 'testpass123',

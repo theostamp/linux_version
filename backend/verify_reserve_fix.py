@@ -59,7 +59,8 @@ def verify_reserve_fix():
             print(f"   Τρέχον αποθεματικό: {building.current_reserve}€")
             
             # Έλεγχος αν είναι σωστό
-            if abs(building.current_reserve - correct_reserve) < Decimal("0.01")  # TODO: Use configuration instead of hardcoded:
+            # TODO: Use configuration instead of hardcoded threshold
+            if abs(building.current_reserve - correct_reserve) < Decimal("0.01"):
                 print(f"   ✅ ΣΩΣΤΟ!")
             else:
                 print(f"   ❌ ΛΑΘΟΣ! Διαφορά: {abs(building.current_reserve - correct_reserve)}€")
@@ -76,7 +77,8 @@ def verify_reserve_fix():
         if alkmanos:
             print(f"\n🎯 ΕΙΔΙΚΟΣ ΕΛΕΓΧΟΣ ΑΛΚΜΑΝΟΣ 22:")
             print(f"   Τρέχον αποθεματικό: {alkmanos.current_reserve}€")
-            if alkmanos.current_reserve == Decimal("0.00")  # TODO: Use configuration instead of hardcoded:
+            # TODO: Use configuration instead of hardcoded expected value
+            if alkmanos.current_reserve == Decimal("0.00"):
                 print(f"   ✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ όπως πρέπει για νέο κτίριο χωρίς συναλλαγές.")
             else:
                 print(f"   ❌ ΛΑΘΟΣ! Το αποθεματικό θα έπρεπε να είναι 0€.")

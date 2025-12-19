@@ -4,9 +4,7 @@ Handles all email notifications for the Digital Concierge platform
 """
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 from django.utils import timezone
 from datetime import timedelta
 import logging
@@ -15,6 +13,7 @@ from .email_templates import EmailTemplates
 from billing.models import UserSubscription
 from users.models import CustomUser
 from .push_service import PushNotificationService
+from core.emailing import send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -80,15 +79,18 @@ class EmailNotificationService:
             if not recipient_list:
                 logger.warning("No valid email addresses found for bulk notification")
                 return False
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=recipient_list,
-                html_message=html_message,
-                fail_silently=False,
-            )
+
+            # Send individually to avoid leaking recipients in To/CC headers.
+            for email in recipient_list:
+                send_templated_email(
+                    to=email,
+                    subject=subject,
+                    template_html="emails/wrapper.html" if html_message else "emails/wrapper.html",
+                    context={
+                        "body_html": html_message or message,
+                        "wrapper_title": subject,
+                    },
+                )
             
             logger.info(f"Bulk notification sent to {len(recipient_list)} users")
             return True
@@ -111,16 +113,21 @@ class EmailNotificationService:
                 'announcement_date': announcement.created_at,
                 'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
             }
-            
-            html_message = render_to_string('emails/system_announcement.html', context)
-            plain_message = strip_tags(html_message)
-            
-            return self.send_bulk_notification(
-                active_users, 
-                subject, 
-                plain_message, 
-                html_message
-            )
+
+            # Send individually with unified base template.
+            sent_any = False
+            for user in active_users:
+                if not user.email:
+                    continue
+                ok = send_templated_email(
+                    to=user.email,
+                    subject=subject,
+                    template_html="emails/system_announcement.html",
+                    context=context,
+                    user=user,
+                )
+                sent_any = sent_any or ok
+            return sent_any
             
         except Exception as e:
             logger.error(f"Failed to send system announcement: {e}")
@@ -166,17 +173,13 @@ class EmailNotificationService:
                 'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
                 'billing_url': f"{settings.FRONTEND_URL}/billing",
             }
-            
-            html_message = render_to_string('emails/usage_limit_warning.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/usage_limit_warning.html",
+                context=context,
+                user=user,
             )
             
             logger.info(f"Usage limit warning sent to {user.email}")
@@ -915,15 +918,11 @@ class MonthlyTaskService:
         
         # Send test notification
         try:
-            from django.core.mail import send_mail
-            from django.conf import settings
-            
-            send_mail(
+            send_templated_email(
+                to=test_email,
                 subject=notification.subject,
-                message=notification.body,
-                from_email=settings.MAILERSEND_FROM_EMAIL or settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[test_email],
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": notification.body, "wrapper_title": notification.subject},
             )
             
             recipient.mark_as_sent()

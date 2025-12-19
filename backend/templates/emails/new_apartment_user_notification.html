@@ -1,0 +1,32 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Νέα εγγραφή χρήστη{% endblock %}
+
+{% block content %}
+<div class="warning">
+  <h2>Ειδοποίηση: Νέα εγγραφή</h2>
+  <p>
+    Αυτό το διαμέρισμα έχει ήδη εγγεγραμμένους χρήστες.
+    Η εγγραφή θα ολοκληρωθεί κανονικά — το email είναι μόνο για ενημέρωσή σας.
+  </p>
+</div>
+
+<h3>Νέος χρήστης</h3>
+<ul>
+  <li><strong>Όνομα:</strong> {{ invitation.first_name }} {{ invitation.last_name }}</li>
+  <li><strong>Email:</strong> {{ invitation.email }}</li>
+  <li><strong>Κτίριο:</strong> {{ building.name }}</li>
+  <li><strong>Διαμέρισμα:</strong> {{ apartment.number }}</li>
+</ul>
+
+<h3>Υπάρχοντες χρήστες στο διαμέρισμα</h3>
+<ul>
+  {% for u in existing_users %}
+    <li>{{ u.get_full_name|default:u.email }} ({{ u.email }})</li>
+  {% empty %}
+    <li>—</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+

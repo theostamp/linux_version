@@ -1,0 +1,25 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Σύνδεση{% endblock %}
+
+{% block content %}
+<h2>Αυτόματη σύνδεση</h2>
+<p>Γεια σας <strong>{{ user.first_name|default:user.email }}</strong>,</p>
+<p>
+  Έχετε ήδη λογαριασμό στο <strong>{{ building.name }}</strong>
+  {% if apartment %}στο διαμέρισμα <strong>{{ apartment.number }}</strong>{% endif %}.
+</p>
+
+<p>Πατήστε το κουμπί παρακάτω για να συνδεθείτε αυτόματα:</p>
+
+<p style="text-align:center; margin: 24px 0;">
+  <a class="button" href="{{ magic_url }}">Δείτε το Διαμέρισμά σας</a>
+</p>
+
+<p class="muted" style="font-size: 12px;">
+  Αυτός ο σύνδεσμος λήγει σε 1 ώρα για λόγους ασφαλείας.
+  Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+</p>
+{% endblock %}
+
+

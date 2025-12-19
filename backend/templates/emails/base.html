@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}New Concierge{% endblock %}</title>
+    <title>{% block title %}{{ app.name|default:"New Concierge" }}{% endblock %}</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -26,10 +26,20 @@
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
-        .logo {
+        .brand-name {
             font-size: 24px;
             font-weight: bold;
             color: #007bff;
+            margin-bottom: 10px;
+        }
+        .brand-subtitle {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .logo-img {
+            max-height: 52px;
+            max-width: 220px;
             margin-bottom: 10px;
         }
         .content {
@@ -56,6 +66,12 @@
             font-size: 12px;
             color: #666;
         }
+        .footer-block {
+            margin: 10px 0;
+        }
+        .muted {
+            color: #888;
+        }
         .warning {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -75,8 +91,22 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🏢 New Concierge</div>
-            <p>Διαχείριση Κτιρίων & Διαμερισμάτων</p>
+            {% if branding.office_logo_url %}
+                <img class="logo-img" src="{{ branding.office_logo_url }}" alt="{{ branding.office_name|default:app.name }}">
+            {% elif app.logo_url %}
+                <img class="logo-img" src="{{ app.logo_url }}" alt="{{ app.name }}">
+            {% endif %}
+
+            <div class="brand-name">
+                {{ branding.office_name|default:app.name }}
+            </div>
+            <p class="brand-subtitle">
+                {% if branding.office_name %}
+                    Γραφείο Διαχείρισης
+                {% else %}
+                    Σύστημα Διαχείρισης Πολυκατοικιών
+                {% endif %}
+            </p>
         </div>
         
         <div class="content">
@@ -84,14 +114,47 @@
         </div>
         
         <div class="footer">
-            <p>
-                <strong>New Concierge</strong><br>
-                Σύστημα Διαχείρισης Κτιρίων<br>
-                Εάν δεν αναμένατε αυτό το email, παρακαλούμε αγνοήστε το.
-            </p>
-            <p>
-                © 2024 New Concierge. Όλα τα δικαιώματα διατηρούνται.
-            </p>
+            {% if branding.office_name or branding.office_phone or branding.office_address %}
+                <div class="footer-block">
+                    <strong>{{ branding.office_name|default:"Στοιχεία Γραφείου" }}</strong><br>
+                    {% if branding.office_phone %}Τηλ: {{ branding.office_phone }}<br>{% endif %}
+                    {% if branding.office_phone_emergency %}Τηλ. ανάγκης: {{ branding.office_phone_emergency }}<br>{% endif %}
+                    {% if branding.office_address %}{{ branding.office_address }}<br>{% endif %}
+                </div>
+            {% endif %}
+
+            {% if branding.bank_iban or branding.bank_name or branding.bank_beneficiary %}
+                <div class="footer-block">
+                    <strong>Στοιχεία Πληρωμής</strong><br>
+                    {% if branding.bank_iban %}IBAN: <span style="font-family: monospace;">{{ branding.bank_iban }}</span><br>{% endif %}
+                    {% if branding.bank_name %}Τράπεζα: {{ branding.bank_name }}<br>{% endif %}
+                    {% if branding.bank_beneficiary %}Δικαιούχος: {{ branding.bank_beneficiary }}<br>{% endif %}
+                </div>
+            {% endif %}
+
+            <div class="footer-block muted">
+                Αυτό το email στάλθηκε αυτόματα. Αν δεν αναμένατε αυτό το μήνυμα, μπορείτε να το αγνοήσετε.
+            </div>
+
+            <div class="footer-block">
+                <strong>{{ app.name|default:"New Concierge" }}</strong>
+                {% if app.url %}
+                    — <a href="{{ app.url }}">{{ app.url }}</a>
+                {% endif %}
+                <br>
+                {% if app.support_email %}
+                    Υποστήριξη: <a href="mailto:{{ app.support_email }}">{{ app.support_email }}</a>
+                {% endif %}
+                {% if app.terms_url or app.privacy_url %}
+                    <br>
+                    {% if app.terms_url %}<a href="{{ app.terms_url }}">Όροι Χρήσης</a>{% endif %}
+                    {% if app.privacy_url %}{% if app.terms_url %} · {% endif %}<a href="{{ app.privacy_url }}">Πολιτική Απορρήτου</a>{% endif %}
+                {% endif %}
+            </div>
+
+            <div class="footer-block muted">
+                © {{ year }} {{ app.name|default:"New Concierge" }}. Όλα τα δικαιώματα διατηρούνται.
+            </div>
         </div>
     </div>
 </body>

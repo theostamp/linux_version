@@ -19,6 +19,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
 from .push_service import PushNotificationService
+from core.emailing import extract_legacy_body_html, send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -505,19 +506,10 @@ class CommonExpenseNotificationService:
                         """ + html_content
                 
                 # Create email
-                from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or \
-                            getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@newconcierge.app')
+                # Note: we use send_templated_email() to enforce consistent header/footer branding.
+                # We'll pass the generated HTML as legacy body and wrap it with `emails/wrapper.html`.
                 
-                email = EmailMultiAlternatives(
-                    subject=subject,
-                    body=text_content,
-                    from_email=from_email,
-                    to=[recipient_email]
-                )
-                
-                if html_content:
-                    email.attach_alternative(html_content, 'text/html')
-                
+                attachments = []
                 # Attach the sheet if available
                 if attachment_path:
                     try:
@@ -526,12 +518,21 @@ class CommonExpenseNotificationService:
                                 content = f.read()
                                 filename = attachment_path.split('/')[-1]
                                 mimetype, _ = mimetypes.guess_type(filename)
-                                email.attach(filename, content, mimetype or 'application/octet-stream')
+                                attachments.append((filename, content, mimetype or 'application/octet-stream'))
                     except Exception as attach_error:
                         logger.warning(f"Could not attach file: {attach_error}")
                 
                 # Send email
-                email.send()
+                body_html = extract_legacy_body_html(html=html_content) if html_content else ""
+                send_templated_email(
+                    to=recipient_email,
+                    subject=subject,
+                    template_html="emails/wrapper.html",
+                    context={"body_html": body_html, "wrapper_title": subject},
+                    sender_user=sender_user,
+                    building_manager_id=getattr(building, "manager_id", None),
+                    attachments=attachments or None,
+                )
                 
                 results['sent_count'] += 1
                 results['details'].append({

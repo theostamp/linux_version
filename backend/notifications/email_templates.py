@@ -10,6 +10,8 @@ from django.utils.html import strip_tags
 from django.template import Context, Template
 import logging
 
+from core.emailing import extract_legacy_body_html, get_app_branding, send_templated_email
+
 logger = logging.getLogger(__name__)
 
 class EmailTemplates:
@@ -26,19 +28,15 @@ class EmailTemplates:
                 'building_name': building_name,
                 'login_url': f"{settings.FRONTEND_URL}/login",
                 'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
-                'support_email': settings.SUPPORT_EMAIL,
+                'support_email': get_app_branding().get("support_email"),
             }
             
-            html_message = render_to_string('emails/welcome_email.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": extract_legacy_body_html(html=render_to_string('emails/welcome_email.html', context)), "wrapper_title": subject},
+                user=user,
             )
             
             logger.info(f"Welcome email sent to {user.email}")
@@ -64,16 +62,12 @@ class EmailTemplates:
                 'billing_url': f"{settings.FRONTEND_URL}/billing",
             }
             
-            html_message = render_to_string('emails/payment_confirmation.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": extract_legacy_body_html(html=render_to_string('emails/payment_confirmation.html', context)), "wrapper_title": subject},
+                user=user,
             )
             
             logger.info(f"Payment confirmation email sent to {user.email}")
@@ -97,19 +91,15 @@ class EmailTemplates:
                 'renewal_date': subscription.current_period_end,
                 'days_until_renewal': days_until_renewal,
                 'billing_url': f"{settings.FRONTEND_URL}/billing",
-                'support_email': settings.SUPPORT_EMAIL,
+                'support_email': get_app_branding().get("support_email"),
             }
             
-            html_message = render_to_string('emails/subscription_renewal.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": extract_legacy_body_html(html=render_to_string('emails/subscription_renewal.html', context)), "wrapper_title": subject},
+                user=user,
             )
             
             logger.info(f"Subscription renewal reminder sent to {user.email}")
@@ -131,19 +121,15 @@ class EmailTemplates:
                 'user_name': user.name,
                 'reset_url': reset_url,
                 'expiry_hours': 24,
-                'support_email': settings.SUPPORT_EMAIL,
+                'support_email': get_app_branding().get("support_email"),
             }
             
-            html_message = render_to_string('emails/password_reset.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": extract_legacy_body_html(html=render_to_string('emails/password_reset.html', context)), "wrapper_title": subject},
+                user=user,
             )
             
             logger.info(f"Password reset email sent to {user.email}")
@@ -164,19 +150,15 @@ class EmailTemplates:
                 'status': status,
                 'reason': reason,
                 'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
-                'support_email': settings.SUPPORT_EMAIL,
+                'support_email': get_app_branding().get("support_email"),
             }
             
-            html_message = render_to_string('emails/account_status.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": extract_legacy_body_html(html=render_to_string('emails/account_status.html', context)), "wrapper_title": subject},
+                user=user,
             )
             
             logger.info(f"Account status notification sent to {user.email}")
@@ -199,19 +181,15 @@ class EmailTemplates:
                 'scheduled_time': maintenance_info.get('scheduled_time', ''),
                 'estimated_duration': maintenance_info.get('estimated_duration', ''),
                 'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
-                'support_email': settings.SUPPORT_EMAIL,
+                'support_email': get_app_branding().get("support_email"),
             }
             
-            html_message = render_to_string('emails/maintenance_notification.html', context)
-            plain_message = strip_tags(html_message)
-            
-            send_mail(
+            send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": extract_legacy_body_html(html=render_to_string('emails/maintenance_notification.html', context)), "wrapper_title": subject},
+                user=user,
             )
             
             logger.info(f"Maintenance notification sent to {user.email}")

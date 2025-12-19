@@ -15,13 +15,13 @@ from typing import Dict, List, Tuple, Optional, Any
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Sum, Q
-from django.core.mail import send_mail
 from django.conf import settings
 
 from apartments.models import Apartment
 from buildings.models import Building
 from financial.models import Payment, Transaction
 from users.models import CustomUser
+from core.emailing import plain_text_to_html, send_templated_email
 
 
 class BalanceIntegrityService:
@@ -421,7 +421,12 @@ class BalanceIntegrityService:
 """
             
             try:
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [admin_email])
+                send_templated_email(
+                    to=admin_email,
+                    subject=subject,
+                    template_html="emails/wrapper.html",
+                    context={"body_html": plain_text_to_html(message), "wrapper_title": subject},
+                )
                 print(f"📧 Εστάλη ειδοποίηση στο {admin_email}")
             except Exception as e:
                 print(f"❌ Σφάλμα αποστολής email: {e}")

@@ -1,0 +1,23 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Προειδοποίηση Ορίου Χρήσης{% endblock %}
+
+{% block content %}
+<div class="warning">
+  <h2>Προειδοποίηση Ορίου Χρήσης</h2>
+  <p>Γεια σας <strong>{{ user_name }}</strong>,</p>
+  <p>
+    Η χρήση για <strong>{{ usage_type }}</strong> έχει φτάσει στο <strong>{{ percentage|floatformat:0 }}%</strong>
+    ({{ current_usage }} από {{ limit }}).
+  </p>
+</div>
+
+{% if dashboard_url or billing_url %}
+  <div style="text-align:center; margin: 24px 0;">
+    {% if dashboard_url %}<a class="button" href="{{ dashboard_url }}">Dashboard</a>{% endif %}
+    {% if billing_url %}<a class="button" href="{{ billing_url }}" style="background-color:#6c757d;">Billing</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}
+
+

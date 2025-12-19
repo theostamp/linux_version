@@ -109,7 +109,7 @@ class Command(BaseCommand):
     def dry_run_analysis(self):
         """Εμφανίζει ανάλυση των δεδομένων που θα διαγραφούν"""
         
-        self.stdout.write('\n📊 ΑΝΑΛΥΣΗ ΔΕΔΟΜΕΝΩΝ ΠΟΥ ΘΑ ΔΙΑΓΡΑΦΟΥΝ:")
+        self.stdout.write('\n📊 ΑΝΑΛΥΣΗ ΔΕΔΟΜΕΝΩΝ ΠΟΥ ΘΑ ΔΙΑΓΡΑΦΟΥΝ:')
         self.stdout.write('=' * 50)
         
         # Έλεγχος για οικονομικά δεδομένα

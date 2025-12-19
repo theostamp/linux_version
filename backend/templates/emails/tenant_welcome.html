@@ -1,0 +1,27 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Το Workspace σας είναι έτοιμο{% endblock %}
+
+{% block content %}
+<div class="success">
+  <h2>Καλώς ήρθατε στο {{ app.name|default:"New Concierge" }}!</h2>
+  <p>Γεια σας <strong>{{ user.first_name|default:user.email }}</strong>,</p>
+  <p>Το workspace σας <strong>{{ tenant.name }}</strong> δημιουργήθηκε επιτυχώς!</p>
+</div>
+
+<div style="background-color:#f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+  <p style="margin:0;"><strong>Domain:</strong> {{ domain.domain }}</p>
+  <p style="margin:0;"><strong>Email:</strong> {{ user.email }}</p>
+  <p style="margin:0;"><strong>Ρόλος:</strong> Manager</p>
+</div>
+
+<p style="text-align:center; margin: 24px 0;">
+  <a class="button" href="{{ access_url }}">Πρόσβαση στο Workspace</a>
+</p>
+
+<p class="muted" style="font-size: 12px;">
+  Αυτό το link είναι έγκυρο για 24 ώρες. Μετά μπορείτε να συνδεθείτε κανονικά με το email και τον κωδικό σας.
+</p>
+{% endblock %}
+
+

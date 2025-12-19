@@ -31,7 +31,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
         # Create user
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com'  # TODO: Use test fixture,
+            # TODO: Use test fixture
+            email='test@example.com',
             password='testpass123'
         )
         
@@ -397,14 +398,16 @@ class FinancialPermissionsTestCase(TestCase):
         # Create different types of users
         self.admin_user = User.objects.create_user(
             username='admin',
-            email='admin@example.com'  # TODO: Use test fixture,
+            # TODO: Use test fixture
+            email='admin@example.com',
             password='adminpass123',
             is_staff=True
         )
         
         self.regular_user = User.objects.create_user(
             username='user',
-            email='user@example.com'  # TODO: Use test fixture,
+            # TODO: Use test fixture
+            email='user@example.com',
             password='userpass123'
         )
         

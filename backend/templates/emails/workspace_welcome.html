@@ -1,0 +1,22 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Ο χώρος εργασίας σας είναι έτοιμος{% endblock %}
+
+{% block content %}
+<div class="success">
+  <h2>Ο χώρος εργασίας σας είναι έτοιμος!</h2>
+  <p>Γεια σας <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+  <p>Ο χώρος εργασίας σας δημιουργήθηκε επιτυχώς και είναι έτοιμος για χρήση.</p>
+</div>
+
+<h3>Σύνδεσμος</h3>
+<p style="text-align:center; margin: 24px 0;">
+  <a class="button" href="{{ workspace_url }}">Άνοιγμα Workspace</a>
+</p>
+
+<div class="warning">
+  <p><strong>Σημείωση:</strong> Αν δεν είστε ήδη συνδεδεμένος/η, θα σας ζητηθεί σύνδεση.</p>
+</div>
+{% endblock %}
+
+

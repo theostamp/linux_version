@@ -15,6 +15,7 @@ import hmac
 import base64
 
 from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
+from core.emailing import extract_legacy_body_html, send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -223,22 +224,18 @@ def send_assembly_reminder_email(
         # Render email with tone-specific subject
         subject = f"{tone_config['subject_prefix']} {tone_config['subject_text']} - {assembly.title}"
         
-        html_content = render_to_string('assemblies/emails/reminder.html', context)
-        text_content = strip_tags(html_content)
-        
-        # Create email
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@newconcierge.gr')
-        
-        email = EmailMultiAlternatives(
+        legacy_html = render_to_string('assemblies/emails/reminder.html', context)
+        send_templated_email(
+            to=user.email,
             subject=subject,
-            body=text_content,
-            from_email=from_email,
-            to=[user.email],
+            template_html="emails/wrapper.html",
+            context={
+                "body_html": extract_legacy_body_html(html=legacy_html),
+                "wrapper_title": subject,
+            },
+            user=user,
+            building_manager_id=getattr(assembly.building, "manager_id", None),
         )
-        email.attach_alternative(html_content, "text/html")
-        
-        # Send
-        email.send(fail_silently=False)
         
         logger.info(f"Sent assembly reminder to {user.email} for assembly {assembly.id}")
         return True
@@ -294,20 +291,18 @@ def send_vote_confirmation_email(
         
         subject = f"✅ Επιβεβαίωση ψήφου - {assembly.title}"
         
-        html_content = render_to_string('assemblies/emails/vote_confirmation.html', context)
-        text_content = strip_tags(html_content)
-        
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@newconcierge.gr')
-        
-        email = EmailMultiAlternatives(
+        legacy_html = render_to_string('assemblies/emails/vote_confirmation.html', context)
+        send_templated_email(
+            to=user.email,
             subject=subject,
-            body=text_content,
-            from_email=from_email,
-            to=[user.email],
+            template_html="emails/wrapper.html",
+            context={
+                "body_html": extract_legacy_body_html(html=legacy_html),
+                "wrapper_title": subject,
+            },
+            user=user,
+            building_manager_id=getattr(assembly.building, "manager_id", None),
         )
-        email.attach_alternative(html_content, "text/html")
-        
-        email.send(fail_silently=False)
         
         logger.info(f"Sent vote confirmation to {user.email} for assembly {assembly.id}")
         return True

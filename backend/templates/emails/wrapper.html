@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+
+{% block title %}{% if wrapper_title %}{{ wrapper_title }}{% else %}{{ app.name|default:"New Concierge" }}{% endif %}{% endblock %}
+
+{% block content %}
+{{ body_html|safe }}
+{% endblock %}
+
+

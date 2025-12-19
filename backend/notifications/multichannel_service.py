@@ -20,6 +20,7 @@ from .providers.base import ChannelType, ProviderResult
 from .providers.sms_providers import SMSProviderFactory
 from .providers.viber_provider import ViberProvider, MockViberProvider
 from .providers.push_provider import PushNotificationProvider, MockPushProvider
+from core.emailing import extract_legacy_body_html, plain_text_to_html, send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -324,20 +325,13 @@ class MultiChannelNotificationService:
         - MAILERSEND_API_KEY
         - MAILERSEND_FROM_EMAIL
         """
-        from django.core.mail import send_mail
-        
         try:
-            # Use MAILERSEND_FROM_EMAIL if available, otherwise DEFAULT_FROM_EMAIL
-            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or \
-                        getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@newconcierge.app')
-            
-            send_mail(
+            body_html = extract_legacy_body_html(html=html_message) if html_message else plain_text_to_html(message)
+            send_templated_email(
+                to=to_email,
                 subject=subject,
-                message=message,
-                from_email=from_email,
-                recipient_list=[to_email],
-                html_message=html_message,
-                fail_silently=False,
+                template_html="emails/wrapper.html",
+                context={"body_html": body_html, "wrapper_title": subject},
             )
             logger.info(f"Email sent successfully via MailerSend to {to_email}")
             return True

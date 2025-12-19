@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
 from .models import UserInvitation, PasswordResetToken
+from core.emailing import send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +53,7 @@ class EmailService:
         # Email content
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Επιβεβαίωση Email"
         
-        # Render HTML template
-        html_content = render_to_string('emails/email_verification.html', {
-            'user': user,
-            'verification_url': verification_url,
-        })
-        
-        # Plain text version
+        # Plain text fallback
         message = f"""
         Γεια σας {user.first_name},
 
@@ -76,18 +71,13 @@ class EmailService:
         """
         
         try:
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            # Create email with both HTML and text content
-            msg = EmailMultiAlternatives(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email]
+            sent = send_templated_email(
+                to=user.email,
+                subject=subject,
+                template_html="emails/email_verification.html",
+                context={"user": user, "verification_url": verification_url},
+                user=user,
             )
-            msg.attach_alternative(html_content, "text/html")
-            sent = msg.send(fail_silently=False)
             if not sent:
                 EmailService._log_not_sent(
                     "verification",
@@ -141,13 +131,6 @@ class EmailService:
             except:
                 pass
         
-        # Render HTML template
-        html_content = render_to_string('emails/user_invitation.html', {
-            'invitation': invitation,
-            'invitation_url': invitation_url,
-            'building_name': building_name,
-        })
-        
         # Plain text version
         building_info = f"\nΚτίριο: {building_name}" if building_name else ""
         role_info = f"\nΡόλος: {invitation.assigned_role}" if invitation.assigned_role else ""
@@ -169,18 +152,17 @@ class EmailService:
         """
         
         try:
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            # Create email with both HTML and text content
-            msg = EmailMultiAlternatives(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [invitation.email]
+            sent = send_templated_email(
+                to=invitation.email,
+                subject=subject,
+                template_html="emails/user_invitation.html",
+                context={
+                    "invitation": invitation,
+                    "invitation_url": invitation_url,
+                    "building_name": building_name,
+                },
+                sender_user=getattr(invitation, "invited_by", None),
             )
-            msg.attach_alternative(html_content, "text/html")
-            sent = msg.send(fail_silently=False)
             if not sent:
                 EmailService._log_not_sent(
                     "invitation",
@@ -202,12 +184,6 @@ class EmailService:
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Επαναφορά Κωδικού"
         
-        # Render HTML template
-        html_content = render_to_string('emails/password_reset.html', {
-            'user': user,
-            'reset_url': reset_url,
-        })
-        
         # Plain text version
         message = f"""
         Γεια σας {user.first_name},
@@ -226,18 +202,13 @@ class EmailService:
         """
         
         try:
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            # Create email with both HTML and text content
-            msg = EmailMultiAlternatives(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email]
+            sent = send_templated_email(
+                to=user.email,
+                subject=subject,
+                template_html="emails/password_reset.html",
+                context={"user": user, "reset_url": reset_url},
+                user=user,
             )
-            msg.attach_alternative(html_content, "text/html")
-            sent = msg.send(fail_silently=False)
             if not sent:
                 EmailService._log_not_sent(
                     "password_reset",
@@ -259,13 +230,6 @@ class EmailService:
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Άνοιγμα σε υπολογιστή"
 
         try:
-            from django.core.mail import EmailMultiAlternatives
-
-            html_content = render_to_string('emails/my_apartment_link.html', {
-                'user': user,
-                'link_url': link_url,
-            })
-
             message = f"""
             Γεια σας {user.first_name or ''},
 
@@ -274,15 +238,13 @@ class EmailService:
 
             Σημείωση: Αν δεν είστε ήδη συνδεδεμένος/η, θα σας ζητηθεί σύνδεση.
             """
-
-            msg = EmailMultiAlternatives(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
+            sent = send_templated_email(
+                to=user.email,
+                subject=subject,
+                template_html="emails/my_apartment_link.html",
+                context={"user": user, "link_url": link_url},
+                user=user,
             )
-            msg.attach_alternative(html_content, "text/html")
-            sent = msg.send(fail_silently=False)
             if not sent:
                 logger.error(
                     "My-apartment link email send returned 0 (not sent). backend=%s to=%s",
@@ -304,13 +266,6 @@ class EmailService:
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Καλώς ήρθατε!"
         
-        # Render HTML template
-        html_content = render_to_string('emails/welcome.html', {
-            'user': user,
-            'login_url': login_url,
-            'frontend_url': settings.FRONTEND_URL,
-        })
-        
         # Plain text version
         message = f"""
         Γεια σας {user.first_name} {user.last_name},
@@ -328,18 +283,13 @@ class EmailService:
         """
         
         try:
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            # Create email with both HTML and text content
-            msg = EmailMultiAlternatives(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email]
+            sent = send_templated_email(
+                to=user.email,
+                subject=subject,
+                template_html="emails/welcome.html",
+                context={"user": user, "login_url": login_url, "frontend_url": settings.FRONTEND_URL},
+                user=user,
             )
-            msg.attach_alternative(html_content, "text/html")
-            sent = msg.send(fail_silently=False)
             if not sent:
                 EmailService._log_not_sent(
                     "welcome",
@@ -392,12 +342,12 @@ class EmailService:
         """
 
         try:
-            sent = send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
+            sent = send_templated_email(
+                to=user.email,
+                subject=subject,
+                template_html="emails/workspace_welcome.html",
+                context={"user": user, "workspace_url": workspace_url},
+                user=user,
             )
             if not sent:
                 EmailService._log_not_sent(
@@ -419,13 +369,6 @@ class EmailService:
         try:
             subject = f"{settings.EMAIL_SUBJECT_PREFIX}Invoice #{billing_cycle.id:06d} Ready for Payment"
             
-            # Render HTML template
-            html_content = render_to_string('emails/invoice_notification.html', {
-                'user': user,
-                'billing_cycle': billing_cycle,
-                'frontend_url': settings.FRONTEND_URL,
-            })
-            
             # Plain text version
             message = f"""
             Hello {user.first_name or user.email},
@@ -445,21 +388,17 @@ class EmailService:
             Best regards,
             New Concierge Team
             """
-            
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            email = EmailMultiAlternatives(
+
+            sent = send_templated_email(
+                to=user.email,
                 subject=subject,
-                body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email]
+                template_html="emails/invoice_notification.html",
+                context={"user": user, "billing_cycle": billing_cycle, "frontend_url": settings.FRONTEND_URL},
+                user=user,
             )
-            email.attach_alternative(html_content, "text/html")
-            email.send()
             
             logger.info(f"Sent invoice notification email to {user.email}")
-            return True
+            return sent
             
         except Exception as e:
             logger.error(f"Failed to send invoice notification to {user.email}: {e}")
@@ -472,13 +411,6 @@ class EmailService:
         """
         try:
             subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Confirmation - Invoice #{billing_cycle.id:06d}"
-            
-            # Render HTML template
-            html_content = render_to_string('emails/payment_confirmation.html', {
-                'user': user,
-                'billing_cycle': billing_cycle,
-                'frontend_url': settings.FRONTEND_URL,
-            })
             
             # Plain text version
             message = f"""
@@ -501,21 +433,17 @@ class EmailService:
             Best regards,
             New Concierge Team
             """
-            
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            email = EmailMultiAlternatives(
+
+            sent = send_templated_email(
+                to=user.email,
                 subject=subject,
-                body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email]
+                template_html="emails/payment_confirmation.html",
+                context={"user": user, "billing_cycle": billing_cycle, "frontend_url": settings.FRONTEND_URL},
+                user=user,
             )
-            email.attach_alternative(html_content, "text/html")
-            email.send()
             
             logger.info(f"Sent payment confirmation email to {user.email}")
-            return True
+            return sent
             
         except Exception as e:
             logger.error(f"Failed to send payment confirmation to {user.email}: {e}")
@@ -528,14 +456,6 @@ class EmailService:
         """
         try:
             subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Failed - Invoice #{billing_cycle.id:06d}"
-            
-            # Render HTML template
-            html_content = render_to_string('emails/payment_failure.html', {
-                'user': user,
-                'billing_cycle': billing_cycle,
-                'failure_reason': failure_reason,
-                'frontend_url': settings.FRONTEND_URL,
-            })
             
             # Plain text version
             message = f"""
@@ -559,21 +479,22 @@ class EmailService:
             Best regards,
             New Concierge Team
             """
-            
-            # Import EmailMultiAlternatives here to avoid circular imports
-            from django.core.mail import EmailMultiAlternatives
-            
-            email = EmailMultiAlternatives(
+
+            sent = send_templated_email(
+                to=user.email,
                 subject=subject,
-                body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email]
+                template_html="emails/payment_failure.html",
+                context={
+                    "user": user,
+                    "billing_cycle": billing_cycle,
+                    "failure_reason": failure_reason,
+                    "frontend_url": settings.FRONTEND_URL,
+                },
+                user=user,
             )
-            email.attach_alternative(html_content, "text/html")
-            email.send()
             
             logger.info(f"Sent payment failure notification to {user.email}")
-            return True
+            return sent
             
         except Exception as e:
             logger.error(f"Failed to send payment failure notification to {user.email}: {e}")
@@ -597,49 +518,15 @@ class EmailService:
         access_url = f"{frontend_url}/tenant/accept?token={secure_token}"
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {tenant.name}"
-        
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2>Καλώς ήρθατε στο New Concierge!</h2>
-            <p>Γεια σας {user.first_name},</p>
-            <p>Το workspace σας <strong>{tenant.name}</strong> δημιουργήθηκε επιτυχώς!</p>
-            
-            <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                <h3>Στοιχεία Πρόσβασης:</h3>
-                <p><strong>Domain:</strong> {domain.domain}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Ρόλος:</strong> Manager (Διαχειριστής)</p>
-            </div>
-            
-            <p>
-                <a href="{access_url}" 
-                   style="background: #4CAF50; color: white; padding: 12px 24px; 
-                          text-decoration: none; border-radius: 4px; display: inline-block;">
-                    Πρόσβαση στο Workspace
-                </a>
-            </p>
-            
-            <p style="color: #666; font-size: 14px;">
-                Αυτό το link είναι έγκυρο για 24 ώρες. Μετά μπορείτε να συνδεθείτε κανονικά με το email και password σας.
-            </p>
-            
-            <p>Καλή αρχή!</p>
-            <p>Η Ομάδα του New Concierge</p>
-        </body>
-        </html>
-        """
-        
         try:
-            send_mail(
+            return send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=strip_tags(html_content),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_content,
-                fail_silently=False,
+                template_html="emails/tenant_welcome.html",
+                context={"user": user, "tenant": tenant, "domain": domain, "access_url": access_url},
+                user=user,
+                tenant_id=getattr(tenant, "id", None),
             )
-            return True
         except Exception as e:
             logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
             return False
@@ -674,48 +561,6 @@ class EmailService:
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ολοκληρώστε την εγγραφή σας - {building.name}"
         
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-                <h2 style="color: #1e3a5f; margin-top: 0;">Καλώς ήρθατε στο {building.name}!</h2>
-                
-                <p>Σκανάρατε το QR code στο kiosk του κτιρίου και είστε ένα βήμα μακριά από την πλήρη πρόσβαση.</p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
-                    <p style="margin: 0;"><strong>Email:</strong> {invitation.email}</p>
-                    <p style="margin: 0;"><strong>Κτίριο:</strong> {building.name}</p>
-                    {apartment_info}
-                    {f'<p style="margin: 0;"><strong>Διεύθυνση:</strong> {building.address}</p>' if building.address else ''}
-                </div>
-                
-                <p style="text-align: center;">
-                    <a href="{registration_url}" 
-                       style="background: #4CAF50; color: white; padding: 15px 30px; 
-                              text-decoration: none; border-radius: 8px; display: inline-block;
-                              font-size: 16px; font-weight: bold;">
-                        Ολοκλήρωση Εγγραφής
-                    </a>
-                </p>
-                
-                <p style="color: #666; font-size: 14px; text-align: center;">
-                    Αυτός ο σύνδεσμος είναι έγκυρος για 7 ημέρες.
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                
-                <p style="color: #888; font-size: 12px;">
-                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
         message = f"""
 Καλώς ήρθατε στο {building.name}!
 
@@ -735,16 +580,27 @@ Email: {invitation.email}
         """
         
         try:
-            send_mail(
+            sent = send_templated_email(
+                to=invitation.email,
                 subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[invitation.email],
-                html_message=html_content,
-                fail_silently=False,
+                template_html="emails/kiosk_registration.html",
+                context={
+                    "invitation": invitation,
+                    "building": building,
+                    "apartment": apartment,
+                    "registration_url": registration_url,
+                },
+                sender_user=None,
+                building_manager_id=getattr(building, "manager_id", None),
             )
+            if not sent:
+                EmailService._log_not_sent(
+                    "kiosk_registration",
+                    invitation.email,
+                    {"building_id": getattr(building, "id", None)},
+                )
             logger.info(f"Sent kiosk registration email to {invitation.email}")
-            return True
+            return sent
         except Exception as e:
             logger.error(f"Failed to send kiosk registration email to {invitation.email}: {e}")
             return False
@@ -775,42 +631,6 @@ Email: {invitation.email}
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Έχετε ήδη λογαριασμό - {building.name}"
         
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-                <h2 style="color: #1e3a5f; margin-top: 0;">Γεια σας {user.first_name or ''}!</h2>
-                
-                <p>Προσπαθήσατε να εγγραφείτε μέσω του kiosk στο <strong>{building.name}</strong>, αλλά έχετε ήδη λογαριασμό με το email <strong>{user.email}</strong>.</p>
-                
-                <p style="text-align: center;">
-                    <a href="{login_url}" 
-                       style="background: #2196F3; color: white; padding: 15px 30px; 
-                              text-decoration: none; border-radius: 8px; display: inline-block;
-                              font-size: 16px; font-weight: bold; margin: 10px;">
-                        Σύνδεση
-                    </a>
-                </p>
-                
-                <p style="text-align: center; color: #666;">
-                    Ξεχάσατε τον κωδικό σας? 
-                    <a href="{reset_url}" style="color: #2196F3;">Επαναφορά κωδικού</a>
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                
-                <p style="color: #888; font-size: 12px;">
-                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
         message = f"""
 Γεια σας {user.first_name or ''}!
 
@@ -824,13 +644,13 @@ Email: {invitation.email}
         """
         
         try:
-            sent = send_mail(
+            sent = send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_content,
-                fail_silently=False,
+                template_html="emails/login_reminder.html",
+                context={"user": user, "building": building, "login_url": login_url, "reset_url": reset_url},
+                user=user,
+                building_manager_id=getattr(building, "manager_id", None),
             )
             if not sent:
                 EmailService._log_not_sent(
@@ -878,45 +698,6 @@ Email: {invitation.email}
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Σύνδεση - {building.name}"
         
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0;">🏢 New Concierge</h1>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-                <h2 style="color: #1e3a5f; margin-top: 0;">Καλωσήρθατε, {user.first_name or user.email}! 🎉</h2>
-                
-                <p>Έχετε ήδη λογαριασμό στο <strong>{building.name}</strong>{apartment_info}.</p>
-                
-                <p>Πατήστε το κουμπί παρακάτω για να συνδεθείτε αυτόματα και να δείτε το διαμέρισμά σας:</p>
-                
-                <p style="text-align: center;">
-                    <a href="{magic_url}" 
-                       style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
-                              color: white; padding: 18px 40px; 
-                              text-decoration: none; border-radius: 8px; display: inline-block;
-                              font-size: 18px; font-weight: bold; margin: 15px 0;
-                              box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);">
-                        🏠 Δείτε το Διαμέρισμά σας
-                    </a>
-                </p>
-                
-                <p style="text-align: center; color: #888; font-size: 13px;">
-                    Αυτός ο σύνδεσμος λήγει σε 1 ώρα για λόγους ασφαλείας.
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                
-                <p style="color: #888; font-size: 12px;">
-                    Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
         message = f"""
 Καλωσήρθατε, {user.first_name or user.email}!
 
@@ -932,13 +713,13 @@ Email: {invitation.email}
         """
         
         try:
-            sent = send_mail(
+            sent = send_templated_email(
+                to=user.email,
                 subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_content,
-                fail_silently=False,
+                template_html="emails/magic_login.html",
+                context={"user": user, "building": building, "apartment": apartment, "magic_url": magic_url},
+                user=user,
+                building_manager_id=getattr(building, "manager_id", None),
             )
             if not sent:
                 EmailService._log_not_sent(
@@ -974,52 +755,6 @@ Email: {invitation.email}
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Νέα εγγραφή - Διαμέρισμα {apartment.number} ({building.name})"
         
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0;">🔔 Ειδοποίηση Διαχειριστή</h1>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-                <h2 style="color: #1e3a5f; margin-top: 0;">Νέα εγγραφή χρήστη</h2>
-                
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff9800;">
-                    <p style="margin: 0; color: #856404;">
-                        <strong>Σημείωση:</strong> Αυτό το διαμέρισμα έχει ήδη εγγεγραμμένους χρήστες.
-                    </p>
-                </div>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
-                    <h3 style="margin-top: 0; color: #1e3a5f;">Νέος χρήστης:</h3>
-                    <p style="margin: 5px 0;"><strong>Όνομα:</strong> {invitation.first_name} {invitation.last_name}</p>
-                    <p style="margin: 5px 0;"><strong>Email:</strong> {invitation.email}</p>
-                    <p style="margin: 5px 0;"><strong>Διαμέρισμα:</strong> {apartment.number}</p>
-                    <p style="margin: 5px 0;"><strong>Κτίριο:</strong> {building.name}</p>
-                </div>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
-                    <h3 style="margin-top: 0; color: #1e3a5f;">Υπάρχοντες χρήστες στο διαμέρισμα:</h3>
-                    <ul style="margin: 10px 0; padding-left: 20px;">
-                        {existing_users_html}
-                    </ul>
-                </div>
-                
-                <p style="color: #666; font-size: 14px;">
-                    Η εγγραφή θα ολοκληρωθεί κανονικά. Αυτή η ειδοποίηση είναι μόνο για ενημέρωσή σας.
-                    Αν χρειάζεται κάποια ενέργεια, μπορείτε να διαχειριστείτε τους χρήστες από τον πίνακα ελέγχου.
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                
-                <p style="color: #888; font-size: 12px;">
-                    Αυτό είναι αυτόματο μήνυμα από το σύστημα New Concierge.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
         message = f"""
 Νέα εγγραφή χρήστη στο διαμέρισμα {apartment.number}
 
@@ -1041,16 +776,27 @@ Email: {invitation.email}
         """
         
         try:
-            send_mail(
+            sent = send_templated_email(
+                to=manager.email,
                 subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[manager.email],
-                html_message=html_content,
-                fail_silently=False,
+                template_html="emails/new_apartment_user_notification.html",
+                context={
+                    "invitation": invitation,
+                    "building": building,
+                    "apartment": apartment,
+                    "existing_users": [m.resident for m in existing_users],
+                },
+                sender_user=manager,
+                building_manager_id=getattr(building, "manager_id", None),
             )
+            if not sent:
+                EmailService._log_not_sent(
+                    "new_apartment_user_notification",
+                    manager.email,
+                    {"building_id": getattr(building, "id", None), "apartment_id": getattr(apartment, "id", None)},
+                )
             logger.info(f"Sent new apartment user notification to {manager.email} for apartment {apartment.number}")
-            return True
+            return sent
         except Exception as e:
             logger.error(f"Failed to send new apartment user notification: {e}")
             return False

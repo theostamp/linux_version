@@ -1,0 +1,26 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Έχετε ήδη λογαριασμό{% endblock %}
+
+{% block content %}
+<h2>Έχετε ήδη λογαριασμό</h2>
+<p>Γεια σας <strong>{{ user.first_name|default:user.email }}</strong>,</p>
+<p>
+  Προσπαθήσατε να εγγραφείτε μέσω του kiosk στο <strong>{{ building.name }}</strong>,
+  αλλά έχετε ήδη λογαριασμό με το email <strong>{{ user.email }}</strong>.
+</p>
+
+<p style="text-align:center; margin: 24px 0;">
+  <a class="button" href="{{ login_url }}">Σύνδεση</a>
+</p>
+
+<p style="text-align:center;">
+  Ξεχάσατε τον κωδικό σας; <a href="{{ reset_url }}">Επαναφορά κωδικού</a>
+</p>
+
+<p class="muted" style="font-size: 12px;">
+  Αν δεν σκανάρατε εσείς το QR code, παρακαλώ αγνοήστε αυτό το email.
+</p>
+{% endblock %}
+
+

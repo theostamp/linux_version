@@ -39,10 +39,15 @@ interface ApartmentWithBalance {
   // Financial fields from apartment_balances endpoint
   previous_balance?: number;
   expense_share?: number;
+  month_payments?: number;
   total_payments?: number;
   net_obligation?: number;
   current_balance?: number;
   status?: string;
+  // Optional fields seen in some responses (useful for debugging/UI)
+  resident_expenses?: number;
+  owner_expenses?: number;
+  reserve_fund_share?: number;
 }
 
 interface Props {
@@ -58,6 +63,8 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [extraMessage, setExtraMessage] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  // For debt reminders we want month-based obligations; backend only computes net_obligation when month is provided.
+  const month = useMemo(() => new Date().toISOString().slice(0, 7), []);
 
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
@@ -68,12 +75,12 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
 
   // Fetch apartments with FINANCIAL balance info (not just basic apartment data)
   const { data: apartments = [], isLoading } = useQuery<ApartmentWithBalance[]>({
-    queryKey: ['apartments-debt-financial', buildingId],
+    queryKey: ['apartments-debt-financial', buildingId, month],
     queryFn: async () => {
       if (!buildingId) return [];
       // Use fetchApartmentsWithFinancialData which calls /financial/dashboard/apartment_balances/
       // This returns balance data including previous_balance, expense_share, total_payments, net_obligation
-      const data = await fetchApartmentsWithFinancialData(buildingId);
+      const data = await fetchApartmentsWithFinancialData(buildingId, month);
       return data as ApartmentWithBalance[];
     },
     enabled: !!buildingId,
@@ -104,9 +111,9 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
       const currentBalance = parseFloat(String(apt.current_balance ?? 0));
       const netObligation = parseFloat(String(apt.net_obligation ?? 0));
       
-      // Use current_balance as primary (always calculated correctly by backend)
-      // Fallback to net_obligation if current_balance is 0
-      const debt = currentBalance !== 0 ? currentBalance : netObligation;
+      // For debt reminders we care about month-based obligations. If the month snapshot exists, prefer net_obligation.
+      // Fallback to current_balance for safety.
+      const debt = netObligation !== 0 ? netObligation : currentBalance;
       
       // Check status for debt indicators
       const status = (apt.status || '').toLowerCase();
@@ -178,20 +185,18 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
       if (!buildingId) throw new Error('Επιλέξτε πολυκατοικία');
       if (selectedIds.length === 0) throw new Error('Επιλέξτε τουλάχιστον έναν παραλήπτη');
 
-      const subject = `Υπενθύμιση Εκκρεμούς Οφειλής - ${buildingData.name}`;
+      const minDebtValue = minDebt === 'all' ? '0' : minDebt;
 
-      return notificationsApi.create({
+      return notificationsApi.sendDebtReminders({
         building_id: buildingId,
-        subject,
-        body: generateEmailBody(),
-        notification_type: 'email',
-        priority: 'normal',
         apartment_ids: selectedIds,
-        send_to_all: false,
+        month,
+        min_debt: minDebtValue,
+        custom_message: extraMessage?.trim() || undefined,
       });
     },
     onSuccess: () => {
-      toast.success('Οι υπενθυμίσεις στάλθηκαν επιτυχώς');
+      toast.success('Οι υπενθυμίσεις οφειλής στάλθηκαν με ανάλυση');
       onSuccess();
     },
     onError: (error: any) => {
@@ -334,7 +339,7 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
           <div className="space-y-2">
             <Label>Επιπλέον Σχόλια (προαιρετικά)</Label>
             <Textarea
-              placeholder="π.χ. Τα στοιχεία για τραπεζική κατάθεση είναι..."
+              placeholder="π.χ. Στοιχεία κατάθεσης / IBAN / διευκρινίσεις..."
               value={extraMessage}
               onChange={(e) => setExtraMessage(e.target.value)}
               rows={3}
@@ -388,8 +393,20 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
             </div>
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-500 mb-2">Περιεχόμενο:</p>
-              <div className="whitespace-pre-wrap text-sm">
-                {generateEmailBody()}
+              <div className="text-sm text-gray-700">
+                Θα σταλεί εξατομικευμένο email ανά διαμέρισμα με:
+                <ul className="list-disc pl-5 mt-2 space-y-1">
+                  <li>Προηγούμενο υπόλοιπο</li>
+                  <li>Δαπάνες μήνα (με διαχωρισμό ενοίκου/ιδιοκτήτη & αποθεματικό όπου υπάρχει)</li>
+                  <li>Πληρωμές μήνα</li>
+                  <li><strong>Σύνολο πληρωτέο</strong></li>
+                </ul>
+                {extraMessage?.trim() ? (
+                  <div className="mt-3 rounded bg-amber-50 p-3">
+                    <div className="text-xs text-amber-800 mb-1">Επιπλέον σχόλιο:</div>
+                    <div className="whitespace-pre-wrap">{extraMessage.trim()}</div>
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="rounded-lg bg-amber-50 p-4">

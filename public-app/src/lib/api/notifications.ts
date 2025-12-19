@@ -252,6 +252,34 @@ export const notificationsApi = {
     });
     return response;
   },
+
+  /**
+   * Send personalized debt reminders with breakdown + total (month-based).
+   */
+  sendDebtReminders: async (data: {
+    building_id: number;
+    month: string; // YYYY-MM
+    min_debt?: string | number;
+    apartment_ids?: number[];
+    custom_message?: string;
+  }) => {
+    const response = await apiClient.post<{
+      notification_id: number;
+      month: string;
+      sent: number;
+      failed: number;
+      skipped: number;
+      details: Array<{
+        apartment: string;
+        status: string;
+        email?: string;
+        total_due?: string;
+        reason?: string;
+        error?: string;
+      }>;
+    }>(`${BASE_URL}/notifications/send_debt_reminders/`, data);
+    return response;
+  },
 };
 
 /**

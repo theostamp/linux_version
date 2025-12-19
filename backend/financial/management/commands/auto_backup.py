@@ -329,13 +329,13 @@ class Command(BaseCommand):
                     message_lines.append(f'  ❌ {r.get("tenant", "unknown")}: {r.get("error", "Unknown error")}')
             
             message = '\n'.join(message_lines)
-            
-            send_mail(
+
+            from core.emailing import plain_text_to_html, send_templated_email
+            send_templated_email(
+                to=email,
                 subject=f'[NewConcierge] {subject}',
-                message=message,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@newconcierge.app'),
-                recipient_list=[email],
-                fail_silently=True,
+                template_html="emails/wrapper.html",
+                context={"body_html": plain_text_to_html(message), "wrapper_title": subject},
             )
             
             self.stdout.write(f'📧 Notification sent to {email}')

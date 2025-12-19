@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from email.utils import parseaddr
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import EmailMessage
 import logging
@@ -63,11 +64,17 @@ class MailerSendEmailBackend(BaseEmailBackend):
             # Always use self.from_email to ensure verified domain
             from_email = self.from_email
             logger.info(f"Sending email from: {from_email}")
+
+            # Allow per-tenant/office display-name by reading message.from_email (Name <addr>).
+            # We still enforce the verified domain address via self.from_email.
+            from_name, _ = parseaddr(getattr(message, "from_email", "") or "")
+            if not from_name:
+                from_name = "New Concierge"
             
             email_data = {
                 "from": {
                     "email": from_email,
-                    "name": "New Concierge"
+                    "name": from_name
                 },
                 "to": [
                     {"email": email, "name": ""} for email in message.to

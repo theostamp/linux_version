@@ -19,7 +19,6 @@ from calendar import monthrange
 
 from django.db.models import Sum, Q
 from django.utils import timezone
-from django.core.mail import send_mail
 from django.conf import settings
 from django.template import Template, Context
 
@@ -29,6 +28,7 @@ from financial.models import Expense, Transaction, Payment, MonthlyBalance
 from financial.balance_service import BalanceCalculationService
 from .models import NotificationTemplate, Notification, NotificationRecipient
 from .services import NotificationService
+from core.emailing import plain_text_to_html, send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -328,12 +328,15 @@ class DebtReminderService:
                 # Αποστολή email (αν όχι test mode)
                 if not test_mode:
                     try:
-                        send_mail(
+                        send_templated_email(
+                            to=recipient_email,
                             subject=rendered['subject'],
-                            message=rendered['body'],
-                            from_email=settings.MAILERSEND_FROM_EMAIL or settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[recipient_email],
-                            fail_silently=False,
+                            template_html="emails/wrapper.html",
+                            context={
+                                "body_html": plain_text_to_html(rendered["body"]),
+                                "wrapper_title": rendered["subject"],
+                            },
+                            building_manager_id=getattr(building, "manager_id", None),
                         )
                         
                         recipient.mark_as_sent()

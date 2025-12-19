@@ -1,0 +1,76 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Υπενθύμιση Οφειλής{% endblock %}
+
+{% block content %}
+<h2>Υπενθύμιση Οφειλής</h2>
+<p>
+  Αγαπητέ/ή <strong>{{ occupant_name }}</strong>,
+  σας ενημερώνουμε για την κατάσταση του λογαριασμού σας για το διαμέρισμα
+  <strong>{{ apartment_number }}</strong> στο κτίριο <strong>{{ building_name }}</strong>.
+</p>
+
+{% if month_label %}
+  <p class="muted" style="font-size: 12px; margin-top: 0;">
+    Περίοδος αναφοράς: {{ month_label }}
+  </p>
+{% endif %}
+
+<div style="background-color:#f8f9fa; padding: 16px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="margin-top: 0;">📊 Ανάλυση Οφειλής</h3>
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 6px 0; color:#6b7280;">Προηγούμενο υπόλοιπο</td>
+      <td style="padding: 6px 0; text-align:right;"><strong>{{ previous_balance }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 0; color:#6b7280;">Δαπάνες μήνα (σύνολο)</td>
+      <td style="padding: 6px 0; text-align:right;"><strong>{{ month_expenses_total }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 0; color:#6b7280;">- Δαπάνες ενοίκου</td>
+      <td style="padding: 6px 0; text-align:right;">{{ resident_expenses }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 0; color:#6b7280;">- Δαπάνες ιδιοκτήτη</td>
+      <td style="padding: 6px 0; text-align:right;">{{ owner_expenses }}</td>
+    </tr>
+    {% if reserve_fund_share %}
+    <tr>
+      <td style="padding: 6px 0; color:#6b7280;">- Αποθεματικό</td>
+      <td style="padding: 6px 0; text-align:right;">{{ reserve_fund_share }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td style="padding: 6px 0; color:#6b7280;">Πληρωμές μήνα</td>
+      <td style="padding: 6px 0; text-align:right;"><strong>-{{ month_payments }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color:#111827; border-top: 1px solid #e5e7eb;"><strong>Σύνολο πληρωτέο</strong></td>
+      <td style="padding: 10px 0; text-align:right; border-top: 1px solid #e5e7eb;">
+        <strong style="font-size: 18px;">{{ total_due }}</strong>
+      </td>
+    </tr>
+  </table>
+</div>
+
+{% if payment_deadline %}
+  <div class="warning">
+    <p style="margin:0;">
+      <strong>Προθεσμία πληρωμής:</strong> {{ payment_deadline }}
+    </p>
+  </div>
+{% endif %}
+
+{% if custom_message %}
+  <div style="background-color:#e0f2fe; padding: 14px; border-radius: 8px; margin: 20px 0;">
+    <p style="margin:0; white-space: pre-line;">{{ custom_message }}</p>
+  </div>
+{% endif %}
+
+<p>
+  Για οποιαδήποτε διευκρίνιση ή ρύθμιση πληρωμής, παρακαλούμε επικοινωνήστε με τη διαχείριση.
+</p>
+{% endblock %}
+
+
