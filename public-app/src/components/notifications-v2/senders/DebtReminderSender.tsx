@@ -81,24 +81,42 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
 
   // Filter apartments with debt - calculate net obligation properly
   const apartmentsWithDebt = useMemo(() => {
+    // Debug: Log first apartment to see data structure
+    if (apartments.length > 0) {
+      console.log('[DebtReminderSender] First apartment raw data:', apartments[0]);
+      console.log('[DebtReminderSender] Available fields:', Object.keys(apartments[0]));
+    }
+    
     return apartments.filter(apt => {
-      // Calculate the actual debt from financial data
-      // net_obligation = previous_balance + expense_share - total_payments
-      const previousBalance = apt.previous_balance || 0;
-      const expenseShare = apt.expense_share || 0;
-      const totalPayments = apt.total_payments || 0;
+      // Parse values as numbers (they might come as strings from API)
+      const previousBalance = parseFloat(String(apt.previous_balance || 0));
+      const expenseShare = parseFloat(String(apt.expense_share || 0));
+      const totalPayments = parseFloat(String(apt.total_payments || 0));
+      const netObligation = parseFloat(String(apt.net_obligation || 0));
+      const currentBalance = parseFloat(String(apt.current_balance || 0));
       
-      // Use net_obligation if available, otherwise calculate
-      const debt = apt.net_obligation !== undefined 
-        ? apt.net_obligation 
-        : (previousBalance + expenseShare - totalPayments);
+      // Use net_obligation if available, else current_balance, else calculate
+      const debt = !isNaN(netObligation) && netObligation !== 0
+        ? netObligation 
+        : !isNaN(currentBalance) && currentBalance !== 0
+          ? currentBalance
+          : (previousBalance + expenseShare - totalPayments);
       
       // Also check status for 'Οφειλή' or 'overdue'
-      const hasDebtStatus = apt.status?.toLowerCase() === 'οφειλή' || 
-                           apt.status?.toLowerCase() === 'overdue' ||
-                           apt.status?.toLowerCase() === 'κρίσιμο';
+      const status = apt.status?.toLowerCase() || '';
+      const hasDebtStatus = status === 'οφειλή' || 
+                           status === 'overdue' ||
+                           status === 'κρίσιμο';
       
-      // Apartment has debt if net_obligation > 0 or status indicates debt
+      // Debug log for first few apartments
+      if (apartments.indexOf(apt) < 3) {
+        console.log(`[DebtReminderSender] Apt ${apt.number}:`, {
+          previousBalance, expenseShare, totalPayments, netObligation, currentBalance,
+          calculatedDebt: debt, status, hasDebtStatus
+        });
+      }
+      
+      // Apartment has debt if debt > 0 or status indicates debt
       if (debt <= 0 && !hasDebtStatus) return false;
       
       const minAmount = minDebt === 'all' ? 0 : parseInt(minDebt);
@@ -108,13 +126,16 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
 
   // Get debt amount for display
   const getDebtAmount = (apt: ApartmentWithBalance): number => {
-    const previousBalance = apt.previous_balance || 0;
-    const expenseShare = apt.expense_share || 0;
-    const totalPayments = apt.total_payments || 0;
+    const previousBalance = parseFloat(String(apt.previous_balance || 0));
+    const expenseShare = parseFloat(String(apt.expense_share || 0));
+    const totalPayments = parseFloat(String(apt.total_payments || 0));
+    const netObligation = parseFloat(String(apt.net_obligation || 0));
+    const currentBalance = parseFloat(String(apt.current_balance || 0));
     
-    return apt.net_obligation !== undefined 
-      ? apt.net_obligation 
-      : (previousBalance + expenseShare - totalPayments);
+    // Use net_obligation if available, else current_balance, else calculate
+    if (!isNaN(netObligation) && netObligation !== 0) return netObligation;
+    if (!isNaN(currentBalance) && currentBalance !== 0) return currentBalance;
+    return previousBalance + expenseShare - totalPayments;
   };
 
   const handleToggleApartment = (id: number) => {
