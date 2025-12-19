@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
     formats: ["image/webp", "image/avif"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    remotePatterns: [
+      // Plasmic CDN (commonly used for images/assets)
+      { protocol: "https", hostname: "img.plasmic.app", pathname: "/**" },
+      { protocol: "https", hostname: "static.plasmic.app", pathname: "/**" },
+      { protocol: "https", hostname: "static1.plasmic.app", pathname: "/**" },
+      { protocol: "https", hostname: "static2.plasmic.app", pathname: "/**" },
+      { protocol: "https", hostname: "cdn.plasmic.app", pathname: "/**" },
+    ],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy:

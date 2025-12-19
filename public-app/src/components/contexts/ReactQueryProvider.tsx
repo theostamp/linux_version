@@ -3,9 +3,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { setGlobalQueryClient, initializeGlobalRefresh } from '@/lib/globalRefresh';
 
 export function ReactQueryProvider({ children }: { readonly children: React.ReactNode }) {
+  const pathname = usePathname();
   const [client] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -51,10 +53,14 @@ export function ReactQueryProvider({ children }: { readonly children: React.Reac
     };
   }, [client]);
 
+  const shouldShowDevtools =
+    process.env.NODE_ENV !== 'production' &&
+    pathname !== '/plasmic-host';
+
   return (
     <QueryClientProvider client={client}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {shouldShowDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   );
 }

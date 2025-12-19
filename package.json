@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@plasmicapp/loader-nextjs": "^1.0.445",
     "node-fetch": "^3.3.2"
   }
 }

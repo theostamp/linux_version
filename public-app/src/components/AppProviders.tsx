@@ -12,6 +12,18 @@ import LayoutWrapper from '@/components/LayoutWrapper';
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
 
+  // Plasmic app host route must be completely "clean":
+  // - no auth/building providers that might call backend
+  // - no LayoutWrapper / sidebar
+  // - no Toaster (adds DOM to the canvas)
+  if (pathname === '/plasmic-host') {
+    return (
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
+    );
+  }
+
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = (pathname?.startsWith('/kiosk') || pathname?.startsWith('/kiosk-display')) && !pathname?.startsWith('/kiosk-widgets') && !pathname?.startsWith('/kiosk-management');
 
