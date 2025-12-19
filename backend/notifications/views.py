@@ -136,6 +136,20 @@ class NotificationViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return building
 
+        # ✅ Tenant-office access: allow office manager/staff of the current tenant to access tenant buildings.
+        # In our multi-tenant setup, buildings live in tenant schemas, while users are shared (public schema).
+        # The strict membership checks below may not cover office roles consistently.
+        current_tenant = getattr(self.request, "tenant", None)
+        user_tenant_id = getattr(user, "tenant_id", None)
+        user_role = getattr(user, "role", None)
+        if (
+            current_tenant
+            and user_tenant_id
+            and int(user_tenant_id) == int(getattr(current_tenant, "id", 0) or 0)
+            and user_role in ["manager", "office_staff"]
+        ):
+            return building
+
         if user.is_staff and building.manager_id == user.id:
             return building
 
