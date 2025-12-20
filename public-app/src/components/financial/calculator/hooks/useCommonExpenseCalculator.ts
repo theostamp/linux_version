@@ -1,10 +1,11 @@
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { useMonthlyExpenses } from '@/hooks/useMonthlyExpenses';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
+import { api } from '@/lib/api';
 import { 
   CommonExpenseModalProps, 
   ValidationResult, 
@@ -95,6 +96,54 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   useMonthRefresh(selectedMonth, forceRefresh, 'CommonExpenseModal');
 
+  // ===========================================================================================
+  // Month-specific advanced shares (source of truth for table columns)
+  // ===========================================================================================
+  const [monthAdvancedResult, setMonthAdvancedResult] = useState<any>(null);
+  const calcRequestRef = useRef<string>('');
+
+  useEffect(() => {
+    const run = async () => {
+      if (!props.isOpen) return;
+      if (!buildingId) return;
+      if (!selectedMonth) return;
+
+      const requestId = `${buildingId}-${selectedMonth}-${Date.now()}`;
+      calcRequestRef.current = requestId;
+
+      try {
+        // IMPORTANT:
+        // The month dropdown in the modal controls what we should display.
+        // The incoming `state.shares` may correspond to another month/period from the wizard.
+        // So we always compute month-specific shares here.
+        const result = await api.post('/financial/common-expenses/calculate_advanced/', {
+          building_id: buildingId,
+          month_filter: selectedMonth,
+        });
+
+        // Discard stale responses
+        if (calcRequestRef.current !== requestId) return;
+        setMonthAdvancedResult(result);
+      } catch (e) {
+        // Soft-fail: keep using the wizard state if the advanced calc fails
+        if (calcRequestRef.current !== requestId) return;
+        setMonthAdvancedResult(null);
+      }
+    };
+
+    run();
+  }, [props.isOpen, buildingId, selectedMonth]);
+
+  const effectiveShares = useMemo(() => {
+    // Prefer month-specific shares; fallback to wizard state
+    return (monthAdvancedResult?.shares as Record<string, Share> | undefined) || (state.shares as any);
+  }, [monthAdvancedResult, state.shares]);
+
+  const effectiveAdvancedShares = useMemo(() => {
+    // Prefer month-specific advanced result; fallback to wizard state advancedShares
+    return monthAdvancedResult || state.advancedShares;
+  }, [monthAdvancedResult, state.advancedShares]);
+
   const occupantsByApartmentId = useMemo<OccupantsMap>(() => {
     const map: OccupantsMap = {};
     aptWithFinancial.forEach((apt) => {
@@ -105,7 +154,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const perApartmentAmounts = useMemo<PerApartmentAmounts>(() => {
     const items: PerApartmentAmounts = {};
-    Object.values(state.shares as { [key: string]: Share }).forEach((share) => {
+    Object.values(effectiveShares as { [key: string]: Share }).forEach((share) => {
       const bd = share.breakdown || {};
       items[share.apartment_id] = {
         common: toNumber(bd.general_expenses),
@@ -118,7 +167,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       };
     });
     return items;
-  }, [state.shares]);
+  }, [effectiveShares]);
 
   const expenseBreakdown = useMemo<ExpenseBreakdown>(() => {
     const breakdown: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
@@ -135,9 +184,9 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       breakdown.coownership = 0; // Not available in API yet
       
       console.log('🔍 DEBUG expenseBreakdown: Mapped API data to breakdown:', breakdown);
-    } else if (state.advancedShares && state.advancedShares.expense_totals) {
+    } else if (effectiveAdvancedShares && effectiveAdvancedShares.expense_totals) {
       // Fallback to state data if API data not available
-      const { general, elevator, heating, equal_share, individual } = state.advancedShares.expense_totals;
+      const { general, elevator, heating, equal_share, individual } = effectiveAdvancedShares.expense_totals;
       breakdown.common = parseFloat(general || 0);
       breakdown.elevator = parseFloat(elevator || 0);
       breakdown.heating = parseFloat(heating || 0);
@@ -151,7 +200,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     }
     
     return breakdown;
-  }, [monthlyExpenses, state.advancedShares, state.totalExpenses, selectedMonth]);
+  }, [monthlyExpenses, effectiveAdvancedShares, state.totalExpenses, selectedMonth]);
 
   const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
     let finalFee = 0;
@@ -253,7 +302,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   };
 
   const getGroupedExpenses = useCallback((): GroupedExpenses => {
-    const expenseDetails: { [key: string]: ExpenseItem[] } = state.advancedShares?.expense_details || { general: [], elevator: [], heating: [], equal_share: [], individual: [] };
+    const expenseDetails: { [key: string]: ExpenseItem[] } = effectiveAdvancedShares?.expense_details || { general: [], elevator: [], heating: [], equal_share: [], individual: [] };
     const grouped: GroupedExpenses = {};
     const categories: string[] = ['general', 'elevator', 'heating', 'equal_share', 'individual'];
 
@@ -282,7 +331,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     });
 
     return grouped;
-  }, [state.advancedShares]);
+  }, [effectiveAdvancedShares]);
 
   const getTotalPreviousBalance = useCallback(() => {
     console.log('🔍 DEBUG getTotalPreviousBalance called with aptWithFinancial:', {
@@ -464,6 +513,9 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     isSaving, isSending, showHeatingModal, setShowHeatingModal, heatingBreakdown, setHeatingBreakdown,
     validationResult, setValidationResult, aptWithFinancial, occupantsByApartmentId, perApartmentAmounts,
     expenseBreakdown, managementFeeInfo, reserveFundInfo, totalExpenses, handleSave, handlePrint,
-    handleExport, handleSendToAll, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses
+    handleExport, handleSendToAll, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses,
+    // Expose month-specific sources so the modal can render consistent tables for the selected month
+    effectiveShares,
+    effectiveAdvancedShares
   };
 };

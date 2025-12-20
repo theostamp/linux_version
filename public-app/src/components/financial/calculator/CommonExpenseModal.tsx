@@ -125,8 +125,26 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     validateData,
     getGroupedExpenses,
     getTotalPreviousBalance,
-    getFinalTotalExpenses
+    getFinalTotalExpenses,
+    effectiveShares,
+    effectiveAdvancedShares
   } = useCommonExpenseCalculator({ ...props, selectedMonth: expenseSheetMonth });
+
+  // IMPORTANT:
+  // Το dropdown μήνα στο modal πρέπει να ελέγχει ΟΛΑ τα δεδομένα που εμφανίζονται.
+  // Το `state` που έρχεται από το wizard μπορεί να αντιστοιχεί σε άλλη περίοδο.
+  // Το hook υπολογίζει month-specific shares για τον επιλεγμένο μήνα.
+  const apartmentsCountForMonth = React.useMemo(() => {
+    return Object.keys((effectiveShares as any) || {}).length;
+  }, [effectiveShares]);
+
+  const stateForDisplay = React.useMemo(() => {
+    return {
+      ...state,
+      shares: effectiveShares as any,
+      advancedShares: effectiveAdvancedShares as any
+    };
+  }, [state, effectiveShares, effectiveAdvancedShares]);
   const resolvedBuildingName = buildingData?.name || buildingName || 'Άγνωστο Κτίριο';
   const resolvedBuildingAddress = buildingData?.address || props.buildingAddress || '';
   const resolvedBuildingCity = buildingData?.city || props.buildingCity || '';
@@ -337,7 +355,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             <TabsContent value="traditional">
               <TraditionalViewTab
                 {...props}
-                state={state}
+                state={stateForDisplay}
                 buildingId={buildingId}
                 selectedMonth={expenseSheetMonth}
                 buildingName={resolvedBuildingName}
@@ -362,11 +380,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </TabsContent>
 
             <TabsContent value="analysis">
-              <ExpenseBreakdownSection state={state} buildingName={resolvedBuildingName} apartmentsCount={Object.keys(state.shares).length} onViewDetails={() => {}} />
+              <ExpenseBreakdownSection state={stateForDisplay} buildingName={resolvedBuildingName} apartmentsCount={apartmentsCountForMonth} onViewDetails={() => {}} />
             </TabsContent>
 
             <TabsContent value="statistics">
-              <StatisticsSection state={state} buildingName={resolvedBuildingName} apartmentsCount={Object.keys(state.shares).length} expenseBreakdown={expenseBreakdown} reserveFundInfo={reserveFundInfo} managementFeeInfo={managementFeeInfo} aptWithFinancial={aptWithFinancial} />
+              <StatisticsSection state={stateForDisplay} buildingName={resolvedBuildingName} apartmentsCount={apartmentsCountForMonth} expenseBreakdown={expenseBreakdown} reserveFundInfo={reserveFundInfo} managementFeeInfo={managementFeeInfo} aptWithFinancial={aptWithFinancial} />
             </TabsContent>
 
             <TabsContent value="export">
@@ -380,7 +398,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     setShowHeatingModal={setShowHeatingModal}
                     buildingName={resolvedBuildingName}
                     periodInfo={getPeriodInfo(state)}
-                    apartmentsCount={Object.keys(state.shares).length}
+                    apartmentsCount={apartmentsCountForMonth}
                     totalExpenses={totalExpenses}
                     formatAmount={formatAmount}
                 />
