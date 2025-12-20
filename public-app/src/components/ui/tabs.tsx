@@ -14,12 +14,11 @@ const TabsList = React.forwardRef<
     className={cn(
       // Base styles - better mobile spacing
       "inline-flex flex-wrap items-center gap-1 sm:gap-1.5",
-      // Background with better contrast
-      "rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-slate-800/80 p-1 sm:p-1.5",
-      // Text color with good contrast
-      "text-slate-600 dark:text-slate-400",
-      // Soft shadow for depth
-      "shadow-inner shadow-slate-200/50 dark:shadow-slate-900/50",
+      // Theme-aware colors (better contrast in dark mode too)
+      "rounded-xl sm:rounded-2xl bg-muted p-1 sm:p-1.5",
+      "text-muted-foreground",
+      // Subtle depth
+      "shadow-inner shadow-black/5 dark:shadow-black/20",
       className
     )}
     {...props}
@@ -41,22 +40,22 @@ const TabsTrigger = React.forwardRef<
       "text-xs sm:text-sm font-semibold",
       "transition-all duration-200",
       
-      // Inactive state - better contrast
-      "text-slate-600 dark:text-slate-400",
-      "hover:text-slate-900 dark:hover:text-slate-100",
-      "hover:bg-white/50 dark:hover:bg-slate-700/50",
+      // Inactive state
+      "text-muted-foreground",
+      "hover:text-foreground",
+      "hover:bg-background/60",
       
       // Focus state
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       
       // Disabled state
       "disabled:pointer-events-none disabled:opacity-50",
       
-      // Active state - high contrast colors
-      "data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700",
-      "data-[state=active]:text-teal-700 dark:data-[state=active]:text-teal-300",
-      "data-[state=active]:shadow-md data-[state=active]:shadow-slate-200/50 dark:data-[state=active]:shadow-slate-900/50",
-      "data-[state=active]:ring-1 data-[state=active]:ring-teal-200/50 dark:data-[state=active]:ring-teal-700/30",
+      // Active state
+      "data-[state=active]:bg-background",
+      "data-[state=active]:text-foreground",
+      "data-[state=active]:shadow-sm data-[state=active]:shadow-black/10",
+      "data-[state=active]:ring-1 data-[state=active]:ring-border/50",
       
       className
     )}
@@ -72,7 +71,7 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      "mt-3 sm:mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2",
+      "mt-3 sm:mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       className
     )}
     {...props}
