@@ -1055,10 +1055,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     if (balance >= 0) {
       // Positive balance - Green shades
       return {
-        amount: 'text-green-700',
-        title: 'text-green-900',
-        icon: 'text-green-600',
-        cardBg: 'border-green-200 bg-green-50/50'
+        amount: 'text-green-700 dark:text-green-200',
+        title: 'text-green-900 dark:text-green-100',
+        icon: 'text-green-600 dark:text-green-300',
+        cardBg: 'border-green-200 bg-green-50/50 dark:border-green-700/40'
       };
     } else {
       // Negative balance - Red to Orange based on severity
@@ -1066,26 +1066,26 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       if (absBalance >= BALANCE_THRESHOLDS.HIGH_DEBT) {
         // High debt - Red
         return {
-          amount: 'text-red-700',
-          title: 'text-red-900',
-          icon: 'text-red-600',
-          cardBg: 'border-red-200 bg-red-50/50'
+          amount: 'text-red-700 dark:text-red-200',
+          title: 'text-red-900 dark:text-red-100',
+          icon: 'text-red-600 dark:text-red-300',
+          cardBg: 'border-red-200 bg-red-50/50 dark:border-red-700/40'
         };
       } else if (absBalance >= BALANCE_THRESHOLDS.MEDIUM_DEBT) {
         // Medium debt - Orange/Red
         return {
-          amount: 'text-red-600',
-          title: 'text-red-800',
-          icon: 'text-red-500',
-          cardBg: 'border-red-200 bg-red-50/30'
+          amount: 'text-red-600 dark:text-red-200',
+          title: 'text-red-800 dark:text-red-100',
+          icon: 'text-red-500 dark:text-red-300',
+          cardBg: 'border-red-200 bg-red-50/30 dark:border-red-700/40'
         };
       } else {
         // Low debt - Orange
         return {
-          amount: 'text-orange-600',
-          title: 'text-orange-800',
-          icon: 'text-orange-500',
-          cardBg: 'border-orange-200 bg-orange-50/30'
+          amount: 'text-orange-600 dark:text-orange-200',
+          title: 'text-orange-800 dark:text-orange-100',
+          icon: 'text-orange-500 dark:text-orange-300',
+          cardBg: 'border-orange-200 bg-orange-50/30 dark:border-orange-700/40'
         };
       }
     }
@@ -1344,20 +1344,20 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         <span className="text-green-600">
                           {formatCurrency(financialSummary?.total_payments_month || 0)}
                         </span>
-                        <span className="text-gray-500 mx-1">/</span>
+                        <span className="text-gray-500 dark:text-gray-400 mx-1">/</span>
                         <span className="text-red-600">
                           {formatCurrency(Math.abs(financialSummary?.current_obligations || 0))}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShowAmountDetails('total_balance', financialSummary?.total_balance || 0, 'Συνολικό Υπόλοιπο')}
-                        className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
-                        title="Δείτε λεπτομέρειες"
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleShowAmountDetails('total_balance', financialSummary?.total_balance || 0, 'Συνολικό Υπόλοιπο')}
+                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                          title="Δείτε λεπτομέρειες"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
                     </div>
                     
                     <Badge 
@@ -1371,15 +1371,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   </div>
 
                   {/* Ανάλυση κάλυψης υποχρεώσεων */}
-                  <div className="pt-2 border-t border-gray-200 space-y-3">
-                    <div className="text-xs font-medium text-gray-700 mb-2">Τι πρέπει να πληρωθεί αυτόν τον μήνα:</div>
+                  <div className="pt-2 border-t border-gray-200 dark:border-slate-700 space-y-3">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-2">Τι πρέπει να πληρωθεί αυτόν τον μήνα:</div>
 
                     {/* Παλαιότερες οφειλές - ΠΑΝΤΑ ΕΜΦΑΝΙΖΕΤΑΙ */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-purple-700 font-medium">Παλαιότερες οφειλές:</span>
+                        <span className="text-xs text-purple-700 dark:text-purple-200 font-medium">Παλαιότερες οφειλές:</span>
                         <div className="flex items-center gap-2">
-                          <span className={`font-semibold text-sm ${(financialSummary?.previous_obligations || 0) > 0 ? 'text-purple-800' : 'text-gray-500'}`}>
+                          <span className={`font-semibold text-sm ${(financialSummary?.previous_obligations || 0) > 0 ? 'text-purple-800 dark:text-purple-200' : 'text-gray-500 dark:text-gray-300'}`}>
                             {formatCurrency(financialSummary?.previous_obligations || 0)}
                           </span>
                           {(financialSummary?.previous_obligations || 0) > 0 && (
@@ -1387,7 +1387,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                               variant="ghost"
                               size="sm"
                               onClick={() => handleShowAmountDetails('previous_obligations', financialSummary?.previous_obligations || 0, 'Παλαιότερες Οφειλές')}
-                              className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
+                              className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-300 dark:hover:text-purple-200"
                               title="Δείτε λεπτομέρειες"
                             >
                               <Eye className="h-3 w-3" />
@@ -1400,9 +1400,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Τρέχουσες υποχρεώσεις - μόνο του μήνα */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-red-700 font-medium">Μηνιαίο:</span>
+                        <span className="text-xs text-red-700 dark:text-red-300 font-medium">Μηνιαίο:</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-red-800">
+                          <span className="font-semibold text-sm text-red-800 dark:text-red-200">
                             {(() => {
                               console.log('🔍 DEBUG current_month_expenses:', financialSummary.current_month_expenses);
                               console.log('🔍 DEBUG current_obligations:', financialSummary.current_obligations);
@@ -1416,7 +1416,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             variant="ghost"
                             size="sm"
                             onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.current_obligations || 0, 'Οικονομικές Υποχρεώσεις Περιόδου')}
-                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
                             title="Δείτε λεπτομέρειες"
                           >
                             <Eye className="h-3 w-3" />
@@ -1429,10 +1429,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
                     {/* Συνολικό ποσό προς πληρωμή */}
                     {(financialSummary?.previous_obligations || 0) > 0 && (
-                      <div className="space-y-1 pt-2 border-t border-purple-200 bg-purple-50/50 -mx-3 px-3 py-2">
+                      <div className="space-y-1 pt-2 border-t border-purple-200 bg-purple-50/50 dark:border-purple-800/40 dark:bg-purple-900/20 -mx-3 px-3 py-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-purple-900 font-bold">ΣΥΝΟΛΟ</span>
-                          <span className="font-bold text-sm text-purple-900">
+                          <span className="text-xs text-purple-900 dark:text-purple-100 font-bold">ΣΥΝΟΛΟ</span>
+                          <span className="font-bold text-sm text-purple-900 dark:text-purple-100">
                             {formatCurrency((financialSummary?.previous_obligations || 0) + (financialSummary?.current_month_expenses || 0))}
                           </span>
                         </div>

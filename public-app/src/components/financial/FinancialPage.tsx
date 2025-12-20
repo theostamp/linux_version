@@ -595,10 +595,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 	        </div>
         
         {/* Context Banner - Building & Month */}
-        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-500/10 rounded-lg shadow-md">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-500/10 dark:bg-indigo-950/40 rounded-lg shadow-md">
           {/* Building Info */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/20 rounded-md shadow-sm">
+            <div className="p-2 bg-indigo-500/20 dark:bg-indigo-900/40 rounded-md shadow-sm">
               <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
@@ -607,10 +607,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </p>
             </div>
           </div>
-          
+
           {/* Month Selector */}
           <div className="flex-1 flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/20 rounded-md shadow-sm">
+            <div className="p-2 bg-indigo-500/20 dark:bg-indigo-900/40 rounded-md shadow-sm">
               <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
@@ -634,7 +634,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </div>
             </div>
           </div>
-          
+
           {/* Status Indicator */}
           <div className="flex items-center gap-2">
             {(() => {
