@@ -25,6 +25,17 @@ const isHeatingSeasonActive = (): boolean => {
 export default function AnnouncementsExpensesSlider({ data, isLoading, error, buildingId }: AnnouncementsExpensesSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Match AnnouncementsVotesCarousel filtering so we don't show an empty slide
+  const hasAnnouncementsOrVotes = useMemo(() => {
+    const rawAnnouncements = Array.isArray(data?.announcements) ? data.announcements : [];
+    const filteredAnnouncements = rawAnnouncements.filter((ann: any) =>
+      !ann?.title?.toLowerCase?.().includes('συνέλευση') &&
+      !ann?.title?.toLowerCase?.().includes('σύγκληση')
+    );
+    const votes = Array.isArray(data?.votes) ? data.votes : [];
+    return filteredAnnouncements.length > 0 || votes.length > 0;
+  }, [data]);
+
   const shouldShowHeatingWidget = useMemo(() => {
     const hasHeatingExpenses =
       Array.isArray(data?.financial?.heating_expenses) && data.financial.heating_expenses.length > 0;
@@ -36,16 +47,19 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
   const widgets = useMemo(() => {
     const baseWidgets = [
       {
-        id: 'announcements-votes',
-        name: 'Ανακοινώσεις & Ψηφοφορίες',
-        Component: AnnouncementsVotesCarousel,
-      },
-      {
         id: 'expenses',
         name: 'Δαπάνες Τρέχοντος Μήνα',
         Component: CurrentMonthExpensesWidget,
       },
     ];
+
+    if (hasAnnouncementsOrVotes) {
+      baseWidgets.unshift({
+        id: 'announcements-votes',
+        name: 'Ανακοινώσεις & Ψηφοφορίες',
+        Component: AnnouncementsVotesCarousel,
+      });
+    }
     
     // Show heating chart when it has data/period, or during heating season.
     if (shouldShowHeatingWidget) {
@@ -57,7 +71,7 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
     }
     
     return baseWidgets;
-  }, [shouldShowHeatingWidget]);
+  }, [shouldShowHeatingWidget, hasAnnouncementsOrVotes]);
 
   // Keep currentIndex valid when widget list changes
   useEffect(() => {
