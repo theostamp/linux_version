@@ -544,7 +544,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Header */}
         <div 
-          className="p-4 border-b border-teal-100 dark:border-slate-700 flex items-center gap-3 min-h-[64px] bg-white/50 dark:bg-slate-800/50"
+          className="p-4 border-b border-teal-100 dark:border-slate-700 flex items-center gap-3 h-20 bg-white/50 dark:bg-slate-800/50"
         >
           <div 
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-teal-500 dark:bg-teal-600 text-white"
@@ -767,7 +767,7 @@ export default function CollapsibleSidebar() {
       >
         {/* Mobile Header */}
         <div 
-          className="p-4 border-b border-teal-100 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-800/50"
+          className="p-4 border-b border-teal-100 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-800/50 h-20"
         >
           <div className="flex items-center gap-3">
             <div 
@@ -796,8 +796,8 @@ export default function CollapsibleSidebar() {
           </button>
         </div>
 
-        {/* Mobile Building Selector for residents with multiple buildings */}
-        {isResidentUser && hasMultipleBuildings && (
+        {/* Mobile Building Selector for users with multiple buildings */}
+        {hasMultipleBuildings && (
           <div className="px-4 py-3 border-b border-teal-100 dark:border-slate-700 bg-white/30 dark:bg-slate-800/30">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Επιλέξτε Πολυκατοικία:</p>
             <BuildingSelectorButton

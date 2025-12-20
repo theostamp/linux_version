@@ -47,7 +47,9 @@ export default function GlobalHeader() {
       <header
         className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
       >
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+        {/* On mobile/tablet the sidebar hamburger button is fixed at top-left.
+            Add extra left padding so it never overlaps the header content. */}
+        <div className="w-full pr-4 pl-16 sm:pr-6 sm:pl-16 lg:px-8">
           <div className="w-full max-w-full">
             {/* On mobile, allow a 2nd row so the building selector never overlaps other header actions */}
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6 lg:gap-8 py-3 sm:h-20">
@@ -286,7 +288,7 @@ export default function GlobalHeader() {
             </div>
 
               {/* Mobile-only: building selector as a full-width second row to avoid crowding/overlap */}
-              {canSelectBuilding && hasMultipleBuildings && !showOfficeDetails && (
+              {canSelectBuilding && (hasMultipleBuildings || showOfficeDetails) && (
                 <div className="lg:hidden col-span-3 pt-1">
                   <BuildingSelectorButton
                     onBuildingSelect={setSelectedBuilding}
