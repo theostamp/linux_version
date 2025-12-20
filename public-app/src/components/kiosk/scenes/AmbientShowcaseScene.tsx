@@ -19,18 +19,6 @@ interface AmbientShowcaseSceneProps {
   brandingConfig?: Partial<AmbientBrandingConfig>;
 }
 
-// Available ambient images - will be randomly selected
-const AMBIENT_IMAGES = [
-  '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg',
-  '/kiosk/assets/visuals/kiosk1.jpg',
-  // SVG files are also available but we'll focus on JPG for now
-];
-
-// Function to get a random image from the available images
-const getRandomAmbientImage = (): string => {
-  return AMBIENT_IMAGES[Math.floor(Math.random() * AMBIENT_IMAGES.length)];
-};
-
 const formatGreekDate = (date: Date) => ({
   day: date.toLocaleDateString('el-GR', { day: '2-digit' }),
   month: date.toLocaleDateString('el-GR', { month: 'long' }),
@@ -118,7 +106,7 @@ const pickAmbientVideo = (weatherData: KioskWeatherData | null, now: Date): stri
   if (isWindy) return AMBIENT_VIDEOS.windy_city;
   if (isCozyCold) return AMBIENT_VIDEOS.cozy_fireplace;
 
-  // If no match, keep the static image (until we add more clips like "clear_sky", "cloudy", "hot_beach", etc.)
+  // If no match, keep non-video background (e.g. gradient or configured branding image).
   return null;
 };
 
@@ -388,7 +376,6 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
 
 export default function AmbientShowcaseScene({ data, buildingId, brandingConfig }: AmbientShowcaseSceneProps) {
   const [now, setNow] = useState(new Date());
-  const [randomImage] = useState(() => getRandomAmbientImage()); // Random image selected once on mount
   
   // Fetch weather data
   const { weather: weatherData } = useKioskWeather(300000); // Refresh every 5 minutes
@@ -403,8 +390,10 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     [data, brandingConfig]
   );
 
-  // Use branding image if available, otherwise use random ambient image
-  const backgroundImage = branding.background?.src || randomImage;
+  const backgroundImage = branding.background?.type === 'image' ? branding.background?.src : undefined;
+  const backgroundGradient = branding.background?.type === 'gradient'
+    ? branding.background?.gradient
+    : 'radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.25), transparent 55%), radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.22), transparent 55%), linear-gradient(135deg, #020617 0%, #0f172a 45%, #1e1b4b 100%)';
   const backgroundVideo = useMemo(() => pickAmbientVideo(weatherData, now), [weatherData, now]);
 
   const dateInfo = formatGreekDate(now);
@@ -430,12 +419,14 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
             preload="metadata"
             poster={backgroundImage}
           />
-        ) : (
+        ) : backgroundImage ? (
           <img 
             src={backgroundImage} 
             alt="" 
             className="h-full w-full object-cover"
           />
+        ) : (
+          <div className="h-full w-full" style={{ backgroundImage: backgroundGradient }} />
         )}
         {/* Gradient overlay for sidebar area */}
         <div className="absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-teal-900/90 via-teal-800/70 to-transparent" />

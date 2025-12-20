@@ -37,10 +37,11 @@ export interface AmbientBrandingConfig {
 
 export const defaultAmbientBranding: AmbientBrandingConfig = {
   background: {
-    type: 'image',
-    src: '/kiosk/assets/visuals/14826004_1920_1080_30fpspxhere.com.jpg',
-    overlayColor: 'rgba(8, 5, 20, 0.5)',
-    blur: 8,
+    // Default: no static legacy image. Use a gradient backdrop.
+    type: 'gradient',
+    gradient: 'radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.25), transparent 55%), radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.22), transparent 55%), linear-gradient(135deg, #020617 0%, #0f172a 45%, #1e1b4b 100%)',
+    overlayColor: 'rgba(8, 5, 20, 0.45)',
+    blur: 0,
   },
   tagline: 'Αναπνέουμε πιο ήρεμα στα κοινόχρηστα',
   subline: 'Έξυπνη ενημέρωση, ζεστή ατμόσφαιρα, 24/7 για τους ενοίκους σας.',
