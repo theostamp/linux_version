@@ -50,6 +50,78 @@ const extractWeatherCondition = (weatherData: KioskWeatherData | null): string |
   return weatherData?.current?.condition || null;
 };
 
+type AmbientVideoKey = 'rain_city' | 'windy_city' | 'cozy_fireplace';
+
+const AMBIENT_VIDEOS: Record<AmbientVideoKey, string> = {
+  rain_city: '/ambient-videos/rain_city.mp4',
+  windy_city: '/ambient-videos/windy_city.mp4',
+  cozy_fireplace: '/ambient-videos/cozy_fireplace.mp4',
+};
+
+const normalizeGreek = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    // Remove accents/diacritics for robust matching (e.g. "βροχή" == "βροχη")
+    .replace(/\p{Diacritic}/gu, '');
+
+const parseTimeHHMM = (hhmm?: string | null): { hours: number; minutes: number } | null => {
+  if (!hhmm) return null;
+  const match = hhmm.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return { hours, minutes };
+};
+
+const isNightBySunriseSunset = (now: Date, sunrise?: string, sunset?: string): boolean => {
+  const sr = parseTimeHHMM(sunrise);
+  const ss = parseTimeHHMM(sunset);
+  if (!sr || !ss) {
+    // Fallback: simple time-of-day heuristic
+    const h = now.getHours();
+    return h >= 20 || h < 6;
+  }
+
+  const sunriseDate = new Date(now);
+  sunriseDate.setHours(sr.hours, sr.minutes, 0, 0);
+  const sunsetDate = new Date(now);
+  sunsetDate.setHours(ss.hours, ss.minutes, 0, 0);
+
+  // If current time is before sunrise or after sunset => night
+  return now < sunriseDate || now > sunsetDate;
+};
+
+const pickAmbientVideo = (weatherData: KioskWeatherData | null, now: Date): string | null => {
+  const conditionRaw = extractWeatherCondition(weatherData) ?? '';
+  const condition = conditionRaw ? normalizeGreek(conditionRaw) : '';
+  const temp = extractTemperature(weatherData);
+  const wind = weatherData?.current?.wind_speed;
+
+  const isRain =
+    condition.includes('βροχ') ||
+    condition.includes('μπορ') ||
+    condition.includes('καταιγ');
+  const isWindy =
+    condition.includes('ανεμ') ||
+    (typeof wind === 'number' && wind >= 25);
+
+  // Cozy fireplace: slightly higher threshold (for kiosk ambience)
+  const COZY_TEMP_C = 14;
+  const isCozyCold = typeof temp === 'number' && temp <= COZY_TEMP_C;
+
+  // Note: with current available videos we keep mapping simple.
+  // Priority: rain > windy > cozy
+  if (isRain) return AMBIENT_VIDEOS.rain_city;
+  if (isWindy) return AMBIENT_VIDEOS.windy_city;
+  if (isCozyCold) return AMBIENT_VIDEOS.cozy_fireplace;
+
+  // If no match, keep the static image (until we add more clips like "clear_sky", "cloudy", "hot_beach", etc.)
+  return null;
+};
+
 // Helper functions to extract assembly info from description
 function extractTime(description: string): string | null {
   if (!description) return null;
@@ -333,6 +405,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
   // Use branding image if available, otherwise use random ambient image
   const backgroundImage = branding.background?.src || randomImage;
+  const backgroundVideo = useMemo(() => pickAmbientVideo(weatherData, now), [weatherData, now]);
 
   const dateInfo = formatGreekDate(now);
   const formattedTime = now.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
@@ -343,13 +416,27 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white">
-      {/* Full-screen Background Image */}
+      {/* Full-screen Background (Video preferred, Image fallback) */}
       <div className="absolute inset-0">
-        <img 
-          src={backgroundImage} 
-          alt="" 
-          className="h-full w-full object-cover"
-        />
+        {backgroundVideo ? (
+          <video
+            key={backgroundVideo}
+            className="h-full w-full object-cover"
+            src={backgroundVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={backgroundImage}
+          />
+        ) : (
+          <img 
+            src={backgroundImage} 
+            alt="" 
+            className="h-full w-full object-cover"
+          />
+        )}
         {/* Gradient overlay for sidebar area */}
         <div className="absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-teal-900/90 via-teal-800/70 to-transparent" />
       </div>

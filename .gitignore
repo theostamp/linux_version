@@ -72,6 +72,9 @@ tmp/
 temp/
 *.tmp
 
+# Local large media staging (do not commit)
+ambient videos/
+
 *BrowserCredits.txt
 /home/theo/project/BrowserCredits.txt
 # Debug logs
