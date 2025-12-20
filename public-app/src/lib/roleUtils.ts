@@ -1,8 +1,11 @@
 import type { User } from '@/types/user';
 
 export type NormalizedRole =
-  | 'resident'
+  | 'enikos'
   | 'internal_manager'
+  | 'admin'
+  | 'ultra_super_user'
+  | 'resident'
   | 'office_staff'
   | 'manager'
   | 'staff'
@@ -12,19 +15,21 @@ export type RoleDescriptor = Pick<User, 'role' | 'profile' | 'is_superuser' | 'i
 export type RoleAwareUser = RoleDescriptor | null | undefined;
 
 const ROLE_ALIASES: Record<string, NormalizedRole> = {
-  resident: 'resident',
-  tenant: 'resident',
-  owner: 'resident',
+  enikos: 'enikos',
+  resident: 'enikos',
+  tenant: 'enikos',
+  owner: 'enikos',
   internal_manager: 'internal_manager',
-  office_manager: 'manager',
-  manager: 'manager',
-  admin: 'manager',
+  admin: 'admin',
+  office_manager: 'admin',
+  manager: 'admin',
   office_staff: 'office_staff',
   staff: 'staff',
-  superuser: 'superuser',
+  ultra_super_user: 'ultra_super_user',
+  superuser: 'ultra_super_user',
 };
 
-const OFFICE_ADMIN_ROLES: NormalizedRole[] = ['manager', 'office_staff', 'staff', 'superuser'];
+const OFFICE_ADMIN_ROLES: NormalizedRole[] = ['admin', 'manager', 'office_staff', 'staff', 'ultra_super_user', 'superuser'];
 const INTERNAL_OR_ADMIN_ROLES: NormalizedRole[] = ['internal_manager', ...OFFICE_ADMIN_ROLES];
 
 function normalizeRole(role?: string | null): NormalizedRole | undefined {
@@ -72,16 +77,19 @@ export function getRoleLabel(user: RoleAwareUser): string {
   const role = getEffectiveRole(user);
 
   switch (role) {
+    case 'enikos':
     case 'resident':
       return 'Ένοικος';
     case 'internal_manager':
       return 'Εσωτερικός Διαχειριστής';
     case 'office_staff':
       return 'Υπάλληλος Γραφείου';
+    case 'admin':
     case 'manager':
       return 'Διαχειριστής';
     case 'staff':
       return 'Διαχειριστής';
+    case 'ultra_super_user':
     case 'superuser':
       return 'Ultra Admin';
     default:

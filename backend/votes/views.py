@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.http import Http404
 import logging
 
+from core.mixins import RBACQuerySetMixin
+from core.permissions import IsAdmin, IsInternalManager, IsEnikos
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer
 from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin, IsOfficeManagerOrInternalManager
@@ -14,7 +16,7 @@ from core.utils import filter_queryset_by_user_and_building
 logger = logging.getLogger(__name__)
 
 
-class VoteViewSet(viewsets.ModelViewSet):
+class VoteViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     """
     CRUD για Vote + custom actions:
       - POST   /api/votes/{pk}/vote/           -> υποβολή ψήφου
@@ -32,48 +34,15 @@ class VoteViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated(), IsOfficeManagerOrInternalManager()]
 
     def get_queryset(self):
-        """
-        Φέρνει μόνο τα votes που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
-        """
-        qs = Vote.objects.select_related('creator', 'building').order_by('-created_at')
-
-        # IMPORTANT: Avoid evaluating the queryset here (e.g. qs.count()).
-        # Any DB issue/migration mismatch would surface as a 500 *before* filtering,
-        # and it also adds unnecessary load on every request.
-        try:
-            building_param = self.request.query_params.get('building')
-            logger.info(f"[VoteViewSet.get_queryset] Building param: {building_param}")
-            logger.info(
-                "[VoteViewSet.get_queryset] User: %s, is_superuser: %s, is_staff: %s",
-                getattr(self.request, "user", None),
-                getattr(getattr(self.request, "user", None), "is_superuser", None),
-                getattr(getattr(self.request, "user", None), "is_staff", None),
-            )
-
-            return filter_queryset_by_user_and_building(self.request, qs)
-        except Exception:
-            logger.exception("Error in VoteViewSet.get_queryset")
-            # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
-            return Vote.objects.none()
-
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return VoteListSerializer
-        elif self.action in ['retrieve', 'results']:
-            return VoteSerializer
-        elif self.action in ['vote', 'my_submission', 'submit']:
-            return VoteSubmissionSerializer
-        return super().get_serializer_class()
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['request'] = self.request
-        return context
-
-    def perform_update(self, serializer):
-        building = serializer.validated_data.get('building')
-        serializer.save(building=building) if building else serializer.save()
+        """Φιλτράρισμα με βάση τα δικαιώματα χρήστη (RBAC)"""
+        queryset = super().get_queryset().select_related('creator', 'building')
+        building_id = self.request.query_params.get('building')
+        if building_id:
+            try:
+                queryset = queryset.filter(building_id=int(building_id))
+            except (ValueError, TypeError):
+                pass
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)

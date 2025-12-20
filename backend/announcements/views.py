@@ -7,6 +7,8 @@ from django.db.models import Q
 from django.core.cache import cache
 import logging
 
+from core.mixins import RBACQuerySetMixin
+from core.permissions import IsAdmin, IsInternalManager, IsEnikos
 from .models import Announcement
 from .serializers import AnnouncementSerializer, AnnouncementListSerializer
 from core.permissions import IsManagerOrSuperuser, IsOfficeManagerOrInternalManager
@@ -15,7 +17,7 @@ from users.permissions import IsBuildingAdmin
 
 logger = logging.getLogger(__name__)
 
-class AnnouncementViewSet(viewsets.ModelViewSet):
+class AnnouncementViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     """
     CRUD για Announcement
     - GET    /api/announcements/?building=<id> -> φιλτραρισμένη λίστα
@@ -40,23 +42,15 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         return AnnouncementSerializer
 
     def get_queryset(self):
-        """
-        Filter announcements by building parameter if provided.
-        Returns all announcements if no building parameter is provided.
-        """
-        queryset = Announcement.objects.select_related('author', 'building').order_by('-priority', '-created_at')
-        
-        # Filter by building if provided in query params
+        """Φιλτράρισμα με βάση τα δικαιώματα χρήστη (RBAC)"""
+        queryset = super().get_queryset()
         building_id = self.request.query_params.get('building')
         if building_id:
             try:
                 building_id = int(building_id)
-                # Include announcements for this building OR global announcements (building=null)
                 queryset = queryset.filter(Q(building_id=building_id) | Q(building__isnull=True))
             except (ValueError, TypeError):
-                # Invalid building_id, return empty queryset
                 queryset = queryset.none()
-        
         return queryset
 
     def perform_create(self, serializer):

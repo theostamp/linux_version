@@ -35,11 +35,15 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class SystemRole(models.TextChoices):
-        ADMIN = 'admin', _('Admin')  # Superusers only
-        OFFICE_MANAGER = 'manager', _('Office Manager')  # Γραφείο διαχείρισης (Tenant owner)
-        OFFICE_STAFF = 'office_staff', _('Office Staff')  # Υπάλληλος γραφείου διαχείρισης
-        INTERNAL_MANAGER = 'internal_manager', _('Internal Manager')  # Εσωτερικός διαχειριστής πολυκατοικίας
-        RESIDENT = 'resident', _('Resident')  # Ένοικος/Ιδιοκτήτης
+        ULTRA_SUPER_USER = 'ultra_super_user', _('Ultra Super User')  # Global access (All Tenants)
+        ADMIN = 'admin', _('Admin')  # Tenant-level access
+        INTERNAL_MANAGER = 'internal_manager', _('Internal Manager')  # Building-level access
+        ENIKOS = 'enikos', _('Enikos (Tenant)')  # Unit-level access & Public Announcements
+        
+        # Legacy mappings for backward compatibility
+        OFFICE_MANAGER = 'manager', _('Office Manager')
+        OFFICE_STAFF = 'office_staff', _('Office Staff')
+        RESIDENT = 'resident', _('Resident')
 
     email = models.EmailField(unique=True)
     username = models.CharField(
@@ -290,27 +294,28 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.get_full_name()
 
     @property
-    def is_office_manager(self):
-        return self.role == self.SystemRole.OFFICE_MANAGER
-
-    @property
-    def is_office_staff(self):
-        """Ελέγχει αν ο χρήστης είναι υπάλληλος γραφείου"""
-        return self.role == self.SystemRole.OFFICE_STAFF
+    def is_ultra_super_user(self):
+        return self.role == self.SystemRole.ULTRA_SUPER_USER or (self.is_superuser and self.is_staff)
 
     @property
     def is_admin(self):
-        return self.role == self.SystemRole.ADMIN
+        return self.role == self.SystemRole.ADMIN or self.role == self.SystemRole.OFFICE_MANAGER
+
+    @property
+    def is_office_staff(self):
+        return self.role == self.SystemRole.OFFICE_STAFF
 
     @property
     def is_internal_manager(self):
-        """Ελέγχει αν ο χρήστης είναι εσωτερικός διαχειριστής"""
         return self.role == self.SystemRole.INTERNAL_MANAGER
 
     @property
-    def is_resident_role(self):
-        """Ελέγχει αν ο χρήστης έχει ρόλο ενοίκου"""
-        return self.role == self.SystemRole.RESIDENT
+    def is_enikos(self):
+        return self.role == self.SystemRole.ENIKOS or self.role == self.SystemRole.RESIDENT
+
+    @property
+    def is_office_manager(self):
+        return self.role == self.SystemRole.OFFICE_MANAGER
 
     @property
     def is_admin_level(self):

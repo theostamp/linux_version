@@ -1,3 +1,4 @@
+from core.mixins import RBACQuerySetMixin
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
@@ -495,7 +496,7 @@ def update_project_schedule(project, offer=None):
         )
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = Project.objects.select_related('building', 'created_by').prefetch_related('offers', 'votes', 'expenses').all()
     permission_classes = [IsAuthenticated, ProjectPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -766,7 +767,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(OfferSerializer(offer).data)
 
 
-class OfferViewSet(viewsets.ModelViewSet):
+class OfferViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = Offer.objects.select_related('project', 'project__building', 'reviewed_by').prefetch_related('files').all()
     permission_classes = [IsAuthenticated, ProjectPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -952,7 +953,7 @@ class OfferViewSet(viewsets.ModelViewSet):
         return Response(OfferSerializer(offer).data, status=status.HTTP_200_OK)
 
 
-class OfferFileViewSet(viewsets.ModelViewSet):
+class OfferFileViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = OfferFile.objects.select_related('offer', 'offer__project', 'uploaded_by').all()
     serializer_class = OfferFileSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]
@@ -966,7 +967,7 @@ class OfferFileViewSet(viewsets.ModelViewSet):
         serializer.save(uploaded_by=self.request.user)
 
 
-class ProjectVoteViewSet(viewsets.ModelViewSet):
+class ProjectVoteViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = ProjectVote.objects.select_related('project', 'offer').all()
     serializer_class = ProjectVoteSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]
@@ -977,7 +978,7 @@ class ProjectVoteViewSet(viewsets.ModelViewSet):
     ordering = ['-voted_at']
 
 
-class ProjectExpenseViewSet(viewsets.ModelViewSet):
+class ProjectExpenseViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = ProjectExpense.objects.select_related('project', 'created_by').all()
     serializer_class = ProjectExpenseSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]

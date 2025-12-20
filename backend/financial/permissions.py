@@ -27,49 +27,26 @@ class FinancialPermissionMixin:
         if not user or not user.is_authenticated:
             return False
             
-        # Superusers έχουν πλήρη πρόσβαση
-        if user.is_superuser:
+        # 1. Ultra Super User: Global access
+        if getattr(user, 'is_ultra_super_user', False) or (user.is_superuser and user.is_staff):
             return True
             
-        # Staff users έχουν πρόσβαση σε όλες τις πολυκατοικίες
-        if user.is_staff:
+        # 2. Admin: Tenant-level access
+        if getattr(user, 'is_admin', False):
             return True
         
-        # Office Manager: Πλήρης πρόσβαση στις πολυκατοικίες του tenant
-        if getattr(user, 'is_office_manager', False):
-            return True
-        
-        # Internal Manager: Πρόσβαση μόνο στη δική του πολυκατοικία
+        # 3. Internal Manager: Building-level access
         if getattr(user, 'is_internal_manager', False):
             if building:
                 return user.is_internal_manager_of(building)
-            # Χωρίς building context, επιτρέπουμε read (θα ελεγχθεί σε object level)
-            return not write_access
+            return not write_access  # Allow general access for reading lists (filtered by queryset)
         
-        # Resident: Read-only πρόσβαση μόνο στη δική του πολυκατοικία
-        if getattr(user, 'is_resident_role', False) or getattr(user, 'role', '') == 'resident':
+        # 4. Enikos (Tenant): Unit-level access & Public Announcements
+        if getattr(user, 'is_enikos', False):
             if write_access:
-                return False  # Residents δεν έχουν write access
+                return False  # Enikos never have write access to general finances
             if building:
                 return user.is_resident_of(building)
-            return True  # Θα ελεγχθεί σε object level
-        
-        # RBAC Groups fallback
-        if user.groups.filter(name='Manager').exists():
-            return True
-        if user.groups.filter(name='Resident').exists():
-            return not write_access
-            
-        # Legacy: Χρήστες με role 'manager' έχουν πρόσβαση στις πολυκατοικίες που διαχειρίζονται
-        if getattr(user, 'role', '') == 'manager':
-            if building:
-                return hasattr(building, 'manager') and building.manager == user
-            return True
-            
-        # Legacy: Χρήστες με role 'admin' έχουν πρόσβαση
-        if getattr(user, 'role', '') == 'admin':
-            if building:
-                return hasattr(building, 'admin') and building.admin == user
             return True
             
         return False

@@ -464,3 +464,50 @@ class CanAccessBuilding(BasePermission):
             return False
         
         return user.can_access_building(building)
+class IsUltraSuperUser(BasePermission):
+    """
+    Global access (All Tenants).
+    Restricted to users with role 'ultra_super_user' or superuser+staff.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (getattr(request.user, 'is_ultra_super_user', False) or (request.user.is_superuser and request.user.is_staff))
+        )
+
+class IsAdmin(BasePermission):
+    """
+    Tenant-level access.
+    Restricted to the assigned Tenant ID (enforced by django-tenants and role check).
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (getattr(request.user, 'is_admin', False) or request.user.is_superuser)
+        )
+
+class IsInternalManager(BasePermission):
+    """
+    Building-level access.
+    Restricted to assigned Building IDs within the Tenant.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (getattr(request.user, 'is_internal_manager', False) or getattr(request.user, 'is_admin', False) or request.user.is_superuser)
+        )
+
+class IsEnikos(BasePermission):
+    """
+    Unit-level access.
+    Restricted to assigned Unit ID and public data for their building.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (getattr(request.user, 'is_enikos', False) or getattr(request.user, 'is_internal_manager', False) or getattr(request.user, 'is_admin', False) or request.user.is_superuser)
+        )

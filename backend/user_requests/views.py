@@ -3,6 +3,8 @@
 from rest_framework import viewsets, permissions 
 from rest_framework.response import Response 
 from core.permissions import IsManagerOrSuperuser
+from core.mixins import RBACQuerySetMixin
+from core.permissions import IsAdmin, IsInternalManager, IsEnikos
 from .models import UserRequest
 from .serializers import UserRequestSerializer, UserRequestListSerializer
 from buildings.models import Building
@@ -15,7 +17,7 @@ from django.db import models
 from django.utils import timezone
    
 
-class UserRequestViewSet(viewsets.ModelViewSet):
+class UserRequestViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = UserRequest.objects.all().order_by('-created_at')
     serializer_class = UserRequestSerializer
 

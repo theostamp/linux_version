@@ -32,6 +32,8 @@ from .permissions import (
     ExpensePermission, PaymentPermission, TransactionPermission,
     FinancialReadPermission, FinancialWritePermission, ReportPermission
 )
+from core.mixins import RBACQuerySetMixin
+from core.permissions import IsAdmin, IsInternalManager, IsEnikos
 from core.permissions import IsManager, IsRelatedToBuilding
 from .audit import FinancialAuditLog
 from .services import CommonExpenseAutomationService
@@ -144,7 +146,7 @@ class SupplierViewSet(OptionalBuildingContextMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ExpenseViewSet(BuildingContextMixin, viewsets.ModelViewSet):
+class ExpenseViewSet(RBACQuerySetMixin, BuildingContextMixin, viewsets.ModelViewSet):
     """
     ViewSet για τη διαχείριση δαπανών με RBAC permissions.
     
@@ -997,7 +999,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return Response(types)
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση εισπράξεων"""
     
     queryset = Payment.objects.select_related('apartment', 'apartment__building').all()

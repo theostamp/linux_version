@@ -1,3 +1,4 @@
+from core.mixins import RBACQuerySetMixin
 from rest_framework import viewsets, generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
@@ -21,7 +22,7 @@ from io import BytesIO
 from django.http import HttpResponse
 
 
-class ContractorViewSet(viewsets.ModelViewSet):
+class ContractorViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = Contractor.objects.prefetch_related('receipts', 'scheduled_work').all()
     serializer_class = ContractorSerializer
     permission_classes = [IsAuthenticated, MaintenancePermission]
@@ -48,7 +49,7 @@ class ContractorViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ServiceReceiptViewSet(viewsets.ModelViewSet):
+class ServiceReceiptViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = ServiceReceipt.objects.select_related('contractor', 'building').all()
     serializer_class = ServiceReceiptSerializer
     permission_classes = [IsAuthenticated, MaintenancePermission]
@@ -214,7 +215,7 @@ class ServiceReceiptViewSet(viewsets.ModelViewSet):
             print(f"[ServiceReceiptViewSet] perform_destroy failed: {e}")
 
 
-class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
+class ScheduledMaintenanceViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = ScheduledMaintenance.objects.select_related('building', 'contractor').all()
     serializer_class = ScheduledMaintenanceSerializer
     permission_classes = [IsAuthenticated, MaintenancePermission]
@@ -526,7 +527,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
         })
 
 
-class MaintenanceTicketViewSet(viewsets.ModelViewSet):
+class MaintenanceTicketViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση maintenance tickets με RBAC permissions"""
     queryset = MaintenanceTicket.objects.select_related('building', 'apartment', 'contractor').all()
     serializer_class = MaintenanceTicketSerializer
@@ -559,7 +560,7 @@ class MaintenanceTicketViewSet(viewsets.ModelViewSet):
         serializer.save(reporter=self.request.user)
 
 
-class WorkOrderViewSet(viewsets.ModelViewSet):
+class WorkOrderViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = WorkOrder.objects.select_related('ticket', 'contractor', 'assigned_to').all()
     serializer_class = WorkOrderSerializer
     permission_classes = [IsAuthenticated, MaintenancePermission]
@@ -613,7 +614,7 @@ class PublicMaintenanceCountersView(generics.GenericAPIView):
         return Response(data)
 
 
-class PaymentScheduleViewSet(viewsets.ModelViewSet):
+class PaymentScheduleViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = PaymentSchedule.objects.select_related(
         'scheduled_maintenance', 'scheduled_maintenance__building', 
         'scheduled_maintenance__contractor', 'created_by'
@@ -762,7 +763,7 @@ class PaymentScheduleViewSet(viewsets.ModelViewSet):
         return Response(summary)
 
 
-class PaymentInstallmentViewSet(viewsets.ModelViewSet):
+class PaymentInstallmentViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = PaymentInstallment.objects.select_related(
         'payment_schedule', 'payment_schedule__scheduled_maintenance',
         'payment_schedule__scheduled_maintenance__building',
@@ -855,7 +856,7 @@ class PaymentInstallmentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class PaymentReceiptViewSet(viewsets.ModelViewSet):
+class PaymentReceiptViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     queryset = PaymentReceipt.objects.select_related(
         'scheduled_maintenance', 'scheduled_maintenance__building',
         'contractor', 'installment', 'linked_expense',

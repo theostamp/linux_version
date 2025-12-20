@@ -13,10 +13,11 @@ from .serializers import (
     BulkCreateApartmentsSerializer
 )
 from buildings.models import Building
-from core.permissions import IsManagerOrSuperuser
+from core.mixins import RBACQuerySetMixin
+from core.permissions import IsManagerOrSuperuser, IsAdmin, IsInternalManager, IsEnikos
 
 
-class ApartmentViewSet(viewsets.ModelViewSet):
+class ApartmentViewSet(RBACQuerySetMixin, viewsets.ModelViewSet):
     """
     ViewSet για διαχείριση διαμερισμάτων
     """
@@ -36,75 +37,23 @@ class ApartmentViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Δικαιώματα ανάλογα με την ενέργεια"""
         if self.action in ['list', 'retrieve']:
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
+            return [IsEnikos()]
+        return [IsInternalManager()]
     
     def get_queryset(self):
         """Φιλτράρισμα με βάση το κτίριο και τα δικαιώματα χρήστη"""
-        queryset = self.queryset
-        user = self.request.user
+        queryset = super().get_queryset()
         building_param = self.request.query_params.get('building')
-        building_id = None
+        
+        # Φιλτράρισμα ανά κτίριο αν δοθεί στην παράμετρο
         if building_param:
             try:
-                building_id = int(building_param)
+                queryset = queryset.filter(building_id=int(building_param))
             except (TypeError, ValueError):
-                building_id = None
+                pass
         
-        # Φιλτράρισμα ανά κτίριο
-        if building_id:
-            queryset = queryset.filter(building_id=building_id)
-        
-        # Δικαιώματα χρήστη
-        if user.is_superuser:
-            return queryset
-        
-        # Έλεγχος αν ο χρήστης είναι προσωπικό γραφείου (Manager ή Staff)
-        # Επιτρέπουμε πρόσβαση αν έχει τον κατάλληλο ρόλο ή είναι staff
-        is_office_personnel = (
-            user.role in ['manager', 'office_staff', 'staff', 'admin'] or 
-            user.is_staff
-        )
+        return queryset
 
-        if is_office_personnel:
-            # Το προσωπικό γραφείου βλέπει όλα τα διαμερίσματα του tenant (τρέχον schema)
-            # Δεν χρειάζεται φιλτράρισμα ανά manager_id γιατί όλα τα κτίρια στο schema ανήκουν στο γραφείο
-            return queryset
-
-        # Εσωτερικός διαχειριστής: βλέπει όλα τα διαμερίσματα ΜΟΝΟ για τα κτίρια που διαχειρίζεται
-        from buildings.models import BuildingMembership
-        is_internal_manager_for_building = False
-        if building_id:
-            is_internal_manager_for_building = (
-                Building.objects.filter(id=building_id, internal_manager_id=user.id).exists() or
-                BuildingMembership.objects.filter(
-                    building_id=building_id,
-                    resident_id=user.id,
-                    role='internal_manager'
-                ).exists()
-            )
-        else:
-            managed_building_ids = set(
-                Building.objects.filter(internal_manager_id=user.id).values_list('id', flat=True)
-            )
-            membership_building_ids = set(
-                BuildingMembership.objects.filter(
-                    resident_id=user.id,
-                    role='internal_manager'
-                ).values_list('building_id', flat=True)
-            )
-            allowed_building_ids = managed_building_ids | membership_building_ids
-            if allowed_building_ids:
-                return queryset.filter(building_id__in=allowed_building_ids)
-
-        if is_internal_manager_for_building:
-            return queryset
-
-        # Κανονικοί χρήστες βλέπουν μόνο τα διαμερίσματά τους
-        return queryset.filter(
-            Q(owner_user=user) | Q(tenant_user=user)
-        )
-    
     def list(self, request, *args, **kwargs):
         """Λίστα διαμερισμάτων με προαιρετικό φιλτράρισμα"""
         queryset = self.filter_queryset(self.get_queryset())
