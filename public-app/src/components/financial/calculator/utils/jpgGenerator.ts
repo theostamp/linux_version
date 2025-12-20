@@ -418,9 +418,13 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const commonMills = apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
-                  // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΔΕΝ περιλαμβάνει owner expenses)
-                  const residentExpensesTotal = (apt as any).resident_expenses || 0;
-                  const commonAmountWithoutReserve = residentExpensesTotal - apartmentReserveFund;
+                  // ✅ FIX 2025-12-20: Κ/ΧΡΗΣΤΑ χωρίς διπλομέτρηση θέρμανσης/ανελκυστήρα
+                  // Χρησιμοποιούμε το breakdown από τον calculator (perApartmentAmounts) αντί για resident_expenses
+                  // γιατί το resident_expenses περιλαμβάνει και θέρμανση/ανελκυστήρα και θα διπλομετρηθεί.
+                  const commonAmountWithoutReserve = Math.max(
+                    0,
+                    (aptAmount.common || 0) + (aptAmount.other || 0) + (aptAmount.coowner || 0)
+                  );
                   const ownerExpensesTotal = (apt as any).owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                   const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
@@ -459,9 +463,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
                       const commonMills = apt.participation_mills || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                      // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΔΕΝ περιλαμβάνει owner expenses)
-                      const residentExpensesTotal = (apt as any).resident_expenses || 0;
-                      return sum + (residentExpensesTotal - apartmentReserveFund);
+                      const common = Math.max(0, (aptAmount.common || 0) + (aptAmount.other || 0) + (aptAmount.coowner || 0));
+                      return sum + common;
                     } catch (e) {
                       return sum;
                     }
@@ -481,11 +484,12 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
                       const commonMills = apt.participation_mills || 0;
                       const previousBalance = Math.abs(apt.previous_balance || 0);
-                      const residentExpensesTotal = (apt as any).resident_expenses || 0;
                       const ownerExpensesTotal = (apt as any).owner_expenses || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                      // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΔΕΝ περιλαμβάνει owner expenses)
-                      const commonAmountWithoutReserve = residentExpensesTotal - apartmentReserveFund;
+                      const commonAmountWithoutReserve = Math.max(
+                        0,
+                        (aptAmount.common || 0) + (aptAmount.other || 0) + (aptAmount.coowner || 0)
+                      );
                       const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                       const elevatorAmount = aptAmount.elevator || 0;
                       const heatingAmount = aptAmount.heating || 0;
