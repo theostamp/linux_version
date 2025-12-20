@@ -2347,10 +2347,19 @@ class AdvancedCommonExpenseCalculator:
                 building_id=building_id,
                 date__gte=start_date,
                 date__lte=end_date
+            ).exclude(
+                # IMPORTANT:
+                # Το φύλλο κοινοχρήστων αντιμετωπίζει αυτά ως "synthetic" γραμμές/στήλες:
+                # - Management fees: από building.management_fee_per_apartment (ισόποσα)
+                # - Reserve fund: από reserve_fund settings (ανά χιλιοστά) / reserve_fund_monthly_total
+                # Αν υπάρχουν και ως Expense records, διπλομετριούνται (π.χ. Κ/ΧΡΗΣΤΑ 1440 αντί 320).
+                category__in=['management_fees', 'reserve_fund']
             )
         else:
             self.expenses = Expense.objects.filter(
                 building_id=building_id
+            ).exclude(
+                category__in=['management_fees', 'reserve_fund']
             )
         
         # Παράμετροι υπολογισμού θέρμανσης - χρήση από το κτίριο
@@ -2627,7 +2636,7 @@ class AdvancedCommonExpenseCalculator:
             return False
        
         equal_share_categories = [
-            'special_contribution', 'reserve_fund', 'emergency_fund',
+            'special_contribution', 'emergency_fund',
             'renovation_fund'
         ]
         
@@ -2967,7 +2976,7 @@ class AdvancedCommonExpenseCalculator:
         ]
         
         equal_share_categories = [
-            'special_contribution', 'reserve_fund', 'emergency_fund',
+            'special_contribution', 'emergency_fund',
             'renovation_fund'
         ]
         
