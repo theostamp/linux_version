@@ -21,6 +21,13 @@ const isHeatingSeasonActive = (): boolean => {
 export default function AnnouncementsExpensesSlider({ data, isLoading, error, buildingId }: AnnouncementsExpensesSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const shouldShowHeatingWidget = useMemo(() => {
+    const hasHeatingExpenses =
+      Array.isArray(data?.financial?.heating_expenses) && data.financial.heating_expenses.length > 0;
+    const hasHeatingPeriod = Boolean(data?.financial?.heating_period);
+    return hasHeatingExpenses || hasHeatingPeriod || isHeatingSeasonActive();
+  }, [data]);
+
   // Filter widgets based on heating season
   const widgets = useMemo(() => {
     const baseWidgets = [
@@ -36,8 +43,8 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
       },
     ];
     
-    // Only show heating chart during heating season (September-May)
-    if (isHeatingSeasonActive()) {
+    // Show heating chart when it has data/period, or during heating season.
+    if (shouldShowHeatingWidget) {
       baseWidgets.push({
         id: 'heating',
         name: 'Κατανάλωση Θέρμανσης',
@@ -46,7 +53,12 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
     }
     
     return baseWidgets;
-  }, []);
+  }, [shouldShowHeatingWidget]);
+
+  // Keep currentIndex valid when widget list changes
+  useEffect(() => {
+    setCurrentIndex((prev) => (widgets.length === 0 ? 0 : prev % widgets.length));
+  }, [widgets.length]);
 
   // Auto-advance slider every 15 seconds
   useEffect(() => {

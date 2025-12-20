@@ -74,12 +74,12 @@ interface FinancialTabDefinition {
 }
 
 const DESKTOP_TAB_BASE_CLASSES =
-  'group flex flex-col items-center p-2.5 rounded-xl bg-card/60 backdrop-blur-sm text-center shadow-sm ring-1 ring-border/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
+  'group flex flex-col items-center p-2.5 rounded-xl bg-card/60 backdrop-blur-sm text-center shadow-md ring-1 ring-border/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
 const DESKTOP_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
 const MOBILE_TAB_BASE_CLASSES =
-  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-card/60 backdrop-blur-sm text-sm text-foreground shadow-sm ring-1 ring-border/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
+  'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-card/60 backdrop-blur-sm text-sm text-foreground shadow-md ring-1 ring-border/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
 const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
-const TAB_ACTIVE_SHARED_CLASSES = 'shadow-md ring-2 ring-offset-1 ring-offset-background';
+const TAB_ACTIVE_SHARED_CLASSES = 'shadow-lg ring-2 ring-offset-1 ring-offset-background';
 const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
 const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
 const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
