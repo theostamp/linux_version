@@ -69,6 +69,17 @@ class MonthlyBalanceService:
             MonthlyBalance: Το δημιουργημένο ή ενημερωμένο record
         """
         logger.info(f"📊 Creating/updating MonthlyBalance for {self.building.name} - {month:02d}/{year}")
+
+        # Fast-path: if we are NOT recalculating and the record already exists, return it
+        # (prevents expensive re-computation when we are only ensuring the month chain exists)
+        if not recalculate:
+            existing = MonthlyBalance.objects.filter(
+                building=self.building,
+                year=year,
+                month=month
+            ).first()
+            if existing:
+                return existing
         
         # Περίοδος μήνα
         month_start = date(year, month, 1)
@@ -86,6 +97,7 @@ class MonthlyBalanceService:
         logger.debug(f"   💰 Εισπράξεις μήνα: €{total_payments}")
         
         # 3. Υπολογισμός παλαιότερων οφειλών (από προηγούμενο μήνα)
+        # IMPORTANT: For correct carry-over, ensure the previous month exists (build chain if missing)
         previous_obligations = self._calculate_previous_obligations(year, month)
         logger.debug(f"   📊 Παλαιότερες οφειλές: €{previous_obligations}")
         
@@ -203,13 +215,14 @@ class MonthlyBalanceService:
             year=prev_year,
             month=prev_month
         ).first()
-        
+
         if prev_balance:
             # Χρησιμοποιούμε το carry_forward από προηγούμενο μήνα
             return prev_balance.carry_forward
-        
-        # Αν δεν υπάρχει MonthlyBalance, υπολογίζουμε δυναμικά
-        # Χρησιμοποιώντας το BalanceCalculationService
+
+        # Αν δεν υπάρχει MonthlyBalance, χτίζουμε την αλυσίδα προς τα πίσω
+        # ώστε το carry_forward να προκύψει από την ίδια (συνεπή) λογική.
+        # Αυτό αποφεύγει αποκλίσεις από legacy/sign conventions στο dynamic fallback.
         month_start = date(year, month, 1)
         
         # Έλεγχος financial_system_start_date
@@ -217,12 +230,26 @@ class MonthlyBalanceService:
             if month_start <= self.building.financial_system_start_date:
                 # Πριν την έναρξη του συστήματος, δεν υπάρχουν παλαιότερες οφειλές
                 return Decimal('0.00')
-        
-        # Υπολογισμός συνολικού balance για όλα τα διαμερίσματα
-        # μέχρι την αρχή αυτού του μήνα
+
+        # Try to create the missing previous month MonthlyBalance (without forcing recalculation of existing ones).
+        # This may recursively ensure earlier months if they are also missing.
+        try:
+            prev_generated = self.create_or_update_monthly_balance(prev_year, prev_month, recalculate=False)
+            return prev_generated.carry_forward or Decimal('0.00')
+        except Exception as exc:
+            logger.warning(
+                "Failed to backfill previous MonthlyBalance for %02d/%d (building=%s). Falling back to dynamic calc.",
+                prev_month,
+                prev_year,
+                self.building.id,
+                exc_info=exc
+            )
+
+        # LAST RESORT: dynamic calculation using BalanceCalculationService
+        # (kept for backward compatibility; should be rare after backfilling)
         total_balance = Decimal('0.00')
         apartments = Apartment.objects.filter(building=self.building)
-        
+
         for apartment in apartments:
             apartment_balance = BalanceCalculationService.calculate_historical_balance(
                 apartment=apartment,
@@ -231,7 +258,7 @@ class MonthlyBalanceService:
                 include_reserve_fund=True  # ✅ ΚΡΙΣΙΜΟ: Περιλαμβάνουμε reserve fund!
             )
             total_balance += apartment_balance
-        
+
         # Παλαιότερες οφειλές = θετικό balance (χρέη)
         return total_balance if total_balance > 0 else Decimal('0.00')
     
