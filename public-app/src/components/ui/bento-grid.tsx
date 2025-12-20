@@ -46,17 +46,17 @@ export const BentoGridItem = ({
       {hasMeta && (
         <div className="space-y-2">
           {icon && (
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300">
               {icon}
             </div>
           )}
           {title && (
-            <div className="font-condensed text-lg font-semibold text-slate-900">
+            <div className="font-condensed text-lg font-semibold text-foreground">
               {title}
             </div>
           )}
           {description && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {description}
             </p>
           )}
@@ -65,4 +65,3 @@ export const BentoGridItem = ({
     </div>
   );
 };
-

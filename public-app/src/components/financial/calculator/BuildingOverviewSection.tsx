@@ -1013,33 +1013,33 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const getProgressColors = (percentage: number) => {
     if (percentage >= 100) {
       return {
-        bg: 'bg-green-200',
-        fill: 'bg-green-600',
-        text: 'text-green-700'
+        bg: 'bg-green-200 dark:bg-green-950/40',
+        fill: 'bg-green-600 dark:bg-green-400',
+        text: 'text-green-700 dark:text-green-300'
       };
     } else if (percentage >= 90) {
       return {
-        bg: 'bg-green-100',
-        fill: 'bg-green-500',
-        text: 'text-green-600'
+        bg: 'bg-green-100 dark:bg-green-950/30',
+        fill: 'bg-green-500 dark:bg-green-400',
+        text: 'text-green-600 dark:text-green-300'
       };
     } else if (percentage >= 70) {
       return {
-        bg: 'bg-yellow-100',
-        fill: 'bg-yellow-500',
-        text: 'text-yellow-600'
+        bg: 'bg-yellow-100 dark:bg-yellow-950/30',
+        fill: 'bg-yellow-500 dark:bg-yellow-400',
+        text: 'text-yellow-600 dark:text-yellow-300'
       };
     } else if (percentage >= 40) {
       return {
-        bg: 'bg-orange-100',
-        fill: 'bg-orange-500',
-        text: 'text-orange-600'
+        bg: 'bg-orange-100 dark:bg-orange-950/30',
+        fill: 'bg-orange-500 dark:bg-orange-400',
+        text: 'text-orange-600 dark:text-orange-300'
       };
     } else {
       return {
-        bg: 'bg-red-100',
-        fill: 'bg-red-500',
-        text: 'text-red-600'
+        bg: 'bg-red-100 dark:bg-red-950/30',
+        fill: 'bg-red-500 dark:bg-red-400',
+        text: 'text-red-600 dark:text-red-300'
       };
     }
   };
@@ -1094,15 +1094,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   // Dynamic card colors for Reserve Fund based on progress
   const getReserveFundCardColors = (percentage: number) => {
     if (percentage >= 100) {
-      return 'border-green-200 bg-green-50/50';
+      return 'border-green-200 bg-green-50/50 dark:border-green-700/40 dark:bg-green-950/20';
     } else if (percentage >= 90) {
-      return 'border-green-200 bg-green-50/30';
+      return 'border-green-200 bg-green-50/30 dark:border-green-700/40 dark:bg-green-950/20';
     } else if (percentage >= 70) {
-      return 'border-yellow-200 bg-yellow-50/30';
+      return 'border-yellow-200 bg-yellow-50/30 dark:border-yellow-700/40 dark:bg-yellow-950/20';
     } else if (percentage >= 40) {
-      return 'border-orange-200 bg-orange-50/30';
+      return 'border-orange-200 bg-orange-50/30 dark:border-orange-700/40 dark:bg-orange-950/20';
     } else {
-      return 'border-red-200 bg-red-50/30';
+      return 'border-red-200 bg-red-50/30 dark:border-red-700/40 dark:bg-red-950/20';
     }
   };
 
@@ -1455,8 +1455,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         <div className="space-y-2">
           <div className="grid grid-cols-1 gap-3 sm:gap-4">
             {/* Reserve Fund Goal Card - Full width */}
-            <Card className={`col-span-1 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
-              <CardContent className="p-4 cursor-pointer hover:bg-orange-50/50 transition-colors" onClick={() => setShowReserveGoalModal(true)}>
+              <Card className={`col-span-1 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
+              <CardContent className="p-4 cursor-pointer hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-colors" onClick={() => setShowReserveGoalModal(true)}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
@@ -1471,7 +1471,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         handleRefreshReserve();
                       }}
                       disabled={refreshingReserve}
-                      className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                      className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 dark:text-orange-300 dark:hover:text-orange-200"
                       title="Ανανέωση δεδομένων"
                     >
                       <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
@@ -1484,7 +1484,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           e.stopPropagation();
                           setEditingGoal(true);
                         }}
-                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 dark:text-orange-300 dark:hover:text-orange-200"
                         title="Επεξεργασία στόχου"
                       >
                         <Edit3 className="h-4 w-4" />
@@ -1496,7 +1496,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 {/* Reserve Fund Content */}
                 <div className="mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-orange-600 font-medium">Σύνολο / Δόσεις:</span>
+                    <span className="text-xs text-orange-600 dark:text-orange-300 font-medium">Σύνολο / Δόσεις:</span>
                     <span className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
                       {formatCurrency(financialSummary?.reserve_fund_goal || 0)} / {financialSummary?.reserve_fund_duration_months || 0}
                     </span>
@@ -1510,12 +1510,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
         {/* Section 3: Management Expenses - New Row */}
         <div className="space-y-2">
-          <Card className={`border-purple-200 bg-purple-50/30 relative ${applyingServicePackage ? 'opacity-75' : ''}`}>
-            <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-purple-50/50 transition-colors" onClick={() => setShowManagementExpensesModal(true)}>
+          <Card className={`border-purple-200 bg-purple-50/30 dark:border-purple-800/40 dark:bg-purple-950/20 relative ${applyingServicePackage ? 'opacity-75' : ''}`}>
+            <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-colors" onClick={() => setShowManagementExpensesModal(true)}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Building className="h-5 w-5 text-purple-600" />
-                  <h3 className="text-sm font-semibold text-purple-900">Δαπάνες Διαχείρισης</h3>
+                  <Building className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                  <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100">Δαπάνες Διαχείρισης</h3>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -1525,7 +1525,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       e.stopPropagation();
                       handleResetManagementFees();
                     }}
-                    className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:text-red-200 dark:hover:bg-red-950/20"
                     title="Επαναφορά management fees με σωστή ημερομηνία"
                   >
                     <RefreshCw className="h-4 w-4 mr-1" />
