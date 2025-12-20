@@ -71,7 +71,7 @@ export default function BuildingSelectorButton({
           onClick={handleOpen}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`flex items-center gap-2 min-w-0 max-w-full px-4 py-2 bg-background border border-input rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md transition-all ${className}`}
+          className={`flex items-center gap-2 min-w-0 max-w-full px-4 py-2 bg-white dark:bg-slate-900 border border-input rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md transition-all ${className}`}
         >
           <BuildingIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <span className="text-sm font-medium text-foreground truncate min-w-0">

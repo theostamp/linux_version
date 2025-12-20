@@ -147,7 +147,7 @@ export default function GlobalHeader() {
                     
                     {/* Building Selector for residents with multiple buildings - Desktop */}
                     {canSelectBuilding && hasMultipleBuildings && (
-                      <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                      <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
                         <BuildingSelectorButton
                           onBuildingSelect={setSelectedBuilding}
                           selectedBuilding={selectedBuilding}
@@ -294,7 +294,7 @@ export default function GlobalHeader() {
 
               {/* Mobile-only: building selector as a full-width second row to avoid crowding/overlap */}
               {canSelectBuilding && hasMultipleBuildings && !showOfficeDetails && (
-                <div className="sm:hidden col-span-3 pt-1">
+                <div className="lg:hidden col-span-3 pt-1">
                   <BuildingSelectorButton
                     onBuildingSelect={setSelectedBuilding}
                     selectedBuilding={selectedBuilding}
@@ -315,4 +315,3 @@ export default function GlobalHeader() {
     </>
   );
 }
-
