@@ -1,9 +1,8 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
-import { ThemeProvider } from '@/components/contexts/ThemeContext';
 import { AuthProvider } from '@/components/contexts/AuthContext';
 import { BuildingProvider } from '@/components/contexts/BuildingContext';
 import { LoadingProvider } from '@/components/contexts/LoadingContext';
@@ -12,16 +11,23 @@ import LayoutWrapper from '@/components/LayoutWrapper';
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
 
+  // Force light mode globally (dark mode is intentionally disabled across the app).
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    try {
+      localStorage.removeItem('theme-preference');
+    } catch {
+      // ignore
+    }
+  }, [pathname]);
+
   // Plasmic app host route must be completely "clean":
   // - no auth/building providers that might call backend
   // - no LayoutWrapper / sidebar
   // - no Toaster (adds DOM to the canvas)
   if (pathname === '/plasmic-host') {
-    return (
-      <ThemeProvider>
-        {children}
-      </ThemeProvider>
-    );
+    return children;
   }
 
   const isInfoScreen = pathname?.startsWith('/info-screen');
@@ -86,24 +92,20 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // IMPORTANT: Only /kiosk and /test-kiosk routes, NOT /kiosk-widgets or /kiosk-management
   if (isKioskMode) {
     return (
-      <ThemeProvider>
-        <LoadingProvider>
-          {children}
-          <Toaster position="top-right" richColors closeButton />
-        </LoadingProvider>
-      </ThemeProvider>
+      <LoadingProvider>
+        {children}
+        <Toaster position="top-right" richColors closeButton />
+      </LoadingProvider>
     );
   }
 
   // Info screen routes - no auth needed, uses LayoutWrapper
   if (isInfoScreen) {
     return (
-      <ThemeProvider>
-        <LoadingProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
-          <Toaster position="top-right" richColors closeButton />
-        </LoadingProvider>
-      </ThemeProvider>
+      <LoadingProvider>
+        <LayoutWrapper>{children}</LayoutWrapper>
+        <Toaster position="top-right" richColors closeButton />
+      </LoadingProvider>
     );
   }
 
@@ -117,26 +119,22 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // For auth pages (login, signup, etc.), skip AuthProvider to avoid loading spinner
   if (isNoAuthLoadingRoute) {
     return (
-      <ThemeProvider>
-        <LoadingProvider>
-          {children}
-          <Toaster position="top-right" richColors closeButton />
-        </LoadingProvider>
-      </ThemeProvider>
+      <LoadingProvider>
+        {children}
+        <Toaster position="top-right" richColors closeButton />
+      </LoadingProvider>
     );
   }
 
   return (
-    <ThemeProvider>
-      <LoadingProvider>
-        <AuthProvider>
-          <BuildingProvider>
-            {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
-            {/* ✅ Sonner Toaster - Available globally for all routes */}
-            <Toaster position="top-right" richColors closeButton />
-          </BuildingProvider>
-        </AuthProvider>
-      </LoadingProvider>
-    </ThemeProvider>
+    <LoadingProvider>
+      <AuthProvider>
+        <BuildingProvider>
+          {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
+          {/* ✅ Sonner Toaster - Available globally for all routes */}
+          <Toaster position="top-right" richColors closeButton />
+        </BuildingProvider>
+      </AuthProvider>
+    </LoadingProvider>
   );
 }

@@ -5,6 +5,11 @@
    Soft pastel colors, no dark borders
    ======================================== */
 
+/* Dark mode is intentionally disabled across the app. */
+html {
+  color-scheme: light;
+}
+
 :root {
   /* Light Mode - Kaspersky Soft Palette */
   --background: 216 28% 97%;           /* #F5F7FA - soft gray-blue */
