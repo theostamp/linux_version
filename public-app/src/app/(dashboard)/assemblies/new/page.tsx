@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -656,4 +656,3 @@ export default function CreateAssemblyPage() {
     </AuthGate>
   );
 }
-
