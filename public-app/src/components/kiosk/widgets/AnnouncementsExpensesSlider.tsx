@@ -10,6 +10,10 @@ interface AnnouncementsExpensesSliderProps extends BaseWidgetProps {
   buildingId?: number | null;
 }
 
+// We rotate widgets faster than the default scene duration (often 30s),
+// otherwise the 3rd widget (Heating chart) may never be shown before the scene switches.
+const WIDGET_ROTATION_MS = 9000; // 9s -> 3 widgets fit in ~27s
+
 // Check if we're in heating season (September to May)
 const isHeatingSeasonActive = (): boolean => {
   const month = new Date().getMonth(); // 0-11
@@ -66,7 +70,7 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % widgets.length);
-    }, 15000); // 15 seconds per widget
+    }, WIDGET_ROTATION_MS);
 
     return () => clearInterval(interval);
   }, [widgets.length]);
@@ -94,6 +98,24 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
 
   return (
     <div className="h-full flex flex-col">
+      {/* Minimal slider header so users understand there are multiple panels */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[11px] uppercase tracking-[0.12em] text-indigo-200/80">
+          {widgets[currentIndex]?.name}
+        </div>
+        {widgets.length > 1 && (
+          <div className="flex items-center gap-1">
+            {widgets.map((w, idx) => (
+              <span
+                key={w.id}
+                className={`h-1.5 w-1.5 rounded-full ${
+                  idx === currentIndex ? 'bg-indigo-200' : 'bg-indigo-200/30'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
       {/* Widget Content - Clean, no navigation controls */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full">
