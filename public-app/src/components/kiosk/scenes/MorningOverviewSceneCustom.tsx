@@ -66,6 +66,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = [
     { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
+    { id: 'qr-connect', name: 'Σύνδεση με QR', Component: QRCodeWidget },
   ];
 
   // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
@@ -148,7 +149,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
                     }}
                   >
                     <div className="h-full w-full p-4">
-                      <WidgetComp data={data} isLoading={false} error={undefined} />
+                      <WidgetComp data={data} isLoading={false} error={undefined} buildingId={buildingId} />
                     </div>
                   </div>
                 );
@@ -204,20 +205,11 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
           <div className="flex-1 min-h-0 flex flex-col gap-3">
             <div
-              className="flex-[0.9] min-h-0 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
+              className="flex-1 min-h-0 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
               style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
             >
               <div className="h-full w-full p-4">
                 <ApartmentDebtsWidget data={data} isLoading={false} error={undefined} />
-              </div>
-            </div>
-
-            <div
-              className="flex-[1.1] min-h-0 w-full backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
-              style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
-            >
-              <div className="h-full w-full px-4 py-6">
-                <QRCodeWidget data={data} isLoading={false} error={undefined} />
               </div>
             </div>
           </div>
