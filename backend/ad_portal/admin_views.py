@@ -6,6 +6,7 @@ import csv
 import re
 import zipfile
 from io import BytesIO
+from urllib.parse import quote
 
 from django.db import connection
 from django.http import HttpResponse
@@ -364,6 +365,10 @@ body { font-family: Arial, sans-serif; color: #0f172a; }
                 )
                 if utm_term:
                     landing_url += f"&utm_term={utm_term}"
+                # Prefill fields (avoid storing full business name in DB; we pass it on the URL)
+                landing_url += f"&business_name={quote(business_name)}"
+                if utm_term:
+                    landing_url += f"&category={quote(utm_term)}"
                 landing_url += f"&radius_m={radius_m}"
 
                 qr_b64 = self._build_qr_png_b64(landing_url)

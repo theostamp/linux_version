@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useRef } from 'react';
 
 type PlacementRow = {
   code: string;
@@ -51,6 +53,23 @@ export default function AdPortalAdminPage() {
   const [csvText, setCsvText] = useState('');
   const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false);
   const [outreachError, setOutreachError] = useState<string | null>(null);
+
+  // V2: auto-discovery (Google Places via client-side JS API already loaded in layout)
+  type DiscoveredPlace = {
+    place_id: string;
+    name: string;
+    vicinity?: string;
+    types?: string[];
+  };
+  const [discoverKeyword, setDiscoverKeyword] = useState('cafe');
+  const [discoverRadiusM, setDiscoverRadiusM] = useState('300');
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [discoverError, setDiscoverError] = useState<string | null>(null);
+  const [discovered, setDiscovered] = useState<DiscoveredPlace[]>([]);
+  const [selectedPlaceIds, setSelectedPlaceIds] = useState<Record<string, boolean>>({});
+  const placesMapDivRef = useRef<HTMLDivElement | null>(null);
+  const placesMapRef = useRef<google.maps.Map | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
 
   const buildingOptions = useMemo(() => (Array.isArray(buildings) ? buildings : []), [buildings]);
 
@@ -113,13 +132,14 @@ export default function AdPortalAdminPage() {
     }
   };
 
-  const downloadOutreachZip = async () => {
+  const downloadOutreachZip = async (overrideCsvText?: string) => {
     if (!isUltraAdmin) return;
     if (!buildingId) {
       setOutreachError('Επιλέξτε κτίριο.');
       return;
     }
-    if (!csvText.trim()) {
+    const effectiveCsv = (overrideCsvText ?? csvText).trim();
+    if (!effectiveCsv) {
       setOutreachError('Βάλτε CSV (τουλάχιστον μία γραμμή).');
       return;
     }
@@ -157,7 +177,7 @@ export default function AdPortalAdminPage() {
           utm_medium: utmMedium,
           utm_campaign: utmCampaign,
           radius_m: Number(radiusM) || 300,
-          csv_text: csvText,
+          csv_text: effectiveCsv,
         }),
       });
       if (!res.ok) {
@@ -179,6 +199,126 @@ export default function AdPortalAdminPage() {
     } finally {
       setIsGeneratingOutreach(false);
     }
+  };
+
+  const discoverBusinesses = async () => {
+    if (!buildingId) {
+      setDiscoverError('Επιλέξτε κτίριο.');
+      return;
+    }
+    const lat = selectedBuilding?.latitude ?? null;
+    const lng = selectedBuilding?.longitude ?? null;
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      setDiscoverError('Το κτίριο δεν έχει latitude/longitude. Βάλε συντεταγμένες στο κτίριο για να δουλέψει το discovery.');
+      return;
+    }
+    if (typeof window === 'undefined' || !window.google?.maps?.places) {
+      setDiscoverError('Google Maps/Places δεν είναι διαθέσιμο (λείπει NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ή δεν φόρτωσε το script).');
+      return;
+    }
+    const r = Number(discoverRadiusM) || 300;
+    const radius = Math.max(100, Math.min(2000, Math.round(r)));
+    const keyword = discoverKeyword.trim();
+    if (!keyword) {
+      setDiscoverError('Βάλε keyword/κατηγορία (π.χ. cafe, bakery, pharmacy).');
+      return;
+    }
+    if (!placesMapDivRef.current) {
+      setDiscoverError('Internal error: map container not ready.');
+      return;
+    }
+
+    setIsDiscovering(true);
+    setDiscoverError(null);
+    try {
+      const center = new window.google.maps.LatLng(lat, lng);
+      if (!placesMapRef.current) {
+        placesMapRef.current = new window.google.maps.Map(placesMapDivRef.current, {
+          center,
+          zoom: 16,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        });
+        placesServiceRef.current = new window.google.maps.places.PlacesService(placesMapRef.current);
+      } else {
+        placesMapRef.current.setCenter(center);
+      }
+      if (!placesServiceRef.current) {
+        setDiscoverError('Places service init failed.');
+        return;
+      }
+
+      const results = await new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
+        placesServiceRef.current!.nearbySearch(
+          {
+            location: center,
+            radius,
+            keyword,
+          },
+          (res, status) => {
+            if (status !== window.google.maps.places.PlacesServiceStatus.OK || !res) {
+              reject(new Error(`Places error: ${status}`));
+              return;
+            }
+            resolve(res);
+          }
+        );
+      });
+
+      const mapped: DiscoveredPlace[] = (results || [])
+        .filter((p) => p.place_id && p.name)
+        .map((p) => ({
+          place_id: String(p.place_id),
+          name: String(p.name),
+          vicinity: (p.vicinity as string | undefined) || undefined,
+          types: Array.isArray(p.types) ? (p.types as string[]) : undefined,
+        }));
+
+      // Merge unique by place_id
+      const byId = new Map<string, DiscoveredPlace>();
+      [...discovered, ...mapped].forEach((p) => byId.set(p.place_id, p));
+      const merged = Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, 'el'));
+      setDiscovered(merged);
+      setSelectedPlaceIds((prev) => {
+        const next = { ...prev };
+        merged.forEach((p) => {
+          if (next[p.place_id] === undefined) next[p.place_id] = false;
+        });
+        return next;
+      });
+    } catch (e) {
+      setDiscoverError(e instanceof Error ? e.message : 'Αποτυχία discovery');
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
+  const selectAllDiscovered = (value: boolean) => {
+    setSelectedPlaceIds((prev) => {
+      const next = { ...prev };
+      discovered.forEach((p) => (next[p.place_id] = value));
+      return next;
+    });
+  };
+
+  const downloadZipForSelectedDiscovered = async () => {
+    const selected = discovered.filter((p) => selectedPlaceIds[p.place_id]);
+    if (selected.length === 0) {
+      setOutreachError('Δεν έχεις επιλέξει επιχειρήσεις.');
+      return;
+    }
+    const keyword = discoverKeyword.trim();
+    const csv = [
+      'business_name,category,address',
+      ...selected.map((p) => {
+        const name = `"${String(p.name).replace(/"/g, '""')}"`;
+        const cat = `"${String(keyword).replace(/"/g, '""')}"`;
+        const addr = `"${String(p.vicinity || '').replace(/"/g, '""')}"`;
+        return `${name},${cat},${addr}`;
+      }),
+    ].join('\n');
+    await downloadOutreachZip(csv);
   };
 
   if (!isUltraAdmin) {
@@ -372,9 +512,91 @@ export default function AdPortalAdminPage() {
 
           {outreachError ? <div className="text-sm text-red-600 break-all">{outreachError}</div> : null}
 
-          <Button onClick={downloadOutreachZip} disabled={isGeneratingOutreach || !buildingId}>
+          <Button onClick={() => downloadOutreachZip()} disabled={isGeneratingOutreach || !buildingId}>
             {isGeneratingOutreach ? 'Δημιουργία ZIP…' : 'Download ZIP (PDF + QR)'}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>V2 — Auto Discovery (Google Places)</CardTitle>
+          <CardDescription>
+            Βρίσκει επιχειρήσεις γύρω από το κτίριο με βάση radius + keyword, μετά διαλέγεις ποιες θες και βγάζει ZIP.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            Επιλεγμένο κτίριο: <span className="font-medium">{selectedBuilding?.name ?? '—'}</span>
+            {typeof selectedBuilding?.latitude === 'number' && typeof selectedBuilding?.longitude === 'number' ? (
+              <span className="text-muted-foreground"> • coords OK</span>
+            ) : (
+              <span className="text-red-600"> • λείπουν coords</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label>radius_m</Label>
+              <Input value={discoverRadiusM} onChange={(e) => setDiscoverRadiusM(e.target.value)} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>keyword / category</Label>
+              <Input value={discoverKeyword} onChange={(e) => setDiscoverKeyword(e.target.value)} placeholder="cafe, bakery, pharmacy..." />
+            </div>
+          </div>
+
+          {discoverError ? <div className="text-sm text-red-600 break-all">{discoverError}</div> : null}
+
+          <div className="flex flex-col md:flex-row gap-2 md:items-center">
+            <Button onClick={discoverBusinesses} disabled={isDiscovering || !buildingId}>
+              {isDiscovering ? 'Αναζήτηση…' : 'Αναζήτηση επιχειρήσεων'}
+            </Button>
+            <Button variant="outline" onClick={() => selectAllDiscovered(true)} disabled={discovered.length === 0}>
+              Select all
+            </Button>
+            <Button variant="outline" onClick={() => selectAllDiscovered(false)} disabled={discovered.length === 0}>
+              Clear
+            </Button>
+            <Button onClick={downloadZipForSelectedDiscovered} disabled={discovered.length === 0 || isGeneratingOutreach}>
+              Download ZIP για επιλεγμένα
+            </Button>
+          </div>
+
+          <div ref={placesMapDivRef} className="hidden" />
+
+          <div className="text-sm text-muted-foreground">Αποτελέσματα: {discovered.length}</div>
+          {discovered.length > 0 ? (
+            <div className="rounded-md border overflow-hidden">
+              <div className="max-h-[360px] overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background border-b">
+                    <tr>
+                      <th className="p-2 text-left w-[48px]">OK</th>
+                      <th className="p-2 text-left">Όνομα</th>
+                      <th className="p-2 text-left">Περιοχή</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {discovered.map((p) => (
+                      <tr key={p.place_id} className="border-b last:border-b-0">
+                        <td className="p-2 align-top">
+                          <Checkbox
+                            checked={Boolean(selectedPlaceIds[p.place_id])}
+                            onCheckedChange={(v) =>
+                              setSelectedPlaceIds((prev) => ({ ...prev, [p.place_id]: Boolean(v) }))
+                            }
+                          />
+                        </td>
+                        <td className="p-2 align-top">{p.name}</td>
+                        <td className="p-2 align-top text-muted-foreground">{p.vicinity || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>
