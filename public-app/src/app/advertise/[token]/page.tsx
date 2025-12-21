@@ -97,6 +97,7 @@ export default function AdvertiseLandingPage() {
   const [category, setCategory] = useState('');
   const [consentTerms, setConsentTerms] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
+  const [radiusM, setRadiusM] = useState<number>(300);
 
   // Creative
   const [tickerText, setTickerText] = useState('');
@@ -124,6 +125,27 @@ export default function AdvertiseLandingPage() {
     () => packages.find((p) => p.code === selectedPlacement) || null,
     [packages, selectedPlacement]
   );
+
+  // Prefill from URL params (useful for outreach letters)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      const prefillName = (qs.get('utm_content') || qs.get('business_name') || '').trim();
+      const prefillCategory = (qs.get('utm_term') || qs.get('category') || '').trim();
+      const radiusRaw = (qs.get('radius_m') || '').trim();
+      const r = radiusRaw ? Number(radiusRaw) : NaN;
+      if (Number.isFinite(r)) {
+        setRadiusM(Math.max(100, Math.min(2000, Math.round(r))));
+      }
+      if (prefillName && !businessName) setBusinessName(prefillName);
+      if (prefillCategory && !category) setCategory(prefillCategory);
+      if (prefillName && !tickerText) setTickerText(`${prefillName} — κοντά σας`);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -187,7 +209,7 @@ export default function AdvertiseLandingPage() {
       mapRef.current.setZoom(hasCoords ? 17 : 12);
     }
 
-    // Building marker + 300m circle
+    // Building marker + radius circle
     if (hasCoords && mapRef.current) {
       const pos = new window.google.maps.LatLng(lat, lng);
       if (!buildingMarkerRef.current) {
@@ -204,17 +226,17 @@ export default function AdvertiseLandingPage() {
         circleRef.current = new window.google.maps.Circle({
           map: mapRef.current,
           center: pos,
-          radius: 300,
+          radius: radiusM,
           strokeOpacity: 0.4,
           strokeWeight: 1,
           fillOpacity: 0.08,
         });
       } else {
         circleRef.current.setCenter(pos);
-        circleRef.current.setRadius(300);
+        circleRef.current.setRadius(radiusM);
       }
     }
-  }, [landing]);
+  }, [landing, radiusM]);
 
   // Init business autocomplete
   useEffect(() => {
@@ -262,7 +284,7 @@ export default function AdvertiseLandingPage() {
         }
       }
 
-      // Find competitors around the building within 300m (simple heuristic)
+      // Find competitors around the building within radiusM (simple heuristic)
       try {
         const bLat = landing.building.latitude ?? null;
         const bLng = landing.building.longitude ?? null;
@@ -279,7 +301,7 @@ export default function AdvertiseLandingPage() {
         placesServiceRef.current.nearbySearch(
           {
             location,
-            radius: 300,
+            radius: radiusM,
             keyword,
           },
           (results, status) => {
@@ -341,7 +363,7 @@ export default function AdvertiseLandingPage() {
       businessAutocompleteRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [landing]);
+  }, [landing, radiusM]);
 
   const handleCopyManageLink = async () => {
     if (!startResult) return;
@@ -460,7 +482,7 @@ export default function AdvertiseLandingPage() {
                   {placeId && competitorCount > 0 ? (
                     <div className="rounded-md border p-3 bg-muted/20">
                       <div className="text-sm font-medium">
-                        Βλέπεις <span className="font-semibold">{competitorCount}</span> ανταγωνιστές σε ακτίνα 300μ.
+                        Βλέπεις <span className="font-semibold">{competitorCount}</span> ανταγωνιστές σε ακτίνα {radiusM}μ.
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
                         Θες να κλειδώσεις εσύ το κτίριο; Διάλεξε θέση και ξεκίνα δωρεάν.

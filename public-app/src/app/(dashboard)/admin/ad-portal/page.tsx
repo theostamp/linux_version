@@ -46,6 +46,12 @@ export default function AdPortalAdminPage() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [createdLandingUrl, setCreatedLandingUrl] = useState<string | null>(null);
 
+  // Bulk outreach (CSV -> ZIP)
+  const [radiusM, setRadiusM] = useState('300');
+  const [csvText, setCsvText] = useState('');
+  const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false);
+  const [outreachError, setOutreachError] = useState<string | null>(null);
+
   const buildingOptions = useMemo(() => (Array.isArray(buildings) ? buildings : []), [buildings]);
 
   const fetchPlacements = async () => {
@@ -104,6 +110,74 @@ export default function AdPortalAdminPage() {
       setTokenError(e instanceof Error ? e.message : 'Αποτυχία δημιουργίας token');
     } finally {
       setIsCreatingToken(false);
+    }
+  };
+
+  const downloadOutreachZip = async () => {
+    if (!isUltraAdmin) return;
+    if (!buildingId) {
+      setOutreachError('Επιλέξτε κτίριο.');
+      return;
+    }
+    if (!csvText.trim()) {
+      setOutreachError('Βάλτε CSV (τουλάχιστον μία γραμμή).');
+      return;
+    }
+    setIsGeneratingOutreach(true);
+    setOutreachError(null);
+    try {
+      // Build headers similar to api.ts (auth + tenant host)
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (typeof window !== 'undefined') {
+        const token =
+          localStorage.getItem('access_token') || localStorage.getItem('access') || localStorage.getItem('accessToken');
+        if (token) headers.Authorization = `Bearer ${token}`;
+        try {
+          const cached = localStorage.getItem('user');
+          if (cached) {
+            const parsed = JSON.parse(cached) as { tenant?: { schema_name?: string } | null };
+            const schema = parsed?.tenant?.schema_name;
+            if (schema && typeof schema === 'string' && schema.trim()) {
+              headers['X-Tenant-Host'] = `${schema}.newconcierge.app`;
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      const res = await fetch('/api/ad-portal/admin/outreach/bulk/', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          building_id: buildingId,
+          expires_days: Number(expiresDays) || 60,
+          campaign_source: 'bulk_csv',
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+          radius_m: Number(radiusM) || 300,
+          csv_text: csvText,
+        }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safeName = (selectedBuilding?.name || 'building').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '');
+      a.href = url;
+      a.download = `ad-outreach-${safeName || 'building'}-${buildingId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setOutreachError(e instanceof Error ? e.message : 'Αποτυχία δημιουργίας ZIP');
+    } finally {
+      setIsGeneratingOutreach(false);
     }
   };
 
@@ -256,6 +330,51 @@ export default function AdPortalAdminPage() {
               </div>
             ) : null}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Outreach — Bulk CSV → ZIP (PDF + QR)</CardTitle>
+          <CardDescription>
+            Φτιάχνει <span className="font-medium">unique QR ανά επιχείρηση</span> και κατεβάζει ZIP με PDF letters.
+            Το όνομα/κατηγορία περνάνε στο landing ως <span className="font-mono">utm_content / utm_term</span>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            Επιλεγμένο κτίριο: <span className="font-medium">{selectedBuilding?.name ?? '—'}</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>radius_m (ανταγωνισμός στο landing)</Label>
+              <Input value={radiusM} onChange={(e) => setRadiusM(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>CSV format</Label>
+              <Input
+                value="Με headers: business_name,category,address  ή χωρίς headers: name,category,address"
+                readOnly
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>CSV</Label>
+            <textarea
+              className="w-full min-h-[180px] rounded-md border bg-background px-3 py-2 text-sm"
+              value={csvText}
+              onChange={(e) => setCsvText(e.target.value)}
+              placeholder={`business_name,category,address\n\"Το Καφέ του Νίκου\",cafe,\"Βουλής 4, Αθήνα\"\n\"Φούρνος Γιώργος\",bakery,\"Σταδίου 10, Αθήνα\"`}
+            />
+          </div>
+
+          {outreachError ? <div className="text-sm text-red-600 break-all">{outreachError}</div> : null}
+
+          <Button onClick={downloadOutreachZip} disabled={isGeneratingOutreach || !buildingId}>
+            {isGeneratingOutreach ? 'Δημιουργία ZIP…' : 'Download ZIP (PDF + QR)'}
+          </Button>
         </CardContent>
       </Card>
     </div>
