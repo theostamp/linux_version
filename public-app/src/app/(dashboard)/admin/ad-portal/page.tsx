@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useRef } from 'react';
 
 type PlacementRow = {
@@ -60,6 +61,8 @@ export default function AdPortalAdminPage() {
     name: string;
     vicinity?: string;
     types?: string[];
+    lat?: number;
+    lng?: number;
   };
   const DISCOVERY_KEYWORD_SUGGESTIONS: Array<{ value: string; label: string }> = [
     { value: 'καφέ', label: 'Καφέ' },
@@ -100,6 +103,12 @@ export default function AdPortalAdminPage() {
   const placesMapDivRef = useRef<HTMLDivElement | null>(null);
   const placesMapRef = useRef<google.maps.Map | null>(null);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const modalMapDivRef = useRef<HTMLDivElement | null>(null);
+  const modalMapRef = useRef<google.maps.Map | null>(null);
+  const modalMarkersRef = useRef<Array<google.maps.Marker>>([]);
+  const modalCircleRef = useRef<google.maps.Circle | null>(null);
+  const modalInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [recentKeywords, setRecentKeywords] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -400,6 +409,8 @@ export default function AdPortalAdminPage() {
           name: String(p.name),
           vicinity: (p.vicinity as string | undefined) || undefined,
           types: Array.isArray(p.types) ? (p.types as string[]) : undefined,
+          lat: typeof p.geometry?.location?.lat === 'function' ? p.geometry.location.lat() : undefined,
+          lng: typeof p.geometry?.location?.lng === 'function' ? p.geometry.location.lng() : undefined,
         }));
 
       // Merge unique by place_id
@@ -447,6 +458,126 @@ export default function AdPortalAdminPage() {
     ].join('\n');
     await downloadOutreachZip(csv);
   };
+
+  const clearModalOverlays = () => {
+    modalMarkersRef.current.forEach((m) => m.setMap(null));
+    modalMarkersRef.current = [];
+    if (modalCircleRef.current) {
+      modalCircleRef.current.setMap(null);
+      modalCircleRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!isMapModalOpen) return;
+    const lat = parseCoord((selectedBuilding as any)?.latitude);
+    const lng = parseCoord((selectedBuilding as any)?.longitude);
+    if (lat === null || lng === null) return;
+    if (typeof window === 'undefined' || !window.google?.maps) return;
+    if (!modalMapDivRef.current) return;
+
+    const center = new window.google.maps.LatLng(lat, lng);
+    if (!modalMapRef.current) {
+      modalMapRef.current = new window.google.maps.Map(modalMapDivRef.current, {
+        center,
+        zoom: 15,
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
+      });
+    } else {
+      modalMapRef.current.setCenter(center);
+    }
+    if (!modalInfoWindowRef.current) {
+      modalInfoWindowRef.current = new window.google.maps.InfoWindow();
+    }
+
+    // Ensure proper render after Dialog open/animation
+    setTimeout(() => {
+      try {
+        window.google.maps.event.trigger(modalMapRef.current!, 'resize');
+      } catch {
+        // ignore
+      }
+
+      clearModalOverlays();
+
+      const r = Number(discoverRadiusM) || 300;
+      const radius = Math.max(100, Math.min(2000, Math.round(r)));
+
+      // Building marker
+      const buildingMarker = new window.google.maps.Marker({
+        position: center,
+        map: modalMapRef.current!,
+        title: selectedBuilding?.name ? `Κτίριο: ${selectedBuilding.name}` : 'Κτίριο',
+        label: { text: 'Κ', color: '#ffffff', fontWeight: '700' },
+      });
+      modalMarkersRef.current.push(buildingMarker);
+
+      // Radius circle
+      modalCircleRef.current = new window.google.maps.Circle({
+        map: modalMapRef.current!,
+        center,
+        radius,
+        strokeColor: '#2563eb',
+        strokeOpacity: 0.7,
+        strokeWeight: 2,
+        fillColor: '#2563eb',
+        fillOpacity: 0.08,
+        clickable: false,
+      });
+
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend(center);
+
+      // Place markers
+      discovered.forEach((p) => {
+        if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+        const pos = new window.google.maps.LatLng(p.lat, p.lng);
+        bounds.extend(pos);
+        const isSelected = Boolean(selectedPlaceIds[p.place_id]);
+        const marker = new window.google.maps.Marker({
+          position: pos,
+          map: modalMapRef.current!,
+          title: p.name,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 7,
+            fillColor: isSelected ? '#16a34a' : '#dc2626',
+            fillOpacity: 0.95,
+            strokeColor: '#ffffff',
+            strokeOpacity: 1,
+            strokeWeight: 2,
+          },
+        });
+        marker.addListener('click', () => {
+          const html = `
+            <div style="font-size:13px;line-height:1.35">
+              <div style="font-weight:700;margin-bottom:4px">${p.name}</div>
+              <div style="color:#475569">${p.vicinity || ''}</div>
+              <div style="color:#64748b;margin-top:6px">${isSelected ? 'Selected' : 'Not selected'}</div>
+            </div>
+          `;
+          modalInfoWindowRef.current!.setContent(html);
+          modalInfoWindowRef.current!.open({ map: modalMapRef.current!, anchor: marker });
+        });
+        modalMarkersRef.current.push(marker);
+      });
+
+      // Fit bounds (with some padding)
+      try {
+        modalMapRef.current!.fitBounds(bounds, 60);
+      } catch {
+        // ignore
+      }
+    }, 50);
+
+    // Cleanup overlays when modal closes/unmounts
+    return () => {
+      clearModalOverlays();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMapModalOpen, discovered, selectedPlaceIds, discoverRadiusM, selectedBuilding?.id]);
 
   if (!isUltraAdmin) {
     return (
@@ -755,6 +886,9 @@ export default function AdPortalAdminPage() {
             <Button onClick={downloadZipForSelectedDiscovered} disabled={discovered.length === 0 || isGeneratingOutreach}>
               Download ZIP για επιλεγμένα
             </Button>
+            <Button variant="outline" onClick={() => setIsMapModalOpen(true)} disabled={discovered.length === 0}>
+              Χάρτης (pins)
+            </Button>
           </div>
 
           {/* Offscreen 1x1 container for PlacesService initialization (avoid display:none/hidden quirks) */}
@@ -796,6 +930,29 @@ export default function AdPortalAdminPage() {
               </div>
             </div>
           ) : null}
+
+          <Dialog open={isMapModalOpen} onOpenChange={setIsMapModalOpen}>
+            <DialogContent className="w-[95vw] max-w-5xl h-[85vh] p-0 overflow-hidden">
+              <div className="p-5 pb-3">
+                <DialogHeader>
+                  <DialogTitle>Χάρτης — Επιχειρήσεις γύρω από το κτίριο</DialogTitle>
+                  <DialogDescription>
+                    Pins: <span className="font-medium">Κ</span> = κτίριο,{' '}
+                    <span className="font-medium text-green-700">πράσινο</span> = selected,{' '}
+                    <span className="font-medium text-red-700">κόκκινο</span> = not selected.
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+              <div className="px-5 pb-4">
+                <div className="text-sm text-muted-foreground">
+                  Κτίριο: <span className="font-medium">{selectedBuilding?.name ?? '—'}</span> • Αποτελέσματα: {discovered.length}
+                </div>
+              </div>
+              <div className="h-[calc(85vh-140px)] w-full">
+                <div ref={modalMapDivRef} className="h-full w-full" />
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>
