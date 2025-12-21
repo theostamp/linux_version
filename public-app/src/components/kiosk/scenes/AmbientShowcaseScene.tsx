@@ -634,7 +634,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
       {/* News Widget Footer - match Morning Overview */}
       <div
-        className="fixed bottom-4 h-14 backdrop-blur-2xl border shadow-2xl rounded-xl z-50"
+        className="fixed bottom-4 h-20 backdrop-blur-3xl border shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl z-50 overflow-hidden"
         style={{
           backgroundColor: palette.tickerSurface,
           borderColor: palette.accentBorder,
@@ -642,7 +642,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
           right: '20px',
         }}
       >
-        <div className="h-full px-5">
+        <div className="h-full px-8">
           <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
       </div>

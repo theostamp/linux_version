@@ -25,7 +25,12 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   const marqueeContent = useMemo(() => {
     const items: Array<{ kind: 'news' | 'ad'; text: string }> = [];
     const safeNews = Array.isArray(news) ? news.filter(Boolean) : [];
-    const safeAds = Array.isArray(adTickerItems) ? adTickerItems : [];
+    let safeAds = Array.isArray(adTickerItems) ? adTickerItems : [];
+
+    // Fallback if no ads yet
+    if (safeAds.length === 0) {
+      safeAds = [{ text: 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας' }];
+    }
 
     if (safeNews.length === 0 && safeAds.length === 0) return null;
 
@@ -49,15 +54,25 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
       <span key={idx} className="inline-flex items-center">
         {item.kind === 'ad' ? (
           <>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-100 uppercase tracking-[0.12em] mr-2">
-              Χορηγός
+            <span className={`text-[13px] px-2 py-0.5 rounded-md font-black uppercase tracking-tighter mr-3 shadow-lg ${
+              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας' 
+                ? 'bg-blue-500 text-white animate-pulse' 
+                : 'bg-yellow-400 text-black shadow-[0_0_10px_rgba(250,204,21,0.3)]'
+            }`}>
+              AD
             </span>
-            <span className="text-amber-50">{item.text}</span>
+            <span className={`text-lg font-bold ${
+              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας' 
+                ? 'text-blue-100 italic' 
+                : 'text-yellow-100'
+            }`}>
+              {item.text}
+            </span>
           </>
         ) : (
-          <span className="text-emerald-50">{item.text}</span>
+          <span className="text-white font-medium text-lg opacity-90">{item.text}</span>
         )}
-        <span className="mx-4 text-amber-400 font-bold">◆</span>
+        <span className="mx-8 text-white/20 font-light text-xl">|</span>
       </span>
     ));
   }, [news, adTickerItems]);
@@ -95,18 +110,18 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   return (
     <div className="h-full flex items-center">
       {/* News ticker - Horizontal layout */}
-      <div className="flex items-center space-x-3 w-full">
+      <div className="flex items-center space-x-6 w-full h-full">
         {/* News label */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] uppercase tracking-[0.14em] text-emerald-100 flex-shrink-0">
-          <Globe className="w-3.5 h-3.5" />
-          <span>Νέα</span>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[12px] font-black uppercase tracking-[0.2em] text-white/40 flex-shrink-0">
+          <Globe className="w-4 h-4" />
+          <span>News</span>
         </div>
         
         {/* Continuous scrolling ticker - slower speed, tighter spacing */}
-        <div className="relative flex-1 overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-900 to-transparent pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none z-10" />
-          <div className="text-sm whitespace-nowrap animate-ticker">
+        <div className="relative flex-1 overflow-hidden h-full flex items-center">
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-transparent to-transparent pointer-events-none z-10" />
+          <div className="whitespace-nowrap animate-ticker flex items-center">
             {marqueeContent}
           </div>
         </div>
@@ -119,7 +134,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         }
         
         .animate-ticker {
-          animation: ticker 60s linear infinite;
+          animation: ticker 80s linear infinite;
         }
         
         .animate-ticker:hover {

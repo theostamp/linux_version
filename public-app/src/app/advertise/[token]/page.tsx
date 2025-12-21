@@ -10,6 +10,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { 
+  Sparkles, 
+  Target, 
+  TrendingUp, 
+  CheckCircle2, 
+  MousePointerClick, 
+  Megaphone, 
+  Building2, 
+  MapPin, 
+  Zap, 
+  ShieldCheck,
+  ChevronRight,
+  Info,
+  ArrowRight,
+  Store,
+  Map as MapIcon,
+  Layout,
+  Play,
+  Search,
+  Users,
+  AlertTriangle,
+  Check,
+  Globe
+} from 'lucide-react';
 
 type PlacementCode = 'ticker' | 'banner' | 'interstitial';
 
@@ -82,6 +106,116 @@ function parseCoord(v: unknown): number | null {
     if (Number.isFinite(n)) return n;
   }
   return null;
+}
+
+function KioskPreview({ 
+  placement, 
+  text, 
+  businessName 
+}: { 
+  placement: PlacementCode; 
+  text: string; 
+  businessName: string 
+}) {
+  return (
+    <div className="relative mx-auto w-full max-w-[300px] aspect-[9/16] bg-slate-900 rounded-[2rem] border-[6px] border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+      {/* Kiosk Header */}
+      <div className="bg-slate-800 p-4 flex items-center gap-2 border-b border-slate-700">
+        <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center">
+          <Building2 className="w-4 h-4 text-primary" />
+        </div>
+        <div className="flex-1">
+          <div className="h-2 w-16 bg-slate-600 rounded mb-1" />
+          <div className="h-1.5 w-10 bg-slate-700 rounded" />
+        </div>
+        <div className="w-6 h-6 rounded-full bg-slate-700" />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 p-3 space-y-3 relative overflow-hidden">
+        {/* Mock Widgets */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="h-16 bg-slate-800/50 rounded-lg border border-slate-700/50 p-2">
+            <div className="h-2 w-8 bg-slate-600 rounded mb-2" />
+            <div className="h-4 w-12 bg-primary/20 rounded" />
+          </div>
+          <div className="h-16 bg-slate-800/50 rounded-lg border border-slate-700/50 p-2">
+            <div className="h-2 w-8 bg-slate-600 rounded mb-2" />
+            <div className="h-4 w-12 bg-slate-600 rounded" />
+          </div>
+        </div>
+        
+        <div className="h-24 bg-slate-800/50 rounded-lg border border-slate-700/50 p-2">
+          <div className="h-2 w-12 bg-slate-600 rounded mb-2" />
+          <div className="space-y-1.5">
+            <div className="h-1.5 w-full bg-slate-700 rounded" />
+            <div className="h-1.5 w-4/5 bg-slate-700 rounded" />
+            <div className="h-1.5 w-5/6 bg-slate-700 rounded" />
+          </div>
+        </div>
+
+        {/* Banner Placeholder if selected */}
+        {placement === 'banner' && (
+          <div className="absolute inset-x-3 bottom-12 h-32 bg-primary/10 border-2 border-dashed border-primary/30 rounded-lg flex flex-col items-center justify-center p-4 animate-pulse">
+            <Megaphone className="w-6 h-6 text-primary mb-2 opacity-50" />
+            <div className="text-[10px] text-primary font-bold text-center uppercase tracking-wider">Your Banner Here</div>
+            <div className="text-[8px] text-primary/70 mt-1">{businessName}</div>
+          </div>
+        )}
+
+        {/* Interstitial Placeholder if selected */}
+        {placement === 'interstitial' && (
+          <div className="absolute inset-0 bg-slate-900/95 z-10 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-500">
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <div className="text-sm font-bold text-white mb-2 uppercase tracking-widest">{businessName}</div>
+            <div className="text-xs text-slate-300 line-clamp-3">{text || 'Η διαφήμισή σας σε πλήρη οθόνη...'}</div>
+            <div className="mt-4 px-4 py-1.5 bg-primary rounded text-[10px] font-bold text-white">ΜΑΘΕΤΕ ΠΕΡΙΣΣΟΤΕΡΑ</div>
+          </div>
+        )}
+      </div>
+
+      {/* Ticker Section */}
+      <div className="bg-slate-950 h-10 border-t border-slate-800 flex items-center overflow-hidden whitespace-nowrap px-4">
+        {placement === 'ticker' ? (
+          <div className="flex items-center gap-4 animate-marquee">
+            <span className="text-primary font-bold text-[10px] uppercase tracking-tighter shrink-0 flex items-center gap-1">
+              <Zap className="w-3 h-3 fill-primary" /> NEWS & OFFERS:
+            </span>
+            <span className="text-slate-100 text-xs font-medium">
+              {text || 'Εδώ θα εμφανίζεται το κείμενο της διαφήμισής σας...'} — {businessName || 'Η Επιχείρησή σας'}
+            </span>
+            <span className="text-slate-500 text-xs opacity-50">•</span>
+            <span className="text-slate-100 text-xs font-medium">
+              {text || 'Εδώ θα εμφανίζεται το κείμενο της διαφήμισής σας...'}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-16 bg-slate-800 rounded" />
+            <div className="h-1.5 w-24 bg-slate-800 rounded" />
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Speaker/Detail */}
+      <div className="h-8 bg-slate-900 flex items-center justify-center">
+        <div className="w-12 h-1 bg-slate-800 rounded-full" />
+      </div>
+
+      <style jsx>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          display: flex;
+          animation: marquee 15s linear infinite;
+        }
+      `}</style>
+    </div>
+  );
 }
 
 export default function AdvertiseLandingPage() {
@@ -435,209 +569,592 @@ export default function AdvertiseLandingPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Διαφήμιση στο InfoPoint</h1>
-        <p className="text-sm text-muted-foreground">
-          1 μήνας δωρεάν δοκιμή (χωρίς κάρτα). Μετά επιλέγετε αν θέλετε αυτόματη συνδρομή ή χειροκίνητη ανανέωση.
-        </p>
-        <div className="text-xs text-muted-foreground">
-          Βήματα: <span className="font-medium">1)</span> Βρες το μαγαζί σου <span className="font-medium">2)</span> Διάλεξε θέση <span className="font-medium">3)</span> Ξεκίνα δωρεάν
+    <div className="min-h-screen bg-slate-50/50">
+      {/* Top Navigation Bar */}
+      <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary p-1.5 rounded-lg">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">New Concierge <span className="text-primary">InfoPoint</span></span>
+          </div>
+          <div className="hidden sm:flex items-center gap-4">
+            <div className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" /> 30 ΗΜΕΡΕΣ ΔΩΡΕΑΝ TRIAL
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* FOMO / Urgency Banner */}
+      <div className="bg-amber-500 py-2 overflow-hidden">
+        <div className="flex items-center gap-12 animate-marquee whitespace-nowrap">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-4 text-white text-xs font-black uppercase tracking-widest">
+              <AlertTriangle className="w-4 h-4" /> Περιορισμένη διαθεσιμότητα: 1 επιχείρηση ανά κατηγορία 
+              <span className="opacity-50">•</span>
+              <Sparkles className="w-4 h-4" /> Κλειδώστε το κτίριο πριν από τον ανταγωνισμό σας
+              <span className="opacity-50">•</span>
+              <Target className="w-4 h-4" /> Τοπική αποκλειστικότητα στη γειτονιά σας
+              <span className="opacity-50">•</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {isLoading ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Φόρτωση…</CardTitle>
-          </CardHeader>
-        </Card>
-      ) : error ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Σφάλμα</CardTitle>
-            <CardDescription className="break-all">{error}</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : !landing ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Δεν βρέθηκαν δεδομένα</CardTitle>
-          </CardHeader>
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>{landing.building.name}</CardTitle>
-              <CardDescription>
-                {landing.building.address}, {landing.building.city} {landing.building.postal_code}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>1) Βρες το μαγαζί σου (Google)</Label>
-                  <Input ref={businessInputRef} placeholder="Πληκτρολόγησε και διάλεξε από τη λίστα (π.χ. καφέ, φούρνος…)" />
-                  {placeId ? (
-                    <p className="text-sm text-muted-foreground">
-                      Επιλέχθηκε: <span className="font-medium">{businessName || '—'}</span>
-                      {category ? <span className="text-muted-foreground"> • {category}</span> : null}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Δείξε μας την επιχείρησή σου για να δεις τον ανταγωνισμό κοντά στο κτίριο.</p>
-                  )}
-
-                  {placeId && competitorCount > 0 ? (
-                    <div className="rounded-md border p-3 bg-muted/20">
-                      <div className="text-sm font-medium">
-                        Βλέπεις <span className="font-semibold">{competitorCount}</span> ανταγωνιστές σε ακτίνα {radiusM}μ.
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Θες να κλειδώσεις εσύ το κτίριο; Διάλεξε θέση και ξεκίνα δωρεάν.
-                      </div>
-                      {competitors.length > 0 ? (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Ενδεικτικά:
-                          <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                            {competitors.slice(0, 5).map((c) => (
-                              <li key={c.place_id}>
-                                {c.name}
-                                {typeof c.distance_m === 'number' ? ` • ~${c.distance_m}m` : ''}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-                <div className="rounded-md border overflow-hidden">
-                  <div ref={mapDivRef} className="h-[280px] w-full" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Διάλεξε θέση</CardTitle>
-              <CardDescription>Η τιμή εξαρτάται από το placement (ticker, banner, whole page).</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {packages.map((p) => (
-                <button
-                  key={p.code}
-                  type="button"
-                  onClick={() => setSelectedPlacement(p.code)}
-                  disabled={!p.is_available}
-                  className={[
-                    'text-left rounded-md border p-4 transition',
-                    selectedPlacement === p.code ? 'border-primary ring-1 ring-primary' : 'hover:border-muted-foreground/30',
-                    !p.is_available ? 'opacity-50 cursor-not-allowed' : '',
-                  ].join(' ')}
-                >
-                  <div className="font-medium">{p.display_name}</div>
-                  <div className="text-sm text-muted-foreground">{p.description}</div>
-                  <div className="mt-3 text-sm">
-                    <span className="font-semibold">{formatEur(p.monthly_price_eur)}</span>
-                    <span className="text-muted-foreground"> / μήνα</span>
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Διαθεσιμότητα: {p.remaining_slots}/{p.max_slots_per_building}
-                  </div>
-                </button>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>3) Ξεκίνα δωρεάν</CardTitle>
-              <CardDescription>
-                Θα ενεργοποιηθεί trial 30 ημερών (χωρίς κάρτα). Πριν λήξει, θα σας ζητήσουμε πληρωμή για να συνεχίσει.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.gr" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Όνομα επιχείρησης</Label>
-                  <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Επωνυμία" />
-                </div>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+            <div className="sm:text-center md:mx-auto lg:col-span-6 lg:text-left space-y-8">
+              <div>
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider uppercase animate-pulse">
+                  <Sparkles className="w-3 h-3" /> ΝΕΑ ΥΠΗΡΕΣΙΑ ΤΟΠΙΚΗΣ ΠΡΟΒΟΛΗΣ
+                </span>
+                <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+                  Φτάστε στην <span className="text-primary underline decoration-primary/30 underline-offset-8">καρδιά</span> της γειτονιάς σας.
+                </h1>
+                <p className="mt-6 text-lg text-slate-600 max-w-2xl sm:mx-auto lg:mx-0">
+                  Προβληθείτε στην ψηφιακή οθόνη InfoPoint της πολυκατοικίας {landing?.building.name || 'της γειτονιάς'}. 
+                  Μια υπηρεσία που φέρνει το μήνυμά σας εκεί που ζουν οι πελάτες σας, καθημερινά.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label>Κείμενο ticker (προτείνεται σύντομο)</Label>
-                <Textarea value={tickerText} onChange={(e) => setTickerText(e.target.value)} placeholder="Π.χ. -20% για κατοίκους" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>CTA link (προαιρετικό)</Label>
-                <Input value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="https://..." />
-              </div>
-
-              <div className="flex items-start gap-2">
-                <Checkbox id="terms" checked={consentTerms} onCheckedChange={(v) => setConsentTerms(Boolean(v))} />
-                <Label htmlFor="terms" className="leading-5">
-                  Αποδέχομαι τους όρους χρήσης και την πολιτική απορρήτου.
-                </Label>
-              </div>
-              <div className="flex items-start gap-2">
-                <Checkbox
-                  id="mkt"
-                  checked={consentMarketing}
-                  onCheckedChange={(v) => setConsentMarketing(Boolean(v))}
-                />
-                <Label htmlFor="mkt" className="leading-5">
-                  Θέλω να λαμβάνω ενημερώσεις/προσφορές (προαιρετικό).
-                </Label>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Επιλογή: <span className="font-medium">{selectedPackage?.display_name ?? selectedPlacement}</span>
-                  {selectedPackage ? (
-                    <>
-                      {' '}
-                      • <span className="font-medium">{formatEur(selectedPackage.monthly_price_eur)}</span>/μήνα μετά το trial
-                    </>
-                  ) : null}
-                </div>
-                <Button onClick={startTrial} disabled={isStarting}>
-                  {isStarting ? 'Εκκίνηση…' : 'Έναρξη δωρεάν trial'}
+              <div className="flex flex-col sm:flex-row gap-4 sm:justify-center lg:justify-start">
+                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl transition-all" onClick={() => document.getElementById('steps')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Ξεκινήστε Δωρεάν <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-slate-50 text-slate-500 text-sm font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" /> Χωρίς Πιστωτική Κάρτα
+                </div>
               </div>
 
-              {startResult ? (
-                <div className="rounded-md border p-4 bg-muted/30">
-                  <div className="font-medium">Έτοιμο!</div>
-                  <div className="text-sm text-muted-foreground">
-                    Trial έως:{' '}
-                    {startResult.trial_ends_at
-                      ? new Date(startResult.trial_ends_at).toLocaleString('el-GR')
-                      : '—'}
-                  </div>
-                  <div className="mt-2 flex flex-col md:flex-row md:items-center gap-2 text-sm">
-                    <div>
-                      Διαχείριση:{' '}
-                      <Link className="underline" href={`/advertise/manage/${startResult.manage_token}`}>
-                        Άνοιγμα portal
-                      </Link>
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+                <div>
+                  <div className="text-2xl font-bold text-slate-900">100%</div>
+                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Ορατότητα</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-slate-900">Daily</div>
+                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Engagement</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-slate-900">Zero</div>
+                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Trash</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-16 sm:mt-24 lg:mt-0 lg:col-span-6 relative flex justify-center lg:justify-end">
+              <div className="relative">
+                <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-primary/30 to-violet-500/30 blur-2xl opacity-50 animate-pulse" />
+                <KioskPreview 
+                  placement={selectedPlacement} 
+                  text={tickerText} 
+                  businessName={businessName || 'Η Επιχείρησή σας'} 
+                />
+                
+                {/* Floating tags */}
+                <div className="absolute -left-12 top-1/4 p-4 bg-white rounded-2xl shadow-xl border border-slate-100 animate-bounce delay-700 hidden sm:block">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-orange-600" />
                     </div>
-                    <Button type="button" variant="outline" onClick={handleCopyManageLink}>
-                      {copyState === 'copied' ? 'Αντιγράφηκε' : copyState === 'failed' ? 'Αποτυχία αντιγραφής' : 'Αντιγραφή link'}
-                    </Button>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Στοχευμένο</div>
+                      <div className="text-xs font-bold text-slate-800">Ακτίνα {radiusM}μ.</div>
+                    </div>
                   </div>
                 </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </>
-      )}
+
+                <div className="absolute -right-12 bottom-1/4 p-4 bg-white rounded-2xl shadow-xl border border-slate-100 animate-bounce hidden sm:block">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Αποδοτικό</div>
+                      <div className="text-xs font-bold text-slate-800">Υψηλό ROI</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Advantage Cards */}
+      <section className="py-20 bg-slate-50/50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900">Γιατί να διαφημιστείτε στο InfoPoint;</h2>
+            <p className="mt-4 text-slate-600">Μια νέα εποχή στην τοπική διαφήμιση.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="pt-8">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
+                  <Zap className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Δεν πάει στα σκουπίδια</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Τα φυλλάδια συνήθως καταλήγουν στον κάδο. Το InfoPoint είναι μια μόνιμη, ψηφιακή παρουσία στην είσοδο της πολυκατοικίας.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="pt-8">
+                <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-6">
+                  <Users className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Καθημερινή Επαφή</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Οι ένοικοι βλέπουν την οθόνη τουλάχιστον 2-4 φορές την ημέρα. Η επανάληψη χτίζει εμπιστοσύνη για το brand σας.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="pt-8">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mb-6">
+                  <ShieldCheck className="w-6 h-6 text-amber-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Αποκλειστικότητα</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Περιορισμένος αριθμός θέσεων ανά κτίριο. Μην αφήσετε τον ανταγωνισμό να πάρει τη θέση σας στην πολυκατοικία.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Interactive Flow */}
+      <section id="steps" className="py-24 bg-white border-t scroll-mt-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-20">
+          
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <p className="text-slate-500 font-medium">Φορτώνουμε τα δεδομένα του κτιρίου...</p>
+            </div>
+          ) : error ? (
+            <Card className="border-red-100 bg-red-50">
+              <CardHeader>
+                <CardTitle className="text-red-800">Σφάλμα</CardTitle>
+                <CardDescription className="text-red-600">{error}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" onClick={() => window.location.reload()}>Δοκιμάστε ξανά</Button>
+              </CardContent>
+            </Card>
+          ) : !landing ? (
+            <div className="text-center py-20">
+              <Info className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h2 className="text-xl font-bold">Δεν βρέθηκαν δεδομένα</h2>
+              <p className="text-slate-500 mt-2">Το link που χρησιμοποιήσατε φαίνεται να μην είναι έγκυρο.</p>
+            </div>
+          ) : (
+            <>
+              {/* Header Info */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-12 border-b border-slate-100">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
+                    Επιλεγμένο Κτίριο
+                  </div>
+                  <h2 className="text-3xl font-bold text-slate-900">{landing.building.name}</h2>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <MapPin className="w-4 h-4" />
+                    {landing.building.address}, {landing.building.city} {landing.building.postal_code}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center overflow-hidden">
+                        <img src={`https://i.pravatar.cc/100?u=${i + landing.building.id}`} alt="User" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-sm font-medium text-slate-600">
+                    <span className="text-slate-900 font-bold">30+</span> ένοικοι βλέπουν την οθόνη
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 1: Business Discovery */}
+              <div className="space-y-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">1</div>
+                  <h3 className="text-2xl font-bold">Βρείτε την επιχείρησή σας</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                  <Card className="border-slate-100 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-slate-50/50">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Search className="w-5 h-5 text-primary" /> Αναζήτηση στην Google
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6 space-y-6">
+                      <div className="space-y-3">
+                        <Label htmlFor="biz-search" className="text-slate-700 font-semibold">Όνομα Επιχείρησης</Label>
+                        <div className="relative">
+                          <Store className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                          <Input 
+                            id="biz-search"
+                            ref={businessInputRef} 
+                            placeholder="Πληκτρολογήστε (π.χ. My Cafe, Φούρνος Παπαδόπουλος)" 
+                            className="pl-10 h-12 border-slate-200 focus:ring-primary/20"
+                          />
+                        </div>
+                        {placeId ? (
+                          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg text-green-700 text-sm animate-in zoom-in-95">
+                            <CheckCircle2 className="w-4 h-4" />
+                            Επιλέχθηκε: <span className="font-bold">{businessName}</span>
+                          </div>
+                        ) : (
+                          <p className="text-[13px] text-slate-500 leading-relaxed">
+                            Επιλέξτε την επιχείρησή σας για να αναλύσουμε τον ανταγωνισμό στη γειτονιά του κτιρίου.
+                          </p>
+                        )}
+                      </div>
+
+                      {placeId && competitorCount > 0 && (
+                        <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-4">
+                          <div className="flex items-center gap-2 text-orange-800 font-bold text-sm uppercase tracking-wide">
+                            <AlertTriangle className="w-4 h-4" /> Ανάλυση Γειτονιάς
+                          </div>
+                          <p className="text-sm text-orange-900/80 leading-relaxed">
+                            Βρέθηκαν <span className="font-bold">{competitorCount} παρόμοιες επιχειρήσεις</span> σε ακτίνα {radiusM}μ. 
+                          </p>
+                          <div className="bg-white/60 p-3 rounded-lg border border-orange-200">
+                            <div className="text-[10px] font-black text-orange-600 uppercase mb-1 tracking-tighter">Κίνδυνος Απώλειας</div>
+                            <p className="text-xs text-orange-900 font-medium">
+                              Αν κάποιος από αυτούς ξεκινήσει trial, η κατηγορία σας θα "κλειδώσει" και δεν θα μπορείτε να προβληθείτε σε αυτό το κτίριο.
+                            </p>
+                          </div>
+                          <div className="pt-2">
+                            <ul className="space-y-2">
+                              {competitors.slice(0, 3).map((c) => (
+                                <li key={c.place_id} className="flex items-center justify-between text-xs text-orange-900/60 bg-white/50 p-2 rounded-lg">
+                                  <span>{c.name}</span>
+                                  <span className="font-medium">~{c.distance_m}m</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <div className="rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-slate-100 aspect-video lg:aspect-square group relative">
+                    <div ref={mapDivRef} className="h-full w-full grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500" />
+                    <div className="absolute top-4 left-4 p-2 bg-white/90 backdrop-blur rounded-lg shadow-sm text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border">
+                      <MapIcon className="w-3 h-3 text-primary" /> Live Γειτονιά
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Placement Selection */}
+              <div className="space-y-10 pt-10 border-t border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">2</div>
+                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 className="text-2xl font-bold">Επιλέξτε θέση προβολής</h3>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-100 border border-orange-200 text-orange-700 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Εγγύηση Αποκλειστικότητας Κατηγορίας
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {packages.map((p) => {
+                    const isSelected = selectedPlacement === p.code;
+                    const Icon = p.code === 'ticker' ? Zap : p.code === 'banner' ? Megaphone : Layout;
+                    
+                    return (
+                      <button
+                        key={p.code}
+                        type="button"
+                        onClick={() => setSelectedPlacement(p.code)}
+                        disabled={!p.is_available}
+                        className={`relative text-left flex flex-col p-6 rounded-2xl border-2 transition-all duration-300 group ${
+                          isSelected 
+                            ? 'border-primary bg-primary/5 ring-4 ring-primary/10 shadow-lg' 
+                            : 'border-slate-100 bg-white hover:border-slate-300 hover:shadow-md'
+                        } ${!p.is_available ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                      >
+                        {isSelected && (
+                          <div className="absolute -top-3 -right-3 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg animate-in zoom-in">
+                            <Check className="w-5 h-5" />
+                          </div>
+                        )}
+                        
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-colors ${
+                          isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'
+                        }`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        
+                        <h4 className="font-bold text-lg mb-2 text-slate-900">{p.display_name}</h4>
+                        <p className="text-xs text-slate-500 mb-6 leading-relaxed min-h-[40px]">{p.description}</p>
+                        
+                        <div className="mt-auto space-y-4">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-slate-900">{formatEur(p.monthly_price_eur)}</span>
+                            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">/ μήνα</span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Διαθεσιμότητα</span>
+                            <div className="flex flex-col items-end">
+                              <span className={`text-xs font-bold ${p.remaining_slots > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {p.remaining_slots}/{p.max_slots_per_building}
+                              </span>
+                              {p.remaining_slots === 1 && (
+                                <span className="text-[9px] font-bold text-red-500 animate-pulse">ΜΟΝΟ 1 ΘΕΣΗ ΕΜΕΙΝΕ!</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step 3: Creative & Finalize */}
+              <div className="space-y-10 pt-10 border-t border-slate-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">3</div>
+                  <h3 className="text-2xl font-bold">Στοιχεία & Έναρξη</h3>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                  <div className="lg:col-span-7 space-y-8">
+                    <Card className="border-slate-100">
+                      <CardContent className="pt-8 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label className="text-slate-700 font-semibold">Email Επικοινωνίας</Label>
+                            <Input 
+                              value={email} 
+                              onChange={(e) => setEmail(e.target.value)} 
+                              placeholder="you@business.gr" 
+                              className="h-11 border-slate-200"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-700 font-semibold">Όνομα Επιχείρησης</Label>
+                            <Input 
+                              value={businessName} 
+                              onChange={(e) => setBusinessName(e.target.value)} 
+                              placeholder="Επωνυμία" 
+                              className="h-11 border-slate-200"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold">Κείμενο Προβολής (Ticker)</Label>
+                          <div className="relative">
+                            <Textarea 
+                              value={tickerText} 
+                              onChange={(e) => setTickerText(e.target.value)} 
+                              placeholder="Π.χ. -20% για τους κατοίκους της πολυκατοικίας!" 
+                              className="min-h-[100px] border-slate-200 resize-none"
+                              maxLength={150}
+                            />
+                            <div className="absolute bottom-2 right-2 text-[10px] font-bold text-slate-400">
+                              {tickerText.length}/150
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-400 italic">Αυτό το κείμενο θα κυλάει στο κάτω μέρος της οθόνης.</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold">Link Ιστοσελίδας / Facebook (Προαιρετικό)</Label>
+                          <div className="relative">
+                            <Globe className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                            <Input 
+                              value={ctaUrl} 
+                              onChange={(e) => setCtaUrl(e.target.value)} 
+                              placeholder="https://facebook.com/mybusiness" 
+                              className="pl-10 h-11 border-slate-200"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <div className="flex items-start gap-3">
+                            <Checkbox id="terms" checked={consentTerms} onCheckedChange={(v) => setConsentTerms(Boolean(v))} className="mt-1" />
+                            <Label htmlFor="terms" className="text-sm text-slate-600 leading-relaxed cursor-pointer">
+                              Αποδέχομαι τους <Link href="/terms" className="text-primary font-bold hover:underline">Όρους Χρήσης</Link> και την Πολιτική Απορρήτου.
+                            </Label>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <Checkbox id="mkt" checked={consentMarketing} onCheckedChange={(v) => setConsentMarketing(Boolean(v))} className="mt-1" />
+                            <Label htmlFor="mkt" className="text-sm text-slate-600 leading-relaxed cursor-pointer font-medium">
+                              Θέλω να λαμβάνω ενημερώσεις για νέες δυνατότητες προβολής.
+                            </Label>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="flex flex-col gap-4">
+                      <Button 
+                        size="lg" 
+                        className="h-16 text-lg font-black uppercase tracking-wider shadow-xl shadow-primary/20 hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-primary hover:bg-primary/90"
+                        onClick={startTrial} 
+                        disabled={isStarting}
+                      >
+                        {isStarting ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-3" />
+                            ΚΛΕΙΔΩΜΑ ΘΕΣΗΣ...
+                          </>
+                        ) : (
+                          <>
+                            ΚΛΕΙΔΩΣΤΕ ΤΗ ΘΕΣΗ ΣΑΣ ΤΩΡΑ <ChevronRight className="ml-2 w-6 h-6" />
+                          </>
+                        )}
+                      </Button>
+                      <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> SECURE SETUP</span>
+                        <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-orange-400" /> INSTANT ACTIVATION</span>
+                        <span className="flex items-center gap-1.5"><MousePointerClick className="w-3.5 h-3.5" /> NO CREDIT CARD</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-5 space-y-6">
+                    <div className="sticky top-24">
+                      <div className="flex items-center justify-between mb-4">
+                        <Label className="text-slate-900 font-bold uppercase tracking-widest text-xs">Live Preview</Label>
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-red-500 uppercase">
+                          <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" /> LIVE
+                        </div>
+                      </div>
+                      
+                      <KioskPreview 
+                        placement={selectedPlacement} 
+                        text={tickerText} 
+                        businessName={businessName || 'Η Επιχείρησή σας'} 
+                      />
+                      
+                      <div className="mt-8 p-6 bg-primary/5 border border-primary/10 rounded-2xl space-y-4">
+                        <h5 className="font-bold text-slate-900">Τι περιλαμβάνει το trial;</h5>
+                        <ul className="space-y-3">
+                          {[
+                            '30 ημέρες δωρεάν προβολή',
+                            'Πρόσβαση στο διαχειριστικό portal',
+                            'Δυνατότητα αλλαγής κειμένου ανά πάσα στιγμή',
+                            'Στατιστικά εμφανίσεων',
+                          ].map((text, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                              <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                              {text}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Success Result */}
+              {startResult && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                  <Card className="max-w-md w-full shadow-2xl border-none animate-in zoom-in-95 duration-300">
+                    <CardHeader className="text-center pb-2">
+                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle2 className="w-10 h-10 text-green-600" />
+                      </div>
+                      <CardTitle className="text-2xl font-black uppercase tracking-tight">Συγχαρητήρια!</CardTitle>
+                      <CardDescription className="text-slate-600 text-lg">Η δοκιμή σας ξεκίνησε.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-4">
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ημερομηνία Λήξης Trial</div>
+                        <div className="text-xl font-bold text-slate-900">
+                          {startResult.trial_ends_at
+                            ? new Date(startResult.trial_ends_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : '—'}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Button className="w-full h-12 font-bold" asChild>
+                          <Link href={`/advertise/manage/${startResult.manage_token}`}>
+                            ΕΙΣΟΔΟΣ ΣΤΟ PORTAL <Play className="ml-2 w-4 h-4 fill-current" />
+                          </Link>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full h-12 font-bold border-slate-200" 
+                          onClick={handleCopyManageLink}
+                        >
+                          {copyState === 'copied' ? (
+                            <>ΑΝΤΙΓΡΑΦΗΚΕ! <Check className="ml-2 w-4 h-4" /></>
+                          ) : (
+                            <>ΑΝΤΙΓΡΑΦΗ LINK ΔΙΑΧΕΙΡΙΣΗΣ <ChevronRight className="ml-2 w-4 h-4" /></>
+                          )}
+                        </Button>
+                      </div>
+                      
+                      <p className="text-[11px] text-center text-slate-400 leading-relaxed uppercase tracking-wider font-bold">
+                        Κρατήστε το link διαχείρισης για να βλέπετε στατιστικά και να αλλάζετε το κείμενο της διαφήμισης.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Final Footer */}
+      <footer className="bg-slate-900 text-white py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+            <div className="space-y-6 lg:col-span-2">
+              <div className="flex items-center gap-2">
+                <div className="bg-primary p-1.5 rounded-lg">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold tracking-tight text-white">New Concierge <span className="text-primary">InfoPoint</span></span>
+              </div>
+              <p className="text-slate-400 max-w-sm leading-relaxed">
+                Η πιο σύγχρονη πλατφόρμα ψηφιακής διαχείρισης και τοπικής προβολής για πολυκατοικίες στην Ελλάδα.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-slate-500">Νομικά</h4>
+              <ul className="space-y-4 text-sm text-slate-400 font-medium">
+                <li><Link href="/terms" className="hover:text-white transition-colors">Όροι Χρήσης</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Πολιτική Απορρήτου</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-slate-500">Επικοινωνία</h4>
+              <ul className="space-y-4 text-sm text-slate-400 font-medium">
+                <li>support@newconcierge.app</li>
+                <li>+30 210 1234567</li>
+              </ul>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-500 font-bold uppercase tracking-widest">
+            © {new Date().getFullYear()} New Concierge. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

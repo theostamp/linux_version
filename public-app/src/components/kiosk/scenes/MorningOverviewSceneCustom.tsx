@@ -227,10 +227,10 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
       {/* News Widget - Fixed to bottom with breathing room */}
       <div
-        className="fixed bottom-4 left-5 right-5 h-14 backdrop-blur-2xl border shadow-2xl rounded-xl z-50"
+        className="fixed bottom-4 left-5 right-5 h-20 backdrop-blur-3xl border shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl z-50 overflow-hidden"
         style={{ backgroundColor: palette.tickerSurface, borderColor: palette.accentBorder }}
       >
-        <div className="h-full px-5">
+        <div className="h-full px-8">
           <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
       </div>
