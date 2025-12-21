@@ -297,8 +297,8 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
               </h3>
               {/* Status badge */}
               {(isHappeningNow || isInProgress) ? (
-                <span className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 bg-emerald-500/40 rounded-full text-[11px] text-emerald-100 font-semibold">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 bg-indigo-500/25 rounded-full text-[11px] text-indigo-100 font-semibold">
+                  <span className="w-2 h-2 bg-indigo-300 rounded-full animate-pulse" />
                   Σε Εξέλιξη
                 </span>
               ) : (
@@ -357,9 +357,9 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
 
           {/* E-Voting Notice */}
           {(hasVotingItems || isPreVotingActive) && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border border-emerald-400/30">
-              <Smartphone className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-              <span className="text-sm text-emerald-100 font-medium">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-500/15 border border-indigo-400/25">
+              <Smartphone className="w-4 h-4 text-indigo-200 flex-shrink-0" />
+              <span className="text-sm text-indigo-100 font-medium">
                 Ψηφίστε ηλεκτρονικά μέσω της εφαρμογής!
               </span>
             </div>
@@ -371,7 +371,13 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
 };
 
 // Compact QR Code component for sidebar
-const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
+const CompactQRCode = ({
+  buildingId,
+  accentColor = '#93c5fd',
+}: {
+  buildingId?: number | null;
+  accentColor?: string;
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const QR_SIZE = 100;
 
@@ -388,7 +394,7 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
           width: QR_SIZE,
           margin: 1,
           color: {
-            dark: '#0f766e', // teal-700
+            dark: '#1d4ed8', // blue-700 (match Morning Overview palette)
             light: '#ffffff'
           },
           errorCorrectionLevel: 'M'
@@ -401,7 +407,10 @@ const CompactQRCode = ({ buildingId }: { buildingId?: number | null }) => {
   }, [buildingId]);
 
   return (
-    <div className="bg-white rounded-xl p-2 shadow-xl ring-2 ring-teal-400/30">
+    <div
+      className="bg-white rounded-xl p-2 shadow-xl border"
+      style={{ borderColor: accentColor }}
+    >
       <canvas
         ref={canvasRef}
         style={{ width: QR_SIZE, height: QR_SIZE, imageRendering: 'pixelated' }}
@@ -428,6 +437,8 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
   }, []);
 
   const palette = useMemo(() => getScenePalette(paletteHour), [paletteHour]);
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(0);
 
   const branding = useMemo(
     () => resolveAmbientBranding(data, brandingConfig),
@@ -446,6 +457,19 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
   const weatherCondition = extractWeatherCondition(weatherData);
   const greeting = now.getHours() < 12 ? 'Καλημέρα' : now.getHours() < 18 ? 'Καλή συνέχεια' : 'Καλησπέρα';
   const effectiveBuildingId = buildingId ?? data?.building_info?.id;
+
+  // Measure sidebar width so footer ticker does NOT cover it.
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+    const el = sidebarRef.current;
+    const ro = new ResizeObserver(() => {
+      setSidebarWidth(el.getBoundingClientRect().width);
+    });
+    ro.observe(el);
+    // initial
+    setSidebarWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white pb-20">
@@ -485,6 +509,9 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
       {/* Sidebar - Match Morning Overview widget surfaces */}
       <aside
+        ref={(node) => {
+          sidebarRef.current = node;
+        }}
         className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col backdrop-blur-2xl border-r shadow-2xl"
         style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
       >
@@ -562,7 +589,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
           
           {/* QR Code centered */}
           <div className="flex flex-col items-center gap-3">
-            <CompactQRCode buildingId={effectiveBuildingId} />
+            <CompactQRCode buildingId={effectiveBuildingId} accentColor={palette.accentBorder} />
             <div className="text-center">
               <p className="text-sm font-semibold text-white">New Concierge</p>
               <p className="text-xs text-indigo-200/70 mt-1">Σκανάρετε για σύνδεση</p>
@@ -596,8 +623,13 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
 
       {/* News Widget Footer - match Morning Overview */}
       <div
-        className="fixed bottom-4 left-5 right-5 h-14 backdrop-blur-2xl border shadow-2xl rounded-xl z-50"
-        style={{ backgroundColor: palette.tickerSurface, borderColor: palette.accentBorder }}
+        className="fixed bottom-4 h-14 backdrop-blur-2xl border shadow-2xl rounded-xl z-50"
+        style={{
+          backgroundColor: palette.tickerSurface,
+          borderColor: palette.accentBorder,
+          left: `${Math.max(20, sidebarWidth + 20)}px`,
+          right: '20px',
+        }}
       >
         <div className="h-full px-5">
           <NewsWidget data={data} isLoading={false} error={undefined} />
