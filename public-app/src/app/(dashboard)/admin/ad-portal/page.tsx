@@ -61,6 +61,36 @@ export default function AdPortalAdminPage() {
     vicinity?: string;
     types?: string[];
   };
+  const DISCOVERY_KEYWORD_SUGGESTIONS: Array<{ value: string; label: string }> = [
+    { value: 'καφέ', label: 'Καφέ' },
+    { value: 'φούρνος', label: 'Φούρνος' },
+    { value: 'ζαχαροπλαστείο', label: 'Ζαχαροπλαστείο' },
+    { value: 'εστιατόριο', label: 'Εστιατόριο' },
+    { value: 'σουβλάκι', label: 'Σουβλάκι' },
+    { value: 'πιτσαρία', label: 'Πιτσαρία' },
+    { value: 'φαρμακείο', label: 'Φαρμακείο' },
+    { value: 'σούπερ μάρκετ', label: 'Σούπερ μάρκετ' },
+    { value: 'mini market', label: 'Mini market' },
+    { value: 'κομμωτήριο', label: 'Κομμωτήριο' },
+    { value: 'barber', label: 'Barber' },
+    { value: 'γυμναστήριο', label: 'Γυμναστήριο' },
+    { value: 'ξενοδοχείο', label: 'Ξενοδοχείο' },
+    { value: 'οδοντίατρος', label: 'Οδοντίατρος' },
+    { value: 'ιατρείο', label: 'Ιατρείο' },
+    { value: 'κτηνίατρος', label: 'Κτηνίατρος' },
+    { value: 'λογιστής', label: 'Λογιστής' },
+    { value: 'δικηγόρος', label: 'Δικηγόρος' },
+    { value: 'ηλεκτρολόγος', label: 'Ηλεκτρολόγος' },
+    { value: 'υδραυλικός', label: 'Υδραυλικός' },
+    { value: 'car repair', label: 'Car repair' },
+    { value: 'parking', label: 'Parking' },
+    { value: 'ATM', label: 'ATM' },
+    { value: 'bank', label: 'Bank' },
+    { value: 'cafe', label: 'Cafe' },
+    { value: 'bakery', label: 'Bakery' },
+    { value: 'pharmacy', label: 'Pharmacy' },
+    { value: 'restaurant', label: 'Restaurant' },
+  ];
   const [discoverKeyword, setDiscoverKeyword] = useState('cafe');
   const [discoverRadiusM, setDiscoverRadiusM] = useState('300');
   const [isDiscovering, setIsDiscovering] = useState(false);
@@ -70,6 +100,16 @@ export default function AdPortalAdminPage() {
   const placesMapDivRef = useRef<HTMLDivElement | null>(null);
   const placesMapRef = useRef<google.maps.Map | null>(null);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const [recentKeywords, setRecentKeywords] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('ad_discovery_recent_keywords') || '[]';
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string' && x.trim()).slice(0, 15) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const buildingOptions = useMemo(() => (Array.isArray(buildings) ? buildings : []), [buildings]);
 
@@ -297,6 +337,18 @@ export default function AdPortalAdminPage() {
     if (!keyword) {
       setDiscoverError('Βάλε keyword/κατηγορία (π.χ. cafe, bakery, pharmacy).');
       return;
+    }
+
+    // Store recent keywords for faster future selection
+    try {
+      const next = [keyword, ...recentKeywords].map((x) => x.trim()).filter(Boolean);
+      const deduped = Array.from(new Set(next)).slice(0, 15);
+      setRecentKeywords(deduped);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ad_discovery_recent_keywords', JSON.stringify(deduped));
+      }
+    } catch {
+      // ignore
     }
     if (!placesMapDivRef.current) {
       setDiscoverError('Internal error: map container not ready.');
@@ -667,8 +719,24 @@ export default function AdPortalAdminPage() {
               <Input value={discoverRadiusM} onChange={(e) => setDiscoverRadiusM(e.target.value)} />
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <Label>keyword / category</Label>
-              <Input value={discoverKeyword} onChange={(e) => setDiscoverKeyword(e.target.value)} placeholder="cafe, bakery, pharmacy..." />
+              <Label>keyword / category (autocomplete)</Label>
+              <Input
+                value={discoverKeyword}
+                onChange={(e) => setDiscoverKeyword(e.target.value)}
+                placeholder="Π.χ. καφέ, φαρμακείο, bakery..."
+                list="ad-places-keywords"
+              />
+              <datalist id="ad-places-keywords">
+                {recentKeywords.map((k) => (
+                  <option key={`recent-${k}`} value={k} />
+                ))}
+                {DISCOVERY_KEYWORD_SUGGESTIONS.map((k) => (
+                  <option key={k.value} value={k.value} />
+                ))}
+              </datalist>
+              <div className="text-xs text-muted-foreground">
+                Tips: γράψε 2-3 γράμματα για dropdown προτάσεις. Κρατάει και recent keywords.
+              </div>
             </div>
           </div>
 
