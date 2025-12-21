@@ -563,7 +563,12 @@ export default function AdPortalAdminPage() {
             </Button>
           </div>
 
-          <div ref={placesMapDivRef} className="hidden" />
+          {/* Offscreen 1x1 container for PlacesService initialization (avoid display:none/hidden quirks) */}
+          <div
+            ref={placesMapDivRef}
+            className="pointer-events-none absolute left-[-9999px] top-[-9999px] h-px w-px opacity-0"
+            aria-hidden="true"
+          />
 
           <div className="text-sm text-muted-foreground">Αποτελέσματα: {discovered.length}</div>
           {discovered.length > 0 ? (
