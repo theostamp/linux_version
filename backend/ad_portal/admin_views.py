@@ -159,6 +159,22 @@ class AdOutreachBulkGenerateView(APIView):
 
     permission_classes = [IsAuthenticated, IsUltraAdmin]
 
+    def _check_deps(self):
+        """
+        Ensure QR/PDF dependencies exist in the runtime environment.
+        Railway often installs only backend/requirements.txt, so missing libs would cause 500s.
+        """
+        missing = []
+        try:
+            import qrcode  # noqa: F401
+        except Exception:
+            missing.append("qrcode")
+        try:
+            import reportlab  # noqa: F401
+        except Exception:
+            missing.append("reportlab")
+        return missing
+
     def _slug(self, value: str) -> str:
         s = (value or "").strip().lower()
         s = re.sub(r"\s+", "-", s)
@@ -280,6 +296,17 @@ body { font-family: Arial, sans-serif; color: #0f172a; }
         return out2
 
     def post(self, request):
+        missing = self._check_deps()
+        if missing:
+            return Response(
+                {
+                    "error": "PDF/QR dependencies are not installed on the backend runtime.",
+                    "missing": missing,
+                    "hint": "Install backend/requirements.txt (needs qrcode[pil] and reportlab).",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         building_id = request.data.get("building_id")
         try:
             building_id_int = int(building_id)
@@ -332,53 +359,62 @@ body { font-family: Arial, sans-serif; color: #0f172a; }
         zip_buf = BytesIO()
         generated = 0
 
-        with zipfile.ZipFile(zip_buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-            for idx, row in enumerate(rows, start=1):
-                business_name = (row.get("business_name") or row.get("name") or "").strip()
-                if not business_name:
-                    continue
-                category = (row.get("category") or row.get("utm_term") or "").strip()
-                address = (row.get("address") or "").strip()
+        try:
+            with zipfile.ZipFile(zip_buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for idx, row in enumerate(rows, start=1):
+                    business_name = (row.get("business_name") or row.get("name") or "").strip()
+                    if not business_name:
+                        continue
+                    category = (row.get("category") or row.get("utm_term") or "").strip()
+                    address = (row.get("address") or "").strip()
 
-                # Token + tracking fields
-                utm_content = (row.get("utm_content") or self._slug(business_name) or f"lead-{idx}").strip()[:120]
-                utm_term = (category or "").strip()[:120]
+                    # Token + tracking fields
+                    utm_content = (row.get("utm_content") or self._slug(business_name) or f"lead-{idx}").strip()[:120]
+                    utm_term = (category or "").strip()[:120]
 
-                with schema_context("public"):
-                    token = AdLandingToken.objects.create(
-                        tenant_schema=tenant_schema,
-                        building_id=building_id_int,
-                        campaign_source=campaign_source,
-                        utm_source=utm_source,
-                        utm_medium=utm_medium,
-                        utm_campaign=utm_campaign,
-                        utm_content=utm_content,
-                        utm_term=utm_term,
-                        expires_at=expires_at,
-                        is_active=True,
+                    with schema_context("public"):
+                        token = AdLandingToken.objects.create(
+                            tenant_schema=tenant_schema,
+                            building_id=building_id_int,
+                            campaign_source=campaign_source,
+                            utm_source=utm_source,
+                            utm_medium=utm_medium,
+                            utm_campaign=utm_campaign,
+                            utm_content=utm_content,
+                            utm_term=utm_term,
+                            expires_at=expires_at,
+                            is_active=True,
+                        )
+
+                    landing_url = (
+                        f"{base}/advertise/{token.token}"
+                        f"?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}"
+                        f"&utm_content={utm_content}"
+                    )
+                    if utm_term:
+                        landing_url += f"&utm_term={utm_term}"
+                    # Prefill fields (avoid storing full business name in DB; we pass it on the URL)
+                    landing_url += f"&business_name={quote(business_name)}"
+                    if utm_term:
+                        landing_url += f"&category={quote(utm_term)}"
+                    landing_url += f"&radius_m={radius_m}"
+
+                    qr_b64 = self._build_qr_png_b64(landing_url)
+                    qr_png_bytes = base64.b64decode(qr_b64.encode("ascii"))
+
+                    title = f"Προς: {business_name}"
+                    addr_line = (
+                        f"<div style='margin-top:6px; font-size: 12px; color:#64748b;'>Διεύθυνση: {address}</div>"
+                        if address
+                        else ""
+                    )
+                    cat_line = (
+                        f"<div style='margin-top:6px; font-size: 12px; color:#64748b;'>Κατηγορία: {utm_term}</div>"
+                        if utm_term
+                        else ""
                     )
 
-                landing_url = (
-                    f"{base}/advertise/{token.token}"
-                    f"?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}"
-                    f"&utm_content={utm_content}"
-                )
-                if utm_term:
-                    landing_url += f"&utm_term={utm_term}"
-                # Prefill fields (avoid storing full business name in DB; we pass it on the URL)
-                landing_url += f"&business_name={quote(business_name)}"
-                if utm_term:
-                    landing_url += f"&category={quote(utm_term)}"
-                landing_url += f"&radius_m={radius_m}"
-
-                qr_b64 = self._build_qr_png_b64(landing_url)
-                qr_png_bytes = base64.b64decode(qr_b64.encode("ascii"))
-
-                title = f"Προς: {business_name}"
-                addr_line = f"<div style='margin-top:6px; font-size: 12px; color:#64748b;'>Διεύθυνση: {address}</div>" if address else ""
-                cat_line = f"<div style='margin-top:6px; font-size: 12px; color:#64748b;'>Κατηγορία: {utm_term}</div>" if utm_term else ""
-
-                html = f"""
+                    html = f"""
 <div style="display:flex; flex-direction:column; gap: 14px;">
   <div class="box">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: 16px;">
@@ -416,11 +452,16 @@ body { font-family: Arial, sans-serif; color: #0f172a; }
 </div>
 """
 
-                pdf_bytes = self._render_pdf(html=html, qr_png_bytes=qr_png_bytes, fallback_title=title)
-                safe_name = self._slug(business_name)
-                filename = f"{safe_name}-building-{building_id_int}-token-{str(token.token)[:8]}.pdf"
-                zf.writestr(filename, pdf_bytes)
-                generated += 1
+                    pdf_bytes = self._render_pdf(html=html, qr_png_bytes=qr_png_bytes, fallback_title=title)
+                    safe_name = self._slug(business_name)
+                    filename = f"{safe_name}-building-{building_id_int}-token-{str(token.token)[:8]}.pdf"
+                    zf.writestr(filename, pdf_bytes)
+                    generated += 1
+        except Exception as e:
+            return Response(
+                {"error": "Failed to generate outreach ZIP", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         if generated == 0:
             return Response({"error": "No valid rows found in CSV"}, status=status.HTTP_400_BAD_REQUEST)
