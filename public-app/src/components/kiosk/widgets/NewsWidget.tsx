@@ -136,7 +136,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         }
         
         .animate-ticker {
-          animation: ticker 320s linear infinite;
+          animation: ticker 480s linear infinite;
         }
         
         .animate-ticker:hover {
