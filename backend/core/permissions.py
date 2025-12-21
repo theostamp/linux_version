@@ -175,6 +175,27 @@ class IsSuperuser(BasePermission):
         )
 
 
+class IsUltraAdmin(BasePermission):
+    """
+    Ultra Admin (platform) access ONLY.
+
+    Requirement (as per product rules):
+    - role == 'admin'
+    - is_superuser == True
+    - is_staff == True
+    """
+
+    def has_permission(self, request, view):
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return False
+        return bool(
+            getattr(user, "role", None) == "admin"
+            and getattr(user, "is_superuser", False)
+            and getattr(user, "is_staff", False)
+        )
+
+
 # ============================================================
 # 🏢 Internal Manager Permissions
 # ============================================================

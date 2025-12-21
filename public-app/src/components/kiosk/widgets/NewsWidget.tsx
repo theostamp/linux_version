@@ -11,20 +11,56 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   // Use the existing news hook
   const { news, loading: newsLoading, error: newsError } = useNews(180000); // 3 minutes refresh
 
+  const adTickerItems = useMemo(() => {
+    const ads = (data as any)?.ads?.ticker;
+    if (!Array.isArray(ads)) return [];
+    return ads
+      .map((a: any) => ({
+        text: String(a?.creative?.ticker_text || a?.creative?.headline || '').trim(),
+      }))
+      .filter((a: any) => a.text);
+  }, [data]);
+
   // Build continuous ticker text with colored separators
   const marqueeContent = useMemo(() => {
-    if (news.length === 0) return null;
-    
-    // Duplicate news array for seamless loop
-    const allNews = [...news, ...news];
-    
-    return allNews.map((item, idx) => (
+    const items: Array<{ kind: 'news' | 'ad'; text: string }> = [];
+    const safeNews = Array.isArray(news) ? news.filter(Boolean) : [];
+    const safeAds = Array.isArray(adTickerItems) ? adTickerItems : [];
+
+    if (safeNews.length === 0 && safeAds.length === 0) return null;
+
+    // Interleave: every 3 news items insert 1 ad (if any). If no news, show ads only.
+    let adIndex = 0;
+    for (let i = 0; i < safeNews.length; i += 1) {
+      items.push({ kind: 'news', text: String(safeNews[i]) });
+      if ((i + 1) % 3 === 0 && safeAds.length > 0) {
+        items.push({ kind: 'ad', text: safeAds[adIndex % safeAds.length].text });
+        adIndex += 1;
+      }
+    }
+    if (safeNews.length === 0 && safeAds.length > 0) {
+      safeAds.forEach((a) => items.push({ kind: 'ad', text: a.text }));
+    }
+
+    // Duplicate for seamless loop
+    const loop = [...items, ...items];
+
+    return loop.map((item, idx) => (
       <span key={idx} className="inline-flex items-center">
-        <span className="text-emerald-50">{item}</span>
+        {item.kind === 'ad' ? (
+          <>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-100 uppercase tracking-[0.12em] mr-2">
+              Χορηγός
+            </span>
+            <span className="text-amber-50">{item.text}</span>
+          </>
+        ) : (
+          <span className="text-emerald-50">{item.text}</span>
+        )}
         <span className="mx-4 text-amber-400 font-bold">◆</span>
       </span>
     ));
-  }, [news]);
+  }, [news, adTickerItems]);
 
   if (isLoading || newsLoading) {
     return (
@@ -45,7 +81,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
     );
   }
 
-  if (news.length === 0) {
+  if (news.length === 0 && adTickerItems.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-green-200/50">
         <div className="text-center">

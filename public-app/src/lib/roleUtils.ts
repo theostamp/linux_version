@@ -18,7 +18,8 @@ const ROLE_ALIASES: Record<string, NormalizedRole> = {
   internal_manager: 'internal_manager',
   office_manager: 'manager',
   manager: 'manager',
-  admin: 'manager',
+  // Platform admin (backend role=admin) should map to Ultra Admin behavior
+  admin: 'superuser',
   office_staff: 'office_staff',
   staff: 'staff',
   superuser: 'superuser',

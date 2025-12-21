@@ -46,7 +46,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/logout',
     '/verify-payment',
     '/forgot-password',
-    '/accept-invitation'
+    '/accept-invitation',
+    '/advertise'
   ];
   
   // Auth pages that should NOT show the loading spinner (they handle their own auth)
@@ -56,6 +57,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/forgot-password',
     '/accept-invitation',
     '/auth/verify-email',
+    '/advertise',
     '/'
   ];
   

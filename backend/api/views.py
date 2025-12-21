@@ -248,6 +248,74 @@ def public_info(request, building_id=None):
                     
             except Building.DoesNotExist:
                 pass
+
+        # ------------------------------------------------------------------
+        # 🧾 Ads (Automated Ad Portal) - data lives in PUBLIC schema
+        # Privacy: we only expose creative fields (no advertiser PII).
+        # ------------------------------------------------------------------
+        ads_payload = {"ticker": [], "banner": [], "interstitial": []}
+        if building_id and building_id != 0:
+            try:
+                with schema_context("public"):
+                    from django.db.models import Prefetch
+                    from ad_portal.models import AdContract, AdContractStatus, AdCreative, AdCreativeStatus
+
+                    now = timezone.now()
+                    contracts_qs = (
+                        AdContract.objects.filter(tenant_schema=schema_name, building_id=building_id)
+                        .filter(
+                            Q(status=AdContractStatus.ACTIVE_PAID)
+                            | Q(status=AdContractStatus.TRIAL_ACTIVE, trial_ends_at__isnull=True)
+                            | Q(status=AdContractStatus.TRIAL_ACTIVE, trial_ends_at__gt=now)
+                        )
+                        .select_related("placement_type")
+                        .prefetch_related(
+                            Prefetch(
+                                "creatives",
+                                queryset=AdCreative.objects.exclude(status=AdCreativeStatus.REJECTED).order_by("-updated_at"),
+                                to_attr="_prefetched_creatives",
+                            )
+                        )
+                    )
+
+                    for c in contracts_qs:
+                        creative = None
+                        pref = getattr(c, "_prefetched_creatives", None)
+                        if pref:
+                            creative = pref[0]
+
+                        # Fallback: if no creative yet, skip (nothing to show)
+                        if not creative:
+                            continue
+
+                        placement_code = getattr(getattr(c, "placement_type", None), "code", "") or ""
+                        if placement_code not in ads_payload:
+                            continue
+
+                        # Choose best text for ticker
+                        ticker_text = (creative.ticker_text or creative.headline or "").strip()
+                        if placement_code == "ticker" and not ticker_text:
+                            continue
+
+                        ads_payload[placement_code].append(
+                            {
+                                "contract_id": c.id,
+                                "placement": placement_code,
+                                "status": c.status,
+                                "active_until": c.active_until,
+                                "trial_ends_at": c.trial_ends_at,
+                                "creative": {
+                                    "headline": (creative.headline or "").strip(),
+                                    "body": (creative.body or "").strip(),
+                                    "ticker_text": (creative.ticker_text or "").strip(),
+                                    "image_url": (creative.image_url or "").strip(),
+                                    "cta_url": (creative.cta_url or "").strip(),
+                                    "creative_status": creative.status,
+                                },
+                            }
+                        )
+            except Exception as e:
+                print(f"[public_info] Error loading ads: {e}")
         
         # Return response
         return JsonResponse({
@@ -255,4 +323,5 @@ def public_info(request, building_id=None):
             'votes': votes_data,
             'building_info': building_info,
             'financial': financial_info,
+            'ads': ads_payload,
         })

@@ -166,6 +166,11 @@ export interface KioskData {
   financial: KioskFinancialInfo;
   maintenance: KioskMaintenanceInfo;
   urgent_priorities: KioskUrgentPriority[];
+  ads?: {
+    ticker: KioskAd[];
+    banner: KioskAd[];
+    interstitial: KioskAd[];
+  };
   upcoming_assembly?: {
     id: string;
     title: string;
@@ -192,6 +197,22 @@ export interface KioskData {
     total_apartments: number;
     occupied: number;
     collection_rate: number;
+  };
+}
+
+export interface KioskAd {
+  contract_id: number;
+  placement: 'ticker' | 'banner' | 'interstitial';
+  status: string;
+  active_until: string | null;
+  trial_ends_at: string | null;
+  creative: {
+    headline: string;
+    body: string;
+    ticker_text: string;
+    image_url: string;
+    cta_url: string;
+    creative_status: string;
   };
 }
 
@@ -300,6 +321,11 @@ interface PublicInfoResponse {
   financial_info?: PublicFinancialInfo;
   maintenance?: PublicMaintenanceInfo;
   upcoming_assembly?: KioskData['upcoming_assembly'];
+  ads?: {
+    ticker?: KioskAd[];
+    banner?: KioskAd[];
+    interstitial?: KioskAd[];
+  };
 }
 
 export const useKioskData = (buildingId: number | null = 1) => {
@@ -571,6 +597,11 @@ export const useKioskData = (buildingId: number | null = 1) => {
         maintenance: maintenanceInfo,
         urgent_priorities: urgentPriorities.slice(0, 6), // Max 6 urgent items
         upcoming_assembly: publicData.upcoming_assembly ?? null,
+        ads: {
+          ticker: Array.isArray(publicData.ads?.ticker) ? publicData.ads!.ticker : [],
+          banner: Array.isArray(publicData.ads?.banner) ? publicData.ads!.banner : [],
+          interstitial: Array.isArray(publicData.ads?.interstitial) ? publicData.ads!.interstitial : [],
+        },
         statistics: {
           total_apartments: totalApartments || 10,
           occupied: (buildingInfo.occupied ?? totalApartments) || 10,

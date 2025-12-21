@@ -56,6 +56,7 @@ interface NavigationLink {
   icon: React.ReactNode;
   roles: string[];
   isBeta?: boolean;
+  requiresUltraAdmin?: boolean;
   // Staff permission required (for staff role only)
   staffPermission?: 'can_access_office_finance' | 'can_view_financials' | 'can_manage_requests';
   // Tooltip description
@@ -313,6 +314,29 @@ const navigationGroups: NavigationGroup[] = [
       },
     ]
   },
+  {
+    id: 'ads',
+    title: 'Διαφημίσεις',
+    colorKey: 'warning',
+    links: [
+      {
+        href: '/admin/ad-portal',
+        label: 'Ad Settings',
+        icon: <Megaphone className="w-5 h-5" />,
+        roles: ['superuser'],
+        requiresUltraAdmin: true,
+        tooltip: 'Ρύθμιση πακέτων/τιμών και δημιουργία QR tokens (Ultra Admin μόνο)',
+      },
+      {
+        href: '/office-dashboard/ad-analytics',
+        label: 'Ad Analytics',
+        icon: <BarChart3 className="w-5 h-5" />,
+        roles: ['superuser'],
+        requiresUltraAdmin: true,
+        tooltip: 'Funnel metrics ανά κτίριο (Ultra Admin μόνο)',
+      },
+    ],
+  },
 ];
 
 export default function CollapsibleSidebar() {
@@ -392,6 +416,9 @@ export default function CollapsibleSidebar() {
 
   // Determine user role
   const userRole = getEffectiveRole(user);
+  const isUltraAdminUser = Boolean(
+    user?.role?.toLowerCase() === 'admin' && user?.is_superuser && user?.is_staff
+  );
 
   // Check if staff has a specific permission
   const staffHasPermission = (permissionKey: NavigationLink['staffPermission']): boolean => {
@@ -410,6 +437,11 @@ export default function CollapsibleSidebar() {
     links: group.links.filter(link => {
       // First check role
       if (!userRole || !link.roles.includes(userRole)) return false;
+
+      // Ultra admin gating (extra hard check, not just role mapping)
+      if (link.requiresUltraAdmin) {
+        return isUltraAdminUser;
+      }
       
       // Then check staff permission if required
       if (link.staffPermission && userRole === 'staff') {

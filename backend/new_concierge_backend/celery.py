@@ -34,6 +34,11 @@ app.conf.beat_schedule = {
         'task': 'assemblies.tasks.check_and_send_assembly_reminders',
         'schedule': crontab(minute=0, hour='8,9,10'),  # 08:00, 09:00, 10:00 daily
     },
+    # Ad Portal trial reminders (7/3/1 days) + trial end notices
+    'ad-portal-trial-reminders-daily': {
+        'task': 'ad_portal.tasks.check_ad_portal_trials_daily',
+        'schedule': crontab(minute=0, hour=10),  # 10:00 daily
+    },
 }
 
 

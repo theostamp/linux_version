@@ -13,6 +13,8 @@ import {
 } from '@/components/kiosk/scenes/branding';
 import ActiveVoteWidget from '@/components/kiosk/widgets/ActiveVoteWidget';
 import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
+import AdBannerWidget from '@/components/kiosk/widgets/AdBannerWidget';
+import AdInterstitialOverlay from '@/components/kiosk/widgets/AdInterstitialOverlay';
 
 interface AmbientShowcaseSceneProps {
   data?: KioskData | null;
@@ -580,6 +582,15 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
         {/* Spacer */}
         <div className="flex-1" />
 
+        {/* Optional banner ad (if available) */}
+        {Array.isArray((data as any)?.ads?.banner) && (data as any).ads.banner.length > 0 ? (
+          <div className="px-5 pb-5">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <AdBannerWidget data={data} isLoading={false} error={undefined} />
+            </div>
+          </div>
+        ) : null}
+
         {/* App Promo Section */}
         <div className="px-5 py-5 border-t border-white/10">
           <div className="flex items-center gap-2 text-indigo-200/80 text-[11px] uppercase tracking-[0.12em] mb-4">
@@ -641,6 +652,9 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
           © {new Date().getFullYear()} New Concierge. All rights reserved.
         </p>
       </div>
+
+      {/* Whole-page interstitial ad (low frequency) */}
+      <AdInterstitialOverlay data={data} isLoading={false} error={undefined} />
     </div>
   );
 }

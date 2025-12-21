@@ -1,0 +1,28 @@
+{% extends "emails/base.html" %}
+{% block title %}Αποτυχία πληρωμής{% endblock %}
+{% block content %}
+<div style="max-width: 640px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, sans-serif;">
+  <h2 style="margin: 0 0 8px 0;">Αποτυχία πληρωμής</h2>
+  <p style="margin: 0 0 16px 0; color: #444;">
+    Δεν μπορέσαμε να ολοκληρώσουμε την πληρωμή. Για να συνεχίσει η προβολή, απαιτείται ενέργεια.
+  </p>
+
+  <div style="padding: 14px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fafafa; margin-bottom: 16px;">
+    <div style="font-weight: 600; margin-bottom: 6px;">Κτίριο</div>
+    <div style="color:#333;">{{ building.name }}</div>
+    <div style="color:#666; font-size: 13px;">{{ building.address }}, {{ building.city }} {{ building.postal_code }}</div>
+  </div>
+
+  <p style="margin: 0 0 16px 0;">
+    <a href="{{ manage_url }}" style="display:inline-block; background:#ef4444; color:#fff; text-decoration:none; padding:12px 16px; border-radius:10px; font-weight:600;">
+      Επανάληψη Πληρωμής
+    </a>
+  </p>
+
+  <p style="margin: 0; color:#666; font-size: 13px;">
+    Αν θεωρείτε ότι πρόκειται για λάθος, απαντήστε σε αυτό το email.
+  </p>
+</div>
+{% endblock %}
+
+

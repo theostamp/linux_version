@@ -66,6 +66,9 @@ urlpatterns = [
     # Public info
     path('api/public-info/', legacy_api_views.public_info, name='public-info'),
     path('api/public-info/', include('public_info.urls')),
+
+    # Automated Ad Portal (public schema-backed, exposed via tenant routing)
+    path('api/ad-portal/', include('ad_portal.urls')),
     
     # Tenants
     path('api/tenants/', include('tenants.urls')),

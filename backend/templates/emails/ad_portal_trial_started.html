@@ -1,0 +1,32 @@
+{% extends "emails/base.html" %}
+{% block title %}Ξεκίνησε η δωρεάν δοκιμή σας{% endblock %}
+{% block content %}
+<div style="max-width: 640px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, sans-serif;">
+  <h2 style="margin: 0 0 8px 0;">Καλώς ήρθατε!</h2>
+  <p style="margin: 0 0 16px 0; color: #444;">
+    Ξεκίνησε η <strong>δωρεάν δοκιμή 30 ημερών</strong> για τη διαφήμισή σας στο InfoPoint.
+  </p>
+
+  <div style="padding: 14px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fafafa; margin-bottom: 16px;">
+    <div style="font-weight: 600; margin-bottom: 6px;">Κτίριο</div>
+    <div style="color:#333;">{{ building.name }}</div>
+    <div style="color:#666; font-size: 13px;">{{ building.address }}, {{ building.city }} {{ building.postal_code }}</div>
+  </div>
+
+  <p style="margin: 0 0 16px 0; color: #444;">
+    Μπορείτε να επεξεργαστείτε το δημιουργικό σας και να δείτε την κατάσταση εδώ:
+  </p>
+
+  <p style="margin: 0 0 16px 0;">
+    <a href="{{ manage_url }}" style="display:inline-block; background:#00BC7D; color:#fff; text-decoration:none; padding:12px 16px; border-radius:10px; font-weight:600;">
+      Άνοιγμα Ad Portal
+    </a>
+  </p>
+
+  <p style="margin: 0; color:#666; font-size: 13px;">
+    Θα σας στείλουμε υπενθυμίσεις πριν λήξει το trial, ώστε να συνεχίσει η προβολή χωρίς διακοπή.
+  </p>
+</div>
+{% endblock %}
+
+

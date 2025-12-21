@@ -56,6 +56,8 @@ SHARED_APPS = [
     'office_staff',         # Office Staff Management (shared - relates to users)
     'billing',              # Subscription & Billing System (shared across tenants)
     'online_payments_public',  # Online payments webhooks/idempotency (public schema)
+    'ad_portal',            # Automated Ad Portal (public schema)
+    'ad_portal_public',     # Ad Portal Stripe webhooks/idempotency (public schema)
 
     'corsheaders',
     'django.contrib.contenttypes',

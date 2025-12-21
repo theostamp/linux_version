@@ -10,6 +10,8 @@ import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidge
 import AnnouncementsExpensesSlider from '@/components/kiosk/widgets/AnnouncementsExpensesSlider';
 import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
+import AdBannerWidget from '@/components/kiosk/widgets/AdBannerWidget';
+import AdInterstitialOverlay from '@/components/kiosk/widgets/AdInterstitialOverlay';
 import { Building2 } from 'lucide-react';
 
 interface MorningOverviewSceneCustomProps {
@@ -64,10 +66,17 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   const [paletteHour, setPaletteHour] = useState(() => new Date().getHours());
 
   // Sidebar widgets that will auto-scroll with slide animation
-  const sidebarWidgets = [
-    { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
-    { id: 'qr-connect', name: 'Σύνδεση με QR', Component: QRCodeWidget },
-  ];
+  const sidebarWidgets = useMemo(() => {
+    const base = [
+      { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
+      { id: 'qr-connect', name: 'Σύνδεση με QR', Component: QRCodeWidget },
+    ];
+    const hasBannerAds = Array.isArray((data as any)?.ads?.banner) && (data as any).ads.banner.length > 0;
+    if (hasBannerAds) {
+      base.push({ id: 'ad-banner', name: 'Χορηγούμενο', Component: AdBannerWidget });
+    }
+    return base;
+  }, [data]);
 
   // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
   useEffect(() => {
@@ -232,6 +241,9 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           © {new Date().getFullYear()} New Concierge. All rights reserved.
         </p>
       </div>
+
+      {/* Whole-page interstitial ad (low frequency) */}
+      <AdInterstitialOverlay data={data} isLoading={false} error={undefined} />
     </div>
   );
 }

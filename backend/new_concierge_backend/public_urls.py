@@ -50,6 +50,11 @@ urlpatterns = [
 
     # Online payments webhooks (public schema)
     path('api/webhooks/', include('online_payments_public.urls')),
+    # Ad Portal webhooks (public schema)
+    path('api/webhooks/ad-portal/', include('ad_portal_public.urls')),
+
+    # Automated Ad Portal (public schema)
+    path('api/ad-portal/', include('ad_portal.urls')),
     
     # Office Staff Management (shared across all tenants)
     path('api/office/', include('office_staff.urls')),
