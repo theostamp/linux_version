@@ -13,6 +13,12 @@ import { Textarea } from '@/components/ui/textarea';
 
 type PlacementCode = 'ticker' | 'banner' | 'interstitial';
 
+type Competitor = {
+  place_id: string;
+  name: string;
+  distance_m: number | null;
+};
+
 type LandingPackage = {
   code: PlacementCode;
   display_name: string;
@@ -53,6 +59,20 @@ function formatEur(value: string) {
   const n = Number(value);
   if (Number.isFinite(n)) return new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' }).format(n);
   return `${value}€`;
+}
+
+function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const sin1 = Math.sin(dLat / 2);
+  const sin2 = Math.sin(dLng / 2);
+  const x = sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2;
+  const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  return Math.round(R * c);
 }
 
 export default function AdvertiseLandingPage() {
@@ -97,6 +117,8 @@ export default function AdvertiseLandingPage() {
   const businessInputRef = useRef<HTMLInputElement | null>(null);
   const businessAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [competitorCount, setCompetitorCount] = useState<number>(0);
+  const [competitors, setCompetitors] = useState<Competitor[]>([]);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const selectedPackage = useMemo(
     () => packages.find((p) => p.code === selectedPlacement) || null,
@@ -250,6 +272,7 @@ export default function AdvertiseLandingPage() {
         competitorMarkersRef.current.forEach((m) => m.setMap(null));
         competitorMarkersRef.current = [];
         setCompetitorCount(0);
+        setCompetitors([]);
 
         const location = new window.google.maps.LatLng(bLat, bLng);
         const keyword = cat || name;
@@ -263,6 +286,22 @@ export default function AdvertiseLandingPage() {
             if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results) return;
             const filtered = results.filter((r) => r.place_id && r.place_id !== pid).slice(0, 12);
             setCompetitorCount(filtered.length);
+            try {
+              const origin = { lat: bLat, lng: bLng };
+              const list: Competitor[] = filtered.map((r) => {
+                const loc2 = r.geometry?.location;
+                const pos = loc2 ? { lat: loc2.lat(), lng: loc2.lng() } : null;
+                return {
+                  place_id: String(r.place_id || ''),
+                  name: String(r.name || 'Ανταγωνιστής'),
+                  distance_m: pos ? haversineMeters(origin, pos) : null,
+                };
+              });
+              list.sort((a, b) => (a.distance_m ?? 1e9) - (b.distance_m ?? 1e9));
+              setCompetitors(list);
+            } catch {
+              // ignore
+            }
             if (!mapRef.current) return;
             filtered.forEach((r) => {
               if (!r.geometry?.location) return;
@@ -303,6 +342,19 @@ export default function AdvertiseLandingPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [landing]);
+
+  const handleCopyManageLink = async () => {
+    if (!startResult) return;
+    const url = `${window.location.origin}/advertise/manage/${startResult.manage_token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyState('copied');
+      setTimeout(() => setCopyState('idle'), 2000);
+    } catch {
+      setCopyState('failed');
+      setTimeout(() => setCopyState('idle'), 2000);
+    }
+  };
 
   const startTrial = async () => {
     if (!landing) return;
@@ -356,8 +408,11 @@ export default function AdvertiseLandingPage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">Διαφήμιση στο InfoPoint</h1>
         <p className="text-sm text-muted-foreground">
-          1 μήνας δωρεάν δοκιμή. Μετά επιλέγετε αν θέλετε αυτόματη συνδρομή ή χειροκίνητη ανανέωση.
+          1 μήνας δωρεάν δοκιμή (χωρίς κάρτα). Μετά επιλέγετε αν θέλετε αυτόματη συνδρομή ή χειροκίνητη ανανέωση.
         </p>
+        <div className="text-xs text-muted-foreground">
+          Βήματα: <span className="font-medium">1)</span> Βρες το μαγαζί σου <span className="font-medium">2)</span> Διάλεξε θέση <span className="font-medium">3)</span> Ξεκίνα δωρεάν
+        </div>
       </div>
 
       {isLoading ? (
@@ -391,15 +446,40 @@ export default function AdvertiseLandingPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Βρες το μαγαζί σου (Google)</Label>
-                  <Input ref={businessInputRef} placeholder="Π.χ. Το Καφέ του Νίκου" />
-                  {competitorCount > 0 ? (
+                  <Label>1) Βρες το μαγαζί σου (Google)</Label>
+                  <Input ref={businessInputRef} placeholder="Πληκτρολόγησε και διάλεξε από τη λίστα (π.χ. καφέ, φούρνος…)" />
+                  {placeId ? (
                     <p className="text-sm text-muted-foreground">
-                      Βρέθηκαν περίπου <span className="font-medium">{competitorCount}</span> ανταγωνιστές σε ακτίνα 300μ.
+                      Επιλέχθηκε: <span className="font-medium">{businessName || '—'}</span>
+                      {category ? <span className="text-muted-foreground"> • {category}</span> : null}
                     </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Δείξε μας την επιχείρησή σου για να δεις τον ανταγωνισμό.</p>
+                    <p className="text-sm text-muted-foreground">Δείξε μας την επιχείρησή σου για να δεις τον ανταγωνισμό κοντά στο κτίριο.</p>
                   )}
+
+                  {placeId && competitorCount > 0 ? (
+                    <div className="rounded-md border p-3 bg-muted/20">
+                      <div className="text-sm font-medium">
+                        Βλέπεις <span className="font-semibold">{competitorCount}</span> ανταγωνιστές σε ακτίνα 300μ.
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        Θες να κλειδώσεις εσύ το κτίριο; Διάλεξε θέση και ξεκίνα δωρεάν.
+                      </div>
+                      {competitors.length > 0 ? (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Ενδεικτικά:
+                          <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                            {competitors.slice(0, 5).map((c) => (
+                              <li key={c.place_id}>
+                                {c.name}
+                                {typeof c.distance_m === 'number' ? ` • ~${c.distance_m}m` : ''}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="rounded-md border overflow-hidden">
                   <div ref={mapDivRef} className="h-[280px] w-full" />
@@ -442,9 +522,9 @@ export default function AdvertiseLandingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Ξεκίνα δωρεάν</CardTitle>
+              <CardTitle>3) Ξεκίνα δωρεάν</CardTitle>
               <CardDescription>
-                Θα ενεργοποιηθεί trial 30 ημερών. Πριν λήξει, θα σας ζητήσουμε πληρωμή για να συνεχίσει.
+                Θα ενεργοποιηθεί trial 30 ημερών (χωρίς κάρτα). Πριν λήξει, θα σας ζητήσουμε πληρωμή για να συνεχίσει.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -510,11 +590,16 @@ export default function AdvertiseLandingPage() {
                       ? new Date(startResult.trial_ends_at).toLocaleString('el-GR')
                       : '—'}
                   </div>
-                  <div className="mt-2 text-sm">
-                    Διαχείριση:{' '}
-                    <Link className="underline" href={`/advertise/manage/${startResult.manage_token}`}>
-                      Άνοιγμα portal
-                    </Link>
+                  <div className="mt-2 flex flex-col md:flex-row md:items-center gap-2 text-sm">
+                    <div>
+                      Διαχείριση:{' '}
+                      <Link className="underline" href={`/advertise/manage/${startResult.manage_token}`}>
+                        Άνοιγμα portal
+                      </Link>
+                    </div>
+                    <Button type="button" variant="outline" onClick={handleCopyManageLink}>
+                      {copyState === 'copied' ? 'Αντιγράφηκε' : copyState === 'failed' ? 'Αποτυχία αντιγραφής' : 'Αντιγραφή link'}
+                    </Button>
                   </div>
                 </div>
               ) : null}
