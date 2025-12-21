@@ -36,12 +36,13 @@ import {
   Monitor,
   Settings,
   Send,
-  User,
-  CreditCard,
-  ChevronRight,
-  Info,
-  Mail,
-} from 'lucide-react';
+    User,
+    CreditCard,
+    ChevronRight,
+    Info,
+    Mail,
+    BarChart3,
+  } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
