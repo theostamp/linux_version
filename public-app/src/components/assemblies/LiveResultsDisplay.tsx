@@ -63,7 +63,7 @@ export default function LiveResultsDisplay({ results, votingType, votingTypeDisp
     },
   ];
 
-  return ( section
+  return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
