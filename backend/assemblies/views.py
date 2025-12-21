@@ -15,7 +15,8 @@ from django.shortcuts import get_object_or_404
 
 from .models import (
     Assembly, AgendaItem, AgendaItemAttachment,
-    AssemblyAttendee, AssemblyVote, AssemblyMinutesTemplate
+    AssemblyAttendee, AssemblyVote, AssemblyMinutesTemplate,
+    CommunityPoll, PollOption, PollVote
 )
 from .serializers import (
     AssemblyListSerializer, AssemblyDetailSerializer, AssemblyCreateSerializer,
@@ -24,9 +25,28 @@ from .serializers import (
     AssemblyMinutesTemplateSerializer,
     CheckInSerializer, RSVPSerializer, CastVoteSerializer,
     StartAssemblySerializer, EndAssemblySerializer, AdjournAssemblySerializer,
-    EndAgendaItemSerializer, GenerateMinutesSerializer
+    EndAgendaItemSerializer, GenerateMinutesSerializer,
+    CommunityPollSerializer, PollVoteSerializer
 )
 from .services import AssemblyMinutesService
+from core.permissions import CanCreateAssembly, CanAccessBuilding, IsOfficeManagerOrInternalManager
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.db import connection
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+
+# Helper για real-time ενημερώσεις
+def broadcast_assembly_event(assembly_id, event_type, payload):
+    channel_layer = get_channel_layer()
+    schema_name = getattr(connection, "schema_name", None) or "public"
+    async_to_sync(channel_layer.group_send)(
+        f'assembly_{schema_name}_{assembly_id}',
+        {
+            'type': event_type,
+            **payload
+        }
+    )
 
 
 class AssemblyViewSet(viewsets.ModelViewSet):
@@ -57,6 +77,16 @@ class AssemblyViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description']
     ordering_fields = ['scheduled_date', 'created_at', 'status']
     ordering = ['-scheduled_date']
+
+    def get_permissions(self):
+        """
+        Εφαρμογή permissions ανά action:
+        - Διαχειριστικές ενέργειες: Managers/Internal Managers
+        - Προβολή: Όλοι όσοι έχουν πρόσβαση στο κτίριο
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'start', 'end', 'adjourn', 'send_invitation', 'generate_minutes', 'approve_minutes']:
+            return [IsAuthenticated(), CanCreateAssembly()]
+        return [IsAuthenticated(), CanAccessBuilding()]
     
     def get_queryset(self):
         return Assembly.objects.filter(
@@ -100,6 +130,13 @@ class AssemblyViewSet(viewsets.ModelViewSet):
             )
         
         assembly.start_assembly()
+        
+        # Broadcast real-time update
+        broadcast_assembly_event(assembly.id, 'item_update', {
+            'item_id': None,
+            'item_type': 'assembly_started'
+        })
+        
         return Response({
             'message': 'Η συνέλευση ξεκίνησε',
             'started_at': assembly.actual_start_time
@@ -250,6 +287,25 @@ class AssemblyViewSet(viewsets.ModelViewSet):
         })
     
     @action(detail=True, methods=['get'])
+    def download_pdf(self, request, pk=None):
+        """Λήψη πρακτικών σε μορφή PDF"""
+        assembly = self.get_object()
+        
+        try:
+            service = AssemblyMinutesService(assembly)
+            pdf_bytes = service.generate_pdf()
+            
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            filename = f"praktika_{assembly.scheduled_date}_{assembly.id}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        except Exception as e:
+            return Response(
+                {'error': f'Σφάλμα κατά τη δημιουργία PDF: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'])
     def live_status(self, request, pk=None):
         """Live status για real-time updates κατά τη διάρκεια της συνέλευσης"""
         assembly = self.get_object()
@@ -286,6 +342,11 @@ class AgendaItemViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description']
     ordering_fields = ['order', 'created_at']
     ordering = ['order']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'start', 'end', 'defer']:
+            return [IsAuthenticated(), CanCreateAssembly()]
+        return [IsAuthenticated(), CanAccessBuilding()]
     
     def get_queryset(self):
         return AgendaItem.objects.filter(
@@ -324,6 +385,13 @@ class AgendaItemViewSet(viewsets.ModelViewSet):
             current.end_item()
         
         item.start_item()
+        
+        # Broadcast real-time update
+        broadcast_assembly_event(item.assembly.id, 'item_update', {
+            'item_id': str(item.id),
+            'item_type': item.item_type
+        })
+        
         return Response({
             'message': f'Ξεκίνησε το θέμα: {item.title}',
             'started_at': item.started_at
@@ -554,6 +622,14 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
             vote_source=vote_source,
             notes=serializer.validated_data.get('notes', '')
         )
+        
+        # Broadcast real-time results if it's a live vote
+        if vote_source == 'live':
+            results = agenda_item.get_voting_results()
+            broadcast_assembly_event(assembly.id, 'vote_update', {
+                'agenda_item_id': str(agenda_item.id),
+                'results': results
+            })
         
         return Response({
             'message': 'Η ψήφος καταγράφηκε',
@@ -886,3 +962,90 @@ class EmailVoteView(APIView):
             'votes_recorded': len(created_votes),
             'message': f'Καταχωρήθηκαν {len(created_votes)} ψήφοι επιτυχώς'
         })
+
+
+class CommunityPollViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση δημοσκοπήσεων κοινότητας.
+    """
+    queryset = CommunityPoll.objects.all().prefetch_related('options', 'votes')
+    serializer_class = CommunityPollSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['building', 'is_active', 'author']
+    search_fields = ['title', 'description']
+    ordering = ['-created_at']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), CanCreateAssembly()]
+        return [IsAuthenticated(), CanAccessBuilding()]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Filter by buildings the user has access to
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            return self.queryset
+        
+        from buildings.models import BuildingMembership
+        accessible_buildings = BuildingMembership.objects.filter(resident=user).values_list('building_id', flat=True)
+        return self.queryset.filter(building__id__in=accessible_buildings)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def vote(self, request, pk=None):
+        """Ψηφοφορία σε δημοσκόπηση"""
+        poll = self.get_object()
+        user = request.user
+        
+        if poll.is_expired:
+            return Response({'error': 'Η δημοσκόπηση έχει λήξει'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not poll.is_active:
+            return Response({'error': 'Η δημοσκόπηση δεν είναι ενεργή'}, status=status.HTTP_400_BAD_REQUEST)
+
+        option_id = request.data.get('option_id')
+        if not option_id:
+            return Response({'error': 'Απαιτείται option_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        option = get_object_or_404(PollOption, id=option_id, poll=poll)
+
+        # Check for multiple choices
+        if not poll.allow_multiple_choices:
+            if PollVote.objects.filter(poll=poll, user=user).exists():
+                return Response({'error': 'Έχετε ήδη ψηφίσει σε αυτή τη δημοσκόπηση'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create vote (idempotent για multi-choice ώστε να μην δημιουργούνται διπλοεγγραφές)
+        vote, created = PollVote.objects.get_or_create(poll=poll, option=option, user=user)
+
+        return Response(
+            PollVoteSerializer(vote).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class PollVoteViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet για προβολή ψήφων (read-only)
+    """
+    queryset = PollVote.objects.all().select_related('poll', 'option', 'user')
+    serializer_class = PollVoteSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Περιορισμός ψήφων σε polls/buildings που έχει πρόσβαση ο χρήστης (αποφυγή data leak).
+        """
+        user = self.request.user
+        qs = super().get_queryset()
+
+        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+            return qs
+
+        from buildings.models import BuildingMembership
+        accessible_buildings = BuildingMembership.objects.filter(resident=user).values_list('building_id', flat=True)
+        return qs.filter(poll__building__id__in=accessible_buildings)

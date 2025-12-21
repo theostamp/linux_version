@@ -5,8 +5,17 @@ Business logic για συνελεύσεις
 
 from django.utils import timezone
 from django.template import Template, Context
+from django.conf import settings
 from datetime import datetime
 from typing import Optional
+import io
+import markdown
+try:
+    from weasyprint import HTML, CSS
+except ImportError:
+    HTML = None
+    CSS = None
+
 from .models import Assembly, AgendaItem, AssemblyMinutesTemplate
 
 
@@ -108,6 +117,52 @@ class AssemblyMinutesService:
         minutes.append(self._generate_footer())
         
         return '\n'.join(minutes)
+    
+    def generate_pdf(self) -> bytes:
+        """Δημιουργεί PDF από τα πρακτικά"""
+        if not HTML:
+            raise ImportError("WeasyPrint is not installed or properly configured.")
+            
+        md_text = self.generate()
+        
+        # Μετατροπή Markdown σε HTML
+        # Χρησιμοποιούμε extensions για πίνακες και κώδικα
+        html_content = markdown.markdown(md_text, extensions=['tables', 'fenced_code', 'toc'])
+        
+        # Προσθήκη βασικού CSS για το PDF
+        full_html = f"""
+        <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body {{
+                        font-family: 'DejaVu Sans', sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        padding: 20px;
+                    }}
+                    h1 {{ color: #059669; text-align: center; border-bottom: 2px solid #059669; padding-bottom: 10px; }}
+                    h2 {{ color: #10b981; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; margin-top: 30px; }}
+                    h3 {{ color: #374151; }}
+                    table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                    th, td {{ border: 1px solid #e5e7eb; padding: 10px; text-align: left; }}
+                    th {{ background-color: #f9fafb; }}
+                    hr {{ border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0; }}
+                    .footer {{ margin-top: 50px; font-size: 0.8em; color: #6b7280; text-align: center; }}
+                    .signatures {{ margin-top: 50px; }}
+                    .signatures table {{ border: 0; }}
+                    .signatures td {{ border: 0; height: 100px; vertical-align: bottom; border-bottom: 1px solid #333; }}
+                </style>
+            </head>
+            <body>
+                {html_content}
+            </body>
+        </html>
+        """
+        
+        # Δημιουργία PDF
+        pdf_bytes = HTML(string=full_html).write_pdf()
+        return pdf_bytes
     
     def _generate_header(self) -> str:
         """Δημιουργεί το header των πρακτικών"""

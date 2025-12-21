@@ -522,6 +522,36 @@ class AgendaItem(models.Model):
             
         self.save()
     
+    def get_voting_results(self):
+        """Επιστρέφει τα αποτελέσματα της ψηφοφορίας για αυτό το θέμα"""
+        if self.item_type != 'voting':
+            return None
+            
+        votes = self.assembly_votes.all()
+        
+        approve_votes = [v for v in votes if v.vote == 'approve']
+        reject_votes = [v for v in votes if v.vote == 'reject']
+        abstain_votes = [v for v in votes if v.vote == 'abstain']
+        
+        return {
+            'approve': {
+                'count': len(approve_votes),
+                'mills': sum(v.mills for v in approve_votes)
+            },
+            'reject': {
+                'count': len(reject_votes),
+                'mills': sum(v.mills for v in reject_votes)
+            },
+            'abstain': {
+                'count': len(abstain_votes),
+                'mills': sum(v.mills for v in abstain_votes)
+            },
+            'total': {
+                'count': len(votes),
+                'mills': sum(v.mills for v in votes)
+            }
+        }
+    
     def defer_item(self, reason=''):
         """Αναβάλλει το θέμα"""
         self.status = 'deferred'
@@ -873,3 +903,107 @@ class AssemblyMinutesTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CommunityPoll(models.Model):
+    """
+    Ανεπίσημη δημοσκόπηση για το κτίριο (Polls)
+    Χρησιμοποιείται για γρήγορες ερωτήσεις προς τους ενοίκους.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    building = models.ForeignKey(
+        'buildings.Building', 
+        on_delete=models.CASCADE, 
+        related_name='community_polls',
+        verbose_name="Κτίριο"
+    )
+    title = models.CharField(max_length=255, verbose_name="Τίτλος Δημοσκόπησης")
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    author = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='created_community_polls',
+        verbose_name="Δημιουργήθηκε από"
+    )
+    
+    is_active = models.BooleanField(default=True, verbose_name="Ενεργή")
+    allow_multiple_choices = models.BooleanField(default=False, verbose_name="Πολλαπλές Επιλογές")
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="Λήξη")
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ημερομηνία Δημιουργίας")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Τελευταία Ενημέρωση")
+
+    class Meta:
+        verbose_name = "Δημοσκόπηση Κοινότητας"
+        verbose_name_plural = "Δημοσκοπήσεις Κοινότητας"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        return timezone.now() > self.expires_at
+
+
+class PollOption(models.Model):
+    """Επιλογές για μια δημοσκόπηση"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    poll = models.ForeignKey(
+        CommunityPoll, 
+        on_delete=models.CASCADE, 
+        related_name='options',
+        verbose_name="Δημοσκόπηση"
+    )
+    text = models.CharField(max_length=255, verbose_name="Κείμενο Επιλογής")
+    order = models.PositiveIntegerField(default=0, verbose_name="Σειρά")
+
+    class Meta:
+        verbose_name = "Επιλογή Δημοσκόπησης"
+        verbose_name_plural = "Επιλογές Δημοσκοπήσεων"
+        ordering = ['poll', 'order']
+
+    def __str__(self):
+        return f"{self.poll.title} - {self.text}"
+
+
+class PollVote(models.Model):
+    """Ψήφος σε δημοσκόπηση"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    poll = models.ForeignKey(
+        CommunityPoll,
+        on_delete=models.CASCADE,
+        related_name='votes',
+        verbose_name="Δημοσκόπηση"
+    )
+    option = models.ForeignKey(
+        PollOption, 
+        on_delete=models.CASCADE, 
+        related_name='user_votes',
+        verbose_name="Επιλογή"
+    )
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='community_poll_votes',
+        verbose_name="Χρήστης"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ημερομηνία Ψήφου")
+
+    class Meta:
+        verbose_name = "Ψήφος Δημοσκόπησης"
+        verbose_name_plural = "Ψήφοι Δημοσκοπήσεων"
+        # Δεν μπορούμε να κάνουμε conditional unique constraint με βάση σχετικό πεδίο (poll.allow_multiple_choices).
+        # Κρατάμε DB-level idempotency για multi-choice (όχι διπλή ψήφος στο ίδιο option)
+        # και κάνουμε τον περιορισμό "μία ψήφος συνολικά" για single-choice στο API layer.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['poll', 'user', 'option'],
+                name='uniq_poll_user_option_vote',
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} -> {self.option.text}"

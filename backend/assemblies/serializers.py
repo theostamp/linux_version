@@ -6,8 +6,53 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import (
     Assembly, AgendaItem, AgendaItemAttachment,
-    AssemblyAttendee, AssemblyVote, AssemblyMinutesTemplate
+    AssemblyAttendee, AssemblyVote, AssemblyMinutesTemplate,
+    CommunityPoll, PollOption, PollVote
 )
+
+
+class PollOptionSerializer(serializers.ModelSerializer):
+    """Serializer για επιλογές δημοσκόπησης"""
+    
+    class Meta:
+        model = PollOption
+        fields = ['id', 'text', 'order']
+
+
+class CommunityPollSerializer(serializers.ModelSerializer):
+    """Serializer για δημοσκοπήσεις κοινότητας"""
+    
+    options = PollOptionSerializer(many=True, read_only=True)
+    author_name = serializers.CharField(source='author.get_full_name', read_only=True)
+    vote_count = serializers.SerializerMethodField()
+    has_voted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CommunityPoll
+        fields = [
+            'id', 'building', 'title', 'description', 'author', 'author_name',
+            'is_active', 'allow_multiple_choices', 'expires_at', 'is_expired',
+            'options', 'vote_count', 'has_voted', 'created_at'
+        ]
+        read_only_fields = ['id', 'author', 'created_at']
+
+    def get_vote_count(self, obj):
+        return obj.votes.count()
+
+    def get_has_voted(self, obj):
+        user = self.context.get('request').user
+        if not user or user.is_anonymous:
+            return False
+        return obj.votes.filter(user=user).exists()
+
+
+class PollVoteSerializer(serializers.ModelSerializer):
+    """Serializer για ψήφους σε δημοσκόπηση"""
+    
+    class Meta:
+        model = PollVote
+        fields = ['id', 'poll', 'option', 'user', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
 
 
 class AgendaItemAttachmentSerializer(serializers.ModelSerializer):

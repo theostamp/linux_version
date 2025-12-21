@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django_tenants.utils import schema_context
 from .models import ChatRoom, ChatMessage, ChatParticipant, ChatNotification, MessageReaction, OnlineStatus
 
 User = get_user_model()
@@ -18,7 +19,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Σύνδεση στο WebSocket και συμμετοχή στο chat room.
         """
         self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = f'chat_{self.room_name}'
+        self.tenant_schema = self.scope.get("tenant_schema")
+        if not self.tenant_schema or self.tenant_schema == "public":
+            await self.close()
+            return
+
+        # Tenant-aware group name (αποφυγή cross-tenant collisions/leaks)
+        self.room_group_name = f'chat_{self.tenant_schema}_{self.room_name}'
         
         # Έλεγχος αν ο χρήστης είναι αυθεντικοποιημένος
         if self.scope["user"].is_anonymous:
@@ -453,13 +460,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Έλεγχος αν ο χρήστης έχει πρόσβαση στο chat room.
         """
         try:
-            building_id = int(self.room_name.replace('chat_', ''))
-            chat_room = ChatRoom.objects.get(building_id=building_id)
-            user = self.scope["user"]
-            
-            # Έλεγχος πρόσβασης (office/internal/residents)
-            building = chat_room.building
-            return user.can_access_building(building)
+            with schema_context(self.tenant_schema):
+                building_id = int(self.room_name.replace('chat_', ''))
+                chat_room = ChatRoom.objects.get(building_id=building_id)
+                user = self.scope["user"]
+                
+                # Έλεγχος πρόσβασης (office/internal/residents)
+                building = chat_room.building
+                return user.can_access_building(building)
         except (ValueError, ChatRoom.DoesNotExist):
             return False
 
@@ -468,26 +476,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         Αποθήκευση μηνύματος στη βάση.
         """
-        building_id = int(self.room_name.replace('chat_', ''))
-        chat_room = ChatRoom.objects.get(building_id=building_id)
-        
-        reply_to = None
-        if reply_to_id:
-            try:
-                reply_to = ChatMessage.objects.get(id=reply_to_id)
-            except ChatMessage.DoesNotExist:
-                pass
-        
-        return ChatMessage.objects.create(
-            chat_room=chat_room,
-            sender=self.scope["user"],
-            content=content,
-            message_type=message_type,
-            file_url=file_url,
-            file_name=file_name,
-            file_size=file_size,
-            reply_to=reply_to
-        )
+        with schema_context(self.tenant_schema):
+            building_id = int(self.room_name.replace('chat_', ''))
+            chat_room = ChatRoom.objects.get(building_id=building_id)
+            
+            reply_to = None
+            if reply_to_id:
+                try:
+                    reply_to = ChatMessage.objects.get(id=reply_to_id)
+                except ChatMessage.DoesNotExist:
+                    pass
+            
+            return ChatMessage.objects.create(
+                chat_room=chat_room,
+                sender=self.scope["user"],
+                content=content,
+                message_type=message_type,
+                file_url=file_url,
+                file_name=file_name,
+                file_size=file_size,
+                reply_to=reply_to
+            )
 
     @database_sync_to_async
     def get_reply_to_data(self, reply_to_id):
@@ -495,14 +504,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Πάρε τα data του μηνύματος που απαντάει.
         """
         try:
-            reply_message = ChatMessage.objects.select_related('sender').get(id=reply_to_id)
-            return {
-                'id': reply_message.id,
-                'sender_name': reply_message.sender.get_full_name() or reply_message.sender.email,
-                'content': reply_message.content[:100] + '...' if len(reply_message.content) > 100 else reply_message.content,
-                'message_type': reply_message.message_type,
-                'is_deleted': reply_message.is_deleted
-            }
+            with schema_context(self.tenant_schema):
+                reply_message = ChatMessage.objects.select_related('sender').get(id=reply_to_id)
+                return {
+                    'id': reply_message.id,
+                    'sender_name': reply_message.sender.get_full_name() or reply_message.sender.email,
+                    'content': reply_message.content[:100] + '...' if len(reply_message.content) > 100 else reply_message.content,
+                    'message_type': reply_message.message_type,
+                    'is_deleted': reply_message.is_deleted
+                }
         except ChatMessage.DoesNotExist:
             return None
 
@@ -511,58 +521,61 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         Ενημέρωση κατάστασης συμμετέχοντα.
         """
-        building_id = int(self.room_name.replace('chat_', ''))
-        chat_room = ChatRoom.objects.get(building_id=building_id)
-        
-        participant, created = ChatParticipant.objects.get_or_create(
-            chat_room=chat_room,
-            user=self.scope["user"],
-            defaults={'is_online': is_online}
-        )
-        
-        if not created:
-            participant.is_online = is_online
-            participant.save()
+        with schema_context(self.tenant_schema):
+            building_id = int(self.room_name.replace('chat_', ''))
+            chat_room = ChatRoom.objects.get(building_id=building_id)
+            
+            participant, created = ChatParticipant.objects.get_or_create(
+                chat_room=chat_room,
+                user=self.scope["user"],
+                defaults={'is_online': is_online}
+            )
+            
+            if not created:
+                participant.is_online = is_online
+                participant.save()
 
     @database_sync_to_async
     def update_notifications(self):
         """
         Ενημέρωση ειδοποιήσεων για μη διαβασμένα μηνύματα.
         """
-        building_id = int(self.room_name.replace('chat_', ''))
-        chat_room = ChatRoom.objects.get(building_id=building_id)
-        
-        # Ενημέρωση ειδοποιήσεων για όλους τους συμμετέχοντες εκτός από τον αποστολέα
-        participants = chat_room.participants.exclude(user=self.scope["user"])
-        
-        for participant in participants:
-            notification, created = ChatNotification.objects.get_or_create(
-                chat_room=chat_room,
-                user=participant.user,
-                defaults={'unread_count': 1}
-            )
+        with schema_context(self.tenant_schema):
+            building_id = int(self.room_name.replace('chat_', ''))
+            chat_room = ChatRoom.objects.get(building_id=building_id)
             
-            if not created:
-                notification.unread_count += 1
-                notification.save()
+            # Ενημέρωση ειδοποιήσεων για όλους τους συμμετέχοντες εκτός από τον αποστολέα
+            participants = chat_room.participants.exclude(user=self.scope["user"])
+            
+            for participant in participants:
+                notification, created = ChatNotification.objects.get_or_create(
+                    chat_room=chat_room,
+                    user=participant.user,
+                    defaults={'unread_count': 1}
+                )
+                
+                if not created:
+                    notification.unread_count += 1
+                    notification.save()
 
     @database_sync_to_async
     def get_sender_role(self, sender):
         """
         Επιστροφή του ρόλου του αποστολέα στο κτίριο.
         """
-        building_id = int(self.room_name.replace('chat_', ''))
-        chat_room = ChatRoom.objects.get(building_id=building_id)
-        building = chat_room.building
-        
-        # UI badges: treat office-level as manager, internal_manager separately, else resident.
-        if getattr(sender, "is_office_level", False) or sender.is_manager_of(building):
-            return "manager"
-        if hasattr(sender, "is_internal_manager_of") and sender.is_internal_manager_of(building):
-            return "internal_manager"
-        if sender.is_resident_of(building):
-            return "resident"
-        return "other"
+        with schema_context(self.tenant_schema):
+            building_id = int(self.room_name.replace('chat_', ''))
+            chat_room = ChatRoom.objects.get(building_id=building_id)
+            building = chat_room.building
+            
+            # UI badges: treat office-level as manager, internal_manager separately, else resident.
+            if getattr(sender, "is_office_level", False) or sender.is_manager_of(building):
+                return "manager"
+            if hasattr(sender, "is_internal_manager_of") and sender.is_internal_manager_of(building):
+                return "internal_manager"
+            if sender.is_resident_of(building):
+                return "resident"
+            return "other"
 
     @database_sync_to_async
     def mark_message_as_read(self, message_id):
@@ -570,19 +583,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Σήμανση μηνύματος ως διαβασμένο.
         """
         try:
-            building_id = int(self.room_name.replace('chat_', ''))
-            chat_room = ChatRoom.objects.get(building_id=building_id)
-            
-            notification, created = ChatNotification.objects.get_or_create(
-                chat_room=chat_room,
-                user=self.scope["user"],
-                defaults={'unread_count': 0}
-            )
-            
-            if not created and notification.unread_count > 0:
-                notification.unread_count = max(0, notification.unread_count - 1)
-                notification.last_read_at = timezone.now()
-                notification.save()
+            with schema_context(self.tenant_schema):
+                building_id = int(self.room_name.replace('chat_', ''))
+                chat_room = ChatRoom.objects.get(building_id=building_id)
+                
+                notification, created = ChatNotification.objects.get_or_create(
+                    chat_room=chat_room,
+                    user=self.scope["user"],
+                    defaults={'unread_count': 0}
+                )
+                
+                if not created and notification.unread_count > 0:
+                    notification.unread_count = max(0, notification.unread_count - 1)
+                    notification.last_read_at = timezone.now()
+                    notification.save()
         except (ValueError, ChatRoom.DoesNotExist):
             pass
 
@@ -592,33 +606,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Toggle reaction σε μήνυμα.
         """
         try:
-            message = ChatMessage.objects.get(id=message_id)
-            user = self.scope["user"]
-            
-            # Έλεγχος αν το μήνυμα έχει διαγραφεί
-            if message.is_deleted:
-                return None
-            
-            # Toggle - αν υπάρχει αφαίρεσε, αλλιώς πρόσθεσε
-            reaction, created = MessageReaction.objects.get_or_create(
-                message=message,
-                user=user,
-                emoji=emoji
-            )
-            
-            if not created:
-                reaction.delete()
-                action = 'removed'
-            else:
-                action = 'added'
-            
-            # Επιστροφή updated reactions
-            reactions = self._get_reactions_sync(message, user)
-            
-            return {
-                'action': action,
-                'reactions': reactions
-            }
+            with schema_context(self.tenant_schema):
+                message = ChatMessage.objects.get(id=message_id)
+                user = self.scope["user"]
+                
+                # Έλεγχος αν το μήνυμα έχει διαγραφεί
+                if message.is_deleted:
+                    return None
+                
+                # Toggle - αν υπάρχει αφαίρεσε, αλλιώς πρόσθεσε
+                reaction, created = MessageReaction.objects.get_or_create(
+                    message=message,
+                    user=user,
+                    emoji=emoji
+                )
+                
+                if not created:
+                    reaction.delete()
+                    action = 'removed'
+                else:
+                    action = 'added'
+                
+                # Επιστροφή updated reactions
+                reactions = self._get_reactions_sync(message, user)
+                
+                return {
+                    'action': action,
+                    'reactions': reactions
+                }
         except ChatMessage.DoesNotExist:
             return None
 
@@ -652,25 +667,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Επεξεργασία μηνύματος.
         """
         try:
-            message = ChatMessage.objects.get(id=message_id)
-            user = self.scope["user"]
-            
-            # Έλεγχος αν ο χρήστης είναι ο αποστολέας
-            if message.sender != user:
-                return None
-            
-            # Έλεγχος αν το μήνυμα έχει διαγραφεί
-            if message.is_deleted:
-                return None
-            
-            message.content = new_content
-            message.is_edited = True
-            message.edited_at = timezone.now()
-            message.save(update_fields=['content', 'is_edited', 'edited_at'])
-            
-            return {
-                'edited_at': message.edited_at.isoformat()
-            }
+            with schema_context(self.tenant_schema):
+                message = ChatMessage.objects.get(id=message_id)
+                user = self.scope["user"]
+                
+                # Έλεγχος αν ο χρήστης είναι ο αποστολέας
+                if message.sender != user:
+                    return None
+                
+                # Έλεγχος αν το μήνυμα έχει διαγραφεί
+                if message.is_deleted:
+                    return None
+                
+                message.content = new_content
+                message.is_edited = True
+                message.edited_at = timezone.now()
+                message.save(update_fields=['content', 'is_edited', 'edited_at'])
+                
+                return {
+                    'edited_at': message.edited_at.isoformat()
+                }
         except ChatMessage.DoesNotExist:
             return None
 
@@ -680,24 +696,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Soft delete μηνύματος.
         """
         try:
-            message = ChatMessage.objects.get(id=message_id)
-            user = self.scope["user"]
-            
-            # Έλεγχος αν ο χρήστης είναι ο αποστολέας
-            if message.sender != user:
-                return None
-            
-            # Έλεγχος αν το μήνυμα έχει ήδη διαγραφεί
-            if message.is_deleted:
-                return None
-            
-            message.is_deleted = True
-            message.deleted_at = timezone.now()
-            message.save(update_fields=['is_deleted', 'deleted_at'])
-            
-            return {
-                'deleted_at': message.deleted_at.isoformat()
-            }
+            with schema_context(self.tenant_schema):
+                message = ChatMessage.objects.get(id=message_id)
+                user = self.scope["user"]
+                
+                # Έλεγχος αν ο χρήστης είναι ο αποστολέας
+                if message.sender != user:
+                    return None
+                
+                # Έλεγχος αν το μήνυμα έχει ήδη διαγραφεί
+                if message.is_deleted:
+                    return None
+                
+                message.is_deleted = True
+                message.deleted_at = timezone.now()
+                message.save(update_fields=['is_deleted', 'deleted_at'])
+                
+                return {
+                    'deleted_at': message.deleted_at.isoformat()
+                }
         except ChatMessage.DoesNotExist:
             return None
 
@@ -706,20 +723,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         Ενημέρωση online status χρήστη.
         """
-        user = self.scope["user"]
-        
-        defaults = {
-            'is_online': is_online,
-        }
-        if status_message is not None:
-            defaults['status_message'] = status_message
-        
-        online_status, created = OnlineStatus.objects.update_or_create(
-            user=user,
-            defaults=defaults
-        )
-        
-        # Force update last_activity (auto_now won't work with update_or_create)
-        online_status.save(update_fields=['is_online'])
-        
-        return online_status
+        with schema_context(self.tenant_schema):
+            user = self.scope["user"]
+            
+            defaults = {
+                'is_online': is_online,
+            }
+            if status_message is not None:
+                defaults['status_message'] = status_message
+            
+            online_status, created = OnlineStatus.objects.update_or_create(
+                user=user,
+                defaults=defaults
+            )
+            
+            # Force update last_activity (auto_now won't work with update_or_create)
+            online_status.save(update_fields=['is_online'])
+            
+            return online_status
