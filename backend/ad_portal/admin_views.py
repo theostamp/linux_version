@@ -9,6 +9,7 @@ from io import BytesIO
 from urllib.parse import quote
 
 from django.db import connection
+from django.db.models import Count, Max, Q
 from django.http import HttpResponse
 from django.utils import timezone
 from django_tenants.utils import schema_context
@@ -510,5 +511,192 @@ class AdTenantListView(APIView):
                 t.setdefault("is_primary_domain", False)
 
             return Response({"tenants": tenants})
+
+
+class AdGlobalOverviewView(APIView):
+    """
+    Ultra-admin only: global overview across all tenants/buildings.
+    Runs primarily in PUBLIC schema (ad data is stored there) and enriches rows
+    with building details via schema_context(tenant_schema).
+    """
+
+    permission_classes = [IsAuthenticated, IsUltraAdmin]
+
+    def get(self, request):
+        with schema_context("public"):
+            from ad_portal.models import (
+                AdContract,
+                AdContractStatus,
+                AdCreative,
+                AdCreativeStatus,
+                AdLead,
+            )
+            from tenants.models import Client, Domain
+
+            # Tenant -> primary domain mapping
+            tenants = list(Client.objects.exclude(schema_name="public").values("id", "schema_name"))
+            by_id = {t["id"]: t for t in tenants}
+            schema_to_domain: dict[str, str] = {}
+            domains = (
+                Domain.objects.filter(tenant_id__in=by_id.keys())
+                .order_by("tenant_id", "-is_primary", "id")
+                .values("tenant_id", "domain", "is_primary")
+            )
+            for d in domains:
+                t = by_id.get(d["tenant_id"])
+                if not t:
+                    continue
+                schema = t["schema_name"]
+                if schema not in schema_to_domain:
+                    schema_to_domain[schema] = d["domain"]
+            for t in tenants:
+                schema_to_domain.setdefault(t["schema_name"], f'{t["schema_name"]}.newconcierge.app')
+
+            # Contracts grouped by tenant+building
+            contracts_rows = list(
+                AdContract.objects.values("tenant_schema", "building_id").annotate(
+                    contracts_total=Count("id"),
+                    contracts_active_paid=Count("id", filter=Q(status=AdContractStatus.ACTIVE_PAID)),
+                    contracts_trial_active=Count("id", filter=Q(status=AdContractStatus.TRIAL_ACTIVE)),
+                    contracts_paused=Count("id", filter=Q(status=AdContractStatus.PAUSED)),
+                    contracts_cancelled=Count("id", filter=Q(status=AdContractStatus.CANCELLED)),
+                    contracts_trial_expired=Count("id", filter=Q(status=AdContractStatus.TRIAL_EXPIRED)),
+                    last_contract_updated_at=Max("updated_at"),
+                )
+            )
+
+            # Leads grouped
+            leads_rows = list(
+                AdLead.objects.values("tenant_schema", "building_id").annotate(
+                    leads_total=Count("id"),
+                    last_lead_created_at=Max("created_at"),
+                )
+            )
+
+            # Creatives grouped (via contract)
+            creatives_rows = list(
+                AdCreative.objects.values("contract__tenant_schema", "contract__building_id").annotate(
+                    creatives_total=Count("id"),
+                    creatives_live=Count("id", filter=Q(status=AdCreativeStatus.LIVE)),
+                    creatives_approved=Count("id", filter=Q(status=AdCreativeStatus.APPROVED)),
+                    last_creative_updated_at=Max("updated_at"),
+                )
+            )
+
+            # Merge rows
+            merged: dict[tuple[str, int], dict] = {}
+
+            def _k(schema: str, building_id: int) -> tuple[str, int]:
+                return (schema or "", int(building_id))
+
+            for r in contracts_rows:
+                key = _k(r["tenant_schema"], r["building_id"])
+                merged[key] = {
+                    "tenant_schema": r["tenant_schema"],
+                    "tenant_domain": schema_to_domain.get(r["tenant_schema"], f'{r["tenant_schema"]}.newconcierge.app'),
+                    "building_id": r["building_id"],
+                    **{k: r.get(k) for k in r.keys() if k not in ("tenant_schema", "building_id")},
+                }
+
+            for r in leads_rows:
+                key = _k(r["tenant_schema"], r["building_id"])
+                merged.setdefault(
+                    key,
+                    {
+                        "tenant_schema": r["tenant_schema"],
+                        "tenant_domain": schema_to_domain.get(r["tenant_schema"], f'{r["tenant_schema"]}.newconcierge.app'),
+                        "building_id": r["building_id"],
+                    },
+                )
+                merged[key].update({k: r.get(k) for k in r.keys() if k not in ("tenant_schema", "building_id")})
+
+            for r in creatives_rows:
+                schema = r["contract__tenant_schema"]
+                building_id = r["contract__building_id"]
+                key = _k(schema, building_id)
+                merged.setdefault(
+                    key,
+                    {
+                        "tenant_schema": schema,
+                        "tenant_domain": schema_to_domain.get(schema, f"{schema}.newconcierge.app"),
+                        "building_id": building_id,
+                    },
+                )
+                merged[key].update(
+                    {
+                        "creatives_total": r.get("creatives_total"),
+                        "creatives_live": r.get("creatives_live"),
+                        "creatives_approved": r.get("creatives_approved"),
+                        "last_creative_updated_at": r.get("last_creative_updated_at"),
+                    }
+                )
+
+            # Enrich with building info (group per tenant to avoid N+1)
+            tenant_to_ids: dict[str, set[int]] = {}
+            for (schema, bid) in merged.keys():
+                if not schema:
+                    continue
+                tenant_to_ids.setdefault(schema, set()).add(int(bid))
+
+            building_info: dict[tuple[str, int], dict] = {}
+            for schema, ids in tenant_to_ids.items():
+                try:
+                    with schema_context(schema):
+                        from buildings.models import Building
+
+                        rows = list(
+                            Building.objects.filter(id__in=list(ids)).values(
+                                "id", "name", "address", "city", "postal_code", "latitude", "longitude"
+                            )
+                        )
+                        for b in rows:
+                            building_info[(schema, int(b["id"]))] = {
+                                "building_name": b.get("name"),
+                                "building_address": b.get("address"),
+                                "building_city": b.get("city"),
+                                "building_postal_code": b.get("postal_code"),
+                                "building_latitude": b.get("latitude"),
+                                "building_longitude": b.get("longitude"),
+                            }
+                except Exception:
+                    # Skip schema failures; still return core stats.
+                    continue
+
+            out = []
+            for key, row in merged.items():
+                row = dict(row)
+                row.update(building_info.get(key, {}))
+                # Normalize nulls to 0 for counts
+                for c in (
+                    "contracts_total",
+                    "contracts_active_paid",
+                    "contracts_trial_active",
+                    "contracts_paused",
+                    "contracts_cancelled",
+                    "contracts_trial_expired",
+                    "leads_total",
+                    "creatives_total",
+                    "creatives_live",
+                    "creatives_approved",
+                ):
+                    row[c] = int(row.get(c) or 0)
+
+                # last_activity = max(last_contract_updated_at, last_lead_created_at, last_creative_updated_at)
+                last_activity = None
+                for ts_key in ("last_contract_updated_at", "last_lead_created_at", "last_creative_updated_at"):
+                    ts = row.get(ts_key)
+                    if ts and (last_activity is None or ts > last_activity):
+                        last_activity = ts
+                row["last_activity_at"] = last_activity
+                out.append(row)
+
+            out.sort(
+                key=lambda r: (
+                    str(r.get("tenant_schema") or ""),
+                    str(r.get("building_name") or ""),
+                    int(r.get("building_id") or 0),
+                )
+            )
+            return Response({"rows": out})
 
 

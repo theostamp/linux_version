@@ -191,6 +191,56 @@ export default function AdPortalAdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUltraAdmin]);
 
+  // Global overview across all tenants/buildings (Ultra Admin)
+  type GlobalOverviewRow = {
+    tenant_schema: string;
+    tenant_domain: string;
+    building_id: number;
+    building_name?: string;
+    building_address?: string;
+    building_city?: string;
+    building_postal_code?: string;
+    building_latitude?: any;
+    building_longitude?: any;
+
+    contracts_total: number;
+    contracts_active_paid: number;
+    contracts_trial_active: number;
+    contracts_paused: number;
+    contracts_cancelled: number;
+    contracts_trial_expired: number;
+
+    leads_total: number;
+    creatives_total: number;
+    creatives_live: number;
+    creatives_approved: number;
+
+    last_activity_at?: string | null;
+  };
+  const [globalRows, setGlobalRows] = useState<GlobalOverviewRow[]>([]);
+  const [isLoadingGlobal, setIsLoadingGlobal] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [globalSearch, setGlobalSearch] = useState('');
+
+  const fetchGlobalOverview = async () => {
+    if (!isUltraAdmin) return;
+    setIsLoadingGlobal(true);
+    setGlobalError(null);
+    try {
+      const res = await api.get<{ rows: GlobalOverviewRow[] }>(`/ad-portal/admin/global/overview/`);
+      setGlobalRows(Array.isArray(res?.rows) ? res.rows : []);
+    } catch (e) {
+      setGlobalError(e instanceof Error ? e.message : 'Σφάλμα φόρτωσης global overview');
+    } finally {
+      setIsLoadingGlobal(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGlobalOverview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUltraAdmin]);
+
   const applyTenantOverride = (host: string) => {
     const trimmed = (host || '').trim();
     if (typeof window !== 'undefined') {
@@ -200,6 +250,17 @@ export default function AdPortalAdminPage() {
     setTenantHostOverride(trimmed);
     // Hard refresh to ensure all contexts refetch under the new tenant host
     if (typeof window !== 'undefined') window.location.reload();
+  };
+
+  const switchToTenantAndBuilding = (host: string, buildingId: number) => {
+    const trimmed = (host || '').trim();
+    if (typeof window !== 'undefined') {
+      if (trimmed) localStorage.setItem('ultra_admin_tenant_host_override', trimmed);
+      else localStorage.removeItem('ultra_admin_tenant_host_override');
+      localStorage.setItem('selectedBuildingId', String(buildingId));
+      localStorage.setItem('activeBuildingId', String(buildingId));
+      window.location.reload();
+    }
   };
 
   const fetchPlacements = async () => {
@@ -698,6 +759,95 @@ export default function AdPortalAdminPage() {
           <CardTitle>Ad Portal — Ρυθμίσεις (Ultra Admin)</CardTitle>
           <CardDescription>Ρύθμιση πακέτων (ticker/banner/whole page) και δημιουργία QR tokens.</CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Global Overview (All Tenants)</CardTitle>
+          <CardDescription>Συνολική εποπτεία διαφημίσεων ανά tenant + κτίριο (public schema aggregation).</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="text-sm text-muted-foreground">
+              {isLoadingGlobal ? 'Φόρτωση…' : `Γραμμές: ${globalRows.length}`}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                placeholder="Search tenant / building..."
+                className="w-[260px]"
+              />
+              <Button variant="outline" onClick={fetchGlobalOverview} disabled={isLoadingGlobal}>
+                Ανανέωση
+              </Button>
+            </div>
+          </div>
+          {globalError ? <div className="text-sm text-red-600 break-all">{globalError}</div> : null}
+
+          {globalRows.length > 0 ? (
+            <div className="rounded-md border overflow-hidden">
+              <div className="max-h-[420px] overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background border-b">
+                    <tr>
+                      <th className="p-2 text-left">Tenant</th>
+                      <th className="p-2 text-left">Κτίριο</th>
+                      <th className="p-2 text-right">Paid</th>
+                      <th className="p-2 text-right">Trial</th>
+                      <th className="p-2 text-right">Paused</th>
+                      <th className="p-2 text-right">Leads</th>
+                      <th className="p-2 text-right">Live creatives</th>
+                      <th className="p-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {globalRows
+                      .filter((r) => {
+                        const q = globalSearch.trim().toLowerCase();
+                        if (!q) return true;
+                        const hay = `${r.tenant_schema} ${r.tenant_domain} ${r.building_id} ${r.building_name || ''} ${
+                          r.building_address || ''
+                        }`
+                          .toLowerCase()
+                          .trim();
+                        return hay.includes(q);
+                      })
+                      .map((r) => (
+                        <tr key={`${r.tenant_schema}:${r.building_id}`} className="border-b last:border-b-0">
+                          <td className="p-2 align-top">
+                            <div className="font-medium">{r.tenant_schema}</div>
+                            <div className="text-xs text-muted-foreground font-mono">{r.tenant_domain}</div>
+                          </td>
+                          <td className="p-2 align-top">
+                            <div className="font-medium">{r.building_name || `Building #${r.building_id}`}</div>
+                            <div className="text-xs text-muted-foreground">
+                              #{r.building_id}
+                              {r.building_address ? ` • ${r.building_address}` : ''}
+                            </div>
+                          </td>
+                          <td className="p-2 align-top text-right tabular-nums">{r.contracts_active_paid}</td>
+                          <td className="p-2 align-top text-right tabular-nums">{r.contracts_trial_active}</td>
+                          <td className="p-2 align-top text-right tabular-nums">{r.contracts_paused}</td>
+                          <td className="p-2 align-top text-right tabular-nums">{r.leads_total}</td>
+                          <td className="p-2 align-top text-right tabular-nums">{r.creatives_live}</td>
+                          <td className="p-2 align-top">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => switchToTenantAndBuilding(r.tenant_domain, r.building_id)}
+                            >
+                              Open context
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
       </Card>
 
       <Card>

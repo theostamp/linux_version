@@ -8,6 +8,7 @@ from .admin_views import (
     AdTokenCreateView,
     AdOutreachBulkGenerateView,
     AdTenantListView,
+    AdGlobalOverviewView,
 )
 
 
@@ -26,6 +27,7 @@ urlpatterns = [
     path("admin/tokens/", AdTokenCreateView.as_view(), name="ad-portal-admin-tokens-create"),
     path("admin/outreach/bulk/", AdOutreachBulkGenerateView.as_view(), name="ad-portal-admin-outreach-bulk"),
     path("admin/tenants/", AdTenantListView.as_view(), name="ad-portal-admin-tenants"),
+    path("admin/global/overview/", AdGlobalOverviewView.as_view(), name="ad-portal-admin-global-overview"),
 ]
 
 
