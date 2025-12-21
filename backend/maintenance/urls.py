@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ContractorViewSet, ServiceReceiptViewSet, ScheduledMaintenanceViewSet,
     MaintenanceTicketViewSet, WorkOrderViewSet, PublicScheduledMaintenanceListView,
-    PublicMaintenanceCountersView, PaymentScheduleViewSet, PaymentInstallmentViewSet, PaymentReceiptViewSet
+    PublicMaintenanceCountersView, PaymentScheduleViewSet, PaymentInstallmentViewSet, PaymentReceiptViewSet,
+    MarketplacePartnerViewSet
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ router.register(r'work-orders', WorkOrderViewSet)
 router.register(r'payment-schedules', PaymentScheduleViewSet)
 router.register(r'payment-installments', PaymentInstallmentViewSet)
 router.register(r'payment-receipts', PaymentReceiptViewSet)
+router.register(r'marketplace-partners', MarketplacePartnerViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

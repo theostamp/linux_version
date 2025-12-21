@@ -1,6 +1,22 @@
 from rest_framework import serializers
-from .models import Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, WorkOrder, PaymentSchedule, PaymentInstallment, PaymentReceipt
+from .models import (
+    Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, 
+    WorkOrder, PaymentSchedule, PaymentInstallment, PaymentReceipt,
+    MarketplacePartner
+)
 from financial.models import Expense
+
+
+class MarketplacePartnerSerializer(serializers.ModelSerializer):
+    contractor_name = serializers.CharField(source='contractor.name', read_only=True)
+    service_type = serializers.CharField(source='contractor.get_service_type_display', read_only=True)
+    rating = serializers.DecimalField(source='contractor.rating', max_digits=3, decimal_places=2, read_only=True)
+    phone = serializers.CharField(source='contractor.phone', read_only=True)
+    email = serializers.CharField(source='contractor.email', read_only=True)
+    
+    class Meta:
+        model = MarketplacePartner
+        fields = '__all__'
 
 
 class ContractorSerializer(serializers.ModelSerializer):

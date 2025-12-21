@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from django.core.validators import MinValueValidator, MaxValueValidator
 from buildings.models import Building
 from django.contrib.auth import get_user_model
@@ -743,6 +744,44 @@ class MaintenanceTicket(models.Model):
         if not self.sla_due_at:
             return False
         return self.status not in ['completed', 'closed', 'cancelled'] and self.sla_due_at < timezone.now()
+
+
+class MarketplacePartner(models.Model):
+    """
+    Marketplace Συνεργατών
+    Προβολή αξιολογημένων τεχνικών από το Γραφείο Διαχείρισης προς τους ενοίκους.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    contractor = models.OneToOneField(
+        Contractor, 
+        on_delete=models.CASCADE, 
+        related_name='marketplace_profile',
+        verbose_name="Συνεργείο"
+    )
+    is_verified = models.BooleanField(default=True, verbose_name="Επαληθευμένος")
+    is_featured = models.BooleanField(default=False, verbose_name="Προβεβλημένος")
+    
+    # Πληροφορίες για το Marketplace
+    short_description = models.CharField(max_length=255, blank=True, verbose_name="Σύντομη Περιγραφή")
+    detailed_description = models.TextField(blank=True, verbose_name="Αναλυτική Περιγραφή")
+    special_offers = models.TextField(blank=True, verbose_name="Ειδικές Προσφορές για Ενοίκους")
+    
+    # Portfolio / Images (θα μπορούσαν να είναι ξεχωριστό model, προς το παρόν JSON)
+    portfolio_links = models.JSONField(default=list, blank=True, verbose_name="Links Έργων")
+    
+    # Visibility
+    show_in_marketplace = models.BooleanField(default=True, verbose_name="Εμφάνιση στο Marketplace")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Συνεργάτης Marketplace"
+        verbose_name_plural = "Συνεργάτες Marketplace"
+        ordering = ['-is_featured', 'contractor__name']
+
+    def __str__(self):
+        return f"Marketplace: {self.contractor.name}"
 
 
 class WorkOrder(models.Model):

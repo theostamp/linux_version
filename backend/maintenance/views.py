@@ -1,13 +1,17 @@
 from rest_framework import viewsets, generics, status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.utils import timezone
 from django.db import models
-from .models import Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, WorkOrder, PaymentSchedule, PaymentInstallment, PaymentReceipt
+from .models import (
+    Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, 
+    WorkOrder, PaymentSchedule, PaymentInstallment, PaymentReceipt,
+    MarketplacePartner
+)
 from financial.models import Expense
 from .permissions import MaintenancePermission
 from core.permissions import IsManager, IsResident, IsRelatedToBuilding
@@ -15,7 +19,8 @@ from .serializers import (
     ContractorSerializer, ServiceReceiptSerializer, ScheduledMaintenanceSerializer,
     MaintenanceTicketSerializer, WorkOrderSerializer, PublicScheduledMaintenanceSerializer,
     PaymentScheduleSerializer, PaymentInstallmentSerializer, PaymentReceiptSerializer,
-    PaymentReceiptCreateSerializer, PaymentReceiptDetailSerializer, ScheduledMaintenanceWithPaymentsSerializer
+    PaymentReceiptCreateSerializer, PaymentReceiptDetailSerializer, ScheduledMaintenanceWithPaymentsSerializer,
+    MarketplacePartnerSerializer
 )
 from io import BytesIO
 from django.http import HttpResponse
@@ -1083,3 +1088,25 @@ class PaymentReceiptViewSet(viewsets.ModelViewSet):
         """Συντόμευση στο sign_receipt για συμβατότητα με TODO."""
         request._full_data = {**getattr(request, 'data', {}), 'signature': request.data.get('signature')}
         return self.sign_receipt(request, pk)
+
+
+class MarketplacePartnerViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet για διαχείριση συνεργατών Marketplace.
+    """
+    queryset = MarketplacePartner.objects.filter(show_in_marketplace=True).select_related('contractor')
+    serializer_class = MarketplacePartnerSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['is_verified', 'is_featured', 'contractor__service_type']
+    search_fields = ['contractor__name', 'short_description', 'detailed_description']
+    ordering_fields = ['is_featured', 'created_at']
+    ordering = ['-is_featured', 'contractor__name']
+
+    def get_permissions(self):
+        # Marketplace εμφανίζεται στο dashboard (authenticated users). Αποφεύγουμε δημόσια έκθεση
+        # τηλεφώνων/email συνεργατών από tenant domains.
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsManager()]
