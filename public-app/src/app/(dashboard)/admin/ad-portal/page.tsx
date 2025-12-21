@@ -63,6 +63,7 @@ export default function AdPortalAdminPage() {
     types?: string[];
     lat?: number;
     lng?: number;
+    distance_m?: number;
   };
   const DISCOVERY_KEYWORD_SUGGESTIONS: Array<{ value: string; label: string }> = [
     { value: 'καφέ', label: 'Καφέ' },
@@ -101,15 +102,16 @@ export default function AdPortalAdminPage() {
   const [discovered, setDiscovered] = useState<DiscoveredPlace[]>([]);
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<Record<string, boolean>>({});
   const placesMapDivRef = useRef<HTMLDivElement | null>(null);
-  const placesMapRef = useRef<google.maps.Map | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  // NOTE: Google Maps typings in this repo are partial; keep these runtime-only to avoid TS conflicts.
+  const placesMapRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [mapModalError, setMapModalError] = useState<string | null>(null);
   const modalMapDivRef = useRef<HTMLDivElement | null>(null);
-  const modalMapRef = useRef<google.maps.Map | null>(null);
-  const modalMarkersRef = useRef<Array<google.maps.Marker>>([]);
-  const modalCircleRef = useRef<google.maps.Circle | null>(null);
-  const modalInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const modalMapRef = useRef<any>(null);
+  const modalMarkersRef = useRef<any[]>([]);
+  const modalCircleRef = useRef<any>(null);
+  const modalInfoWindowRef = useRef<any>(null);
   const modalHasFitBoundsRef = useRef<boolean>(false);
   const [recentKeywords, setRecentKeywords] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -131,6 +133,19 @@ export default function AdPortalAdminPage() {
       if (Number.isFinite(n)) return n;
     }
     return null;
+  };
+
+  const haversineMeters = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    // https://en.wikipedia.org/wiki/Haversine_formula
+    const R = 6371000; // meters
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
   };
 
   // Tenant context switching (Ultra Admin platform tool)
@@ -338,12 +353,13 @@ export default function AdPortalAdminPage() {
       setDiscoverError('Το κτίριο δεν έχει latitude/longitude. Βάλε συντεταγμένες στο κτίριο για να δουλέψει το discovery.');
       return;
     }
-    if (typeof window === 'undefined' || !window.google?.maps?.places) {
+    if (typeof window === 'undefined' || !(window as any).google?.maps?.places) {
       setDiscoverError('Google Maps/Places δεν είναι διαθέσιμο (λείπει NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ή δεν φόρτωσε το script).');
       return;
     }
     const r = Number(discoverRadiusM) || 300;
-    const radius = Math.max(100, Math.min(2000, Math.round(r)));
+    // nearbySearch supports larger radii, but keep it sane for UI
+    const radius = Math.max(50, Math.min(10000, Math.round(r)));
     const keyword = discoverKeyword.trim();
     if (!keyword) {
       setDiscoverError('Βάλε keyword/κατηγορία (π.χ. cafe, bakery, pharmacy).');
@@ -369,16 +385,23 @@ export default function AdPortalAdminPage() {
     setIsDiscovering(true);
     setDiscoverError(null);
     try {
-      const center = new window.google.maps.LatLng(lat, lng);
+      // IMPORTANT: start fresh on each search, otherwise old results from a bigger radius remain visible.
+      setDiscovered([]);
+      setSelectedPlaceIds({});
+
+      const gmaps: any = (window as any).google?.maps;
+      const center = new gmaps.LatLng(lat, lng);
       if (!placesMapRef.current) {
-        placesMapRef.current = new window.google.maps.Map(placesMapDivRef.current, {
+        placesMapRef.current = new gmaps.Map(placesMapDivRef.current, {
           center,
           zoom: 16,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
         });
-        placesServiceRef.current = new window.google.maps.places.PlacesService(placesMapRef.current);
+        const placesLib: any = gmaps?.places;
+        const PlacesService = placesLib?.PlacesService;
+        placesServiceRef.current = PlacesService ? new PlacesService(placesMapRef.current) : null;
       } else {
         placesMapRef.current.setCenter(center);
       }
@@ -387,44 +410,72 @@ export default function AdPortalAdminPage() {
         return;
       }
 
-      const results = await new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
+      // nearbySearch returns up to ~20 results per page. Use pagination to fetch more (up to ~60 total).
+      const results = await new Promise<any[]>((resolve, reject) => {
+        const collected: any[] = [];
+        let pageCount = 0;
+
+        const callback = (res: any[] | null, status: any, pagination?: any) => {
+          const placesLib: any = (gmaps as any)?.places;
+          const OK = placesLib?.PlacesServiceStatus?.OK;
+          if (status !== OK || !res) {
+            reject(new Error(`Places error: ${status}`));
+            return;
+          }
+          collected.push(...res);
+          pageCount += 1;
+
+          // Fetch next page if available (Google may require a short delay)
+          if (pagination?.hasNextPage && pageCount < 3) {
+            setTimeout(() => pagination.nextPage(), 1200);
+            return;
+          }
+          resolve(collected);
+        };
+
         placesServiceRef.current!.nearbySearch(
           {
             location: center,
             radius,
             keyword,
           },
-          (res, status) => {
-            if (status !== window.google.maps.places.PlacesServiceStatus.OK || !res) {
-              reject(new Error(`Places error: ${status}`));
-              return;
-            }
-            resolve(res);
-          }
+          callback
         );
       });
 
       const mapped: DiscoveredPlace[] = (results || [])
         .filter((p) => p.place_id && p.name)
-        .map((p) => ({
-          place_id: String(p.place_id),
-          name: String(p.name),
-          vicinity: (p.vicinity as string | undefined) || undefined,
-          types: Array.isArray(p.types) ? (p.types as string[]) : undefined,
-          lat: typeof p.geometry?.location?.lat === 'function' ? p.geometry.location.lat() : undefined,
-          lng: typeof p.geometry?.location?.lng === 'function' ? p.geometry.location.lng() : undefined,
-        }));
+        .map((p) => {
+          const plat = typeof p.geometry?.location?.lat === 'function' ? p.geometry.location.lat() : undefined;
+          const plng = typeof p.geometry?.location?.lng === 'function' ? p.geometry.location.lng() : undefined;
+          const distance_m =
+            typeof plat === 'number' && typeof plng === 'number' ? haversineMeters(lat, lng, plat, plng) : undefined;
+          return {
+            place_id: String(p.place_id),
+            name: String(p.name),
+            vicinity: (p.vicinity as string | undefined) || undefined,
+            types: Array.isArray(p.types) ? (p.types as string[]) : undefined,
+            lat: plat,
+            lng: plng,
+            distance_m,
+          };
+        })
+        // Extra safety: keep only within radius (Google can return borderline out-of-radius)
+        .filter((p) => typeof p.distance_m !== 'number' || p.distance_m <= radius);
 
-      // Merge unique by place_id
+      // Deduplicate within this run
       const byId = new Map<string, DiscoveredPlace>();
-      [...discovered, ...mapped].forEach((p) => byId.set(p.place_id, p));
-      const merged = Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name, 'el'));
-      setDiscovered(merged);
-      setSelectedPlaceIds((prev) => {
-        const next = { ...prev };
-        merged.forEach((p) => {
-          if (next[p.place_id] === undefined) next[p.place_id] = false;
-        });
+      mapped.forEach((p) => byId.set(p.place_id, p));
+      const finalList = Array.from(byId.values()).sort((a, b) => {
+        const da = typeof a.distance_m === 'number' ? a.distance_m : Number.POSITIVE_INFINITY;
+        const db = typeof b.distance_m === 'number' ? b.distance_m : Number.POSITIVE_INFINITY;
+        if (da !== db) return da - db;
+        return a.name.localeCompare(b.name, 'el');
+      });
+      setDiscovered(finalList);
+      setSelectedPlaceIds(() => {
+        const next: Record<string, boolean> = {};
+        finalList.forEach((p) => (next[p.place_id] = false));
         return next;
       });
     } catch (e) {
@@ -488,7 +539,7 @@ export default function AdPortalAdminPage() {
         setMapModalError('Λείπουν συντεταγμένες (latitude/longitude) για το κτίριο.');
         return;
       }
-      if (typeof window === 'undefined' || !window.google?.maps) {
+      if (typeof window === 'undefined' || !(window as any).google?.maps) {
         setMapModalError('Google Maps δεν είναι διαθέσιμο (δεν φόρτωσε το script / API key).');
         return;
       }
@@ -505,9 +556,10 @@ export default function AdPortalAdminPage() {
       }
 
       try {
-        const center = new window.google.maps.LatLng(lat, lng);
+        const gmaps: any = (window as any).google.maps;
+        const center = new gmaps.LatLng(lat, lng);
         if (!modalMapRef.current) {
-          modalMapRef.current = new window.google.maps.Map(el, {
+          modalMapRef.current = new gmaps.Map(el, {
             center,
             zoom: 15,
             mapTypeControl: true,
@@ -518,12 +570,13 @@ export default function AdPortalAdminPage() {
           modalMapRef.current.setCenter(center);
         }
         if (!modalInfoWindowRef.current) {
-          modalInfoWindowRef.current = new window.google.maps.InfoWindow();
+          modalInfoWindowRef.current = new gmaps.InfoWindow();
         }
 
         // Resize event (safe even if not needed)
         try {
-          window.google.maps.event.trigger(modalMapRef.current, 'resize');
+          const evt: any = (gmaps as any)?.event;
+          if (evt?.trigger) evt.trigger(modalMapRef.current, 'resize');
         } catch {
           // ignore
         }
@@ -534,16 +587,20 @@ export default function AdPortalAdminPage() {
         const radius = Math.max(100, Math.min(2000, Math.round(r)));
 
         // Building marker
-        const buildingMarker = new window.google.maps.Marker({
+        const buildingMarker = new (gmaps as any).Marker(
+          ({
           position: center,
           map: modalMapRef.current,
           title: selectedBuilding?.name ? `Κτίριο: ${selectedBuilding.name}` : 'Κτίριο',
           label: { text: 'Κ', color: '#ffffff', fontWeight: '700' },
-        });
+          } as any)
+        );
         modalMarkersRef.current.push(buildingMarker);
 
         // Radius circle
-        modalCircleRef.current = new window.google.maps.Circle({
+        const CircleCtor: any = (gmaps as any).Circle;
+        modalCircleRef.current = CircleCtor
+          ? new CircleCtor({
           map: modalMapRef.current,
           center,
           radius,
@@ -553,31 +610,33 @@ export default function AdPortalAdminPage() {
           fillColor: '#2563eb',
           fillOpacity: 0.08,
           clickable: false,
-        });
+            })
+          : null;
 
-        const bounds = new window.google.maps.LatLngBounds();
+        const bounds = new (gmaps as any).LatLngBounds();
         bounds.extend(center);
 
         // Place markers
         discovered.forEach((p) => {
           if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
-          const pos = new window.google.maps.LatLng(p.lat, p.lng);
+          const pos = new gmaps.LatLng(p.lat, p.lng);
           bounds.extend(pos);
           const isSelected = Boolean(selectedPlaceIds[p.place_id]);
-          const marker = new window.google.maps.Marker({
+          const SymbolPath: any = (gmaps as any).SymbolPath;
+          const marker = new (gmaps as any).Marker({
             position: pos,
             map: modalMapRef.current!,
             title: p.name,
             icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
+              path: SymbolPath?.CIRCLE,
               scale: 7,
               fillColor: isSelected ? '#16a34a' : '#dc2626',
               fillOpacity: 0.95,
               strokeColor: '#ffffff',
               strokeOpacity: 1,
               strokeWeight: 2,
-            },
-          });
+            } as any,
+          } as any);
           marker.addListener('click', () => {
             const html = `
               <div style="font-size:13px;line-height:1.35">
@@ -587,7 +646,12 @@ export default function AdPortalAdminPage() {
               </div>
             `;
             modalInfoWindowRef.current!.setContent(html);
-            modalInfoWindowRef.current!.open({ map: modalMapRef.current!, anchor: marker });
+            // Typings differ across Google Maps versions; use the classic signature
+            try {
+              (modalInfoWindowRef.current as any).open(modalMapRef.current!, marker);
+            } catch {
+              (modalInfoWindowRef.current as any).open();
+            }
           });
           modalMarkersRef.current.push(marker);
         });
@@ -596,7 +660,7 @@ export default function AdPortalAdminPage() {
         if (!modalHasFitBoundsRef.current) {
           modalHasFitBoundsRef.current = true;
           try {
-            modalMapRef.current!.fitBounds(bounds, 60);
+            modalMapRef.current!.fitBounds(bounds);
           } catch {
             // ignore
           }
