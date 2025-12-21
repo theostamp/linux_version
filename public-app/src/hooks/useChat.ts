@@ -166,9 +166,45 @@ export function useChat(buildingId: number | null): UseChatReturn {
         wsUrl = `ws://localhost:18000/ws/chat/${buildingId}/`;
       }
       
-      console.log('[useChat] Σύνδεση στο WebSocket:', wsUrl);
+      const token = localStorage.getItem('access_token') || localStorage.getItem('access');
+      if (!token) {
+        console.log('[useChat] No JWT token found, falling back to REST API polling.');
+        setIsConnecting(false);
+        setIsConnected(true);
+        isPollingMode.current = true;
+        loadMessages();
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = setInterval(() => loadMessages(), 5000);
+        if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = setInterval(async () => {
+          try {
+            await apiPost('/chat/online/heartbeat/', {});
+          } catch (err) {
+            console.log('[useChat] Heartbeat failed:', err);
+          }
+        }, 20000);
+        apiPost('/chat/online/heartbeat/', {}).catch(() => {});
+        return;
+      }
+
+      // Optional tenant hints (helps when infra doesn't preserve Host for websockets)
+      let schemaHint = '';
+      try {
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          const parsed = JSON.parse(cached) as { tenant?: { schema_name?: string } | null };
+          schemaHint = parsed?.tenant?.schema_name || '';
+        }
+      } catch {}
+
+      const params = new URLSearchParams();
+      params.set('token', token);
+      if (schemaHint) params.set('schema', schemaHint);
+      const wsUrlWithAuth = `${wsUrl}?${params.toString()}`;
+
+      console.log('[useChat] Σύνδεση στο WebSocket:', wsUrlWithAuth);
       
-      const ws = new WebSocket(wsUrl);
+      const ws = new WebSocket(wsUrlWithAuth);
       wsRef.current = ws;
       
       ws.onopen = () => {

@@ -16,14 +16,17 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { 
   useAssembly, useAssemblyAttendees, useAgendaItems, 
   useStartAgendaItem, useEndAgendaItem, useAttendeeCheckIn,
-  useEndAssembly
+  useEndAssembly, useAgendaItemVoteResults
 } from '@/hooks/useAssemblies';
+import { useAssemblyWebSocket } from '@/hooks/useAssemblyWebSocket';
 
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hasInternalManagerAccess } from '@/lib/roleUtils';
+import LiveVotingPanel from '@/components/assemblies/LiveVotingPanel';
+import LiveResultsDisplay from '@/components/assemblies/LiveResultsDisplay';
 
 function LiveTimer({ startTime }: { startTime: string | null }) {
   const [elapsed, setElapsed] = useState(0);
@@ -211,6 +214,10 @@ function LiveAssemblyContent() {
 
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
   const { data: attendees = [] } = useAssemblyAttendees(assemblyId);
+
+  // Real-time updates via WebSocket
+  useAssemblyWebSocket(assemblyId);
+
   const { data: agendaItems = [] } = useAgendaItems(assemblyId);
   
   const startAgendaItem = useStartAgendaItem();
@@ -218,6 +225,11 @@ function LiveAssemblyContent() {
   const endAssembly = useEndAssembly();
 
   const canManage = hasInternalManagerAccess(user);
+  
+  const currentItem = agendaItems.find(item => item.status === 'in_progress');
+  const { data: voteResults } = useAgendaItemVoteResults(currentItem?.id);
+  const currentAttendee = attendees.find(a => a.user === user?.id);
+  const isVotingItem = currentItem?.item_type === 'voting';
 
   if (isLoading || buildingLoading) {
     return (
@@ -254,7 +266,6 @@ function LiveAssemblyContent() {
   }
 
   const isLive = assembly.status === 'in_progress';
-  const currentItem = agendaItems.find(item => item.started_at && !item.completed_at);
   const completedCount = agendaItems.filter(item => item.completed_at).length;
   const presentCount = attendees.filter(a => a.is_present).length;
 
@@ -367,22 +378,64 @@ function LiveAssemblyContent() {
         </div>
       </div>
 
-      {/* Current Item Highlight */}
+      {/* Current Item Highlight & Voting */}
       {currentItem && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white"
-        >
-          <div className="flex items-center gap-2 text-emerald-100 mb-2">
-            <Play className="w-4 h-4" />
-            <span className="text-sm font-medium">Τρέχον Θέμα</span>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={cn(
+              "lg:col-span-2 rounded-2xl p-8 text-white shadow-lg",
+              isVotingItem 
+                ? "bg-gradient-to-br from-indigo-600 to-purple-700" 
+                : "bg-gradient-to-br from-emerald-500 to-teal-600"
+            )}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-widest">
+                {isVotingItem ? 'Θέμα Ψηφοφορίας' : 'Τρέχον Θέμα'}
+              </div>
+              <div className="text-white/60 text-sm font-medium">
+                {currentItem.order} από {agendaItems.length}
+              </div>
+            </div>
+            
+            <h2 className="text-3xl font-black mb-4">{currentItem.title}</h2>
+            
+            {currentItem.description && (
+              <p className="text-lg text-white/80 leading-relaxed mb-6">
+                {currentItem.description}
+              </p>
+            )}
+
+            {isVotingItem && voteResults && (
+              <div className="mt-8 pt-8 border-t border-white/10">
+                <LiveResultsDisplay 
+                  results={voteResults.summary} 
+                  votingTypeDisplay={currentItem.voting_type_display}
+                />
+              </div>
+            )}
+          </motion.div>
+
+          <div className="space-y-6">
+            {isVotingItem && (
+              <LiveVotingPanel
+                item={currentItem}
+                attendee={currentAttendee || null}
+                hasVoted={voteResults?.votes?.some((v: any) => v.attendee === currentAttendee?.id) || false}
+              />
+            )}
+            
+            {!isVotingItem && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center h-full flex flex-col items-center justify-center">
+                <MessageSquare className="w-12 h-12 text-gray-200 mb-4" />
+                <h3 className="text-gray-900 font-bold">Σε εξέλιξη συζήτησης</h3>
+                <p className="text-gray-500 text-sm mt-2">Δεν απαιτείται ψηφοφορία για αυτό το θέμα.</p>
+              </div>
+            )}
           </div>
-          <h2 className="text-2xl font-bold">{currentItem.order}. {currentItem.title}</h2>
-          {currentItem.description && (
-            <p className="mt-2 text-emerald-100">{currentItem.description}</p>
-          )}
-        </motion.div>
+        </div>
       )}
 
       {/* Agenda Items */}

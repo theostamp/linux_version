@@ -17,7 +17,8 @@ import {
   useAssembly, 
   useSendAssemblyInvitation,
   useStartAssembly,
-  useDeleteAssembly 
+  useDeleteAssembly,
+  useDownloadAssemblyMinutes 
 } from '@/hooks/useAssemblies';
 import type { Assembly, AssemblyStatus } from '@/lib/api';
 
@@ -252,6 +253,7 @@ function AssemblyDetailContent() {
   const sendInvitation = useSendAssemblyInvitation();
   const startAssembly = useStartAssembly();
   const deleteAssembly = useDeleteAssembly();
+  const downloadMinutes = useDownloadAssemblyMinutes();
 
   const canManage = hasInternalManagerAccess(user);
 
@@ -528,6 +530,21 @@ function AssemblyDetailContent() {
       {/* Admin actions at bottom */}
       {canManage && (
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+          {(assembly.status === 'completed') && (
+            <Button 
+              variant="outline" 
+              onClick={() => downloadMinutes.mutate(assembly.id)}
+              disabled={downloadMinutes.isPending}
+              className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+            >
+              {downloadMinutes.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Λήψη Πρακτικών (PDF)
+            </Button>
+          )}
           {(assembly.status === 'draft' || assembly.status === 'scheduled' || assembly.status === 'convened') && (
             <Button variant="outline" asChild>
               <Link href={`/assemblies/${assembly.id}/edit`}>

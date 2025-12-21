@@ -2640,6 +2640,19 @@ export async function approveAssemblyMinutes(assemblyId: string): Promise<{ mess
   return await apiPost(`/assemblies/${assemblyId}/approve_minutes/`, {});
 }
 
+export async function downloadAssemblyMinutes(assemblyId: string): Promise<Blob> {
+  const response = await fetch(getApiUrl(`/assemblies/${assemblyId}/download_pdf/`), {
+    method: "GET",
+    headers: getHeaders("GET"),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to download PDF');
+  }
+  
+  return await response.blob();
+}
+
 export async function getAssemblyLiveStatus(assemblyId: string): Promise<{
   status: AssemblyStatus;
   quorum_achieved: boolean;

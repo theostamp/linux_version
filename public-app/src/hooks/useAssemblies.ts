@@ -16,6 +16,7 @@ import {
   getAssemblyQuorum,
   generateAssemblyMinutes,
   approveAssemblyMinutes,
+  downloadAssemblyMinutes,
   getAssemblyLiveStatus,
   fetchAgendaItems,
   createAgendaItem,
@@ -252,6 +253,26 @@ export function useApproveMinutes() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Σφάλμα κατά την έγκριση πρακτικών');
+    },
+  });
+}
+
+export function useDownloadAssemblyMinutes() {
+  return useMutation({
+    mutationFn: (assemblyId: string) => downloadAssemblyMinutes(assemblyId),
+    onSuccess: (blob, assemblyId) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `praktika_${assemblyId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Το PDF λήφθηκε επιτυχώς');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Σφάλμα κατά τη λήψη του PDF');
     },
   });
 }
