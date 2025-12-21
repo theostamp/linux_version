@@ -72,7 +72,9 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         ) : (
           <span className="text-white font-medium text-lg opacity-90">{item.text}</span>
         )}
-        <span className="mx-8 text-white/20 font-light text-xl">|</span>
+        <span className="mx-12 flex items-center justify-center">
+          <span className="w-2 h-2 rounded-full bg-indigo-500/40 shadow-[0_0_8px_rgba(99,102,241,0.4)]" />
+        </span>
       </span>
     ));
   }, [news, adTickerItems]);
@@ -134,7 +136,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         }
         
         .animate-ticker {
-          animation: ticker 80s linear infinite;
+          animation: ticker 160s linear infinite;
         }
         
         .animate-ticker:hover {
