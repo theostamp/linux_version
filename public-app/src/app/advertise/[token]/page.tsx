@@ -42,8 +42,8 @@ type LandingResponse = {
     address: string;
     city: string;
     postal_code: string;
-    latitude?: number | null;
-    longitude?: number | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
   };
   packages: LandingPackage[];
 };
@@ -73,6 +73,15 @@ function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng:
   const x = sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2;
   const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
   return Math.round(R * c);
+}
+
+function parseCoord(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string') {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
 }
 
 export default function AdvertiseLandingPage() {
@@ -190,9 +199,9 @@ export default function AdvertiseLandingPage() {
     if (!mapDivRef.current) return;
     if (typeof window === 'undefined' || !window.google?.maps) return;
 
-    const lat = landing.building.latitude ?? null;
-    const lng = landing.building.longitude ?? null;
-    const hasCoords = typeof lat === 'number' && typeof lng === 'number';
+    const lat = parseCoord(landing.building.latitude);
+    const lng = parseCoord(landing.building.longitude);
+    const hasCoords = lat !== null && lng !== null;
     const center = hasCoords ? { lat, lng } : { lat: 37.9838, lng: 23.7275 };
 
     if (!mapRef.current) {
@@ -211,7 +220,7 @@ export default function AdvertiseLandingPage() {
 
     // Building marker + radius circle
     if (hasCoords && mapRef.current) {
-      const pos = new window.google.maps.LatLng(lat, lng);
+      const pos = new window.google.maps.LatLng(lat!, lng!);
       if (!buildingMarkerRef.current) {
         buildingMarkerRef.current = new window.google.maps.Marker({
           map: mapRef.current,
@@ -286,9 +295,9 @@ export default function AdvertiseLandingPage() {
 
       // Find competitors around the building within radiusM (simple heuristic)
       try {
-        const bLat = landing.building.latitude ?? null;
-        const bLng = landing.building.longitude ?? null;
-        if (typeof bLat !== 'number' || typeof bLng !== 'number') return;
+        const bLat = parseCoord(landing.building.latitude);
+        const bLng = parseCoord(landing.building.longitude);
+        if (bLat === null || bLng === null) return;
         if (!placesServiceRef.current) return;
 
         competitorMarkersRef.current.forEach((m) => m.setMap(null));

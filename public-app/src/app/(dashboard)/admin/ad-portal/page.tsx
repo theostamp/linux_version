@@ -73,6 +73,15 @@ export default function AdPortalAdminPage() {
 
   const buildingOptions = useMemo(() => (Array.isArray(buildings) ? buildings : []), [buildings]);
 
+  const parseCoord = (v: unknown): number | null => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+    return null;
+  };
+
   // Tenant context switching (Ultra Admin platform tool)
   type TenantRow = {
     id: number;
@@ -272,9 +281,9 @@ export default function AdPortalAdminPage() {
       setDiscoverError('Επιλέξτε κτίριο.');
       return;
     }
-    const lat = selectedBuilding?.latitude ?? null;
-    const lng = selectedBuilding?.longitude ?? null;
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
+    const lat = parseCoord((selectedBuilding as any)?.latitude);
+    const lng = parseCoord((selectedBuilding as any)?.longitude);
+    if (lat === null || lng === null) {
       setDiscoverError('Το κτίριο δεν έχει latitude/longitude. Βάλε συντεταγμένες στο κτίριο για να δουλέψει το discovery.');
       return;
     }
@@ -645,7 +654,7 @@ export default function AdPortalAdminPage() {
         <CardContent className="space-y-4">
           <div className="text-sm text-muted-foreground">
             Επιλεγμένο κτίριο: <span className="font-medium">{selectedBuilding?.name ?? '—'}</span>
-            {typeof selectedBuilding?.latitude === 'number' && typeof selectedBuilding?.longitude === 'number' ? (
+            {parseCoord((selectedBuilding as any)?.latitude) !== null && parseCoord((selectedBuilding as any)?.longitude) !== null ? (
               <span className="text-muted-foreground"> • coords OK</span>
             ) : (
               <span className="text-red-600"> • λείπουν coords</span>
