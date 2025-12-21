@@ -431,3 +431,43 @@ body { font-family: Arial, sans-serif; color: #0f172a; }
         return resp
 
 
+class AdTenantListView(APIView):
+    """
+    Ultra-admin only: list tenants/domains for platform operations.
+    Runs in PUBLIC schema.
+    """
+
+    permission_classes = [IsAuthenticated, IsUltraAdmin]
+
+    def get(self, request):
+        with schema_context("public"):
+            from tenants.models import Client, Domain
+
+            tenants = list(
+                Client.objects.exclude(schema_name="public")
+                .order_by("schema_name")
+                .values("id", "schema_name", "name")
+            )
+
+            by_id = {t["id"]: t for t in tenants}
+            domains = (
+                Domain.objects.filter(tenant_id__in=by_id.keys())
+                .order_by("tenant_id", "-is_primary", "id")
+                .values("tenant_id", "domain", "is_primary")
+            )
+            for d in domains:
+                t = by_id.get(d["tenant_id"])
+                if not t:
+                    continue
+                # first domain encountered becomes primary_domain
+                if "primary_domain" not in t:
+                    t["primary_domain"] = d["domain"]
+                    t["is_primary_domain"] = bool(d.get("is_primary"))
+
+            for t in tenants:
+                t.setdefault("primary_domain", f'{t["schema_name"]}.newconcierge.app')
+                t.setdefault("is_primary_domain", False)
+
+            return Response({"tenants": tenants})
+
+

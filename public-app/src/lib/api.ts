@@ -357,15 +357,25 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
     }
 
     // ✅ Multi-tenant routing support when running on a shared public domain.
-    // Prefer an explicit tenant host derived from the cached user (public schema) if available.
+    // Prefer an explicit tenant host derived from:
+    // 1) Ultra-admin override (platform tooling)
+    // 2) Cached user tenant schema
     // This allows backend proxy routes to forward the correct tenant host to Django.
     try {
       const cached = localStorage.getItem("user");
       if (cached) {
-        const parsed = JSON.parse(cached) as { tenant?: { schema_name?: string } | null };
-        const schema = parsed?.tenant?.schema_name;
-        if (schema && typeof schema === "string" && schema.trim()) {
-          headers["X-Tenant-Host"] = `${schema}.newconcierge.app`;
+        const parsed = JSON.parse(cached) as { tenant?: { schema_name?: string } | null; role?: string; is_superuser?: boolean; is_staff?: boolean };
+        const isUltraAdmin =
+          String(parsed?.role || "").toLowerCase() === "admin" && Boolean(parsed?.is_superuser) && Boolean(parsed?.is_staff);
+
+        const override = localStorage.getItem("ultra_admin_tenant_host_override") || "";
+        if (isUltraAdmin && override && typeof override === "string" && override.trim()) {
+          headers["X-Tenant-Host"] = override.trim();
+        } else {
+          const schema = parsed?.tenant?.schema_name;
+          if (schema && typeof schema === "string" && schema.trim()) {
+            headers["X-Tenant-Host"] = `${schema}.newconcierge.app`;
+          }
         }
       }
     } catch {

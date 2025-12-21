@@ -195,6 +195,21 @@ class TenantAccessMiddleware:
         # Skip middleware for unauthenticated users (they'll be handled by auth)
         if not request.user.is_authenticated:
             return self.get_response(request)
+
+        # ✅ Ultra Admin override:
+        # Allow platform ultra admins to access any tenant schema (cross-tenant operations),
+        # while keeping strict isolation for normal users.
+        try:
+            user = request.user
+            if (
+                getattr(user, "is_superuser", False)
+                and getattr(user, "is_staff", False)
+                and getattr(user, "role", None) == "admin"
+            ):
+                return self.get_response(request)
+        except Exception:
+            # Fall back to normal enforcement
+            pass
         
         # Check if user has access to current tenant
         if not self.user_has_tenant_access(request.user, connection.schema_name):

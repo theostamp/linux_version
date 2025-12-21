@@ -73,6 +73,60 @@ export default function AdPortalAdminPage() {
 
   const buildingOptions = useMemo(() => (Array.isArray(buildings) ? buildings : []), [buildings]);
 
+  // Tenant context switching (Ultra Admin platform tool)
+  type TenantRow = {
+    id: number;
+    schema_name: string;
+    name: string;
+    primary_domain: string;
+    is_primary_domain: boolean;
+  };
+  const [tenantRows, setTenantRows] = useState<TenantRow[]>([]);
+  const [tenantError, setTenantError] = useState<string | null>(null);
+  const [isLoadingTenants, setIsLoadingTenants] = useState(false);
+  const [tenantHostOverride, setTenantHostOverride] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('ultra_admin_tenant_host_override') || '';
+  });
+
+  const effectiveTenantHost = useMemo(() => {
+    // If override is set, we operate on that tenant regardless of URL host.
+    if (tenantHostOverride?.trim()) return tenantHostOverride.trim();
+    const schema = (user as any)?.tenant?.schema_name;
+    if (schema && typeof schema === 'string') return `${schema}.newconcierge.app`;
+    return typeof window !== 'undefined' ? window.location.hostname : '';
+  }, [tenantHostOverride, user]);
+
+  const fetchTenants = async () => {
+    if (!isUltraAdmin) return;
+    setIsLoadingTenants(true);
+    setTenantError(null);
+    try {
+      const res = await api.get<{ tenants: TenantRow[] }>(`/ad-portal/admin/tenants/`);
+      setTenantRows(Array.isArray(res?.tenants) ? res.tenants : []);
+    } catch (e) {
+      setTenantError(e instanceof Error ? e.message : 'Σφάλμα φόρτωσης tenants');
+    } finally {
+      setIsLoadingTenants(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTenants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUltraAdmin]);
+
+  const applyTenantOverride = (host: string) => {
+    const trimmed = (host || '').trim();
+    if (typeof window !== 'undefined') {
+      if (trimmed) localStorage.setItem('ultra_admin_tenant_host_override', trimmed);
+      else localStorage.removeItem('ultra_admin_tenant_host_override');
+    }
+    setTenantHostOverride(trimmed);
+    // Hard refresh to ensure all contexts refetch under the new tenant host
+    if (typeof window !== 'undefined') window.location.reload();
+  };
+
   const fetchPlacements = async () => {
     if (!isUltraAdmin) return;
     setIsLoadingPlacements(true);
@@ -155,10 +209,22 @@ export default function AdPortalAdminPage() {
         try {
           const cached = localStorage.getItem('user');
           if (cached) {
-            const parsed = JSON.parse(cached) as { tenant?: { schema_name?: string } | null };
-            const schema = parsed?.tenant?.schema_name;
-            if (schema && typeof schema === 'string' && schema.trim()) {
-              headers['X-Tenant-Host'] = `${schema}.newconcierge.app`;
+            const parsed = JSON.parse(cached) as {
+              tenant?: { schema_name?: string } | null;
+              role?: string;
+              is_superuser?: boolean;
+              is_staff?: boolean;
+            };
+            const isUltraAdmin =
+              String(parsed?.role || '').toLowerCase() === 'admin' && Boolean(parsed?.is_superuser) && Boolean(parsed?.is_staff);
+            const override = localStorage.getItem('ultra_admin_tenant_host_override') || '';
+            if (isUltraAdmin && override.trim()) {
+              headers['X-Tenant-Host'] = override.trim();
+            } else {
+              const schema = parsed?.tenant?.schema_name;
+              if (schema && typeof schema === 'string' && schema.trim()) {
+                headers['X-Tenant-Host'] = `${schema}.newconcierge.app`;
+              }
             }
           }
         } catch {
@@ -341,6 +407,57 @@ export default function AdPortalAdminPage() {
           <CardTitle>Ad Portal — Ρυθμίσεις (Ultra Admin)</CardTitle>
           <CardDescription>Ρύθμιση πακέτων (ticker/banner/whole page) και δημιουργία QR tokens.</CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tenant Context (Ultra Admin)</CardTitle>
+          <CardDescription>
+            Τρέχον context: <span className="font-mono">{effectiveTenantHost || '—'}</span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Tenant (domain)</Label>
+              <Select
+                value={tenantHostOverride?.trim() ? tenantHostOverride.trim() : '__default__'}
+                onValueChange={(v) => {
+                  if (v === '__default__') applyTenantOverride('');
+                  else applyTenantOverride(v);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Επιλογή" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__default__">Default (user tenant)</SelectItem>
+                  {tenantRows.map((t) => (
+                    <SelectItem key={t.schema_name} value={t.primary_domain}>
+                      {t.schema_name} — {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="text-xs text-muted-foreground">
+                Αυτό επηρεάζει **όλα** τα API calls (buildings, ad tokens κλπ). Χρησιμοποιείται μόνο για platform ops.
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tenants</Label>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={fetchTenants} disabled={isLoadingTenants}>
+                  {isLoadingTenants ? 'Φόρτωση…' : 'Ανανέωση λίστας'}
+                </Button>
+                <Button variant="outline" onClick={() => applyTenantOverride('')} disabled={!tenantHostOverride}>
+                  Clear override
+                </Button>
+              </div>
+              {tenantError ? <div className="text-sm text-red-600 break-all">{tenantError}</div> : null}
+              <div className="text-xs text-muted-foreground">Σύνολο: {tenantRows.length}</div>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       <Card>

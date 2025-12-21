@@ -2,7 +2,13 @@ from django.urls import path
 
 from . import views
 from .analytics_views import AdAnalyticsSummaryView
-from .admin_views import AdPlacementListView, AdPlacementUpdateView, AdTokenCreateView, AdOutreachBulkGenerateView
+from .admin_views import (
+    AdPlacementListView,
+    AdPlacementUpdateView,
+    AdTokenCreateView,
+    AdOutreachBulkGenerateView,
+    AdTenantListView,
+)
 
 
 urlpatterns = [
@@ -19,6 +25,7 @@ urlpatterns = [
     path("admin/placements/<str:code>/", AdPlacementUpdateView.as_view(), name="ad-portal-admin-placements-update"),
     path("admin/tokens/", AdTokenCreateView.as_view(), name="ad-portal-admin-tokens-create"),
     path("admin/outreach/bulk/", AdOutreachBulkGenerateView.as_view(), name="ad-portal-admin-outreach-bulk"),
+    path("admin/tenants/", AdTenantListView.as_view(), name="ad-portal-admin-tenants"),
 ]
 
 
