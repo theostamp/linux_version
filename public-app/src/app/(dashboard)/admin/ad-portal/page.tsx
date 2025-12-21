@@ -241,6 +241,86 @@ export default function AdPortalAdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUltraAdmin]);
 
+  // History + dropoffs (Ultra Admin)
+  type HistoryRow = {
+    date: string;
+    landing_views: number;
+    leads_created: number;
+    trials_started: number;
+    checkouts_started: number;
+    payment_success: number;
+    payment_failed: number;
+    trials_ending: number;
+  };
+  const [historyDays, setHistoryDays] = useState('30');
+  const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  type DropoffRow = {
+    contract_id: number;
+    tenant_schema: string;
+    building_id: number;
+    placement_code: string;
+    status: string;
+    trial_started_at?: string | null;
+    trial_ends_at?: string | null;
+    updated_at?: string | null;
+    lead: { email: string; business_name: string; category: string; phone: string };
+  };
+  const [dropoffDays, setDropoffDays] = useState('30');
+  const [dropoffRows, setDropoffRows] = useState<DropoffRow[]>([]);
+  const [isLoadingDropoffs, setIsLoadingDropoffs] = useState(false);
+  const [dropoffError, setDropoffError] = useState<string | null>(null);
+
+  const fetchHistory = async () => {
+    if (!isUltraAdmin) return;
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+    try {
+      const days = Number(historyDays) || 30;
+      const res = await api.get<{ rows: HistoryRow[] }>(`/ad-portal/admin/global/history/?days=${days}`);
+      setHistoryRows(Array.isArray(res?.rows) ? res.rows : []);
+    } catch (e) {
+      setHistoryError(e instanceof Error ? e.message : 'Σφάλμα φόρτωσης ιστορικού');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const fetchDropoffs = async () => {
+    if (!isUltraAdmin) return;
+    setIsLoadingDropoffs(true);
+    setDropoffError(null);
+    try {
+      const days = Number(dropoffDays) || 30;
+      const res = await api.get<{ rows: DropoffRow[] }>(`/ad-portal/admin/global/dropoffs/?days=${days}&limit=200`);
+      setDropoffRows(Array.isArray(res?.rows) ? res.rows : []);
+    } catch (e) {
+      setDropoffError(e instanceof Error ? e.message : 'Σφάλμα φόρτωσης drop-offs');
+    } finally {
+      setIsLoadingDropoffs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+    fetchDropoffs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUltraAdmin]);
+
+  const backfillSnapshots = async () => {
+    if (!isUltraAdmin) return;
+    try {
+      const days = Number(historyDays) || 30;
+      await api.post(`/ad-portal/admin/global/snapshots/backfill/`, { days });
+      // Refresh after triggering
+      await fetchHistory();
+    } catch (e) {
+      setHistoryError(e instanceof Error ? e.message : 'Αποτυχία backfill snapshots');
+    }
+  };
+
   const applyTenantOverride = (host: string) => {
     const trimmed = (host || '').trim();
     if (typeof window !== 'undefined') {
@@ -847,6 +927,122 @@ export default function AdPortalAdminPage() {
               </div>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ιστορικό & Στατιστικά (Snapshots)</CardTitle>
+          <CardDescription>Ημερήσια funnel metrics από snapshots (γρήγορο, χωρίς βαριά queries).</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex gap-2 items-center">
+              <Label className="text-xs">days</Label>
+              <Input value={historyDays} onChange={(e) => setHistoryDays(e.target.value)} className="w-[90px]" />
+              <Button variant="outline" onClick={fetchHistory} disabled={isLoadingHistory}>
+                {isLoadingHistory ? 'Φόρτωση…' : 'Ανανέωση'}
+              </Button>
+              <Button variant="outline" onClick={backfillSnapshots} disabled={isLoadingHistory}>
+                Backfill snapshots
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground">Γραμμές: {historyRows.length}</div>
+          </div>
+          {historyError ? <div className="text-sm text-red-600 break-all">{historyError}</div> : null}
+
+          {historyRows.length > 0 ? (
+            <div className="rounded-md border overflow-hidden">
+              <div className="max-h-[320px] overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background border-b">
+                    <tr>
+                      <th className="p-2 text-left">Ημέρα</th>
+                      <th className="p-2 text-right">Landing</th>
+                      <th className="p-2 text-right">Leads</th>
+                      <th className="p-2 text-right">Trials</th>
+                      <th className="p-2 text-right">Checkout</th>
+                      <th className="p-2 text-right">Paid</th>
+                      <th className="p-2 text-right">Failed</th>
+                      <th className="p-2 text-right">Trials ending</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyRows.map((r) => (
+                      <tr key={r.date} className="border-b last:border-b-0">
+                        <td className="p-2 align-top font-mono">{r.date}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.landing_views}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.leads_created}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.trials_started}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.checkouts_started}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.payment_success}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.payment_failed}</td>
+                        <td className="p-2 align-top text-right tabular-nums">{r.trials_ending}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              Δεν υπάρχουν snapshots ακόμα. Πάτα <span className="font-medium">Backfill snapshots</span> για να δημιουργηθούν.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ποιοι δοκίμασαν και δεν συνέχισαν (Drop-offs)</CardTitle>
+          <CardDescription>Συμβόλαια που έληξε το trial και δεν υπάρχει payment_success.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex gap-2 items-center">
+              <Label className="text-xs">days</Label>
+              <Input value={dropoffDays} onChange={(e) => setDropoffDays(e.target.value)} className="w-[90px]" />
+              <Button variant="outline" onClick={fetchDropoffs} disabled={isLoadingDropoffs}>
+                {isLoadingDropoffs ? 'Φόρτωση…' : 'Ανανέωση'}
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground">Rows: {dropoffRows.length}</div>
+          </div>
+          {dropoffError ? <div className="text-sm text-red-600 break-all">{dropoffError}</div> : null}
+
+          {dropoffRows.length > 0 ? (
+            <div className="rounded-md border overflow-hidden">
+              <div className="max-h-[360px] overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background border-b">
+                    <tr>
+                      <th className="p-2 text-left">Επιχείρηση</th>
+                      <th className="p-2 text-left">Email</th>
+                      <th className="p-2 text-left">Tenant/Building</th>
+                      <th className="p-2 text-left">Placement</th>
+                      <th className="p-2 text-left">Trial ended</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dropoffRows.map((r) => (
+                      <tr key={String(r.contract_id)} className="border-b last:border-b-0">
+                        <td className="p-2 align-top">{r.lead?.business_name || '—'}</td>
+                        <td className="p-2 align-top font-mono">{r.lead?.email || '—'}</td>
+                        <td className="p-2 align-top">
+                          <div className="font-mono text-xs">{r.tenant_schema}</div>
+                          <div className="text-xs text-muted-foreground">#{r.building_id}</div>
+                        </td>
+                        <td className="p-2 align-top font-mono">{r.placement_code}</td>
+                        <td className="p-2 align-top font-mono text-xs">{String(r.trial_ends_at || '').slice(0, 10)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">Δεν βρέθηκαν drop-offs στο range.</div>
+          )}
         </CardContent>
       </Card>
 

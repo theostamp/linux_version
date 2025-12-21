@@ -4,8 +4,6 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
-
 class AdPlacementCode(models.TextChoices):
     TICKER = "ticker", _("News Ticker")
     BANNER = "banner", _("Banner")
@@ -313,5 +311,54 @@ class AdEvent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.event_type} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class AdDailySnapshot(models.Model):
+    """
+    Daily aggregated stats to power Ultra Admin reporting without expensive queries.
+    Stored in PUBLIC schema (shared app).
+
+    Notes:
+    - `placement_code` is optional. When empty, row represents "all placements combined".
+    - Counts are derived from `AdEvent` + `AdLead` + `AdContract` (trial_ends).
+    """
+
+    date = models.DateField(db_index=True)
+    tenant_schema = models.CharField(max_length=63, blank=True, default="", db_index=True)
+    building_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+    placement_code = models.CharField(max_length=32, blank=True, default="", db_index=True)
+
+    # Events
+    landing_views = models.PositiveIntegerField(default=0)
+    trials_started = models.PositiveIntegerField(default=0)
+    manage_views = models.PositiveIntegerField(default=0)
+    creatives_updated = models.PositiveIntegerField(default=0)
+    checkouts_started = models.PositiveIntegerField(default=0)
+    payment_success = models.PositiveIntegerField(default=0)
+    payment_failed = models.PositiveIntegerField(default=0)
+
+    # Non-event counts
+    leads_created = models.PositiveIntegerField(default=0)
+    trials_ending = models.PositiveIntegerField(default=0)  # contracts whose trial_ends_at falls on this date
+
+    computed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Ad Daily Snapshot")
+        verbose_name_plural = _("Ad Daily Snapshots")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["date", "tenant_schema", "building_id", "placement_code"],
+                name="adportal_daily_snapshot_unique",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["date", "tenant_schema", "building_id"]),
+        ]
+
+    def __str__(self) -> str:
+        b = self.building_id if self.building_id is not None else "-"
+        p = self.placement_code or "all"
+        return f"{self.date} {self.tenant_schema}:{b} ({p})"
 
 

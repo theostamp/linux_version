@@ -39,6 +39,12 @@ app.conf.beat_schedule = {
         'task': 'ad_portal.tasks.check_ad_portal_trials_daily',
         'schedule': crontab(minute=0, hour=10),  # 10:00 daily
     },
+    # Ad Portal daily snapshots (fast reporting)
+    'ad-portal-daily-snapshots': {
+        'task': 'ad_portal.tasks.compute_ad_portal_daily_snapshots',
+        'schedule': crontab(minute=20, hour=2),  # 02:20 daily
+        'args': (30,),
+    },
 }
 
 

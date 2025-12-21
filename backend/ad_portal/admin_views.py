@@ -8,8 +8,10 @@ import zipfile
 from io import BytesIO
 from urllib.parse import quote
 
+from datetime import timedelta
+
 from django.db import connection
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q, Sum
 from django.http import HttpResponse
 from django.utils import timezone
 from django_tenants.utils import schema_context
@@ -698,5 +700,151 @@ class AdGlobalOverviewView(APIView):
                 )
             )
             return Response({"rows": out})
+
+
+class AdGlobalHistoryView(APIView):
+    """
+    Ultra-admin only: daily time-series using AdDailySnapshot (fast).
+    """
+
+    permission_classes = [IsAuthenticated, IsUltraAdmin]
+
+    def get(self, request):
+        days = int(request.GET.get("days", "30") or 30)
+        days = max(1, min(days, 365))
+        tenant_schema = (request.GET.get("tenant_schema") or "").strip()
+        building_id = request.GET.get("building_id")
+        placement_code = (request.GET.get("placement_code") or "").strip()
+
+        since_date = timezone.localdate() - timedelta(days=days - 1)
+
+        with schema_context("public"):
+            from ad_portal.models import AdDailySnapshot
+
+            qs = AdDailySnapshot.objects.filter(date__gte=since_date)
+            if tenant_schema:
+                qs = qs.filter(tenant_schema=tenant_schema)
+            if building_id and str(building_id).isdigit():
+                qs = qs.filter(building_id=int(building_id))
+            # Default to "all placements" rows (placement_code="")
+            qs = qs.filter(placement_code=placement_code)
+
+            rows = list(
+                qs.values("date")
+                .annotate(
+                    landing_views=Sum("landing_views"),
+                    trials_started=Sum("trials_started"),
+                    checkouts_started=Sum("checkouts_started"),
+                    payment_success=Sum("payment_success"),
+                    payment_failed=Sum("payment_failed"),
+                    leads_created=Sum("leads_created"),
+                    trials_ending=Sum("trials_ending"),
+                )
+                .order_by("date")
+            )
+
+            return Response(
+                {
+                    "since_date": since_date,
+                    "days": days,
+                    "filters": {
+                        "tenant_schema": tenant_schema or None,
+                        "building_id": int(building_id) if building_id and str(building_id).isdigit() else None,
+                        "placement_code": placement_code,
+                    },
+                    "rows": [
+                        {
+                            "date": r["date"],
+                            "landing_views": int(r.get("landing_views") or 0),
+                            "trials_started": int(r.get("trials_started") or 0),
+                            "checkouts_started": int(r.get("checkouts_started") or 0),
+                            "payment_success": int(r.get("payment_success") or 0),
+                            "payment_failed": int(r.get("payment_failed") or 0),
+                            "leads_created": int(r.get("leads_created") or 0),
+                            "trials_ending": int(r.get("trials_ending") or 0),
+                        }
+                        for r in rows
+                    ],
+                }
+            )
+
+
+class AdTrialDropoffsView(APIView):
+    """
+    Ultra-admin only: list "tried but didn't continue" contracts.
+    Definition (MVP):
+    - trial_ends_at has passed (ended in the last N days)
+    - contract has NO payment_success event
+    """
+
+    permission_classes = [IsAuthenticated, IsUltraAdmin]
+
+    def get(self, request):
+        days = int(request.GET.get("days", "30") or 30)
+        days = max(1, min(days, 365))
+        limit = int(request.GET.get("limit", "200") or 200)
+        limit = max(1, min(limit, 500))
+
+        since = timezone.now() - timedelta(days=days)
+
+        with schema_context("public"):
+            from ad_portal.models import AdContract, AdContractStatus, AdEvent
+
+            paid_qs = AdEvent.objects.filter(contract_id=OuterRef("pk"), event_type="payment_success")
+            qs = (
+                AdContract.objects.select_related("lead", "placement_type")
+                .filter(trial_ends_at__isnull=False, trial_ends_at__lt=timezone.now(), trial_ends_at__gte=since)
+                .exclude(status=AdContractStatus.ACTIVE_PAID)
+                .annotate(has_paid=Exists(paid_qs))
+                .filter(has_paid=False)
+                .order_by("-trial_ends_at", "-updated_at")
+            )
+
+            rows = []
+            for c in qs[:limit]:
+                rows.append(
+                    {
+                        "contract_id": c.id,
+                        "tenant_schema": c.tenant_schema,
+                        "building_id": c.building_id,
+                        "placement_code": c.placement_type.code if c.placement_type else "",
+                        "status": c.status,
+                        "trial_started_at": c.trial_started_at,
+                        "trial_ends_at": c.trial_ends_at,
+                        "updated_at": c.updated_at,
+                        "lead": {
+                            "email": c.lead.email if c.lead else "",
+                            "business_name": c.lead.business_name if c.lead else "",
+                            "category": c.lead.category if c.lead else "",
+                            "phone": c.lead.phone if c.lead else "",
+                        },
+                    }
+                )
+
+            return Response({"days": days, "count": len(rows), "rows": rows})
+
+
+class AdSnapshotBackfillView(APIView):
+    """
+    Ultra-admin only: trigger snapshot computation (best-effort async, fallback sync).
+    """
+
+    permission_classes = [IsAuthenticated, IsUltraAdmin]
+
+    def post(self, request):
+        days = int((request.data or {}).get("days") or 30)
+        days = max(1, min(days, 365))
+        try:
+            from ad_portal.tasks import compute_ad_portal_daily_snapshots
+
+            try:
+                compute_ad_portal_daily_snapshots.delay(days)
+                return Response({"ok": True, "mode": "async", "days": days})
+            except Exception:
+                # Celery not available -> sync
+                result = compute_ad_portal_daily_snapshots(days)
+                return Response({"ok": True, "mode": "sync", "days": days, "result": str(result)})
+        except Exception as e:
+            return Response({"ok": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

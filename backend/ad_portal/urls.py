@@ -9,6 +9,9 @@ from .admin_views import (
     AdOutreachBulkGenerateView,
     AdTenantListView,
     AdGlobalOverviewView,
+    AdGlobalHistoryView,
+    AdTrialDropoffsView,
+    AdSnapshotBackfillView,
 )
 
 
@@ -28,6 +31,9 @@ urlpatterns = [
     path("admin/outreach/bulk/", AdOutreachBulkGenerateView.as_view(), name="ad-portal-admin-outreach-bulk"),
     path("admin/tenants/", AdTenantListView.as_view(), name="ad-portal-admin-tenants"),
     path("admin/global/overview/", AdGlobalOverviewView.as_view(), name="ad-portal-admin-global-overview"),
+    path("admin/global/history/", AdGlobalHistoryView.as_view(), name="ad-portal-admin-global-history"),
+    path("admin/global/dropoffs/", AdTrialDropoffsView.as_view(), name="ad-portal-admin-global-dropoffs"),
+    path("admin/global/snapshots/backfill/", AdSnapshotBackfillView.as_view(), name="ad-portal-admin-snapshots-backfill"),
 ]
 
 

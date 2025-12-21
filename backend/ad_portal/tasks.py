@@ -1,10 +1,15 @@
 import logging
 
 from celery import shared_task
+from collections import defaultdict
+from datetime import datetime, timedelta
+from typing import Any
+
+from django.db.models import Count
 from django.utils import timezone
 from django_tenants.utils import schema_context
 
-from ad_portal.models import AdContract, AdContractStatus, AdEvent
+from ad_portal.models import AdContract, AdContractStatus, AdDailySnapshot, AdEvent, AdLead
 from ad_portal.email_service import (
     send_payment_failed_email,
     send_payment_success_email,
@@ -129,5 +134,117 @@ def check_ad_portal_trials_daily():
                     logger.warning("[AD_PORTAL] Failed sending trial reminder email: %s", e)
 
     return f"Processed {processed} trial notifications"
+
+
+def _day_bounds(d):
+    tz = timezone.get_current_timezone()
+    start = timezone.make_aware(datetime.combine(d, datetime.min.time()), tz)
+    end = start + timedelta(days=1)
+    return start, end
+
+
+@shared_task
+def compute_ad_portal_daily_snapshots(days_back: int = 30):
+    """
+    Compute/Upsert daily snapshots for the last N days (including today).
+    Runs in PUBLIC schema (shared app).
+    """
+    days_back = int(days_back or 30)
+    days_back = max(1, min(days_back, 365))
+
+    today = timezone.localdate()
+    start_date = today - timedelta(days=days_back - 1)
+
+    event_map = {
+        "landing_view": "landing_views",
+        "trial_started": "trials_started",
+        "manage_view": "manage_views",
+        "creative_updated": "creatives_updated",
+        "checkout_started": "checkouts_started",
+        "payment_success": "payment_success",
+        "payment_failed": "payment_failed",
+    }
+
+    with schema_context("public"):
+        for i in range(days_back):
+            d = start_date + timedelta(days=i)
+            day_start, day_end = _day_bounds(d)
+
+            # Key: (tenant_schema, building_id, placement_code)
+            agg: dict[tuple[str, int | None, str], dict[str, Any]] = defaultdict(
+                lambda: {
+                    "landing_views": 0,
+                    "trials_started": 0,
+                    "manage_views": 0,
+                    "creatives_updated": 0,
+                    "checkouts_started": 0,
+                    "payment_success": 0,
+                    "payment_failed": 0,
+                    "leads_created": 0,
+                    "trials_ending": 0,
+                }
+            )
+
+            # Events (with optional placement from metadata)
+            events = (
+                AdEvent.objects.filter(created_at__gte=day_start, created_at__lt=day_end)
+                .values("tenant_schema", "building_id", "event_type", "metadata__placement")
+                .annotate(c=Count("id"))
+            )
+            for row in events:
+                et = row.get("event_type") or ""
+                field = event_map.get(et)
+                if not field:
+                    continue
+                tenant_schema = (row.get("tenant_schema") or "").strip()
+                building_id = row.get("building_id")
+                placement_code = (row.get("metadata__placement") or "").strip()
+                key = (tenant_schema, int(building_id) if building_id is not None else None, placement_code)
+                agg[key][field] = int(row.get("c") or 0)
+
+                # Also aggregate to placement_code="" (all placements) if this row is per-placement
+                if placement_code:
+                    key_all = (tenant_schema, int(building_id) if building_id is not None else None, "")
+                    agg[key_all][field] = int(agg[key_all][field] or 0) + int(row.get("c") or 0)
+
+            # Leads created (aggregate only)
+            leads = (
+                AdLead.objects.filter(created_at__gte=day_start, created_at__lt=day_end)
+                .values("tenant_schema", "building_id")
+                .annotate(c=Count("id"))
+            )
+            for row in leads:
+                tenant_schema = (row.get("tenant_schema") or "").strip()
+                building_id = row.get("building_id")
+                key_all = (tenant_schema, int(building_id) if building_id is not None else None, "")
+                agg[key_all]["leads_created"] = int(row.get("c") or 0)
+
+            # Trials ending (based on trial_ends_at date window)
+            trials_ending = (
+                AdContract.objects.filter(trial_ends_at__gte=day_start, trial_ends_at__lt=day_end)
+                .select_related("placement_type")
+                .values("tenant_schema", "building_id", "placement_type__code")
+                .annotate(c=Count("id"))
+            )
+            for row in trials_ending:
+                tenant_schema = (row.get("tenant_schema") or "").strip()
+                building_id = row.get("building_id")
+                placement_code = (row.get("placement_type__code") or "").strip()
+                key = (tenant_schema, int(building_id) if building_id is not None else None, placement_code)
+                agg[key]["trials_ending"] = int(row.get("c") or 0)
+                key_all = (tenant_schema, int(building_id) if building_id is not None else None, "")
+                agg[key_all]["trials_ending"] = int(agg[key_all]["trials_ending"] or 0) + int(row.get("c") or 0)
+
+            # Upsert snapshots
+            for (tenant_schema, building_id, placement_code), data in agg.items():
+                AdDailySnapshot.objects.update_or_create(
+                    date=d,
+                    tenant_schema=tenant_schema,
+                    building_id=building_id,
+                    placement_code=placement_code,
+                    defaults=data,
+                )
+
+    return f"Snapshots computed: {days_back} day(s)"
 
 
