@@ -104,11 +104,13 @@ export default function AdPortalAdminPage() {
   const placesMapRef = useRef<google.maps.Map | null>(null);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [mapModalError, setMapModalError] = useState<string | null>(null);
   const modalMapDivRef = useRef<HTMLDivElement | null>(null);
   const modalMapRef = useRef<google.maps.Map | null>(null);
   const modalMarkersRef = useRef<Array<google.maps.Marker>>([]);
   const modalCircleRef = useRef<google.maps.Circle | null>(null);
   const modalInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const modalHasFitBoundsRef = useRef<boolean>(false);
   const [recentKeywords, setRecentKeywords] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -470,110 +472,143 @@ export default function AdPortalAdminPage() {
 
   useEffect(() => {
     if (!isMapModalOpen) return;
-    const lat = parseCoord((selectedBuilding as any)?.latitude);
-    const lng = parseCoord((selectedBuilding as any)?.longitude);
-    if (lat === null || lng === null) return;
-    if (typeof window === 'undefined' || !window.google?.maps) return;
-    if (!modalMapDivRef.current) return;
 
-    const center = new window.google.maps.LatLng(lat, lng);
-    if (!modalMapRef.current) {
-      modalMapRef.current = new window.google.maps.Map(modalMapDivRef.current, {
-        center,
-        zoom: 15,
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true,
-      });
-    } else {
-      modalMapRef.current.setCenter(center);
-    }
-    if (!modalInfoWindowRef.current) {
-      modalInfoWindowRef.current = new window.google.maps.InfoWindow();
-    }
+    setMapModalError(null);
+    modalHasFitBoundsRef.current = false;
 
-    // Ensure proper render after Dialog open/animation
-    setTimeout(() => {
-      try {
-        window.google.maps.event.trigger(modalMapRef.current!, 'resize');
-      } catch {
-        // ignore
+    let cancelled = false;
+    let tries = 0;
+
+    const tick = () => {
+      if (cancelled) return;
+
+      const lat = parseCoord((selectedBuilding as any)?.latitude);
+      const lng = parseCoord((selectedBuilding as any)?.longitude);
+      if (lat === null || lng === null) {
+        setMapModalError('Λείπουν συντεταγμένες (latitude/longitude) για το κτίριο.');
+        return;
+      }
+      if (typeof window === 'undefined' || !window.google?.maps) {
+        setMapModalError('Google Maps δεν είναι διαθέσιμο (δεν φόρτωσε το script / API key).');
+        return;
+      }
+      const el = modalMapDivRef.current;
+      if (!el) {
+        if (tries++ < 120) requestAnimationFrame(tick);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 50 || rect.height < 50) {
+        // Dialog animation/layout not settled yet
+        if (tries++ < 120) requestAnimationFrame(tick);
+        return;
       }
 
-      clearModalOverlays();
-
-      const r = Number(discoverRadiusM) || 300;
-      const radius = Math.max(100, Math.min(2000, Math.round(r)));
-
-      // Building marker
-      const buildingMarker = new window.google.maps.Marker({
-        position: center,
-        map: modalMapRef.current!,
-        title: selectedBuilding?.name ? `Κτίριο: ${selectedBuilding.name}` : 'Κτίριο',
-        label: { text: 'Κ', color: '#ffffff', fontWeight: '700' },
-      });
-      modalMarkersRef.current.push(buildingMarker);
-
-      // Radius circle
-      modalCircleRef.current = new window.google.maps.Circle({
-        map: modalMapRef.current!,
-        center,
-        radius,
-        strokeColor: '#2563eb',
-        strokeOpacity: 0.7,
-        strokeWeight: 2,
-        fillColor: '#2563eb',
-        fillOpacity: 0.08,
-        clickable: false,
-      });
-
-      const bounds = new window.google.maps.LatLngBounds();
-      bounds.extend(center);
-
-      // Place markers
-      discovered.forEach((p) => {
-        if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
-        const pos = new window.google.maps.LatLng(p.lat, p.lng);
-        bounds.extend(pos);
-        const isSelected = Boolean(selectedPlaceIds[p.place_id]);
-        const marker = new window.google.maps.Marker({
-          position: pos,
-          map: modalMapRef.current!,
-          title: p.name,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 7,
-            fillColor: isSelected ? '#16a34a' : '#dc2626',
-            fillOpacity: 0.95,
-            strokeColor: '#ffffff',
-            strokeOpacity: 1,
-            strokeWeight: 2,
-          },
-        });
-        marker.addListener('click', () => {
-          const html = `
-            <div style="font-size:13px;line-height:1.35">
-              <div style="font-weight:700;margin-bottom:4px">${p.name}</div>
-              <div style="color:#475569">${p.vicinity || ''}</div>
-              <div style="color:#64748b;margin-top:6px">${isSelected ? 'Selected' : 'Not selected'}</div>
-            </div>
-          `;
-          modalInfoWindowRef.current!.setContent(html);
-          modalInfoWindowRef.current!.open({ map: modalMapRef.current!, anchor: marker });
-        });
-        modalMarkersRef.current.push(marker);
-      });
-
-      // Fit bounds (with some padding)
       try {
-        modalMapRef.current!.fitBounds(bounds, 60);
-      } catch {
-        // ignore
-      }
-    }, 50);
+        const center = new window.google.maps.LatLng(lat, lng);
+        if (!modalMapRef.current) {
+          modalMapRef.current = new window.google.maps.Map(el, {
+            center,
+            zoom: 15,
+            mapTypeControl: true,
+            streetViewControl: false,
+            fullscreenControl: true,
+          });
+        } else {
+          modalMapRef.current.setCenter(center);
+        }
+        if (!modalInfoWindowRef.current) {
+          modalInfoWindowRef.current = new window.google.maps.InfoWindow();
+        }
 
-    // Cleanup overlays when modal closes/unmounts
+        // Resize event (safe even if not needed)
+        try {
+          window.google.maps.event.trigger(modalMapRef.current, 'resize');
+        } catch {
+          // ignore
+        }
+
+        clearModalOverlays();
+
+        const r = Number(discoverRadiusM) || 300;
+        const radius = Math.max(100, Math.min(2000, Math.round(r)));
+
+        // Building marker
+        const buildingMarker = new window.google.maps.Marker({
+          position: center,
+          map: modalMapRef.current,
+          title: selectedBuilding?.name ? `Κτίριο: ${selectedBuilding.name}` : 'Κτίριο',
+          label: { text: 'Κ', color: '#ffffff', fontWeight: '700' },
+        });
+        modalMarkersRef.current.push(buildingMarker);
+
+        // Radius circle
+        modalCircleRef.current = new window.google.maps.Circle({
+          map: modalMapRef.current,
+          center,
+          radius,
+          strokeColor: '#2563eb',
+          strokeOpacity: 0.7,
+          strokeWeight: 2,
+          fillColor: '#2563eb',
+          fillOpacity: 0.08,
+          clickable: false,
+        });
+
+        const bounds = new window.google.maps.LatLngBounds();
+        bounds.extend(center);
+
+        // Place markers
+        discovered.forEach((p) => {
+          if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+          const pos = new window.google.maps.LatLng(p.lat, p.lng);
+          bounds.extend(pos);
+          const isSelected = Boolean(selectedPlaceIds[p.place_id]);
+          const marker = new window.google.maps.Marker({
+            position: pos,
+            map: modalMapRef.current!,
+            title: p.name,
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 7,
+              fillColor: isSelected ? '#16a34a' : '#dc2626',
+              fillOpacity: 0.95,
+              strokeColor: '#ffffff',
+              strokeOpacity: 1,
+              strokeWeight: 2,
+            },
+          });
+          marker.addListener('click', () => {
+            const html = `
+              <div style="font-size:13px;line-height:1.35">
+                <div style="font-weight:700;margin-bottom:4px">${p.name}</div>
+                <div style="color:#475569">${p.vicinity || ''}</div>
+                <div style="color:#64748b;margin-top:6px">${Boolean(selectedPlaceIds[p.place_id]) ? 'Selected' : 'Not selected'}</div>
+              </div>
+            `;
+            modalInfoWindowRef.current!.setContent(html);
+            modalInfoWindowRef.current!.open({ map: modalMapRef.current!, anchor: marker });
+          });
+          modalMarkersRef.current.push(marker);
+        });
+
+        // Fit bounds only once per open (avoid fighting user pan/zoom on selection toggles)
+        if (!modalHasFitBoundsRef.current) {
+          modalHasFitBoundsRef.current = true;
+          try {
+            modalMapRef.current!.fitBounds(bounds, 60);
+          } catch {
+            // ignore
+          }
+        }
+      } catch (e) {
+        setMapModalError(e instanceof Error ? e.message : 'Αποτυχία αρχικοποίησης χάρτη');
+      }
+    };
+
+    requestAnimationFrame(tick);
     return () => {
+      cancelled = true;
       clearModalOverlays();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -947,6 +982,7 @@ export default function AdPortalAdminPage() {
                 <div className="text-sm text-muted-foreground">
                   Κτίριο: <span className="font-medium">{selectedBuilding?.name ?? '—'}</span> • Αποτελέσματα: {discovered.length}
                 </div>
+                {mapModalError ? <div className="mt-2 text-sm text-red-600 break-all">{mapModalError}</div> : null}
               </div>
               <div className="h-[calc(85vh-140px)] w-full">
                 <div ref={modalMapDivRef} className="h-full w-full" />
