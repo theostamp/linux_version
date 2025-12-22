@@ -219,6 +219,84 @@ function KioskPreview({
   );
 }
 
+function LargeKioskShowcase({ 
+  placement, 
+  text, 
+  businessName,
+  radiusM
+}: { 
+  placement: PlacementCode; 
+  text: string; 
+  businessName: string;
+  radiusM: number;
+}) {
+  return (
+    <div className="relative w-full py-12 px-4 overflow-hidden bg-slate-950 rounded-[3rem] border border-white/10 shadow-2xl my-12">
+      {/* Background Glows */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 blur-[120px] rounded-full" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/20 blur-[120px] rounded-full" />
+
+      <div className="relative z-10 max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-16">
+        
+        {/* Left Side Info Points */}
+        <div className="hidden lg:flex flex-col gap-8 w-1/4">
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-700">
+            <div className="flex items-center gap-3 mb-2 text-primary font-bold text-sm uppercase">
+              <Zap className="w-5 h-5" /> 24/7 ΕΚΘΕΣΗ
+            </div>
+            <p className="text-slate-400 text-sm italic">Το μήνυμά σας δεν σταματά ποτέ. Μόνιμη παρουσία στην είσοδο.</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-1000 delay-200">
+            <div className="flex items-center gap-3 mb-2 text-green-400 font-bold text-sm uppercase">
+              <TrendingUp className="w-5 h-5" /> SMART DATA
+            </div>
+            <p className="text-slate-400 text-sm italic">Στατιστικά εμφανίσεων και engagement σε πραγματικό χρόνο.</p>
+          </div>
+        </div>
+
+        {/* Center: The Kiosk Screen */}
+        <div className="relative group scale-110 lg:scale-125 transition-transform duration-700 hover:scale-[1.3]">
+          <div className="absolute -inset-4 bg-primary/20 rounded-[3rem] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
+          <KioskPreview placement={placement} text={text} businessName={businessName} />
+          
+          {/* Label indicating this is the Physical Screen */}
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-1.5 bg-primary rounded-full text-[10px] font-black text-white uppercase tracking-widest shadow-lg">
+            InfoPoint Physical Screen (43")
+          </div>
+        </div>
+
+        {/* Right Side Info Points */}
+        <div className="hidden lg:flex flex-col gap-8 w-1/4">
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-right duration-700">
+            <div className="flex items-center gap-3 mb-2 text-orange-400 font-bold text-sm uppercase">
+              <Target className="w-5 h-5" /> HYPER-LOCAL
+            </div>
+            <p className="text-slate-400 text-sm italic">Στοχεύστε ακριβώς στη γειτονιά σας (ακτίνα {radiusM}μ).</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-right duration-1000 delay-200">
+            <div className="flex items-center gap-3 mb-2 text-blue-400 font-bold text-sm uppercase">
+              <Smartphone className="w-5 h-5" /> WEB SYNC
+            </div>
+            <p className="text-slate-400 text-sm italic">Αυτόματη εμφάνιση και στα κινητά των ενοίκων.</p>
+          </div>
+        </div>
+
+        {/* Mobile View Indicators (for small screens) */}
+        <div className="grid grid-cols-2 gap-4 lg:hidden w-full">
+           <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
+              <Zap className="w-5 h-5 text-primary mx-auto mb-2" />
+              <div className="text-[10px] font-bold text-white uppercase">24/7 PROMO</div>
+           </div>
+           <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
+              <Target className="w-5 h-5 text-orange-400 mx-auto mb-2" />
+              <div className="text-[10px] font-bold text-white uppercase">HYPER-LOCAL</div>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdvertiseLandingPage() {
   const params = useParams<{ token?: string | string[] }>();
   const token = useMemo(() => {
@@ -606,79 +684,100 @@ export default function AdvertiseLandingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-            <div className="sm:text-center md:mx-auto lg:col-span-6 lg:text-left space-y-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+          
+          {/* Centered Top Headings */}
+          <div className="text-center max-w-4xl mx-auto space-y-6">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-black tracking-[0.2em] uppercase animate-pulse">
+              <Sparkles className="w-3.5 h-3.5" /> ΝΕΑ ΥΠΗΡΕΣΙΑ ΤΟΠΙΚΗΣ ΠΡΟΒΟΛΗΣ
+            </span>
+            <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl md:text-7xl">
+              Φτάστε στην <span className="text-primary underline decoration-primary/30 underline-offset-8">καρδιά</span> της γειτονιάς σας.
+            </h1>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-2xl font-bold text-slate-400 uppercase tracking-widest">Γρήγορα αναπτυσσόμενο δίκτυο τοπικής προβολής</p>
+              <p className="text-xl font-black text-red-500 animate-bounce mt-2 uppercase tracking-tighter italic">Εσείς θα μείνετε απέξω;</p>
+            </div>
+          </div>
+
+          {/* New Full Width Showcase Image/Mockup */}
+          <LargeKioskShowcase 
+            placement={selectedPlacement} 
+            text={tickerText} 
+            businessName={businessName || 'Η Επιχείρησή σας'} 
+            radiusM={radiusM}
+          />
+
+          {/* Bottom Content Row (Omnichannel) */}
+          <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-center w-full mt-12">
+            <div className="lg:col-span-7 space-y-10">
               <div>
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider uppercase animate-pulse">
-                  <Sparkles className="w-3 h-3" /> ΝΕΑ ΥΠΗΡΕΣΙΑ ΤΟΠΙΚΗΣ ΠΡΟΒΟΛΗΣ
-                </span>
-                <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
-                  Φτάστε στην <span className="text-primary underline decoration-primary/30 underline-offset-8">καρδιά</span> της γειτονιάς σας.
-                </h1>
-                <p className="mt-6 text-lg text-slate-600 max-w-2xl sm:mx-auto lg:mx-0">
+                <h2 className="text-3xl font-bold text-slate-900 mb-6">Πανταχού Παρούσα Προβολή</h2>
+                <p className="text-xl text-slate-600 leading-relaxed italic">
                   Προβληθείτε στην ψηφιακή οθόνη InfoPoint της πολυκατοικίας {landing?.building.name || 'της γειτονιάς'}. 
                   Μια υπηρεσία που φέρνει το μήνυμά σας εκεί που ζουν οι πελάτες σας, 24/7 στην είσοδο αλλά και στα κινητά τους.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 sm:justify-center lg:justify-start">
-                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl transition-all" onClick={() => document.getElementById('steps')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Ξεκινήστε Δωρεάν <ArrowRight className="ml-2 w-5 h-5" />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-xl shadow-primary/20 hover:shadow-2xl transition-all uppercase tracking-tight" onClick={() => document.getElementById('steps')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Ξεκινήστε Δωρεάν <ArrowRight className="ml-2 w-6 h-6" />
                 </Button>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-slate-50 text-slate-500 text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" /> Χωρίς Πιστωτική Κάρτα
+                <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border bg-slate-50 text-slate-500 text-sm font-bold uppercase tracking-widest">
+                  <CheckCircle2 className="w-5 h-5 text-green-500" /> Χωρίς Πιστωτική Κάρτα
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-slate-100">
                 <div>
-                  <div className="text-2xl font-bold text-slate-900">100%</div>
-                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Ορατότητα</div>
+                  <div className="text-3xl font-black text-slate-900">100%</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Ορατότητα</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-slate-900">Daily</div>
-                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Engagement</div>
+                  <div className="text-3xl font-black text-slate-900">Daily</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Engagement</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-slate-900">Zero</div>
-                  <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Trash</div>
+                  <div className="text-3xl font-black text-slate-900">Zero</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Trash</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-slate-900">Sync</div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Mobile App</div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-16 sm:mt-24 lg:mt-0 lg:col-span-6 relative flex justify-center lg:justify-end">
-              <div className="relative">
-                <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-primary/30 to-violet-500/30 blur-2xl opacity-50 animate-pulse" />
-                <KioskPreview 
-                  placement={selectedPlacement} 
-                  text={tickerText} 
-                  businessName={businessName || 'Η Επιχείρησή σας'} 
-                />
-                
-                {/* Floating tags */}
-                <div className="absolute -left-12 top-1/4 p-4 bg-white rounded-2xl shadow-xl border border-slate-100 animate-bounce delay-700 hidden sm:block">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                      <Target className="w-4 h-4 text-orange-600" />
+            <div className="mt-16 lg:mt-0 lg:col-span-5 flex justify-center lg:justify-end relative">
+              <div className="relative group">
+                <div className="absolute -inset-10 bg-indigo-500/10 rounded-full blur-[100px] opacity-50 group-hover:opacity-100 transition-opacity" />
+                {/* Mockup of Mobile App */}
+                <div className="relative w-64 aspect-[9/19.5] bg-slate-950 rounded-[2.5rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden flex flex-col p-1">
+                  <div className="h-6 w-full flex justify-center items-end gap-1">
+                    <div className="w-12 h-1 bg-slate-800 rounded-full mb-1" />
+                  </div>
+                  <div className="flex-1 bg-white rounded-[2rem] overflow-hidden flex flex-col">
+                    <div className="bg-primary h-12 flex items-center px-4 justify-between">
+                      <div className="w-6 h-6 rounded-full bg-white/20" />
+                      <div className="h-2 w-12 bg-white/30 rounded" />
+                      <div className="w-6 h-6 rounded-full bg-white/20" />
                     </div>
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Στοχευμένο</div>
-                      <div className="text-xs font-bold text-slate-800">Ακτίνα {radiusM}μ.</div>
+                    <div className="p-4 space-y-4">
+                      <div className="h-24 bg-slate-50 rounded-xl border border-dashed border-primary/30 flex items-center justify-center p-4">
+                        <div className="text-center">
+                          <div className="text-[8px] text-primary font-bold uppercase tracking-widest">{businessName || 'Η Επιχείρησή σας'}</div>
+                          <div className="text-[6px] text-slate-400 mt-1 line-clamp-2">{tickerText || 'Η διαφήμισή σας εμφανίζεται εδώ'}</div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-2 w-3/4 bg-slate-100 rounded" />
+                        <div className="h-2 w-1/2 bg-slate-100 rounded" />
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="absolute -right-12 bottom-1/4 p-4 bg-white rounded-2xl shadow-xl border border-slate-100 animate-bounce hidden sm:block">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Αποδοτικό</div>
-                      <div className="text-xs font-bold text-slate-800">Υψηλό ROI</div>
-                    </div>
-                  </div>
+                <div className="absolute -bottom-4 -right-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl animate-bounce">
+                  Mobile Sync
                 </div>
               </div>
             </div>
