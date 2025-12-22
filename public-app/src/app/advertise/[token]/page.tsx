@@ -231,58 +231,75 @@ function LargeKioskShowcase({
   radiusM: number;
 }) {
   return (
-    <div className="relative w-full py-12 px-4 overflow-hidden bg-slate-950 rounded-[3rem] border border-white/10 shadow-2xl my-12">
+    <div className="relative w-full py-24 px-4 overflow-hidden bg-slate-950 rounded-[4rem] border border-white/10 shadow-2xl my-16">
       {/* Background Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 blur-[120px] rounded-full" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/20 blur-[120px] rounded-full" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 blur-[150px] rounded-full" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 blur-[150px] rounded-full" />
 
-      <div className="relative z-10 max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-16">
+      <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-4">
         
-        {/* Left Side Info Points */}
-        <div className="hidden lg:flex flex-col gap-8 w-1/4">
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-700">
+        {/* Left Side Info Points (25%) */}
+        <div className="hidden lg:flex flex-col gap-12 w-[25%] relative">
+          {/* Connecting Lines & Dots */}
+          <div className="absolute top-[20%] -right-12 w-24 h-[1px] bg-gradient-to-r from-primary/40 to-transparent" />
+          <div className="absolute top-[20%] -right-12 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
+          
+          <div className="absolute bottom-[20%] -right-8 w-16 h-[1px] bg-gradient-to-r from-green-400/40 to-transparent" />
+          <div className="absolute bottom-[20%] -right-8 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
+
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float shadow-2xl transform hover:scale-105 transition-all duration-500 relative -left-12">
             <div className="flex items-center gap-3 mb-2 text-primary font-bold text-sm uppercase">
               <Zap className="w-5 h-5" /> 24/7 ΕΚΘΕΣΗ
             </div>
-            <p className="text-slate-400 text-sm italic">Το μήνυμά σας δεν σταματά ποτέ. Μόνιμη παρουσία στην είσοδο.</p>
+            <p className="text-slate-400 text-sm italic leading-relaxed">Το μήνυμά σας δεν σταματά ποτέ. Μόνιμη παρουσία στην είσοδο.</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-left duration-1000 delay-200">
+
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float-delayed shadow-2xl transform hover:scale-105 transition-all duration-500 relative -left-8">
             <div className="flex items-center gap-3 mb-2 text-green-400 font-bold text-sm uppercase">
               <TrendingUp className="w-5 h-5" /> SMART DATA
             </div>
-            <p className="text-slate-400 text-sm italic">Στατιστικά εμφανίσεων και engagement σε πραγματικό χρόνο.</p>
+            <p className="text-slate-400 text-sm italic leading-relaxed">Στατιστικά εμφανίσεων και engagement σε πραγματικό χρόνο.</p>
           </div>
         </div>
 
-        {/* Center: The Kiosk Screen */}
-        <div className="relative group scale-110 lg:scale-125 transition-transform duration-700 hover:scale-[1.3]">
-          <div className="absolute -inset-4 bg-primary/20 rounded-[3rem] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
-          <KioskPreview placement={placement} text={text} businessName={businessName} />
+        {/* Center: The Kiosk Screen (50%) */}
+        <div className="w-full lg:w-[50%] flex justify-center relative scale-90 lg:scale-110">
+          <div className="relative group transition-transform duration-1000">
+            <div className="absolute -inset-10 bg-primary/20 rounded-[4rem] blur-[100px] opacity-40 group-hover:opacity-60 transition-opacity" />
+            <KioskPreview placement={placement} text={text} businessName={businessName} />
+            
+            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-6 py-2 bg-primary rounded-full text-[11px] font-black text-white uppercase tracking-widest shadow-2xl">
+              InfoPoint Physical Screen (43")
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side Info Points (25%) */}
+        <div className="hidden lg:flex flex-col gap-12 w-[25%] relative">
+          {/* Connecting Lines & Dots */}
+          <div className="absolute top-[20%] -left-12 w-24 h-[1px] bg-gradient-to-l from-orange-400/40 to-transparent" />
+          <div className="absolute top-[20%] -left-12 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
           
-          {/* Label indicating this is the Physical Screen */}
-          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-1.5 bg-primary rounded-full text-[10px] font-black text-white uppercase tracking-widest shadow-lg">
-            InfoPoint Physical Screen (43")
-          </div>
-        </div>
+          <div className="absolute bottom-[20%] -left-8 w-16 h-[1px] bg-gradient-to-l from-blue-400/40 to-transparent" />
+          <div className="absolute bottom-[20%] -left-8 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
 
-        {/* Right Side Info Points */}
-        <div className="hidden lg:flex flex-col gap-8 w-1/4">
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-right duration-700">
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float shadow-2xl transform hover:scale-105 transition-all duration-500 relative -right-12">
             <div className="flex items-center gap-3 mb-2 text-orange-400 font-bold text-sm uppercase">
               <Target className="w-5 h-5" /> HYPER-LOCAL
             </div>
-            <p className="text-slate-400 text-sm italic">Στοχεύστε ακριβώς στη γειτονιά σας (ακτίνα {radiusM}μ).</p>
+            <p className="text-slate-400 text-sm italic leading-relaxed">Στοχεύστε ακριβώς στη γειτονιά σας (ακτίνα {radiusM}μ).</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-in slide-in-from-right duration-1000 delay-200">
+
+          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float-delayed shadow-2xl transform hover:scale-105 transition-all duration-500 relative -right-8">
             <div className="flex items-center gap-3 mb-2 text-blue-400 font-bold text-sm uppercase">
               <Smartphone className="w-5 h-5" /> WEB SYNC
             </div>
-            <p className="text-slate-400 text-sm italic">Αυτόματη εμφάνιση και στα κινητά των ενοίκων.</p>
+            <p className="text-slate-400 text-sm italic leading-relaxed">Αυτόματη εμφάνιση και στα κινητά των ενοίκων.</p>
           </div>
         </div>
 
         {/* Mobile View Indicators (for small screens) */}
-        <div className="grid grid-cols-2 gap-4 lg:hidden w-full">
+        <div className="grid grid-cols-2 gap-4 lg:hidden w-full mt-12">
            <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
               <Zap className="w-5 h-5 text-primary mx-auto mb-2" />
               <div className="text-[10px] font-bold text-white uppercase">24/7 PROMO</div>
@@ -293,7 +310,23 @@ function LargeKioskShowcase({
            </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float 6s ease-in-out infinite;
+          animation-delay: 3s;
+        }
+      `}</style>
     </div>
+  );
+}
   );
 }
 
@@ -709,17 +742,37 @@ export default function AdvertiseLandingPage() {
           />
 
           {/* Bottom Content Row (Omnichannel) */}
-          <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-center w-full mt-12">
-            <div className="lg:col-span-7 space-y-10">
+          <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-center w-full mt-24">
+            <div className="lg:col-span-6 space-y-10">
               <div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-6">Πανταχού Παρούσα Προβολή</h2>
-                <p className="text-xl text-slate-600 leading-relaxed italic">
-                  Προβληθείτε στην ψηφιακή οθόνη InfoPoint της πολυκατοικίας {landing?.building.name || 'της γειτονιάς'}. 
-                  Μια υπηρεσία που φέρνει το μήνυμά σας εκεί που ζουν οι πελάτες σας, 24/7 στην είσοδο αλλά και στα κινητά τους.
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black tracking-widest uppercase mb-4">
+                  <Smartphone className="w-3.5 h-3.5" /> Mobile Synchronization
+                </span>
+                <h2 className="text-4xl font-extrabold text-slate-900 leading-tight">Το μήνυμά σας, στην τσέπη κάθε ενοίκου.</h2>
+                <p className="mt-6 text-xl text-slate-600 leading-relaxed italic">
+                  Η προβολή σας δεν περιορίζεται στην είσοδο. Κάθε φορά που ένας ένοικος ανοίγει την εφαρμογή της πολυκατοικίας για να δει τα κοινόχρηστα ή τις ανακοινώσεις, η επιχείρησή σας είναι εκεί.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="space-y-4">
+                {[
+                  { icon: Target, title: 'Hyper-Local Targeting', desc: 'Εμφάνιση μόνο στους ενοίκους της συγκεκριμένης πολυκατοικίας.' },
+                  { icon: MousePointerClick, title: 'Direct Engagement', desc: 'Δυνατότητα click-through στο site ή τα social media σας.' },
+                  { icon: Zap, title: 'Instant Updates', desc: 'Αλλάξτε το μήνυμά σας και ενημερώστε ακαριαία οθόνη και κινητά.' }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
+                      <item.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900">{item.title}</h4>
+                      <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-xl shadow-primary/20 hover:shadow-2xl transition-all uppercase tracking-tight" onClick={() => document.getElementById('steps')?.scrollIntoView({ behavior: 'smooth' })}>
                   Ξεκινήστε Δωρεάν <ArrowRight className="ml-2 w-6 h-6" />
                 </Button>
@@ -727,57 +780,78 @@ export default function AdvertiseLandingPage() {
                   <CheckCircle2 className="w-5 h-5 text-green-500" /> Χωρίς Πιστωτική Κάρτα
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-slate-100">
-                <div>
-                  <div className="text-3xl font-black text-slate-900">100%</div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Ορατότητα</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-slate-900">Daily</div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Engagement</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-slate-900">Zero</div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Trash</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-slate-900">Sync</div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em]">Mobile App</div>
-                </div>
-              </div>
             </div>
 
-            <div className="mt-16 lg:mt-0 lg:col-span-5 flex justify-center lg:justify-end relative">
-              <div className="relative group">
-                <div className="absolute -inset-10 bg-indigo-500/10 rounded-full blur-[100px] opacity-50 group-hover:opacity-100 transition-opacity" />
-                {/* Mockup of Mobile App */}
-                <div className="relative w-64 aspect-[9/19.5] bg-slate-950 rounded-[2.5rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden flex flex-col p-1">
-                  <div className="h-6 w-full flex justify-center items-end gap-1">
-                    <div className="w-12 h-1 bg-slate-800 rounded-full mb-1" />
-                  </div>
-                  <div className="flex-1 bg-white rounded-[2rem] overflow-hidden flex flex-col">
-                    <div className="bg-primary h-12 flex items-center px-4 justify-between">
-                      <div className="w-6 h-6 rounded-full bg-white/20" />
-                      <div className="h-2 w-12 bg-white/30 rounded" />
-                      <div className="w-6 h-6 rounded-full bg-white/20" />
+            <div className="mt-16 lg:mt-0 lg:col-span-6 flex justify-center lg:justify-end relative">
+              <div className="relative scale-110">
+                <div className="absolute -inset-20 bg-primary/10 rounded-full blur-[120px] opacity-60" />
+                
+                {/* Reverting to the more informative Phone Mockup with floating labels */}
+                <div className="relative w-72 aspect-[9/19] bg-slate-950 rounded-[3rem] border-[10px] border-slate-800 shadow-[0_50px_100px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col p-1">
+                   <div className="h-7 w-full flex justify-center items-center">
+                     <div className="w-20 h-5 bg-slate-800 rounded-b-2xl" />
+                   </div>
+                   <div className="flex-1 bg-white rounded-[2.2rem] overflow-hidden flex flex-col relative">
+                      <div className="bg-primary pt-10 pb-4 px-6">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/20" />
+                            <div className="space-y-1">
+                               <div className="h-2 w-20 bg-white/40 rounded" />
+                               <div className="h-1.5 w-12 bg-white/20 rounded" />
+                            </div>
+                         </div>
+                      </div>
+                      
+                      <div className="p-6 space-y-6">
+                         {/* The Ad Block on Mobile */}
+                         <div className="p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-primary/30 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 px-2 py-0.5 bg-primary text-white text-[8px] font-black uppercase tracking-widest rounded-bl-lg">Ad Sync</div>
+                            <div className="flex items-center gap-3 mb-3">
+                               <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center">
+                                  <Store className="w-5 h-5 text-primary" />
+                               </div>
+                               <div className="font-black text-xs text-slate-900 uppercase tracking-tight">{businessName || 'Η Επιχείρησή σας'}</div>
+                            </div>
+                            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                               {tickerText || 'Η διαφήμισή σας εμφανίζεται αυτόματα στα κινητά των ενοίκων...'}
+                            </p>
+                            <div className="mt-4 w-full py-2 bg-primary rounded-lg text-white text-[10px] font-black text-center uppercase tracking-widest">Μάθετε Περισσότερα</div>
+                         </div>
+
+                         <div className="space-y-4 opacity-20">
+                            <div className="h-4 w-1/2 bg-slate-200 rounded" />
+                            <div className="space-y-2">
+                               <div className="h-2 w-full bg-slate-100 rounded" />
+                               <div className="h-2 w-5/6 bg-slate-100 rounded" />
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Floating Informative Labels for Mobile */}
+                <div className="absolute -left-12 top-1/4 p-4 bg-white rounded-2xl shadow-xl border border-slate-100 animate-float">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                      <Smartphone className="w-4 h-4 text-indigo-600" />
                     </div>
-                    <div className="p-4 space-y-4">
-                      <div className="h-24 bg-slate-50 rounded-xl border border-dashed border-primary/30 flex items-center justify-center p-4">
-                        <div className="text-center">
-                          <div className="text-[8px] text-primary font-bold uppercase tracking-widest">{businessName || 'Η Επιχείρησή σας'}</div>
-                          <div className="text-[6px] text-slate-400 mt-1 line-clamp-2">{tickerText || 'Η διαφήμισή σας εμφανίζεται εδώ'}</div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-2 w-3/4 bg-slate-100 rounded" />
-                        <div className="h-2 w-1/2 bg-slate-100 rounded" />
-                      </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Mobile App</div>
+                      <div className="text-xs font-bold text-slate-800">100% Sync</div>
                     </div>
                   </div>
                 </div>
-                <div className="absolute -bottom-4 -right-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl animate-bounce">
-                  Mobile Sync
+
+                <div className="absolute -right-12 bottom-1/3 p-4 bg-white rounded-2xl shadow-xl border border-slate-100 animate-float-delayed">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Engagement</div>
+                      <div className="text-xs font-bold text-slate-800">Direct Clicks</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
