@@ -617,7 +617,7 @@ export default function AdvertiseLandingPage() {
                 </h1>
                 <p className="mt-6 text-lg text-slate-600 max-w-2xl sm:mx-auto lg:mx-0">
                   Προβληθείτε στην ψηφιακή οθόνη InfoPoint της πολυκατοικίας {landing?.building.name || 'της γειτονιάς'}. 
-                  Μια υπηρεσία που φέρνει το μήνυμά σας εκεί που ζουν οι πελάτες σας, καθημερινά.
+                  Μια υπηρεσία που φέρνει το μήνυμά σας εκεί που ζουν οι πελάτες σας, 24/7 στην είσοδο αλλά και στα κινητά τους.
                 </p>
               </div>
 
@@ -692,15 +692,26 @@ export default function AdvertiseLandingPage() {
             <h2 className="text-3xl font-bold text-slate-900">Γιατί να διαφημιστείτε στο InfoPoint;</h2>
             <p className="mt-4 text-slate-600">Μια νέα εποχή στην τοπική διαφήμιση.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="pt-8">
                 <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
                   <Zap className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Δεν πάει στα σκουπίδια</h3>
+                <h3 className="text-xl font-bold mb-3">24/7 Παρουσία</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  Τα φυλλάδια συνήθως καταλήγουν στον κάδο. Το InfoPoint είναι μια μόνιμη, ψηφιακή παρουσία στην είσοδο της πολυκατοικίας.
+                  Η διαφήμισή σας παίζει ασταμάτητα στην μεγάλη οθόνη υψηλής ευκρίνειας στην είσοδο της πολυκατοικίας.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="pt-8">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-6">
+                  <Smartphone className="w-6 h-6 text-indigo-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Και στο Κινητό</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Το μήνυμά σας εμφανίζεται και στην web εφαρμογή των ενοίκων, ακολουθώντας τους παντού.
                 </p>
               </CardContent>
             </Card>
@@ -711,7 +722,7 @@ export default function AdvertiseLandingPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-3">Καθημερινή Επαφή</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  Οι ένοικοι βλέπουν την οθόνη τουλάχιστον 2-4 φορές την ημέρα. Η επανάληψη χτίζει εμπιστοσύνη για το brand σας.
+                  Οι ένοικοι βλέπουν την οθόνη τουλάχιστον 2-4 φορές την ημέρα. Η επανάληψη χτίζει εμπιστοσύνη.
                 </p>
               </CardContent>
             </Card>
@@ -722,7 +733,7 @@ export default function AdvertiseLandingPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-3">Αποκλειστικότητα</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  Περιορισμένος αριθμός θέσεων ανά κτίριο. Μην αφήσετε τον ανταγωνισμό να πάρει τη θέση σας στην πολυκατοικία.
+                  Μόνο μία επιχείρηση ανά κατηγορία. Μην αφήσετε τον ανταγωνισμό να πάρει τη θέση σας.
                 </p>
               </CardContent>
             </Card>
@@ -1052,9 +1063,10 @@ export default function AdvertiseLandingPage() {
                         <ul className="space-y-3">
                           {[
                             '30 ημέρες δωρεάν προβολή',
+                            '24/7 προβολή στην οθόνη εισόδου',
+                            'Προβολή στην εφαρμογή των ενοίκων',
                             'Πρόσβαση στο διαχειριστικό portal',
                             'Δυνατότητα αλλαγής κειμένου ανά πάσα στιγμή',
-                            'Στατιστικά εμφανίσεων',
                           ].map((text, i) => (
                             <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
                               <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
