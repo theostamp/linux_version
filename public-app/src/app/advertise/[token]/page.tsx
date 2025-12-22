@@ -327,8 +327,6 @@ function LargeKioskShowcase({
     </div>
   );
 }
-  );
-}
 
 export default function AdvertiseLandingPage() {
   const params = useParams<{ token?: string | string[] }>();
