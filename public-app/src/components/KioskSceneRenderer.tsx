@@ -18,28 +18,32 @@ interface KioskSceneRendererProps {
 // Fallback scene rotator component
 function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: number | null }) {
   const [fallbackSceneIndex, setFallbackSceneIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const fallbackScenes = [
     { name: 'Πρωινή Επισκόπηση', Component: MorningOverviewSceneCustom },
     { name: 'Ambient Showcase', Component: AmbientShowcaseScene },
   ];
 
-  // Keep fallback rotation stable: Morning + Ambient.
-  // The assembly-day emphasis is handled inside scenes (e.g., Ambient banner).
   const scenesToShow = fallbackScenes;
 
-  // Auto-rotate fallback scenes every 30 seconds
+  // Auto-rotate fallback scenes every 30 seconds with smooth transition
   useEffect(() => {
     if (scenesToShow.length <= 1) return;
     
     const timer = setInterval(() => {
-      setFallbackSceneIndex((prev) => (prev + 1) % scenesToShow.length);
+      setIsTransitioning(true);
+      
+      setTimeout(() => {
+        setFallbackSceneIndex((prev) => (prev + 1) % scenesToShow.length);
+        setIsTransitioning(false);
+      }, 1000); // 1s fade-out delay
     }, 30000); // 30 seconds
 
     return () => clearInterval(timer);
   }, [scenesToShow.length]);
 
-  // Reset index if scenes change (currently stable, but keep for future-proofing)
+  // Reset index if scenes change
   useEffect(() => {
     setFallbackSceneIndex(0);
   }, []);
@@ -48,7 +52,11 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   const CurrentFallbackScene = scenesToShow[currentIndex].Component;
 
   return (
-    <div className="relative">
+    <div 
+      className={`transition-opacity duration-1000 ease-in-out ${
+        isTransitioning ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
       <CurrentFallbackScene data={data} buildingId={buildingId} />
     </div>
   );
@@ -104,7 +112,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
       setTimeout(() => {
         setCurrentSceneIndex((prevIndex) => (prevIndex + 1) % scenes.length);
         setIsTransitioning(false);
-      }, 300);
+      }, 1000);
     }, duration);
 
     return () => clearTimeout(timer);
@@ -226,7 +234,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   if (currentScene.name === 'Πρωινή Επισκόπηση') {
     return (
       <div 
-        className={`transition-opacity duration-300 ${
+        className={`transition-opacity duration-1000 ease-in-out ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
@@ -239,7 +247,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   if (currentScene.name === 'Ambient Showcase' || currentScene.name === 'Ανάλαφρη Παρουσίαση') {
     return (
       <div
-        className={`transition-opacity duration-300 ${
+        className={`transition-opacity duration-1000 ease-in-out ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
@@ -256,7 +264,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   if (currentScene.name === 'Συνέλευση' || currentScene.name === 'Assembly Countdown') {
     return (
       <div
-        className={`transition-opacity duration-300 ${
+        className={`transition-opacity duration-1000 ease-in-out ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
@@ -274,7 +282,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
 
   return (
     <div 
-      className={`relative h-screen w-screen overflow-hidden bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 transition-opacity duration-300 ${
+      className={`relative h-screen w-screen overflow-hidden bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 transition-opacity duration-1000 ease-in-out ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
     >

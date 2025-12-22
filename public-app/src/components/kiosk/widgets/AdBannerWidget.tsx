@@ -21,9 +21,14 @@ export default function AdBannerWidget({ data }: BaseWidgetProps) {
   if (bannerAds.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center text-white/60">
-        <div className="text-center">
-          <div className="text-xs uppercase tracking-[0.14em] text-white/40">Διαφήμιση</div>
-          <div className="text-sm font-medium mt-1">Δεν υπάρχουν ενεργές καμπάνιες</div>
+        <div className="text-center p-4 border border-dashed border-white/20 rounded-2xl animate-pulse">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-2">Promotion</div>
+          <div className="text-sm font-bold text-white/80 leading-relaxed italic">
+            Εδώ μπορείτε να προβάλετε την επιχείρησή σας
+          </div>
+          <div className="text-[9px] mt-2 uppercase tracking-widest text-indigo-300 font-bold">
+            InfoPoint Advertising
+          </div>
         </div>
       </div>
     );
