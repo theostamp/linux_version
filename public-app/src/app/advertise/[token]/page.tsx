@@ -698,16 +698,25 @@ export default function AdvertiseLandingPage() {
       </nav>
 
       {/* FOMO / Urgency Banner */}
-      <div className="bg-amber-500 py-2 overflow-hidden">
-        <div className="flex items-center gap-12 animate-marquee whitespace-nowrap">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-4 text-white text-xs font-black uppercase tracking-widest">
-              <AlertTriangle className="w-4 h-4" /> Περιορισμένη διαθεσιμότητα: 1 επιχείρηση ανά κατηγορία 
-              <span className="opacity-50">•</span>
-              <Sparkles className="w-4 h-4" /> Κλειδώστε το κτίριο πριν από τον ανταγωνισμό σας
-              <span className="opacity-50">•</span>
-              <Target className="w-4 h-4" /> Τοπική αποκλειστικότητα στη γειτονιά σας
-              <span className="opacity-50">•</span>
+      <div className="bg-amber-500 py-3 overflow-hidden border-y border-amber-400/50 shadow-inner">
+        <div className="flex items-center gap-12 animate-marquee-top whitespace-nowrap">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex items-center gap-6 text-white text-[11px] font-black uppercase tracking-[0.2em]">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-900/40" /> 
+                Περιορισμένη διαθεσιμότητα: 1 επιχείρηση ανά κατηγορία
+              </div>
+              <span className="text-amber-700/50 font-light">•</span>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-900/40" /> 
+                Κλειδώστε το κτίριο πριν από τον ανταγωνισμό σας
+              </div>
+              <span className="text-amber-700/50 font-light">•</span>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-amber-900/40" /> 
+                Τοπική αποκλειστικότητα στη γειτονιά σας
+              </div>
+              <span className="text-amber-700/50 font-light">•</span>
             </div>
           ))}
         </div>
@@ -1339,6 +1348,20 @@ export default function AdvertiseLandingPage() {
           </div>
         </div>
       </footer>
+
+      <style jsx global>{`
+        @keyframes marquee-top {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee-top {
+          display: flex;
+          animation: marquee-top 40s linear infinite;
+        }
+        .animate-marquee-top:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </div>
   );
 }
