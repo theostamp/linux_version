@@ -3,10 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { BaseWidgetProps } from '@/types/kiosk';
 import type { KioskAd } from '@/hooks/useKioskData';
-
-import { useEffect, useMemo, useState } from 'react';
-import type { BaseWidgetProps } from '@/types/kiosk';
-import type { KioskAd } from '@/hooks/useKioskData';
 import { Timer, Info, Play, ArrowLeft } from 'lucide-react';
 
 type AdStatus = 'idle' | 'warning' | 'showing';
