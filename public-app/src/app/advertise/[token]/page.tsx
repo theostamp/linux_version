@@ -32,7 +32,8 @@ import {
   Users,
   AlertTriangle,
   Check,
-  Globe
+  Globe,
+  Smartphone
 } from 'lucide-react';
 
 type PlacementCode = 'ticker' | 'banner' | 'interstitial';
