@@ -600,13 +600,16 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
         }
         
         const text = await res.text();
+        console.error(`[API POST] Error ${res.status} from ${url}:`, text);
         throw createApiError("POST", url, res.status, text);
       }
       
       // Reset retry delay on success
       resetRetryDelay(url);
       
-      const data = attachApiResponseData(await res.json() as T);
+      const responseData = await res.json();
+      console.log(`[API POST] ✓ Success ${res.status} from ${url}:`, responseData);
+      const data = attachApiResponseData(responseData as T);
       
       // Invalidate ALL cache after successful mutation to ensure fresh data
       // Selective invalidation had issues with pattern matching
@@ -1428,6 +1431,9 @@ export async function fetchRequest(id: number | string, buildingId?: number | nu
 }
 
 export async function createUserRequest(payload: CreateUserRequestPayload): Promise<UserRequest> {
+  const buildingId = payload.building;
+  const url = buildingId ? `/user-requests/?building=${buildingId}` : '/user-requests/';
+
   // If we have photos, we MUST use FormData
   if (payload.photos && payload.photos.length > 0) {
     const formData = new FormData();
@@ -1443,11 +1449,11 @@ export async function createUserRequest(payload: CreateUserRequestPayload): Prom
       }
     });
     
-    return apiPost<UserRequest>('/user-requests/', formData);
+    return apiPost<UserRequest>(url, formData);
   }
   
   // Standard JSON request
-  return apiPost<UserRequest>('/user-requests/', payload);
+  return apiPost<UserRequest>(url, payload);
 }
 
 export async function updateUserRequest(id: number, payload: UpdateUserRequestPayload): Promise<UserRequest> {

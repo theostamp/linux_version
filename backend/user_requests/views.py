@@ -82,13 +82,9 @@ class UserRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Handle file uploads
         photos = []
-        print("[DEBUG] perform_create called")
-        print(f"[DEBUG] request.FILES: {self.request.FILES}")
-        print(f"[DEBUG] request.FILES.getlist('photos'): {self.request.FILES.getlist('photos') if hasattr(self.request, 'FILES') else 'No FILES'}")
-        print(f"[DEBUG] request.content_type: {self.request.content_type}")
-        print(f"[DEBUG] request.META.get('CONTENT_TYPE'): {self.request.META.get('CONTENT_TYPE')}")
-        print(f"[DEBUG] request.POST: {self.request.POST}")
-        print(f"[DEBUG] request.data: {self.request.data}")
+        
+        # Get building from data if not already in validated_data
+        building_id = self.request.data.get('building')
         
         if hasattr(self.request, 'FILES'):
             for file in self.request.FILES.getlist('photos'):
