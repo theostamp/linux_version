@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, LOCATION_TYPES } from '@/types/userRequests';
-import { MapPin, User, AlertTriangle } from 'lucide-react';
+import { MapPin, User, AlertTriangle, Wrench } from 'lucide-react';
 import PhotoUpload from '@/components/PhotoUpload';
 
 export default function NewRequestPage() {
@@ -37,7 +37,7 @@ export default function NewRequestPage() {
   if (!buildingToUse) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">📋 Νέο Αίτημα</h1>
+        <h1 className="text-2xl font-bold mb-4">📋 Αναφορά Βλάβης</h1>
         <p className="text-red-600">Παρακαλώ επιλέξτε κτίριο για να συνεχίσετε.</p>
         <Link href="/requests">
           <Button variant="secondary" className="mt-4">⬅ Επιστροφή</Button>
@@ -96,21 +96,27 @@ export default function NewRequestPage() {
   return (
     <div className="space-y-6">
       <Link href="/requests">
-        <Button variant="secondary">⬅ Επιστροφή στα Αιτήματα</Button>
+        <Button variant="outline" className="gap-2">
+          ⬅ Επιστροφή στις Αναφορές
+        </Button>
       </Link>
 
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6 text-center">🔧 Νέο Αίτημα Ενοικου</h1>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-border p-6 md:p-8 max-w-3xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+            <Wrench className="w-8 h-8" />
+          </div>
+          <h1 className="text-3xl font-bold font-condensed">Αναφορά Νέας Βλάβης</h1>
+          <p className="text-muted-foreground mt-2">
+            Συμπληρώστε τα παρακάτω στοιχεία για να ενημερώσετε τη διαχείριση
+          </p>
+        </div>
         
         <BuildingFilterIndicator className="mb-6" />
         
-        <div className="text-sm text-gray-600 mb-6 text-center">
-          Κτίριο: <strong>{buildingToUse.name}</strong>
-          {selectedBuilding && (
-            <span className="block text-xs text-blue-600 mt-1">
-              Φιλτράρισμα ενεργό
-            </span>
-          )}
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-8 bg-secondary/30 py-2 px-4 rounded-full w-fit mx-auto">
+          <MapPin className="w-4 h-4" />
+          <span>Κτίριο: <strong>{buildingToUse.name}</strong></span>
         </div>
 
         {user && (

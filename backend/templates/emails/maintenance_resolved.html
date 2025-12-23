@@ -1,0 +1,53 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Αποκατάσταση Βλάβης - New Concierge{% endblock %}
+
+{% block content %}
+<div class="success">
+    <h2>🔧 Η βλάβη αποκαταστάθηκε!</h2>
+    <p>Γεια σας <strong>{{ user.first_name }}</strong>,</p>
+    <p>Σας ενημερώνουμε ότι η βλάβη που αναφέρατε έχει πλέον αποκατασταθεί.</p>
+</div>
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #28a745;">
+    <h3 style="margin-top: 0; color: #333;">📋 Στοιχεία Αναφοράς:</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold; width: 120px;">Τίτλος:</td>
+            <td style="padding: 8px 0;">{{ ticket.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Κτίριο:</td>
+            <td style="padding: 8px 0;">{{ building.name }}</td>
+        </tr>
+        {% if ticket.location %}
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Τοποθεσία:</td>
+            <td style="padding: 8px 0;">{{ ticket.location }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Κατάσταση:</td>
+            <td style="padding: 8px 0;"><span style="color: #28a745; font-weight: bold;">Ολοκληρώθηκε</span></td>
+        </tr>
+    </table>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ frontend_url }}/requests/{{ ticket.id }}" class="button">Προβολή Αναφοράς</a>
+</div>
+
+<p>Εάν θεωρείτε ότι το πρόβλημα παραμένει ή έχετε κάποιο άλλο θέμα, παρακαλούμε επικοινωνήστε με τη διαχείριση ή υποβάλετε μια νέα αναφορά βλάβης μέσω της εφαρμογής.</p>
+
+<p>Σας ευχαριστούμε για τη συνεργασία και την υπομονή σας.</p>
+
+<p>Με εκτίμηση,<br>
+<strong>Η ομάδα του New Concierge</strong></p>
+
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+<p style="font-size: 12px; color: #666; text-align: center;">
+    Αυτό το email στάλθηκε αυτόματα από το σύστημα διαχείρισης του κτιρίου σας.<br>
+    Παρακαλούμε μη απαντάτε σε αυτό το email.
+</p>
+{% endblock %}
+

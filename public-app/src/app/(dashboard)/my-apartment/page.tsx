@@ -28,11 +28,14 @@ import {
   CheckCircle2,
   Laptop,
   Mail,
-  Loader2
+  Loader2,
+  Wrench,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import AuthGate from '@/components/AuthGate';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { sendMyApartmentLinkEmail } from '@/lib/api';
 
@@ -512,6 +515,47 @@ function MyApartmentContent() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Quick Actions for Residents */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors cursor-pointer" asChild>
+          <Link href="/requests/new">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2 text-primary">
+                <Wrench className="w-5 h-5" />
+                Αναφορά Βλάβης
+              </CardTitle>
+              <CardDescription>
+                Ενημερώστε τον διαχειριστή για κάποιο τεχνικό πρόβλημα ή ανάγκη συντήρησης.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-sm font-medium text-primary">
+                Δημιουργία νέας αναφοράς <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="bg-secondary/10 border-secondary/20 hover:bg-secondary/20 transition-colors cursor-pointer" asChild>
+          <Link href="/requests">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+                <History className="w-5 h-5" />
+                Ιστορικό Αναφορών
+              </CardTitle>
+              <CardDescription>
+                Δείτε την κατάσταση και την πρόοδο των αναφορών που έχετε υποβάλει.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-sm font-medium text-foreground">
+                Προβολή όλων <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+      </div>
       
       {/* Tabs for History */}
       <Tabs defaultValue="payments" className="space-y-4">

@@ -86,7 +86,7 @@ function RequestsPageContent() {
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">🔧 Αιτήματα Συντήρησης</h1>
+        <h1 className="text-2xl font-bold mb-6">🔧 Αναφορά Βλαβών</h1>
         <BuildingFilterIndicator className="mb-4" />
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -100,9 +100,9 @@ function RequestsPageContent() {
   if (isError) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">🔧 Αιτήματα Συντήρησης</h1>
+        <h1 className="text-2xl font-bold mb-6">🔧 Αναφορά Βλαβών</h1>
         <BuildingFilterIndicator className="mb-4" />
-        <ErrorMessage message="Αδυναμία φόρτωσης αιτημάτων." />
+        <ErrorMessage message="Αδυναμία φόρτωσης αναφορών." />
       </div>
     );
   }
@@ -152,8 +152,8 @@ function RequestsPageContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🔧 Αιτήματα Συντήρησης</h1>
-          <p className="text-muted-foreground mt-1">Διαχείριση τεχνικών θεμάτων και αιτημάτων ενοίκων</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🔧 Αναφορά Βλαβών</h1>
+          <p className="text-muted-foreground mt-1">Διαχείριση τεχνικών θεμάτων και αναφορών ενοίκων</p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -173,7 +173,7 @@ function RequestsPageContent() {
             <Button asChild className="gap-2">
               <Link href="/requests/new">
                 <Plus className="w-4 h-4" />
-                Νέο Αίτημα
+                Νέα Αναφορά
               </Link>
             </Button>
           )}
@@ -338,7 +338,7 @@ function RequestsPageContent() {
           {hasActiveFilters ? (
             <>
               <Search className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-              <p className="font-medium mb-4">Δεν βρέθηκαν αιτήματα με τα επιλεγμένα φίλτρα.</p>
+              <p className="font-medium mb-4">Δεν βρέθηκαν αναφορές με τα επιλεγμένα φίλτρα.</p>
               <Button onClick={clearFilters} variant="outline">
                 <X className="w-4 h-4 mr-2" />
                 Καθαρισμός φίλτρων
@@ -347,12 +347,12 @@ function RequestsPageContent() {
           ) : (
             <>
               <Wrench className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-              <p className="font-medium mb-4">Δεν υπάρχουν διαθέσιμα αιτήματα.</p>
+              <p className="font-medium mb-4">Δεν υπάρχουν διαθέσιμες αναφορές.</p>
               {canCreateRequest && (
                 <Button asChild>
                   <Link href="/requests/new">
                     <Plus className="w-4 h-4 mr-2" />
-                    Δημιουργία πρώτου αιτήματος
+                    Δημιουργία πρώτης αναφοράς
                   </Link>
                 </Button>
               )}
@@ -384,7 +384,7 @@ function RequestsPageContent() {
         <Link 
           href="/requests/new"
           className="fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-lg transition-transform hover:scale-110 z-50 md:hidden"
-          title="Νέο Αίτημα"
+          title="Νέα Αναφορά"
         >
           <Plus className="w-6 h-6" />
         </Link>
@@ -507,7 +507,7 @@ function RequestItemContent({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href={`/requests/${id}`} className="text-sm font-medium text-primary hover:underline">
-          Προβολή αιτήματος
+          Προβολή αναφοράς
         </Link>
         {canDelete && (
           <Button

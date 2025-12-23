@@ -130,7 +130,7 @@ const navigationGroups: NavigationGroup[] = [
       },
       {
         href: '/requests',
-        label: 'Αιτήματα',
+        label: 'Αναφορά Βλαβών',
         icon: <ClipboardList className="w-5 h-5" />,
         roles: ['manager', 'resident', 'internal_manager', 'staff', 'superuser'],
         tooltip: 'Υποβάλετε και παρακολουθήστε αιτήματα για συντήρηση και επισκευές',

@@ -801,6 +801,38 @@ Email: {invitation.email}
             logger.error(f"Failed to send new apartment user notification: {e}")
             return False
 
+    @staticmethod
+    def send_maintenance_resolved_email(ticket):
+        """
+        Αποστολή email ενημέρωσης για την αποκατάσταση βλάβης στον ένοικο που την ανέφερε.
+        """
+        if not ticket.reporter or not ticket.reporter.email:
+            return False
+
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Αποκατάσταση Βλάβης: {ticket.title}"
+        
+        # Build context
+        context = {
+            "user": ticket.reporter,
+            "ticket": ticket,
+            "building": ticket.building,
+            "frontend_url": settings.FRONTEND_URL,
+        }
+
+        try:
+            sent = send_templated_email(
+                to=ticket.reporter.email,
+                subject=subject,
+                template_html="emails/maintenance_resolved.html",
+                context=context,
+                user=ticket.reporter,
+                building_manager_id=getattr(ticket.building, "manager_id", None),
+            )
+            return sent
+        except Exception as e:
+            logger.error(f"Error sending maintenance resolved email: {e}")
+            return False
+
 
 class InvitationService:
     """

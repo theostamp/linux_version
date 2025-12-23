@@ -8,6 +8,11 @@ from .models import MaintenanceTicket, WorkOrder, ServiceReceipt, ScheduledMaint
 from financial.models import Expense
 from todo_management.services import ensure_linked_todo, complete_linked_todo
 from core.utils import publish_building_event
+from announcements.models import Announcement
+from users.services import EmailService
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=MaintenanceTicket)
@@ -22,8 +27,54 @@ def sync_ticket_todo(sender, instance: MaintenanceTicket, created, **kwargs):
         assigned_to=instance.assignee,
         created_by=instance.reporter,
     )
-    if instance.status in {"completed", "closed", "cancelled"}:
+    
+    # Handle resolution logic (email and kiosk announcement)
+    if instance.status in {"completed", "closed"}:
         complete_linked_todo(content_object=instance)
+        
+        # Check if we already handled this resolution to avoid duplicates
+        # We can use a simple check or a cache, but for now let's just do it
+        # ideally we only want to do this once when it transition to completed/closed
+        
+        # Create Kiosk Announcement
+        try:
+            # Validity: 3 days
+            start_date = timezone.now().date()
+            end_date = start_date + timezone.timedelta(days=3)
+            
+            # Find an author (manager or staff or reporter as fallback)
+            author = instance.assignee or instance.reporter
+            
+            # Check if an announcement already exists for this ticket to avoid spam
+            announcement_title = f"Αποκατάσταση: {instance.title}"
+            if not Announcement.objects.filter(building=instance.building, title=announcement_title, created_at__gt=timezone.now() - timezone.timedelta(days=1)).exists():
+                Announcement.objects.create(
+                    building=instance.building,
+                    author=author,
+                    title=announcement_title,
+                    description=f"Η βλάβη '{instance.title}' αποκαταστάθηκε επιτυχώς. Σας ευχαριστούμε για την υπομονή σας.",
+                    start_date=start_date,
+                    end_date=end_date,
+                    published=True,
+                    is_active=True,
+                    is_urgent=False, # It will show up in normal announcements
+                    priority=10 # Higher priority to be seen
+                )
+                logger.info(f"Created kiosk announcement for resolved ticket {instance.id}")
+        except Exception as e:
+            logger.error(f"Error creating kiosk announcement for ticket {instance.id}: {e}")
+
+        # Send Email Notification
+        if instance.reporter and instance.reporter.email:
+            try:
+                EmailService.send_maintenance_resolved_email(instance)
+                logger.info(f"Sent resolution email for ticket {instance.id} to {instance.reporter.email}")
+            except Exception as e:
+                logger.error(f"Error sending resolution email for ticket {instance.id}: {e}")
+
+    elif instance.status == "cancelled":
+        complete_linked_todo(content_object=instance)
+
     publish_building_event(
         building_id=instance.building_id,
         event_type="ticket.updated",
