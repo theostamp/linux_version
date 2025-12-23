@@ -5,7 +5,7 @@ import { Clock, Thermometer, Smartphone, Building2, CloudSun, Check, Calendar, A
 import type { KioskData, KioskAnnouncement } from '@/hooks/useKioskData';
 import { useKioskWeather, type KioskWeatherData } from '@/hooks/useKioskWeather';
 import QRCodeLib from 'qrcode';
-import { format, parseISO, differenceInDays, differenceInHours, isBefore, startOfDay } from 'date-fns';
+import { format, parseISO, differenceInDays, differenceInHours, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { el } from 'date-fns/locale';
 import {
   AmbientBrandingConfig,
@@ -527,6 +527,50 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
   const greeting = now.getHours() < 12 ? 'Καλημέρα' : now.getHours() < 18 ? 'Καλή συνέχεια' : 'Καλησπέρα';
   const effectiveBuildingId = buildingId ?? data?.building_info?.id;
 
+  // Avoid rendering empty "frames" on the right side when there is no content.
+  // - Assembly banner only renders on the day of the assembly (and for a short window).
+  // - Active vote widget returns null if no active vote exists.
+  const shouldShowAssemblyBanner = useMemo(() => {
+    const rawAssemblyFromApi = (data?.upcoming_assembly as AssemblyAPIData | null) ?? null;
+    const rawAssembly = rawAssemblyFromApi || deriveAssemblyFromAnnouncements(data);
+    if (!rawAssembly?.scheduled_date) return false;
+
+    const assemblyDate = new Date(rawAssembly.scheduled_date);
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    assemblyDate.setHours(0, 0, 0, 0);
+    if (assemblyDate.getTime() !== today.getTime()) return false;
+
+    // Apply the same "stale" window as CompactAssemblyBanner
+    let assemblyDateTime = new Date(rawAssembly.scheduled_date);
+    if (rawAssembly.scheduled_time) {
+      const [hours, minutes] = rawAssembly.scheduled_time.split(':').map(Number);
+      assemblyDateTime.setHours(hours, minutes, 0, 0);
+    }
+    const diffMs = assemblyDateTime.getTime() - now.getTime();
+    const isPast = diffMs < 0;
+    const isHappeningNow = isPast && diffMs > -3 * 60 * 60 * 1000; // within last 3 hours
+    const isInProgress = rawAssembly.status === 'in_progress';
+    if (isPast && !isHappeningNow && !isInProgress) return false;
+
+    return true;
+  }, [data, now]);
+
+  const hasActiveVote = useMemo(() => {
+    const votes = Array.isArray(data?.votes) ? (data?.votes as Array<any>) : [];
+    if (!votes.length) return false;
+
+    const nowLocal = new Date();
+    return votes.some((v) => {
+      if (v?.is_active === false) return false;
+      if (!v?.start_date) return false;
+
+      const startDate = startOfDay(parseISO(v.start_date));
+      const endDate = v?.end_date ? endOfDay(parseISO(v.end_date)) : null;
+      return startDate <= nowLocal && (!endDate || endDate >= nowLocal);
+    });
+  }, [data?.votes]);
+
   // Measure sidebar width so footer ticker does NOT cover it.
   useEffect(() => {
     if (!sidebarRef.current) return;
@@ -571,17 +615,21 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
       </div>
 
       {/* Right-side alerts (assembly & voting) spaced between top and ticker */}
-      <div className="absolute top-4 right-4 bottom-28 w-[360px] min-w-[320px] flex flex-col gap-4">
-        {Boolean(data?.upcoming_assembly || deriveAssemblyFromAnnouncements(data)) && (
-          <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
-            <CompactAssemblyBanner buildingId={effectiveBuildingId} kioskData={data} />
-          </div>
-        )}
+      {(shouldShowAssemblyBanner || hasActiveVote) && (
+        <div className="absolute top-4 right-4 bottom-28 w-[360px] min-w-[320px] flex flex-col gap-4">
+          {shouldShowAssemblyBanner && (
+            <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
+              <CompactAssemblyBanner buildingId={effectiveBuildingId} kioskData={data} />
+            </div>
+          )}
 
-        <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
-          <ActiveVoteWidget data={data} variant="ambient" />
+          {hasActiveVote && (
+            <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
+              <ActiveVoteWidget data={data} variant="ambient" />
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Sidebar - Match Morning Overview widget surfaces */}
       <aside
