@@ -228,8 +228,8 @@ export default function NewProjectPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-6">
-        <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')} className="flex-1">
+      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')}>
+        <div className="flex items-center gap-3 mb-6">
           <TabsList className="grid w-full grid-cols-2 lg:w-[420px] rounded-lg bg-gray-100 p-1 border border-gray-300">
             <TabsTrigger
               value="new"
@@ -244,18 +244,17 @@ export default function NewProjectPage() {
               Προτεινόμενα Έργα
             </TabsTrigger>
           </TabsList>
-        </Tabs>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsHelpModalOpen(true)}
-          className="h-9 w-9 rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-300 hover:border-blue-300"
-          title="Οδηγίες διαδικασίας έργων"
-        >
-          <HelpCircle className="h-5 w-5" />
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsHelpModalOpen(true)}
+            className="h-9 w-9 rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-300 hover:border-blue-300"
+            title="Οδηγίες διαδικασίας έργων"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </Button>
+        </div>
 
         <TabsContent value="new">
           <Card>
