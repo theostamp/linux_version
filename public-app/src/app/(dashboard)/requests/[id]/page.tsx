@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { deleteUserRequest, toggleSupportRequest, fetchRequest } from '@/lib/api';
+import { deleteUserRequest, toggleSupportRequest, fetchRequest, getActiveBuildingId } from '@/lib/api';
 import type { UserRequest } from '@/types/userRequests';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { toast } from 'sonner';
@@ -46,7 +46,9 @@ export default function RequestDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   
-  const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  // When landing directly on /requests/[id], BuildingContext may not be ready yet.
+  // Fallback to localStorage to avoid requesting without building context.
+  const buildingId = selectedBuilding?.id || currentBuilding?.id || getActiveBuildingId();
 
   const isOwner = request?.created_by_username === user?.username;
   const isAdmin = hasOfficeAdminAccess(user);
@@ -54,6 +56,7 @@ export default function RequestDetailPage() {
   const canChangeStatus = isAdmin;
 
   async function loadRequest() {
+    setLoading(true);
     try {
       const data = await fetchRequest(Number(id), buildingId);
       setRequest(data);
@@ -125,10 +128,11 @@ export default function RequestDetailPage() {
   }
 
   useEffect(() => {
-    if (isAuthReady) {
-      loadRequest();
-    }
-  }, [id, isAuthReady]);
+    if (!isAuthReady) return;
+    if (!id) return;
+    if (!buildingId) return;
+    loadRequest();
+  }, [id, isAuthReady, buildingId]);
 
   if (!isAuthReady || loading) {
     return (
