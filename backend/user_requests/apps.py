@@ -8,6 +8,6 @@ class UserRequestsConfig(AppConfig):
     name = 'user_requests'
 
     def ready(self):
-        pass
+        import user_requests.signals
         # Εδώ μπορείς να κάνεις import και άλλες συναρτήσεις ή να εκτελέσεις κώδικα που χρειάζεται να τρέξει όταν φορτώνει το app.
         # Για παράδειγμα, αν έχεις custom signals ή tasks που θέλεις να εκτελούνται κατά την εκκίνηση του app.

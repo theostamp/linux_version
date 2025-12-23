@@ -805,15 +805,19 @@ Email: {invitation.email}
     def send_maintenance_resolved_email(ticket):
         """
         Αποστολή email ενημέρωσης για την αποκατάσταση βλάβης στον ένοικο που την ανέφερε.
+        Υποστηρίζει τόσο MaintenanceTicket όσο και UserRequest.
         """
-        if not ticket.reporter or not ticket.reporter.email:
+        # Determine reporter (reporter for MaintenanceTicket, created_by for UserRequest)
+        reporter = getattr(ticket, 'reporter', None) or getattr(ticket, 'created_by', None)
+        
+        if not reporter or not reporter.email:
             return False
 
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Αποκατάσταση Βλάβης: {ticket.title}"
         
         # Build context
         context = {
-            "user": ticket.reporter,
+            "user": reporter,
             "ticket": ticket,
             "building": ticket.building,
             "frontend_url": settings.FRONTEND_URL,
@@ -821,11 +825,11 @@ Email: {invitation.email}
 
         try:
             sent = send_templated_email(
-                to=ticket.reporter.email,
+                to=reporter.email,
                 subject=subject,
                 template_html="emails/maintenance_resolved.html",
                 context=context,
-                user=ticket.reporter,
+                user=reporter,
                 building_manager_id=getattr(ticket.building, "manager_id", None),
             )
             return sent
