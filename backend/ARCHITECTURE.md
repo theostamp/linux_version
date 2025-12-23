@@ -55,7 +55,7 @@ TENANT_APPS = [
 
     # Communication & governance
     'announcements',       # Ανακοινώσεις
-    'user_requests',       # Αιτήματα χρηστών
+    'user_requests',       # Αναφορά Βλαβών (πρώην Αιτήματα)
     'votes',               # Ψηφοφορίες
     'chat',                # Chat
     'notifications',       # Ειδοποιήσεις

@@ -8,7 +8,7 @@
 - ✅ **Buildings** - Κτίρια & Διαμερίσματα
 - ✅ **Projects** - Έργα & Προσφορές
 - ✅ **Announcements** - Ανακοινώσεις
-- ✅ **Requests** - Αιτήματα
+- ✅ **Requests** - Αναφορά Βλαβών
 - ✅ **Votes** - Ψηφοφορίες
 - ✅ **Community** - Ομαδική ανανέωση (Announcements + Requests + Votes)
 
@@ -69,7 +69,7 @@ function MyComponent() {
     refreshBuildings,      // Κτίρια
     refreshProjects,       // Έργα & Προσφορές
     refreshAnnouncements,  // Ανακοινώσεις
-    refreshRequests,       // Αιτήματα
+    refreshRequests,       // Αναφορά Βλαβών
     refreshVotes,          // Ψηφοφορίες
     refreshCommunity,      // Όλα τα community data
     refreshAll             // ΟΛΑ
