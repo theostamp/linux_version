@@ -74,22 +74,36 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
     const hasBannerAds = Array.isArray((data as any)?.ads?.banner) && (data as any).ads.banner.length > 0;
     if (hasBannerAds) {
       base.push({ id: 'ad-banner', name: 'Χορηγούμενο', Component: AdBannerWidget });
+      // Extra dedicated ad slot for rotation
+      base.push({ id: 'ad-slot-2', name: 'Διαφήμιση', Component: AdBannerWidget });
     }
     return base;
   }, [data]);
 
-  // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
+  // Per-widget display durations (ms)
+  const sidebarWidgetDurations = useMemo(() => {
+    return {
+      default: 10000,
+      'emergency-contacts': 12000,
+      'qr-connect': 9000,
+      'ad-banner': 15000,
+      'ad-slot-2': 15000,
+    } as Record<string, number>;
+  }, []);
+
+  // Auto-scroll sidebar widgets with per-widget duration
   useEffect(() => {
     if (sidebarWidgets.length <= 1) return;
 
-    const interval = setInterval(() => {
-      setCurrentSidebarWidget((prev) => (prev + 1) % sidebarWidgets.length);
-    }, 10000);
+    const currentId = sidebarWidgets[currentSidebarWidget]?.id;
+    const duration = sidebarWidgetDurations[currentId] ?? sidebarWidgetDurations.default ?? 10000;
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [sidebarWidgets.length]);
+    const timer = setTimeout(() => {
+      setCurrentSidebarWidget((prev) => (prev + 1) % sidebarWidgets.length);
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [currentSidebarWidget, sidebarWidgets, sidebarWidgetDurations]);
 
   useEffect(() => {
     const timer = setInterval(() => setPaletteHour(new Date().getHours()), 60 * 1000);
