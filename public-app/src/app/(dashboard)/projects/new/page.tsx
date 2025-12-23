@@ -11,11 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
 import CreateAssemblyModal, { type ProjectDataForAssembly } from '@/components/assemblies/CreateAssemblyModal';
 import { BackButton } from '@/components/ui/BackButton';
-import { Save, Plus, Settings as SettingsIcon, Users, ExternalLink } from 'lucide-react';
+import { Save, Plus, Settings as SettingsIcon, Users, ExternalLink, HelpCircle, ArrowRight, FileText, CheckCircle, Vote } from 'lucide-react';
 
 const SUGGESTED_PROJECTS = [
   { title: 'Στεγανοποίηση Ταράτσας', description: 'Πλήρης στεγανοποίηση ταράτσας με ασφαλτόπανο και τσιμεντοκονίαμα', priority: 'high' },
@@ -72,6 +73,7 @@ export default function NewProjectPage() {
   const [isAssemblyModalOpen, setIsAssemblyModalOpen] = useState(false);
   const [createGeneralAssembly, setCreateGeneralAssembly] = useState(false);
   const [linkedAssemblyId, setLinkedAssemblyId] = useState<string | null>(null);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -226,21 +228,34 @@ export default function NewProjectPage() {
         </div>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')}>
-        <TabsList className="mb-6 grid w-full grid-cols-2 lg:w-[420px] rounded-lg bg-muted p-1">
-          <TabsTrigger
-            value="new"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
-          >
-            Νέα Δημιουργία
-          </TabsTrigger>
-          <TabsTrigger
-            value="suggested"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
-          >
-            Προτεινόμενα Έργα
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex items-center gap-3 mb-6">
+        <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')} className="flex-1">
+          <TabsList className="grid w-full grid-cols-2 lg:w-[420px] rounded-lg bg-gray-100 p-1 border border-gray-300">
+            <TabsTrigger
+              value="new"
+              className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 rounded-md font-medium"
+            >
+              Νέα Δημιουργία
+            </TabsTrigger>
+            <TabsTrigger
+              value="suggested"
+              className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 rounded-md font-medium"
+            >
+              Προτεινόμενα Έργα
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsHelpModalOpen(true)}
+          className="h-9 w-9 rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-300 hover:border-blue-300"
+          title="Οδηγίες διαδικασίας έργων"
+        >
+          <HelpCircle className="h-5 w-5" />
+        </Button>
+      </div>
 
         <TabsContent value="new">
           <Card>
@@ -508,6 +523,201 @@ export default function NewProjectPage() {
           proposedTime: formData.assembly_time,
         }}
       />
+
+      {/* Help Modal - Διαδικασία Έργων */}
+      <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <HelpCircle className="w-6 h-6 text-blue-600" />
+              Διαδικασία Διαχείρισης Έργων
+            </DialogTitle>
+            <DialogDescription>
+              Ολοκληρωμένη επεξήγηση της ροής εργασιών από την προσφορά έως την έγκριση του έργου
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Εισαγωγή */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-900">
+                Η διαδικασία διαχείρισης έργων στην εφαρμογή ακολουθεί μια οργανωμένη ροή που εξασφαλίζει διαφάνεια και συμμετοχή όλων των ενοίκων.
+              </p>
+            </div>
+
+            {/* Βήμα 1: Προσφορά */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-700 font-bold text-lg">1</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Προσφορά Έργου
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>Στο στάδιο αυτό:</p>
+                    <ul className="list-disc list-inside ml-4 space-y-1">
+                      <li>Δημιουργείτε ένα <strong>νέο έργο</strong> με τίτλο, περιγραφή και εκτιμώμενο κόστος</li>
+                      <li>Ορίζετε <strong>προτεραιότητα</strong> (Χαμηλή, Μεσαία, Υψηλή, Επείγον)</li>
+                      <li>Προσθέτετε <strong>προθεσμίες</strong> και <strong>όρους πληρωμής</strong></li>
+                      <li>Μπορείτε να επιλέξετε από <strong>προτεινόμενα έργα</strong> για γρήγορη δημιουργία</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex justify-center">
+              <ArrowRight className="w-6 h-6 text-gray-400" />
+            </div>
+
+            {/* Βήμα 2: Έργο */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <span className="text-indigo-700 font-bold text-lg">2</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-2">
+                    <SettingsIcon className="w-5 h-5 text-indigo-600" />
+                    Διαχείριση Έργου
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>Μετά τη δημιουργία:</p>
+                    <ul className="list-disc list-inside ml-4 space-y-1">
+                      <li>Το έργο εμφανίζεται στη <strong>λίστα έργων</strong> με κατάσταση "Προσφορά"</li>
+                      <li>Μπορείτε να <strong>επεξεργαστείτε</strong> τα στοιχεία του έργου</li>
+                      <li>Να προσθέσετε <strong>προσφορές</strong> από εταιρείες</li>
+                      <li>Να συγκρίνετε <strong>τιμές και προδιαγραφές</strong></li>
+                      <li>Να επιλέξετε την <strong>καλύτερη προσφορά</strong></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex justify-center">
+              <ArrowRight className="w-6 h-6 text-gray-400" />
+            </div>
+
+            {/* Βήμα 3: Συνέλευση */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                  <span className="text-purple-700 font-bold text-lg">3</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-purple-600" />
+                    Γενική Συνέλευση
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>Για έγκριση του έργου:</p>
+                    <ul className="list-disc list-inside ml-4 space-y-1">
+                      <li>Ενεργοποιείτε την επιλογή <strong>"Γενική Συνέλευση"</strong> κατά τη δημιουργία</li>
+                      <li>Ορίζετε <strong>ημερήσια διάταξη</strong> με θέματα συζήτησης</li>
+                      <li>Δημιουργείτε <strong>ψηφοφορίες</strong> για κάθε θέμα</li>
+                      <li>Ρυθμίζετε <strong>Zoom settings</strong> για online συμμετοχή</li>
+                      <li>Ενεργοποιείτε <strong>pre-voting</strong> για ηλεκτρονική ψηφοφορία πριν τη συνέλευση</li>
+                    </ul>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
+                      <p className="text-xs text-purple-800">
+                        <strong>💡 Συμβουλή:</strong> Η συνέλευση μπορεί να είναι <strong>φυσική</strong>, <strong>online</strong> ή <strong>υβριδική</strong> (και τα δύο).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex justify-center">
+              <ArrowRight className="w-6 h-6 text-gray-400" />
+            </div>
+
+            {/* Βήμα 4: Έγκριση */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <span className="text-green-700 font-bold text-lg">4</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    Έγκριση Έργου
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>Στο στάδιο αυτό:</p>
+                    <ul className="list-disc list-inside ml-4 space-y-1">
+                      <li>Οι ένοικοι <strong>ψηφίζουν</strong> για την έγκριση του έργου</li>
+                      <li>Η ψηφοφορία μπορεί να γίνει <strong>πριν</strong> (pre-voting) ή <strong>κατά τη διάρκεια</strong> της συνέλευσης</li>
+                      <li>Ελέγχεται η <strong>απαρτία</strong> (quorum) - απαιτείται συνήθως 50%+ των χιλιοστών</li>
+                      <li>Αν εγκριθεί, το έργο μεταβαίνει σε κατάσταση <strong>"Εγκεκριμένο"</strong></li>
+                      <li>Μπορείτε να ξεκινήσετε την <strong>εκτέλεση</strong> του έργου</li>
+                    </ul>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+                      <p className="text-xs text-green-800">
+                        <strong>✅ Αποτέλεσμα:</strong> Μετά την έγκριση, το έργο είναι έτοιμο για εκτέλεση και παρακολούθηση προόδου.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Συνολική ροή */}
+            <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-green-50 border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <Vote className="w-5 h-5 text-indigo-600" />
+                Συνολική Ροή
+              </h4>
+              <div className="grid grid-cols-4 gap-2 text-xs">
+                <div className="text-center p-2 bg-white rounded border border-blue-200">
+                  <div className="font-semibold text-blue-700">1. Προσφορά</div>
+                  <div className="text-gray-600 mt-1">Δημιουργία έργου</div>
+                </div>
+                <div className="text-center p-2 bg-white rounded border border-indigo-200">
+                  <div className="font-semibold text-indigo-700">2. Έργο</div>
+                  <div className="text-gray-600 mt-1">Επιλογή προσφοράς</div>
+                </div>
+                <div className="text-center p-2 bg-white rounded border border-purple-200">
+                  <div className="font-semibold text-purple-700">3. Συνέλευση</div>
+                  <div className="text-gray-600 mt-1">Ψηφοφορία</div>
+                </div>
+                <div className="text-center p-2 bg-white rounded border border-green-200">
+                  <div className="font-semibold text-green-700">4. Έγκριση</div>
+                  <div className="text-gray-600 mt-1">Εκτέλεση</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Συμβουλές */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                <HelpCircle className="w-4 h-4" />
+                Συμβουλές
+              </h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-amber-800">
+                <li>Χρησιμοποιήστε τα <strong>προτεινόμενα έργα</strong> για γρήγορη έναρξη</li>
+                <li>Συμπεριλάβετε <strong>λεπτομερή περιγραφή</strong> και <strong>εκτιμώμενο κόστος</strong></li>
+                <li>Ενεργοποιήστε <strong>pre-voting</strong> για μεγαλύτερη συμμετοχή</li>
+                <li>Ρυθμίστε <strong>Zoom</strong> εκ των προτέρων για online συμμετοχή</li>
+                <li>Καταγράψτε τα <strong>πρακτικά</strong> μετά τη συνέλευση</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setIsHelpModalOpen(false)}>
+              Κατάλαβα
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
