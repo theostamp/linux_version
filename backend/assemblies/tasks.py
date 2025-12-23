@@ -138,14 +138,25 @@ def send_same_day_assembly_reminder(self, assembly_id: str, schema_name: str):
                 if has_pre_voting else ""
             )
 
-            subject = "Υπενθύμιση: Γενική Συνέλευση σήμερα"
-            message = (
-                f"Υπενθύμιση Γενικής Συνέλευσης\n\n"
-                f"Ημερομηνία: {date_str}\n"
-                f"Ώρα: {time_str}\n"
-                f"Τοποθεσία: {location}\n"
-                f"{pre_voting_line}"
-            )
+            # Links για συμμετοχή
+            app_url = getattr(settings, 'FRONTEND_URL', '').rstrip('/') or ''
+            assembly_url = f"{app_url}/assemblies/{assembly.id}" if app_url else ""
+
+            subject = "ΣΗΜΕΡΑ: Υπενθύμιση Γενικής Συνέλευσης"
+            message_lines = [
+                "ΣΗΜΕΡΑ: Γενική Συνέλευση",
+                "",
+                f"Ημερομηνία: {date_str}",
+                f"Ώρα: {time_str}",
+                f"Τοποθεσία: {location}",
+            ]
+
+            if has_pre_voting:
+                message_lines.append("Pre-voting: Μπορείτε να ψηφίσετε ηλεκτρονικά πριν τη συνέλευση μέσα από την εφαρμογή.")
+            if assembly_url:
+                message_lines.append(f"Συμμετοχή / λεπτομέρειες: {assembly_url}")
+
+            message = "\n".join(message_lines)
 
             service = MultiChannelNotificationService()
             results = service.send_bulk(
