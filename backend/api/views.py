@@ -317,6 +317,63 @@ def public_info(request, building_id=None):
             except Exception as e:
                 print(f"[public_info] Error loading ads: {e}")
         
+        # Get upcoming assembly for kiosk display
+        upcoming_assembly_data = None
+        if building_id and building_id != 0:
+            try:
+                from assemblies.models import Assembly
+                from datetime import timedelta
+                
+                today = timezone.now().date()
+                
+                # Get assembly for today or upcoming (within 7 days)
+                assembly = Assembly.objects.filter(
+                    building_id=building_id,
+                    status__in=['scheduled', 'convened', 'in_progress'],
+                    scheduled_date__gte=today,
+                    scheduled_date__lte=today + timedelta(days=7)
+                ).select_related('building').prefetch_related(
+                    'agenda_items',
+                    'attendees'
+                ).order_by('scheduled_date', 'scheduled_time').first()
+                
+                if assembly:
+                    # Serialize agenda items
+                    agenda_items = []
+                    for item in assembly.agenda_items.order_by('order'):
+                        agenda_items.append({
+                            'id': str(item.id),
+                            'order': item.order,
+                            'title': item.title,
+                            'item_type': item.item_type,
+                            'estimated_duration': item.estimated_duration,
+                        })
+                    
+                    upcoming_assembly_data = {
+                        'id': str(assembly.id),
+                        'title': assembly.title,
+                        'scheduled_date': assembly.scheduled_date.isoformat(),
+                        'scheduled_time': assembly.scheduled_time.strftime('%H:%M') if assembly.scheduled_time else None,
+                        'location': assembly.location,
+                        'is_online': assembly.is_online,
+                        'is_physical': assembly.is_physical,
+                        'meeting_link': assembly.meeting_link if assembly.is_online else None,
+                        'status': assembly.status,
+                        'building_name': assembly.building.name if assembly.building else '',
+                        'is_pre_voting_active': assembly.is_pre_voting_active,
+                        'quorum_percentage': assembly.quorum_percentage,
+                        'agenda_items': agenda_items,
+                    }
+                    
+                    print(f"[public_info] Found upcoming assembly: {assembly.title} on {assembly.scheduled_date}")
+                else:
+                    print(f"[public_info] No upcoming assembly found for building {building_id}")
+                    
+            except Exception as e:
+                print(f"[public_info] Error loading upcoming assembly: {e}")
+                import traceback
+                traceback.print_exc()
+        
         # Return response
         return JsonResponse({
             'announcements': announcements_data,
@@ -324,4 +381,5 @@ def public_info(request, building_id=None):
             'building_info': building_info,
             'financial': financial_info,
             'ads': ads_payload,
+            'upcoming_assembly': upcoming_assembly_data,
         })
