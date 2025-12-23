@@ -360,6 +360,8 @@ class AssemblyCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         agenda_items_data = validated_data.pop('agenda_items', [])
+        # Όλες οι νέες συνελεύσεις δημιουργούνται ως "scheduled" (όχι draft)
+        validated_data['status'] = 'scheduled'
         assembly = Assembly.objects.create(**validated_data)
         
         for item_data in agenda_items_data:
