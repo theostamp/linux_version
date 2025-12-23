@@ -200,13 +200,77 @@ interface AssemblyAPIData {
   agenda_items?: Array<{ id: string; title: string; item_type: string }>;
 }
 
+// Helper: derive assembly from announcements (fallback)
+function deriveAssemblyFromAnnouncements(kioskData?: KioskData | null): AssemblyAPIData | null {
+  if (!kioskData?.announcements || kioskData.announcements.length === 0) return null;
+
+  // Find assembly-type announcement with end_date >= today and title/description indicating συνέλευση
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const assemblyAnnouncements = kioskData.announcements.filter((a) => {
+    const t = (a.title || '').toLowerCase();
+    const d = (a.description || '').toLowerCase();
+    const isAssembly = t.includes('συνέλευση') || t.includes('σύγκληση') || d.includes('συνέλευση') || d.includes('σύγκληση');
+    if (!isAssembly) return false;
+    if (!a.end_date) return false;
+    const end = new Date(a.end_date);
+    end.setHours(0, 0, 0, 0);
+    return end.getTime() >= today.getTime();
+  });
+
+  if (assemblyAnnouncements.length === 0) return null;
+
+  // Pick the soonest (by end_date)
+  assemblyAnnouncements.sort((a, b) => {
+    const da = new Date(a.end_date || '');
+    const db = new Date(b.end_date || '');
+    return da.getTime() - db.getTime();
+  });
+
+  const chosen = assemblyAnnouncements[0];
+
+  // Try to extract date/time from description
+  const extract = (label: string): string | null => {
+    const regex = new RegExp(`\\*\\*${label}:\\*\\*\\s*([^\\n*]+)`, 'i');
+    const match = chosen.description?.match(regex);
+    return match ? match[1].trim() : null;
+  };
+
+  const dateStr = extract('Ημερομηνία και Ώρα Συνέλευσης') || chosen.end_date || chosen.start_date || '';
+  const timeMatch = (dateStr.match(/(\d{1,2}:\d{2})/) || [null, null])[1];
+  const dateOnly = (dateStr.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/) || [null, null])[1];
+
+  let scheduledDateISO = chosen.end_date || chosen.start_date || '';
+  if (dateOnly) {
+    const [d, m, y] = dateOnly.split('/').map((v) => parseInt(v, 10));
+    const year = y < 100 ? 2000 + y : y;
+    const dt = new Date(year, m - 1, d);
+    scheduledDateISO = dt.toISOString().split('T')[0];
+  }
+
+  const scheduled_time = timeMatch || '20:00';
+
+  return {
+    id: `announcement-${chosen.id}`,
+    title: chosen.title || 'Γενική Συνέλευση',
+    scheduled_date: scheduledDateISO,
+    scheduled_time,
+    location: extract('Τοποθεσία') || undefined,
+    status: 'scheduled',
+    is_pre_voting_active: chosen.description?.toLowerCase().includes('pre-voting') || false,
+    agenda_items: [],
+  };
+}
+
 // Compact Assembly Reminder - Gets data from public-info (data prop)
 // ONLY shows on the day of the assembly
 const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number | null; kioskData?: KioskData | null }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Get assembly from public-info data (no separate API call needed!)
-  const rawAssembly = kioskData?.upcoming_assembly as AssemblyAPIData | null;
+  const rawAssemblyFromApi = kioskData?.upcoming_assembly as AssemblyAPIData | null;
+  const rawAssembly = rawAssemblyFromApi || deriveAssemblyFromAnnouncements(kioskData);
 
   // Check if assembly is today
   const assembly = useMemo(() => {
@@ -236,6 +300,9 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
   // Debug log
   useEffect(() => {
     console.log('[CompactAssemblyBanner] kioskData has upcoming_assembly:', !!kioskData?.upcoming_assembly);
+    if (!kioskData?.upcoming_assembly) {
+      console.log('[CompactAssemblyBanner] fallback to announcements? ->', !!deriveAssemblyFromAnnouncements(kioskData));
+    }
   }, [kioskData]);
 
   // If no assembly today, don't show anything
