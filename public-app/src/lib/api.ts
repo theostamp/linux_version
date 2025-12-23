@@ -1384,7 +1384,7 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
   if (filters.status) {
     params.status = filters.status;
   }
-  if (filters.buildingId) {
+  if (typeof filters.buildingId === 'number') {
     params.building = filters.buildingId;
   }
   try {

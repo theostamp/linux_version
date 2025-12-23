@@ -38,7 +38,7 @@ function RequestsPageContent() {
   const [priorityFilter, setPriorityFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
 
-  const buildingId = selectedBuilding?.id ?? null;
+  const buildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
   const canDelete = hasOfficeAdminAccess(user);
   const canCreateRequest = true;
 

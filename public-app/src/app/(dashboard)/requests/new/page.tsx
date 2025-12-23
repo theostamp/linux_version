@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, LOCATION_TYPES } from '@/types/userRequests';
+import type { UserRequest } from '@/types/userRequests';
 import { MapPin, User, AlertTriangle, Wrench } from 'lucide-react';
 import PhotoUpload from '@/components/PhotoUpload';
 
@@ -73,12 +74,23 @@ export default function NewRequestPage() {
         photos: photos.length > 0 ? photos : undefined,
       };
       
-      await createUserRequest(payload);
-      
-      // ✅ Invalidate all request queries regardless of buildingId
+      const created = await createUserRequest(payload);
+
+      // ✅ Update cached lists immediately so the new report appears without waiting for refetch
+      const upsert = (existing: UserRequest[] | undefined) => {
+        const list = Array.isArray(existing) ? existing : [];
+        if (list.some((r) => r.id === created.id)) return list;
+        return [created as unknown as UserRequest, ...list];
+      };
+
+      queryClient.setQueryData<UserRequest[]>(['requests', buildingToUse.id], upsert);
+      queryClient.setQueryData<UserRequest[]>(['requests', null], upsert); // "All buildings" view
+
+      // Still invalidate to ensure consistency with server ordering/fields
       await queryClient.invalidateQueries({ queryKey: ['requests'] });
-      toast.success('Το αίτημα δημιουργήθηκε επιτυχώς!');
-      router.push('/requests');
+
+      toast.success('Η αναφορά καταχωρήθηκε επιτυχώς!');
+      router.push(`/requests/${created.id}`);
     } catch (err: unknown) {
       const error = err as { response?: { data?: unknown }; message?: string };
       const msg = error.response?.data
