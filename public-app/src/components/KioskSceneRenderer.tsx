@@ -260,8 +260,17 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     );
   }
 
-  // Check if this is the Assembly Countdown scene
-  if (currentScene.name === 'Συνέλευση' || currentScene.name === 'Assembly Countdown') {
+  // Check if this is the Assembly Countdown scene OR if there's an assembly today
+  const hasAssemblyToday = useMemo(() => {
+    if (!kioskData?.upcoming_assembly) return false;
+    const assemblyDate = new Date(kioskData.upcoming_assembly.scheduled_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    assemblyDate.setHours(0, 0, 0, 0);
+    return assemblyDate.getTime() === today.getTime();
+  }, [kioskData?.upcoming_assembly]);
+
+  if (currentScene.name === 'Συνέλευση' || currentScene.name === 'Assembly Countdown' || hasAssemblyToday) {
     return (
       <div
         className={`transition-opacity duration-1000 ease-in-out ${

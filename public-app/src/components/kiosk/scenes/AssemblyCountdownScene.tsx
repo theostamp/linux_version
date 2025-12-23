@@ -230,24 +230,62 @@ export default function AssemblyCountdownScene({
 }: AssemblyCountdownSceneProps) {
   const [countdown, setCountdown] = useState<CountdownTime | null>(null);
   const [assembly, setAssembly] = useState<AssemblyData | null>(externalAssembly || null);
-  const [isLoading, setIsLoading] = useState(!externalAssembly);
+  const [isLoading, setIsLoading] = useState(!externalAssembly && !data?.upcoming_assembly);
 
-  // Fetch assembly data if not provided
+  // Get assembly from data.upcoming_assembly (from public-info) or externalAssembly or fetch
   useEffect(() => {
+    // Priority 1: externalAssembly prop
     if (externalAssembly) {
       setAssembly(externalAssembly);
+      setIsLoading(false);
       return;
     }
 
-    if (!buildingId) return;
+    // Priority 2: upcoming_assembly from public-info data
+    if (data?.upcoming_assembly) {
+      const apiAssembly = data.upcoming_assembly;
+      // Transform API data to AssemblyData format
+      const transformedAssembly: AssemblyData = {
+        id: apiAssembly.id,
+        title: apiAssembly.title,
+        scheduled_date: apiAssembly.scheduled_date,
+        scheduled_time: apiAssembly.scheduled_time || '20:00',
+        location: apiAssembly.location,
+        is_online: apiAssembly.is_online || false,
+        is_physical: apiAssembly.is_physical || false,
+        meeting_link: apiAssembly.meeting_link,
+        status: apiAssembly.status || 'scheduled',
+        agenda_items: apiAssembly.agenda_items || [],
+        stats: {
+          total_apartments_invited: 0,
+          rsvp_attending: 0,
+          rsvp_not_attending: 0,
+          rsvp_pending: 0,
+          pre_voted_count: 0,
+          pre_voted_percentage: 0,
+        },
+        quorum_percentage: apiAssembly.quorum_percentage || 0,
+        is_pre_voting_active: apiAssembly.is_pre_voting_active || false,
+        building_name: apiAssembly.building_name || '',
+      };
+      setAssembly(transformedAssembly);
+      setIsLoading(false);
+      return;
+    }
+
+    // Priority 3: Fetch from API (fallback)
+    if (!buildingId) {
+      setIsLoading(false);
+      return;
+    }
 
     const fetchAssembly = async () => {
       try {
         const response = await fetch(`/api/assemblies/upcoming?building_id=${buildingId}`);
         if (response.ok) {
-          const data = await response.json();
-          if (data.assembly) {
-            setAssembly(data.assembly);
+          const responseData = await response.json();
+          if (responseData.assembly) {
+            setAssembly(responseData.assembly);
           }
         }
       } catch (error) {
@@ -258,7 +296,7 @@ export default function AssemblyCountdownScene({
     };
 
     fetchAssembly();
-  }, [buildingId, externalAssembly]);
+  }, [buildingId, externalAssembly, data?.upcoming_assembly]);
 
   // Update countdown every second
   useEffect(() => {
