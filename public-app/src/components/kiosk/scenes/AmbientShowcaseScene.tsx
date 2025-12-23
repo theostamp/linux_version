@@ -570,11 +570,18 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
         <div className="absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-slate-950/85 via-slate-900/55 to-transparent" />
       </div>
 
-      {/* Assembly Reminder Banner - Top Right (only shows on assembly day) */}
-      <CompactAssemblyBanner buildingId={effectiveBuildingId} kioskData={data} />
-      
-      {/* Active Vote Widget - Shows when there's an ongoing vote (bottom right) */}
-      <ActiveVoteWidget data={data} variant="ambient" />
+      {/* Right-side alerts (assembly & voting) spaced between top and ticker */}
+      <div className="absolute top-4 right-4 bottom-28 w-[360px] min-w-[320px] flex flex-col gap-4">
+        {Boolean(data?.upcoming_assembly || deriveAssemblyFromAnnouncements(data)) && (
+          <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
+            <CompactAssemblyBanner buildingId={effectiveBuildingId} kioskData={data} />
+          </div>
+        )}
+
+        <div className="flex-1 min-h-0 backdrop-blur-2xl rounded-3xl shadow-3xl overflow-hidden border border-white/10 p-3 bg-slate-900/55">
+          <ActiveVoteWidget data={data} variant="ambient" />
+        </div>
+      </div>
 
       {/* Sidebar - Match Morning Overview widget surfaces */}
       <aside
