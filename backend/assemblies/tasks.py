@@ -15,6 +15,11 @@ from celery import shared_task
 from django.utils import timezone
 from django_tenants.utils import schema_context, get_tenant_model
 from typing import Optional
+from notifications.multichannel_service import (
+    MultiChannelNotificationService,
+    RecipientChannels,
+)
+from notifications.providers.base import ChannelType
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +80,85 @@ def send_assembly_reminder_task(
             
     except Exception as exc:
         logger.exception(f"Failed to send {reminder_type} reminder for assembly {assembly_id}")
+        raise self.retry(exc=exc, countdown=120)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_same_day_assembly_reminder(self, assembly_id: str, schema_name: str):
+    """
+    Στέλνει same-day reminder (email + Viber αν διαθέσιμο) για συνέλευση.
+    Περιλαμβάνει ώρα, τοποθεσία και υπενθύμιση pre-voting (αν είναι ενεργό).
+    """
+    from assemblies.models import Assembly
+
+    try:
+        with schema_context(schema_name):
+            assembly = (
+                Assembly.objects.select_related('building')
+                .prefetch_related('attendees__user', 'agenda_items')
+                .get(id=assembly_id)
+            )
+
+            recipients: list[RecipientChannels] = []
+
+            for attendee in assembly.attendees.select_related("user"):
+                user = attendee.user
+                email = user.email if user and user.email else None
+
+                viber_id = None
+                if user and hasattr(user, "viber_subscription"):
+                    sub = user.viber_subscription
+                    if sub and getattr(sub, "is_subscribed", False):
+                        viber_id = sub.viber_user_id
+
+                if not email and not viber_id:
+                    continue
+
+                recipients.append(
+                    RecipientChannels(
+                        email=email,
+                        viber_id=viber_id,
+                    )
+                )
+
+            if not recipients:
+                return f"No recipients with email/Viber for assembly {assembly_id}"
+
+            date_str = assembly.scheduled_date.strftime("%d/%m/%Y") if assembly.scheduled_date else ""
+            time_str = assembly.scheduled_time.strftime("%H:%M") if assembly.scheduled_time else ""
+            location = assembly.location or "Θα ανακοινωθεί"
+
+            has_pre_voting = assembly.is_pre_voting_active or assembly.agenda_items.filter(
+                item_type='voting',
+                allows_pre_voting=True
+            ).exists()
+
+            pre_voting_line = (
+                "\n\nPre-voting: Μπορείτε να ψηφίσετε ηλεκτρονικά πριν τη συνέλευση μέσα από την εφαρμογή."
+                if has_pre_voting else ""
+            )
+
+            subject = "Υπενθύμιση: Γενική Συνέλευση σήμερα"
+            message = (
+                f"Υπενθύμιση Γενικής Συνέλευσης\n\n"
+                f"Ημερομηνία: {date_str}\n"
+                f"Ώρα: {time_str}\n"
+                f"Τοποθεσία: {location}\n"
+                f"{pre_voting_line}"
+            )
+
+            service = MultiChannelNotificationService()
+            results = service.send_bulk(
+                recipients=recipients,
+                subject=subject,
+                message=message,
+                channels=[ChannelType.EMAIL, ChannelType.VIBER],
+            )
+
+            successful = sum(1 for r in results if r.any_success)
+            return f"Same-day reminder sent for assembly {assembly_id}: success={successful}/{len(results)}"
+
+    except Exception as exc:
         raise self.retry(exc=exc, countdown=120)
 
 

@@ -7,6 +7,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.db import transaction
+from datetime import datetime, time, timedelta
 import logging
 
 from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
@@ -452,6 +453,7 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
                 RecipientChannels,
             )
             from notifications.providers.base import ChannelType
+            from assemblies.tasks import send_same_day_assembly_reminder
 
             recipients: list[RecipientChannels] = []
 
@@ -522,6 +524,30 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
             instance.invitation_sent_at = timezone.now()
             # Δεν αλλάζουμε status εδώ για να μην συγκρουστεί με άλλα flows
             instance.save(update_fields=["invitation_sent", "invitation_sent_at"])
+
+            # Προγραμματισμός same-day reminder (email/Viber) μόνο αν η ημερομηνία είναι μελλοντική
+            if instance.scheduled_date:
+                today = timezone.localdate()
+                sched_date = instance.scheduled_date
+                if sched_date > today:
+                    # Υπολογισμός ώρας αποστολής: 3 ώρες πριν την έναρξη, αλλιώς 09:00 τοπική ώρα
+                    send_at = datetime.combine(sched_date, time(9, 0, 0, tzinfo=timezone.get_current_timezone()))
+                    if instance.scheduled_time:
+                        start_dt = datetime.combine(
+                            sched_date,
+                            instance.scheduled_time,
+                            tzinfo=timezone.get_current_timezone()
+                        )
+                        candidate = start_dt - timedelta(hours=3)
+                        if candidate > timezone.now():
+                            send_at = candidate
+                    # Προγραμματισμός Celery task με schema name
+                    from django.db import connection
+                    schema_name = connection.schema_name
+                    send_same_day_assembly_reminder.apply_async(
+                        args=[str(instance.id), schema_name],
+                        eta=send_at
+                    )
 
         except Exception as e:
             logger.error(
