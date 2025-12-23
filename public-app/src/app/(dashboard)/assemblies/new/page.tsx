@@ -25,6 +25,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { hasInternalManagerAccess } from '@/lib/roleUtils';
+import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
 
 interface AgendaItemForm {
   id: string;
@@ -194,6 +195,7 @@ function AgendaItemCard({
               <Switch
                 checked={item.allows_pre_voting}
                 onCheckedChange={(v) => onUpdate(item.id, { allows_pre_voting: v })}
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
               />
               <div>
                 <Label className="text-indigo-800">Επιτρέπεται Pre-voting</Label>
@@ -226,12 +228,24 @@ function CreateAssemblyContent() {
     is_online: false,
     location: '',
     meeting_link: '',
+    zoom_settings: {
+      meetingUrl: '',
+      meetingId: '',
+      password: '',
+      waitingRoom: true,
+      participantVideo: false,
+      hostVideo: true,
+      muteOnEntry: true,
+      autoRecord: false,
+      notes: '',
+    },
     pre_voting_enabled: true,
     pre_voting_start_date: '',
     pre_voting_end_date: '',
   });
 
   const [userTouchedBuilding, setUserTouchedBuilding] = useState(false);
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
 
   // Auto-fill building once we know the current/selected building, unless user already chose manually
   useEffect(() => {
@@ -324,6 +338,8 @@ function CreateAssemblyContent() {
       is_online: formData.is_online,
       location: formData.location,
       meeting_link: formData.meeting_link,
+      meeting_id: formData.zoom_settings.meetingId || '',
+      meeting_password: formData.zoom_settings.password || '',
       pre_voting_enabled: formData.pre_voting_enabled,
       pre_voting_start_date: preVotingStartDate,
       pre_voting_end_date: preVotingEndDate,
@@ -467,6 +483,7 @@ function CreateAssemblyContent() {
             <Switch
               checked={formData.is_physical}
               onCheckedChange={(v) => setFormData({ ...formData, is_physical: v })}
+              className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
             />
             <div className="flex-1">
               <Label className="flex items-center gap-2">
@@ -481,6 +498,7 @@ function CreateAssemblyContent() {
             <Switch
               checked={formData.is_online}
               onCheckedChange={(v) => setFormData({ ...formData, is_online: v })}
+              className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
             />
             <div className="flex-1">
               <Label className="flex items-center gap-2">
@@ -505,16 +523,43 @@ function CreateAssemblyContent() {
           )}
 
           {formData.is_online && (
-            <div>
-              <Label htmlFor="meeting_link">Σύνδεσμος τηλεδιάσκεψης</Label>
-              <Input
-                id="meeting_link"
-                type="url"
-                value={formData.meeting_link}
-                onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-                placeholder="https://zoom.us/j/..."
-                className="mt-1"
-              />
+            <div className="md:col-span-2 space-y-3">
+              <div>
+                <Label htmlFor="meeting_link">Σύνδεσμος τηλεδιάσκεψης</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="meeting_link"
+                    type="url"
+                    value={formData.meeting_link}
+                    onChange={(e) => {
+                      const url = e.target.value;
+                      // Extract meeting ID from URL
+                      const match = url.match(/\/j\/(\d+)/);
+                      const meetingId = match ? match[1] : '';
+                      setFormData({
+                        ...formData,
+                        meeting_link: url,
+                        zoom_settings: {
+                          ...formData.zoom_settings,
+                          meetingUrl: url,
+                          meetingId: meetingId,
+                        },
+                      });
+                    }}
+                    placeholder="https://zoom.us/j/..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsZoomModalOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Video className="w-4 h-4" />
+                    Ρυθμίσεις Zoom
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -533,6 +578,7 @@ function CreateAssemblyContent() {
           <Switch
             checked={formData.pre_voting_enabled}
             onCheckedChange={(v) => setFormData({ ...formData, pre_voting_enabled: v })}
+            className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
           />
         </div>
 
@@ -643,6 +689,20 @@ function CreateAssemblyContent() {
           )}
         </Button>
       </div>
+
+      {/* Zoom Settings Modal */}
+      <ZoomSettingsModal
+        isOpen={isZoomModalOpen}
+        onClose={() => setIsZoomModalOpen(false)}
+        onSave={(settings) => {
+          setFormData({
+            ...formData,
+            meeting_link: settings.meetingUrl,
+            zoom_settings: settings,
+          });
+        }}
+        initialSettings={formData.zoom_settings}
+      />
     </form>
   );
 }
