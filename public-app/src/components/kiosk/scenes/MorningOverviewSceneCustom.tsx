@@ -119,7 +119,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
           {showImportantBlock && (
             <div
-              className="flex-shrink-0 h-[35%] backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
+              className="flex-1 min-h-0 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border"
               style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
             >
               <div className="h-full p-3 flex flex-col gap-3">
@@ -139,7 +139,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
           {/* Auto-Scrolling Widgets Area - Slide Animation */}
           <div
-            className="flex-1 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden relative border"
+            className="flex-1 min-h-0 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden relative border"
             style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
           >
             {/* Sliding Widget Container - Smooth Film Strip Animation */}
