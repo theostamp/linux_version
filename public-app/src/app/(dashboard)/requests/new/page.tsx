@@ -66,11 +66,10 @@ export default function NewRequestPage() {
         title: title.trim(),
         description: description.trim(),
         building: buildingToUse.id,
-        type: maintenanceCategory || undefined,
-        priority: priority,
+        type: maintenanceCategory || 'other',
+        priority: isUrgent ? 'urgent' : priority,
         location: location || undefined,
         apartment_number: apartmentNumber || undefined,
-        is_urgent: isUrgent || undefined,
         photos: photos.length > 0 ? photos : undefined,
       };
       

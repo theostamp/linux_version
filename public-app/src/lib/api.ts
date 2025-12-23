@@ -1353,6 +1353,12 @@ export type CreateUserRequestPayload = {
   description: string;
   building?: number | null;
   category?: string;
+  type?: string;
+  priority?: string;
+  location?: string;
+  apartment_number?: string;
+  is_urgent?: boolean;
+  photos?: File[];
 };
 
 export type UpdateUserRequestPayload = Partial<CreateUserRequestPayload> & {
@@ -1411,6 +1417,25 @@ export async function fetchRequest(id: number | string, buildingId?: number | nu
 }
 
 export async function createUserRequest(payload: CreateUserRequestPayload): Promise<UserRequest> {
+  // If we have photos, we MUST use FormData
+  if (payload.photos && payload.photos.length > 0) {
+    const formData = new FormData();
+    
+    // Add all fields to FormData
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === 'photos' && Array.isArray(value)) {
+        value.forEach((file) => {
+          formData.append('photos', file);
+        });
+      } else if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+    
+    return apiPost<UserRequest>('/user-requests/', formData);
+  }
+  
+  // Standard JSON request
   return apiPost<UserRequest>('/user-requests/', payload);
 }
 
