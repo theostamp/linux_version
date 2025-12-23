@@ -35,49 +35,11 @@ class UserRequestViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Φέρνει μόνο τα user requests που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
+        Χρησιμοποιεί το κοινό φίλτρο `filter_queryset_by_user_and_building` ώστε να δουλεύει σωστά για
+        manager/office_staff/internal_manager/resident (και να αποφεύγονται 404 σε retrieve λόγω λάθους filtering).
         """
-        qs = UserRequest.objects.all().order_by('-created_at')
-        
-        # Filter by building if provided in query params
-        building_id = self.request.query_params.get('building')
-        if building_id:
-            try:
-                qs = qs.filter(building_id=int(building_id))
-            except ValueError:
-                pass
-
-        # Για retrieve actions (individual request detail), χρησιμοποιούμε διαφορετική λογική
-        if self.action == 'retrieve':
-            # Για superuser: όλα τα requests
-            if self.request.user.is_superuser:
-                return qs
-            # Για manager: μόνο requests από κτήρια που διαχειρίζεται
-            elif self.request.user.is_staff:
-                managed_building_ids = Building.objects.filter(manager_id=self.request.user.id).values_list("id", flat=True)
-                return qs.filter(building_id__in=managed_building_ids)
-            # Για resident: μόνο τα δικά του requests ή requests από το κτήριό του
-            else:
-                # Get all building IDs where the user is a member
-                user_building_ids = self.request.user.memberships.all().values_list('building_id', flat=True)
-                
-                return qs.filter(
-                    models.Q(created_by=self.request.user) |
-                    models.Q(building_id__in=user_building_ids)
-                )
-        
-        # Για όλες τις άλλες actions (list, create, etc.) χρησιμοποιούμε το κανονικό filtering
-        if not self.request.user.is_superuser:
-            if self.request.user.is_staff:
-                managed_building_ids = Building.objects.filter(manager_id=self.request.user.id).values_list("id", flat=True)
-                qs = qs.filter(building_id__in=managed_building_ids)
-            else:
-                user_building_ids = self.request.user.memberships.all().values_list('building_id', flat=True)
-                qs = qs.filter(
-                    models.Q(created_by=self.request.user) |
-                    models.Q(building_id__in=user_building_ids)
-                )
-
-        return qs
+        qs = UserRequest.objects.all().order_by("-created_at")
+        return filter_queryset_by_user_and_building(self.request, qs, building_field="building")
 
     def perform_create(self, serializer):
         # Handle file uploads
