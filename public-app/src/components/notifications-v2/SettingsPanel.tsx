@@ -489,6 +489,7 @@ export default function SettingsPanel() {
                 id="autoSend"
                 checked={formData.autoSend}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoSend: checked }))}
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
               />
             </div>
           </div>

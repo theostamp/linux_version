@@ -467,6 +467,7 @@ export default function CreateAssemblyModal({
                   <Switch
                     checked={formData.is_physical}
                     onCheckedChange={(v) => setFormData({ ...formData, is_physical: v })}
+                    className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
                   />
                   <div className="flex-1">
                     <Label className="flex items-center gap-1 text-sm">
@@ -480,6 +481,7 @@ export default function CreateAssemblyModal({
                   <Switch
                     checked={formData.is_online}
                     onCheckedChange={(v) => setFormData({ ...formData, is_online: v })}
+                    className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
                   />
                   <div className="flex-1">
                     <Label className="flex items-center gap-1 text-sm">
