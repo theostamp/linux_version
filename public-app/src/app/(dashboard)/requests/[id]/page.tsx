@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { deleteUserRequest, toggleSupportRequest, fetchRequest, getActiveBuildingId } from '@/lib/api';
+import { deleteUserRequest, toggleSupportRequest, fetchRequest, getActiveBuildingId, updateUserRequest } from '@/lib/api';
 import type { UserRequest } from '@/types/userRequests';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { toast } from 'sonner';
@@ -116,7 +116,11 @@ export default function RequestDetailPage() {
     if (!request) return;
     setChangingStatus(true);
     try {
-      const updatedRequest = await fetchRequest(request.id, buildingId);
+      const updatedRequest = await updateUserRequest(
+        request.id,
+        { status: newStatus },
+        typeof buildingId === 'number' ? buildingId : null,
+      );
       setRequest(updatedRequest);
       toast.success('Η κατάσταση ενημερώθηκε επιτυχώς');
     } catch (err: unknown) {

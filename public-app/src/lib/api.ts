@@ -1456,8 +1456,13 @@ export async function createUserRequest(payload: CreateUserRequestPayload): Prom
   return apiPost<UserRequest>(url, payload);
 }
 
-export async function updateUserRequest(id: number, payload: UpdateUserRequestPayload): Promise<UserRequest> {
-  return apiPatch<UserRequest>(`/user-requests/${id}/`, payload);
+export async function updateUserRequest(
+  id: number,
+  payload: UpdateUserRequestPayload,
+  buildingId?: number | null,
+): Promise<UserRequest> {
+  const query = typeof buildingId === 'number' ? `?building=${buildingId}` : '';
+  return apiPatch<UserRequest>(`/user-requests/${id}/${query}`, payload);
 }
 
 export async function deleteUserRequest(requestId: number): Promise<void> {
