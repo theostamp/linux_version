@@ -1402,8 +1402,12 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
   }
 }
 
-export async function fetchRequest(id: number | string): Promise<UserRequest> {
-  return apiGet<UserRequest>(`/user-requests/${id}/`);
+export async function fetchRequest(id: number | string, buildingId?: number | null): Promise<UserRequest> {
+  const params: Record<string, number> = {};
+  if (buildingId) {
+    params.building = buildingId;
+  }
+  return apiGet<UserRequest>(`/user-requests/${id}/`, params);
 }
 
 export async function createUserRequest(payload: CreateUserRequestPayload): Promise<UserRequest> {

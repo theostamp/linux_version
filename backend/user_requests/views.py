@@ -38,6 +38,14 @@ class UserRequestViewSet(viewsets.ModelViewSet):
         """
         qs = UserRequest.objects.all().order_by('-created_at')
         
+        # Filter by building if provided in query params
+        building_id = self.request.query_params.get('building')
+        if building_id:
+            try:
+                qs = qs.filter(building_id=int(building_id))
+            except ValueError:
+                pass
+
         # Για retrieve actions (individual request detail), χρησιμοποιούμε διαφορετική λογική
         if self.action == 'retrieve':
             # Για superuser: όλα τα requests
@@ -49,20 +57,26 @@ class UserRequestViewSet(viewsets.ModelViewSet):
                 return qs.filter(building_id__in=managed_building_ids)
             # Για resident: μόνο τα δικά του requests ή requests από το κτήριό του
             else:
-                try:
-                    profile = getattr(self.request.user, "profile", None)
-                    if profile and getattr(profile, "building", None):
-                        return qs.filter(
-                            models.Q(created_by=self.request.user) |
-                            models.Q(building=profile.building)
-                        )
-                    else:
-                        return qs.filter(created_by=self.request.user)
-                except (AttributeError, ObjectDoesNotExist):
-                    return qs.filter(created_by=self.request.user)
+                # Get all building IDs where the user is a member
+                user_building_ids = self.request.user.memberships.all().values_list('building_id', flat=True)
+                
+                return qs.filter(
+                    models.Q(created_by=self.request.user) |
+                    models.Q(building_id__in=user_building_ids)
+                )
         
         # Για όλες τις άλλες actions (list, create, etc.) χρησιμοποιούμε το κανονικό filtering
-        # For tests, return all items to ensure basic CRUD behavior passes.
+        if not self.request.user.is_superuser:
+            if self.request.user.is_staff:
+                managed_building_ids = Building.objects.filter(manager_id=self.request.user.id).values_list("id", flat=True)
+                qs = qs.filter(building_id__in=managed_building_ids)
+            else:
+                user_building_ids = self.request.user.memberships.all().values_list('building_id', flat=True)
+                qs = qs.filter(
+                    models.Q(created_by=self.request.user) |
+                    models.Q(building_id__in=user_building_ids)
+                )
+
         return qs
 
     def perform_create(self, serializer):

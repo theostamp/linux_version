@@ -6,6 +6,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { deleteUserRequest, toggleSupportRequest, fetchRequest } from '@/lib/api';
 import type { UserRequest } from '@/types/userRequests';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -37,12 +38,10 @@ export default function RequestDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isAuthReady } = useAuth();
+  const { selectedBuilding, currentBuilding } = useBuilding();
   const [request, setRequest] = useState<UserRequest | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [supporting, setSupporting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [changingStatus, setChangingStatus] = useState(false);
+  
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
   const isOwner = request?.created_by_username === user?.username;
   const isAdmin = hasOfficeAdminAccess(user);
@@ -51,7 +50,7 @@ export default function RequestDetailPage() {
 
   async function loadRequest() {
     try {
-      const data = await fetchRequest(Number(id));
+      const data = await fetchRequest(Number(id), buildingId);
       setRequest(data);
       setError('');
     } catch (err: unknown) {
@@ -109,7 +108,7 @@ export default function RequestDetailPage() {
     if (!request) return;
     setChangingStatus(true);
     try {
-      const updatedRequest = await fetchRequest(request.id);
+      const updatedRequest = await fetchRequest(request.id, buildingId);
       setRequest(updatedRequest);
       toast.success('Η κατάσταση ενημερώθηκε επιτυχώς');
     } catch (err: unknown) {
