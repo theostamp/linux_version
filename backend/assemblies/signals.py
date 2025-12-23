@@ -13,6 +13,42 @@ from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
 logger = logging.getLogger(__name__)
 
 
+def _build_assembly_topic(project):
+    """Βοηθητική συνάρτηση για δημιουργία περιγραφής θέματος"""
+    description = project.description or "Δεν υπάρχει περιγραφή"
+    trimmed_description = description if len(description) <= 200 else f"{description[:200]}..."
+
+    lines = [
+        "---",
+        f"### Θέμα: {project.title}",
+    ]
+
+    if project.estimated_cost:
+        lines.append(f"**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}")
+    if project.deadline:
+        lines.append(f"**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime('%d/%m/%Y')}")
+
+    lines.append(f"**Περιγραφή:** {trimmed_description}")
+    return "\n".join(line for line in lines if line.strip())
+
+
+def _build_assembly_description_for_projects(projects, assembly_date, assembly_time_str, location_info):
+    """Δημιουργεί περιγραφή ανακοίνωσης συνέλευσης με θέματα από έργα"""
+    header = (
+        "Καλείστε να παραστείτε στη Γενική Συνέλευση των ιδιοκτητών.\n\n"
+        f"**Ημερομηνία και Ώρα Συνέλευσης:** {assembly_date.strftime('%d/%m/%Y')} στις {assembly_time_str}{location_info}\n\n"
+        "**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**\n\n"
+    )
+
+    topics = "\n\n".join(_build_assembly_topic(project) for project in projects if project)
+    footer = (
+        "\n\n**Σημαντικό:** Η παρουσία σας είναι απαραίτητη για την απαρτία της συνέλευσης.\n\n"
+        "Για περισσότερες πληροφορίες και διευκρινήσεις, παρακαλούμε επικοινωνήστε με τη Διαχείρηση."
+    )
+
+    return f"{header}{topics}{footer}".strip()
+
+
 @receiver(post_save, sender=AssemblyVote)
 def sync_assembly_vote_to_vote_submission(sender, instance, created, **kwargs):
     """
@@ -209,6 +245,158 @@ def track_assembly_status_change(sender, instance, **kwargs):
             _assembly_previous_status[instance.pk] = old_instance.status
         except Assembly.DoesNotExist:
             pass
+
+
+@receiver(post_save, sender=Assembly)
+def create_announcement_for_assembly(sender, instance, created, **kwargs):
+    """
+    Αυτόματη δημιουργία ανακοίνωσης όταν δημιουργείται συνέλευση με συνδεδεμένα έργα
+    """
+    if not created:
+        return
+    
+    # Έλεγχος αν η συνέλευση έχει συνδεδεμένα έργα
+    linked_projects = instance.linked_projects.all()
+    if not linked_projects.exists():
+        return
+    
+    try:
+        from announcements.models import Announcement
+        from core.utils import publish_building_event
+        
+        assembly_date = instance.scheduled_date
+        assembly_time_str = instance.scheduled_time.strftime('%H:%M') if instance.scheduled_time else '20:00'
+        
+        location_info = ""
+        if instance.is_online and instance.meeting_link:
+            location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {instance.meeting_link}"
+        elif instance.location:
+            location_info = f"\n**Τοποθεσία:** {instance.location}"
+        
+        today = timezone.now().date()
+        title = f"Σύγκληση Γενικής Συνέλευσης - {assembly_date.strftime('%d/%m/%Y')}"
+        
+        # Εύρεση υπάρχουσας ανακοίνωσης για αυτή την ημερομηνία
+        existing_announcement = (
+            Announcement.objects
+            .filter(
+                building=instance.building,
+                title=title,
+                projects__isnull=False,
+            )
+            .distinct()
+            .first()
+        )
+        
+        if existing_announcement:
+            # Ενημέρωση υπάρχουσας ανακοίνωσης με τα νέα έργα
+            projects_for_description = list(existing_announcement.projects.all())
+            
+            for project in linked_projects:
+                if not any(p.id == project.id for p in projects_for_description):
+                    projects_for_description.append(project)
+                    existing_announcement.projects.add(project)
+            
+            # Αναδόμηση περιγραφής
+            projects_for_description = sorted(
+                projects_for_description,
+                key=lambda p: p.created_at or timezone.now()
+            )
+            
+            existing_announcement.description = _build_assembly_description_for_projects(
+                projects_for_description,
+                assembly_date,
+                assembly_time_str,
+                location_info,
+            )
+            if not existing_announcement.start_date:
+                existing_announcement.start_date = today
+            existing_announcement.end_date = assembly_date
+            existing_announcement.updated_at = timezone.now()
+            existing_announcement.save(update_fields=['description', 'start_date', 'end_date', 'updated_at'])
+            
+            # Σύνδεση με Assembly
+            instance.linked_announcement = existing_announcement
+            instance.save(update_fields=['linked_announcement'])
+            
+            publish_building_event(
+                building_id=instance.building_id,
+                event_type="announcement.updated",
+                payload={
+                    "id": existing_announcement.id,
+                    "title": existing_announcement.title,
+                    "is_urgent": existing_announcement.is_urgent,
+                },
+            )
+        else:
+            # Δημιουργία νέας ανακοίνωσης
+            # Χρειάζεται author - χρησιμοποιούμε τον creator του πρώτου έργου
+            first_project = linked_projects.first()
+            author = first_project.created_by
+            if not author:
+                # Αν δεν υπάρχει creator, χρησιμοποιούμε τον πρώτο διαθέσιμο user
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    author = User.objects.filter(tenant=instance.building.tenant).first()
+                except:
+                    pass
+            
+            announcement = Announcement.objects.create(
+                building=instance.building,
+                author=author,
+                title=title,
+                description=_build_assembly_description_for_projects(
+                    list(linked_projects),
+                    assembly_date,
+                    assembly_time_str,
+                    location_info,
+                ),
+                published=True,
+                is_active=True,
+                is_urgent=True,
+                priority=20,
+                start_date=today,
+                end_date=assembly_date,
+            )
+            
+            # Σύνδεση με έργα
+            announcement.projects.set(linked_projects)
+            
+            # Σύνδεση με Assembly
+            instance.linked_announcement = announcement
+            instance.save(update_fields=['linked_announcement'])
+            
+            publish_building_event(
+                building_id=instance.building_id,
+                event_type="announcement.created",
+                payload={
+                    "id": announcement.id,
+                    "title": announcement.title,
+                    "is_urgent": announcement.is_urgent,
+                },
+            )
+            
+            try:
+                from notifications.services import NotificationEventService
+                
+                NotificationEventService.create_event(
+                    event_type='meeting',
+                    building=instance.building,
+                    title=f"Γενική Συνέλευση: {instance.title}",
+                    description=f"Σύγκληση γενικής συνέλευσης στις {assembly_date.strftime('%d/%m/%Y')} για συζήτηση και έγκριση έργων.",
+                    url=f"/assemblies/{instance.id}",
+                    is_urgent=True,
+                    icon='📋',
+                    event_date=timezone.make_aware(
+                        timezone.datetime.combine(assembly_date, timezone.datetime.min.time())
+                    ) if assembly_date else None,
+                )
+            except Exception:
+                pass  # Αν δεν υπάρχει το NotificationEventService, συνεχίζουμε
+        
+    except Exception as e:
+        logger.error(f"Failed to create announcement for assembly {instance.id}: {e}")
 
 
 @receiver(post_save, sender=Assembly)
