@@ -36,12 +36,14 @@ function AssemblyCard({
   assembly, 
   index, 
   canManage,
-  onDelete
+  onDelete,
+  isPast = false,
 }: { 
   assembly: AssemblyListItem; 
   index: number;
   canManage: boolean;
   onDelete: () => void;
+  isPast?: boolean;
 }) {
   const router = useRouter();
   const status = statusColors[assembly.status] || statusColors.draft;
@@ -69,11 +71,35 @@ function AssemblyCard({
       transition={{ duration: 0.3, delay: index * 0.05 }}
       onClick={() => router.push(`/assemblies/${assembly.id}`)}
       className={cn(
-        'group relative rounded-2xl bg-gradient-to-br from-card/90 to-muted/10 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20 transition-all duration-300 cursor-pointer',
-        'hover:shadow-md hover:ring-primary/20',
+        'group relative rounded-2xl bg-gray-50 border border-gray-200 p-5 shadow-sm ring-1 ring-border/10 transition-all duration-300 cursor-pointer',
+        'hover:shadow-md hover:ring-primary/20 hover:border-primary/30',
         isLive && 'bg-emerald-500/5 ring-2 ring-emerald-500/30'
       )}
     >
+      {/* Past overlay */}
+      {isPast && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <span className="text-red-500/60 font-bold text-5xl rotate-[-18deg] tracking-[0.25em]">
+            Έγινε
+          </span>
+        </div>
+      )}
+
+      {/* Delete button */}
+      {canManage && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute top-3 right-3 rounded-full border border-gray-300 bg-white/80 text-gray-600 hover:text-destructive hover:border-destructive/60 px-2 py-1 text-xs shadow-sm"
+          title="Διαγραφή συνέλευσης"
+        >
+          Διαγραφή
+        </button>
+      )}
+
       {/* Live indicator */}
       {isLive && (
         <div className="absolute -top-2 -right-2">
@@ -388,6 +414,7 @@ function AssembliesPageContent() {
                     index={index}
                     canManage={canManage}
                     onDelete={() => handleDelete(assembly.id, assembly.title)}
+                    isPast
                   />
                 ))}
               </div>
