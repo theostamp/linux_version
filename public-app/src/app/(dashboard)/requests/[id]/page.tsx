@@ -40,6 +40,11 @@ export default function RequestDetailPage() {
   const { user, isAuthReady } = useAuth();
   const { selectedBuilding, currentBuilding } = useBuilding();
   const [request, setRequest] = useState<UserRequest | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [supporting, setSupporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [changingStatus, setChangingStatus] = useState(false);
   
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
