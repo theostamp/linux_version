@@ -116,9 +116,8 @@ function RequestsPageContent() {
     try {
       await deleteUserRequest(request.id);
       toast.success('Το αίτημα διαγράφηκε επιτυχώς');
-      // ✅ Invalidate AND explicitly refetch for immediate UI update
-      await queryClient.invalidateQueries({ queryKey: ['requests'] });
-      await queryClient.refetchQueries({ queryKey: ['requests'] });
+      // ✅ Invalidate all request queries
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
     } catch (error) {
       console.error('Error deleting request:', error);
       toast.error('Σφάλμα κατά τη διαγραφή του αιτήματος');

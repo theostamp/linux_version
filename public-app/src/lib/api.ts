@@ -535,6 +535,17 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+      
+      if (isFormData) {
+        console.log(`[API POST] Sending FormData to ${url}`);
+        // Debug FormData content
+        for (const [key, value] of (body as FormData).entries()) {
+          console.log(`  ${key}: ${value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value}`);
+        }
+      } else {
+        console.log(`[API POST] Sending JSON to ${url}`, body);
+      }
+
       const headers = getHeaders('POST');
       if (isFormData) {
         delete headers['Content-Type'];

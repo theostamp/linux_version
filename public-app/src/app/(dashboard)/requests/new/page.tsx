@@ -75,9 +75,8 @@ export default function NewRequestPage() {
       
       await createUserRequest(payload);
       
-      // ✅ Invalidate AND explicitly refetch for immediate UI update
+      // ✅ Invalidate all request queries regardless of buildingId
       await queryClient.invalidateQueries({ queryKey: ['requests'] });
-      await queryClient.refetchQueries({ queryKey: ['requests'] });
       toast.success('Το αίτημα δημιουργήθηκε επιτυχώς!');
       router.push('/requests');
     } catch (err: unknown) {
