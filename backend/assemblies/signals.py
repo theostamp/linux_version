@@ -6,6 +6,7 @@ Assembly Signals
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.db import transaction
 import logging
 
 from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
@@ -429,4 +430,106 @@ def schedule_emails_on_convened(sender, instance, created, **kwargs):
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to schedule emails for assembly {instance.id}: {e}")
+
+
+@receiver(post_save, sender=Assembly)
+def send_initial_notifications_on_creation(sender, instance: Assembly, created, **kwargs):
+    """
+    Στέλνει άμεσα ειδοποιήσεις (email + Viber αν είναι ενεργό) όταν δημιουργείται συνέλευση.
+    Χρησιμοποιεί MultiChannelNotificationService ώστε να επιλέγει διαθέσιμα κανάλια για κάθε χρήστη.
+    Παραλείπει αν έχει ήδη σταλεί πρόσκληση (invitation_sent=True).
+    """
+    if not created:
+        return
+
+    if instance.invitation_sent:
+        return
+
+    def _send():
+        try:
+            from notifications.multichannel_service import (
+                MultiChannelNotificationService,
+                RecipientChannels,
+            )
+            from notifications.providers.base import ChannelType
+
+            recipients: list[RecipientChannels] = []
+
+            for attendee in instance.attendees.select_related("user"):
+                user = attendee.user
+                email = user.email if user and user.email else None
+
+                viber_id = None
+                if user and hasattr(user, "viber_subscription"):
+                    sub = user.viber_subscription
+                    if sub and getattr(sub, "is_subscribed", False):
+                        viber_id = sub.viber_user_id
+
+                # Αν δεν έχουμε κανένα κανάλι, προσπερνάμε
+                if not email and not viber_id:
+                    continue
+
+                recipients.append(
+                    RecipientChannels(
+                        email=email,
+                        viber_id=viber_id,
+                    )
+                )
+
+            if not recipients:
+                logger.info(
+                    "[Assembly Notifications] No recipients with email or Viber for assembly %s",
+                    instance.id,
+                )
+                return
+
+            date_str = instance.scheduled_date.strftime("%d/%m/%Y") if instance.scheduled_date else ""
+            time_str = (
+                instance.scheduled_time.strftime("%H:%M")
+                if instance.scheduled_time
+                else ""
+            )
+            location = instance.location or "Θα ανακοινωθεί"
+            title = instance.title
+
+            subject = f"Γενική Συνέλευση: {title}"
+            message = (
+                f"Πρόσκληση σε Γενική Συνέλευση\n\n"
+                f"Τίτλος: {title}\n"
+                f"Ημερομηνία: {date_str} {time_str}\n"
+                f"Τοποθεσία: {location}\n\n"
+                f"Παρακαλούμε για την παρουσία σας ή/και τη συμμετοχή μέσω ψηφοφορίας."
+            )
+
+            service = MultiChannelNotificationService()
+            results = service.send_bulk(
+                recipients=recipients,
+                subject=subject,
+                message=message,
+                channels=[ChannelType.EMAIL, ChannelType.VIBER],
+            )
+
+            successful = sum(1 for r in results if r.any_success)
+            logger.info(
+                "[Assembly Notifications] Sent initial notifications for assembly %s (success=%s / total=%s)",
+                instance.id,
+                successful,
+                len(results),
+            )
+
+            # Μαρκάρουμε ότι στάλθηκε η πρόσκληση
+            instance.invitation_sent = True
+            instance.invitation_sent_at = timezone.now()
+            # Δεν αλλάζουμε status εδώ για να μην συγκρουστεί με άλλα flows
+            instance.save(update_fields=["invitation_sent", "invitation_sent_at"])
+
+        except Exception as e:
+            logger.error(
+                "[Assembly Notifications] Failed to send initial notifications for assembly %s: %s",
+                instance.id,
+                e,
+            )
+
+    # Μετά το commit ώστε να έχουν δημιουργηθεί οι attendees
+    transaction.on_commit(_send)
 
