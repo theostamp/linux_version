@@ -256,6 +256,7 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
               <Switch
                 checked={includeNotification}
                 onCheckedChange={setIncludeNotification}
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-blue-600 border-gray-400"
               />
             </div>
             

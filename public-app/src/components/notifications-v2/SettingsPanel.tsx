@@ -836,6 +836,7 @@ function EventNotificationsPanel() {
                   <Switch
                     checked={eventSettings.enabled}
                     onCheckedChange={() => toggleEventEnabled(event.id)}
+                    className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
                   />
                 </div>
               </CardContent>

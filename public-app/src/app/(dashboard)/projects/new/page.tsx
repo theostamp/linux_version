@@ -326,7 +326,11 @@ export default function NewProjectPage() {
                       </p>
                     </div>
                   </div>
-                  <Switch checked={createGeneralAssembly} onCheckedChange={setCreateGeneralAssembly} />
+                  <Switch 
+                    checked={createGeneralAssembly} 
+                    onCheckedChange={setCreateGeneralAssembly}
+                    className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
+                  />
                 </div>
 
                 {createGeneralAssembly && (
@@ -408,6 +412,7 @@ export default function NewProjectPage() {
                 id="should_create_vote"
                 checked={formData.should_create_vote}
                 onCheckedChange={(checked) => handleInputChange('should_create_vote', checked)}
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-primary border-gray-400"
               />
             </div>
 

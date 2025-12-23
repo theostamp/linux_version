@@ -189,7 +189,7 @@ function AgendaItemRow({
               <Switch
                 checked={item.allows_pre_voting}
                 onCheckedChange={(v) => onUpdate(item.id, { allows_pre_voting: v })}
-                className="scale-75"
+                className="scale-75 data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
               />
               <div>
                 <Label className="text-xs text-indigo-800">Pre-voting</Label>
@@ -528,6 +528,7 @@ export default function CreateAssemblyModal({
                   <Switch
                     checked={formData.pre_voting_enabled}
                     onCheckedChange={(v) => setFormData({ ...formData, pre_voting_enabled: v })}
+                    className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
                   />
                 </div>
               </div>
