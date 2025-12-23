@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
+import re
 
 from .models import Project, Offer, ProjectVote
 from todo_management.services import ensure_linked_todo, complete_linked_todo
@@ -34,12 +35,13 @@ def sync_project_todo(sender, instance: Project, created, **kwargs):
         create_project_vote(instance)
 
         # Δημιουργία ξεχωριστής ανακοίνωσης για γενική συνέλευση αν υπάρχει
-        if instance.general_assembly_date:
+        # Ελέγχουμε και general_assembly_date και linked_assembly
+        if instance.general_assembly_date or instance.linked_assembly:
             create_assembly_announcement(instance)
     else:
-        # Αν ενημερώνεται το έργο και προστέθηκε general_assembly_date
+        # Αν ενημερώνεται το έργο και προστέθηκε general_assembly_date ή linked_assembly
         # ελέγχουμε αν υπάρχει ήδη ανακοίνωση για τη συνέλευση
-        if instance.general_assembly_date:
+        if instance.general_assembly_date or instance.linked_assembly:
             # Θα δημιουργήσουμε ανακοίνωση μόνο αν δεν υπάρχει ήδη για αυτή την ημερομηνία
             create_assembly_announcement(instance, check_existing=True)
             # Απενεργοποίηση ανακοίνωσης αν η ημερομηνία έχει περάσει
@@ -176,6 +178,69 @@ def create_offer_announcement(offer: Offer):
     try:
         from announcements.models import Announcement
         
+        project = offer.project
+        
+        # Έλεγχος αν υπάρχει ανακοίνωση συνέλευσης για αυτό το έργο
+        # Αν υπάρχει, ενημερώνουμε αυτήν αντί να δημιουργούμε ξεχωριστή
+        assembly_announcement = None
+        if project.linked_assembly or project.general_assembly_date:
+            assembly_date = project.linked_assembly.scheduled_date if project.linked_assembly else project.general_assembly_date
+            assembly_announcement = (
+                Announcement.objects
+                .filter(
+                    building=project.building,
+                    title__icontains=f"Σύγκληση Γενικής Συνέλευσης",
+                    projects=project,
+                    is_active=True
+                )
+                .first()
+            )
+        
+        if assembly_announcement:
+            # Ενημέρωση ανακοίνωσης συνέλευσης με πλήθος προσφορών
+            offers_count = project.offers.filter(status='submitted').count()
+            
+            # Προσθήκη/ενημέρωση πληροφορίας για προσφορές στην περιγραφή
+            current_description = assembly_announcement.description
+            
+            # Έλεγχος αν υπάρχει ήδη πληροφορία για προσφορές
+            if "προσφορές" in current_description.lower() or "προσφορά" in current_description.lower():
+                # Ενημέρωση υπάρχουσας αναφοράς
+                # Αντικατάσταση παλιού πλήθους με νέο
+                pattern = r'(\d+)\s+προσφορές?\s+προς\s+έγκριση'
+                if re.search(pattern, current_description, re.IGNORECASE):
+                    current_description = re.sub(
+                        pattern,
+                        f'{offers_count} {"προσφορά" if offers_count == 1 else "προσφορές"} προς έγκριση',
+                        current_description,
+                        flags=re.IGNORECASE
+                    )
+                else:
+                    # Προσθήκη νέας πληροφορίας
+                    offers_info = f"\n\n**Προσφορές:** Έχουν συγκεντρωθεί {offers_count} {'προσφορά' if offers_count == 1 else 'προσφορές'} προς έγκριση."
+                    current_description = current_description + offers_info
+            else:
+                # Προσθήκη νέας πληροφορίας για προσφορές
+                offers_info = f"\n\n**Προσφορές:** Έχουν συγκεντρωθεί {offers_count} {'προσφορά' if offers_count == 1 else 'προσφορές'} προς έγκριση."
+                current_description = current_description + offers_info
+            
+            assembly_announcement.description = current_description
+            assembly_announcement.updated_at = timezone.now()
+            assembly_announcement.save(update_fields=['description', 'updated_at'])
+            
+            # Ενημέρωση με WebSocket
+            publish_building_event(
+                building_id=project.building_id,
+                event_type="announcement.updated",
+                payload={
+                    "id": assembly_announcement.id,
+                    "title": assembly_announcement.title,
+                    "is_urgent": assembly_announcement.is_urgent,
+                },
+            )
+            return  # Τελείωσε η ενημέρωση
+        
+        # Αν δεν υπάρχει ανακοίνωση συνέλευσης, δημιουργούμε ξεχωριστή για προσφορές
         # Έλεγχος αν υπάρχει ήδη ανακοίνωση για προσφορές αυτού του έργου
         existing_announcement = Announcement.objects.filter(
             building=offer.project.building,
@@ -354,27 +419,37 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
     try:
         from announcements.models import Announcement
 
-        assembly_date = project.general_assembly_date
-        if not assembly_date:
+        # Προτεραιότητα: linked_assembly > general_assembly_date
+        assembly = project.linked_assembly
+        if assembly:
+            assembly_date = assembly.scheduled_date
+            assembly_time_str = assembly.scheduled_time.strftime('%H:%M') if assembly.scheduled_time else '20:00'
+            location_info = ""
+            if assembly.is_online and assembly.meeting_link:
+                location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {assembly.meeting_link}"
+            elif assembly.location:
+                location_info = f"\n**Τοποθεσία:** {assembly.location}"
+        elif project.general_assembly_date:
+            assembly_date = project.general_assembly_date
+            # Στοιχεία συνέλευσης
+            if project.assembly_time:
+                if hasattr(project.assembly_time, 'strftime'):
+                    assembly_time_str = project.assembly_time.strftime('%H:%M')
+                else:
+                    assembly_time_str = str(project.assembly_time)
+            else:
+                assembly_time_str = '20:00'
+
+            location_info = ""
+            if project.assembly_is_online and project.assembly_zoom_link:
+                location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {project.assembly_zoom_link}"
+            elif project.assembly_location:
+                location_info = f"\n**Τοποθεσία:** {project.assembly_location}"
+        else:
             return
 
         today = project.created_at.date() if hasattr(project, 'created_at') else assembly_date
         title = f"Σύγκληση Γενικής Συνέλευσης - {assembly_date.strftime('%d/%m/%Y')}"
-
-        # Στοιχεία συνέλευσης
-        if project.assembly_time:
-            if hasattr(project.assembly_time, 'strftime'):
-                assembly_time_str = project.assembly_time.strftime('%H:%M')
-            else:
-                assembly_time_str = str(project.assembly_time)
-        else:
-            assembly_time_str = '20:00'
-
-        location_info = ""
-        if project.assembly_is_online and project.assembly_zoom_link:
-            location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {project.assembly_zoom_link}"
-        elif project.assembly_location:
-            location_info = f"\n**Τοποθεσία:** {project.assembly_location}"
 
         # Εύρεση υπάρχουσας ανακοίνωσης (μόνο όσες σχετίζονται ήδη με έργα)
         existing_announcement = (
@@ -577,16 +652,23 @@ def deactivate_assembly_announcement(project: Project):
     try:
         from announcements.models import Announcement
 
-        if not project.general_assembly_date:
+        # Προτεραιότητα: linked_assembly > general_assembly_date
+        assembly_date = None
+        if project.linked_assembly:
+            assembly_date = project.linked_assembly.scheduled_date
+        elif project.general_assembly_date:
+            assembly_date = project.general_assembly_date
+        
+        if not assembly_date:
             return
 
         # Έλεγχος αν η ημερομηνία έχει περάσει
-        if project.general_assembly_date < timezone.now().date():
+        if assembly_date < timezone.now().date():
             # Βρες την ανακοίνωση της συνέλευσης
             announcements = Announcement.objects.filter(
                 building=project.building,
                 title__icontains="Σύγκληση Γενικής Συνέλευσης",
-                end_date=project.general_assembly_date,
+                end_date=assembly_date,
                 is_active=True
             )
 
