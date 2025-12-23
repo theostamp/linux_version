@@ -49,6 +49,9 @@ django-redis==5.4.0
 requests==2.32.3
 ipython==8.24.0
 
+# Markdown rendering (used by assemblies minutes service)
+Markdown>=3.6
+
 # Security
 python-decouple==3.8
 
