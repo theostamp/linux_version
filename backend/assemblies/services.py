@@ -120,15 +120,21 @@ class AssemblyMinutesService:
     
     def generate_pdf(self) -> bytes:
         """Δημιουργεί PDF από τα πρακτικά"""
+        return self.render_markdown_to_pdf(self.generate())
+
+    @staticmethod
+    def render_markdown_to_pdf(md_text: str) -> bytes:
+        """
+        Δημιουργεί PDF από markdown κείμενο.
+        Χρησιμοποιείται ώστε το PDF να ακολουθεί και χειροκίνητες επεξεργασίες (minutes_text).
+        """
         if not HTML:
             raise ImportError("WeasyPrint is not installed or properly configured.")
-            
-        md_text = self.generate()
-        
+
         # Μετατροπή Markdown σε HTML
         # Χρησιμοποιούμε extensions για πίνακες και κώδικα
-        html_content = markdown.markdown(md_text, extensions=['tables', 'fenced_code', 'toc'])
-        
+        html_content = markdown.markdown(md_text or "", extensions=['tables', 'fenced_code', 'toc'])
+
         # Προσθήκη βασικού CSS για το PDF
         full_html = f"""
         <html>
@@ -159,10 +165,8 @@ class AssemblyMinutesService:
             </body>
         </html>
         """
-        
-        # Δημιουργία PDF
-        pdf_bytes = HTML(string=full_html).write_pdf()
-        return pdf_bytes
+
+        return HTML(string=full_html).write_pdf()
     
     def _generate_header(self) -> str:
         """Δημιουργεί το header των πρακτικών"""
@@ -212,7 +216,7 @@ class AssemblyMinutesService:
     
     def _generate_attendees_list(self) -> str:
         """Δημιουργεί τη λίστα παρόντων"""
-        attendees = self.assembly.attendees.filter(is_present=True).order_by('apartment__apartment_number')
+        attendees = self.assembly.attendees.filter(is_present=True).order_by('apartment__number')
         
         if not attendees.exists():
             return "*Δεν καταγράφηκαν παρόντες*"
@@ -225,7 +229,7 @@ class AssemblyMinutesService:
                 attendance_type += f' (εκ μέρους {attendee.proxy_from_apartment})'
             
             lines.append(
-                f'| {attendee.apartment.apartment_number} | '
+                f'| {attendee.apartment.number} | '
                 f'{attendee.display_name} | '
                 f'{attendee.mills} | '
                 f'{attendance_type} |'

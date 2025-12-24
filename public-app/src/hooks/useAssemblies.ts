@@ -36,6 +36,7 @@ import {
   type AgendaItem,
   type AssemblyAttendee,
   type CreateAssemblyPayload,
+  type UpdateAssemblyPayload,
   type CreateAgendaItemPayload,
   type RSVPStatus,
   type AttendanceType,
@@ -131,7 +132,7 @@ export function useUpdateAssembly() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateAssemblyPayload> }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateAssemblyPayload }) => 
       updateAssembly(id, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['assemblies'] });

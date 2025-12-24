@@ -232,7 +232,15 @@ class AssemblyViewSet(viewsets.ModelViewSet):
         assembly = self.get_object()
         
         if request.method == 'GET':
-            # Return current minutes
+            # Return saved minutes if they exist, otherwise generate a draft.
+            # Optional: force_generate=1 to always regenerate.
+            force_generate = str(request.query_params.get('force_generate', '')).lower() in ('1', 'true', 'yes')
+            if not force_generate and assembly.minutes_text and assembly.minutes_text.strip():
+                return Response({
+                    'minutes_text': assembly.minutes_text,
+                    'approved': assembly.minutes_approved
+                })
+
             minutes_service = AssemblyMinutesService(assembly)
             minutes_text = minutes_service.generate()
             return Response({
@@ -292,8 +300,13 @@ class AssemblyViewSet(viewsets.ModelViewSet):
         assembly = self.get_object()
         
         try:
-            service = AssemblyMinutesService(assembly)
-            pdf_bytes = service.generate_pdf()
+            # Prefer saved minutes_text so edits are reflected in the exported PDF.
+            saved_text = (assembly.minutes_text or '').strip()
+            if saved_text:
+                pdf_bytes = AssemblyMinutesService.render_markdown_to_pdf(saved_text)
+            else:
+                service = AssemblyMinutesService(assembly)
+                pdf_bytes = service.generate_pdf()
             
             response = HttpResponse(pdf_bytes, content_type='application/pdf')
             filename = f"praktika_{assembly.scheduled_date}_{assembly.id}.pdf"

@@ -2616,6 +2616,14 @@ export type CreateAssemblyPayload = {
   }>;
 };
 
+export type UpdateAssemblyPayload = Partial<CreateAssemblyPayload> & {
+  /**
+   * Editable minutes markdown. Stored in Assembly.minutes_text (backend).
+   * Not used on create, but supported on PATCH.
+   */
+  minutes_text?: string;
+};
+
 export type CreateAgendaItemPayload = {
   assembly?: string;
   order: number;
@@ -2646,7 +2654,7 @@ export async function createAssembly(payload: CreateAssemblyPayload): Promise<As
   return await apiPost<Assembly>('/assemblies/', payload);
 }
 
-export async function updateAssembly(assemblyId: string, payload: Partial<CreateAssemblyPayload>): Promise<Assembly> {
+export async function updateAssembly(assemblyId: string, payload: UpdateAssemblyPayload): Promise<Assembly> {
   return await apiPatch<Assembly>(`/assemblies/${assemblyId}/`, payload);
 }
 
