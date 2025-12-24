@@ -33,11 +33,16 @@ export default function AuthGate({ children, fallback, role = 'any' }: Readonly<
     // Map 'admin' role requirement to 'superuser' (since admin role maps to superuser)
     const requiredRole = role === 'admin' ? 'superuser' : role;
     
-    // Superusers always have access to superuser pages, regardless of their role field
-    const hasAccess = 
-      requiredRole === 'superuser' && user.is_superuser
-        ? true
-        : effectiveRole === requiredRole;
+    let hasAccess = false;
+    
+    if (requiredRole === 'superuser') {
+      // Ultra Admin (platform admin) requires BOTH is_superuser AND is_staff
+      // This distinguishes platform admins from tenant superusers
+      hasAccess = user.is_superuser === true && user.is_staff === true;
+    } else {
+      // For other roles, use effective role check
+      hasAccess = effectiveRole === requiredRole;
+    }
     
     if (!hasAccess) {
       return (
