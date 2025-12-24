@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { 
   Vote, CheckCircle, XCircle, MinusCircle, 
-  Loader2, Search, Users, Mail, Hand, Filter, RefreshCw
+  Loader2, Search, Users, Mail, RefreshCw, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -40,53 +40,48 @@ type VoteFilter = 'all' | 'voted' | 'pending' | 'pre_vote';
 const voteConfig = {
   approve: {
     label: 'Υπέρ',
-    shortLabel: 'Υ',
     icon: CheckCircle,
     color: 'text-emerald-600',
-    bgColor: 'bg-emerald-100',
-    activeColor: 'bg-emerald-500 text-white',
-    borderColor: 'border-emerald-500',
+    bgColor: 'bg-emerald-50',
+    activeColor: 'bg-emerald-500 text-white shadow-lg shadow-emerald-200',
+    borderColor: 'border-emerald-300',
+    ringColor: 'ring-emerald-500',
   },
   reject: {
     label: 'Κατά',
-    shortLabel: 'Κ',
     icon: XCircle,
     color: 'text-red-600',
-    bgColor: 'bg-red-100',
-    activeColor: 'bg-red-500 text-white',
-    borderColor: 'border-red-500',
+    bgColor: 'bg-red-50',
+    activeColor: 'bg-red-500 text-white shadow-lg shadow-red-200',
+    borderColor: 'border-red-300',
+    ringColor: 'ring-red-500',
   },
   abstain: {
     label: 'Λευκό',
-    shortLabel: 'Λ',
     icon: MinusCircle,
     color: 'text-gray-500',
     bgColor: 'bg-gray-100',
-    activeColor: 'bg-gray-500 text-white',
-    borderColor: 'border-gray-500',
+    activeColor: 'bg-gray-500 text-white shadow-lg shadow-gray-200',
+    borderColor: 'border-gray-300',
+    ringColor: 'ring-gray-500',
   },
 };
 
-function VoteButtonGroup({
+function MobileVoteButtons({
   currentVote,
   onVote,
   disabled,
   isLoading,
-  size = 'default'
 }: {
   currentVote: VoteChoice | null;
   onVote: (vote: VoteChoice) => void;
   disabled?: boolean;
   isLoading?: boolean;
-  size?: 'default' | 'compact';
 }) {
   const choices: VoteChoice[] = ['approve', 'reject', 'abstain'];
   
   return (
-    <div className={cn(
-      "flex rounded-lg overflow-hidden border",
-      size === 'compact' ? 'h-8' : 'h-10'
-    )}>
+    <div className="flex gap-2">
       {choices.map((choice) => {
         const config = voteConfig[choice];
         const isActive = currentVote === choice;
@@ -98,22 +93,28 @@ function VoteButtonGroup({
             onClick={() => onVote(choice)}
             disabled={disabled || isLoading}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1 transition-all",
-              "border-r last:border-r-0 font-medium",
-              size === 'compact' ? 'px-2 text-xs' : 'px-3 text-sm',
-              isActive ? config.activeColor : `hover:${config.bgColor} ${config.color}`,
-              disabled && 'opacity-50 cursor-not-allowed'
+              "flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all duration-200",
+              "min-h-[64px] touch-manipulation active:scale-95",
+              isActive 
+                ? `${config.activeColor} ${config.borderColor} ring-2 ${config.ringColor} ring-offset-1` 
+                : `bg-white ${config.borderColor} hover:${config.bgColor}`,
+              disabled && 'opacity-40 cursor-not-allowed'
             )}
           >
             {isLoading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
               <>
                 <Icon className={cn(
-                  size === 'compact' ? 'w-3 h-3' : 'w-4 h-4'
+                  "w-7 h-7",
+                  isActive ? 'text-white' : config.color
                 )} />
-                <span className="hidden sm:inline">{config.label}</span>
-                <span className="sm:hidden">{config.shortLabel}</span>
+                <span className={cn(
+                  "text-sm font-bold",
+                  isActive ? 'text-white' : config.color
+                )}>
+                  {config.label}
+                </span>
               </>
             )}
           </button>
@@ -123,7 +124,7 @@ function VoteButtonGroup({
   );
 }
 
-function AttendeeVoteRow({
+function AttendeeVoteCard({
   attendee,
   vote,
   onVote,
@@ -138,53 +139,63 @@ function AttendeeVoteRow({
   isPending: boolean;
 }) {
   const isPreVote = vote?.vote_source === 'pre_vote';
+  const hasVoted = !!vote;
   
   return (
     <div className={cn(
-      "border-b border-gray-100 last:border-b-0",
+      "bg-white rounded-2xl border-2 p-4 transition-all",
+      hasVoted ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200",
       !attendee.is_present && "opacity-50"
     )}>
-      <div className="flex items-center gap-3 p-3">
-        {/* Apartment Number */}
+      {/* Header με πληροφορίες ενοίκου */}
+      <div className="flex items-center gap-3 mb-4">
         <div className={cn(
-          "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0",
-          attendee.is_present ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-400"
+          "w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg shrink-0",
+          attendee.is_present 
+            ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white" 
+            : "bg-gray-200 text-gray-500"
         )}>
           {attendee.apartment_number}
         </div>
         
-        {/* Name & Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900 truncate">{attendee.display_name}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-gray-900 text-base truncate">
+              {attendee.display_name}
+            </span>
             {isPreVote && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-blue-50 text-blue-700 border-blue-200">
+              <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] font-bold">
                 <Mail className="w-2.5 h-2.5 mr-1" />
-                Επιστολική
+                ΕΠΙΣΤΟΛΙΚΗ
               </Badge>
             )}
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-gray-500 font-medium">
+              {attendee.mills} χιλιοστά
+            </span>
             {!attendee.is_present && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-gray-50 text-gray-500">
+              <Badge variant="outline" className="text-[10px] bg-gray-50 text-gray-500">
                 Απών
               </Badge>
             )}
+            {hasVoted && (
+              <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
+                <CheckCircle className="w-2.5 h-2.5 mr-1" />
+                Ψήφισε
+              </Badge>
+            )}
           </div>
-          <div className="text-xs text-gray-500">
-            {attendee.mills} χιλιοστά
-          </div>
-        </div>
-
-        {/* Vote Buttons */}
-        <div className="shrink-0">
-          <VoteButtonGroup
-            currentVote={vote?.vote || null}
-            onVote={(v) => onVote(attendee.id, v)}
-            disabled={!attendee.is_present && !isPreVote}
-            isLoading={isPending}
-            size="compact"
-          />
         </div>
       </div>
+
+      {/* Κουμπιά Ψήφου - Μεγάλα για εύκολο touch */}
+      <MobileVoteButtons
+        currentVote={vote?.vote || null}
+        onVote={(v) => onVote(attendee.id, v)}
+        disabled={!attendee.is_present && !isPreVote}
+        isLoading={isPending}
+      />
     </div>
   );
 }
@@ -197,8 +208,9 @@ export default function VotingControlPanel({
   isRefreshing
 }: VotingControlPanelProps) {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<VoteFilter>('all');
+  const [filter, setFilter] = useState<VoteFilter>('pending');
   const [pendingVotes, setPendingVotes] = useState<Set<string>>(new Set());
+  const [isOpen, setIsOpen] = useState(false);
   
   const castVoteMutation = useCastVote();
 
@@ -250,10 +262,9 @@ export default function VotingControlPanel({
     const presentAttendees = attendees.filter(a => a.is_present);
     const votedCount = votes.length;
     const preVoteCount = votes.filter(v => v.vote_source === 'pre_vote').length;
-    const liveVoteCount = votedCount - preVoteCount;
     const pendingCount = presentAttendees.filter(a => !voteMap.has(a.id)).length;
     
-    return { votedCount, preVoteCount, liveVoteCount, pendingCount, presentCount: presentAttendees.length };
+    return { votedCount, preVoteCount, pendingCount, presentCount: presentAttendees.length };
   }, [attendees, votes, voteMap]);
 
   const handleVote = async (attendeeId: string, vote: VoteChoice) => {
@@ -275,140 +286,175 @@ export default function VotingControlPanel({
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          variant="outline" 
-          className="gap-2 bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+          size="lg"
+          className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg h-12 px-5"
         >
-          <Vote className="w-4 h-4" />
-          Διαχείριση Ψήφων
+          <Vote className="w-5 h-5" />
+          <span className="hidden sm:inline">Διαχείριση</span> Ψήφων
           {stats.pendingCount > 0 && (
-            <Badge className="bg-amber-500 text-white text-[10px] px-1.5">
+            <Badge className="bg-amber-400 text-amber-900 text-xs font-bold ml-1">
               {stats.pendingCount}
             </Badge>
           )}
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-4 pb-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Vote className="w-5 h-5 text-indigo-600" />
-            Καταχώρηση Ψήφων: {item.title}
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Stats Bar */}
-        <div className="px-4 py-3 bg-gray-50 border-y border-gray-100 grid grid-cols-4 gap-2 text-center text-sm">
-          <div>
-            <div className="font-bold text-indigo-600">{stats.presentCount}</div>
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Παρόντες</div>
-          </div>
-          <div>
-            <div className="font-bold text-emerald-600">{stats.votedCount}</div>
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Ψήφισαν</div>
-          </div>
-          <div>
-            <div className="font-bold text-blue-600">{stats.preVoteCount}</div>
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Επιστολικές</div>
-          </div>
-          <div>
-            <div className="font-bold text-amber-600">{stats.pendingCount}</div>
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Εκκρεμούν</div>
-          </div>
-        </div>
-
-        {/* Search & Filter */}
-        <div className="px-4 py-3 space-y-3 border-b border-gray-100">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input 
-              placeholder="Αναζήτηση διαμερίσματος ή ονόματος..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <Filter className="w-4 h-4 text-gray-400 shrink-0" />
-            {([
-              { value: 'all', label: 'Όλοι' },
-              { value: 'pending', label: 'Εκκρεμείς' },
-              { value: 'voted', label: 'Ψήφισαν' },
-              { value: 'pre_vote', label: 'Επιστολικές' },
-            ] as const).map((f) => (
-              <Button
-                key={f.value}
-                variant={filter === f.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter(f.value)}
-                className="shrink-0 text-xs h-7"
+      {/* Full-screen mobile dialog */}
+      <DialogContent className="sm:max-w-lg max-w-[100vw] h-[100dvh] sm:h-[90vh] sm:max-h-[800px] p-0 gap-0 flex flex-col rounded-none sm:rounded-2xl">
+        {/* Header - Sticky */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 shrink-0">
+          <DialogHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                  <Vote className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <div>Ψηφοφορία Live</div>
+                  <div className="text-xs font-normal text-gray-500 line-clamp-1">{item.title}</div>
+                </div>
+              </DialogTitle>
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
-                {f.label}
-              </Button>
-            ))}
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+          </DialogHeader>
+
+          {/* Stats Bar - Πολύ ευδιάκριτα */}
+          <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 grid grid-cols-4 gap-2 text-center">
+            <div className="bg-white/80 rounded-xl p-2 shadow-sm">
+              <div className="font-black text-2xl text-indigo-600">{stats.presentCount}</div>
+              <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Παρόντες</div>
+            </div>
+            <div className="bg-white/80 rounded-xl p-2 shadow-sm">
+              <div className="font-black text-2xl text-emerald-600">{stats.votedCount}</div>
+              <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Ψήφισαν</div>
+            </div>
+            <div className="bg-white/80 rounded-xl p-2 shadow-sm">
+              <div className="font-black text-2xl text-blue-600">{stats.preVoteCount}</div>
+              <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Επιστολ.</div>
+            </div>
+            <div className="bg-white/80 rounded-xl p-2 shadow-sm">
+              <div className={cn(
+                "font-black text-2xl",
+                stats.pendingCount > 0 ? "text-amber-500 animate-pulse" : "text-gray-300"
+              )}>
+                {stats.pendingCount}
+              </div>
+              <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Εκκρεμεί</div>
+            </div>
+          </div>
+
+          {/* Search & Filter */}
+          <div className="px-4 py-3 space-y-3 bg-gray-50/50">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input 
+                placeholder="Αναζήτηση διαμερίσματος..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-12 h-12 text-base rounded-xl bg-white border-gray-200 shadow-sm"
+              />
+            </div>
             
-            {onRefresh && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRefresh}
-                disabled={isRefreshing}
-                className="ml-auto shrink-0"
-              >
-                <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
-              </Button>
-            )}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {([
+                { value: 'pending', label: 'Εκκρεμείς', count: stats.pendingCount, highlight: true },
+                { value: 'all', label: 'Όλοι', count: attendees.length },
+                { value: 'voted', label: 'Ψήφισαν', count: stats.votedCount },
+                { value: 'pre_vote', label: 'Επιστολικές', count: stats.preVoteCount },
+              ] as const).map((f) => (
+                <Button
+                  key={f.value}
+                  variant={filter === f.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilter(f.value)}
+                  className={cn(
+                    "shrink-0 h-10 px-4 rounded-full font-semibold shadow-sm",
+                    filter === f.value ? "bg-indigo-600 shadow-indigo-200" : "bg-white",
+                    f.highlight && filter !== f.value && f.count > 0 && "border-amber-300 text-amber-700"
+                  )}
+                >
+                  {f.label}
+                  <span className={cn(
+                    "ml-1.5 text-xs font-bold",
+                    filter === f.value ? "text-indigo-200" : "text-gray-400"
+                  )}>
+                    {f.count}
+                  </span>
+                </Button>
+              ))}
+              
+              {onRefresh && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="ml-auto shrink-0 h-10 w-10 rounded-full"
+                >
+                  <RefreshCw className={cn("w-5 h-5", isRefreshing && "animate-spin")} />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Attendee List */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        {/* Attendee List - Scrollable */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0 bg-gray-50/30">
           {filteredAttendees.length === 0 ? (
-            <div className="p-12 text-center text-gray-400">
-              <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>Δεν βρέθηκαν αποτελέσματα</p>
+            <div className="py-20 text-center">
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-10 h-10 text-gray-300" />
+              </div>
+              <p className="text-gray-500 font-medium text-lg">
+                {filter === 'pending' ? 'Όλοι έχουν ψηφίσει! 🎉' : 'Δεν βρέθηκαν αποτελέσματα'}
+              </p>
+              {filter === 'pending' && (
+                <p className="text-gray-400 text-sm mt-2">Μπορείτε να κλείσετε αυτό το παράθυρο</p>
+              )}
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {filteredAttendees.map((attendee) => (
-                <AttendeeVoteRow
-                  key={attendee.id}
-                  attendee={attendee}
-                  vote={voteMap.get(attendee.id) ? {
-                    vote: voteMap.get(attendee.id)!.vote,
-                    vote_source: voteMap.get(attendee.id)!.vote_source
-                  } : null}
-                  onVote={handleVote}
-                  isPending={pendingVotes.has(attendee.id)}
-                />
-              ))}
-            </div>
+            filteredAttendees.map((attendee) => (
+              <AttendeeVoteCard
+                key={attendee.id}
+                attendee={attendee}
+                vote={voteMap.get(attendee.id) ? {
+                  vote: voteMap.get(attendee.id)!.vote,
+                  vote_source: voteMap.get(attendee.id)!.vote_source
+                } : null}
+                onVote={handleVote}
+                isPending={pendingVotes.has(attendee.id)}
+              />
+            ))
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <Mail className="w-3.5 h-3.5 text-blue-500" />
-                Επιστολική = προ-ψηφισμένη
+        {/* Footer - Sticky με safe area για mobile */}
+        <div className="sticky bottom-0 p-4 bg-white border-t border-gray-100 shrink-0">
+          <div className="flex items-center justify-between text-sm pb-safe">
+            <div className="flex items-center gap-4 text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <Mail className="w-4 h-4 text-blue-500" />
+                <span className="text-xs">Επιστολική</span>
               </span>
-              <span className="flex items-center gap-1">
-                <Hand className="w-3.5 h-3.5 text-amber-500" />
-                Χειροκίνητη καταχώρηση
+              <span className="flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                <span className="text-xs">Ψήφισε</span>
               </span>
             </div>
-            <div className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 font-medium">
               {filteredAttendees.length} εγγραφές
-            </div>
+            </span>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-
