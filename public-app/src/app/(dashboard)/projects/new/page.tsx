@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, getActiveBuildingId, createVote, type CreateVotePayload } from '@/lib/api';
+import { api, getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -172,30 +172,12 @@ export default function NewProjectPage() {
       const project = await api.post<{ id: number }>('/projects/', payload);
 
       if (formData.should_create_vote) {
-        const votePayload: CreateVotePayload = {
-          title: `Έγκριση Έργου: ${formData.title}`,
-          description: `Ψηφοφορία για την έγκριση του έργου "${formData.title}".\n\nΠεριγραφή: ${formData.description || 'Δεν έχει δοθεί περιγραφή'}\n\nΕκτιμώμενο κόστος: ${formData.estimated_cost ? `${formData.estimated_cost}€` : 'Δεν έχει καθοριστεί'}`,
-          start_date: new Date().toISOString().split('T')[0],
-          end_date: formData.general_assembly_date || undefined,
-          choices: ['ΝΑΙ', 'ΟΧΙ', 'ΛΕΥΚΟ'],
-          building: buildingId,
-          is_active: true,
-        };
-
-        try {
-          await createVote(votePayload);
-          toast({
-            title: 'Επιτυχία',
-            description: 'Το έργο και η ψηφοφορία δημιουργήθηκαν επιτυχώς',
-          });
-        } catch (voteError) {
-          console.error('Failed to create vote:', voteError);
-          toast({
-            title: 'Επιτυχία με προειδοποίηση',
-            description: 'Το έργο δημιουργήθηκε, αλλά απέτυχε η δημιουργία της ψηφοφορίας',
-            variant: 'destructive',
-          });
-        }
+        // Σημείωση: Η ψηφοφορία δημιουργείται αυτόματα από το backend (projects/signals.py).
+        // Αν κάναμε εδώ δεύτερο POST /votes/ θα είχαμε duplicates (400).
+        toast({
+          title: 'Επιτυχία',
+          description: 'Το έργο δημιουργήθηκε και η ψηφοφορία θα εμφανιστεί αυτόματα',
+        });
       } else {
         toast({
           title: 'Επιτυχία',
