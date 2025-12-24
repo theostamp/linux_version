@@ -62,6 +62,57 @@ const formatDateTime = (value?: string | null) => {
   }
 };
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getMeetingHorizonLabel(eventDateValue?: string | null): string | null {
+  if (!eventDateValue) return null;
+  const eventDate = new Date(eventDateValue);
+  if (Number.isNaN(eventDate.getTime())) return null;
+
+  const today = startOfLocalDay(new Date());
+  const target = startOfLocalDay(eventDate);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / MS_PER_DAY);
+
+  if (diffDays === 0) return 'Σήμερα έχουμε';
+  if (diffDays === 1) return 'Αύριο έχουμε';
+  if (diffDays > 1) return `Σε ${diffDays} μέρες έχουμε`;
+  if (diffDays === -1) return 'Χθες είχαμε';
+  return `Πριν ${Math.abs(diffDays)} μέρες είχαμε`;
+}
+
+function injectHorizonIntoTitle(title: string, horizon: string): string {
+  const idx = title.indexOf(':');
+  if (idx === -1) {
+    return `${horizon}, ${title}`;
+  }
+  const before = title.slice(0, idx + 1);
+  let after = title.slice(idx + 1).trimStart();
+
+  // De-duplicate repeated meeting label patterns like:
+  // "Γενική Συνέλευση: Γενική Συνέλευση - Έργο: X" -> "Γενική Συνέλευση: <horizon>, Έργο: X"
+  const beforeLabel = before.slice(0, -1).trim(); // remove trailing ':'
+  if (after.startsWith(beforeLabel)) {
+    after = after.slice(beforeLabel.length).trimStart();
+    after = after.replace(/^[\s:–—-]+/, '').trimStart();
+  } else if (beforeLabel.includes('Γενική Συνέλευση') && after.startsWith('Γενική Συνέλευση')) {
+    after = after.slice('Γενική Συνέλευση'.length).trimStart();
+    after = after.replace(/^[\s:–—-]+/, '').trimStart();
+  }
+
+  return `${before} ${horizon}, ${after}`;
+}
+
+function getNotificationEventDisplayTitle(event: NotificationEvent): string {
+  if (event.event_type !== 'meeting') return event.title;
+  const horizon = getMeetingHorizonLabel(event.event_date);
+  if (!horizon) return event.title;
+  return injectHorizonIntoTitle(event.title, horizon);
+}
+
 export default function NotificationsList() {
   const { currentBuilding, selectedBuilding, buildings } = useBuilding();
   const defaultBuildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
@@ -356,7 +407,7 @@ export default function NotificationsList() {
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{event.icon || '🔔'}</span>
                         <div>
-                          <p className="font-semibold text-gray-900">{event.title}</p>
+                          <p className="font-semibold text-gray-900">{getNotificationEventDisplayTitle(event)}</p>
                           <p className="text-xs text-gray-500">
                             {event.event_type_display} · {formatDateTime(event.created_at)}
                           </p>
