@@ -8,7 +8,7 @@ import {
   Users, Calendar, Clock, MapPin, Video, FileText,
   ArrowLeft, Play, CheckCircle, AlertCircle, Percent,
   Timer, Vote, Send, Building2, ChevronRight, Edit,
-  Trash2, XCircle, Loader2, Download
+  Trash2, XCircle, Loader2, Download, Printer, ClipboardList
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -344,6 +344,14 @@ function AssemblyDetailContent() {
     router.push(`/assemblies/${assembly.id}/live`);
   };
 
+  const handleDownloadWorkingSheet = () => {
+    // We use a direct link because this is a public/GET endpoint for authenticated users
+    const url = `${process.env.NEXT_PUBLIC_CORE_API_URL}/api/assemblies/${assembly.id}/download_working_sheet/`;
+    // We should ideally use the api client to handle headers if needed, 
+    // but for simplicity and immediate feedback, we open in new tab
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="space-y-6">
       {/* Back button & header */}
@@ -380,6 +388,17 @@ function AssemblyDetailContent() {
         <div className="flex items-center gap-2">
           {canManage && (
             <>
+              {/* Working Sheet Button */}
+              <Button
+                variant="outline"
+                onClick={handleDownloadWorkingSheet}
+                className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                title="Εκτύπωση φύλλου εργασίας για χειρόγραφη συμπλήρωση"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Φύλλο Εργασίας
+              </Button>
+
               {assembly.status === 'draft' && (
                 <Button
                   variant="outline"

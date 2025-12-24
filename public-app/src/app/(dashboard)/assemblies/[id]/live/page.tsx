@@ -274,7 +274,16 @@ function LiveAssemblyContent() {
   };
 
   const handleCompleteItem = async (itemId: string) => {
-    await endAgendaItem.mutateAsync({ id: itemId, options: { decision_type: 'approved' } });
+    const decision = prompt('Ποια είναι η απόφαση για αυτό το θέμα;', 'Εγκρίθηκε ομόφωνα');
+    if (decision === null) return; // Cancelled
+    
+    await endAgendaItem.mutateAsync({ 
+      id: itemId, 
+      options: { 
+        decision_type: 'approved',
+        decision: decision
+      } 
+    });
   };
 
   const handleEndAssembly = async () => {

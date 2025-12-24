@@ -174,6 +174,80 @@ def send_same_day_assembly_reminder(self, assembly_id: str, schema_name: str):
         raise self.retry(exc=exc, countdown=120)
 
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_agenda_item_decision_notification(self, agenda_item_id: str, schema_name: str):
+    """
+    Στέλνει ειδοποίηση (Email + Viber) στους ενοίκους για την απόφαση ενός θέματος.
+    """
+    from assemblies.models import AgendaItem
+
+    try:
+        with schema_context(schema_name):
+            item = (
+                AgendaItem.objects.select_related('assembly', 'assembly__building')
+                .prefetch_related('assembly__attendees__user')
+                .get(id=agenda_item_id)
+            )
+
+            if not item.decision:
+                return f"No decision for item {agenda_item_id}, skipping notification"
+
+            recipients: list[RecipientChannels] = []
+
+            for attendee in item.assembly.attendees.select_related("user"):
+                user = attendee.user
+                email = user.email if user and user.email else None
+
+                viber_id = None
+                if user and hasattr(user, "viber_subscription"):
+                    sub = user.viber_subscription
+                    if sub and getattr(sub, "is_subscribed", False):
+                        viber_id = sub.viber_user_id
+
+                if not email and not viber_id:
+                    continue
+
+                recipients.append(
+                    RecipientChannels(
+                        email=email,
+                        viber_id=viber_id,
+                    )
+                )
+
+            if not recipients:
+                return f"No recipients for decision notification {agenda_item_id}"
+
+            subject = f"Απόφαση Συνέλευσης: {item.title}"
+            
+            # Map decision type to display string
+            decision_display = dict(AgendaItem._meta.get_field('decision_type').choices).get(
+                item.decision_type, item.decision_type
+            )
+            
+            message = (
+                f"Λήφθηκε νέα απόφαση στη Γενική Συνέλευση:\n\n"
+                f"**Θέμα:** {item.title}\n"
+                f"**Κατάσταση:** {decision_display}\n"
+                f"**Απόφαση:** {item.decision}\n\n"
+                f"Κτίριο: {item.assembly.building.name}\n"
+                f"Ημερομηνία: {item.assembly.scheduled_date.strftime('%d/%m/%Y')}"
+            )
+
+            service = MultiChannelNotificationService()
+            results = service.send_bulk(
+                recipients=recipients,
+                subject=subject,
+                message=message,
+                channels=[ChannelType.EMAIL, ChannelType.VIBER],
+            )
+
+            successful = sum(1 for r in results if r.any_success)
+            return f"Decision notification sent for item {agenda_item_id}: success={successful}/{len(results)}"
+
+    except Exception as exc:
+        raise self.retry(exc=exc, countdown=120)
+
+
 @shared_task
 def check_and_send_assembly_reminders():
     """

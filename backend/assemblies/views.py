@@ -36,17 +36,29 @@ from django.db import connection
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Helper για real-time ενημερώσεις
 def broadcast_assembly_event(assembly_id, event_type, payload):
-    channel_layer = get_channel_layer()
-    schema_name = getattr(connection, "schema_name", None) or "public"
-    async_to_sync(channel_layer.group_send)(
-        f'assembly_{schema_name}_{assembly_id}',
-        {
-            'type': event_type,
-            **payload
-        }
-    )
+    try:
+        channel_layer = get_channel_layer()
+        if not channel_layer:
+            logger.warning(f"Channel layer not available for assembly {assembly_id}")
+            return
+            
+        schema_name = getattr(connection, "schema_name", None) or "public"
+        async_to_sync(channel_layer.group_send)(
+            f'assembly_{schema_name}_{assembly_id}',
+            {
+                'type': event_type,
+                **payload
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error broadcasting assembly event: {str(e)}")
+        # Δεν θέλουμε να σταματήσουμε τη ροή αν αποτύχει το WebSocket update
+        pass
 
 
 class AssemblyViewSet(viewsets.ModelViewSet):
@@ -319,6 +331,26 @@ class AssemblyViewSet(viewsets.ModelViewSet):
             )
     
     @action(detail=True, methods=['get'])
+    def download_working_sheet(self, request, pk=None):
+        """Λήψη φύλλου εργασίας (working sheet) σε μορφή PDF"""
+        assembly = self.get_object()
+        
+        try:
+            service = AssemblyMinutesService(assembly)
+            pdf_bytes = service.generate_working_sheet_pdf()
+            
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            filename = f"working_sheet_{assembly.scheduled_date}_{assembly.id}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        except Exception as e:
+            logger.error(f"Error generating working sheet PDF: {str(e)}")
+            return Response(
+                {'error': f'Σφάλμα κατά τη δημιουργία PDF: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['get'])
     def live_status(self, request, pk=None):
         """Live status για real-time updates κατά τη διάρκεια της συνέλευσης"""
         assembly = self.get_object()
@@ -428,6 +460,15 @@ class AgendaItemViewSet(viewsets.ModelViewSet):
             decision_type=serializer.validated_data.get('decision_type')
         )
         
+        # Στείλε ειδοποίηση απόφασης αν υπάρχει κείμενο απόφασης
+        if item.decision:
+            try:
+                from .tasks import send_agenda_item_decision_notification
+                schema_name = getattr(connection, "schema_name", "public")
+                send_agenda_item_decision_notification.delay(str(item.id), schema_name)
+            except Exception as e:
+                logger.error(f"Failed to trigger decision notification: {e}")
+
         return Response({
             'message': f'Ολοκληρώθηκε το θέμα: {item.title}',
             'ended_at': item.ended_at,

@@ -122,6 +122,68 @@ class AssemblyMinutesService:
         """Δημιουργεί PDF από τα πρακτικά"""
         return self.render_markdown_to_pdf(self.generate())
 
+    def generate_working_sheet(self) -> str:
+        """
+        Δημιουργεί το κείμενο για το Φύλλο Εργασίας (Working Sheet).
+        Προορίζεται για εκτύπωση και χειρόγραφη συμπλήρωση κατά τη συνέλευση.
+        """
+        building = self.assembly.building
+        date_str = self.assembly.scheduled_date.strftime('%d/%m/%Y')
+        time_str = self.assembly.scheduled_time.strftime('%H:%M')
+        
+        lines = [
+            f"# ΦΥΛΛΟ ΕΡΓΑΣΙΑΣ ΓΕΝΙΚΗΣ ΣΥΝΕΛΕΥΣΗΣ",
+            f"**Κτίριο:** {building.name}",
+            f"**Ημερομηνία:** {date_str} | **Ώρα:** {time_str}",
+            f"**Τοποθεσία:** {self.assembly.location or '____________________'}",
+            "\n---\n",
+            "## 1. ΚΑΤΑΓΡΑΦΗ ΠΑΡΟΥΣΙΩΝ & ΑΠΑΡΤΙΑΣ",
+            "\n| Διαμ. | Ιδιοκτήτης/Ένοικος | χιλιοστά | Παρών (✓) | Παρατηρήσεις |",
+            "|-------|--------------------|----------|-----------|--------------|",
+        ]
+        
+        # Προσθήκη όλων των καλεσμένων για check-in
+        for attendee in self.assembly.attendees.all().order_by('apartment__number'):
+            lines.append(
+                f"| {attendee.apartment.number} | {attendee.display_name} | {attendee.mills} | [ ] | |"
+            )
+            
+        lines.extend([
+            "\n**Σύνολο Παρόντων χιλιοστών:** ____________________",
+            f"**Απαιτούμενη Απαρτία:** {self.assembly.required_quorum_mills} χιλιοστά",
+            "\n---\n",
+            "## 2. ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ & ΑΠΟΦΑΣΕΙΣ",
+            "\nΣημειώστε τις αποφάσεις και τα αποτελέσματα των ψηφοφοριών.\n"
+        ])
+        
+        # Προσθήκη θεμάτων ατζέντας
+        for item in self.assembly.agenda_items.all().order_by('order'):
+            lines.append(f"### Θέμα {item.order}: {item.title}")
+            lines.append(f"**Τύπος:** {item.get_item_type_display()}")
+            lines.append("\n**Σημειώσεις Συζήτησης:**\n\n\n\n")
+            
+            if item.item_type == 'voting':
+                lines.append("| Ψήφοι Υπέρ | Ψήφοι Κατά | Λευκά | Σύνολο χιλιοστών |")
+                lines.append("|------------|------------|-------|------------------|")
+                lines.append("|            |            |       |                  |")
+            
+            lines.append("\n**ΤΕΛΙΚΗ ΑΠΟΦΑΣΗ:**\n[ ] Εγκρίθηκε  [ ] Απορρίφθηκε  [ ] Αναβλήθηκε")
+            lines.append("\nΚείμενο Απόφασης: ______________________________________________________")
+            lines.append("________________________________________________________________________\n")
+            lines.append("---")
+            
+        lines.extend([
+            "\n## 3. ΛΗΞΗ ΣΥΝΕΛΕΥΣΗΣ",
+            "\n**Πραγματική Ώρα Λήξης:** ____________________",
+            "\n**Υπογραφή Προέδρου:** ____________________  **Υπογραφή Γραμματέα:** ____________________",
+        ])
+        
+        return "\n".join(lines)
+
+    def generate_working_sheet_pdf(self) -> bytes:
+        """Δημιουργεί PDF για το Φύλλο Εργασίας"""
+        return self.render_markdown_to_pdf(self.generate_working_sheet())
+
     @staticmethod
     def render_markdown_to_pdf(md_text: str) -> bytes:
         """
