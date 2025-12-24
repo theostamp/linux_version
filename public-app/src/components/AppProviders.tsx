@@ -41,6 +41,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/signup',
     '/plans',
     '/payment',
+    '/marketplace',
     '/auth/callback',
     '/auth/verify-email',
     '/logout',

@@ -64,7 +64,8 @@ function MarketplaceProviderContent({ id }: { id: string }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
-      <div className="flex items-center justify-between gap-4">
+      <div className="sticky top-0 z-40 -mx-4 px-4 pt-6 pb-4 backdrop-blur-md bg-gradient-to-b from-emerald-950/80 via-slate-950/70 to-transparent border-b border-white/5">
+        <div className="flex items-center justify-between gap-4">
         <Button
           variant="ghost"
           className="text-slate-200 hover:bg-white/10"
@@ -73,6 +74,7 @@ function MarketplaceProviderContent({ id }: { id: string }) {
           <ChevronLeft className="w-4 h-4 mr-2" />
           Πίσω
         </Button>
+        </div>
       </div>
 
       <div className="rounded-[2.5rem] border border-white/10 bg-white/5 overflow-hidden">
