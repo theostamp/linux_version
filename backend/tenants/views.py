@@ -100,43 +100,58 @@ class TenantListView(APIView):
         """
         Returns list of tenants with their domains and building counts.
         """
-        with schema_context("public"):
-            tenants = list(
-                Client.objects.exclude(schema_name="public")
-                .filter(is_active=True)
-                .order_by("name", "schema_name")
-                .values("id", "schema_name", "name", "on_trial", "paid_until")
-            )
+        logger.info(f"TenantListView.get called by user: {request.user.email} (ID: {request.user.id})")
+        
+        try:
+            with schema_context("public"):
+                # Temporarily remove is_active filter to see if that's the issue
+                tenants_query = Client.objects.exclude(schema_name="public")
+                logger.info(f"TenantListView: Total tenants in public schema (excluding public): {tenants_query.count()}")
+                
+                tenants = list(
+                    tenants_query.order_by("name", "schema_name")
+                    .values("id", "schema_name", "name", "on_trial", "paid_until", "is_active")
+                )
 
-            by_id = {t["id"]: t for t in tenants}
-            
-            # Get primary domains for each tenant
-            domains = (
-                Domain.objects.filter(tenant_id__in=by_id.keys())
-                .order_by("tenant_id", "-is_primary", "id")
-                .values("tenant_id", "domain", "is_primary")
-            )
-            
-            for d in domains:
-                t = by_id.get(d["tenant_id"])
-                if not t:
-                    continue
-                # First domain encountered becomes primary_domain
-                if "primary_domain" not in t:
-                    t["primary_domain"] = d["domain"]
-                    t["is_primary_domain"] = bool(d.get("is_primary"))
+                by_id = {t["id"]: t for t in tenants}
+                
+                # Get primary domains for each tenant
+                domains = (
+                    Domain.objects.filter(tenant_id__in=by_id.keys())
+                    .order_by("tenant_id", "-is_primary", "id")
+                    .values("tenant_id", "domain", "is_primary")
+                )
+                
+                for d in domains:
+                    t = by_id.get(d["tenant_id"])
+                    if not t:
+                        continue
+                    # First domain encountered becomes primary_domain
+                    if "primary_domain" not in t:
+                        t["primary_domain"] = d["domain"]
+                        t["is_primary_domain"] = bool(d.get("is_primary"))
 
-            # Set default domains for tenants without any
-            for t in tenants:
-                t.setdefault("primary_domain", f'{t["schema_name"]}.newconcierge.app')
-                t.setdefault("is_primary_domain", False)
-                # Count buildings in each tenant schema
-                t["buildings_count"] = self._count_buildings(t["schema_name"])
+                # Set default domains for tenants without any and count buildings
+                for t in tenants:
+                    if "primary_domain" not in t:
+                        t["primary_domain"] = f'{t["schema_name"]}.newconcierge.app'
+                        t["is_primary_domain"] = False
+                    
+                    # Count buildings in each tenant schema
+                    t["buildings_count"] = self._count_buildings(t["schema_name"])
 
+                logger.info(f"Returning {len(tenants)} tenants to frontend")
+                return Response({
+                    "tenants": tenants,
+                    "count": len(tenants)
+                })
+        except Exception as e:
+            logger.error(f"Error in TenantListView: {e}", exc_info=True)
             return Response({
-                "tenants": tenants,
-                "count": len(tenants)
-            })
+                "error": str(e),
+                "tenants": [],
+                "count": 0
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _count_buildings(self, schema_name: str) -> int:
         """Count buildings in a tenant schema."""

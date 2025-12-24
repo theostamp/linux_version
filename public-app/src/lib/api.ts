@@ -2889,8 +2889,7 @@ export function isUltraAdmin(): boolean {
     };
     
     return (
-      String(parsed?.role || '').toLowerCase() === 'admin' &&
-      Boolean(parsed?.is_superuser) &&
+      (String(parsed?.role || '').toLowerCase() === 'admin' || Boolean(parsed?.is_superuser)) &&
       Boolean(parsed?.is_staff)
     );
   } catch {
