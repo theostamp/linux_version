@@ -2832,3 +2832,94 @@ export async function attendeeCastVote(
     notes 
   });
 }
+
+// ============================================================
+// Ultra Admin - Tenant Management
+// ============================================================
+
+/**
+ * Tenant representation for Ultra Admin
+ */
+export type Tenant = {
+  id: number;
+  schema_name: string;
+  name: string;
+  primary_domain: string;
+  is_primary_domain: boolean;
+  on_trial: boolean;
+  paid_until: string | null;
+  buildings_count: number;
+};
+
+export type TenantsResponse = {
+  tenants: Tenant[];
+  count: number;
+};
+
+/**
+ * Fetch all tenants (Ultra Admin only)
+ * Returns list of active tenants with their domains and building counts
+ */
+export async function fetchTenants(): Promise<Tenant[]> {
+  try {
+    console.log('[API CALL] Fetching tenants from /tenants/list/');
+    const data = await apiGet<TenantsResponse>('/tenants/list/');
+    console.log('[API CALL] Found', data.tenants?.length || 0, 'tenants');
+    return data.tenants || [];
+  } catch (error) {
+    console.error('[API CALL] Failed to fetch tenants:', error);
+    return [];
+  }
+}
+
+/**
+ * Check if the current user is an Ultra Admin
+ */
+export function isUltraAdmin(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    const cached = localStorage.getItem('user');
+    if (!cached) return false;
+    
+    const parsed = JSON.parse(cached) as { 
+      role?: string; 
+      is_superuser?: boolean; 
+      is_staff?: boolean 
+    };
+    
+    return (
+      String(parsed?.role || '').toLowerCase() === 'admin' &&
+      Boolean(parsed?.is_superuser) &&
+      Boolean(parsed?.is_staff)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the current Ultra Admin tenant host override
+ */
+export function getUltraAdminTenantOverride(): string | null {
+  if (typeof window === 'undefined') return null;
+  const override = localStorage.getItem('ultra_admin_tenant_host_override');
+  return override?.trim() || null;
+}
+
+/**
+ * Set the Ultra Admin tenant host override
+ * This allows Ultra Admin to switch between tenants
+ */
+export function setUltraAdminTenantOverride(host: string | null): void {
+  if (typeof window === 'undefined') return;
+  
+  const trimmed = (host || '').trim();
+  if (trimmed) {
+    localStorage.setItem('ultra_admin_tenant_host_override', trimmed);
+    console.log('[ULTRA ADMIN] Tenant override set to:', trimmed);
+  } else {
+    localStorage.removeItem('ultra_admin_tenant_host_override');
+    console.log('[ULTRA ADMIN] Tenant override cleared');
+  }
+}

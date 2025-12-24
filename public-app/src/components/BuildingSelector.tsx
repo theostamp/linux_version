@@ -1,9 +1,27 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import type { Building } from '@/lib/api';
-import { fetchAllBuildingsPublic, fetchMyBuildings } from '@/lib/api';
-import { Search, Building as BuildingIcon, Check, X, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type { Building, Tenant } from '@/lib/api';
+import { 
+  fetchAllBuildingsPublic, 
+  fetchMyBuildings, 
+  fetchTenants,
+  isUltraAdmin,
+  getUltraAdminTenantOverride,
+  setUltraAdminTenantOverride 
+} from '@/lib/api';
+import { 
+  Search, 
+  Building as BuildingIcon, 
+  Check, 
+  X, 
+  MapPin, 
+  Users, 
+  ChevronRight, 
+  ArrowLeft,
+  Globe,
+  Shield
+} from 'lucide-react';
 
 interface BuildingSelectorProps {
   isOpen: boolean;
@@ -13,6 +31,8 @@ interface BuildingSelectorProps {
   currentBuilding?: Building | null;
   onManualBuildingSelect?: (id: number) => void;
 }
+
+type ViewMode = 'buildings' | 'tenants';
 
 export default function BuildingSelector({
   isOpen,
@@ -24,11 +44,22 @@ export default function BuildingSelector({
 }: BuildingSelectorProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredBuildings, setFilteredBuildings] = useState<Building[]>([]);
+  const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([]);
   const [manualId, setManualId] = useState<string>('');
+  const [viewMode, setViewMode] = useState<ViewMode>('buildings');
+  // Note: selectedTenant is currently unused but kept for potential future enhancement
+  const [, setSelectedTenant] = useState<Tenant | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Check if user is Ultra Admin
+  const isUltraAdminUser = useMemo(() => isUltraAdmin(), []);
+  
+  // Get current tenant override
+  const currentTenantOverride = useMemo(() => getUltraAdminTenantOverride(), []);
 
   // Read role from localStorage so this component can be used on public routes (e.g. /kiosk-display)
   useEffect(() => {
@@ -53,13 +84,29 @@ export default function BuildingSelector({
   // If role is unknown (public routes), default to all buildings
   const shouldUseMyBuildings = !!userRole && !isManagerOrAdmin;
 
-  // Load buildings when modal opens
+  // Load data when modal opens
   useEffect(() => {
     if (isOpen) {
       loadBuildings();
+      if (isUltraAdminUser) {
+        loadTenants();
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, shouldUseMyBuildings]);
+  }, [isOpen, shouldUseMyBuildings, isUltraAdminUser]);
+
+  const loadTenants = async () => {
+    if (!isUltraAdminUser) return;
+    
+    try {
+      console.log('[BuildingSelector] Loading tenants for Ultra Admin');
+      const tenantsData = await fetchTenants();
+      console.log('[BuildingSelector] Loaded tenants:', tenantsData.length);
+      setTenants(tenantsData);
+    } catch (error) {
+      console.error('Error loading tenants:', error);
+      setTenants([]);
+    }
+  };
 
   const loadBuildings = async () => {
     setIsLoading(true);
@@ -89,22 +136,18 @@ export default function BuildingSelector({
     }
   };
 
-  // Φιλτράρισμα κτιρίων βάσει του search term
-  // Αποκλείουμε το currentBuilding (όχι selectedBuilding) γιατί εμφανίζεται ξεχωριστά στην ενότητα "Τρέχον κτίριο"
+  // Filter buildings based on search term
   useEffect(() => {
-    // Skip filtering if buildings haven't loaded yet or are still loading
     if (buildings.length === 0 || isLoading) {
       setFilteredBuildings([]);
       return;
     }
     
-    // Αποκλείουμε το currentBuilding από τη λίστα "Άλλα κτίρια" γιατί εμφανίζεται ξεχωριστά
     const buildingsToFilter = currentBuilding 
       ? buildings.filter(b => b.id !== currentBuilding.id)
       : buildings;
     
     if (!searchTerm.trim()) {
-      // Only log when buildings are actually loaded
       if (buildings.length > 0) {
         console.log('[BuildingSelector] Filtered buildings (no search):', buildingsToFilter.length, 'out of', buildings.length);
       }
@@ -120,7 +163,26 @@ export default function BuildingSelector({
     }
   }, [searchTerm, buildings, currentBuilding, isLoading]);
 
-  // Κλείσιμο modal με ESC
+  // Filter tenants based on search term
+  useEffect(() => {
+    if (tenants.length === 0) {
+      setFilteredTenants([]);
+      return;
+    }
+    
+    if (!searchTerm.trim()) {
+      setFilteredTenants(tenants);
+    } else {
+      const filtered = tenants.filter(tenant =>
+        tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.schema_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.primary_domain.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredTenants(filtered);
+    }
+  }, [searchTerm, tenants]);
+
+  // Close modal with ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -139,7 +201,7 @@ export default function BuildingSelector({
     };
   }, [isOpen, onClose]);
 
-  // Κλείσιμο modal με κλικ έξω
+  // Close modal on backdrop click
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
       onClose();
@@ -151,9 +213,45 @@ export default function BuildingSelector({
     onClose();
     setSearchTerm('');
     setManualId('');
+    setViewMode('buildings');
+  };
+
+  const handleTenantSelect = (tenant: Tenant) => {
+    console.log('[BuildingSelector] Tenant selected:', tenant.schema_name);
+    setSelectedTenant(tenant);
+    
+    // Set the tenant override and reload
+    setUltraAdminTenantOverride(tenant.primary_domain);
+    
+    // Clear building selection and reload the page
+    localStorage.removeItem('selectedBuildingId');
+    localStorage.removeItem('activeBuildingId');
+    
+    onClose();
+    
+    // Reload to apply new tenant context
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
+  const handleClearTenantOverride = () => {
+    setUltraAdminTenantOverride(null);
+    localStorage.removeItem('selectedBuildingId');
+    localStorage.removeItem('activeBuildingId');
+    onClose();
+    
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   };
 
   if (!isOpen) return null;
+
+  // Find current tenant from override
+  const currentTenant = currentTenantOverride 
+    ? tenants.find(t => t.primary_domain === currentTenantOverride)
+    : null;
 
   return (
     <>
@@ -171,8 +269,23 @@ export default function BuildingSelector({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200/50 bg-muted">
           <div className="flex items-center gap-2">
-            <BuildingIcon className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Επιλογή Κτιρίου</h2>
+            {viewMode === 'tenants' ? (
+              <>
+                <button
+                  onClick={() => setViewMode('buildings')}
+                  className="text-muted-foreground hover:text-foreground transition-colors mr-1"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <Globe className="w-5 h-5 text-amber-500" />
+                <h2 className="text-lg font-semibold text-foreground">Επιλογή Tenant</h2>
+              </>
+            ) : (
+              <>
+                <BuildingIcon className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Επιλογή Κτιρίου</h2>
+              </>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -182,13 +295,31 @@ export default function BuildingSelector({
           </button>
         </div>
 
+        {/* Ultra Admin Tenant Indicator */}
+        {isUltraAdminUser && currentTenantOverride && viewMode === 'buildings' && (
+          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200/50 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Shield className="w-4 h-4 text-amber-600" />
+              <span className="text-amber-800 dark:text-amber-200">
+                Tenant: <strong>{currentTenant?.name || currentTenantOverride}</strong>
+              </span>
+            </div>
+            <button
+              onClick={handleClearTenantOverride}
+              className="text-xs text-amber-600 hover:text-amber-800 dark:text-amber-400 underline"
+            >
+              Καθαρισμός
+            </button>
+          </div>
+        )}
+
         {/* Search */}
         <div className="p-4 border-b border-slate-200/50 bg-white dark:bg-popover">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input
               type="text"
-              placeholder="Αναζήτηση κτιρίου..."
+              placeholder={viewMode === 'tenants' ? "Αναζήτηση tenant..." : "Αναζήτηση κτιρίου..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-input rounded-md shadow-sm bg-background focus:ring-2 focus:ring-ring focus:outline-none text-foreground placeholder:text-muted-foreground"
@@ -196,7 +327,7 @@ export default function BuildingSelector({
             />
           </div>
           {/* Manual ID input - only for managers/admins/office_staff */}
-          {onManualBuildingSelect && !shouldUseMyBuildings && (
+          {viewMode === 'buildings' && onManualBuildingSelect && !shouldUseMyBuildings && (
             <div className="mt-3 flex items-center gap-2">
               <input
                 type="number"
@@ -229,10 +360,89 @@ export default function BuildingSelector({
         <div className="overflow-y-auto max-h-96">
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
-              Φόρτωση κτιρίων...
+              {viewMode === 'tenants' ? 'Φόρτωση tenants...' : 'Φόρτωση κτιρίων...'}
             </div>
-          ) : (
+          ) : viewMode === 'tenants' ? (
+            /* Tenants List (Ultra Admin only) */
             <>
+              {filteredTenants.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  {searchTerm ? 'Δεν βρέθηκαν tenants' : 'Δεν υπάρχουν διαθέσιμα tenants'}
+                </div>
+              ) : (
+                filteredTenants.map((tenant) => (
+                  <div
+                    key={tenant.id}
+                    onClick={() => handleTenantSelect(tenant)}
+                    className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      currentTenantOverride === tenant.primary_domain ? 'bg-amber-50 dark:bg-amber-900/20 border-r-4 border-amber-500' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center shadow-sm ${
+                        tenant.on_trial 
+                          ? 'bg-amber-500 text-white' 
+                          : 'bg-emerald-500 text-white'
+                      }`}>
+                        <Users className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground flex items-center gap-2">
+                          {tenant.name}
+                          {tenant.on_trial && (
+                            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                              Trial
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {tenant.primary_domain}
+                          <span className="mx-1">•</span>
+                          {tenant.buildings_count} κτίρια
+                        </div>
+                      </div>
+                    </div>
+                    {currentTenantOverride === tenant.primary_domain && (
+                      <Check className="w-5 h-5 text-amber-500" />
+                    )}
+                  </div>
+                ))
+              )}
+            </>
+          ) : (
+            /* Buildings List */
+            <>
+              {/* Ultra Admin: Switch Tenant button */}
+              {isUltraAdminUser && (
+                <>
+                  <div
+                    onClick={() => {
+                      setSearchTerm('');
+                      setViewMode('tenants');
+                    }}
+                    className="flex items-center justify-between p-4 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer transition-colors border-b border-slate-200/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-amber-500 rounded-md flex items-center justify-center shadow-sm text-white">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground flex items-center gap-2">
+                          Αλλαγή Tenant
+                          <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5 rounded-full">
+                            Ultra Admin
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {tenants.length} διαθέσιμα tenants
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </>
+              )}
+
               {/* Επιλογή "Όλα" - Hidden for residents/internal_managers with single building */}
               {(!shouldUseMyBuildings || buildings.length > 1) && (
                 <>
@@ -318,7 +528,11 @@ export default function BuildingSelector({
               </div>
               {filteredBuildings.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
-                  {searchTerm ? 'Δεν βρέθηκαν κτίρια' : 'Δεν υπάρχουν διαθέσιμα κτίρια'}
+                  {searchTerm ? 'Δεν βρέθηκαν κτίρια' : (
+                    isUltraAdminUser && !currentTenantOverride 
+                      ? 'Επιλέξτε πρώτα ένα tenant για να δείτε κτίρια'
+                      : 'Δεν υπάρχουν διαθέσιμα κτίρια'
+                  )}
                 </div>
               ) : (
                 filteredBuildings.map((building) => (
@@ -354,13 +568,15 @@ export default function BuildingSelector({
         {/* Footer */}
         <div className="p-4 border-t border-slate-200/50 bg-muted">
           <div className="text-sm text-muted-foreground">
-            {shouldUseMyBuildings 
-              ? (buildings.length > 1 
-                  ? 'Επιλέξτε ένα κτίριο για προβολή ή "Όλες οι ιδιοκτησίες" για συνολική εικόνα'
-                  : 'Εμφανίζονται μόνο τα κτίρια στα οποία έχετε πρόσβαση'
-                )
-              : 'Επιλέξτε ένα κτίριο για φιλτράρισμα ή "Όλα τα Κτίρια" για προβολή όλων'
-            }
+            {viewMode === 'tenants' ? (
+              'Επιλέξτε έναν tenant για να δείτε τα κτίριά του'
+            ) : shouldUseMyBuildings ? (
+              buildings.length > 1 
+                ? 'Επιλέξτε ένα κτίριο για προβολή ή "Όλες οι ιδιοκτησίες" για συνολική εικόνα'
+                : 'Εμφανίζονται μόνο τα κτίρια στα οποία έχετε πρόσβαση'
+            ) : (
+              'Επιλέξτε ένα κτίριο για φιλτράρισμα ή "Όλα τα Κτίρια" για προβολή όλων'
+            )}
           </div>
         </div>
         </div>

@@ -3,11 +3,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 from rest_framework_simplejwt.tokens import RefreshToken
+from django_tenants.utils import schema_context
 from users.models import CustomUser
-from .models import Client
+from .models import Client, Domain
+from core.permissions import IsUltraAdmin
 import logging
 
 logger = logging.getLogger(__name__)
@@ -84,3 +86,64 @@ class AcceptTenantInviteView(APIView):
             return Response({
                 'error': 'Failed to process invitation'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TenantListView(APIView):
+    """
+    Ultra Admin only: List all tenants with their primary domains.
+    Used by the building selector to allow Ultra Admin to switch between tenants.
+    Runs in PUBLIC schema.
+    """
+    permission_classes = [IsAuthenticated, IsUltraAdmin]
+
+    def get(self, request):
+        """
+        Returns list of tenants with their domains and building counts.
+        """
+        with schema_context("public"):
+            tenants = list(
+                Client.objects.exclude(schema_name="public")
+                .filter(is_active=True)
+                .order_by("name", "schema_name")
+                .values("id", "schema_name", "name", "on_trial", "paid_until")
+            )
+
+            by_id = {t["id"]: t for t in tenants}
+            
+            # Get primary domains for each tenant
+            domains = (
+                Domain.objects.filter(tenant_id__in=by_id.keys())
+                .order_by("tenant_id", "-is_primary", "id")
+                .values("tenant_id", "domain", "is_primary")
+            )
+            
+            for d in domains:
+                t = by_id.get(d["tenant_id"])
+                if not t:
+                    continue
+                # First domain encountered becomes primary_domain
+                if "primary_domain" not in t:
+                    t["primary_domain"] = d["domain"]
+                    t["is_primary_domain"] = bool(d.get("is_primary"))
+
+            # Set default domains for tenants without any
+            for t in tenants:
+                t.setdefault("primary_domain", f'{t["schema_name"]}.newconcierge.app')
+                t.setdefault("is_primary_domain", False)
+                # Count buildings in each tenant schema
+                t["buildings_count"] = self._count_buildings(t["schema_name"])
+
+            return Response({
+                "tenants": tenants,
+                "count": len(tenants)
+            })
+
+    def _count_buildings(self, schema_name: str) -> int:
+        """Count buildings in a tenant schema."""
+        try:
+            with schema_context(schema_name):
+                from buildings.models import Building
+                return Building.objects.count()
+        except Exception as e:
+            logger.warning(f"Could not count buildings for tenant {schema_name}: {e}")
+            return 0
