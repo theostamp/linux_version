@@ -370,9 +370,71 @@
                     <br>Έχετε ήδη ψηφίσει σε {{ voted_count }} από {{ total_voting_items }} θέματα.
                     {% endif %}
                 </p>
+                <p style="margin-top: 10px; font-size: 14px;">
+                    Μπορείτε να ψηφίσετε <strong>εξ αποστάσεως</strong> (επιστολική ψήφος μέσω email) πατώντας στο κουμπί παρακάτω.
+                    Το link είναι <strong>προσωπικό</strong> και δεν πρέπει να προωθηθεί.
+                </p>
                 <a href="{{ vote_url }}" class="cta-button" {% if is_urgent %}style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);"{% endif %}>
                     {% if is_urgent %}🔔{% else %}🗳️{% endif %} {{ cta_text|default:"Ψηφίστε Τώρα" }}
                 </a>
+
+                <div style="text-align:left; margin-top: 18px;">
+                    <div style="font-weight: 600; color: #4b5563; margin-bottom: 8px;">
+                        Θέματα ψηφοφορίας:
+                    </div>
+                    <ul style="margin-left: 18px; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                        {% for item in pending_votes %}
+                        <li style="margin-bottom: 6px;">{{ item.title }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div style="margin-top: 14px; font-size: 12px; color: #6b7280;">
+                    Αν δεν ανοίγει το κουμπί, αντιγράψτε αυτόν τον σύνδεσμο στον browser σας:
+                    <br>
+                    <a href="{{ vote_url }}" style="color:#4f46e5; word-break: break-all;">{{ vote_url }}</a>
+                </div>
+            </div>
+            {% elif has_pending_votes and not vote_url %}
+            <div class="cta-section" style="background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);">
+                {% if pre_voting_state == 'not_started' %}
+                <h3 style="color: #4f46e5;">🗳️ Η ψηφοφορία θα ανοίξει σύντομα</h3>
+                <p style="color: #475569; margin-bottom: 10px;">
+                    Υπάρχουν θέματα προς ψήφιση, όμως το <strong>pre-voting</strong> δεν είναι ενεργό αυτή τη στιγμή.
+                    {% if pre_voting_start %}
+                    <br>Έναρξη: <strong>{{ pre_voting_start|date:"d/m/Y" }}</strong>
+                    {% endif %}
+                    {% if pre_voting_end %}
+                    · Λήξη: <strong>{{ pre_voting_end|date:"d/m/Y" }}</strong>
+                    {% endif %}
+                </p>
+                {% elif pre_voting_state == 'ended' %}
+                <h3 style="color: #4f46e5;">🗳️ Το pre-voting ολοκληρώθηκε</h3>
+                <p style="color: #475569; margin-bottom: 10px;">
+                    Η περίοδος pre-voting έχει λήξει.
+                    Η ψηφοφορία θα πραγματοποιηθεί κατά τη διάρκεια της συνέλευσης.
+                </p>
+                {% else %}
+                <h3 style="color: #4f46e5;">🗳️ Η ψηφοφορία θα γίνει στη συνέλευση</h3>
+                <p style="color: #475569; margin-bottom: 10px;">
+                    Υπάρχουν θέματα προς ψήφιση. Η ηλεκτρονική ψήφος δεν είναι διαθέσιμη πριν τη συνέλευση·
+                    η ψηφοφορία θα πραγματοποιηθεί κατά τη διάρκεια της συνέλευσης.
+                </p>
+                {% endif %}
+                <div style="text-align:left; margin-top: 12px;">
+                    <div style="font-weight: 600; color: #4b5563; margin-bottom: 8px;">
+                        Θέματα ψηφοφορίας:
+                    </div>
+                    <ul style="margin-left: 18px; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                        {% for item in pending_votes %}
+                        <li style="margin-bottom: 6px;">{{ item.title }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div style="margin-top: 12px; font-size: 13px; color: #6b7280;">
+                    Μπορείτε πάντα να δείτε τη συνέλευση και τις λεπτομέρειες στην εφαρμογή:
+                    <a href="{{ assembly_url }}" style="color:#4f46e5;">{{ assembly_url }}</a>
+                </div>
             </div>
             {% elif total_voting_items > 0 and voted_count == total_voting_items %}
             <div class="cta-section" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);">

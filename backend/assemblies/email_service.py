@@ -185,13 +185,38 @@ def send_assembly_reminder_email(
             )
             return None  # Indicates skipped, not failed
         
-        # Generate vote URL if voting is included
-        vote_url = get_vote_url(attendee, assembly) if include_voting and pending_votes else None
+        # Generate vote URL if voting is included AND voting is currently allowed.
+        # Note: vote-by-email endpoint is intended for pre-voting or in-progress assemblies.
+        can_vote_online_now = bool(assembly.is_pre_voting_active or assembly.status == 'in_progress')
+        vote_url = (
+            get_vote_url(attendee, assembly)
+            if include_voting and pending_votes and can_vote_online_now
+            else None
+        )
         
         # Calculate days until assembly
         today = timezone.now().date()
         assembly_date = assembly.scheduled_date
         days_until = (assembly_date - today).days
+
+        # Pre-voting window status (for friendlier messaging)
+        pre_voting_state = 'disabled'
+        pre_voting_start = None
+        pre_voting_end = None
+        if getattr(assembly, 'pre_voting_enabled', False):
+            pre_voting_start = assembly.pre_voting_start_date or assembly.scheduled_date
+            pre_voting_end = assembly.pre_voting_end_date or (
+                assembly.scheduled_date + timedelta(days=3) if assembly.scheduled_date else None
+            )
+            if assembly.is_pre_voting_active:
+                pre_voting_state = 'active'
+            elif pre_voting_start and today < pre_voting_start:
+                pre_voting_state = 'not_started'
+            elif pre_voting_end and today > pre_voting_end:
+                pre_voting_state = 'ended'
+            else:
+                # Fallback for edge-cases where dates are missing/inconsistent
+                pre_voting_state = 'inactive'
         
         # Prepare context with tone configuration
         context = {
@@ -206,11 +231,16 @@ def send_assembly_reminder_email(
             'total_voting_items': len(voting_items),
             'has_pending_votes': len(pending_votes) > 0,
             'vote_url': vote_url,
+            'can_vote_online_now': can_vote_online_now,
+            'pre_voting_state': pre_voting_state,
+            'pre_voting_start': pre_voting_start,
+            'pre_voting_end': pre_voting_end,
             'days_until': days_until,
             'is_today': days_until == 0,
             'is_tomorrow': days_until == 1,
             'frontend_url': getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr'),
             'assembly_url': f"{getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr')}/assemblies/{assembly.id}",
+            'now': timezone.now(),
             # Tone-specific content
             'reminder_type': reminder_type,
             'tone': tone_config['tone'],
