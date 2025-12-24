@@ -543,9 +543,6 @@ function LiveAssemblyContent() {
     </div>
   );
 }
-    </div>
-  );
-}
 
 export default function LiveAssemblyPage() {
   return (
