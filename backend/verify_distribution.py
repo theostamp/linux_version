@@ -54,9 +54,9 @@ with schema_context('demo'):
         print("   " + "-"*40)
 
         total_distributed = Decimal('0')
-        for trans in transactions.order_by('apartment__apartment_number'):
+        for trans in transactions.order_by('apartment__number'):
             apt = trans.apartment
-            print(f"   {apt.apartment_number:12s} {apt.participation_mills:7d} €{trans.amount:8.2f}")
+            print(f"   {apt.number:12s} {apt.participation_mills:7d} €{trans.amount:8.2f}")
             total_distributed += trans.amount
 
         print("   " + "-"*40)

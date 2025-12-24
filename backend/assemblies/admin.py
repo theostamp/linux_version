@@ -204,7 +204,7 @@ class AssemblyVoteAdmin(admin.ModelAdmin):
         'agenda_item__assembly__scheduled_date'
     ]
     search_fields = [
-        'attendee__apartment__apartment_number',
+        'attendee__apartment__number',
         'agenda_item__title',
         'agenda_item__assembly__title'
     ]

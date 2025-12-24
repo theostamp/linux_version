@@ -548,8 +548,8 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
     serializer_class = AssemblyAttendeeSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['assembly', 'is_present', 'rsvp_status', 'attendance_type']
-    search_fields = ['attendee_name', 'apartment__apartment_number']
-    ordering = ['apartment__apartment_number']
+    search_fields = ['attendee_name', 'apartment__number']
+    ordering = ['apartment__number']
     
     def get_queryset(self):
         return AssemblyAttendee.objects.filter(

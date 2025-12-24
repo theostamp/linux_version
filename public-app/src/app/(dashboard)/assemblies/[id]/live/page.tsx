@@ -8,7 +8,7 @@ import {
   Users, ArrowLeft, Play, Pause, Square, Clock,
   CheckCircle, XCircle, Minus, Vote, Loader2,
   ChevronRight, Timer, Percent, Building2,
-  Video, MapPin, AlertCircle, MessageSquare
+  Video, MapPin, AlertCircle, MessageSquare, Monitor
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -274,13 +274,18 @@ function LiveAssemblyContent() {
   };
 
   const handleCompleteItem = async (itemId: string) => {
-    const decision = prompt('Ποια είναι η απόφαση για αυτό το θέμα;', 'Εγκρίθηκε ομόφωνα');
+    const item = agendaItems.find(i => i.id === itemId);
+    const defaultDecision = item?.item_type === 'voting' 
+      ? 'Εγκρίθηκε κατά πλειοψηφία' 
+      : 'Ολοκληρώθηκε η συζήτηση';
+      
+    const decision = prompt('Ποια είναι η απόφαση για αυτό το θέμα;', defaultDecision);
     if (decision === null) return; // Cancelled
     
     await endAgendaItem.mutateAsync({ 
       id: itemId, 
       options: { 
-        decision_type: 'approved',
+        decision_type: item?.item_type === 'voting' ? 'approved' : 'no_decision',
         decision: decision
       } 
     });
@@ -332,18 +337,28 @@ function LiveAssemblyContent() {
         </div>
 
         {canManage && isLive && (
-          <Button
-            variant="destructive"
-            onClick={handleEndAssembly}
-            disabled={endAssembly.isPending}
-          >
-            {endAssembly.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Square className="w-4 h-4 mr-2" />
-            )}
-            Τέλος Συνέλευσης
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => window.open(`/kiosk-display?building_id=${assembly.building}`, '_blank')}
+              className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+            >
+              <Monitor className="w-4 h-4 mr-2" />
+              Προβολή Kiosk
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleEndAssembly}
+              disabled={endAssembly.isPending}
+            >
+              {endAssembly.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Square className="w-4 h-4 mr-2" />
+              )}
+              Τέλος Συνέλευσης
+            </Button>
+          </div>
         )}
       </div>
 
