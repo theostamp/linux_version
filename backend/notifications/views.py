@@ -49,6 +49,7 @@ from .services import (
     DigestService,
     MonthlyTaskService
 )
+from .debt_reminder_breakdown_service import DebtReminderBreakdownService
 from .tasks import send_notification_task
 
 
@@ -282,7 +283,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """
         from decimal import Decimal
         from datetime import date
-        from core.emailing import send_templated_email
 
         data = request.data or {}
         building = self._resolve_building(data.get('building_id'))
@@ -303,139 +303,24 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
         custom_message = (data.get('custom_message') or '').strip()
 
-        # Fetch month snapshot balances
-        from financial.services import FinancialDashboardService
-        dashboard = FinancialDashboardService(building_id=building.id)
-        balances = dashboard.get_apartment_balances(month=month)
-        balances_by_id = {int(b['id']): b for b in balances if b.get('id') is not None}
-
-        # Determine target apartments
-        if apartment_ids:
-            target_apartments = Apartment.objects.filter(building=building, id__in=apartment_ids)
-        else:
-            target_apartments = Apartment.objects.filter(building=building)
-
-        subject_base = f"Υπενθύμιση Οφειλών {month} - {building.name}"
-        notification = NotificationService.create_notification(
+        result = DebtReminderBreakdownService.send_debt_reminders(
             building=building,
             created_by=request.user,
-            subject=subject_base,
-            body="Personalized debt reminders with breakdown (sent per recipient)",
-            sms_body="",
-            notification_type='email',
-            priority='normal',
-            scheduled_at=None,
-            template=None,
+            month=month,
+            min_debt=min_debt,
+            apartment_ids=apartment_ids,
+            custom_message=custom_message,
+            create_notification_if_empty=True,
         )
-
-        sent = 0
-        failed = 0
-        skipped = 0
-        details = []
-
-        # Create recipients + send
-        for apartment in target_apartments:
-            recipient_email = apartment.occupant_email or apartment.owner_email
-            recipient_name = apartment.occupant_name
-
-            # Create recipient record
-            recipient = NotificationRecipient.objects.create(
-                notification=notification,
-                apartment=apartment,
-                recipient_name=recipient_name or f"Διαμέρισμα {apartment.number}",
-                email=recipient_email or '',
-                phone=apartment.occupant_phone or '',
-                status='pending',
-            )
-
-            if not recipient_email:
-                recipient.mark_as_failed("No email address")
-                skipped += 1
-                details.append({"apartment": apartment.number, "status": "skipped", "reason": "No email address"})
-                continue
-
-            bal = balances_by_id.get(int(apartment.id))
-            if not bal:
-                recipient.mark_as_failed("No balance data")
-                skipped += 1
-                details.append({"apartment": apartment.number, "status": "skipped", "reason": "No balance data"})
-                continue
-
-            # Use net_obligation as month total due (backend computes only with month provided)
-            try:
-                total_due_raw = Decimal(str(bal.get('net_obligation', 0)))
-            except Exception:
-                total_due_raw = Decimal('0')
-
-            if total_due_raw <= min_debt:
-                recipient.mark_as_failed("Below threshold")
-                skipped += 1
-                details.append({"apartment": apartment.number, "status": "skipped", "reason": "Below threshold", "total_due": str(total_due_raw)})
-                continue
-
-            def _fmt_money(value) -> str:
-                try:
-                    return f"{Decimal(str(value)):.2f}€"
-                except Exception:
-                    return "0.00€"
-
-            previous_balance = _fmt_money(bal.get('previous_balance', 0))
-            expense_share = Decimal(str(bal.get('expense_share', 0) or 0))
-            reserve_fund_share = Decimal(str(bal.get('reserve_fund_share', 0) or 0))
-            month_expenses_total = _fmt_money(expense_share + reserve_fund_share)
-
-            ctx = {
-                "occupant_name": recipient_name or "Αγαπητέ/ή ένοικε",
-                "apartment_number": apartment.number,
-                "building_name": building.name,
-                "month_label": month,
-                "previous_balance": previous_balance,
-                "month_expenses_total": month_expenses_total,
-                "resident_expenses": _fmt_money(bal.get('resident_expenses', 0)),
-                "owner_expenses": _fmt_money(bal.get('owner_expenses', 0)),
-                "reserve_fund_share": _fmt_money(reserve_fund_share) if reserve_fund_share else "",
-                "month_payments": _fmt_money(bal.get('month_payments', 0)),
-                "total_due": _fmt_money(total_due_raw),
-                "payment_deadline": "",
-                "custom_message": custom_message,
-            }
-
-            try:
-                ok = send_templated_email(
-                    to=recipient_email,
-                    subject=f"Υπενθύμιση Οφειλών {month} - Διαμέρισμα {apartment.number} ({building.name})",
-                    template_html="emails/debt_reminder_breakdown.html",
-                    context=ctx,
-                    building_manager_id=getattr(building, "manager_id", None),
-                )
-                if ok:
-                    recipient.mark_as_sent()
-                    sent += 1
-                    details.append({"apartment": apartment.number, "status": "sent", "email": recipient_email, "total_due": str(total_due_raw)})
-                else:
-                    recipient.mark_as_failed("Not sent (send() returned 0)")
-                    failed += 1
-                    details.append({"apartment": apartment.number, "status": "failed", "email": recipient_email, "error": "Not sent"})
-            except Exception as e:
-                recipient.mark_as_failed(str(e))
-                failed += 1
-                details.append({"apartment": apartment.number, "status": "failed", "email": recipient_email, "error": str(e)})
-
-        notification.total_recipients = sent + failed + skipped
-        notification.successful_sends = sent
-        notification.failed_sends = failed
-        notification.completed_at = timezone.now()
-        notification.status = 'sent' if failed == 0 else 'failed'
-        notification.save(update_fields=['total_recipients', 'successful_sends', 'failed_sends', 'completed_at', 'status'])
 
         return Response(
             {
-                "notification_id": notification.id,
-                "month": month,
-                "sent": sent,
-                "failed": failed,
-                "skipped": skipped,
-                "details": details,
+                "notification_id": result.notification_id,
+                "month": result.month,
+                "sent": result.sent,
+                "failed": result.failed,
+                "skipped": result.skipped,
+                "details": result.details,
             },
             status=status.HTTP_200_OK,
         )

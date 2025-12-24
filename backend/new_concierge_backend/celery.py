@@ -39,6 +39,12 @@ app.conf.beat_schedule = {
         'task': 'assemblies.tasks.check_and_send_pre_voting_open_reminders',
         'schedule': crontab(minute=0, hour=9),  # 09:00 daily
     },
+    # Daily debt reminders (09:00) - weekly dedupe per building (Mon-Sun)
+    'send-daily-debt-reminders': {
+        'task': 'notifications.tasks.send_daily_debt_reminders_if_not_sent_this_week',
+        'schedule': crontab(minute=0, hour=9),  # 09:00 daily
+        'args': (),
+    },
     # Ad Portal trial reminders (7/3/1 days) + trial end notices
     'ad-portal-trial-reminders-daily': {
         'task': 'ad_portal.tasks.check_ad_portal_trials_daily',
@@ -49,12 +55,6 @@ app.conf.beat_schedule = {
         'task': 'ad_portal.tasks.compute_ad_portal_daily_snapshots',
         'schedule': crontab(minute=20, hour=2),  # 02:20 daily
         'args': (30,),
-    },
-    # Weekly automated debt reminders (every Monday at 10:00)
-    'send-weekly-debt-reminders': {
-        'task': 'notifications.tasks.send_weekly_debt_reminders',
-        'schedule': crontab(minute=0, hour=10, day_of_week=1),  # Monday 10:00
-        'args': (),
     },
 }
 

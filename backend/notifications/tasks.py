@@ -414,3 +414,82 @@ def send_weekly_debt_reminders(
     )
     logger.info(summary)
     return summary
+
+
+@shared_task
+def send_daily_debt_reminders_if_not_sent_this_week(
+    min_debt_amount: float = 0.01,
+):
+    """
+    Καθημερινός έλεγχος οφειλών (09:00) και αυτόματη αποστολή υπενθύμισης,
+    μόνο αν ΔΕΝ υπάρχει Notification με status='sent' μέσα στη Δευτέρα–Κυριακή
+    της τρέχουσας εβδομάδας.
+
+    - Multi-tenant: τρέχει για όλα τα tenant schemas
+    - Dedupe ανά building: weekly window (Europe/Athens)
+    - Χρησιμοποιεί το breakdown email template (όπως το manual endpoint)
+    """
+    from decimal import Decimal
+    from django.contrib.auth import get_user_model
+    from buildings.models import Building
+    from notifications.debt_reminder_breakdown_service import DebtReminderBreakdownService
+
+    TenantModel = get_tenant_model()
+    now = timezone.now()
+    month = now.date().strftime("%Y-%m")
+
+    tenants_processed = 0
+    buildings_processed = 0
+    buildings_skipped = 0
+    notifications_created = 0
+
+    for tenant in TenantModel.objects.exclude(schema_name="public"):
+        try:
+            with schema_context(tenant.schema_name):
+                tenants_processed += 1
+
+                User = get_user_model()
+                system_user = (
+                    User.objects.filter(is_superuser=True).first()
+                    or User.objects.filter(is_staff=True).first()
+                    or User.objects.first()
+                )
+                if not system_user:
+                    logger.warning(
+                        "No system user in schema %s - skipping daily debt reminders",
+                        tenant.schema_name,
+                    )
+                    continue
+
+                for building in Building.objects.all():
+                    buildings_processed += 1
+
+                    if DebtReminderBreakdownService.has_sent_this_week(building, now=now):
+                        buildings_skipped += 1
+                        continue
+
+                    result = DebtReminderBreakdownService.send_debt_reminders(
+                        building=building,
+                        created_by=system_user,
+                        month=month,
+                        min_debt=Decimal(str(min_debt_amount)),
+                        apartment_ids=None,
+                        custom_message="",
+                        # Avoid creating empty notifications when there are no eligible recipients
+                        create_notification_if_empty=False,
+                    )
+                    if result.notification_id is not None:
+                        notifications_created += 1
+
+        except Exception as e:
+            logger.exception(
+                "Daily debt reminders failed for tenant %s: %s", tenant.schema_name, e
+            )
+            continue
+
+    summary = (
+        f"Daily debt reminders: tenants={tenants_processed}, buildings={buildings_processed}, "
+        f"skipped={buildings_skipped}, notifications_created={notifications_created}"
+    )
+    logger.info(summary)
+    return summary
