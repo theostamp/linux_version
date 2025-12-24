@@ -59,6 +59,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/accept-invitation',
     '/auth/verify-email',
     '/advertise',
+    '/marketplace/offer-request',
     '/'
   ];
   

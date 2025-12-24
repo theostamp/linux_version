@@ -1,0 +1,52 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Αίτημα Προσφοράς{% endblock %}
+
+{% block content %}
+<div class="info">
+  <h2>📩 Αίτημα προσφοράς για εργασία</h2>
+  <p>Γεια σας{% if provider_name %} <strong>{{ provider_name }}</strong>{% endif %},</p>
+  <p>Σας ζητάμε προσφορά για το παρακάτω έργο/εργασία μέσω του New Concierge Marketplace.</p>
+</div>
+
+<div style="background-color:#f8f9fa; padding:16px; border-radius:8px; margin:20px 0;">
+  <h4 style="margin-top:0;">🏷️ Έργο</h4>
+  <p style="margin:0;"><strong>{{ project_title }}</strong></p>
+  {% if building_name or building_address %}
+    <p style="margin:8px 0 0 0; color:#666;">
+      {% if building_name %}🏢 {{ building_name }}{% endif %}
+      {% if building_address %}<br>📍 {{ building_address }}{% endif %}
+    </p>
+  {% endif %}
+</div>
+
+{% if project_description %}
+<div style="margin:20px 0;">
+  <h4>📝 Περιγραφή</h4>
+  <p style="white-space:pre-wrap;">{{ project_description }}</p>
+</div>
+{% endif %}
+
+{% if message_to_provider %}
+<div class="warning">
+  <p><strong>Σημείωση:</strong></p>
+  <p style="white-space:pre-wrap;">{{ message_to_provider }}</p>
+</div>
+{% endif %}
+
+<h3>✅ Υποβολή προσφοράς</h3>
+<p>Πατήστε το κουμπί για να συμπληρώσετε όλα τα στοιχεία της προσφοράς (ποσό, προκαταβολή, δόσεις, εγγύηση, χρονοδιάγραμμα κ.λπ.) και να ανεβάσετε συνημμένα (PDF/εικόνες) με το δικό σας λογότυπο/ύφος.</p>
+
+<div style="text-align:center; margin:28px 0;">
+  <a href="{{ provider_form_url }}" class="button">Υποβολή Προσφοράς</a>
+</div>
+
+<hr style="margin:28px 0; border:none; border-top:1px solid #eee;">
+
+<p style="font-size:12px; color:#666;">
+  Αν δεν λειτουργεί το κουμπί, αντιγράψτε τον σύνδεσμο:<br>
+  <a href="{{ provider_form_url }}">{{ provider_form_url }}</a>
+</p>
+{% endblock %}
+
+

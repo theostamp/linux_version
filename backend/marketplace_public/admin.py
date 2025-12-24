@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from .models import MarketplaceCommission, MarketplaceCommissionPolicy, MarketplaceProvider
+from .models import (
+    MarketplaceCommission,
+    MarketplaceCommissionPolicy,
+    MarketplaceOfferRequest,
+    MarketplaceProvider,
+)
 
 
 @admin.register(MarketplaceProvider)
@@ -51,5 +56,21 @@ class MarketplaceCommissionPolicyAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_active", "service_type")
     ordering = ("service_type",)
+
+
+@admin.register(MarketplaceOfferRequest)
+class MarketplaceOfferRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "status",
+        "tenant_schema",
+        "project_title_snapshot",
+        "provider_name_snapshot",
+        "provider_email_snapshot",
+    )
+    list_filter = ("status", "tenant_schema")
+    search_fields = ("project_title_snapshot", "provider_name_snapshot", "provider_email_snapshot", "tenant_schema")
+    readonly_fields = ("id", "token", "created_at", "updated_at", "email_sent_at", "opened_at", "submitted_at")
+    ordering = ("-created_at",)
 
 

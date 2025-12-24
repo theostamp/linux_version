@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from .models import MarketplaceCommission, MarketplaceProvider
+from .models import MarketplaceCommission, MarketplaceOfferRequest, MarketplaceProvider
 
 
 class MarketplaceProviderSerializer(serializers.ModelSerializer):
@@ -57,5 +57,12 @@ class MarketplaceCommissionSerializer(serializers.ModelSerializer):
         model = MarketplaceCommission
         fields = "__all__"
         read_only_fields = ["created_at", "updated_at"]
+
+
+class MarketplaceOfferRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MarketplaceOfferRequest
+        fields = "__all__"
+        read_only_fields = ["id", "token", "tenant_schema", "created_at", "updated_at", "email_sent_at", "opened_at", "submitted_at"]
 
 

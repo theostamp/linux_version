@@ -260,3 +260,68 @@ class MarketplaceCommission(models.Model):
         return f"Commission {self.id} ({self.status})"
 
 
+class MarketplaceOfferRequestStatus(models.TextChoices):
+    SENT = "sent", "Sent"
+    OPENED = "opened", "Opened"
+    SUBMITTED = "submitted", "Submitted"
+    CANCELLED = "cancelled", "Cancelled"
+
+
+class MarketplaceOfferRequest(models.Model):
+    """
+    RFQ flow (PUBLIC schema): ένας ένοικος/διαχειριστής ζητάει προσφορά από Marketplace provider.
+
+    - Δημιουργείται στο public schema (shared) για να μπορεί να ανοιχτεί από εξωτερικό provider με token.
+    - Με την υποβολή, δημιουργείται Offer στο αντίστοιχο tenant schema.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True)
+
+    tenant_schema = models.CharField(max_length=64, db_index=True)
+    tenant_host = models.CharField(max_length=255, blank=True, default="", help_text="π.χ. theo.newconcierge.app")
+
+    building_id = models.IntegerField(null=True, blank=True, db_index=True)
+    project_id = models.UUIDField(db_index=True)
+
+    provider_id = models.UUIDField(db_index=True)
+    provider_name_snapshot = models.CharField(max_length=255, blank=True, default="")
+    provider_email_snapshot = models.EmailField(blank=True, default="")
+    provider_phone_snapshot = models.CharField(max_length=30, blank=True, default="")
+
+    project_title_snapshot = models.CharField(max_length=255, blank=True, default="")
+    project_description_snapshot = models.TextField(blank=True, default="")
+    requested_by_user_id = models.IntegerField(null=True, blank=True)
+    requested_by_email_snapshot = models.EmailField(blank=True, default="")
+
+    message_to_provider = models.TextField(blank=True, default="")
+
+    status = models.CharField(
+        max_length=20,
+        choices=MarketplaceOfferRequestStatus.choices,
+        default=MarketplaceOfferRequestStatus.SENT,
+        db_index=True,
+    )
+
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    submitted_offer_id = models.UUIDField(null=True, blank=True, db_index=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Marketplace Offer Request"
+        verbose_name_plural = "Marketplace Offer Requests"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["tenant_schema", "project_id"]),
+            models.Index(fields=["tenant_schema", "building_id"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"OfferRequest {self.id} ({self.status})"
+
+

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BadgeCheck, ChevronLeft, Mail, MapPin, Phone, Star } from 'lucide-react';
@@ -7,7 +8,7 @@ import { BadgeCheck, ChevronLeft, Mail, MapPin, Phone, Star } from 'lucide-react
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
-import { getActiveBuildingId } from '@/lib/api';
+import { apiPost, getActiveBuildingId } from '@/lib/api';
 import { useMarketplaceProvider } from '@/hooks/useMarketplaceProviders';
 
 export default function MarketplaceProviderPage({ params }: { params: { id: string } }) {
@@ -33,6 +34,9 @@ function MarketplaceProviderContent({ id }: { id: string }) {
   const returnTo = searchParams.get('return_to');
   const projectId = searchParams.get('project_id');
   const { data: provider, isLoading } = useMarketplaceProvider(id, buildingId);
+  const [isRequestingOffer, setIsRequestingOffer] = useState(false);
+  const [requestOfferError, setRequestOfferError] = useState<string | null>(null);
+  const [requestOfferSuccessUrl, setRequestOfferSuccessUrl] = useState<string | null>(null);
 
   const backHref = returnTo || `/marketplace?building_id=${buildingId}`;
 
@@ -117,21 +121,66 @@ function MarketplaceProviderContent({ id }: { id: string }) {
           </div>
 
           {projectId ? (
-            <Button
-              className="w-full rounded-2xl"
-              onClick={() => {
-                const qs = new URLSearchParams();
-                qs.set('project', projectId);
-                qs.set('contractor_name', provider.name);
-                if (provider.phone) qs.set('contractor_phone', provider.phone);
-                if (provider.email) qs.set('contractor_email', provider.email);
-                if (provider.address) qs.set('contractor_address', provider.address);
-                qs.set('marketplace_provider_id', provider.id);
-                router.push(`/projects/offers/new?${qs.toString()}`);
-              }}
-            >
-              Επιλογή για προσφορά
-            </Button>
+            <div className="space-y-3">
+              <Button
+                className="w-full rounded-2xl"
+                onClick={() => {
+                  const qs = new URLSearchParams();
+                  qs.set('project', projectId);
+                  qs.set('contractor_name', provider.name);
+                  if (provider.phone) qs.set('contractor_phone', provider.phone);
+                  if (provider.email) qs.set('contractor_email', provider.email);
+                  if (provider.address) qs.set('contractor_address', provider.address);
+                  qs.set('marketplace_provider_id', provider.id);
+                  router.push(`/projects/offers/new?${qs.toString()}`);
+                }}
+              >
+                Χρήση στοιχείων στην προσφορά (χειροκίνητα)
+              </Button>
+
+              <Button
+                variant="secondary"
+                className="w-full rounded-2xl bg-emerald-600/20 hover:bg-emerald-600/25 text-emerald-50"
+                disabled={isRequestingOffer || !provider.email}
+                onClick={async () => {
+                  try {
+                    setIsRequestingOffer(true);
+                    setRequestOfferError(null);
+                    setRequestOfferSuccessUrl(null);
+
+                    const res = await apiPost<{ provider_form_url?: string }>(`/marketplace/offer-requests/`, {
+                      provider_id: provider.id,
+                      project_id: projectId,
+                    });
+
+                    setRequestOfferSuccessUrl(res.provider_form_url || null);
+                  } catch (e: unknown) {
+                    setRequestOfferError(
+                      (e as { message?: string })?.message || 'Αποτυχία αποστολής αιτήματος προσφοράς.',
+                    );
+                  } finally {
+                    setIsRequestingOffer(false);
+                  }
+                }}
+              >
+                {isRequestingOffer ? 'Αποστολή…' : 'Ζήτα επίσημη προσφορά (email)'}
+              </Button>
+
+              {requestOfferError ? (
+                <div className="text-sm text-red-200 rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+                  {requestOfferError}
+                </div>
+              ) : null}
+
+              {requestOfferSuccessUrl ? (
+                <div className="text-sm text-emerald-50 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                  Στάλθηκε email στον συνεργάτη. Θα υποβάλει την προσφορά του από το link.
+                  <div className="mt-2 text-xs text-emerald-50/80 break-all">
+                    Link (debug): {requestOfferSuccessUrl}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           ) : null}
 
           {provider.website ? (
