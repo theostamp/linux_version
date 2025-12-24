@@ -256,15 +256,15 @@ export default function BuildingSelector({
   return (
     <>
       <div 
-        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+        className="fixed inset-0 bg-slate-900/10 z-[100] backdrop-blur-[2px]"
         onClick={handleBackdropClick}
       />
       <div 
-        className="fixed inset-0 flex items-start justify-center z-50 p-4 pt-24 pointer-events-none"
+        className="fixed inset-0 flex items-start justify-center z-[110] p-4 pt-24 pointer-events-none"
       >
         <div 
           ref={modalRef}
-          className="bg-white dark:bg-popover rounded-xl shadow-xl w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-slate-200/60 pointer-events-auto"
+          className="bg-white dark:bg-slate-900 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-slate-200 dark:border-slate-800 pointer-events-auto"
         >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200/50 bg-muted">

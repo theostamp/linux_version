@@ -45,16 +45,16 @@ export default function GlobalHeader() {
   return (
     <>
       <header
-        className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+        className="sticky top-0 z-50 bg-white dark:bg-slate-900 shadow-[0_2px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] border-b border-slate-100 dark:border-slate-800"
       >
         {/* On mobile/tablet the sidebar hamburger button is fixed at top-left.
             Add extra left padding so it never overlaps the header content. */}
         <div className="w-full pr-4 pl-16 sm:pr-6 sm:pl-16 lg:px-8">
           <div className="w-full max-w-full">
             {/* On mobile, allow a 2nd row so the building selector never overlaps other header actions */}
-            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6 lg:gap-8 py-3 sm:h-20">
+            <div className="flex flex-wrap sm:grid sm:grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6 lg:gap-8 py-3 sm:h-20">
               {/* Left Section - Logo */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 order-1">
                 {(() => {
                   const logoUrl = getOfficeLogoUrl(user?.office_logo);
                   return logoUrl && !logoError ? (
@@ -86,46 +86,46 @@ export default function GlobalHeader() {
               <div className="min-w-0">
                 {showOfficeDetails ? (
                   <>
-                {/* Desktop: Grid Layout for even spacing */}
-                <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                  {/* Office Name and Address */}
-                  <div className="flex flex-col justify-center min-w-0">
-                    <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
-                      {user?.office_name || 'Γραφείο Διαχείρισης'}
-                    </h1>
-                    {user?.office_address && (
-                      <p className="text-xs text-muted-foreground leading-tight truncate">
-                        {user.office_address}
-                      </p>
-                    )}
-                  </div>
+            {/* Desktop: Grid Layout for even spacing */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-center">
+              {/* Office Name and Address */}
+              <div className="flex flex-col justify-center min-w-0">
+                <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
+                  {user?.office_name || 'Γραφείο Διαχείρισης'}
+                </h1>
+                {user?.office_address && (
+                  <p className="text-xs text-muted-foreground leading-tight truncate">
+                    {user.office_address}
+                  </p>
+                )}
+              </div>
 
-                  {/* Contact Details */}
-                  <div className="flex flex-col justify-center min-w-0">
-                    {user?.office_phone && (
-                      <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
-                        📞 {user.office_phone}
-                      </p>
-                    )}
-                    {user?.email && (
-                      <p className="text-xs text-muted-foreground leading-tight truncate">
-                        ✉️ {user.email}
-                      </p>
-                    )}
-                  </div>
+              {/* Contact Details */}
+              <div className="flex flex-col justify-center min-w-0">
+                {user?.office_phone && (
+                  <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
+                    📞 {user.office_phone}
+                  </p>
+                )}
+                {user?.email && (
+                  <p className="text-xs text-muted-foreground leading-tight truncate">
+                    ✉️ {user.email}
+                  </p>
+                )}
+              </div>
 
-                      {/* Building Selector - ADMIN & INTERNAL MANAGER */}
-                      {canSelectBuilding && (
-                    <div className="hidden lg:flex items-center gap-2 min-w-0">
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
-                      <BuildingSelectorButton
-                        onBuildingSelect={setSelectedBuilding}
-                        selectedBuilding={selectedBuilding}
-                        className="min-w-[160px]"
-                      />
-                    </div>
-                  )}
+              {/* Building Selector - ADMIN & INTERNAL MANAGER */}
+              {canSelectBuilding && (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
+                  <BuildingSelectorButton
+                    onBuildingSelect={setSelectedBuilding}
+                    selectedBuilding={selectedBuilding}
+                    className="min-w-[220px]"
+                  />
                 </div>
+              )}
+            </div>
 
                 {/* Mobile version - Office Name Only */}
                 <div className="sm:hidden">
@@ -146,16 +146,17 @@ export default function GlobalHeader() {
                       </p>
                     </div>
                     
-                    {/* Building Selector for residents with multiple buildings - Desktop */}
-                    {canSelectBuilding && hasMultipleBuildings && (
-                      <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-                        <BuildingSelectorButton
-                          onBuildingSelect={setSelectedBuilding}
-                          selectedBuilding={selectedBuilding}
-                          className="min-w-[140px]"
-                        />
-                      </div>
-                    )}
+                {/* Building Selector for residents with multiple buildings - Desktop */}
+                {canSelectBuilding && hasMultipleBuildings && (
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
+                    <BuildingSelectorButton
+                      onBuildingSelect={setSelectedBuilding}
+                      selectedBuilding={selectedBuilding}
+                      className="min-w-[220px]"
+                    />
+                  </div>
+                )}
                     
                     {/* Mobile selector moved to its own row (see below) */}
                   </div>
@@ -289,7 +290,7 @@ export default function GlobalHeader() {
 
               {/* Mobile-only: building selector as a full-width second row to avoid crowding/overlap */}
               {canSelectBuilding && (hasMultipleBuildings || showOfficeDetails) && (
-                <div className="lg:hidden col-span-3 pt-1">
+                <div className="sm:hidden w-full pt-1 order-4">
                   <BuildingSelectorButton
                     onBuildingSelect={setSelectedBuilding}
                     selectedBuilding={selectedBuilding}

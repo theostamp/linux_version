@@ -71,18 +71,20 @@ export default function BuildingSelectorButton({
           onClick={handleOpen}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`flex items-center gap-2 min-w-0 max-w-full px-4 py-2 bg-white dark:bg-slate-900 border border-input rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md transition-all ${className}`}
+          className={`flex items-center justify-between gap-3 min-w-[220px] max-w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 ${className}`}
         >
-          <BuildingIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          <span className="text-sm font-medium text-foreground truncate min-w-0">
-            {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
-          </span>
-          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <BuildingIcon className="w-4 h-4 text-teal-600 dark:text-teal-400 flex-shrink-0" />
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+              {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
+            </span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
         </button>
 
         {/* Hover Tooltip */}
         {showTooltip && (
-          <div className="absolute top-full left-0 mt-2 opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+          <div className="absolute top-full left-0 mt-2 opacity-100 transition-opacity duration-300 pointer-events-none z-[60]">
             <div className="bg-white dark:bg-popover text-popover-foreground text-xs rounded-md p-2 shadow-md border border-slate-200/60 max-w-xs">
               <div className="flex items-start gap-2">
                 <Info className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
