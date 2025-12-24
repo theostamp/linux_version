@@ -215,6 +215,8 @@ function LiveAssemblyContent() {
   const { selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const assemblyId = params.id as string;
 
+  const [activeTab, setActiveTab] = useState<'live' | 'attendees' | 'agenda'>('live');
+
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
   const { data: attendees = [] } = useAssemblyAttendees(assemblyId);
 
@@ -271,8 +273,6 @@ function LiveAssemblyContent() {
   const isLive = assembly.status === 'in_progress';
   const completedCount = agendaItems.filter(item => item.completed_at).length;
   const presentCount = attendees.filter(a => a.is_present).length;
-
-  const [activeTab, setActiveTab] = useState<'live' | 'attendees' | 'agenda'>('live');
 
   const handleStartItem = async (itemId: string) => {
     await startAgendaItem.mutateAsync(itemId);
