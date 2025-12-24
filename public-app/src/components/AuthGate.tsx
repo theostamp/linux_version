@@ -3,6 +3,7 @@
 import { useAuth } from '@/components/contexts/AuthContext';
 import LoginForm from '@/components/LoginForm';
 import { ReactNode } from 'react';
+import { getEffectiveRole } from '@/lib/roleUtils';
 
 interface AuthGateProps {
   children: ReactNode;
@@ -12,7 +13,7 @@ interface AuthGateProps {
 
 export default function AuthGate({ children, fallback, role = 'any' }: Readonly<AuthGateProps>) {
   const { user, isLoading, isAuthReady } = useAuth();
-  const userRole = user?.role;
+  const effectiveRole = getEffectiveRole(user);
 
   if (isLoading || !isAuthReady) {
     return <div className="p-6 text-center text-gray-500">🔄 Έλεγχος σύνδεσης...</div>;
@@ -27,12 +28,24 @@ export default function AuthGate({ children, fallback, role = 'any' }: Readonly<
     );
   }
 
-  if (role !== 'any' && userRole !== role) {
-    return (
-      <div className="p-6 text-red-600">
-        ⛔ Δεν έχετε πρόσβαση σε αυτή τη σελίδα. (Απαιτείται ρόλος: {role})
-      </div>
-    );
+  // Check role access using effective role (includes is_superuser check)
+  if (role !== 'any') {
+    // Map 'admin' role requirement to 'superuser' (since admin role maps to superuser)
+    const requiredRole = role === 'admin' ? 'superuser' : role;
+    
+    // Superusers always have access to superuser pages, regardless of their role field
+    const hasAccess = 
+      requiredRole === 'superuser' && user.is_superuser
+        ? true
+        : effectiveRole === requiredRole;
+    
+    if (!hasAccess) {
+      return (
+        <div className="p-6 text-red-600">
+          ⛔ Δεν έχετε πρόσβαση σε αυτή τη σελίδα. (Απαιτείται ρόλος: {role})
+        </div>
+      );
+    }
   }
 
   return <>{children}</>;
