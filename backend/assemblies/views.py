@@ -110,10 +110,12 @@ class AssemblyViewSet(viewsets.ModelViewSet):
     def _get_user_building_ids(self):
         """Επιστρέφει τα building IDs που έχει πρόσβαση ο χρήστης"""
         user = self.request.user
-        # Manager βλέπει όλα τα buildings
-        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+        
+        # Superuser ή Manager βλέπει όλα τα buildings
+        if user.is_superuser or (hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']):
             from buildings.models import Building
             return Building.objects.values_list('id', flat=True)
+        
         # Residents βλέπουν μόνο τα δικά τους buildings
         from buildings.models import BuildingMembership
         return BuildingMembership.objects.filter(
@@ -400,7 +402,7 @@ class AgendaItemViewSet(viewsets.ModelViewSet):
     
     def _get_user_building_ids(self):
         user = self.request.user
-        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+        if user.is_superuser or (hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']):
             from buildings.models import Building
             return Building.objects.values_list('id', flat=True)
         from buildings.models import BuildingMembership
@@ -558,7 +560,7 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
     
     def _get_user_building_ids(self):
         user = self.request.user
-        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+        if user.is_superuser or (hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']):
             from buildings.models import Building
             return Building.objects.values_list('id', flat=True)
         from buildings.models import BuildingMembership
@@ -709,7 +711,7 @@ class AssemblyVoteViewSet(viewsets.ReadOnlyModelViewSet):
     
     def _get_user_building_ids(self):
         user = self.request.user
-        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+        if user.is_superuser or (hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']):
             from buildings.models import Building
             return Building.objects.values_list('id', flat=True)
         from buildings.models import BuildingMembership
@@ -737,7 +739,7 @@ class AssemblyMinutesTemplateViewSet(viewsets.ModelViewSet):
     
     def _get_user_building_ids(self):
         user = self.request.user
-        if hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']:
+        if user.is_superuser or (hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff']):
             from buildings.models import Building
             return Building.objects.values_list('id', flat=True)
         from buildings.models import BuildingMembership
