@@ -29,6 +29,7 @@ import { hasInternalManagerAccess } from '@/lib/roleUtils';
 import LiveVotingPanel from '@/components/assemblies/LiveVotingPanel';
 import LiveResultsDisplay from '@/components/assemblies/LiveResultsDisplay';
 import LiveAttendeePanel from '@/components/assemblies/LiveAttendeePanel';
+import VotingControlPanel from '@/components/assemblies/VotingControlPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function LiveTimer({ startTime }: { startTime: string | null }) {
@@ -342,7 +343,15 @@ function LiveAssemblyContent() {
         </div>
 
         {canManage && isLive && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Voting Control Panel - εμφανίζεται μόνο αν υπάρχει ενεργό θέμα ψηφοφορίας */}
+            {isVotingItem && currentItem && (
+              <VotingControlPanel
+                item={currentItem}
+                attendees={attendees}
+                votes={voteResults?.votes || []}
+              />
+            )}
             <Button
               variant="outline"
               onClick={() => window.open(`/kiosk-display?building_id=${assembly.building}`, '_blank')}
