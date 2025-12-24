@@ -158,7 +158,7 @@ const navigationGroups: NavigationGroup[] = [
       },
       {
         href: '/projects',
-        label: 'Προσφορές',
+        label: 'Εργα & Προσφορές',
         icon: <FileText className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         tooltip: 'Διαχείριση προσφορών και έργων',
