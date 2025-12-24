@@ -8,9 +8,29 @@ interface AuthGateProps {
   children: ReactNode;
   fallback?: ReactNode;
   role?: 'manager' | 'resident' | 'staff' | 'admin' | 'superuser' | 'any';
+  /** Requires Ultra Admin (is_superuser=true && is_staff=true) */
+  requiresUltraAdmin?: boolean;
 }
 
-export default function AuthGate({ children, fallback, role = 'any' }: Readonly<AuthGateProps>) {
+/**
+ * Check if user is Ultra Admin (platform level access).
+ * Ultra Admin = role='admin' && is_superuser=true && is_staff=true
+ */
+function isUltraAdmin(user: any): boolean {
+  return Boolean(
+    user &&
+    user.role?.toLowerCase() === 'admin' &&
+    user.is_superuser === true &&
+    user.is_staff === true
+  );
+}
+
+export default function AuthGate({ 
+  children, 
+  fallback, 
+  role = 'any',
+  requiresUltraAdmin = false,
+}: Readonly<AuthGateProps>) {
   const { user, isLoading, isAuthReady } = useAuth();
   const userRole = user?.role;
 
@@ -27,6 +47,32 @@ export default function AuthGate({ children, fallback, role = 'any' }: Readonly<
     );
   }
 
+  // Ultra Admin check (takes precedence)
+  if (requiresUltraAdmin) {
+    if (!isUltraAdmin(user)) {
+      return (
+        <div className="p-6 text-red-600">
+          ⛔ Δεν έχετε πρόσβαση σε αυτή τη σελίδα. (Απαιτείται Ultra Admin)
+        </div>
+      );
+    }
+    // Ultra Admin has access, render children
+    return <>{children}</>;
+  }
+
+  // For 'superuser' role, also accept Ultra Admin users
+  if (role === 'superuser') {
+    if (userRole !== 'superuser' && !isUltraAdmin(user)) {
+      return (
+        <div className="p-6 text-red-600">
+          ⛔ Δεν έχετε πρόσβαση σε αυτή τη σελίδα. (Απαιτείται ρόλος: {role})
+        </div>
+      );
+    }
+    return <>{children}</>;
+  }
+
+  // Standard role check
   if (role !== 'any' && userRole !== role) {
     return (
       <div className="p-6 text-red-600">

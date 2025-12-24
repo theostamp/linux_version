@@ -906,7 +906,7 @@ function MarketplaceAdminContent() {
 
 export default function MarketplaceAdminPage() {
   return (
-    <AuthGate role="superuser">
+    <AuthGate requiresUltraAdmin>
       <MarketplaceAdminContent />
     </AuthGate>
   );
