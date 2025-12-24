@@ -191,6 +191,14 @@ class Assembly(models.Model):
         verbose_name="Υπενθύμιση ημέρας συνέλευσης"
     )
     email_sameday_sent_at = models.DateTimeField(null=True, blank=True)
+
+    # Pre-voting open tracking (email)
+    email_pre_voting_open_sent = models.BooleanField(
+        default=False,
+        verbose_name="Ειδοποίηση Έναρξης Pre-voting",
+        help_text="Αποστέλλεται όταν ανοίγει το pre-voting (στην pre_voting_start_date)"
+    )
+    email_pre_voting_open_sent_at = models.DateTimeField(null=True, blank=True)
     
     # Σύνδεση με προηγούμενη συνέλευση (για continuation)
     continued_from = models.ForeignKey(

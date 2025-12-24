@@ -5,7 +5,7 @@ import logging
 
 from celery import shared_task
 from django.utils import timezone
-from django_tenants.utils import schema_context
+from django_tenants.utils import schema_context, get_tenant_model
 from datetime import timedelta
 from typing import Optional
 
@@ -323,3 +323,94 @@ def send_automated_debt_reminders(
         )
         logger.info(f"🎉 {summary}")
         return summary
+
+
+@shared_task
+def send_weekly_debt_reminders(
+    min_debt_amount: float = 0.01,
+    cooldown_days: int = 6,
+):
+    """
+    Αυτόματη εβδομαδιαία αποστολή υπενθυμίσεων οφειλών (multi-tenant).
+
+    - Τρέχει μέσω Celery Beat 1 φορά/εβδομάδα
+    - Dedupe ανά building: αν έχει σταλεί campaign τις τελευταίες `cooldown_days` ημέρες, κάνει skip
+    """
+    from decimal import Decimal
+    from django.contrib.auth import get_user_model
+    from buildings.models import Building
+    from notifications.models import NotificationTemplate, Notification
+    from notifications.debt_reminder_service import DebtReminderService
+
+    TenantModel = get_tenant_model()
+    now = timezone.now()
+    since = now - timedelta(days=cooldown_days)
+
+    tenants_processed = 0
+    buildings_processed = 0
+    buildings_skipped = 0
+    total_sent = 0
+    total_failed = 0
+
+    for tenant in TenantModel.objects.exclude(schema_name='public'):
+        try:
+            with schema_context(tenant.schema_name):
+                tenants_processed += 1
+
+                User = get_user_model()
+                system_user = (
+                    User.objects.filter(is_superuser=True).first()
+                    or User.objects.filter(is_staff=True).first()
+                    or User.objects.first()
+                )
+                if not system_user:
+                    logger.warning("No system user in schema %s - skipping weekly debt reminders", tenant.schema_name)
+                    continue
+
+                for building in Building.objects.all():
+                    buildings_processed += 1
+
+                    # Dedupe: skip if a debt reminder campaign was created recently for this building
+                    recently_sent = Notification.objects.filter(
+                        building=building,
+                        subject__icontains="Υπενθύμιση Οφειλών",
+                        created_at__gte=since,
+                    ).exists()
+                    if recently_sent:
+                        buildings_skipped += 1
+                        continue
+
+                    template = NotificationTemplate.objects.filter(
+                        building=building,
+                        category='reminder',
+                        is_active=True,
+                        name__icontains='οφειλ'
+                    ).first()
+
+                    if not template:
+                        template = DebtReminderService.create_default_debt_reminder_template(building)
+
+                    results = DebtReminderService.send_personalized_reminders(
+                        building=building,
+                        template=template,
+                        created_by=system_user,
+                        min_debt_amount=Decimal(str(min_debt_amount)),
+                        target_month=None,
+                        send_to_all=False,
+                        test_mode=False,
+                        test_email=None,
+                    )
+
+                    total_sent += int(results.get('emails_sent', 0) or 0)
+                    total_failed += int(results.get('emails_failed', 0) or 0)
+
+        except Exception as e:
+            logger.exception("Weekly debt reminders failed for tenant %s: %s", tenant.schema_name, e)
+            continue
+
+    summary = (
+        f"Weekly debt reminders: tenants={tenants_processed}, buildings={buildings_processed}, "
+        f"skipped={buildings_skipped}, sent={total_sent}, failed={total_failed}"
+    )
+    logger.info(summary)
+    return summary

@@ -13,6 +13,7 @@ import logging
 from datetime import timedelta, datetime, time
 from celery import shared_task
 from django.utils import timezone
+from django.conf import settings
 from django_tenants.utils import schema_context, get_tenant_model
 from typing import Optional
 from notifications.multichannel_service import (
@@ -260,6 +261,47 @@ def check_and_send_assembly_reminders():
     
     logger.info(f"Assembly reminder check complete. Scheduled {sent_count} reminder tasks.")
     return {'scheduled_tasks': sent_count}
+
+
+@shared_task
+def check_and_send_pre_voting_open_reminders():
+    """
+    Celery Beat task - εκτελείται καθημερινά.
+    Στέλνει email υπενθύμιση την ημέρα που ανοίγει το pre-voting (pre_voting_start_date).
+    """
+    from assemblies.models import Assembly
+
+    TenantModel = get_tenant_model()
+    today = timezone.now().date()
+
+    scheduled = 0
+
+    for tenant in TenantModel.objects.exclude(schema_name='public'):
+        try:
+            with schema_context(tenant.schema_name):
+                assemblies = Assembly.objects.filter(
+                    status__in=['scheduled', 'convened'],
+                    pre_voting_enabled=True,
+                    pre_voting_start_date=today,
+                ).select_related('building')
+
+                for assembly in assemblies:
+                    if getattr(assembly, 'email_pre_voting_open_sent', False):
+                        continue
+
+                    send_assembly_reminder_task.delay(
+                        str(assembly.id),
+                        'pre_voting_open',
+                        tenant.schema_name,
+                    )
+                    scheduled += 1
+
+        except Exception as e:
+            logger.exception(f"Error processing tenant {tenant.schema_name} for pre-voting-open reminders: {e}")
+            continue
+
+    logger.info(f"Pre-voting-open reminder check complete. Scheduled {scheduled} reminder tasks.")
+    return {'scheduled_tasks': scheduled}
 
 
 @shared_task
