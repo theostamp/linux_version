@@ -382,11 +382,23 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    // If auth is ready and user exists but no tenant, stop loading (user might not have tenant yet)
+    const role = (user as unknown as { role?: string })?.role;
+    const isManagementStaff =
+      !!(user as any)?.is_staff ||
+      !!(user as any)?.is_superuser ||
+      (typeof role === 'string' && ['manager', 'admin', 'office_staff', 'staff'].includes(role));
+    
+    // If auth is ready and user exists but no tenant:
+    // - For ultra/admin staff, we still want to load buildings (tenant is resolved via X-Tenant-Host).
+    // - For regular users, stop loading (they might not have tenant yet).
     if (!authLoading && user && !user.tenant) {
-      console.log('[BuildingContext] User has no tenant, stopping loading');
-      setIsLoading(false);
-      setIsLoadingBuildings(false);
+      if (isManagementStaff) {
+        loadBuildings();
+      } else {
+        console.log('[BuildingContext] User has no tenant, stopping loading');
+        setIsLoading(false);
+        setIsLoadingBuildings(false);
+      }
       return;
     }
     

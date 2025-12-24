@@ -381,6 +381,18 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
     } catch {
       // ignore parsing errors
     }
+
+    // Fallback: if no tenant host was derived from user/override, use current hostname
+    // (works for tenant subdomains like theo.newconcierge.app and demo.localhost)
+    if (!headers["X-Tenant-Host"]) {
+      const hostname = window.location.hostname || "";
+      const shouldSet =
+        (typeof hostname === "string" && hostname.endsWith("newconcierge.app")) ||
+        (typeof hostname === "string" && hostname.endsWith("localhost"));
+      if (shouldSet && hostname.trim()) {
+        headers["X-Tenant-Host"] = hostname.trim();
+      }
+    }
     
     // Add CSRF token for mutation requests
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
