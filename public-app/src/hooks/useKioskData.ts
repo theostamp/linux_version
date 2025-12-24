@@ -646,13 +646,13 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
     const interval = setInterval(() => {
       fetchKioskData();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, data?.upcoming_assembly?.status === 'in_progress' ? 15 * 1000 : 5 * 60 * 1000); // 15s if live, 5m otherwise
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [fetchKioskData]);
+  }, [fetchKioskData, data?.upcoming_assembly?.status]);
 
   const refetch = useCallback(() => {
     return fetchKioskData();

@@ -7,6 +7,7 @@ import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
 import MorningOverviewSceneCustom from '@/components/kiosk/scenes/MorningOverviewSceneCustom';
 import AmbientShowcaseScene from '@/components/kiosk/scenes/AmbientShowcaseScene';
 import AssemblyCountdownScene from '@/components/kiosk/scenes/AssemblyCountdownScene';
+import LiveAssemblyScene from '@/components/kiosk/scenes/LiveAssemblyScene';
 import { extractAmbientBrandingFromSettings } from '@/components/kiosk/scenes/branding';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
@@ -271,16 +272,27 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   }, [kioskData?.upcoming_assembly]);
 
   if (currentScene.name === 'Συνέλευση' || currentScene.name === 'Assembly Countdown' || hasAssemblyToday) {
+    // Determine which assembly scene to show based on status
+    const assemblyStatus = kioskData?.upcoming_assembly?.status;
+    const isLive = assemblyStatus === 'in_progress';
+
     return (
       <div
         className={`transition-opacity duration-1000 ease-in-out ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <AssemblyCountdownScene
-          data={kioskData}
-          buildingId={effectiveBuildingId}
-        />
+        {isLive ? (
+          <LiveAssemblyScene
+            data={kioskData}
+            buildingId={effectiveBuildingId}
+          />
+        ) : (
+          <AssemblyCountdownScene
+            data={kioskData}
+            buildingId={effectiveBuildingId}
+          />
+        )}
       </div>
     );
   }

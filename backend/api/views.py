@@ -340,15 +340,25 @@ def public_info(request, building_id=None):
                 if assembly:
                     # Serialize agenda items
                     agenda_items = []
+                    current_item_data = None
+                    
                     for item in assembly.agenda_items.order_by('order'):
-                        agenda_items.append({
+                        item_data = {
                             'id': str(item.id),
                             'order': item.order,
                             'title': item.title,
                             'item_type': item.item_type,
+                            'status': item.status,
                             'estimated_duration': item.estimated_duration,
-                        })
-                    
+                        }
+                        agenda_items.append(item_data)
+                        
+                        # Capture current item details
+                        if item.status == 'in_progress':
+                            current_item_data = item_data.copy()
+                            if item.item_type == 'voting':
+                                current_item_data['voting_results'] = item.get_voting_results()
+
                     upcoming_assembly_data = {
                         'id': str(assembly.id),
                         'title': assembly.title,
@@ -359,13 +369,17 @@ def public_info(request, building_id=None):
                         'is_physical': assembly.is_physical,
                         'meeting_link': assembly.meeting_link if assembly.is_online else None,
                         'status': assembly.status,
+                        'actual_start_time': assembly.actual_start_time.isoformat() if assembly.actual_start_time else None,
                         'building_name': assembly.building.name if assembly.building else '',
                         'is_pre_voting_active': assembly.is_pre_voting_active,
-                        'quorum_percentage': assembly.quorum_percentage,
+                        'quorum_percentage': float(assembly.quorum_percentage),
+                        'achieved_quorum_mills': assembly.achieved_quorum_mills,
+                        'required_quorum_mills': assembly.required_quorum_mills,
                         'agenda_items': agenda_items,
+                        'current_item': current_item_data,
                     }
                     
-                    print(f"[public_info] Found upcoming assembly: {assembly.title} on {assembly.scheduled_date}")
+                    print(f"[public_info] Found upcoming assembly: {assembly.title} on {assembly.scheduled_date} (Status: {assembly.status})")
                 else:
                     print(f"[public_info] No upcoming assembly found for building {building_id}")
                     
