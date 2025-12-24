@@ -83,31 +83,25 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isCreatingScene, setIsCreatingScene] = useState(false);
 
-  // 🔴 PRIORITY CHECK: Is there a LIVE assembly? If so, override EVERYTHING
-  const isLiveAssembly = kioskData?.upcoming_assembly?.status === 'in_progress';
-  
-  if (isLiveAssembly) {
-    // Full override - show only the Live Assembly Scene
-    return (
-      <LiveAssemblyScene
-        data={kioskData}
-        buildingId={effectiveBuildingId}
-      />
-    );
-  }
-
   // Get current active scene
   const currentScene = useMemo(() => {
     if (!scenes || scenes.length === 0) return null;
     return scenes[currentSceneIndex] || null;
   }, [scenes, currentSceneIndex]);
+  
   const ambientBrandingFromScene = useMemo(() => {
     if (!currentScene?.settings) return null;
     return extractAmbientBrandingFromSettings(currentScene.settings);
   }, [currentScene?.settings]);
 
-  // Auto-cycle through scenes
+  // 🔴 PRIORITY CHECK: Is there a LIVE assembly?
+  const isLiveAssembly = kioskData?.upcoming_assembly?.status === 'in_progress';
+
+  // Auto-cycle through scenes (only when not in live assembly mode)
   useEffect(() => {
+    // Don't cycle during live assembly
+    if (isLiveAssembly) return;
+    
     if (!scenes || scenes.length === 0 || !currentScene) {
       return;
     }
@@ -130,7 +124,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [currentSceneIndex, scenes, currentScene]);
+  }, [currentSceneIndex, scenes, currentScene, isLiveAssembly]);
 
   // Reset to first scene when scenes change
   useEffect(() => {
@@ -231,6 +225,16 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
           <p className="text-gray-400">{error}</p>
         </div>
       </div>
+    );
+  }
+
+  // 🔴 PRIORITY: Live Assembly overrides ALL other scenes
+  if (isLiveAssembly) {
+    return (
+      <LiveAssemblyScene
+        data={kioskData}
+        buildingId={effectiveBuildingId}
+      />
     );
   }
 
