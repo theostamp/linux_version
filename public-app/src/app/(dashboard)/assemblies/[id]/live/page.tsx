@@ -8,7 +8,8 @@ import {
   Users, ArrowLeft, Play, Pause, Square, Clock,
   CheckCircle, XCircle, Minus, Vote, Loader2,
   ChevronRight, Timer, Percent, Building2,
-  Video, MapPin, AlertCircle, MessageSquare, Monitor
+  Video, MapPin, AlertCircle, MessageSquare, Monitor,
+  FileText
 } from 'lucide-react';
 
 import { useAuth } from '@/components/contexts/AuthContext';
