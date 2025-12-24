@@ -66,12 +66,12 @@ export default function BuildingSelectorButton({
 
   return (
     <>
-      <div className="relative group">
+      <div className="relative group z-10">
         <button
           onClick={handleOpen}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`flex items-center justify-between gap-3 min-w-[220px] max-w-full px-4 py-2.5 bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/50 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-all duration-200 ${className}`}
+          className={`flex items-center justify-between gap-3 min-w-[220px] max-w-full px-4 py-2.5 bg-slate-200/85 dark:bg-slate-700/70 border border-slate-200/70 dark:border-slate-700/50 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:bg-slate-200 dark:hover:bg-slate-700/80 transition-all duration-200 ${className}`}
         >
           <div className="flex items-center gap-2 min-w-0 overflow-hidden">
             <BuildingIcon className="w-4 h-4 text-teal-600 dark:text-teal-400 flex-shrink-0" />
