@@ -359,6 +359,15 @@ def public_info(request, building_id=None):
                             if item.item_type == 'voting':
                                 current_item_data['voting_results'] = item.get_voting_results()
 
+                    # Calculate attendee stats
+                    all_attendees = list(assembly.attendees.all())
+                    present_attendees = [a for a in all_attendees if a.is_present]
+                    attendees_stats = {
+                        'total': len(all_attendees),
+                        'present': len(present_attendees),
+                        'voted': sum(1 for a in present_attendees if a.votes.exists()),
+                    }
+
                     upcoming_assembly_data = {
                         'id': str(assembly.id),
                         'title': assembly.title,
@@ -375,8 +384,10 @@ def public_info(request, building_id=None):
                         'quorum_percentage': float(assembly.quorum_percentage),
                         'achieved_quorum_mills': assembly.achieved_quorum_mills,
                         'required_quorum_mills': assembly.required_quorum_mills,
+                        'total_building_mills': assembly.total_building_mills,
                         'agenda_items': agenda_items,
                         'current_item': current_item_data,
+                        'attendees_stats': attendees_stats,
                     }
                     
                     print(f"[public_info] Found upcoming assembly: {assembly.title} on {assembly.scheduled_date} (Status: {assembly.status})")

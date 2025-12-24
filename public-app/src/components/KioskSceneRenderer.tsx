@@ -83,6 +83,19 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isCreatingScene, setIsCreatingScene] = useState(false);
 
+  // 🔴 PRIORITY CHECK: Is there a LIVE assembly? If so, override EVERYTHING
+  const isLiveAssembly = kioskData?.upcoming_assembly?.status === 'in_progress';
+  
+  if (isLiveAssembly) {
+    // Full override - show only the Live Assembly Scene
+    return (
+      <LiveAssemblyScene
+        data={kioskData}
+        buildingId={effectiveBuildingId}
+      />
+    );
+  }
+
   // Get current active scene
   const currentScene = useMemo(() => {
     if (!scenes || scenes.length === 0) return null;
