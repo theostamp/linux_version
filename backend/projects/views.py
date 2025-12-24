@@ -922,6 +922,48 @@ class OfferViewSet(viewsets.ModelViewSet):
             update_project_schedule(project, offer)
             logger.info(f"update_project_schedule completed for project {project.id}")
 
+            # ΒΗΜΑ 5: Marketplace commission record (PUBLIC schema, connect-ready)
+            try:
+                if offer.marketplace_provider_id:
+                    from decimal import Decimal
+                    from django.db import connection
+                    from marketplace_public.models import MarketplaceCommission, MarketplaceProvider
+
+                    tenant_schema = getattr(connection, "schema_name", None) or "unknown"
+
+                    exists = MarketplaceCommission.objects.filter(
+                        tenant_schema=tenant_schema,
+                        offer_id=offer.id,
+                    ).exists()
+
+                    if not exists:
+                        provider = MarketplaceProvider.objects.filter(id=offer.marketplace_provider_id).first()
+                        rate = getattr(provider, "default_commission_rate_percent", None)
+
+                        commission_amount = None
+                        try:
+                            if rate is not None and offer.amount is not None:
+                                commission_amount = (offer.amount * Decimal(str(rate))) / Decimal("100")
+                        except Exception:
+                            commission_amount = None
+
+                        MarketplaceCommission.objects.create(
+                            tenant_schema=tenant_schema,
+                            building_id=offer.project.building_id,
+                            project_id=offer.project.id,
+                            offer_id=offer.id,
+                            provider_id=offer.marketplace_provider_id,
+                            provider_name_snapshot=(provider.name if provider else offer.contractor_name),
+                            gross_amount=offer.amount,
+                            commission_rate_percent=rate,
+                            commission_amount=commission_amount,
+                        )
+            except Exception as e:
+                logger.error(
+                    f"[MarketplaceCommission] Failed to create commission for offer {offer.id}: {str(e)}",
+                    exc_info=True,
+                )
+
         logger.info(
             f"Offer {offer.id} approved successfully",
             extra={

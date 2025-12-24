@@ -14,7 +14,7 @@ from .models import (
 )
 from financial.models import Expense
 from .permissions import MaintenancePermission
-from core.permissions import IsManager, IsResident, IsRelatedToBuilding
+from core.permissions import IsManager, IsResident, IsRelatedToBuilding, IsUltraAdmin
 from .serializers import (
     ContractorSerializer, ServiceReceiptSerializer, ScheduledMaintenanceSerializer,
     MaintenanceTicketSerializer, WorkOrderSerializer, PublicScheduledMaintenanceSerializer,
@@ -1109,4 +1109,4 @@ class MarketplacePartnerViewSet(viewsets.ModelViewSet):
         # τηλεφώνων/email συνεργατών από tenant domains.
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
-        return [IsAuthenticated(), IsManager()]
+        return [IsAuthenticated(), IsUltraAdmin()]

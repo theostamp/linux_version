@@ -69,6 +69,9 @@ urlpatterns = [
 
     # Automated Ad Portal (public schema-backed, exposed via tenant routing)
     path('api/ad-portal/', include('ad_portal.urls')),
+
+    # Marketplace (public schema-backed, exposed via tenant routing)
+    path('api/marketplace/', include('marketplace_public.urls')),
     
     # Tenants
     path('api/tenants/', include('tenants.urls')),

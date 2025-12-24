@@ -212,6 +212,15 @@ class Offer(models.Model):
     contractor_phone = models.CharField(max_length=20, null=True, blank=True, verbose_name="Τηλέφωνο")
     contractor_email = models.EmailField(null=True, blank=True, verbose_name="Email")
     contractor_address = models.TextField(null=True, blank=True, verbose_name="Διεύθυνση")
+
+    # Marketplace linkage (PUBLIC schema provider id)
+    marketplace_provider_id = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Marketplace Provider ID",
+        help_text="UUID του Marketplace provider (public schema) αν η προσφορά προήλθε από το marketplace.",
+    )
     
     # Στοιχεία προσφοράς
     amount = models.DecimalField(

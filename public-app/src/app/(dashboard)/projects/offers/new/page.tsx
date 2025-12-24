@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
 import { getActiveBuildingId } from '@/lib/api';
 import type { Project } from '@/lib/api';
@@ -27,6 +27,7 @@ type OfferFormState = {
   contractor_phone: string;
   contractor_email: string;
   contractor_address: string;
+  marketplace_provider_id: string;
   amount: string;
   description: string;
   payment_terms: string;
@@ -59,6 +60,7 @@ const INITIAL_FORM: OfferFormState = {
   contractor_phone: '',
   contractor_email: '',
   contractor_address: '',
+  marketplace_provider_id: '',
   amount: '',
   description: '',
   payment_terms: '',
@@ -71,6 +73,7 @@ const INITIAL_FORM: OfferFormState = {
 
 function NewOfferPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { buildings, selectedBuilding, setSelectedBuilding } = useBuilding();
   const defaultBuildingId = selectedBuilding?.id ?? getActiveBuildingId();
@@ -80,12 +83,46 @@ function NewOfferPageContent() {
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [didPrefillFromQuery, setDidPrefillFromQuery] = useState(false);
 
   useEffect(() => {
     if (!selectedBuilding && buildings.length > 0) {
       setSelectedBuilding(buildings[0]);
     }
   }, [selectedBuilding, buildings, setSelectedBuilding]);
+
+  // Prefill from marketplace selection (query params)
+  useEffect(() => {
+    if (didPrefillFromQuery) return;
+
+    const project = searchParams.get('project') || searchParams.get('project_id') || '';
+    const contractor_name = searchParams.get('contractor_name') || '';
+    const contractor_phone = searchParams.get('contractor_phone') || '';
+    const contractor_email = searchParams.get('contractor_email') || '';
+    const contractor_address = searchParams.get('contractor_address') || '';
+    const marketplace_provider_id = searchParams.get('marketplace_provider_id') || '';
+
+    const hasAny =
+      Boolean(project) ||
+      Boolean(contractor_name) ||
+      Boolean(contractor_phone) ||
+      Boolean(contractor_email) ||
+      Boolean(contractor_address) ||
+      Boolean(marketplace_provider_id);
+
+    if (!hasAny) return;
+
+    setFormState((prev) => ({
+      ...prev,
+      project: project || prev.project,
+      contractor_name: contractor_name || prev.contractor_name,
+      contractor_phone: contractor_phone || prev.contractor_phone,
+      contractor_email: contractor_email || prev.contractor_email,
+      contractor_address: contractor_address || prev.contractor_address,
+      marketplace_provider_id: marketplace_provider_id || prev.marketplace_provider_id,
+    }));
+    setDidPrefillFromQuery(true);
+  }, [searchParams, didPrefillFromQuery]);
 
   // Auto-validate installments when payment_method changes to installments
   useEffect(() => {
@@ -188,6 +225,9 @@ function NewOfferPageContent() {
       }
       if (formState.contractor_address?.trim()) {
         payload.contractor_address = formState.contractor_address.trim();
+      }
+      if (formState.marketplace_provider_id?.trim()) {
+        payload.marketplace_provider_id = formState.marketplace_provider_id.trim();
       }
       // Amount is already set above as required
       if (formState.payment_terms?.trim()) {
@@ -439,6 +479,50 @@ function NewOfferPageContent() {
                         <p className="font-medium capitalize">{selectedProject.priority ?? '—'}</p>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Marketplace CTA */}
+                {formState.project ? (
+                  <div className="rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <ShieldCheck className="w-5 h-5 text-indigo-600 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold text-slate-900">
+                          Θέλετε να πάρετε προσφορά από πιστοποιημένο επαγγελματία;
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Με την επιλογή “Marketplace” έχετε πλεονεκτήματα όπως εγγύηση εργασιών, ασφάλιση έργου και
+                          άμεση ανταπόκριση σε περίπτωση αστοχίας.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+                      <span className="rounded-full bg-white px-2 py-1 border border-slate-200">Εγγύηση</span>
+                      <span className="rounded-full bg-white px-2 py-1 border border-slate-200">Ασφάλιση</span>
+                      <span className="rounded-full bg-white px-2 py-1 border border-slate-200">Αξιολόγηση</span>
+                      <span className="rounded-full bg-white px-2 py-1 border border-slate-200">Geolocation</span>
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <Button
+                        type="button"
+                        disabled={!buildingId}
+                        onClick={() => {
+                          const returnTo = `/projects/offers/new?project=${encodeURIComponent(formState.project)}`;
+                          router.push(
+                            `/marketplace?building_id=${encodeURIComponent(String(buildingId))}&project_id=${encodeURIComponent(
+                              formState.project,
+                            )}&return_to=${encodeURIComponent(returnTo)}`,
+                          );
+                        }}
+                      >
+                        Βρείτε επαγγελματία στο Marketplace
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    Επιλέξτε έργο για να εμφανιστεί η λίστα πιστοποιημένων επαγγελματιών.
                   </div>
                 )}
 

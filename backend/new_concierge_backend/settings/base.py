@@ -58,6 +58,7 @@ SHARED_APPS = [
     'online_payments_public',  # Online payments webhooks/idempotency (public schema)
     'ad_portal',            # Automated Ad Portal (public schema)
     'ad_portal_public',     # Ad Portal Stripe webhooks/idempotency (public schema)
+    'marketplace_public',   # Global Marketplace (public schema)
 
     'corsheaders',
     'django.contrib.contenttypes',

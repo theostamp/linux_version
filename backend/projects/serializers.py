@@ -71,7 +71,9 @@ class OfferSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'project', 'project_title', 'building_name',
             'contractor_name', 'contractor_contact', 'contractor_phone',
-            'contractor_email', 'contractor_address', 'amount', 'description',
+            'contractor_email', 'contractor_address',
+            'marketplace_provider_id',
+            'amount', 'description',
             'payment_terms', 'payment_method', 'installments', 'advance_payment',
             'warranty_period', 'completion_time',
             'status', 'submitted_at', 'reviewed_at', 'notes',
