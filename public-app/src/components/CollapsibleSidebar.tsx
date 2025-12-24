@@ -338,6 +338,21 @@ const navigationGroups: NavigationGroup[] = [
       },
     ],
   },
+  {
+    id: 'ultra',
+    title: 'Ultra Admin',
+    colorKey: 'purple',
+    links: [
+      {
+        href: '/admin/marketplace',
+        label: 'Marketplace',
+        icon: <Truck className="w-5 h-5" />,
+        roles: ['superuser'],
+        requiresUltraAdmin: true,
+        tooltip: 'Διαχείριση συνεργατών Marketplace (Ultra Admin μόνο)',
+      },
+    ],
+  },
 ];
 
 export default function CollapsibleSidebar() {
