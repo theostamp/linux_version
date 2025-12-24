@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 import { hasInternalManagerAccess } from '@/lib/roleUtils';
 import LiveVotingPanel from '@/components/assemblies/LiveVotingPanel';
 import LiveResultsDisplay from '@/components/assemblies/LiveResultsDisplay';
+import LiveAttendeePanel from '@/components/assemblies/LiveAttendeePanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function LiveTimer({ startTime }: { startTime: string | null }) {
   const [elapsed, setElapsed] = useState(0);
@@ -269,6 +271,8 @@ function LiveAssemblyContent() {
   const completedCount = agendaItems.filter(item => item.completed_at).length;
   const presentCount = attendees.filter(a => a.is_present).length;
 
+  const [activeTab, setActiveTab] = useState<'live' | 'attendees' | 'agenda'>('live');
+
   const handleStartItem = async (itemId: string) => {
     await startAgendaItem.mutateAsync(itemId);
   };
@@ -363,124 +367,182 @@ function LiveAssemblyContent() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Timer */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
-          <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
-            <Timer className="w-4 h-4" />
-            <span className="text-sm font-medium">Διάρκεια</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-gray-500 mb-1">
+            <Timer className="w-3 h-3" />
+            <span className="text-xs font-medium">Διάρκεια</span>
           </div>
-          <LiveTimer startTime={assembly.started_at} />
+          <div className="font-mono text-xl font-bold text-emerald-600">
+            <LiveTimer startTime={assembly.started_at} />
+          </div>
         </div>
 
-        {/* Quorum */}
-        <QuorumDisplay
-          achieved={assembly.quorum_achieved}
-          percentage={Number(assembly.quorum_percentage) || 0}
-          achievedMills={assembly.achieved_quorum_mills || 0}
-          requiredMills={assembly.required_quorum_mills || 1000}
-        />
+        {/* Quorum - Hidden on very small screens or made compact */}
+        <div className="hidden md:block">
+          <QuorumDisplay
+            achieved={assembly.quorum_achieved}
+            percentage={Number(assembly.quorum_percentage) || 0}
+            achievedMills={assembly.achieved_quorum_mills || 0}
+            requiredMills={assembly.required_quorum_mills || 1000}
+          />
+        </div>
+        
+        {/* Mobile Quorum */}
+        <div className="md:hidden bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-gray-500 mb-1">
+            <Percent className="w-3 h-3" />
+            <span className="text-xs font-medium">Απαρτία</span>
+          </div>
+          <div className={cn(
+            "text-xl font-bold",
+            assembly.quorum_achieved ? "text-emerald-600" : "text-amber-600"
+          )}>
+            {Number(assembly.quorum_percentage).toFixed(1)}%
+          </div>
+        </div>
 
         {/* Present */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
-          <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
-            <Users className="w-4 h-4" />
-            <span className="text-sm font-medium">Παρόντες</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-gray-500 mb-1">
+            <Users className="w-3 h-3" />
+            <span className="text-xs font-medium">Παρόντες</span>
           </div>
-          <div className="text-4xl font-bold text-indigo-600">{presentCount}</div>
-          <div className="text-sm text-gray-500">/ {attendees.length}</div>
+          <div className="text-xl font-bold text-indigo-600">{presentCount}</div>
         </div>
 
         {/* Progress */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
-          <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">Πρόοδος</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-gray-500 mb-1">
+            <CheckCircle className="w-3 h-3" />
+            <span className="text-xs font-medium">Πρόοδος</span>
           </div>
-          <div className="text-4xl font-bold text-amber-600">{completedCount}</div>
-          <div className="text-sm text-gray-500">/ {agendaItems.length} θέματα</div>
+          <div className="text-xl font-bold text-amber-600">{completedCount}/{agendaItems.length}</div>
         </div>
       </div>
 
-      {/* Current Item Highlight & Voting */}
-      {currentItem && (
-        <div className="grid lg:grid-cols-3 gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={cn(
-              "lg:col-span-2 rounded-2xl p-8 text-white shadow-lg",
-              isVotingItem 
-                ? "bg-gradient-to-br from-indigo-600 to-purple-700" 
-                : "bg-gradient-to-br from-emerald-500 to-teal-600"
-            )}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-widest">
-                {isVotingItem ? 'Θέμα Ψηφοφορίας' : 'Τρέχον Θέμα'}
-              </div>
-              <div className="text-white/60 text-sm font-medium">
-                {currentItem.order} από {agendaItems.length}
+      {/* Main Tabs for Mobile/Desktop Flow */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="live" className="flex items-center gap-2">
+            <Play className="w-4 h-4" />
+            <span>Live</span>
+          </TabsTrigger>
+          <TabsTrigger value="attendees" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span>Παρόντες</span>
+          </TabsTrigger>
+          <TabsTrigger value="agenda" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            <span>Ατζέντα</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="live" className="space-y-6">
+          {currentItem ? (
+            <div className="grid lg:grid-cols-3 gap-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={cn(
+                  "lg:col-span-2 rounded-2xl p-6 md:p-8 text-white shadow-lg",
+                  isVotingItem 
+                    ? "bg-gradient-to-br from-indigo-600 to-purple-700" 
+                    : "bg-gradient-to-br from-emerald-500 to-teal-600"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] md:text-xs font-bold uppercase tracking-widest">
+                    {isVotingItem ? 'Θέμα Ψηφοφορίας' : 'Τρέχον Θέμα'}
+                  </div>
+                  <div className="text-white/60 text-xs md:text-sm font-medium">
+                    {currentItem.order} από {agendaItems.length}
+                  </div>
+                </div>
+                
+                <h2 className="text-2xl md:text-3xl font-black mb-4">{currentItem.title}</h2>
+                
+                {currentItem.description && (
+                  <p className="text-sm md:text-lg text-white/80 leading-relaxed mb-6">
+                    {currentItem.description}
+                  </p>
+                )}
+
+                {isVotingItem && voteResults && (
+                  <div className="mt-8 pt-8 border-t border-white/10">
+                    <LiveResultsDisplay 
+                      results={voteResults.summary} 
+                      votingTypeDisplay={currentItem.voting_type_display}
+                    />
+                  </div>
+                )}
+              </motion.div>
+
+              <div className="space-y-6">
+                {isVotingItem && (
+                  <LiveVotingPanel
+                    item={currentItem}
+                    attendee={currentAttendee || null}
+                    hasVoted={voteResults?.votes?.some((v: any) => v.attendee === currentAttendee?.id) || false}
+                  />
+                )}
+                
+                {!isVotingItem && (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center h-full flex flex-col items-center justify-center">
+                    <MessageSquare className="w-12 h-12 text-gray-200 mb-4" />
+                    <h3 className="text-gray-900 font-bold">Σε εξέλιξη συζήτησης</h3>
+                    <p className="text-gray-500 text-sm mt-2">Δεν απαιτείται ψηφοφορία για αυτό το θέμα.</p>
+                  </div>
+                )}
               </div>
             </div>
-            
-            <h2 className="text-3xl font-black mb-4">{currentItem.title}</h2>
-            
-            {currentItem.description && (
-              <p className="text-lg text-white/80 leading-relaxed mb-6">
-                {currentItem.description}
-              </p>
-            )}
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Play className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Έτοιμοι για ξεκίνημα;</h3>
+              <p className="text-gray-500 mt-2 mb-6 text-sm">Επιλέξτε ένα θέμα από την ατζέντα για να ξεκινήσετε τη συζήτηση.</p>
+              <Button onClick={() => setActiveTab('agenda')}>Μετάβαση στην Ατζέντα</Button>
+            </div>
+          )}
+        </TabsContent>
 
-            {isVotingItem && voteResults && (
-              <div className="mt-8 pt-8 border-t border-white/10">
-                <LiveResultsDisplay 
-                  results={voteResults.summary} 
-                  votingTypeDisplay={currentItem.voting_type_display}
+        <TabsContent value="attendees" className="h-[600px]">
+          <LiveAttendeePanel
+            assemblyId={assemblyId}
+            attendees={attendees}
+            currentItem={currentItem || null}
+            voteResults={voteResults}
+            canManage={canManage}
+          />
+        </TabsContent>
+
+        <TabsContent value="agenda" className="space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Ημερήσια Διάταξη</h2>
+            <div className="space-y-3">
+              {agendaItems.map((item) => (
+                <AgendaItemCard
+                  key={item.id}
+                  item={item}
+                  isActive={item.id === currentItem?.id}
+                  isCompleted={!!item.completed_at}
+                  onStart={() => { handleStartItem(item.id); setActiveTab('live'); }}
+                  onComplete={() => handleCompleteItem(item.id)}
+                  canManage={canManage}
+                  isStarting={startAgendaItem.isPending}
+                  isCompleting={endAgendaItem.isPending}
                 />
-              </div>
-            )}
-          </motion.div>
-
-          <div className="space-y-6">
-            {isVotingItem && (
-              <LiveVotingPanel
-                item={currentItem}
-                attendee={currentAttendee || null}
-                hasVoted={voteResults?.votes?.some((v: any) => v.attendee === currentAttendee?.id) || false}
-              />
-            )}
-            
-            {!isVotingItem && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center h-full flex flex-col items-center justify-center">
-                <MessageSquare className="w-12 h-12 text-gray-200 mb-4" />
-                <h3 className="text-gray-900 font-bold">Σε εξέλιξη συζήτησης</h3>
-                <p className="text-gray-500 text-sm mt-2">Δεν απαιτείται ψηφοφορία για αυτό το θέμα.</p>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Agenda Items */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Ημερήσια Διάταξη</h2>
-        <div className="space-y-3">
-          {agendaItems.map((item) => (
-            <AgendaItemCard
-              key={item.id}
-              item={item}
-              isActive={item.id === currentItem?.id}
-              isCompleted={!!item.completed_at}
-              onStart={() => handleStartItem(item.id)}
-              onComplete={() => handleCompleteItem(item.id)}
-              canManage={canManage}
-              isStarting={startAgendaItem.isPending}
-              isCompleting={endAgendaItem.isPending}
-            />
-          ))}
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
     </div>
   );
 }
