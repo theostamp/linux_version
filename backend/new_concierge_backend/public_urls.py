@@ -58,6 +58,9 @@ urlpatterns = [
     
     # Office Staff Management (shared across all tenants)
     path('api/office/', include('office_staff.urls')),
+
+    # Marketplace (public schema)
+    path('api/marketplace/', include('marketplace_public.urls')),
     
     # Internal API endpoints (accessible from public schema only)
     path('api/internal/tenants/', include('tenants.internal_urls')),

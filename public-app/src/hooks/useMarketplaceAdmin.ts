@@ -91,7 +91,7 @@ export function useMarketplaceAdmin() {
   const providersQuery = useQuery({
     queryKey: [QUERY_KEY],
     queryFn: async (): Promise<MarketplaceProvider[]> => {
-      const response = await api.get('/marketplace_public/providers/');
+      const response = await api.get('/marketplace/providers/');
       return response.data;
     },
   });
@@ -99,7 +99,7 @@ export function useMarketplaceAdmin() {
   // Create a new provider
   const createMutation = useMutation({
     mutationFn: async (data: CreateProviderInput): Promise<MarketplaceProvider> => {
-      const response = await api.post('/marketplace_public/providers/', data);
+      const response = await api.post('/marketplace/providers/', data);
       return response.data;
     },
     onSuccess: () => {
@@ -116,7 +116,7 @@ export function useMarketplaceAdmin() {
       id: string; 
       data: UpdateProviderInput 
     }): Promise<MarketplaceProvider> => {
-      const response = await api.patch(`/marketplace_public/providers/${id}/`, data);
+      const response = await api.patch(`/marketplace/providers/${id}/`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -127,7 +127,7 @@ export function useMarketplaceAdmin() {
   // Delete a provider
   const deleteMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      await api.delete(`/marketplace_public/providers/${id}/`);
+      await api.delete(`/marketplace/providers/${id}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
