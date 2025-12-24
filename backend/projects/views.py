@@ -594,10 +594,90 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
+        import logging
+        logger = logging.getLogger(__name__)
+
         project = self.get_object()
         with transaction.atomic():
             project.status = 'completed'
             project.save(update_fields=['status', 'updated_at'])
+
+            # Marketplace commission is earned on completion (not on offer approval).
+            try:
+                accepted_offer = Offer.objects.filter(project=project, status='accepted').first()
+                if accepted_offer and accepted_offer.marketplace_provider_id:
+                    from django.db import connection
+                    from django_tenants.utils import schema_context
+                    from decimal import Decimal
+
+                    tenant_schema = getattr(connection, "schema_name", None) or "unknown"
+
+                    with schema_context("public"):
+                        from marketplace_public.models import MarketplaceCommission, MarketplaceProvider
+                        from marketplace_public.services import get_effective_commission_rates
+
+                        existing = MarketplaceCommission.objects.filter(
+                            tenant_schema=tenant_schema,
+                            offer_id=accepted_offer.id,
+                        ).first()
+
+                        provider = MarketplaceProvider.objects.filter(id=accepted_offer.marketplace_provider_id).first()
+                        gross_amount = project.final_cost or accepted_offer.amount
+
+                        commission_rate = None
+                        commission_amount = None
+                        status_to_set = "approved"
+                        notes = ""
+
+                        if provider and gross_amount is not None:
+                            base, bonus, effective = get_effective_commission_rates(provider)
+                            commission_rate = effective
+                            try:
+                                commission_amount = (gross_amount * Decimal(str(effective))) / Decimal("100")
+                            except Exception:
+                                commission_amount = None
+                            notes = f"base={base}% bonus={bonus}% featured={provider.is_featured}"
+                        elif provider is None:
+                            status_to_set = "pending"
+                            notes = "Provider missing in public schema at completion"
+
+                        if existing:
+                            # Only update if not already invoiced/paid/void
+                            if existing.status in {"pending", "approved"}:
+                                existing.building_id = project.building_id
+                                existing.project_id = project.id
+                                existing.provider_id = accepted_offer.marketplace_provider_id
+                                existing.provider_name_snapshot = (
+                                    provider.name if provider else accepted_offer.contractor_name
+                                )
+                                existing.gross_amount = gross_amount
+                                existing.commission_rate_percent = commission_rate
+                                existing.commission_amount = commission_amount
+                                existing.status = status_to_set
+                                if notes:
+                                    existing.notes = notes
+                                existing.save()
+                        else:
+                            MarketplaceCommission.objects.create(
+                                tenant_schema=tenant_schema,
+                                building_id=project.building_id,
+                                project_id=project.id,
+                                offer_id=accepted_offer.id,
+                                provider_id=accepted_offer.marketplace_provider_id,
+                                provider_name_snapshot=(
+                                    provider.name if provider else accepted_offer.contractor_name
+                                ),
+                                gross_amount=gross_amount,
+                                commission_rate_percent=commission_rate,
+                                commission_amount=commission_amount,
+                                status=status_to_set,
+                                notes=notes,
+                            )
+            except Exception as e:
+                logger.error(
+                    f"[MarketplaceCommission] Failed to create/update commission on project completion {project.id}: {str(e)}",
+                    exc_info=True,
+                )
         publish_building_event(
             building_id=project.building_id,
             event_type='project.updated',
@@ -922,47 +1002,8 @@ class OfferViewSet(viewsets.ModelViewSet):
             update_project_schedule(project, offer)
             logger.info(f"update_project_schedule completed for project {project.id}")
 
-            # ΒΗΜΑ 5: Marketplace commission record (PUBLIC schema, connect-ready)
-            try:
-                if offer.marketplace_provider_id:
-                    from decimal import Decimal
-                    from django.db import connection
-                    from marketplace_public.models import MarketplaceCommission, MarketplaceProvider
-
-                    tenant_schema = getattr(connection, "schema_name", None) or "unknown"
-
-                    exists = MarketplaceCommission.objects.filter(
-                        tenant_schema=tenant_schema,
-                        offer_id=offer.id,
-                    ).exists()
-
-                    if not exists:
-                        provider = MarketplaceProvider.objects.filter(id=offer.marketplace_provider_id).first()
-                        rate = getattr(provider, "default_commission_rate_percent", None)
-
-                        commission_amount = None
-                        try:
-                            if rate is not None and offer.amount is not None:
-                                commission_amount = (offer.amount * Decimal(str(rate))) / Decimal("100")
-                        except Exception:
-                            commission_amount = None
-
-                        MarketplaceCommission.objects.create(
-                            tenant_schema=tenant_schema,
-                            building_id=offer.project.building_id,
-                            project_id=offer.project.id,
-                            offer_id=offer.id,
-                            provider_id=offer.marketplace_provider_id,
-                            provider_name_snapshot=(provider.name if provider else offer.contractor_name),
-                            gross_amount=offer.amount,
-                            commission_rate_percent=rate,
-                            commission_amount=commission_amount,
-                        )
-            except Exception as e:
-                logger.error(
-                    f"[MarketplaceCommission] Failed to create commission for offer {offer.id}: {str(e)}",
-                    exc_info=True,
-                )
+            # NOTE: Marketplace commissions are earned on project completion (ProjectViewSet.complete),
+            # not on offer approval.
 
         logger.info(
             f"Offer {offer.id} approved successfully",

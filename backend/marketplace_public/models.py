@@ -109,7 +109,17 @@ class MarketplaceProvider(models.Model):
         blank=True,
         null=True,
         validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
-        verbose_name="Default Προμήθεια Πλατφόρμας (%)",
+        verbose_name="Override Προμήθεια (%)",
+        help_text="Αν οριστεί, υπερισχύει του base rate της κατηγορίας (commission policy).",
+    )
+    featured_bonus_commission_rate_percent_override = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
+        verbose_name="Override Featured Bonus (%)",
+        help_text="Αν ο provider είναι featured, αυτό το bonus υπερισχύει του featured bonus της κατηγορίας.",
     )
     stripe_account_id = models.CharField(
         max_length=255,
@@ -135,6 +145,51 @@ class MarketplaceProvider(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.get_service_type_display()})"
+
+
+class MarketplaceCommissionPolicy(models.Model):
+    """
+    Commission policy ανά κατηγορία (PUBLIC schema).
+
+    - base_commission_rate_percent: βασικό ποσοστό προμήθειας για την κατηγορία
+    - featured_bonus_commission_rate_percent: επιπλέον % όταν ο provider είναι featured
+    """
+
+    service_type = models.CharField(
+        max_length=30,
+        choices=MarketplaceServiceType.choices,
+        unique=True,
+        db_index=True,
+        verbose_name="Κατηγορία",
+    )
+
+    base_commission_rate_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
+        default=Decimal("0.00"),
+        verbose_name="Base Προμήθεια (%)",
+    )
+    featured_bonus_commission_rate_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
+        default=Decimal("0.00"),
+        verbose_name="Featured Bonus (%)",
+    )
+
+    is_active = models.BooleanField(default=True, verbose_name="Ενεργό")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Marketplace Commission Policy"
+        verbose_name_plural = "Marketplace Commission Policies"
+        ordering = ["service_type"]
+
+    def __str__(self) -> str:
+        return f"{self.get_service_type_display()}: {self.base_commission_rate_percent}% (+{self.featured_bonus_commission_rate_percent}% featured)"
 
 
 class MarketplaceCommissionStatus(models.TextChoices):

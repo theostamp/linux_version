@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import MarketplaceCommission, MarketplaceProvider
+from .models import MarketplaceCommission, MarketplaceCommissionPolicy, MarketplaceProvider
 
 
 @admin.register(MarketplaceProvider)
@@ -38,5 +38,18 @@ class MarketplaceCommissionAdmin(admin.ModelAdmin):
     list_filter = ("status", "tenant_schema")
     search_fields = ("provider_name_snapshot", "tenant_schema")
     ordering = ("-created_at",)
+
+
+@admin.register(MarketplaceCommissionPolicy)
+class MarketplaceCommissionPolicyAdmin(admin.ModelAdmin):
+    list_display = (
+        "service_type",
+        "base_commission_rate_percent",
+        "featured_bonus_commission_rate_percent",
+        "is_active",
+        "updated_at",
+    )
+    list_filter = ("is_active", "service_type")
+    ordering = ("service_type",)
 
 
