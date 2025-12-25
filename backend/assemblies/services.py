@@ -567,23 +567,130 @@ class VoteIntegrationService:
             logger.warning(f"Failed to create linked vote: {e}")
             return None
     
-    def sync_vote_results(self):
-        """Συγχρονίζει τα αποτελέσματα από το Vote module στο AssemblyVote"""
+    def sync_vote_results(self, *, user_id: Optional[int] = None) -> int:
+        """
+        Συγχρονίζει VoteSubmission -> AssemblyVote για linked votes.
+
+        Αυτό είναι απαραίτητο ώστε:
+        - οι ψήφοι που καταχωρούνται από το Votes module να εμφανίζονται στη live ροή συνέλευσης
+        - η απαρτία/αποτελέσματα να είναι ενιαία (pre-voting/καταχωρημένες ψήφοι)
+        """
         if not self.agenda_item.linked_vote:
-            return
-        
+            return 0
+
         from votes.models import VoteSubmission
-        
-        # Get submissions from the linked Vote
+        from .models import AssemblyAttendee, AssemblyVote
+        from apartments.models import Apartment
+
         submissions = VoteSubmission.objects.filter(vote=self.agenda_item.linked_vote)
-        
+        if user_id:
+            submissions = submissions.filter(user_id=user_id)
+        submissions = submissions.select_related('user')
+
+        if not submissions.exists():
+            return 0
+
         # Map Vote choices to Assembly choices
         choice_map = {
             'ΝΑΙ': 'approve',
             'ΟΧΙ': 'reject',
-            'ΛΕΥΚΟ': 'abstain'
+            'ΛΕΥΚΟ': 'abstain',
         }
-        
-        # This could sync votes from the regular Vote system to AssemblyVotes
-        # Implementation depends on specific requirements
-        pass
+
+        # Map VoteSubmission.vote_source -> AssemblyVote.vote_source
+        # Treat app/email as electronic pre-voting.
+        source_map = {
+            'pre_vote': 'pre_vote',
+            'live': 'live',
+            'proxy': 'proxy',
+            'app': 'pre_vote',
+            'email': 'pre_vote',
+        }
+
+        assembly = self.agenda_item.assembly
+        building_id = getattr(assembly, 'building_id', None)
+        synced_count = 0
+
+        for submission in submissions:
+            mapped_vote = choice_map.get(submission.choice)
+            if not mapped_vote:
+                continue
+
+            mapped_source = source_map.get(submission.vote_source, 'pre_vote')
+
+            # Find attendee (prefer direct user match; fallback via apartment ownership/tenancy).
+            attendee = AssemblyAttendee.objects.filter(
+                assembly=assembly, user_id=submission.user_id
+            ).first()
+
+            if not attendee and building_id:
+                apartment = Apartment.objects.filter(
+                    building_id=building_id
+                ).filter(
+                    Q(owner_user_id=submission.user_id) | Q(tenant_user_id=submission.user_id)
+                ).first()
+                if apartment:
+                    attendee = AssemblyAttendee.objects.filter(
+                        assembly=assembly, apartment=apartment
+                    ).first()
+                    if attendee and attendee.user_id is None:
+                        attendee.user_id = submission.user_id
+                        attendee.save(update_fields=['user'])
+
+            if not attendee:
+                continue
+
+            # If attendee mills were never initialized correctly, use the submitted mills as a fallback
+            # so quorum calculations don't stay at 0 for valid voters.
+            if attendee.mills == 0 and submission.mills:
+                try:
+                    attendee.mills = submission.mills
+                    attendee.save(update_fields=['mills'])
+                except Exception:
+                    pass
+
+            mills = submission.mills or attendee.mills or 0
+
+            existing_vote = AssemblyVote.objects.filter(
+                agenda_item=self.agenda_item, attendee=attendee
+            ).first()
+
+            if existing_vote:
+                update_fields = []
+                if existing_vote.vote != mapped_vote:
+                    existing_vote.vote = mapped_vote
+                    update_fields.append('vote')
+                if existing_vote.vote_source != mapped_source:
+                    existing_vote.vote_source = mapped_source
+                    update_fields.append('vote_source')
+                if existing_vote.mills != mills:
+                    existing_vote.mills = mills
+                    update_fields.append('mills')
+
+                if update_fields:
+                    existing_vote.save(update_fields=update_fields)
+                    synced_count += 1
+            else:
+                AssemblyVote.objects.create(
+                    agenda_item=self.agenda_item,
+                    attendee=attendee,
+                    vote=mapped_vote,
+                    mills=mills,
+                    vote_source=mapped_source,
+                    notes='Sync από Ψηφοφορίες',
+                )
+                synced_count += 1
+
+            # Mark pre-voting participation for stats/progress
+            if mapped_source == 'pre_vote':
+                attendee_update_fields = []
+                if not attendee.has_pre_voted:
+                    attendee.has_pre_voted = True
+                    attendee_update_fields.append('has_pre_voted')
+                if not attendee.pre_voted_at:
+                    attendee.pre_voted_at = submission.submitted_at or timezone.now()
+                    attendee_update_fields.append('pre_voted_at')
+                if attendee_update_fields:
+                    attendee.save(update_fields=attendee_update_fields)
+
+        return synced_count

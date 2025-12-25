@@ -499,6 +499,15 @@ class AgendaItemViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Ensure votes cast via the linked Votes module are reflected here too.
+        try:
+            if getattr(item, 'linked_vote_id', None):
+                from .services import VoteIntegrationService
+
+                VoteIntegrationService(item).sync_vote_results()
+        except Exception:
+            logger.exception("Failed to sync VoteSubmission -> AssemblyVote for agenda item %s", item.id)
+
         votes = item.assembly_votes.all().select_related('attendee', 'attendee__apartment')
         
         # Group by vote type

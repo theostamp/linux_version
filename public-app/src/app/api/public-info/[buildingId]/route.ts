@@ -147,12 +147,24 @@ export async function GET(
       console.warn('[PUBLIC-INFO API] Sanitization error:', e);
     }
 
-    // If backend public-info doesn't include upcoming assembly (or doesn't include stats yet),
+    // If backend public-info doesn't include upcoming assembly (or returns a minimal legacy shape),
     // enrich it here so kiosk widgets can still work reliably.
     const existingAssembly = (data as any)?.upcoming_assembly;
+    const existingAssemblyLooksRich =
+      existingAssembly &&
+      typeof existingAssembly === 'object' &&
+      (('current_item' in existingAssembly) ||
+        ('attendees_stats' in existingAssembly) ||
+        ('quorum_percentage' in existingAssembly) ||
+        ('achieved_quorum_mills' in existingAssembly) ||
+        ('required_quorum_mills' in existingAssembly));
     const needsAssemblyEnrichment =
       !('upcoming_assembly' in data) ||
-      (existingAssembly && typeof existingAssembly === 'object' && !('stats' in existingAssembly));
+      existingAssembly === null ||
+      (existingAssembly &&
+        typeof existingAssembly === 'object' &&
+        !('stats' in existingAssembly) &&
+        !existingAssemblyLooksRich);
 
     if (needsAssemblyEnrichment) {
       try {
@@ -172,7 +184,12 @@ export async function GET(
         if (assemblyResp.ok) {
           const assemblyJson = await assemblyResp.json();
           const assembly = assemblyJson?.assembly ?? null;
-          (data as any).upcoming_assembly = assembly;
+          // Merge (do not clobber richer backend-provided fields like current_item/attendees_stats).
+          if (assembly && existingAssembly && typeof existingAssembly === 'object') {
+            (data as any).upcoming_assembly = { ...assembly, ...existingAssembly };
+          } else {
+            (data as any).upcoming_assembly = assembly;
+          }
           console.log('[PUBLIC-INFO API] Assembly enrichment:', assembly ? 'FOUND' : 'NONE');
         } else {
           const txt = await assemblyResp.text();

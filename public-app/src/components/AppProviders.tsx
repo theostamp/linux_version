@@ -10,6 +10,7 @@ import LayoutWrapper from '@/components/LayoutWrapper';
 
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
+  const isPlasmicHost = pathname === '/plasmic-host';
 
   // Force light mode globally (dark mode is intentionally disabled across the app).
   useEffect(() => {
@@ -21,14 +22,6 @@ export default function AppProviders({ children }: { readonly children: ReactNod
       // ignore
     }
   }, [pathname]);
-
-  // Plasmic app host route must be completely "clean":
-  // - no auth/building providers that might call backend
-  // - no LayoutWrapper / sidebar
-  // - no Toaster (adds DOM to the canvas)
-  if (pathname === '/plasmic-host') {
-    return children;
-  }
 
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = (pathname?.startsWith('/kiosk') || pathname?.startsWith('/kiosk-display')) && !pathname?.startsWith('/kiosk-widgets') && !pathname?.startsWith('/kiosk-management');
@@ -85,12 +78,21 @@ export default function AppProviders({ children }: { readonly children: ReactNod
 
   // Debug logging
   useEffect(() => {
+    if (isPlasmicHost) return;
     console.log('[AppProviders] Current pathname:', pathname);
     console.log('[AppProviders] Is Dashboard:', isDashboard);
     console.log('[AppProviders] Is Kiosk Mode:', isKioskMode);
     console.log('[AppProviders] Is Info Screen:', isInfoScreen);
     console.log('[AppProviders] Is No Sidebar Route:', isNoSidebarRoute);
-  }, [pathname, isDashboard, isKioskMode, isInfoScreen, isNoSidebarRoute]);
+  }, [pathname, isDashboard, isKioskMode, isInfoScreen, isNoSidebarRoute, isPlasmicHost]);
+
+  // Plasmic app host route must be completely "clean":
+  // - no auth/building providers that might call backend
+  // - no LayoutWrapper / sidebar
+  // - no Toaster (adds DOM to the canvas)
+  if (isPlasmicHost) {
+    return children;
+  }
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   // IMPORTANT: Only /kiosk and /test-kiosk routes, NOT /kiosk-widgets or /kiosk-management

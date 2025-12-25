@@ -17,6 +17,7 @@ interface LiveVotingPanelProps {
   hasVoted: boolean;
   totalBuildingMills: number;
   onVoteSuccess?: () => void;
+  canManage?: boolean;
 }
 
 const voteOptions: { 
@@ -58,12 +59,25 @@ export default function LiveVotingPanel({
   attendee, 
   hasVoted,
   totalBuildingMills,
-  onVoteSuccess 
+  onVoteSuccess,
+  canManage,
 }: LiveVotingPanelProps) {
   const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null);
   const castVoteMutation = useCastVote();
 
   if (!attendee) {
+    if (canManage) {
+      return (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 text-center">
+          <Building2 className="w-10 h-10 text-indigo-500 mx-auto mb-3" />
+          <h4 className="font-semibold text-indigo-900">Διαχείριση Live Ψηφοφορίας</h4>
+          <p className="text-sm text-indigo-700 mt-1">
+            Δεν υπάρχει εγγραφή συμμετοχής για τον λογαριασμό σας (ιδιοκτήτης/ένοικος) — αυτό είναι αναμενόμενο για διαχειριστές.
+            Για καταχώρηση/διόρθωση ψήφων χρησιμοποιήστε το κουμπί <strong>Διαχείριση Ψήφων</strong>.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
         <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
@@ -190,5 +204,4 @@ export default function LiveVotingPanel({
     </motion.div>
   );
 }
-
 

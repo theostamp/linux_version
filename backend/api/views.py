@@ -341,8 +341,42 @@ def public_info(request, building_id=None):
                     # Serialize agenda items
                     agenda_items = []
                     current_item_data = None
-                    
-                    for item in assembly.agenda_items.order_by('order'):
+
+                    # If this assembly has linked votes with VoteSubmissions that aren't reflected in AssemblyVote yet,
+                    # sync once so quorum and live results are consistent across flows.
+                    items = list(assembly.agenda_items.order_by('order'))
+                    try:
+                        from assemblies.services import VoteIntegrationService
+                        from votes.models import VoteSubmission
+
+                        sync_items = [
+                            i for i in items
+                            if i.item_type == 'voting' and getattr(i, 'linked_vote_id', None)
+                        ]
+
+                        did_sync = False
+                        for sync_item in sync_items:
+                            submissions_count = VoteSubmission.objects.filter(
+                                vote_id=sync_item.linked_vote_id
+                            ).count()
+                            if submissions_count == 0:
+                                continue
+
+                            assembly_votes_count = sync_item.assembly_votes.count()
+                            if submissions_count > assembly_votes_count:
+                                VoteIntegrationService(sync_item).sync_vote_results()
+                                did_sync = True
+
+                        if did_sync:
+                            # Refresh quorum fields that may have been updated by vote signals
+                            try:
+                                assembly.refresh_from_db()
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        print(f"[public_info] Vote sync error for assembly {assembly.id}: {e}")
+
+                    for item in items:
                         item_data = {
                             'id': str(item.id),
                             'order': item.order,
@@ -376,6 +410,15 @@ def public_info(request, building_id=None):
                         'voted': voted_count,
                     }
 
+                    # Assembly stats (matches what public-app expects under upcoming_assembly.stats)
+                    total_invited = len(all_attendees)
+                    rsvp_attending = sum(1 for a in all_attendees if a.rsvp_status == 'attending')
+                    rsvp_not_attending = sum(1 for a in all_attendees if a.rsvp_status == 'not_attending')
+                    rsvp_pending = sum(1 for a in all_attendees if a.rsvp_status == 'pending')
+                    pre_voted_count = sum(1 for a in all_attendees if a.has_pre_voted)
+                    pre_voted_percentage = round((pre_voted_count / total_invited * 100) if total_invited > 0 else 0, 1)
+                    voting_items_count = sum(1 for i in agenda_items if i.get('item_type') == 'voting')
+
                     upcoming_assembly_data = {
                         'id': str(assembly.id),
                         'title': assembly.title,
@@ -396,6 +439,15 @@ def public_info(request, building_id=None):
                         'agenda_items': agenda_items,
                         'current_item': current_item_data,
                         'attendees_stats': attendees_stats,
+                        'stats': {
+                            'total_apartments_invited': total_invited,
+                            'rsvp_attending': rsvp_attending,
+                            'rsvp_not_attending': rsvp_not_attending,
+                            'rsvp_pending': rsvp_pending,
+                            'pre_voted_count': pre_voted_count,
+                            'pre_voted_percentage': pre_voted_percentage,
+                            'voting_items_count': voting_items_count,
+                        },
                     }
                     
                     print(f"[public_info] Found upcoming assembly: {assembly.title} on {assembly.scheduled_date} (Status: {assembly.status})")

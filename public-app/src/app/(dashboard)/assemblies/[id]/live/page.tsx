@@ -503,6 +503,7 @@ function LiveAssemblyContent() {
                     attendee={currentAttendee || null}
                     hasVoted={voteResults?.votes?.some((v: any) => v.attendee === currentAttendee?.id) || false}
                     totalBuildingMills={assembly.total_building_mills}
+                    canManage={canManage}
                   />
                 )}
                 

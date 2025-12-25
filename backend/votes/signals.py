@@ -3,7 +3,11 @@ Signal handlers for automatic notification event creation when votes are created
 """
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Vote
+import logging
+
+from .models import Vote, VoteSubmission
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=Vote)
@@ -45,3 +49,35 @@ def create_notification_event_for_vote(sender, instance, created, **kwargs):
             )
 
             print(f"✅ Created NotificationEvent for Vote: {instance.title}")
+
+
+@receiver(post_save, sender=VoteSubmission)
+def sync_vote_submission_to_assembly_vote(sender, instance: VoteSubmission, **kwargs):
+    """
+    Συγχρονισμός VoteSubmission -> AssemblyVote για votes που είναι linked σε AgendaItem.
+
+    Αυτό επιτρέπει οι ψήφοι από τη ροή "Ψηφοφορίες" να εμφανίζονται άμεσα
+    στη live ροή συνέλευσης / kiosk (απαρτία, αποτελέσματα).
+    """
+    try:
+        agenda_item = instance.vote.agenda_item
+    except Exception:
+        return
+
+    try:
+        from assemblies.services import VoteIntegrationService
+
+        synced = VoteIntegrationService(agenda_item).sync_vote_results(user_id=instance.user_id)
+        if synced:
+            logger.info(
+                "Synced VoteSubmission %s to AssemblyVote(s) for agenda item %s (synced=%s)",
+                instance.id,
+                agenda_item.id,
+                synced,
+            )
+    except Exception:
+        logger.exception(
+            "Failed syncing VoteSubmission %s to AssemblyVote for vote %s",
+            instance.id,
+            instance.vote_id,
+        )
