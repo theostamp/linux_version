@@ -102,13 +102,30 @@ export default function VoteDetailPage() {
     return <ErrorMessage message="Δεν έχετε δικαίωμα πρόσβασης σε αυτή την ψηφοφορία." />;
   }
 
-  // Use local date (not UTC) for comparison - toISOString() returns UTC which can be wrong timezone
+  const voteWithExtras = vote as Vote & {
+    building_name?: string;
+    creator_name?: string;
+    days_remaining?: number | null;
+    total_votes?: number;
+    participation_percentage?: number;
+    min_participation?: number;
+    is_urgent?: boolean;
+    status_display?: string;
+    choices?: string[];
+    is_valid?: boolean;
+    is_currently_active?: boolean;
+  };
+
+  // Prefer backend "is_currently_active" (linked votes depend on assembly status), fallback to date checks.
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  // Handle null/invalid end_date - treat as no expiry
   const hasValidEndDate = vote.end_date && vote.end_date !== '1970-01-01' && !vote.end_date.startsWith('1970');
-  const isActive = vote.start_date <= today && (!hasValidEndDate || today <= vote.end_date);
-  const hasVoted = !!myVote;
+  const legacyIsActive = vote.start_date <= today && (!hasValidEndDate || today <= vote.end_date);
+  const isActive = typeof voteWithExtras.is_currently_active === 'boolean' ? voteWithExtras.is_currently_active : legacyIsActive;
+
+  const hasVoted = myVote?.linked
+    ? myVote.submissions.some((s) => s.choice)
+    : !!myVote;
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr || dateStr.startsWith('1970')) return 'Χωρίς ημερομηνία λήξης';
@@ -170,18 +187,8 @@ export default function VoteDetailPage() {
   };
 
   const statusInfo = getStatusInfo();
-  const voteWithExtras = vote as Vote & { 
-    building_name?: string;
-    creator_name?: string;
-    days_remaining?: number | null;
-    total_votes?: number;
-    participation_percentage?: number;
-    min_participation?: number;
-    is_urgent?: boolean;
-    status_display?: string;
-    choices?: string[];
-    is_valid?: boolean;
-  };
+  const linkedSubmissions = myVote?.linked ? myVote.submissions : undefined;
+  const linkedVotedCount = linkedSubmissions ? linkedSubmissions.filter((s) => s.choice).length : 0;
 
   const statusColors = {
     green: {
@@ -345,12 +352,28 @@ export default function VoteDetailPage() {
                   <h3 className="font-semibold text-emerald-800 text-lg mb-1">
                     Η ψήφος σας καταχωρήθηκε!
                   </h3>
-                  <p className="text-emerald-700">
-                    Ψηφίσατε: <span className="font-bold text-lg">{myVote.choice}</span>
-                  </p>
-                  {myVote.created_at && (
-                    <p className="text-sm text-emerald-600 mt-2">
-                      📅 {formatDateTime(myVote.created_at)}
+                  {myVote?.linked ? (
+                    <div className="space-y-2">
+                      <p className="text-emerald-700">
+                        Έχετε ψηφίσει για <span className="font-bold">{linkedVotedCount}</span> από{' '}
+                        <span className="font-bold">{linkedSubmissions?.length || 0}</span> διαμερίσματα.
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {linkedSubmissions
+                          ?.filter((s) => s.choice)
+                          .map((s) => (
+                            <div
+                              key={`voted-${s.apartment_id}`}
+                              className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-emerald-800"
+                            >
+                              <span className="font-semibold">Διαμ. {s.apartment_number}:</span> {s.choice}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-emerald-700">
+                      Ψηφίσατε: <span className="font-bold text-lg">{myVote?.choice}</span>
                     </p>
                   )}
                 </div>
@@ -368,9 +391,9 @@ export default function VoteDetailPage() {
                 <VoteSubmitForm
                   voteId={vote.id}
                   choices={voteWithExtras.choices}
-                  isActive={true}
+                  isActive={statusInfo.canVote}
                   buildingId={buildingId}
-                  initialChoice={null}
+                  submissions={linkedSubmissions}
                   onSubmitted={async () => {
                     await refetchMyVote();
                     await refetchResults();

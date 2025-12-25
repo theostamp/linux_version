@@ -94,6 +94,13 @@ const isActive = (startDate: string, endDate: string | null | undefined): boolea
   return today >= normalizedStartDate && today <= normalizedEndDate;
 };
 
+const isVoteCurrentlyActive = (vote: Vote): boolean => {
+  if (typeof (vote as { is_currently_active?: unknown }).is_currently_active === 'boolean') {
+    return Boolean((vote as { is_currently_active?: boolean }).is_currently_active);
+  }
+  return isActive(vote.start_date, vote.end_date);
+};
+
 function VoteItemContent({
   vote,
   active,
@@ -343,8 +350,8 @@ function VotesPageContent() {
       }
 
       const best = [...group].sort((a, b) => {
-        const aActive = isActive(a.start_date, a.end_date);
-        const bActive = isActive(b.start_date, b.end_date);
+        const aActive = isVoteCurrentlyActive(a);
+        const bActive = isVoteCurrentlyActive(b);
         if (aActive !== bActive) return aActive ? -1 : 1; // Prefer active
 
         const aVotes = (a as { total_votes?: number }).total_votes ?? 0;
@@ -373,8 +380,8 @@ function VotesPageContent() {
   })();
 
   // Separate active and past votes
-  const activeVotes = votes.filter(v => isActive(v.start_date, v.end_date));
-  const pastVotes = votes.filter(v => !isActive(v.start_date, v.end_date));
+  const activeVotes = votes.filter((v) => isVoteCurrentlyActive(v));
+  const pastVotes = votes.filter((v) => !isVoteCurrentlyActive(v));
 
   if (!isAuthReady || buildingLoading || isLoading) {
     return (

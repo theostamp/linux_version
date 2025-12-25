@@ -1274,12 +1274,16 @@ export type Vote = {
   start_date: string;
   end_date: string;
   is_active?: boolean;
+  is_currently_active?: boolean;
   status_display?: string | null;
   is_urgent?: boolean;
   days_remaining?: number | null;
   total_votes?: number;
   participation_percentage?: number | null;
   min_participation?: number | null;
+  is_valid?: boolean;
+  eligible_voters_count?: number;
+  total_building_mills?: number;
   choices?: string[];
   created_at: string;
   updated_at: string;
@@ -1292,10 +1296,21 @@ export type VoteSubmission = {
   user: number;
 };
 
-export type VoteResultsData = {
-  [key: string]: number;
-  total: number;
+export type VoteResultsData = Record<string, any> & { total?: number };
+
+export type LinkedVoteSubmission = {
+  apartment_id: number;
+  apartment_number: string;
+  mills: number;
+  choice: string | null;
+  vote_source: string | null;
+  submitted_at: string | null;
 };
+
+export type MyVoteResponse =
+  | { linked: true; submissions: LinkedVoteSubmission[] }
+  | VoteSubmission
+  | { id: null; choice: null };
 
 export type CreateVotePayload = {
   title: string;
@@ -1350,18 +1365,31 @@ export async function submitVote(
   voteId: number,
   choice: string,
   buildingId?: number | null,
-): Promise<VoteSubmission> {
+  apartmentId?: number | null,
+): Promise<unknown> {
   // Backend endpoint is `/api/votes/{id}/vote/` (not `/submit/`)
   const query = typeof buildingId === 'number' ? `?building=${buildingId}` : '';
-  return apiPost<VoteSubmission>(`/votes/${voteId}/vote/${query}`, { choice });
+  const payload: Record<string, any> = { choice };
+  if (typeof apartmentId === 'number') {
+    payload.apartment_id = apartmentId;
+  }
+  return apiPost<unknown>(`/votes/${voteId}/vote/${query}`, payload);
 }
 
-export async function fetchVoteResults(voteId: number, buildingId?: number | null): Promise<VoteResultsData> {
+export async function fetchVoteResults(
+  voteId: number,
+  buildingId?: number | null,
+): Promise<{ results: VoteResultsData; total: number }> {
   const params: Record<string, number> = {};
   if (typeof buildingId === 'number') {
     params.building = buildingId;
   }
-  return apiGet<VoteResultsData>(`/votes/${voteId}/results/`, params);
+  const raw = await apiGet<VoteResultsData>(`/votes/${voteId}/results/`, params);
+  const total =
+    typeof raw?.total === 'number'
+      ? raw.total
+      : (Number(raw?.ΝΑΙ ?? 0) + Number(raw?.ΟΧΙ ?? 0) + Number(raw?.ΛΕΥΚΟ ?? 0));
+  return { results: raw, total };
 }
 
 export async function createVote(payload: CreateVotePayload): Promise<Vote> {

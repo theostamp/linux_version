@@ -34,7 +34,11 @@ export default function VoteStatus({ voteId, isActive }: Props) {
     );
   }
 
-  const hasVoted = !!myVote;
+  const hasVoted = myVote?.linked
+    ? myVote.submissions.some((s) => s.choice)
+    : !!myVote;
+  const linkedVotedCount = myVote?.linked ? myVote.submissions.filter((s) => s.choice).length : 0;
+  const linkedTotal = myVote?.linked ? myVote.submissions.length : 0;
   const totalVotes = results?.total || 0;
 
   return (
@@ -68,7 +72,11 @@ export default function VoteStatus({ voteId, isActive }: Props) {
                 <Check className="w-3 h-3" />
               </span>
               <span className="text-sm font-medium text-emerald-700">
-                Ψηφίσατε: {myVote.choice}
+                {myVote?.linked
+                  ? (linkedTotal <= 1
+                      ? `Ψηφίσατε: ${myVote.submissions[0]?.choice ?? ''}`.trim()
+                      : `Ψηφίσατε (${linkedVotedCount}/${linkedTotal})`)
+                  : `Ψηφίσατε: ${myVote?.choice}`}
               </span>
             </motion.div>
           ) : isActive ? (

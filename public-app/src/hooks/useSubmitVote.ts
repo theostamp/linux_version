@@ -11,11 +11,13 @@ export function useSubmitVote() {
       voteId,
       option,
       buildingId,
+      apartmentId,
     }: {
       voteId: number;
       option: string;
       buildingId?: number | null;
-    }) => submitVote(voteId, option, buildingId),
+      apartmentId?: number | null;
+    }) => submitVote(voteId, option, buildingId, apartmentId),
     onSuccess: async (_, { voteId }) => {
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['votes'] });
@@ -29,4 +31,3 @@ export function useSubmitVote() {
     },
   });
 }
-

@@ -51,17 +51,27 @@ interface AssemblyData {
     title: string;
     item_type: string;
     status: string;
+    estimated_duration?: number;
+    started_at?: string | null;
     voting_results?: {
       approve: { count: number; mills: number };
       reject: { count: number; mills: number };
       abstain: { count: number; mills: number };
       total: { count: number; mills: number };
     };
+    vote_roster?: Array<{
+      attendee: string;
+      apartment_number: string;
+      mills: number;
+      vote: 'approve' | 'reject' | 'abstain' | null;
+      vote_source: 'pre_vote' | 'live' | 'proxy' | null;
+    }>;
   } | null;
   attendees_stats?: {
     total: number;
     present: number;
     voted: number;
+    quorum_participants?: number;
   };
 }
 
@@ -126,19 +136,43 @@ export default function LiveAssemblyScene({
   const sidebarStyle = { backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder };
   const tickerStyle = { backgroundColor: palette.tickerSurface, borderColor: palette.accentBorder };
 
-  if (!assembly) return null;
+  const currentItem = assembly?.current_item || null;
+  const agendaItems = assembly?.agenda_items || [];
+  const nextItem = agendaItems.find(item => item.order === (currentItem?.order || 0) + 1);
+  const completedItems = agendaItems.filter(i => i.status === 'completed').length;
+  const totalItems = agendaItems.length;
+  const totalBuildingMills = assembly?.total_building_mills || 1000;
+  const voteRoster = currentItem?.vote_roster || [];
+  const rosterVotedCount = voteRoster.filter((v) => v.vote).length;
 
-  const currentItem = assembly.current_item;
-  const nextItem = assembly.agenda_items.find(item => item.order === (currentItem?.order || 0) + 1);
-  const completedItems = assembly.agenda_items.filter(i => i.status === 'completed').length;
-  const totalItems = assembly.agenda_items.length;
-  const totalBuildingMills = assembly.total_building_mills || 1000;
+  const currentItemCountdown = useMemo(() => {
+    const startedAt = currentItem?.started_at;
+    const estimatedMinutes = currentItem?.estimated_duration;
+    if (!startedAt || !estimatedMinutes || estimatedMinutes <= 0) return null;
+
+    const startMs = new Date(startedAt).getTime();
+    if (Number.isNaN(startMs)) return null;
+
+    const totalSeconds = Math.floor(estimatedMinutes * 60);
+    const elapsedSeconds = Math.floor((currentTime.getTime() - startMs) / 1000);
+    const remainingSeconds = totalSeconds - elapsedSeconds;
+    const isOverdue = remainingSeconds < 0;
+
+    const seconds = Math.abs(remainingSeconds);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    const display = `${isOverdue ? '+' : ''}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+    return { display, isOverdue };
+  }, [currentItem?.started_at, currentItem?.estimated_duration, currentTime]);
 
   // Voting results calculation
   const votingResults = currentItem?.voting_results;
   const totalVotedMills = votingResults 
     ? votingResults.approve.mills + votingResults.reject.mills + votingResults.abstain.mills 
     : 0;
+
+  if (!assembly) return null;
 
   return (
     <div
@@ -260,24 +294,41 @@ export default function LiveAssemblyScene({
 	                  style={cardStyle}
 	                >
 	                  {/* Item Header */}
-	                  <div className="flex items-center gap-4 mb-6">
-	                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-emerald-500/20">
-	                      {currentItem.order}
-	                    </div>
-	                    <div>
-	                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300/80 mb-1">
-	                        ΤΡΕΧΟΝ ΘΕΜΑ
+	                  <div className="flex items-start justify-between gap-6 mb-6">
+	                    <div className="flex items-center gap-4">
+	                      <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-emerald-500/20">
+	                        {currentItem.order}
 	                      </div>
-	                      <div className="flex items-center gap-2 text-lg lg:text-xl font-semibold text-white/85">
-	                        {currentItem.item_type === 'voting' && <Vote className="w-6 h-6 text-indigo-300" />}
-	                        {currentItem.item_type === 'informational' && <Info className="w-6 h-6 text-blue-300" />}
-	                        {currentItem.item_type === 'discussion' && <MessageSquare className="w-6 h-6 text-amber-300" />}
-	                        <span>
-	                          {currentItem.item_type === 'voting' ? 'Ψηφοφορία' : 
-	                           currentItem.item_type === 'informational' ? 'Ενημέρωση' : 'Συζήτηση'}
-	                        </span>
+	                      <div>
+	                        <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300/80 mb-1">
+	                          ΤΡΕΧΟΝ ΘΕΜΑ
+	                        </div>
+	                        <div className="flex items-center gap-2 text-lg lg:text-xl font-semibold text-white/85">
+	                          {currentItem.item_type === 'voting' && <Vote className="w-6 h-6 text-indigo-300" />}
+	                          {currentItem.item_type === 'informational' && <Info className="w-6 h-6 text-blue-300" />}
+	                          {currentItem.item_type === 'discussion' && <MessageSquare className="w-6 h-6 text-amber-300" />}
+	                          <span>
+	                            {currentItem.item_type === 'voting' ? 'Ψηφοφορία' : 
+	                             currentItem.item_type === 'informational' ? 'Ενημέρωση' : 'Συζήτηση'}
+	                          </span>
+	                        </div>
 	                      </div>
 	                    </div>
+
+	                    {currentItemCountdown && (
+	                      <div className="text-right">
+	                        <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60 mb-1">
+	                          ΑΝΤΙΣΤΡΟΦΗ ΜΕΤΡΗΣΗ
+	                        </div>
+	                        <div className={cn(
+	                          "font-mono font-black leading-none",
+	                          currentItemCountdown.isOverdue ? "text-amber-300" : "text-lime-300",
+	                          "text-5xl lg:text-6xl"
+	                        )}>
+	                          {currentItemCountdown.display}
+	                        </div>
+	                      </div>
+	                    )}
 	                  </div>
 
 	                  {/* Item Title */}
@@ -409,6 +460,39 @@ export default function LiveAssemblyScene({
                 </div>
               </motion.div>
             )}
+
+            {/* Voting roster (privacy: apartment only) */}
+            {currentItem?.item_type === 'voting' && voteRoster.length > 0 && (
+              <div
+                className="backdrop-blur-2xl border rounded-2xl p-4 shrink-0 shadow-2xl"
+                style={cardStyle}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-200/80">
+                    Ψήφοι
+                  </div>
+                  <div className="font-mono text-sm text-white/80">
+                    {rosterVotedCount}/{voteRoster.length}
+                  </div>
+                </div>
+                <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                  {voteRoster.map((entry) => (
+                    <div
+                      key={entry.attendee}
+                      className="flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-3 py-2"
+                    >
+                      <div className="text-sm font-semibold text-white/85">
+                        Διαμ. {entry.apartment_number}
+                      </div>
+                      <VoteBadge vote={entry.vote} />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 text-[10px] text-white/50">
+                  Προβολή ανά διαμέρισμα (χωρίς ονόματα).
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -458,6 +542,22 @@ export default function LiveAssemblyScene({
         </p>
       </div>
     </div>
+  );
+}
+
+function VoteBadge({ vote }: { vote: 'approve' | 'reject' | 'abstain' | null }) {
+  const config = {
+    approve: { label: 'Υπέρ', className: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' },
+    reject: { label: 'Κατά', className: 'bg-rose-500/20 text-rose-200 border-rose-400/30' },
+    abstain: { label: 'Λευκό', className: 'bg-slate-500/20 text-slate-200 border-slate-400/30' },
+    pending: { label: '—', className: 'bg-white/10 text-white/60 border-white/10' },
+  } as const;
+
+  const selected = vote ? config[vote] : config.pending;
+  return (
+    <span className={cn('rounded-full border px-3 py-1 text-xs font-bold', selected.className)}>
+      {selected.label}
+    </span>
   );
 }
 

@@ -1,9 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiGet } from '@/lib/api';
+import { apiGet, type LinkedVoteSubmission } from '@/lib/api';
 
-interface MyVote {
+export type MyVote =
+  | { linked: true; submissions: LinkedVoteSubmission[] }
+  | { linked: false; id: number; choice: string }
+  | null;
+
+interface LegacyMyVote {
   id: number;
   vote: number;
   choice: string;
@@ -11,13 +16,14 @@ interface MyVote {
 }
 
 export function useMyVote(voteId?: number, buildingId?: number | null) {
-  return useQuery<MyVote | null>({
+  return useQuery<MyVote>({
     queryKey: ['myVote', voteId, buildingId],
     queryFn: async () => {
       try {
         // Backend returns:
         // - 200 + VoteSubmission payload when user has voted
-        // - 404 when no submission exists
+        // - 200 + { linked: true, submissions: [...] } for linked votes (per apartment)
+        // - 404 when vote is not accessible
         // Older backend versions returned 200 with { choice: null } so we guard for that too.
         const params: Record<string, number> = {};
         if (typeof buildingId === 'number') {
@@ -25,10 +31,19 @@ export function useMyVote(voteId?: number, buildingId?: number | null) {
         }
         const data = await apiGet<unknown>(`/votes/${voteId}/my-submission/`, params);
         if (!data || typeof data !== 'object') return null;
-        const record = data as Partial<MyVote> & { choice?: unknown };
+        const linked = (data as { linked?: unknown }).linked;
+        if (linked === true) {
+          const submissions = (data as { submissions?: unknown }).submissions;
+          return {
+            linked: true,
+            submissions: Array.isArray(submissions) ? (submissions as LinkedVoteSubmission[]) : [],
+          };
+        }
+
+        const record = data as Partial<LegacyMyVote> & { choice?: unknown };
         if (!record.id) return null;
         if (record.choice === null || record.choice === undefined) return null;
-        return record as MyVote;
+        return { linked: false, id: record.id, choice: String(record.choice) };
       } catch (error: unknown) {
         const err = error as { response?: { status?: number } };
         if (err?.response?.status === 404) return null;
@@ -41,4 +56,3 @@ export function useMyVote(voteId?: number, buildingId?: number | null) {
     enabled: voteId !== undefined,
   });
 }
-
