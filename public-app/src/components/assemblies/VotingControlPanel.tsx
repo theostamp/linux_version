@@ -426,9 +426,13 @@ export default function VotingControlPanel({
                 <Users className="w-10 h-10 text-gray-300" />
               </div>
               <p className="text-gray-500 font-medium text-lg">
-                {filter === 'pending' ? 'Όλοι έχουν ψηφίσει! 🎉' : 'Δεν βρέθηκαν αποτελέσματα'}
+                {filter === 'pending' 
+                  ? (stats.presentCount === 0 
+                      ? 'Δεν υπάρχουν παρόντες' 
+                      : 'Όλοι οι παρόντες έχουν ψηφίσει! 🎉')
+                  : 'Δεν βρέθηκαν αποτελέσματα'}
               </p>
-              {filter === 'pending' && (
+              {filter === 'pending' && stats.presentCount > 0 && (
                 <p className="text-gray-400 text-sm mt-2">Μπορείτε να κλείσετε αυτό το παράθυρο</p>
               )}
             </div>
