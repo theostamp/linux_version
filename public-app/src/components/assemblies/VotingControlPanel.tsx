@@ -435,24 +435,24 @@ export default function VotingControlPanel({
           )}
         </div>
 
-        {/* Footer - Sticky με safe area για mobile */}
-        <div className="sticky bottom-0 p-4 bg-white border-t border-gray-100 shrink-0">
-          <div className="flex items-center justify-between text-sm pb-safe">
-            <div className="flex items-center gap-4 text-gray-500">
-              <span className="flex items-center gap-1.5">
-                <Mail className="w-4 h-4 text-blue-500" />
-                <span className="text-xs">Επιστολική</span>
+        {/* Footer - Fixed στο κάτω μέρος */}
+        <div className="mt-auto p-3 bg-gray-50/50 border-t border-gray-100 shrink-0">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <Mail className="w-3 h-3 text-blue-500" />
+                <span>Επιστολική</span>
               </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs">Ψήφισε</span>
+              <span className="flex items-center gap-1">
+                <CheckCircle className="w-3 h-3 text-emerald-500" />
+                <span>Ψήφισε</span>
               </span>
             </div>
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-gray-400">
               {filteredAttendees.length} εγγραφές
             </span>
           </div>
-          <div className="mt-2 text-[11px] text-gray-500">
+          <div className="text-[10px] text-gray-400 text-center">
             * Οι καταχωρημένες ψήφοι (pre-vote/live/proxy) προσμετρώνται στην απαρτία.
           </div>
         </div>
