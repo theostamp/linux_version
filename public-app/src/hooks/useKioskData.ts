@@ -626,7 +626,15 @@ export const useKioskData = (buildingId: number | null = 1) => {
     }
   }, [buildingId]);
 
-  // Auto-refresh data every 5 minutes
+  // Track if assembly is live for faster polling
+  const isLiveRef = useRef(false);
+  
+  // Update ref when status changes (without triggering re-render)
+  useEffect(() => {
+    isLiveRef.current = data?.upcoming_assembly?.status === 'in_progress';
+  }, [data?.upcoming_assembly?.status]);
+
+  // Auto-refresh data - faster when assembly is live
   useEffect(() => {
     let cancelled = false;
 
@@ -644,15 +652,26 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
     run();
 
-    const interval = setInterval(() => {
-      fetchKioskData();
-    }, data?.upcoming_assembly?.status === 'in_progress' ? 15 * 1000 : 5 * 60 * 1000); // 15s if live, 5m otherwise
+    // Use dynamic interval based on live status
+    let intervalId: NodeJS.Timeout;
+    
+    const setupInterval = () => {
+      const intervalTime = isLiveRef.current ? 15 * 1000 : 5 * 60 * 1000; // 15s if live, 5m otherwise
+      intervalId = setTimeout(() => {
+        if (!cancelled) {
+          fetchKioskData();
+          setupInterval(); // Reschedule with potentially new interval
+        }
+      }, intervalTime);
+    };
+    
+    setupInterval();
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearTimeout(intervalId);
     };
-  }, [fetchKioskData, data?.upcoming_assembly?.status]);
+  }, [fetchKioskData]); // Only depend on fetchKioskData, not on data
 
   const refetch = useCallback(() => {
     return fetchKioskData();

@@ -97,6 +97,16 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   // 🔴 PRIORITY CHECK: Is there a LIVE assembly?
   const isLiveAssembly = kioskData?.upcoming_assembly?.status === 'in_progress';
 
+  // Check if there's an assembly TODAY (must be before any returns!)
+  const hasAssemblyToday = useMemo(() => {
+    if (!kioskData?.upcoming_assembly) return false;
+    const assemblyDate = new Date(kioskData.upcoming_assembly.scheduled_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    assemblyDate.setHours(0, 0, 0, 0);
+    return assemblyDate.getTime() === today.getTime();
+  }, [kioskData?.upcoming_assembly]);
+
   // Auto-cycle through scenes (only when not in live assembly mode)
   useEffect(() => {
     // Don't cycle during live assembly
@@ -279,15 +289,6 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   }
 
   // Check if this is the Assembly Countdown scene OR if there's an assembly today
-  const hasAssemblyToday = useMemo(() => {
-    if (!kioskData?.upcoming_assembly) return false;
-    const assemblyDate = new Date(kioskData.upcoming_assembly.scheduled_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    assemblyDate.setHours(0, 0, 0, 0);
-    return assemblyDate.getTime() === today.getTime();
-  }, [kioskData?.upcoming_assembly]);
-
   if (currentScene.name === 'Συνέλευση' || currentScene.name === 'Assembly Countdown' || hasAssemblyToday) {
     // Determine which assembly scene to show based on status
     const assemblyStatus = kioskData?.upcoming_assembly?.status;
