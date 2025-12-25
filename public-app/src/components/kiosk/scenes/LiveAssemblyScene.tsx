@@ -1,17 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
-  MapPin,
   Vote,
   CheckCircle,
   Timer,
   FileText,
-  ChevronRight,
   Building2,
-  Video,
   Info,
   MessageSquare,
   TrendingUp,
@@ -89,6 +86,7 @@ export default function LiveAssemblyScene({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [paletteHour, setPaletteHour] = useState(() => new Date().getHours());
+  const voteRosterScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Update data from kiosk polling
   useEffect(() => {
@@ -133,12 +131,9 @@ export default function LiveAssemblyScene({
 
   const palette = useMemo(() => getScenePalette(paletteHour), [paletteHour]);
   const cardStyle = { backgroundColor: palette.cardSurface, borderColor: palette.accentBorder };
-  const sidebarStyle = { backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder };
-  const tickerStyle = { backgroundColor: palette.tickerSurface, borderColor: palette.accentBorder };
 
   const currentItem = assembly?.current_item || null;
   const agendaItems = assembly?.agenda_items || [];
-  const nextItem = agendaItems.find(item => item.order === (currentItem?.order || 0) + 1);
   const completedItems = agendaItems.filter(i => i.status === 'completed').length;
   const totalItems = agendaItems.length;
   const totalBuildingMills = assembly?.total_building_mills || 1000;
@@ -172,6 +167,47 @@ export default function LiveAssemblyScene({
     ? votingResults.approve.mills + votingResults.reject.mills + votingResults.abstain.mills 
     : 0;
 
+  // Smooth auto-scroll for the per-apartment vote roster when it overflows (kiosk has no user scroll).
+  useEffect(() => {
+    const el = voteRosterScrollRef.current;
+    if (!el) return;
+
+    el.scrollTop = 0;
+
+    let rafId: number | null = null;
+    let timeoutId: number | null = null;
+    let lastTs = performance.now();
+    const speedPxPerSecond = 18;
+
+    const step = (ts: number) => {
+      const node = voteRosterScrollRef.current;
+      if (!node) return;
+
+      const dt = ts - lastTs;
+      lastTs = ts;
+
+      const maxScrollTop = node.scrollHeight - node.clientHeight;
+      if (maxScrollTop <= 0) {
+        timeoutId = window.setTimeout(() => {
+          lastTs = performance.now();
+          rafId = requestAnimationFrame(step);
+        }, 900);
+        return;
+      }
+
+      const nextTop = node.scrollTop + (speedPxPerSecond * dt) / 1000;
+      node.scrollTop = nextTop >= maxScrollTop - 1 ? 0 : nextTop;
+      rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [currentItem?.id, voteRoster.length]);
+
   if (!assembly) return null;
 
   return (
@@ -181,7 +217,7 @@ export default function LiveAssemblyScene({
     >
       <div className="pointer-events-none absolute inset-0 opacity-60" style={{ backgroundImage: palette.overlay }} />
 
-      <div className="relative z-10 h-full flex flex-col gap-2 p-4 pb-24">
+      <div className="relative z-10 h-full flex flex-col gap-2 p-4">
         
         {/* Top Header */}
         <header
@@ -224,7 +260,7 @@ export default function LiveAssemblyScene({
         </header>
 
         {/* Stats Bar - Large and Clear */}
-        <div className="grid grid-cols-4 gap-2 lg:gap-3">
+        <div className="grid grid-cols-3 gap-2 lg:gap-3">
           {/* Elapsed Time */}
           <StatCard 
             icon={<Timer className="w-6 h-6" />}
@@ -247,24 +283,12 @@ export default function LiveAssemblyScene({
             surfaceColor={palette.cardSurface}
             accentBorder={palette.accentBorder}
           />
-          
-          {/* Present */}
-          <StatCard 
-            icon={<CheckCircle className="w-6 h-6" />}
-            label="Παρόντες"
-            value={assembly.attendees_stats?.present?.toString() || '-'}
-            subtext={`από ${assembly.attendees_stats?.total || '-'}`}
-            color="blue"
-            large
-            surfaceColor={palette.cardSurface}
-            accentBorder={palette.accentBorder}
-          />
-          
-          {/* Progress */}
-          <StatCard 
-            icon={<FileText className="w-6 h-6" />}
-            label="Πρόοδος"
-            value={`${completedItems}/${totalItems}`}
+	          
+	          {/* Progress */}
+	          <StatCard 
+	            icon={<FileText className="w-6 h-6" />}
+	            label="Πρόοδος"
+	            value={`${completedItems}/${totalItems}`}
             subtext="θέματα"
             color="indigo"
             large
@@ -329,17 +353,12 @@ export default function LiveAssemblyScene({
 	                        </div>
 	                      </div>
 	                    )}
-	                  </div>
+		                  </div>
 
-	                  {/* Item Title */}
-	                  <h2 className="text-3xl lg:text-4xl font-black leading-tight mb-6">
-	                    {currentItem.title}
-	                  </h2>
-
-                  {/* Voting Results */}
-	                  {currentItem.item_type === 'voting' && votingResults && (
-	                    <div className="mt-auto">
-	                      <div className="flex items-center justify-between mb-6">
+	                  {/* Voting Results */}
+		                  {currentItem.item_type === 'voting' && votingResults && (
+		                    <div className="mt-auto">
+		                      <div className="flex items-center justify-between mb-6">
 	                        <h3 className="text-lg lg:text-xl font-bold flex items-center gap-2">
 	                          <TrendingUp className="text-emerald-300 w-6 h-6" />
 	                          Αποτελέσματα Ψηφοφορίας
@@ -418,64 +437,26 @@ export default function LiveAssemblyScene({
             </AnimatePresence>
           </div>
 
-          {/* Right: Agenda Sidebar (30%) */}
+          {/* Right: Vote roster (privacy: apartment only) */}
           <div className="flex-1 flex flex-col gap-2 min-w-0">
-            {/* Agenda List */}
             <div
               className="flex-1 backdrop-blur-2xl border rounded-2xl p-4 overflow-hidden flex flex-col shadow-2xl"
-              style={sidebarStyle}
+              style={cardStyle}
             >
-              <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-200/80 mb-4 flex items-center gap-2 shrink-0">
-                <FileText className="w-4 h-4" />
-                Ημερήσια Διάταξη
-              </h3>
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
-                {assembly.agenda_items.map((item) => (
-                  <AgendaItemRow 
-                    key={item.id}
-                    item={item}
-                    isCurrent={item.id === currentItem?.id}
-                  />
-                ))}
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-200/80">
+                  ΨΗΦΟΙ
+                </div>
+                <div className="font-mono text-sm text-white/80">
+                  {rosterVotedCount}/{voteRoster.length}
+                </div>
               </div>
-            </div>
 
-            {/* Next Up */}
-            {nextItem && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="backdrop-blur-2xl border rounded-2xl p-4 shrink-0 shadow-2xl"
-                style={cardStyle}
-              >
-                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-200/80 mb-3 flex items-center gap-2">
-                  <ChevronRight className="w-4 h-4 text-indigo-200/70" />
-                  ΕΠΟΜΕΝΟ
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-500/25 rounded-xl flex items-center justify-center text-indigo-100 text-xl font-black">
-                    {nextItem.order}
-                  </div>
-                  <div className="text-base font-bold text-white/90 line-clamp-2">{nextItem.title}</div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Voting roster (privacy: apartment only) */}
-            {currentItem?.item_type === 'voting' && voteRoster.length > 0 && (
-              <div
-                className="backdrop-blur-2xl border rounded-2xl p-4 shrink-0 shadow-2xl"
-                style={cardStyle}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-200/80">
-                    Ψήφοι
-                  </div>
-                  <div className="font-mono text-sm text-white/80">
-                    {rosterVotedCount}/{voteRoster.length}
-                  </div>
-                </div>
-                <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+              {currentItem?.item_type === 'voting' && voteRoster.length > 0 ? (
+                <div
+                  ref={voteRosterScrollRef}
+                  className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10"
+                >
                   {voteRoster.map((entry) => (
                     <div
                       key={entry.attendee}
@@ -488,58 +469,18 @@ export default function LiveAssemblyScene({
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 text-[10px] text-white/50">
-                  Προβολή ανά διαμέρισμα (χωρίς ονόματα).
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-white/40 text-sm">
+                  Αναμονή ψήφων…
                 </div>
+              )}
+
+              <div className="mt-2 text-[10px] text-white/50 shrink-0">
+                Προβολή ανά διαμέρισμα (χωρίς ονόματα).
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="fixed bottom-4 left-5 right-5 h-20 backdrop-blur-3xl border shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl z-50 overflow-hidden"
-        style={tickerStyle}
-      >
-        <div className="h-full px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-white/80 text-sm font-medium min-w-0">
-            <Building2 className="w-4 h-4 shrink-0" />
-            <span className="shrink-0">{assembly.building_name}</span>
-            <span className="text-white/30">•</span>
-            <span className="truncate">
-              {currentItem ? `Θέμα ${currentItem.order}: ${currentItem.title}` : 'Αναμονή έναρξης'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-6 text-white/75 text-sm font-medium">
-            {assembly.location && (
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {assembly.location}
-              </span>
-            )}
-            {assembly.is_online && (
-              <span className="flex items-center gap-2">
-                <Video className="w-4 h-4" />
-                Υβριδική
-              </span>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.15em] text-white/60 font-bold">LIVE</span>
-              <motion.div
-                animate={{ scale: [1, 1.3, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.75)]"
-              />
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="fixed bottom-0.5 left-0 right-0 h-3 flex items-center justify-center z-40">
-        <p className="text-[9px] text-lime-200/60 font-normal tracking-wide">
-          © {new Date().getFullYear()} New Concierge. All rights reserved.
-        </p>
       </div>
     </div>
   );
