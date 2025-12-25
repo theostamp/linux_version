@@ -57,10 +57,10 @@ def sync_assembly_vote_to_vote_submission(sender, instance, created, **kwargs):
     Συγχρονισμός AssemblyVote -> VoteSubmission (linked vote)
     Όταν κάποιος ψηφίζει σε θέμα συνέλευσης, η ψήφος καταγράφεται 
     και στο linked Vote για ενιαία αποτελέσματα.
-    """
-    if not created:
-        return
     
+    Τρέχει τόσο για νέες ψήφους όσο και για updates (π.χ. αλλαγή ψήφου κατά τη live).
+    """
+    # ΣΗΜΑΝΤΙΚΟ: Τρέχει για create ΚΑΙ update
     try:
         agenda_item = instance.agenda_item
         linked_vote = agenda_item.linked_vote
