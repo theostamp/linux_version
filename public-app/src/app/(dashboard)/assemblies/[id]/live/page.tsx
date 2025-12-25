@@ -237,9 +237,10 @@ function LiveAssemblyContent() {
   const canManage = hasInternalManagerAccess(user);
   
   const currentItem = agendaItems.find(item => item.status === 'in_progress');
-  const { data: voteResults } = useAgendaItemVoteResults(currentItem?.id);
-  const currentAttendee = attendees.find(a => a.user === user?.id);
   const isVotingItem = currentItem?.item_type === 'voting';
+  const voteResultsItemId = isVotingItem ? currentItem?.id : undefined;
+  const { data: voteResults } = useAgendaItemVoteResults(voteResultsItemId);
+  const currentAttendee = attendees.find(a => a.user === user?.id);
 
   if (isLoading || buildingLoading) {
     return (
