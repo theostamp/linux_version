@@ -167,6 +167,19 @@ class VoteSubmissionSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         if vote:
+            # 🔒 IMPORTANT: Reject VoteSubmission creation for linked votes
+            # Linked votes should use AssemblyVote (canonical source), not VoteSubmission
+            try:
+                agenda_item = vote.agenda_item
+                if agenda_item:
+                    raise serializers.ValidationError(
+                        "Αυτή η ψηφοφορία είναι συνδεδεμένη με συνέλευση. "
+                        "Για να ψηφίσετε, χρησιμοποιήστε τη σελίδα της συνέλευσης."
+                    )
+            except Exception:
+                # agenda_item doesn't exist or vote is not linked - continue with normal validation
+                pass
+            
             if not vote.is_currently_active:
                 raise serializers.ValidationError("Η ψηφοφορία δεν είναι ενεργή αυτή τη στιγμή")
 

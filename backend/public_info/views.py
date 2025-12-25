@@ -508,12 +508,12 @@ def building_info(request, building_id: int):
                                 )
                                 vote_by_attendee = {v.attendee_id: v for v in votes}
                                 roster = []
-                                for attendee in upcoming_assembly.attendees.select_related('apartment').order_by('apartment__number'):
+                                for attendee in upcoming_assembly.attendees.select_related('apartment').filter(apartment__isnull=False).order_by('apartment__number'):
                                     v = vote_by_attendee.get(attendee.id)
                                     roster.append(
                                         {
                                             'attendee': str(attendee.id),
-                                            'apartment_number': getattr(attendee.apartment, 'number', '') or '',
+                                            'apartment_number': attendee.apartment.number if attendee.apartment else '',
                                             'mills': attendee.mills,
                                             'vote': getattr(v, 'vote', None) if v else None,
                                             'vote_source': getattr(v, 'vote_source', None) if v else None,
