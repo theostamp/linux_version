@@ -229,6 +229,38 @@ def send_assembly_reminder_email(
                 # Fallback for edge-cases where dates are missing/inconsistent
                 pre_voting_state = 'inactive'
         
+        # Prepare voting items with individual vote links
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr')
+        voting_items_with_links = []
+        for item in voting_items:
+            item_data = {
+                'id': item.id,
+                'title': item.title,
+                'description': item.description or '',
+                'order': item.order,
+                'is_pending': item.id not in voted_item_ids,
+                'linked_vote': None,
+                'vote_url': None,
+                'vote_type': 'email',  # 'email' or 'direct'
+            }
+            
+            # Αν το item έχει linked_vote, χρησιμοποιούμε το direct vote URL
+            if item.linked_vote:
+                item_data['linked_vote'] = {
+                    'id': item.linked_vote.id,
+                    'title': item.linked_vote.title,
+                }
+                # Direct vote URL για το συγκεκριμένο vote
+                if can_vote_online_now:
+                    item_data['vote_url'] = f"{frontend_url}/votes/{item.linked_vote.id}"
+                    item_data['vote_type'] = 'direct'
+            elif can_vote_online_now and item.id not in voted_item_ids:
+                # Αν δεν έχει linked_vote, χρησιμοποιούμε το γενικό email vote URL
+                item_data['vote_url'] = vote_url
+                item_data['vote_type'] = 'email'
+            
+            voting_items_with_links.append(item_data)
+        
         # Prepare context with tone configuration
         context = {
             'attendee': attendee,
@@ -237,6 +269,7 @@ def send_assembly_reminder_email(
             'building': assembly.building,
             'agenda_items': list(assembly.agenda_items.order_by('order')),
             'voting_items': voting_items,
+            'voting_items_with_links': voting_items_with_links,
             'pending_votes': pending_votes,
             'voted_count': len(voting_items) - len(pending_votes),
             'total_voting_items': len(voting_items),
@@ -249,8 +282,8 @@ def send_assembly_reminder_email(
             'days_until': days_until,
             'is_today': days_until == 0,
             'is_tomorrow': days_until == 1,
-            'frontend_url': getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr'),
-            'assembly_url': f"{getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr')}/assemblies/{assembly.id}",
+            'frontend_url': frontend_url,
+            'assembly_url': f"{frontend_url}/assemblies/{assembly.id}",
             'now': timezone.now(),
             # Tone-specific content
             'reminder_type': reminder_type,

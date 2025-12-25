@@ -237,6 +237,91 @@
             color: #64748b;
         }
         
+        .voting-item-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .voting-item-card:hover {
+            border-color: #818cf8;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+        
+        .voting-item-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .voting-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+            flex: 1;
+            line-height: 1.4;
+        }
+        
+        .voting-item-description {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+        
+        .voting-item-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+        }
+        
+        .voting-item-link:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
+        
+        .voting-item-link.urgent {
+            background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+        }
+        
+        .voting-item-link.urgent:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #c2410c 100%);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+        }
+        
+        .voting-badge-completed {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #d1fae5;
+            color: #047857;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .voting-section-intro {
+            font-size: 15px;
+            color: #475569;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
         .footer {
             background-color: #1f2937;
             padding: 24px 30px;
@@ -298,12 +383,12 @@
         
         <!-- Content -->
         <div class="content">
-            <p class="greeting">
-                Αγαπητέ/ή {{ user.first_name|default:"Ιδιοκτήτη/Ένοικε" }},
+            <p class="greeting" style="font-size: 18px; color: #1f2937; margin-bottom: 16px; line-height: 1.6;">
+                Αγαπητέ/ή {{ user.first_name|default:"Ιδιοκτήτη/Ένοικε" }}{% if user.last_name %} {{ user.last_name }}{% endif %},
             </p>
             
             {% if greeting_extra %}
-            <p style="color: #4b5563; margin-bottom: 20px;">
+            <p style="color: #4b5563; margin-bottom: 24px; font-size: 15px; line-height: 1.7;">
                 {{ greeting_extra }}
             </p>
             {% endif %}
@@ -354,8 +439,99 @@
                 {% endfor %}
             </ul>
             
-            <!-- Voting CTA -->
-            {% if has_pending_votes and vote_url %}
+            <!-- Voting Section -->
+            {% if voting_items_with_links|length > 0 %}
+            <div style="margin-top: 32px;">
+                <h3 class="section-title" style="font-size: 18px; color: #1e293b; margin-bottom: 16px;">
+                    🗳️ Θέματα Ψηφοφορίας
+                </h3>
+                
+                {% if has_pending_votes %}
+                <p class="voting-section-intro">
+                    {% if is_urgent %}
+                    <strong style="color: #dc2626;">⏰ Τελευταία ευκαιρία!</strong> Έχετε {{ pending_votes|length }} θέμα{% if pending_votes|length > 1 %}τα{% endif %} προς ψήφιση.
+                    {% elif is_gentle_reminder %}
+                    Σας υπενθυμίζουμε ότι μπορείτε να ψηφίσετε <strong>εξ αποστάσεως</strong> για τα παρακάτω θέματα.
+                    {% else %}
+                    Μπορείτε να ψηφίσετε <strong>εξ αποστάσεως</strong> (επιστολική ψήφος μέσω email) για τα παρακάτω θέματα.
+                    {% endif %}
+                    {% if voted_count > 0 %}
+                    <br><span style="color: #059669;">✅ Έχετε ήδη ψηφίσει σε {{ voted_count }} από {{ total_voting_items }} θέματα.</span>
+                    {% endif %}
+                </p>
+                {% endif %}
+                
+                <!-- Individual Voting Items -->
+                {% for vote_item in voting_items_with_links %}
+                <div class="voting-item-card">
+                    <div class="voting-item-header">
+                        <h4 class="voting-item-title">
+                            {{ vote_item.order }}. {{ vote_item.title }}
+                        </h4>
+                        {% if not vote_item.is_pending %}
+                        <span class="voting-badge-completed">✅ Έχετε ψηφίσει</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if vote_item.description %}
+                    <p class="voting-item-description">{{ vote_item.description }}</p>
+                    {% endif %}
+                    
+                    {% if vote_item.is_pending and vote_item.vote_url %}
+                    <div style="margin-top: 12px;">
+                        {% if vote_item.vote_type == 'direct' %}
+                        <a href="{{ vote_item.vote_url }}" class="voting-item-link {% if is_urgent %}urgent{% endif %}">
+                            🗳️ Ψηφίστε για αυτό το θέμα
+                        </a>
+                        <p style="font-size: 12px; color: #64748b; margin-top: 8px; margin-bottom: 0;">
+                            Μπορείτε να ψηφίσετε <strong>απευθείας</strong> για αυτό το θέμα μέσω της εφαρμογής.
+                        </p>
+                        {% else %}
+                        <a href="{{ vote_item.vote_url }}" class="voting-item-link {% if is_urgent %}urgent{% endif %}">
+                            📧 Ψηφίστε μέσω email
+                        </a>
+                        <p style="font-size: 12px; color: #64748b; margin-top: 8px; margin-bottom: 0;">
+                            Το link είναι <strong>προσωπικό</strong> και δεν πρέπει να προωθηθεί.
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% elif vote_item.is_pending and not vote_item.vote_url %}
+                    <div style="margin-top: 12px;">
+                        {% if pre_voting_state == 'not_started' %}
+                        <p style="font-size: 14px; color: #64748b; margin: 0;">
+                            ⏳ Η ψηφοφορία θα ανοίξει σύντομα
+                            {% if pre_voting_start %}
+                            ({{ pre_voting_start|date:"d/m/Y" }})
+                            {% endif %}
+                        </p>
+                        {% elif pre_voting_state == 'ended' %}
+                        <p style="font-size: 14px; color: #64748b; margin: 0;">
+                            ✅ Η περίοδος pre-voting ολοκληρώθηκε. Η ψηφοφορία θα πραγματοποιηθεί κατά τη διάρκεια της συνέλευσης.
+                        </p>
+                        {% else %}
+                        <p style="font-size: 14px; color: #64748b; margin: 0;">
+                            📋 Η ψηφοφορία θα πραγματοποιηθεί κατά τη διάρκεια της συνέλευσης.
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                {% if has_pending_votes and vote_url %}
+                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; margin-top: 20px;">
+                    <p style="font-size: 13px; color: #0369a1; margin: 0; line-height: 1.5;">
+                        💡 <strong>Συμβουλή:</strong> Αν προτιμάτε, μπορείτε να ψηφίσετε σε όλα τα θέματα μαζί μέσω του γενικού link:
+                        <br>
+                        <a href="{{ vote_url }}" style="color: #0284c7; word-break: break-all; text-decoration: underline;">{{ vote_url }}</a>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Legacy Voting CTA (fallback for compatibility) -->
+            {% if has_pending_votes and vote_url and voting_items_with_links|length == 0 %}
             <div class="cta-section" {% if is_urgent %}style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);"{% endif %}>
                 {% if is_urgent %}
                 <h3 style="color: #b91c1c;">⏰ {{ cta_text|default:"Ψηφίστε Άμεσα" }}!</h3>
@@ -395,11 +571,12 @@
                     <a href="{{ vote_url }}" style="color:#4f46e5; word-break: break-all;">{{ vote_url }}</a>
                 </div>
             </div>
-            {% elif has_pending_votes and not vote_url %}
+            {% endif %}
+            {% elif has_pending_votes and not vote_url and voting_items_with_links|length == 0 %}
             <div class="cta-section" style="background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);">
                 {% if pre_voting_state == 'not_started' %}
                 <h3 style="color: #4f46e5;">🗳️ Η ψηφοφορία θα ανοίξει σύντομα</h3>
-                <p style="color: #475569; margin-bottom: 10px;">
+                <p style="color: #475569; margin-bottom: 10px; line-height: 1.6;">
                     Υπάρχουν θέματα προς ψήφιση, όμως το <strong>pre-voting</strong> δεν είναι ενεργό αυτή τη στιγμή.
                     {% if pre_voting_start %}
                     <br>Έναρξη: <strong>{{ pre_voting_start|date:"d/m/Y" }}</strong>
@@ -410,13 +587,13 @@
                 </p>
                 {% elif pre_voting_state == 'ended' %}
                 <h3 style="color: #4f46e5;">🗳️ Το pre-voting ολοκληρώθηκε</h3>
-                <p style="color: #475569; margin-bottom: 10px;">
+                <p style="color: #475569; margin-bottom: 10px; line-height: 1.6;">
                     Η περίοδος pre-voting έχει λήξει.
                     Η ψηφοφορία θα πραγματοποιηθεί κατά τη διάρκεια της συνέλευσης.
                 </p>
                 {% else %}
                 <h3 style="color: #4f46e5;">🗳️ Η ψηφοφορία θα γίνει στη συνέλευση</h3>
-                <p style="color: #475569; margin-bottom: 10px;">
+                <p style="color: #475569; margin-bottom: 10px; line-height: 1.6;">
                     Υπάρχουν θέματα προς ψήφιση. Η ηλεκτρονική ψήφος δεν είναι διαθέσιμη πριν τη συνέλευση·
                     η ψηφοφορία θα πραγματοποιηθεί κατά τη διάρκεια της συνέλευσης.
                 </p>
@@ -431,9 +608,9 @@
                         {% endfor %}
                     </ul>
                 </div>
-                <div style="margin-top: 12px; font-size: 13px; color: #6b7280;">
+                <div style="margin-top: 12px; font-size: 13px; color: #6b7280; line-height: 1.5;">
                     Μπορείτε πάντα να δείτε τη συνέλευση και τις λεπτομέρειες στην εφαρμογή:
-                    <a href="{{ assembly_url }}" style="color:#4f46e5;">{{ assembly_url }}</a>
+                    <a href="{{ assembly_url }}" style="color:#4f46e5; text-decoration: underline;">{{ assembly_url }}</a>
                 </div>
             </div>
             {% elif total_voting_items > 0 and voted_count == total_voting_items %}
@@ -457,9 +634,12 @@
             </div>
             
             <!-- Additional Info -->
-            <p style="color: #6b7280; font-size: 14px;">
-                Για οποιαδήποτε απορία ή πληροφορία, μπορείτε να επικοινωνήσετε με τη διαχείριση του κτιρίου.
-            </p>
+            <div style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-left: 4px solid #6366f1; padding: 16px; margin-top: 24px; border-radius: 8px;">
+                <p style="color: #374151; font-size: 14px; margin: 0; line-height: 1.6;">
+                    💬 Για οποιαδήποτε απορία ή πληροφορία, μπορείτε να επικοινωνήσετε με τη διαχείριση του κτιρίου.
+                    Είμαστε στη διάθεσή σας για οποιαδήποτε βοήθεια χρειαστείτε.
+                </p>
+            </div>
         </div>
         
         <!-- Footer -->
