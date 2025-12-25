@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action  
 from rest_framework.response import Response  
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import Http404
 import logging
 
@@ -110,25 +110,36 @@ class VoteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # 🔒 IMPORTANT: Check if user is eligible to vote (must own/rent an apartment in the building)
+        # 🔒 IMPORTANT: Check if user is eligible to vote.
+        # A user can vote only if they own/rent at least one apartment:
+        # - For building-specific votes: in that building
+        # - For global votes (building=None): in any building
         from apartments.models import Apartment
-        apartment = None
         try:
-            # Find apartment where user is owner OR resident (renter)
-            # Note: tenant_user = ενοικιαστής διαμερίσματος, ΟΧΙ django-tenants tenant
-            apartment = Apartment.objects.filter(
+            apartments_qs = Apartment.objects.filter(
                 Q(owner_user=request.user) | Q(tenant_user=request.user),
-                building=vote.building
-            ).first()
+            )
+            if vote.building_id is not None:
+                apartments_qs = apartments_qs.filter(building_id=vote.building_id)
+
+            if not apartments_qs.exists():
+                logger.warning(
+                    "User %s (%s) tried to vote without apartment in building %s",
+                    request.user.id,
+                    request.user.email,
+                    vote.building_id,
+                )
+                return Response(
+                    {"error": "Δεν έχετε δικαίωμα ψήφου σε αυτή την ψηφοφορία. Μόνο ιδιοκτήτες ή ένοικοι διαμερισμάτων μπορούν να ψηφίσουν."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            mills = apartments_qs.aggregate(total=Sum('participation_mills')).get('total') or 0
         except Exception as e:
             logger.warning(f"Could not check apartment eligibility for user {request.user.id}: {e}")
-        
-        # If user has no apartment in this building, they cannot vote
-        if not apartment:
-            logger.warning(f"User {request.user.id} ({request.user.email}) tried to vote without apartment in building {vote.building_id}")
             return Response(
-                {"error": "Δεν έχετε δικαίωμα ψήφου σε αυτή την ψηφοφορία. Μόνο ιδιοκτήτες ή ένοικοι διαμερισμάτων μπορούν να ψηφίσουν."},
-                status=status.HTTP_403_FORBIDDEN
+                {"error": "Αδυναμία ελέγχου δικαιώματος ψήφου. Παρακαλώ δοκιμάστε ξανά."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         
         # Check for existing submission (additional safeguard)
@@ -144,9 +155,7 @@ class VoteViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         
-        # Get mills from apartment
-        mills = apartment.participation_mills or 0
-        logger.info(f"User {request.user.id} voting with {mills} mills from apartment {apartment.id}")
+        logger.info(f"User {request.user.id} voting with {mills} total mills")
         
         serializer.save(vote=vote, user=request.user, mills=mills)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -172,10 +181,11 @@ class VoteViewSet(viewsets.ModelViewSet):
             ser = VoteSubmissionSerializer(sub)
             return Response(ser.data)
         except VoteSubmission.DoesNotExist:
-            # Important: when there's no submission, return 404 so the frontend can treat it as "not voted"
+            # When there's no submission, return a 200 with a null payload.
+            # This avoids noisy 404s in browser logs while preserving the frontend behavior (treat as "not voted").
             return Response(
-                {"detail": "No submission found for this user and vote."},
-                status=status.HTTP_404_NOT_FOUND,
+                {"id": None, "choice": None},
+                status=status.HTTP_200_OK,
             )
 
     @action(detail=True, methods=['get'], url_path='results')

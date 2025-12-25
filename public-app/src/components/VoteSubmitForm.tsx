@@ -42,8 +42,21 @@ export default function VoteSubmitForm({
           toast.success('Η ψήφος σας καταχωρήθηκε!');
           if (onSubmitted) onSubmitted();
         },
-        onError: () => {
-          setError('Αποτυχία υποβολής ψήφου.');
+        onError: (err: unknown) => {
+          const apiError = err as { response?: { body?: string }; message?: string };
+          const body = apiError?.response?.body;
+          if (body) {
+            try {
+              const parsed = JSON.parse(body) as { error?: string };
+              if (parsed?.error) {
+                setError(parsed.error);
+                return;
+              }
+            } catch {
+              // Ignore JSON parse errors and fall back to generic message
+            }
+          }
+          setError(apiError?.message || 'Αποτυχία υποβολής ψήφου.');
         },
       }
     );
@@ -84,4 +97,3 @@ export default function VoteSubmitForm({
     </form>
   );
 }
-

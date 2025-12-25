@@ -1331,7 +1331,12 @@ export async function fetchMyVote(voteId: number, buildingId?: number | null): P
     if (typeof buildingId === 'number') {
       params.building = buildingId;
     }
-    return await apiGet<VoteSubmission>(`/votes/${voteId}/my-submission/`, params);
+    const data = await apiGet<unknown>(`/votes/${voteId}/my-submission/`, params);
+    if (!data || typeof data !== 'object') return null;
+    const record = data as Partial<VoteSubmission> & { choice?: unknown };
+    if (!record.id) return null;
+    if (record.choice === null || record.choice === undefined) return null;
+    return record as VoteSubmission;
   } catch (error: unknown) {
     const apiError = error as { status?: number };
     if (apiError.status === 404) {
