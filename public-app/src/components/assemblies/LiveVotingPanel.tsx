@@ -15,6 +15,7 @@ interface LiveVotingPanelProps {
   item: AgendaItem;
   attendee: AssemblyAttendee | null;
   hasVoted: boolean;
+  totalBuildingMills: number;
   onVoteSuccess?: () => void;
 }
 
@@ -56,6 +57,7 @@ export default function LiveVotingPanel({
   item, 
   attendee, 
   hasVoted,
+  totalBuildingMills,
   onVoteSuccess 
 }: LiveVotingPanelProps) {
   const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null);
@@ -84,6 +86,9 @@ export default function LiveVotingPanel({
       </div>
     );
   }
+
+  const quorumContributionPercent =
+    totalBuildingMills > 0 ? (attendee.mills * 100) / totalBuildingMills : 0;
 
   const handleVoteSubmit = async () => {
     if (!selectedVote) return;
@@ -151,8 +156,12 @@ export default function LiveVotingPanel({
         <div className="bg-indigo-50 rounded-xl p-4 flex items-center gap-3">
           <Building2 className="w-5 h-5 text-indigo-600" />
           <div className="text-sm text-indigo-800">
-            Η ψήφος σας αντιστοιχεί σε <strong>{attendee.mills} χιλιοστά</strong>
+            Η ψήφος σας αντιστοιχεί σε <strong>{attendee.mills} χιλιοστά</strong>{' '}
+            <span className="text-indigo-700">({quorumContributionPercent.toFixed(1)}% της απαρτίας*)</span>
           </div>
+        </div>
+        <div className="text-[11px] text-gray-500 -mt-3 px-1">
+          * Η συμμετοχή σας προσμετράται στην απαρτία.
         </div>
 
         <Button
@@ -181,6 +190,5 @@ export default function LiveVotingPanel({
     </motion.div>
   );
 }
-
 
 

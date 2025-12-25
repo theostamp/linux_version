@@ -965,6 +965,8 @@ class EmailVoteView(APIView):
                 'id': str(assembly.id),
                 'title': assembly.title,
                 'scheduled_date': assembly.scheduled_date.isoformat(),
+                'total_building_mills': assembly.total_building_mills,
+                'required_quorum_percentage': assembly.required_quorum_percentage,
             },
             'attendee': {
                 'id': str(attendee.id),

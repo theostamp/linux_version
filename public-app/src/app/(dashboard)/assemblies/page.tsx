@@ -203,7 +203,12 @@ function AssemblyCard({
             assembly.quorum_status === 'close' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
         )}>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] text-muted-foreground uppercase font-normal">Απαρτία</span>
+            <span
+              className="text-[10px] text-muted-foreground uppercase font-normal"
+              title="* Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι)."
+            >
+              Απαρτία*
+            </span>
             <div className="flex items-center gap-1">
               <span>{(Number(assembly.quorum_percentage) || 0).toFixed(0)}%</span>
               {assembly.quorum_achieved && <CheckCircle className="w-3.5 h-3.5" />}

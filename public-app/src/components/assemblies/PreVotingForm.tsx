@@ -290,6 +290,10 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
     );
   }
 
+  const totalBuildingMills = Number(assembly.total_building_mills) || 0;
+  const quorumContributionPercent =
+    totalBuildingMills > 0 ? (attendee.mills * 100) / totalBuildingMills : 0;
+
   if (!assembly.is_pre_voting_active) {
     const formatShortDate = (iso?: string | null) => {
       if (!iso) return '';
@@ -388,10 +392,16 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
         <Users className="w-5 h-5 text-indigo-600 mt-0.5" />
         <div>
           <p className="text-sm text-indigo-800">
-            <strong>Τα μιλέσιμά σας:</strong> {attendee.mills}
+            <strong>Τα μιλέσιμά σας:</strong> {attendee.mills}{' '}
+            <span className="text-indigo-700">
+              ({quorumContributionPercent.toFixed(1)}% της απαρτίας*)
+            </span>
           </p>
           <p className="text-xs text-indigo-600 mt-1">
             Οι ψήφοι σας υπολογίζονται με βάση τα χιλιοστά του διαμερίσματός σας.
+          </p>
+          <p className="text-[11px] text-indigo-600 mt-1">
+            * Η συμμετοχή σας προσμετράται στην απαρτία ακόμη κι αν δεν είστε παρών/ούσα.
           </p>
         </div>
       </div>
@@ -442,4 +452,3 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
     </div>
   );
 }
-

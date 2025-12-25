@@ -28,6 +28,8 @@ interface EmailVoteData {
     id: string;
     title: string;
     scheduled_date: string;
+    total_building_mills: number;
+    required_quorum_percentage: number;
   };
   attendee: {
     id: string;
@@ -224,6 +226,10 @@ export default function VoteByEmailPage() {
 
   if (!data) return null;
 
+  const totalBuildingMills = data.assembly.total_building_mills || 0;
+  const quorumContributionPercent =
+    totalBuildingMills > 0 ? (data.attendee.mills * 100) / totalBuildingMills : 0;
+
   const pendingItems = data.voting_items.filter(item => !item.has_voted);
   const allVotesSelected = pendingItems.every(item => votes[item.id]);
 
@@ -262,10 +268,15 @@ export default function VoteByEmailPage() {
               Διαμέρισμα
             </div>
             <p className="text-white font-medium">
-              {data.attendee.apartment_number} • {data.attendee.mills} χιλιοστά
+              {data.attendee.apartment_number} • {data.attendee.mills} χιλιοστά •{' '}
+              {quorumContributionPercent.toFixed(1)}% απαρτίας*
             </p>
           </div>
         </div>
+
+        <p className="mt-3 text-[11px] text-white/60">
+          * Η συμμετοχή σας προσμετράται στην απαρτία ακόμη κι αν δεν είστε παρών/ούσα.
+        </p>
 
         {/* Voting items */}
         <div className="space-y-6">
@@ -391,4 +402,3 @@ export default function VoteByEmailPage() {
     </div>
   );
 }
-

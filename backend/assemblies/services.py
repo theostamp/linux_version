@@ -6,6 +6,7 @@ Business logic για συνελεύσεις
 from django.utils import timezone
 from django.template import Template, Context
 from django.conf import settings
+from django.db.models import Q
 from datetime import datetime
 from typing import Optional
 import io
@@ -412,7 +413,9 @@ class AssemblyQuorumService:
     
     def calculate_quorum(self) -> dict:
         """Υπολογίζει την τρέχουσα κατάσταση απαρτίας"""
-        attendees = self.assembly.attendees.filter(is_present=True)
+        attendees = self.assembly.attendees.filter(
+            Q(is_present=True) | Q(has_pre_voted=True) | Q(votes__isnull=False)
+        ).distinct()
         
         present_mills = sum(a.mills for a in attendees)
         required_mills = self.assembly.required_quorum_mills
@@ -431,10 +434,10 @@ class AssemblyQuorumService:
         if self.assembly.quorum_achieved:
             return []
         
-        # Get apartments not present
+        # Get apartments not contributing to quorum yet (not present and no pre-vote/vote recorded)
         present_apartment_ids = self.assembly.attendees.filter(
-            is_present=True
-        ).values_list('apartment_id', flat=True)
+            Q(is_present=True) | Q(has_pre_voted=True) | Q(votes__isnull=False)
+        ).values_list('apartment_id', flat=True).distinct()
         
         from apartments.models import Apartment
         missing = Apartment.objects.filter(

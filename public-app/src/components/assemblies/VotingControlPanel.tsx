@@ -22,6 +22,7 @@ import type { AgendaItem, AssemblyAttendee, VoteChoice } from '@/lib/api';
 interface VotingControlPanelProps {
   item: AgendaItem;
   attendees: AssemblyAttendee[];
+  totalBuildingMills: number;
   votes: Array<{
     id: string;
     attendee: string;
@@ -126,11 +127,13 @@ function MobileVoteButtons({
 
 function AttendeeVoteCard({
   attendee,
+  totalBuildingMills,
   vote,
   onVote,
   isPending,
 }: {
   attendee: AssemblyAttendee;
+  totalBuildingMills: number;
   vote: {
     vote: VoteChoice;
     vote_source: 'pre_vote' | 'live' | 'proxy';
@@ -140,6 +143,8 @@ function AttendeeVoteCard({
 }) {
   const isPreVote = vote?.vote_source === 'pre_vote';
   const hasVoted = !!vote;
+  const quorumContributionPercent =
+    totalBuildingMills > 0 ? (attendee.mills * 100) / totalBuildingMills : 0;
   
   return (
     <div className={cn(
@@ -173,6 +178,12 @@ function AttendeeVoteCard({
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm text-gray-500 font-medium">
               {attendee.mills} χιλιοστά
+              {hasVoted && (
+                <span className="text-gray-400">
+                  {' '}
+                  ({quorumContributionPercent.toFixed(1)}% απαρτίας*)
+                </span>
+              )}
             </span>
             {!attendee.is_present && (
               <Badge variant="outline" className="text-[10px] bg-gray-50 text-gray-500">
@@ -203,6 +214,7 @@ function AttendeeVoteCard({
 export default function VotingControlPanel({
   item,
   attendees,
+  totalBuildingMills,
   votes,
   onRefresh,
   isRefreshing
@@ -425,6 +437,7 @@ export default function VotingControlPanel({
               <AttendeeVoteCard
                 key={attendee.id}
                 attendee={attendee}
+                totalBuildingMills={totalBuildingMills}
                 vote={voteMap.get(attendee.id) ? {
                   vote: voteMap.get(attendee.id)!.vote,
                   vote_source: voteMap.get(attendee.id)!.vote_source
@@ -452,6 +465,9 @@ export default function VotingControlPanel({
             <span className="text-xs text-gray-400 font-medium">
               {filteredAttendees.length} εγγραφές
             </span>
+          </div>
+          <div className="mt-2 text-[11px] text-gray-500">
+            * Οι καταχωρημένες ψήφοι (pre-vote/live/proxy) προσμετρώνται στην απαρτία.
           </div>
         </div>
       </DialogContent>

@@ -117,6 +117,18 @@ def sync_assembly_vote_to_vote_submission(sender, instance, created, **kwargs):
         logger.error(f"Error syncing AssemblyVote {instance.id} to VoteSubmission: {e}")
 
 
+@receiver(post_save, sender=AssemblyVote)
+def update_assembly_quorum_on_vote(sender, instance, **kwargs):
+    """
+    Ενημέρωση απαρτίας όταν καταχωρείται/ενημερώνεται ψήφος.
+    Η απαρτία μετράει παρόντες ΚΑΙ όσους έχουν ψηφίσει (pre-vote/live/proxy).
+    """
+    try:
+        instance.agenda_item.assembly.check_quorum()
+    except Exception as e:
+        logger.warning(f"Failed to update quorum after vote {instance.id}: {e}")
+
+
 @receiver(post_save, sender=AgendaItem)
 def create_vote_for_voting_item(sender, instance, created, **kwargs):
     """
@@ -558,4 +570,3 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
 
     # Μετά το commit ώστε να έχουν δημιουργηθεί οι attendees
     transaction.on_commit(_send)
-

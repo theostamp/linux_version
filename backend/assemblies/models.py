@@ -13,6 +13,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.db.models import Q
 from datetime import timedelta
 from decimal import Decimal
 import uuid
@@ -278,9 +279,10 @@ class Assembly(models.Model):
     
     def check_quorum(self):
         """Ελέγχει και ενημερώνει την απαρτία"""
-        total_mills = sum(
-            attendee.mills for attendee in self.attendees.filter(is_present=True)
-        )
+        participants = self.attendees.filter(
+            Q(is_present=True) | Q(has_pre_voted=True) | Q(votes__isnull=False)
+        ).distinct()
+        total_mills = sum(attendee.mills for attendee in participants)
         self.achieved_quorum_mills = total_mills
         
         if total_mills >= self.required_quorum_mills and not self.quorum_achieved:

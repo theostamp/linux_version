@@ -53,7 +53,7 @@ function QuorumMeter({ assembly }: { assembly: Assembly }) {
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <Percent className="w-4 h-4" />
-          Απαρτία
+          Απαρτία*
         </h3>
         <span className={cn(
           'px-2.5 py-1 rounded-full text-xs font-medium',
@@ -93,6 +93,10 @@ function QuorumMeter({ assembly }: { assembly: Assembly }) {
           {percentage.toFixed(1)}%
         </span>
       </div>
+
+      <p className="mt-2 text-xs text-gray-500">
+        * Η απαρτία υπολογίζεται βάσει χιλιοστών και περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).
+      </p>
     </div>
   );
 }
@@ -618,4 +622,3 @@ export default function AssemblyDetailPage() {
     </AuthGate>
   );
 }
-

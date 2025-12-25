@@ -74,7 +74,7 @@ function QuorumDisplay({
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <Percent className="w-4 h-4" />
-          Απαρτία
+          Απαρτία*
         </h3>
         <span className={cn(
           'px-2.5 py-1 rounded-full text-xs font-medium',
@@ -104,6 +104,10 @@ function QuorumDisplay({
           {percentage.toFixed(1)}%
         </span>
       </div>
+
+      <p className="mt-2 text-xs text-gray-500">
+        * Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).
+      </p>
     </div>
   );
 }
@@ -349,6 +353,7 @@ function LiveAssemblyContent() {
               <VotingControlPanel
                 item={currentItem}
                 attendees={attendees}
+                totalBuildingMills={assembly.total_building_mills}
                 votes={voteResults?.votes || []}
               />
             )}
@@ -403,7 +408,9 @@ function LiveAssemblyContent() {
         <div className="md:hidden bg-white rounded-xl border border-gray-200 p-4 text-center">
           <div className="flex items-center justify-center gap-2 text-gray-500 mb-1">
             <Percent className="w-3 h-3" />
-            <span className="text-xs font-medium">Απαρτία</span>
+            <span className="text-xs font-medium" title="* Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).">
+              Απαρτία*
+            </span>
           </div>
           <div className={cn(
             "text-xl font-bold",
@@ -495,6 +502,7 @@ function LiveAssemblyContent() {
                     item={currentItem}
                     attendee={currentAttendee || null}
                     hasVoted={voteResults?.votes?.some((v: any) => v.attendee === currentAttendee?.id) || false}
+                    totalBuildingMills={assembly.total_building_mills}
                   />
                 )}
                 
@@ -563,4 +571,3 @@ export default function LiveAssemblyPage() {
     </AuthGate>
   );
 }
-

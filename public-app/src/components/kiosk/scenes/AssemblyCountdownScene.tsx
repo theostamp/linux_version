@@ -545,12 +545,14 @@ export default function AssemblyCountdownScene({
               </span>
             )}
             <span>
-              Απαρτία: {assembly.quorum_percentage?.toFixed(0) || 0}%
+              Απαρτία*: {assembly.quorum_percentage?.toFixed(0) || 0}%
             </span>
           </div>
+        </div>
+        <div className="mt-1 text-[10px] text-white/40">
+          * Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).
         </div>
       </div>
     </div>
   );
 }
-

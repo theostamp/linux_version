@@ -186,7 +186,7 @@ export default function LiveAssemblyScene({
           {/* Quorum */}
           <StatCard 
             icon={<Users className="w-8 h-8" />}
-            label="Απαρτία"
+            label="Απαρτία*"
             value={`${assembly.quorum_percentage.toFixed(1)}%`}
             subtext={`${assembly.achieved_quorum_mills} / ${assembly.required_quorum_mills} χιλ.`}
             color={assembly.quorum_percentage >= 100 ? "emerald" : "amber"}
@@ -212,6 +212,10 @@ export default function LiveAssemblyScene({
             color="indigo"
             large
           />
+        </div>
+
+        <div className="text-white/50 text-xs px-1 -mt-2 mb-4">
+          * Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).
         </div>
 
         {/* Main Content Area */}
