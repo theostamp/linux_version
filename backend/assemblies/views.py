@@ -619,7 +619,14 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'], serializer_class=CastVoteSerializer)
     def vote(self, request, pk=None):
-        """Ψηφοφορία σε θέμα"""
+        """
+        Ψηφοφορία σε θέμα
+        
+        Επιτρέπει:
+        - Pre-voting (πριν τη συνέλευση)
+        - Live voting (κατά τη συνέλευση)
+        - Update ψήφου (διαχειριστής μπορεί να αλλάξει ψήφο κατά τη live)
+        """
         attendee = self.get_object()
         serializer = CastVoteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -643,6 +650,21 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Determine vote source
+        assembly = attendee.assembly
+        user = request.user
+        is_manager = user.is_superuser or (hasattr(user, 'role') and user.role in ['admin', 'manager', 'office_staff', 'internal_manager'])
+        
+        if assembly.status == 'in_progress':
+            vote_source = 'live'
+        elif assembly.is_pre_voting_active:
+            vote_source = 'pre_vote'
+        else:
+            return Response(
+                {'error': 'Η ψηφοφορία δεν είναι ενεργή'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # Check if already voted
         existing_vote = AssemblyVote.objects.filter(
             agenda_item=agenda_item,
@@ -650,34 +672,52 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
         ).first()
         
         if existing_vote:
-            return Response(
-                {'error': 'Έχετε ήδη ψηφίσει σε αυτό το θέμα'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            # Αν η συνέλευση είναι live ΚΑΙ ο χρήστης είναι διαχειριστής, επιτρέπεται η αλλαγή
+            if assembly.status == 'in_progress' and is_manager:
+                old_vote = existing_vote.vote
+                existing_vote.vote = serializer.validated_data['vote']
+                existing_vote.vote_source = 'live'  # Override σε live αφού άλλαξε κατά τη συνέλευση
+                existing_vote.voted_by = user  # Ποιος έκανε την αλλαγή
+                existing_vote.notes = serializer.validated_data.get('notes', '') or f"Αλλαγή από {old_vote} κατά τη συνέλευση"
+                existing_vote.save()
+                
+                logger.info(f"Manager {user.id} changed vote for attendee {attendee.id} from {old_vote} to {existing_vote.vote}")
+                
+                # Broadcast updated results
+                results = agenda_item.get_voting_results()
+                broadcast_assembly_event(assembly.id, 'vote_update', {
+                    'agenda_item_id': str(agenda_item.id),
+                    'results': results
+                })
+                
+                return Response({
+                    'message': 'Η ψήφος ενημερώθηκε',
+                    'vote': AssemblyVoteSerializer(existing_vote).data,
+                    'updated': True,
+                    'previous_vote': old_vote
+                })
+            else:
+                return Response(
+                    {'error': 'Έχει ήδη καταχωρηθεί ψήφος για αυτό το θέμα'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
-        # Determine vote source
-        assembly = attendee.assembly
-        if assembly.status == 'in_progress':
-            vote_source = 'live'
-        elif assembly.is_pre_voting_active:
-            vote_source = 'pre_vote'
-            attendee.has_pre_voted = True
-            attendee.pre_voted_at = timezone.now()
-            attendee.save(update_fields=['has_pre_voted', 'pre_voted_at'])
-        else:
-            return Response(
-                {'error': 'Η ψηφοφορία δεν είναι ενεργή'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        # Create new vote
         vote = AssemblyVote.objects.create(
             agenda_item=agenda_item,
             attendee=attendee,
             vote=serializer.validated_data['vote'],
             mills=attendee.mills,
             vote_source=vote_source,
+            voted_by=user if is_manager and attendee.user != user else None,
             notes=serializer.validated_data.get('notes', '')
         )
+        
+        # Update pre-voting status
+        if vote_source == 'pre_vote':
+            attendee.has_pre_voted = True
+            attendee.pre_voted_at = timezone.now()
+            attendee.save(update_fields=['has_pre_voted', 'pre_voted_at'])
         
         # Broadcast real-time results if it's a live vote
         if vote_source == 'live':
@@ -689,7 +729,8 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
         
         return Response({
             'message': 'Η ψήφος καταγράφηκε',
-            'vote': AssemblyVoteSerializer(vote).data
+            'vote': AssemblyVoteSerializer(vote).data,
+            'created': True
         })
 
 
