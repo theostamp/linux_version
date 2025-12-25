@@ -346,11 +346,6 @@ class AssemblyCreateSerializer(serializers.ModelSerializer):
             pre_start = data.get('pre_voting_start_date')
             pre_end = data.get('pre_voting_end_date')
             
-            if pre_end and scheduled_date and pre_end >= scheduled_date:
-                raise serializers.ValidationError({
-                    'pre_voting_end_date': 'Η λήξη pre-voting πρέπει να είναι πριν την ημερομηνία συνέλευσης'
-                })
-            
             if pre_start and pre_end and pre_start > pre_end:
                 raise serializers.ValidationError({
                     'pre_voting_start_date': 'Η έναρξη pre-voting πρέπει να είναι πριν τη λήξη'
@@ -444,4 +439,3 @@ class GenerateMinutesSerializer(serializers.Serializer):
     template_id = serializers.UUIDField(required=False)
     secretary_name = serializers.CharField(required=False)
     chairman_name = serializers.CharField(required=False)
-
