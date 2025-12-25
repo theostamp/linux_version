@@ -2858,7 +2858,7 @@ export async function attendeeCastVote(
   agendaItemId: string, 
   vote: VoteChoice, 
   notes?: string
-): Promise<{ message: string; vote: AssemblyVote }> {
+): Promise<{ message: string; vote: AssemblyVote; created?: boolean; updated?: boolean; previous_vote?: VoteChoice }> {
   return await apiPost(`/assembly-attendees/${attendeeId}/vote/`, { 
     agenda_item_id: agendaItemId, 
     vote, 

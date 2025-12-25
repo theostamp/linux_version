@@ -490,15 +490,14 @@ export function useCastVote() {
       vote: VoteChoice; 
       notes?: string 
     }) => attendeeCastVote(attendeeId, agendaItemId, vote, notes),
-    onSuccess: (_, { agendaItemId }) => {
+    onSuccess: (data, { agendaItemId }) => {
       queryClient.invalidateQueries({ queryKey: ['agenda-items'] });
       queryClient.invalidateQueries({ queryKey: ['agenda-item-votes', agendaItemId] });
       queryClient.invalidateQueries({ queryKey: ['assembly'] });
-      toast.success('Η ψήφος καταγράφηκε');
+      toast.success(data?.updated ? 'Η ψήφος ενημερώθηκε' : 'Η ψήφος καταγράφηκε');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Σφάλμα κατά την ψηφοφορία');
     },
   });
 }
-

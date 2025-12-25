@@ -192,8 +192,11 @@ function AttendeeVoteCard({
       {/* Κουμπιά Ψήφου - Μεγάλα για εύκολο touch */}
       <MobileVoteButtons
         currentVote={vote?.vote || null}
-        onVote={(v) => onVote(attendee.id, v)}
-        disabled={!isPreVote && hasVoted}
+        onVote={(v) => {
+          if (v === vote?.vote) return;
+          onVote(attendee.id, v);
+        }}
+        disabled={false}
         isLoading={isPending}
       />
     </div>
