@@ -6,6 +6,7 @@ import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import type { Building } from '@/lib/api';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useKioskData } from '@/hooks/useKioskData';
 import BuildingSelector from '@/components/BuildingSelector';
 
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
@@ -40,6 +41,9 @@ function KioskDisplayPageContent() {
   }, [searchParams]);
 
   const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();
+  
+  // Fetch kiosk data to get real building info
+  const { data: kioskData } = useKioskData(effectiveBuildingId ?? 1);
 
   // Effect 1: Handle URL parameter changes (highest priority)
   // URL parameter ALWAYS overrides context - this prevents BuildingContext from resetting the building
@@ -80,6 +84,27 @@ function KioskDisplayPageContent() {
       setEffectiveBuildingId(selectedBuilding.id);
     }
   }, [selectedBuilding?.id]);
+
+  // Effect 3: Update selectedBuilding with real building info from API when kioskData loads
+  useEffect(() => {
+    if (kioskData?.building_info && selectedBuilding?.id === kioskData.building_info.id) {
+      // Check if current selectedBuilding is a stub (has "Κτίριο #" name)
+      const isStubBuilding = selectedBuilding.name.startsWith('Κτίριο #');
+      
+      if (isStubBuilding && kioskData.building_info.name) {
+        console.log(`[KioskDisplay] 🔄 Updating stub building with real info: ${kioskData.building_info.name}`);
+        const realBuilding: Building = {
+          id: kioskData.building_info.id,
+          name: kioskData.building_info.name,
+          address: kioskData.building_info.address || '',
+          city: kioskData.building_info.city || '',
+          created_at: FALLBACK_TIMESTAMP,
+          updated_at: FALLBACK_TIMESTAMP,
+        };
+        setSelectedBuilding(realBuilding);
+      }
+    }
+  }, [kioskData?.building_info, selectedBuilding, setSelectedBuilding]);
 
   // Keyboard shortcut Ctrl+Alt+B opens selector (kiosk flow)
   useKeyboardShortcuts({
