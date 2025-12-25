@@ -39,6 +39,50 @@ from django.http import HttpResponse
 import logging
 logger = logging.getLogger(__name__)
 
+# Keep Assembly attendees in sync with apartments.
+# Assemblies are expected to include one attendee per apartment (1 vote / apartment).
+def sync_assembly_attendees_from_apartments(assembly: Assembly) -> int:
+    """
+    Ensure the assembly has AssemblyAttendee rows for all apartments of its building.
+    Returns the number of created attendees (best-effort, idempotent).
+    """
+    try:
+        from apartments.models import Apartment
+
+        existing_apartment_ids = set(
+            AssemblyAttendee.objects.filter(assembly=assembly).values_list('apartment_id', flat=True)
+        )
+        if not existing_apartment_ids:
+            existing_apartment_ids = set()
+
+        apartments = Apartment.objects.filter(building=assembly.building).values_list(
+            'id',
+            'owner_user_id',
+            'tenant_user_id',
+            'participation_mills',
+        )
+
+        attendees_to_create = []
+        for apartment_id, owner_user_id, tenant_user_id, participation_mills in apartments:
+            if apartment_id in existing_apartment_ids:
+                continue
+            attendees_to_create.append(
+                AssemblyAttendee(
+                    assembly=assembly,
+                    apartment_id=apartment_id,
+                    user_id=owner_user_id or tenant_user_id,
+                    mills=participation_mills or 0,
+                )
+            )
+
+        if attendees_to_create:
+            AssemblyAttendee.objects.bulk_create(attendees_to_create, ignore_conflicts=True)
+
+        return len(attendees_to_create)
+    except Exception:
+        logger.exception("Failed to sync attendees from apartments for assembly %s", getattr(assembly, 'id', None))
+        return 0
+
 # Helper για real-time ενημερώσεις
 def broadcast_assembly_event(assembly_id, event_type, payload):
     try:
@@ -143,6 +187,9 @@ class AssemblyViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Ensure attendee roster is up to date before starting (apartments may change after scheduling).
+        sync_assembly_attendees_from_apartments(assembly)
+
         assembly.start_assembly()
         try:
             assembly.check_quorum()
@@ -580,9 +627,25 @@ class AssemblyAttendeeViewSet(viewsets.ModelViewSet):
     ordering = ['apartment__number']
     
     def get_queryset(self):
-        return AssemblyAttendee.objects.filter(
-            assembly__building__id__in=self._get_user_building_ids()
-        ).select_related('assembly', 'apartment', 'user')
+        building_ids = self._get_user_building_ids()
+
+        assembly_id = self.request.query_params.get('assembly')
+        if assembly_id:
+            try:
+                assembly = Assembly.objects.select_related('building').get(
+                    id=assembly_id,
+                    building__id__in=building_ids,
+                )
+                sync_assembly_attendees_from_apartments(assembly)
+            except Assembly.DoesNotExist:
+                pass
+            except Exception:
+                logger.exception("Failed to sync attendees for assembly %s", assembly_id)
+
+        return (
+            AssemblyAttendee.objects.filter(assembly__building__id__in=building_ids)
+            .select_related('assembly', 'apartment', 'user')
+        )
     
     def _get_user_building_ids(self):
         user = self.request.user
