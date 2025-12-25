@@ -520,15 +520,14 @@ def building_info(request, building_id: int):
                         current_item_data = item_data.copy()
                         if item.item_type == 'voting':
                             current_item_data['voting_results'] = item.get_voting_results()
-
                             try:
                                 from assemblies.models import AssemblyVote
 
-                                votes = (
+                                assembly_votes = (
                                     AssemblyVote.objects.filter(agenda_item=item)
                                     .select_related('attendee', 'attendee__apartment')
                                 )
-                                vote_by_attendee = {v.attendee_id: v for v in votes}
+                                vote_by_attendee = {v.attendee_id: v for v in assembly_votes}
                                 roster = []
                                 for attendee in upcoming_assembly.attendees.select_related('apartment').filter(apartment__isnull=False).order_by('apartment__number'):
                                     v = vote_by_attendee.get(attendee.id)
