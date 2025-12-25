@@ -46,52 +46,68 @@ def building_info(request, building_id: int):
 
     with schema_context(schema_name):
         # Get building information
+        building = None
+        building_info = None
+
         try:
             building = Building.objects.get(id=building_id)
-            
-            # Get manager user details from public schema
+        except Building.DoesNotExist:
+            building = None
+        except Exception as e:
+            logger.exception("[public_info] Failed to load building %s: %s", building_id, e)
+            building = None
+
+        if building:
+            # Get manager user details from public schema (best-effort; never fail the endpoint)
             office_logo = None
             management_office_email = None
             management_office_phone_emergency = None
             manager_office_name = None
             manager_office_phone = None
             manager_office_address = None
-            
-            from users.models import CustomUser
-            
-            # Query public schema for manager user
-            with schema_context('public'):
-                manager_user = None
-                
-                # First, try to get manager by building.manager_id if it exists
-                if building.manager_id:
-                    try:
-                        manager_user = CustomUser.objects.get(id=building.manager_id)
-                    except CustomUser.DoesNotExist:
-                        manager_user = None
-                
-                # If no manager_id or manager not found, search for any user with office details
-                if not manager_user:
-                    # Find first user with office details (office_name or office_phone filled)
-                    manager_user = CustomUser.objects.filter(
-                        Q(office_name__isnull=False) & ~Q(office_name='') |
-                        Q(office_phone__isnull=False) & ~Q(office_phone='')
-                    ).first()
-                
-                # Extract office details from manager user if found
-                if manager_user:
-                    manager_office_name = manager_user.office_name or None
-                    manager_office_phone = manager_user.office_phone or None
-                    management_office_phone_emergency = manager_user.office_phone_emergency or None
-                    manager_office_address = manager_user.office_address or None
-                    management_office_email = manager_user.email or None
-                    
-                    # Get logo URL if exists - same approach as /users/me/ endpoint
-                    if manager_user.office_logo:
-                        office_logo = manager_user.office_logo.url
-                    else:
-                        office_logo = None
-            
+
+            try:
+                from users.models import CustomUser
+
+                with schema_context('public'):
+                    manager_user = None
+
+                    # First, try to get manager by building.manager_id if it exists
+                    if building.manager_id:
+                        try:
+                            manager_user = CustomUser.objects.get(id=building.manager_id)
+                        except CustomUser.DoesNotExist:
+                            manager_user = None
+
+                    # If no manager_id or manager not found, search for any user with office details
+                    if not manager_user:
+                        # Find first user with office details (office_name or office_phone filled)
+                        manager_user = CustomUser.objects.filter(
+                            Q(office_name__isnull=False) & ~Q(office_name='') |
+                            Q(office_phone__isnull=False) & ~Q(office_phone='')
+                        ).first()
+
+                    # Extract office details from manager user if found
+                    if manager_user:
+                        manager_office_name = manager_user.office_name or None
+                        manager_office_phone = manager_user.office_phone or None
+                        management_office_phone_emergency = manager_user.office_phone_emergency or None
+                        manager_office_address = manager_user.office_address or None
+                        management_office_email = manager_user.email or None
+
+                        # Get logo URL if exists - same approach as /users/me/ endpoint
+                        try:
+                            if manager_user.office_logo:
+                                office_logo = manager_user.office_logo.url
+                        except Exception:
+                            office_logo = None
+            except Exception as e:
+                logger.exception(
+                    "[public_info] Failed to resolve management office details for building %s: %s",
+                    building_id,
+                    e,
+                )
+
             building_info = {
                 'id': building.id,
                 'name': building.name,
@@ -109,24 +125,30 @@ def building_info(request, building_id: int):
                 'management_office_phone_emergency': management_office_phone_emergency,
                 'office_logo': office_logo,
             }
-        except Building.DoesNotExist:
-            building_info = None
 
         # Include future announcements for kiosk countdown (not just current)
-        announcements = Announcement.objects.filter(
-            building_id=building_id,
-            is_active=True,
-            published=True
-        ).filter(
-            Q(end_date__gte=today) | Q(end_date__isnull=True)
-        ).order_by('-priority', '-start_date')
+        try:
+            announcements = Announcement.objects.filter(
+                building_id=building_id,
+                is_active=True,
+                published=True
+            ).filter(
+                Q(end_date__gte=today) | Q(end_date__isnull=True)
+            ).order_by('-priority', '-start_date')
+        except Exception as e:
+            logger.exception("[public_info] Error fetching announcements for building %s: %s", building_id, e)
+            announcements = Announcement.objects.none()
 
-        votes = Vote.objects.filter(
-            building_id=building_id,
-            is_active=True,
-            start_date__lte=today,
-            end_date__gte=today,
-        ).order_by('-start_date')
+        try:
+            votes = Vote.objects.filter(
+                building_id=building_id,
+                is_active=True,
+                start_date__lte=today,
+                end_date__gte=today,
+            ).order_by('-start_date')
+        except Exception as e:
+            logger.exception("[public_info] Error fetching votes for building %s: %s", building_id, e)
+            votes = Vote.objects.none()
 
         requested_month = request.query_params.get('month') if hasattr(request, 'query_params') else request.GET.get('month')
         if requested_month:
