@@ -110,27 +110,43 @@ class VoteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        serializer = VoteSubmissionSerializer(
-            data=request.data,
-            context={'request': request, 'vote': vote}
-        )
-        serializer.is_valid(raise_exception=True)
-        
-        # Calculate mills from user's apartment
-        mills = 0
+        # 🔒 IMPORTANT: Check if user is eligible to vote (must own/rent an apartment in the building)
+        from apartments.models import Apartment
+        apartment = None
         try:
-            from apartments.models import Apartment
             # Find apartment where user is owner OR resident (renter)
             # Note: tenant_user = ενοικιαστής διαμερίσματος, ΟΧΙ django-tenants tenant
             apartment = Apartment.objects.filter(
                 Q(owner_user=request.user) | Q(tenant_user=request.user),
                 building=vote.building
             ).first()
-            if apartment:
-                mills = apartment.participation_mills or 0
-                logger.info(f"User {request.user.id} voting with {mills} mills from apartment {apartment.id}")
         except Exception as e:
-            logger.warning(f"Could not get mills for user {request.user.id}: {e}")
+            logger.warning(f"Could not check apartment eligibility for user {request.user.id}: {e}")
+        
+        # If user has no apartment in this building, they cannot vote
+        if not apartment:
+            logger.warning(f"User {request.user.id} ({request.user.email}) tried to vote without apartment in building {vote.building_id}")
+            return Response(
+                {"error": "Δεν έχετε δικαίωμα ψήφου σε αυτή την ψηφοφορία. Μόνο ιδιοκτήτες ή ένοικοι διαμερισμάτων μπορούν να ψηφίσουν."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Check for existing submission (additional safeguard)
+        if VoteSubmission.objects.filter(vote=vote, user=request.user).exists():
+            return Response(
+                {"error": "Έχετε ήδη ψηφίσει σε αυτή τη ψηφοφορία."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = VoteSubmissionSerializer(
+            data=request.data,
+            context={'request': request, 'vote': vote}
+        )
+        serializer.is_valid(raise_exception=True)
+        
+        # Get mills from apartment
+        mills = apartment.participation_mills or 0
+        logger.info(f"User {request.user.id} voting with {mills} mills from apartment {apartment.id}")
         
         serializer.save(vote=vote, user=request.user, mills=mills)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
