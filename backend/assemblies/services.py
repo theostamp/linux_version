@@ -491,12 +491,17 @@ class VoteIntegrationService:
         
         try:
             from votes.models import Vote
+            from datetime import timedelta
             
             assembly = self.agenda_item.assembly
             
             # Calculate dates
+            # Η ψηφοφορία ξεκινά από pre_voting_start_date ή την ημέρα της συνέλευσης
             start_date = assembly.pre_voting_start_date or assembly.scheduled_date
-            end_date = assembly.scheduled_date
+            
+            # Η ψηφοφορία λήγει 3 μέρες ΜΕΤΑ τη συνέλευση (για να καλύπτει live voting)
+            # Ή χρησιμοποιεί το pre_voting_end_date αν έχει οριστεί
+            end_date = assembly.pre_voting_end_date or (assembly.scheduled_date + timedelta(days=3))
             
             vote = Vote.objects.create(
                 title=f"[Συνέλευση] {self.agenda_item.title}",
