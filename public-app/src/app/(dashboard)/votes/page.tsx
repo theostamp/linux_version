@@ -297,9 +297,80 @@ function VotesPageContent() {
   } = useVotes(buildingId);
 
   // Deduplication
-  const votes = votesData.filter((vote, index, self) => 
+  // 1) By id (defensive against duplicate API entries)
+  // 2) Collapse "[Συνέλευση]" duplicates that refer to the same underlying topic/title
+  const dedupedById = votesData.filter((vote, index, self) =>
     index === self.findIndex((v) => v.id === vote.id)
   );
+
+  const normalizeVoteTitleForDedupe = (title: string) =>
+    title.replace(/^\[Συνέλευση\]\s*/i, '').trim().toLocaleLowerCase('el-GR');
+
+  const votes = (() => {
+    const byTitle = new Map<string, typeof dedupedById>();
+
+    for (const vote of dedupedById) {
+      const key = normalizeVoteTitleForDedupe(vote.title || '');
+      const existing = byTitle.get(key);
+      if (existing) {
+        existing.push(vote);
+      } else {
+        byTitle.set(key, [vote]);
+      }
+    }
+
+    const isAssemblyVote = (vote: Vote) => (vote.title || '').trim().startsWith('[Συνέλευση]');
+    const toTime = (value: string | null | undefined) => {
+      if (!value) return Number.NEGATIVE_INFINITY;
+      const time = new Date(value).getTime();
+      return Number.isNaN(time) ? Number.NEGATIVE_INFINITY : time;
+    };
+
+    const collapsed: Vote[] = [];
+    for (const group of byTitle.values()) {
+      if (group.length <= 1) {
+        collapsed.push(group[0]);
+        continue;
+      }
+
+      const hasAssembly = group.some((v) => isAssemblyVote(v));
+      const hasNonAssembly = group.some((v) => !isAssemblyVote(v));
+
+      // Only collapse when the duplicates are an assembly/non-assembly pair.
+      if (!hasAssembly || !hasNonAssembly) {
+        collapsed.push(...group);
+        continue;
+      }
+
+      const best = [...group].sort((a, b) => {
+        const aActive = isActive(a.start_date, a.end_date);
+        const bActive = isActive(b.start_date, b.end_date);
+        if (aActive !== bActive) return aActive ? -1 : 1; // Prefer active
+
+        const aVotes = (a as { total_votes?: number }).total_votes ?? 0;
+        const bVotes = (b as { total_votes?: number }).total_votes ?? 0;
+        if (aVotes !== bVotes) return bVotes - aVotes; // Prefer more participation
+
+        const aEnd = toTime(a.end_date);
+        const bEnd = toTime(b.end_date);
+        if (aEnd !== bEnd) return bEnd - aEnd; // Prefer latest end
+
+        const aCreated = toTime(a.created_at);
+        const bCreated = toTime(b.created_at);
+        if (aCreated !== bCreated) return bCreated - aCreated; // Prefer newest
+
+        const aAssembly = isAssemblyVote(a);
+        const bAssembly = isAssemblyVote(b);
+        if (aAssembly !== bAssembly) return aAssembly ? 1 : -1; // Prefer non-assembly
+
+        return 0;
+      })[0];
+
+      collapsed.push(best);
+    }
+
+    return collapsed;
+  })();
 
   // Separate active and past votes
   const activeVotes = votes.filter(v => isActive(v.start_date, v.end_date));

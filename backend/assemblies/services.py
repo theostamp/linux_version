@@ -494,6 +494,7 @@ class VoteIntegrationService:
             from datetime import timedelta
             
             assembly = self.agenda_item.assembly
+            linked_project = self.agenda_item.linked_project
             
             # Calculate dates
             # Η ψηφοφορία ξεκινά από pre_voting_start_date ή την ημέρα της συνέλευσης
@@ -502,11 +503,50 @@ class VoteIntegrationService:
             # Η ψηφοφορία λήγει 3 μέρες ΜΕΤΑ τη συνέλευση (για να καλύπτει live voting)
             # Ή χρησιμοποιεί το pre_voting_end_date αν έχει οριστεί
             end_date = assembly.pre_voting_end_date or (assembly.scheduled_date + timedelta(days=3))
+
+            # If this agenda item is linked to a Project, reuse the existing project vote (if any)
+            # instead of creating a second, duplicate vote.
+            if linked_project:
+                existing_vote = (
+                    Vote.objects.filter(project=linked_project, building=assembly.building, agenda_item__isnull=True)
+                    .order_by('-created_at')
+                    .first()
+                )
+                if existing_vote:
+                    update_fields = []
+                    # Ensure the vote covers the assembly voting window (extend only; never shrink).
+                    if start_date and existing_vote.start_date and existing_vote.start_date > start_date:
+                        existing_vote.start_date = start_date
+                        update_fields.append('start_date')
+                    if end_date and (existing_vote.end_date is None or existing_vote.end_date < end_date):
+                        existing_vote.end_date = end_date
+                        update_fields.append('end_date')
+
+                    quorum_percent = int(getattr(assembly, 'required_quorum_percentage', 0) or 0)
+                    if quorum_percent and existing_vote.min_participation < quorum_percent:
+                        existing_vote.min_participation = quorum_percent
+                        update_fields.append('min_participation')
+
+                    if existing_vote.building_id != assembly.building_id:
+                        existing_vote.building = assembly.building
+                        update_fields.append('building')
+
+                    if not existing_vote.is_active:
+                        existing_vote.is_active = True
+                        update_fields.append('is_active')
+
+                    if update_fields:
+                        existing_vote.save(update_fields=update_fields)
+
+                    self.agenda_item.linked_vote = existing_vote
+                    self.agenda_item.save(update_fields=['linked_vote'])
+                    return existing_vote
             
             vote = Vote.objects.create(
                 title=f"[Συνέλευση] {self.agenda_item.title}",
                 description=self.agenda_item.description or '',
                 building=assembly.building,
+                project=linked_project,
                 start_date=start_date,
                 end_date=end_date,
                 creator=assembly.created_by,
@@ -544,4 +584,3 @@ class VoteIntegrationService:
         # This could sync votes from the regular Vote system to AssemblyVotes
         # Implementation depends on specific requirements
         pass
-

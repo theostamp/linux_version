@@ -1,4 +1,5 @@
 from django.db.models.signals import post_save, pre_delete
+from django.db.models import Q
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -557,8 +558,8 @@ def create_project_vote(project: Project):
         
         # Έλεγχος αν υπάρχει ήδη ψηφοφορία για αυτό το έργο
         existing_vote = Vote.objects.filter(
-            project=project,
-            is_active=True
+            Q(project=project) | Q(agenda_item__linked_project=project),
+            is_active=True,
         ).first()
         
         if existing_vote:
