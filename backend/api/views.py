@@ -359,13 +359,21 @@ def public_info(request, building_id=None):
                             if item.item_type == 'voting':
                                 current_item_data['voting_results'] = item.get_voting_results()
 
-                    # Calculate attendee stats
+                    # Calculate attendee stats (safe version without N+1 queries)
                     all_attendees = list(assembly.attendees.all())
                     present_attendees = [a for a in all_attendees if a.is_present]
+                    # Count voted separately to avoid N+1 query issue
+                    from assemblies.models import AssemblyVote
+                    voted_attendee_ids = set(
+                        AssemblyVote.objects.filter(
+                            agenda_item__assembly=assembly
+                        ).values_list('attendee_id', flat=True)
+                    )
+                    voted_count = sum(1 for a in present_attendees if a.id in voted_attendee_ids)
                     attendees_stats = {
                         'total': len(all_attendees),
                         'present': len(present_attendees),
-                        'voted': sum(1 for a in present_attendees if a.votes.exists()),
+                        'voted': voted_count,
                     }
 
                     upcoming_assembly_data = {
