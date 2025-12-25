@@ -199,13 +199,30 @@ class VoteListSerializer(serializers.ModelSerializer):
     total_votes = serializers.SerializerMethodField()
     eligible_voters_count = serializers.SerializerMethodField()
     days_remaining = serializers.SerializerMethodField()
+    participation_percentage = serializers.SerializerMethodField()
     
     class Meta:
         model = Vote
         fields = [
-            'id', 'title', 'created_at', 'is_urgent', 'is_currently_active',
-            'creator_name', 'building_name', 'total_votes', 'eligible_voters_count',
-            'days_remaining', 'is_active'
+            # Core fields used by the frontend list & dashboard
+            'id',
+            'title',
+            'description',
+            'start_date',
+            'end_date',
+            'created_at',
+            'updated_at',
+            'building',
+            'building_name',
+            'is_urgent',
+            'is_currently_active',
+            'creator_name',
+            'total_votes',
+            'eligible_voters_count',
+            'participation_percentage',
+            'min_participation',
+            'days_remaining',
+            'is_active',
         ]
 
     def get_creator_name(self, obj):
@@ -222,3 +239,6 @@ class VoteListSerializer(serializers.ModelSerializer):
         
     def get_days_remaining(self, obj):
         return obj.days_remaining
+
+    def get_participation_percentage(self, obj):
+        return obj.participation_percentage
