@@ -436,29 +436,121 @@ def building_info(request, building_id: int):
 
         # Get upcoming assemblies (within 7 days)
         try:
-            upcoming_assembly = Assembly.objects.filter(
-                building_id=building_id,
-                status__in=['scheduled', 'convened', 'in_progress'],
-                scheduled_date__gte=today,
-                scheduled_date__lte=today + timedelta(days=7)
-            ).select_related('building').prefetch_related(
-                'agenda_items',
-                'attendees'
-            ).order_by('scheduled_date', 'scheduled_time').first()
-            
+            upcoming_assembly = (
+                Assembly.objects.filter(
+                    building_id=building_id,
+                    status__in=['scheduled', 'convened', 'in_progress'],
+                    scheduled_date__gte=today,
+                    scheduled_date__lte=today + timedelta(days=7),
+                )
+                .select_related('building')
+                .prefetch_related('agenda_items', 'attendees')
+                .order_by('scheduled_date', 'scheduled_time')
+                .first()
+            )
+
             assembly_data = None
             if upcoming_assembly:
-                # Serialize agenda items
+                items = list(upcoming_assembly.agenda_items.order_by('order'))
+
+                # Keep legacy VoteSubmission-only linked votes compatible with the assembly flow.
+                try:
+                    from assemblies.services import VoteIntegrationService
+                    from votes.models import VoteSubmission
+
+                    sync_items = [i for i in items if i.item_type == 'voting' and getattr(i, 'linked_vote_id', None)]
+                    did_sync = False
+                    for sync_item in sync_items:
+                        submissions_count = VoteSubmission.objects.filter(vote_id=sync_item.linked_vote_id).count()
+                        if submissions_count == 0:
+                            continue
+
+                        assembly_votes_count = sync_item.assembly_votes.count()
+                        if submissions_count > assembly_votes_count:
+                            VoteIntegrationService(sync_item).sync_vote_results()
+                            did_sync = True
+
+                    if did_sync:
+                        try:
+                            upcoming_assembly.refresh_from_db()
+                        except Exception:
+                            pass
+                except Exception as e:
+                    logger.warning(f"[public_info] Vote sync error for assembly {upcoming_assembly.id}: {e}")
+
                 agenda_items = []
-                for item in upcoming_assembly.agenda_items.order_by('order'):
-                    agenda_items.append({
+                current_item_data = None
+
+                for item in items:
+                    item_data = {
                         'id': str(item.id),
                         'order': item.order,
                         'title': item.title,
                         'item_type': item.item_type,
+                        'status': item.status,
                         'estimated_duration': item.estimated_duration,
-                    })
-                
+                        'started_at': item.started_at.isoformat() if item.started_at else None,
+                        'ended_at': item.ended_at.isoformat() if item.ended_at else None,
+                    }
+                    agenda_items.append(item_data)
+
+                    if item.status == 'in_progress':
+                        current_item_data = item_data.copy()
+                        if item.item_type == 'voting':
+                            current_item_data['voting_results'] = item.get_voting_results()
+
+                            try:
+                                from assemblies.models import AssemblyVote
+
+                                votes = (
+                                    AssemblyVote.objects.filter(agenda_item=item)
+                                    .select_related('attendee', 'attendee__apartment')
+                                )
+                                vote_by_attendee = {v.attendee_id: v for v in votes}
+                                roster = []
+                                for attendee in upcoming_assembly.attendees.select_related('apartment').order_by('apartment__number'):
+                                    v = vote_by_attendee.get(attendee.id)
+                                    roster.append(
+                                        {
+                                            'attendee': str(attendee.id),
+                                            'apartment_number': getattr(attendee.apartment, 'number', '') or '',
+                                            'mills': attendee.mills,
+                                            'vote': getattr(v, 'vote', None) if v else None,
+                                            'vote_source': getattr(v, 'vote_source', None) if v else None,
+                                        }
+                                    )
+                                current_item_data['vote_roster'] = roster
+                            except Exception as e:
+                                logger.warning(f"[public_info] Failed to build vote roster for {item.id}: {e}")
+
+                all_attendees = list(upcoming_assembly.attendees.all())
+                present_count = sum(1 for a in all_attendees if a.is_present)
+                pre_voted_count = sum(1 for a in all_attendees if a.has_pre_voted)
+
+                voted_attendee_ids = set()
+                try:
+                    from assemblies.models import AssemblyVote
+
+                    voted_attendee_ids = set(
+                        AssemblyVote.objects.filter(agenda_item__assembly=upcoming_assembly)
+                        .values_list('attendee_id', flat=True)
+                        .distinct()
+                    )
+                except Exception:
+                    voted_attendee_ids = set()
+
+                voted_count = sum(1 for a in all_attendees if a.id in voted_attendee_ids)
+                quorum_participants_count = sum(
+                    1 for a in all_attendees if a.is_present or a.has_pre_voted or a.id in voted_attendee_ids
+                )
+
+                total_invited = len(all_attendees)
+                rsvp_attending = sum(1 for a in all_attendees if a.rsvp_status == 'attending')
+                rsvp_not_attending = sum(1 for a in all_attendees if a.rsvp_status == 'not_attending')
+                rsvp_pending = sum(1 for a in all_attendees if a.rsvp_status == 'pending')
+                pre_voted_percentage = round((pre_voted_count / total_invited * 100) if total_invited > 0 else 0, 1)
+                voting_items_count = sum(1 for i in items if i.item_type == 'voting')
+
                 assembly_data = {
                     'id': str(upcoming_assembly.id),
                     'title': upcoming_assembly.title,
@@ -469,20 +561,29 @@ def building_info(request, building_id: int):
                     'is_physical': upcoming_assembly.is_physical,
                     'meeting_link': upcoming_assembly.meeting_link if upcoming_assembly.is_online else None,
                     'status': upcoming_assembly.status,
+                    'actual_start_time': upcoming_assembly.actual_start_time.isoformat() if upcoming_assembly.actual_start_time else None,
                     'building_name': upcoming_assembly.building.name if upcoming_assembly.building else '',
                     'is_pre_voting_active': upcoming_assembly.is_pre_voting_active,
-                    'quorum_percentage': upcoming_assembly.quorum_percentage,
+                    'quorum_percentage': float(upcoming_assembly.quorum_percentage),
+                    'achieved_quorum_mills': upcoming_assembly.achieved_quorum_mills,
+                    'required_quorum_mills': upcoming_assembly.required_quorum_mills,
+                    'total_building_mills': upcoming_assembly.total_building_mills,
                     'agenda_items': agenda_items,
+                    'current_item': current_item_data,
+                    'attendees_stats': {
+                        'total': total_invited,
+                        'present': present_count,
+                        'voted': voted_count,
+                        'quorum_participants': quorum_participants_count,
+                    },
                     'stats': {
-                        'total_apartments_invited': upcoming_assembly.attendees.count(),
-                        'pre_voted_count': upcoming_assembly.attendees.filter(has_pre_voted=True).count(),
-                        'pre_voted_percentage': round(
-                            (upcoming_assembly.attendees.filter(has_pre_voted=True).count() / upcoming_assembly.attendees.count() * 100)
-                            if upcoming_assembly.attendees.count() > 0
-                            else 0,
-                            1
-                        ),
-                        'voting_items_count': upcoming_assembly.agenda_items.filter(item_type='voting', allows_pre_voting=True).count(),
+                        'total_apartments_invited': total_invited,
+                        'rsvp_attending': rsvp_attending,
+                        'rsvp_not_attending': rsvp_not_attending,
+                        'rsvp_pending': rsvp_pending,
+                        'pre_voted_count': pre_voted_count,
+                        'pre_voted_percentage': pre_voted_percentage,
+                        'voting_items_count': voting_items_count,
                     },
                 }
                 logger.info(f"[public_info] Found upcoming assembly for building {building_id}: {upcoming_assembly.title}")

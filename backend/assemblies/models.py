@@ -267,15 +267,15 @@ class Assembly(models.Model):
     
     @property
     def is_pre_voting_active(self):
-        """Είναι ενεργό το pre-voting (πριν ή μετά τη συνέλευση)"""
+        """Είναι ενεργό το pre-voting (πριν τη συνέλευση)"""
         if not self.pre_voting_enabled:
+            return False
+        if self.status in ['completed', 'cancelled', 'adjourned']:
             return False
         today = timezone.now().date()
         start = self.pre_voting_start_date or self.scheduled_date
-        # Default end: 3 days after assembly
-        end = self.pre_voting_end_date or (self.scheduled_date + timedelta(days=3))
-        # Allow voting before, during, and after assembly (until end date)
-        return start <= today <= end and self.status in ['scheduled', 'convened', 'in_progress', 'completed']
+        end = self.pre_voting_end_date or self.scheduled_date
+        return start <= today <= end and self.status in ['scheduled', 'convened']
     
     def check_quorum(self):
         """Ελέγχει και ενημερώνει την απαρτία"""

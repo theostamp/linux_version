@@ -350,6 +350,11 @@ class AssemblyCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'pre_voting_start_date': 'Η έναρξη pre-voting πρέπει να είναι πριν τη λήξη'
                 })
+
+            if scheduled_date and pre_end and pre_end > scheduled_date:
+                raise serializers.ValidationError({
+                    'pre_voting_end_date': 'Η λήξη pre-voting πρέπει να είναι πριν ή την ημέρα της συνέλευσης'
+                })
         
         return data
     

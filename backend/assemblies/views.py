@@ -144,6 +144,23 @@ class AssemblyViewSet(viewsets.ModelViewSet):
             )
         
         assembly.start_assembly()
+        try:
+            assembly.check_quorum()
+        except Exception:
+            logger.exception("Failed to refresh quorum on assembly start")
+
+        try:
+            current_item = assembly.agenda_items.filter(status='in_progress').order_by('order').first()
+            if not current_item:
+                first_item = assembly.agenda_items.order_by('order').first()
+                if first_item and first_item.status == 'pending':
+                    first_item.start_item()
+                    broadcast_assembly_event(assembly.id, 'item_update', {
+                        'item_id': str(first_item.id),
+                        'item_type': 'agenda_item_started'
+                    })
+        except Exception:
+            logger.exception("Failed to auto-start first agenda item for assembly %s", assembly.id)
         
         # Broadcast real-time update
         broadcast_assembly_event(assembly.id, 'item_update', {

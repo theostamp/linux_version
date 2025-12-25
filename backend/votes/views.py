@@ -56,6 +56,16 @@ class VoteViewSet(viewsets.ModelViewSet):
             # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
             return Vote.objects.none()
 
+    def _get_linked_agenda_item(self, vote: Vote):
+        """
+        If this Vote is linked to an Assembly AgendaItem (via AgendaItem.linked_vote),
+        return it. Otherwise return None.
+        """
+        try:
+            return vote.agenda_item
+        except Exception:
+            return None
+
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -142,21 +152,144 @@ class VoteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         
+        agenda_item = self._get_linked_agenda_item(vote)
+        if agenda_item:
+            # Linked vote: treat AssemblyVote as source of truth (per apartment).
+            from assemblies.models import AssemblyAttendee, AssemblyVote
+            from apartments.models import Apartment
+
+            apartment_id = request.data.get('apartment_id')
+            apartments_qs = Apartment.objects.filter(
+                Q(owner_user=request.user) | Q(tenant_user=request.user),
+            )
+            if vote.building_id is not None:
+                apartments_qs = apartments_qs.filter(building_id=vote.building_id)
+
+            eligible_apartments = list(apartments_qs.values('id', 'number', 'participation_mills'))
+            if not eligible_apartments:
+                return Response(
+                    {"error": "Δεν έχετε δικαίωμα ψήφου σε αυτή την ψηφοφορία. Μόνο ιδιοκτήτες ή ένοικοι διαμερισμάτων μπορούν να ψηφίσουν."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            if apartment_id is None:
+                if len(eligible_apartments) == 1:
+                    apartment_id = eligible_apartments[0]['id']
+                else:
+                    return Response(
+                        {
+                            "error": "Επιλέξτε διαμέρισμα για να ψηφίσετε.",
+                            "eligible_apartments": eligible_apartments,
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            try:
+                apartment_id_int = int(apartment_id)
+            except (TypeError, ValueError):
+                return Response({"error": "Μη έγκυρο apartment_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                apartment = apartments_qs.get(id=apartment_id_int)
+            except Apartment.DoesNotExist:
+                return Response(
+                    {"error": "Το διαμέρισμα δεν είναι επιλέξιμο για αυτή την ψηφοφορία."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            # Map VoteSubmission.choice (Greek) -> AssemblyVote.vote
+            choice = request.data.get('choice')
+            mapping = {'ΝΑΙ': 'approve', 'ΟΧΙ': 'reject', 'ΛΕΥΚΟ': 'abstain'}
+            mapped_vote = mapping.get(choice)
+            if not mapped_vote:
+                return Response(
+                    {"error": "Μη έγκυρη επιλογή ψήφου."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            assembly = agenda_item.assembly
+            is_manager = request.user.is_superuser or (
+                hasattr(request.user, 'role')
+                and request.user.role in ['admin', 'manager', 'office_staff', 'internal_manager']
+            )
+
+            if assembly.status == 'in_progress':
+                vote_source = 'live'
+            elif assembly.is_pre_voting_active:
+                vote_source = 'pre_vote'
+            else:
+                return Response(
+                    {"error": "Η ψηφοφορία δεν είναι ενεργή αυτή τη στιγμή"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            attendee, _ = AssemblyAttendee.objects.get_or_create(
+                assembly=assembly,
+                apartment=apartment,
+                defaults={
+                    'user': request.user,
+                    'mills': getattr(apartment, 'participation_mills', 0) or 0,
+                },
+            )
+            if attendee.user_id is None:
+                attendee.user = request.user
+                attendee.save(update_fields=['user'])
+
+            # Prevent duplicate vote per apartment (manager changes handled via assembly endpoints)
+            if AssemblyVote.objects.filter(agenda_item=agenda_item, attendee=attendee).exists():
+                return Response(
+                    {"error": "Έχει ήδη καταχωρηθεί ψήφος για αυτό το διαμέρισμα."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            mills_value = getattr(apartment, 'participation_mills', 0) or attendee.mills or 0
+
+            av = AssemblyVote.objects.create(
+                agenda_item=agenda_item,
+                attendee=attendee,
+                vote=mapped_vote,
+                mills=mills_value,
+                vote_source=vote_source,
+                voted_by=request.user if is_manager and attendee.user_id != request.user.id else None,
+                notes='Ψήφος μέσω Ψηφοφοριών',
+            )
+
+            if vote_source == 'pre_vote':
+                attendee.has_pre_voted = True
+                attendee.pre_voted_at = timezone.now()
+                attendee.save(update_fields=['has_pre_voted', 'pre_voted_at'])
+
+            # Response compatible with the existing frontend expectations
+            return Response(
+                {
+                    "ok": True,
+                    "vote": vote.id,
+                    "choice": choice,
+                    "apartment_id": apartment.id,
+                    "apartment_number": apartment.number,
+                    "mills": mills_value,
+                    "vote_source": vote_source,
+                    "submitted_at": av.voted_at,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        # Standalone vote (legacy): keep existing VoteSubmission behavior
         # Check for existing submission (additional safeguard)
         if VoteSubmission.objects.filter(vote=vote, user=request.user).exists():
             return Response(
                 {"error": "Έχετε ήδη ψηφίσει σε αυτή τη ψηφοφορία."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         serializer = VoteSubmissionSerializer(
             data=request.data,
             context={'request': request, 'vote': vote}
         )
         serializer.is_valid(raise_exception=True)
-        
+
         logger.info(f"User {request.user.id} voting with {mills} total mills")
-        
+
         serializer.save(vote=vote, user=request.user, mills=mills)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -176,17 +309,105 @@ class VoteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        agenda_item = self._get_linked_agenda_item(vote)
+        if agenda_item:
+            from apartments.models import Apartment
+            from assemblies.models import AssemblyAttendee, AssemblyVote
+
+            apartments_qs = Apartment.objects.filter(
+                Q(owner_user=request.user) | Q(tenant_user=request.user),
+            )
+            if vote.building_id is not None:
+                apartments_qs = apartments_qs.filter(building_id=vote.building_id)
+
+            apartments = list(apartments_qs.values('id', 'number', 'participation_mills'))
+            if not apartments:
+                return Response({"linked": True, "submissions": []}, status=status.HTTP_200_OK)
+
+            # Build per-apartment vote status from AssemblyVote
+            attendee_by_apartment = {
+                a['apartment_id']: a['id']
+                for a in AssemblyAttendee.objects.filter(
+                    assembly=agenda_item.assembly,
+                    apartment_id__in=[ap['id'] for ap in apartments],
+                ).values('id', 'apartment_id')
+            }
+            votes = AssemblyVote.objects.filter(
+                agenda_item=agenda_item,
+                attendee_id__in=list(attendee_by_apartment.values()),
+            ).select_related('attendee', 'attendee__apartment')
+
+            vote_map = {v.attendee.apartment_id: v for v in votes}
+            reverse_mapping = {'approve': 'ΝΑΙ', 'reject': 'ΟΧΙ', 'abstain': 'ΛΕΥΚΟ'}
+
+            submissions = []
+            for ap in apartments:
+                v = vote_map.get(ap['id'])
+                submissions.append(
+                    {
+                        "apartment_id": ap['id'],
+                        "apartment_number": ap['number'],
+                        "mills": ap.get('participation_mills') or 0,
+                        "choice": reverse_mapping.get(getattr(v, 'vote', None)) if v else None,
+                        "vote_source": getattr(v, 'vote_source', None) if v else None,
+                        "submitted_at": getattr(v, 'voted_at', None) if v else None,
+                    }
+                )
+
+            return Response(
+                {
+                    "linked": True,
+                    "submissions": submissions,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # Standalone vote (legacy): keep existing behavior
         try:
             sub = VoteSubmission.objects.get(vote=vote, user=request.user)
             ser = VoteSubmissionSerializer(sub)
             return Response(ser.data)
         except VoteSubmission.DoesNotExist:
-            # When there's no submission, return a 200 with a null payload.
-            # This avoids noisy 404s in browser logs while preserving the frontend behavior (treat as "not voted").
-            return Response(
-                {"id": None, "choice": None},
-                status=status.HTTP_200_OK,
-            )
+            return Response({"id": None, "choice": None}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='context')
+    def context(self, request, pk=None):
+        """Returns Assembly/AgendaItem context for linked votes."""
+        try:
+            vote = self.get_object()
+        except Http404:
+            return Response({"error": "Η ψηφοφορία δεν βρέθηκε."}, status=status.HTTP_404_NOT_FOUND)
+
+        agenda_item = self._get_linked_agenda_item(vote)
+        if not agenda_item:
+            return Response({"linked": False, "vote_id": vote.id}, status=status.HTTP_200_OK)
+
+        assembly = agenda_item.assembly
+        return Response(
+            {
+                "linked": True,
+                "vote_id": vote.id,
+                "agenda_item": {
+                    "id": str(agenda_item.id),
+                    "title": agenda_item.title,
+                    "order": agenda_item.order,
+                    "item_type": agenda_item.item_type,
+                    "status": agenda_item.status,
+                    "estimated_duration": agenda_item.estimated_duration,
+                },
+                "assembly": {
+                    "id": str(assembly.id),
+                    "title": assembly.title,
+                    "building": assembly.building_id,
+                    "building_name": getattr(assembly.building, 'name', '') if getattr(assembly, 'building', None) else '',
+                    "scheduled_date": assembly.scheduled_date,
+                    "scheduled_time": assembly.scheduled_time,
+                    "status": assembly.status,
+                    "is_pre_voting_active": assembly.is_pre_voting_active,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=['get'], url_path='results')
     def results(self, request, pk=None):

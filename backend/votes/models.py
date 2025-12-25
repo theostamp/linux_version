@@ -64,9 +64,27 @@ class Vote(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
+    def _get_linked_agenda_item(self):
+        """
+        If this Vote is linked to an Assembly AgendaItem (via AgendaItem.linked_vote),
+        return it. Otherwise return None.
+        """
+        try:
+            return self.agenda_item
+        except Exception:
+            return None
+
     @property
     def is_currently_active(self):
         """Ελέγχει αν η ψηφοφορία είναι ενεργή αυτή τη στιγμή"""
+        agenda_item = self._get_linked_agenda_item()
+        if agenda_item:
+            try:
+                assembly = agenda_item.assembly
+                return bool(self.is_active and (assembly.status == 'in_progress' or assembly.is_pre_voting_active))
+            except Exception:
+                return False
+
         today = timezone.now().date()
         if self.end_date:
             return self.start_date <= today <= self.end_date and self.is_active
@@ -85,17 +103,40 @@ class Vote(models.Model):
     @property
     def total_votes(self):
         """Συνολικός αριθμός ψήφων"""
+        agenda_item = self._get_linked_agenda_item()
+        if agenda_item:
+            try:
+                from assemblies.models import AssemblyVote
+                return AssemblyVote.objects.filter(agenda_item=agenda_item).count()
+            except Exception:
+                return 0
         return self.submissions.count()
 
     @property
     def total_mills_voted(self):
         """Συνολικά χιλιοστά που έχουν ψηφίσει"""
         from django.db.models import Sum
+        agenda_item = self._get_linked_agenda_item()
+        if agenda_item:
+            try:
+                from assemblies.models import AssemblyVote
+                return (
+                    AssemblyVote.objects.filter(agenda_item=agenda_item).aggregate(total=Sum('mills'))['total']
+                    or 0
+                )
+            except Exception:
+                return 0
         return self.submissions.aggregate(total=Sum('mills'))['total'] or 0
     
     @property
     def total_building_mills(self):
         """Συνολικά χιλιοστά κτιρίου"""
+        agenda_item = self._get_linked_agenda_item()
+        if agenda_item:
+            try:
+                return int(getattr(agenda_item.assembly, 'total_building_mills', 0) or 0) or self._get_total_building_mills()
+            except Exception:
+                return self._get_total_building_mills()
         return self._get_total_building_mills()
     
     @property
@@ -110,6 +151,12 @@ class Vote(models.Model):
     @property
     def eligible_voters_count(self):
         """Αριθμός δικαιούχων ψήφου (διαμερίσματα)"""
+        agenda_item = self._get_linked_agenda_item()
+        if agenda_item:
+            try:
+                return agenda_item.assembly.attendees.count()
+            except Exception:
+                return 0
         return self._get_eligible_voters_count()
     
     def _get_total_building_mills(self):
@@ -179,6 +226,64 @@ class Vote(models.Model):
         from django.db.models import Sum
         
         results = {}
+
+        agenda_item = self._get_linked_agenda_item()
+        if agenda_item:
+            # Linked vote: compute results from AssemblyVote (one per apartment/attendee)
+            from django.db.models import Count
+            from assemblies.models import AssemblyVote
+
+            mapping = {'approve': 'ΝΑΙ', 'reject': 'ΟΧΙ', 'abstain': 'ΛΕΥΚΟ'}
+
+            vote_qs = AssemblyVote.objects.filter(agenda_item=agenda_item)
+            grouped = vote_qs.values('vote').annotate(count=Count('id'), mills=Sum('mills'))
+            counts_by_choice = {'ΝΑΙ': 0, 'ΟΧΙ': 0, 'ΛΕΥΚΟ': 0}
+            mills_by_choice = {'ΝΑΙ': 0, 'ΟΧΙ': 0, 'ΛΕΥΚΟ': 0}
+
+            for row in grouped:
+                greek = mapping.get(row.get('vote'))
+                if not greek:
+                    continue
+                counts_by_choice[greek] = int(row.get('count') or 0)
+                mills_by_choice[greek] = int(row.get('mills') or 0)
+
+            for choice, _ in VoteSubmission.CHOICES:
+                results[choice] = counts_by_choice.get(choice, 0)
+
+            results['mills'] = {}
+            for choice, _ in VoteSubmission.CHOICES:
+                results['mills'][choice] = mills_by_choice.get(choice, 0)
+
+            results['total'] = self.total_votes
+            results['total_mills_voted'] = self.total_mills_voted
+            results['total_building_mills'] = self.total_building_mills
+            results['eligible_voters'] = self.eligible_voters_count
+            results['participation_percentage'] = self.participation_percentage
+            results['is_valid'] = self.is_valid_result
+
+            total_bld_mills = self.total_building_mills or 1
+            results['percentages_by_mills'] = {}
+            for choice, _ in VoteSubmission.CHOICES:
+                choice_mills = results['mills'].get(choice, 0)
+                results['percentages_by_mills'][choice] = round((choice_mills / total_bld_mills) * 100, 1)
+
+            results['by_source'] = {
+                'electronic': vote_qs.filter(vote_source='pre_vote').count(),
+                'physical': vote_qs.filter(vote_source='live').count(),
+                'proxy': vote_qs.filter(vote_source='proxy').count(),
+            }
+            results['mills_by_source'] = {
+                'electronic': vote_qs.filter(vote_source='pre_vote').aggregate(total=Sum('mills'))['total'] or 0,
+                'physical': vote_qs.filter(vote_source='live').aggregate(total=Sum('mills'))['total'] or 0,
+                'proxy': vote_qs.filter(vote_source='proxy').aggregate(total=Sum('mills'))['total'] or 0,
+            }
+            results['source_details'] = {
+                'pre_vote': vote_qs.filter(vote_source='pre_vote').count(),
+                'live': vote_qs.filter(vote_source='live').count(),
+                'proxy': vote_qs.filter(vote_source='proxy').count(),
+            }
+
+            return results
         
         # Vote counts
         for choice, _ in VoteSubmission.CHOICES:

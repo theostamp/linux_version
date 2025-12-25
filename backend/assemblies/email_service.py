@@ -216,9 +216,7 @@ def send_assembly_reminder_email(
         pre_voting_end = None
         if getattr(assembly, 'pre_voting_enabled', False):
             pre_voting_start = assembly.pre_voting_start_date or assembly.scheduled_date
-            pre_voting_end = assembly.pre_voting_end_date or (
-                assembly.scheduled_date + timedelta(days=3) if assembly.scheduled_date else None
-            )
+            pre_voting_end = assembly.pre_voting_end_date or assembly.scheduled_date
             if assembly.is_pre_voting_active:
                 pre_voting_state = 'active'
             elif pre_voting_start and today < pre_voting_start:
@@ -503,4 +501,3 @@ def queue_vote_confirmation(attendee: AssemblyAttendee, votes: list[AssemblyVote
         # Fallback to sync send if Celery fails
         logger.warning(f"Failed to queue confirmation, sending sync: {e}")
         send_vote_confirmation_email(attendee, votes)
-

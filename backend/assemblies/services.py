@@ -503,9 +503,9 @@ class VoteIntegrationService:
             # Η ψηφοφορία ξεκινά από pre_voting_start_date ή την ημέρα της συνέλευσης
             start_date = assembly.pre_voting_start_date or assembly.scheduled_date
             
-            # Η ψηφοφορία λήγει 3 μέρες ΜΕΤΑ τη συνέλευση (για να καλύπτει live voting)
-            # Ή χρησιμοποιεί το pre_voting_end_date αν έχει οριστεί
-            end_date = assembly.pre_voting_end_date or (assembly.scheduled_date + timedelta(days=3))
+            # Η ψηφοφορία λήγει το αργότερο την ημέρα της συνέλευσης (no post-voting).
+            # Το live window καλύπτεται από το status της συνέλευσης (in_progress) και το κλείσιμο από διαχειριστή.
+            end_date = assembly.pre_voting_end_date or assembly.scheduled_date
 
             # If this agenda item is linked to a Project, reuse the existing project vote (if any)
             # instead of creating a second, duplicate vote.
