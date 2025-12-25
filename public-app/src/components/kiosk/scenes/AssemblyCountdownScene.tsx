@@ -1,13 +1,19 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Users, Calendar, Clock, MapPin, Vote, CheckCircle,
-  Timer, FileText, Percent, AlertCircle, ChevronRight,
-  Building2, Video, Play
+  Users,
+  Calendar,
+  Clock,
+  MapPin,
+  Vote,
+  FileText,
+  Building2,
+  Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getScenePalette } from '@/components/kiosk/scenes/palette';
 
 interface AssemblyData {
   id: string;
@@ -97,7 +103,17 @@ function calculateCountdown(dateStr: string, timeStr: string): CountdownTime {
   };
 }
 
-function CountdownDigit({ value, label }: { value: number; label: string }) {
+function CountdownDigit({
+  value,
+  label,
+  surfaceColor,
+  accentBorder,
+}: {
+  value: number;
+  label: string;
+  surfaceColor: string;
+  accentBorder: string;
+}) {
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
@@ -105,14 +121,15 @@ function CountdownDigit({ value, label }: { value: number; label: string }) {
           key={value}
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 min-w-[100px] border border-white/20"
+          className="backdrop-blur-2xl rounded-2xl px-8 py-6 min-w-[132px] border shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
+          style={{ backgroundColor: surfaceColor, borderColor: accentBorder }}
         >
-          <span className="text-6xl font-bold text-white tabular-nums">
+          <span className="text-7xl lg:text-8xl font-black text-lime-300 tabular-nums font-mono leading-none">
             {String(value).padStart(2, '0')}
           </span>
         </motion.div>
       </div>
-      <span className="text-white/60 text-sm mt-2 uppercase tracking-wider">
+      <span className="text-white/60 text-[11px] mt-2 uppercase tracking-[0.12em]">
         {label}
       </span>
     </div>
@@ -128,22 +145,22 @@ function AgendaItemRow({ item, index }: { item: AssemblyData['agenda_items'][0];
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.1 }}
       className={cn(
-        'flex items-center gap-4 p-4 rounded-xl transition-all',
+        'flex items-center gap-3 p-3 rounded-2xl transition-all',
         isVoting 
           ? 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-400/30' 
           : 'bg-white/5 border border-white/10'
       )}
     >
       <div className={cn(
-        'w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold',
+        'w-9 h-9 rounded-xl flex items-center justify-center text-base font-bold',
         isVoting ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/80'
       )}>
         {item.order}
       </div>
       
       <div className="flex-1">
-        <h4 className="text-white font-medium">{item.title}</h4>
-        <div className="flex items-center gap-3 mt-1 text-sm text-white/50">
+        <h4 className="text-white font-semibold text-sm leading-snug">{item.title}</h4>
+        <div className="flex items-center gap-3 mt-1 text-[11px] text-white/55">
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {item.estimated_duration} λεπτά
@@ -158,7 +175,7 @@ function AgendaItemRow({ item, index }: { item: AssemblyData['agenda_items'][0];
       </div>
 
       {isVoting && (
-        <Vote className="w-6 h-6 text-indigo-400" />
+        <Vote className="w-5 h-5 text-indigo-300" />
       )}
     </motion.div>
   );
@@ -231,6 +248,7 @@ export default function AssemblyCountdownScene({
   const [countdown, setCountdown] = useState<CountdownTime | null>(null);
   const [assembly, setAssembly] = useState<AssemblyData | null>(externalAssembly || null);
   const [isLoading, setIsLoading] = useState(!externalAssembly && !data?.upcoming_assembly);
+  const [paletteHour, setPaletteHour] = useState(() => new Date().getHours());
 
   // Get assembly from data.upcoming_assembly (from public-info) or externalAssembly or fetch
   useEffect(() => {
@@ -298,6 +316,11 @@ export default function AssemblyCountdownScene({
     fetchAssembly();
   }, [buildingId, externalAssembly, data?.upcoming_assembly]);
 
+  useEffect(() => {
+    const timer = setInterval(() => setPaletteHour(new Date().getHours()), 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Update countdown every second
   useEffect(() => {
     if (!assembly) return;
@@ -312,6 +335,8 @@ export default function AssemblyCountdownScene({
 
     return () => clearInterval(interval);
   }, [assembly]);
+
+  const palette = useMemo(() => getScenePalette(paletteHour), [paletteHour]);
 
   // Format date for display
   const formatDate = (dateStr: string) => {
@@ -329,8 +354,12 @@ export default function AssemblyCountdownScene({
   // No assembly or loading
   if (isLoading) {
     return (
-      <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400" />
+      <div
+        className="relative h-screen w-screen flex items-center justify-center"
+        style={{ background: palette.background }}
+      >
+        <div className="pointer-events-none absolute inset-0 opacity-60" style={{ backgroundImage: palette.overlay }} />
+        <div className="relative animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-lime-300/80" />
       </div>
     );
   }
@@ -347,70 +376,44 @@ export default function AssemblyCountdownScene({
   const votingItemsCount = assembly.agenda_items.filter(i => i.item_type === 'voting').length;
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative">
-      {/* Background */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: countdown.hasStarted
-            ? 'linear-gradient(135deg, #064e3b 0%, #0f766e 30%, #0d9488 70%, #14b8a6 100%)'
-            : countdown.isToday
-              ? 'linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4f46e5 70%, #6366f1 100%)'
-              : 'linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1d4ed8 100%)'
-        }}
-      />
+    <div
+      className="relative h-screen w-screen flex overflow-hidden pb-24 gap-2 text-white"
+      style={{ background: palette.background }}
+    >
+      <div className="pointer-events-none absolute inset-0 opacity-60" style={{ backgroundImage: palette.overlay }} />
 
-      {/* Animated particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+      <div className="relative z-10 h-full w-full flex gap-2 p-4">
+        <div
+          className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 backdrop-blur-2xl rounded-2xl shadow-2xl border"
+          style={{ backgroundColor: palette.cardSurface, borderColor: palette.accentBorder }}
+        >
           <motion.div
-            key={i}
-            className="absolute w-2 h-2 rounded-full bg-white/10"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [null, -100],
-              opacity: [0.3, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex">
-        {/* Left side - Main countdown */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -30 }}
+            initial={{ opacity: 0, y: -24 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className={cn(
-                'w-16 h-16 rounded-2xl flex items-center justify-center',
-                countdown.hasStarted 
-                  ? 'bg-emerald-500 animate-pulse' 
-                  : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-              )}>
-                <Users className="w-8 h-8 text-white" />
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div
+                className={cn(
+                  'w-14 h-14 rounded-2xl flex items-center justify-center',
+                  countdown.hasStarted
+                    ? 'bg-emerald-500/90 animate-pulse'
+                    : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                )}
+              >
+                <Users className="w-7 h-7 text-white" />
               </div>
             </div>
-            
-            <h1 className="text-4xl font-bold text-white mb-2">
-              {countdown.hasStarted ? '🔴 ΣΥΝΕΛΕΥΣΗ ΣΕ ΕΞΕΛΙΞΗ' : 'Γενική Συνέλευση'}
+
+            <div className="text-[11px] uppercase tracking-[0.16em] text-indigo-200/80">
+              {countdown.hasStarted ? 'Live Συνέλευση' : 'Συνέλευση'}
+            </div>
+
+            <h1 className="text-3xl font-bold text-white mt-2">
+              {assembly.title}
             </h1>
-            
-            <h2 className="text-2xl text-white/80">{assembly.title}</h2>
-            
-            <div className="flex items-center justify-center gap-4 mt-4 text-white/60">
+
+            <div className="flex items-center justify-center gap-4 mt-4 text-[13px] text-white/70">
               <span className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
                 {formatDate(assembly.scheduled_date)}
@@ -428,60 +431,76 @@ export default function AssemblyCountdownScene({
             </div>
           </motion.div>
 
-          {/* Countdown timer */}
           {!countdown.hasStarted && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center gap-4 mb-8"
+              transition={{ delay: 0.15 }}
+              className="flex items-center gap-6 mb-8"
             >
               {countdown.days > 0 && (
                 <>
-                  <CountdownDigit value={countdown.days} label="Ημέρες" />
-                  <span className="text-4xl text-white/30 font-light">:</span>
+                  <CountdownDigit
+                    value={countdown.days}
+                    label="Ημέρες"
+                    surfaceColor={palette.sidebarSurface}
+                    accentBorder={palette.accentBorder}
+                  />
+                  <span className="text-6xl text-lime-300/50 font-light">:</span>
                 </>
               )}
-              <CountdownDigit value={countdown.hours} label="Ώρες" />
-              <span className="text-4xl text-white/30 font-light">:</span>
-              <CountdownDigit value={countdown.minutes} label="Λεπτά" />
-              <span className="text-4xl text-white/30 font-light">:</span>
-              <CountdownDigit value={countdown.seconds} label="Δεύτερα" />
+              <CountdownDigit
+                value={countdown.hours}
+                label="Ώρες"
+                surfaceColor={palette.sidebarSurface}
+                accentBorder={palette.accentBorder}
+              />
+              <span className="text-6xl text-lime-300/50 font-light">:</span>
+              <CountdownDigit
+                value={countdown.minutes}
+                label="Λεπτά"
+                surfaceColor={palette.sidebarSurface}
+                accentBorder={palette.accentBorder}
+              />
+              <span className="text-6xl text-lime-300/50 font-light">:</span>
+              <CountdownDigit
+                value={countdown.seconds}
+                label="Δεύτερα"
+                surfaceColor={palette.sidebarSurface}
+                accentBorder={palette.accentBorder}
+              />
             </motion.div>
           )}
 
-          {/* Live indicator when started */}
           {countdown.hasStarted && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className="flex items-center gap-4 mb-8"
             >
-              <div className="flex items-center gap-3 bg-emerald-500/30 px-8 py-4 rounded-2xl border border-emerald-400/50">
+              <div className="flex items-center gap-3 bg-emerald-500/20 px-8 py-4 rounded-2xl border border-emerald-400/30">
                 <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse" />
-                <span className="text-2xl font-bold text-emerald-300">LIVE</span>
+                <span className="text-2xl font-bold text-emerald-200">LIVE</span>
               </div>
             </motion.div>
           )}
 
-          {/* Pre-voting progress */}
           {assembly.is_pre_voting_active && assembly.stats && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.35 }}
               className="w-full max-w-lg"
             >
               <PreVotingProgress stats={assembly.stats} />
             </motion.div>
           )}
 
-          {/* RSVP Summary */}
           {assembly.stats && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.45 }}
               className="w-full max-w-lg mt-6"
             >
               <RSVPSummary stats={assembly.stats} />
@@ -489,69 +508,83 @@ export default function AssemblyCountdownScene({
           )}
         </div>
 
-        {/* Right side - Agenda */}
-        <div className="w-[450px] bg-black/30 backdrop-blur-sm p-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Ημερήσια Διάταξη
-            </h3>
-            {votingItemsCount > 0 && (
-              <span className="px-3 py-1 bg-indigo-500/30 text-indigo-300 rounded-full text-sm">
-                {votingItemsCount} ψηφοφορίες
-              </span>
-            )}
+        <div
+          className="w-[23%] min-w-[360px] min-h-0 backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden border flex flex-col"
+          style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
+        >
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-200/80 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Ημερήσια Διάταξη
+              </h3>
+              {votingItemsCount > 0 && (
+                <span className="px-3 py-1 bg-indigo-500/20 text-indigo-200 rounded-full text-[11px] font-semibold">
+                  {votingItemsCount} ψηφοφορίες
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
             {assembly.agenda_items.map((item, index) => (
               <AgendaItemRow key={item.id} item={item} index={index} />
             ))}
           </div>
 
-          {/* E-Voting prompt */}
           {votingItemsCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="mt-8 p-4 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl border border-emerald-400/30 text-center"
-            >
-              <Vote className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-              <p className="text-emerald-100 font-semibold text-sm mb-1">
-                Ψηφοφορία διαθέσιμη!
-              </p>
-              <p className="text-white/70 text-xs leading-relaxed">
-                Μπορείτε να ψηφίσετε ηλεκτρονικά μέσω της εφαρμογής<br />
-                ή σαρώνοντας το QR code στο διαμέρισμά σας
-              </p>
-            </motion.div>
+            <div className="p-4 border-t border-white/10">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+                className="p-4 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl border border-emerald-400/30 text-center"
+              >
+                <Vote className="w-8 h-8 text-emerald-300 mx-auto mb-2" />
+                <p className="text-emerald-100 font-semibold text-sm mb-1">
+                  Ψηφοφορία διαθέσιμη!
+                </p>
+                <p className="text-white/70 text-xs leading-relaxed">
+                  Μπορείτε να ψηφίσετε ηλεκτρονικά μέσω της εφαρμογής
+                </p>
+              </motion.div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Bottom ticker */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm py-3 px-6">
-        <div className="flex items-center justify-between text-white/70 text-sm">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            <span>{assembly.building_name}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            {assembly.is_online && (
-              <span className="flex items-center gap-1">
-                <Video className="w-4 h-4" />
-                Διαδικτυακή συμμετοχή διαθέσιμη
+      <div
+        className="fixed bottom-4 left-5 right-5 h-20 backdrop-blur-3xl border shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl z-50 overflow-hidden"
+        style={{ backgroundColor: palette.tickerSurface, borderColor: palette.accentBorder }}
+      >
+        <div className="h-full px-8 flex flex-col justify-center">
+          <div className="flex items-center justify-between text-white/80 text-sm font-medium">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              <span>{assembly.building_name}</span>
+            </div>
+            <div className="flex items-center gap-6 text-white/75">
+              {assembly.is_online && (
+                <span className="flex items-center gap-1">
+                  <Video className="w-4 h-4" />
+                  Διαδικτυακή συμμετοχή
+                </span>
+              )}
+              <span className="font-semibold text-white">
+                Απαρτία*: {assembly.quorum_percentage?.toFixed(0) || 0}%
               </span>
-            )}
-            <span>
-              Απαρτία*: {assembly.quorum_percentage?.toFixed(0) || 0}%
-            </span>
+            </div>
+          </div>
+          <div className="mt-1 text-[10px] text-white/40">
+            * Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).
           </div>
         </div>
-        <div className="mt-1 text-[10px] text-white/40">
-          * Περιλαμβάνει παρόντες και όσους έχουν ψηφίσει (pre-voting/καταχωρημένες ψήφοι).
-        </div>
+      </div>
+
+      <div className="fixed bottom-0.5 left-0 right-0 h-3 flex items-center justify-center z-40">
+        <p className="text-[9px] text-lime-200/60 font-normal tracking-wide">
+          © {new Date().getFullYear()} New Concierge. All rights reserved.
+        </p>
       </div>
     </div>
   );
