@@ -149,17 +149,11 @@ function AttendeeVoteCard({
   return (
     <div className={cn(
       "bg-white rounded-2xl border-2 p-4 transition-all",
-      hasVoted ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200",
-      !attendee.is_present && "opacity-50"
+      hasVoted ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200"
     )}>
       {/* Header με πληροφορίες ενοίκου */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={cn(
-          "w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg shrink-0",
-          attendee.is_present 
-            ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white" 
-            : "bg-gray-200 text-gray-500"
-        )}>
+        <div className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 bg-gradient-to-br from-indigo-400 to-indigo-600 text-white">
           {attendee.apartment_number}
         </div>
         
@@ -185,11 +179,6 @@ function AttendeeVoteCard({
                 </span>
               )}
             </span>
-            {!attendee.is_present && (
-              <Badge variant="outline" className="text-[10px] bg-gray-50 text-gray-500">
-                Απών
-              </Badge>
-            )}
             {hasVoted && (
               <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
                 <CheckCircle className="w-2.5 h-2.5 mr-1" />
@@ -204,7 +193,7 @@ function AttendeeVoteCard({
       <MobileVoteButtons
         currentVote={vote?.vote || null}
         onVote={(v) => onVote(attendee.id, v)}
-        disabled={!attendee.is_present && !isPreVote}
+        disabled={!isPreVote && hasVoted}
         isLoading={isPending}
       />
     </div>
@@ -252,7 +241,7 @@ export default function VotingControlPanel({
         result = result.filter(a => voteMap.has(a.id));
         break;
       case 'pending':
-        result = result.filter(a => !voteMap.has(a.id) && a.is_present);
+        result = result.filter(a => !voteMap.has(a.id));
         break;
       case 'pre_vote':
         result = result.filter(a => {
@@ -271,12 +260,11 @@ export default function VotingControlPanel({
 
   // Calculate statistics
   const stats = useMemo(() => {
-    const presentAttendees = attendees.filter(a => a.is_present);
     const votedCount = votes.length;
     const preVoteCount = votes.filter(v => v.vote_source === 'pre_vote').length;
-    const pendingCount = presentAttendees.filter(a => !voteMap.has(a.id)).length;
+    const pendingCount = attendees.filter(a => !voteMap.has(a.id)).length;
     
-    return { votedCount, preVoteCount, pendingCount, presentCount: presentAttendees.length };
+    return { votedCount, preVoteCount, pendingCount };
   }, [attendees, votes, voteMap]);
 
   const handleVote = async (attendeeId: string, vote: VoteChoice) => {
@@ -315,7 +303,7 @@ export default function VotingControlPanel({
       </DialogTrigger>
       
       {/* Full-screen mobile dialog */}
-      <DialogContent className="sm:max-w-lg max-w-[100vw] h-[100dvh] sm:h-[90vh] sm:max-h-[800px] p-0 gap-0 flex flex-col rounded-none sm:rounded-2xl">
+      <DialogContent className="sm:max-w-5xl lg:max-w-6xl max-w-[100vw] h-[100dvh] sm:h-[90vh] sm:max-h-[900px] p-0 gap-0 flex flex-col rounded-none sm:rounded-2xl">
         {/* Header - Sticky */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 shrink-0">
           <DialogHeader className="p-4 pb-2">
@@ -339,11 +327,7 @@ export default function VotingControlPanel({
           </DialogHeader>
 
           {/* Stats Bar - Πολύ ευδιάκριτα */}
-          <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 grid grid-cols-4 gap-2 text-center">
-            <div className="bg-white/80 rounded-xl p-2 shadow-sm">
-              <div className="font-black text-2xl text-indigo-600">{stats.presentCount}</div>
-              <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Παρόντες</div>
-            </div>
+          <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 grid grid-cols-3 gap-2 text-center">
             <div className="bg-white/80 rounded-xl p-2 shadow-sm">
               <div className="font-black text-2xl text-emerald-600">{stats.votedCount}</div>
               <div className="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Ψήφισαν</div>
@@ -427,12 +411,10 @@ export default function VotingControlPanel({
               </div>
               <p className="text-gray-500 font-medium text-lg">
                 {filter === 'pending' 
-                  ? (stats.presentCount === 0 
-                      ? 'Δεν υπάρχουν παρόντες' 
-                      : 'Όλοι οι παρόντες έχουν ψηφίσει! 🎉')
+                  ? 'Όλοι έχουν ψηφίσει! 🎉'
                   : 'Δεν βρέθηκαν αποτελέσματα'}
               </p>
-              {filter === 'pending' && stats.presentCount > 0 && (
+              {filter === 'pending' && (
                 <p className="text-gray-400 text-sm mt-2">Μπορείτε να κλείσετε αυτό το παράθυρο</p>
               )}
             </div>
