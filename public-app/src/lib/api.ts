@@ -2830,8 +2830,34 @@ export async function getAgendaItemVoteResults(itemId: string): Promise<{
 // Attendee API functions
 
 export async function fetchAssemblyAttendees(assemblyId: string): Promise<AssemblyAttendee[]> {
-  const response = await apiGet<Paginated<AssemblyAttendee>>(`/assembly-attendees/?assembly=${assemblyId}`);
-  return extractResults(response);
+  const pageSize = 1000;
+  const firstPage = await apiGet<Paginated<AssemblyAttendee>>('/assembly-attendees/', {
+    assembly: assemblyId,
+    page_size: pageSize,
+    page: 1,
+  });
+
+  let attendees = extractResults(firstPage);
+  if (Array.isArray(firstPage)) return attendees;
+
+  const totalCount = typeof (firstPage as any)?.count === 'number' ? (firstPage as any).count : attendees.length;
+  let next = (firstPage as any)?.next as string | null | undefined;
+  let page = 2;
+
+  while (next && attendees.length < totalCount && page < 50) {
+    const data = await apiGet<Paginated<AssemblyAttendee>>('/assembly-attendees/', {
+      assembly: assemblyId,
+      page_size: pageSize,
+      page,
+    });
+    attendees = attendees.concat(extractResults(data));
+
+    if (Array.isArray(data)) break;
+    next = (data as any)?.next as string | null | undefined;
+    page += 1;
+  }
+
+  return attendees;
 }
 
 export async function attendeeCheckIn(
