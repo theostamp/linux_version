@@ -3259,16 +3259,19 @@ If a field is not found, return null."""
         # Configure with API key
         # Try to use v1 API instead of v1beta by configuring client options
         try:
-            # For newer SDK versions, try to configure for v1 API
-            genai.configure(
-                api_key=api_key,
-                # Explicitly use v1 API endpoint (not v1beta)
-                transport='rest',  # Use REST transport for better compatibility
-            )
-        except Exception as config_error:
-            logger.warning(f"Failed to configure with transport options: {config_error}")
-            # Fallback to basic configuration
+            # For newer SDK versions, configure for v1 API compatibility
             genai.configure(api_key=api_key)
+            
+            # Try to list available models to verify API connection
+            # This helps identify which API version is being used
+            try:
+                available_models = genai.list_models()
+                logger.debug(f"Available Gemini models: {[m.name for m in available_models]}")
+            except Exception as list_error:
+                logger.debug(f"Could not list models (non-critical): {list_error}")
+        except Exception as config_error:
+            logger.warning(f"Failed to configure Gemini API: {config_error}")
+            raise ValueError(f"Failed to configure Gemini API: {config_error}")
         
         # Try models in order: newest first, then fallback to older compatible models
         model_names = [
