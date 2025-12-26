@@ -24,7 +24,7 @@ function TenantAcceptContent() {
 
       try {
         console.log('[TenantAccept] Processing invitation token...');
-        
+
         // Call backend API to accept invitation
         const response = await apiPost<{
           status: string;
@@ -55,12 +55,12 @@ function TenantAcceptContent() {
 
           // Redirect to tenant domain
           const tenantDomain = response.tenant.domain;
-          const tenantUrl = tenantDomain.startsWith('http') 
-            ? tenantDomain 
+          const tenantUrl = tenantDomain.startsWith('http')
+            ? tenantDomain
             : `https://${tenantDomain}`;
-          
+
           console.log('[TenantAccept] Redirecting to tenant domain:', tenantUrl);
-          
+
           // Small delay to ensure tokens are saved
           setTimeout(() => {
             window.location.href = `${tenantUrl}/dashboard`;
@@ -71,12 +71,12 @@ function TenantAcceptContent() {
         }
       } catch (error: unknown) {
         console.error('[TenantAccept] Error accepting invitation:', error);
-        
+
         const err = error as { response?: { data?: { error?: string } }; message?: string };
-        const errorMessage = err?.response?.data?.error || 
-                           error?.message || 
+        const errorMessage = err?.response?.data?.error ||
+                           error?.message ||
                            'Failed to accept invitation. The link may have expired.';
-        
+
         setStatus('error');
         setMessage(errorMessage);
       }
@@ -148,4 +148,3 @@ export default function TenantAcceptPage() {
     </Suspense>
   );
 }
-

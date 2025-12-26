@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const initializationStartedRef = useRef(false);
-  
+
   // Check if we're on an auth callback path where OAuth flow handles authentication
   const isAuthCallbackPath = AUTH_CALLBACK_PATHS.some(path => pathname?.startsWith(path));
 
@@ -76,11 +76,11 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       const { user: loggedInUser } = await loginUser(email, password);
       setUser(loggedInUser);
       console.log('AuthContext: Login successful for user:', loggedInUser?.email);
-      
+
       // Ensure states are properly set after successful login
       setIsLoading(false);
       setIsAuthReady(true);
-      
+
       return loggedInUser;
     } catch (error) {
       setIsLoading(false);
@@ -92,19 +92,19 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const loginWithToken = useCallback(async (token: string): Promise<void> => {
     try {
       setIsLoading(true);
-      
+
       // Store the token (both access_token and access for backward compatibility)
       localStorage.setItem('access_token', token);
       localStorage.setItem('access', token);
-      
+
       // Fetch user data with this token
       const user = await getCurrentUser();
       setUser(user);
-      
+
       // Update auth state
       setIsLoading(false);
       setIsAuthReady(true);
-      
+
       console.log('AuthContext: Token login successful for user:', user?.email);
     } catch (error) {
       console.error('AuthContext: Token login failed:', error);
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         console.log('AuthContext: No token found, cannot refresh user');
         return;
       }
-      
+
       console.log('AuthContext: Refreshing user data');
       const me = await getCurrentUser();
       setUser(me);
@@ -213,10 +213,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       if (cachedUser && token) {
         try {
           const parsedUser = JSON.parse(cachedUser) as User;
-          
+
           // Always verify user data with API to ensure permissions are up to date
           console.log('AuthContext: Found cached user:', parsedUser?.email, 'but will verify with API');
-          
+
           try {
             const freshUser = await getCurrentUser();
             if (!isMounted) {
@@ -316,9 +316,9 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     // TEMPORARILY DISABLED - might be causing hanging issues
     console.log('[AuthContext] Token check interval disabled to debug hanging issue');
     return;
-    
+
     if (!isAuthenticated) return;
-    
+
     const checkTokenInterval = setInterval(() => {
       const token = localStorage.getItem('access_token') || localStorage.getItem('access');
       if (!token) {
@@ -326,25 +326,25 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         performClientLogout();
         return;
       }
-      
+
       // Προαιρετικά, θα μπορούσαμε να κάνουμε ένα ελαφρύ API call για να επιβεβαιώσουμε ότι το token είναι έγκυρο
       console.log('AuthContext: Token check - Token exists');
     }, 1 * 60 * 1000); // 1 λεπτό
-    
+
     return () => clearInterval(checkTokenInterval);
   }, [isAuthenticated, performClientLogout]);
 
   const contextValue = React.useMemo(
-    () => ({ 
-      user: userState, 
-      login, 
+    () => ({
+      user: userState,
+      login,
       loginWithToken,
-      logout, 
-      isLoading, 
-      isAuthReady, 
+      logout,
+      isLoading,
+      isAuthReady,
       isAuthenticated,
       refreshUser,
-      setUser 
+      setUser
     }),
     [userState, login, loginWithToken, logout, isLoading, isAuthReady, isAuthenticated, refreshUser, setUser]
   );
@@ -374,7 +374,7 @@ export function useAuth() {
       setUser: () => {},
     };
   }
-  
+
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
@@ -384,4 +384,3 @@ export function useAuthGuard() {
   const { user, isAuthReady, isAuthenticated } = useAuth();
   return { user, isAuthReady, isAuthenticated };
 }
-

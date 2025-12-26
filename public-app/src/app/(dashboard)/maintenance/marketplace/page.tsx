@@ -4,8 +4,8 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ShoppingBag, Star, ShieldCheck, Phone, Mail, 
+import {
+  ShoppingBag, Star, ShieldCheck, Phone, Mail,
   ChevronRight, ExternalLink, BadgeCheck, Search,
   Wrench, Droplets, Zap, Thermometer, Construction,
   Hammer, Paintbrush, Loader2
@@ -92,7 +92,7 @@ function PartnerCard({ partner }: { partner: MarketplacePartner }) {
           </Button>
         </div>
       </div>
-      
+
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between group-hover:bg-indigo-50 transition-colors">
         <span className="text-xs font-bold text-gray-400 group-hover:text-indigo-400 uppercase tracking-widest">Λεπτομέρειες</span>
         <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
@@ -105,7 +105,7 @@ function MarketplaceContent() {
   const [search, setSearch] = useState('');
   const { data: partners = [], isLoading } = useMarketplacePartners();
 
-  const filteredPartners = partners.filter(p => 
+  const filteredPartners = partners.filter(p =>
     p.contractor_name.toLowerCase().includes(search.toLowerCase()) ||
     p.service_type.toLowerCase().includes(search.toLowerCase())
   );
@@ -116,7 +116,7 @@ function MarketplaceContent() {
       <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-[2.5rem] p-10 md:p-16 text-white relative overflow-hidden shadow-2xl shadow-indigo-200">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
-        
+
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-indigo-100 text-sm font-bold mb-6">
             <ShieldCheck className="w-4 h-4" />
@@ -128,12 +128,12 @@ function MarketplaceContent() {
           <p className="text-indigo-100 text-lg md:text-xl font-medium leading-relaxed opacity-90 mb-10">
             Το New Concierge Marketplace σας συνδέει με επαγγελματίες που εμπιστεύεται το Γραφείο Διαχείρισης, με ειδικές τιμές για τους ενοίκους μας.
           </p>
-          
+
           <div className="relative max-w-md group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <Search className="w-5 h-5 text-indigo-300 group-focus-within:text-indigo-500 transition-colors" />
             </div>
-            <Input 
+            <Input
               placeholder="Αναζήτηση υπηρεσίας (π.χ. υδραυλικός)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -185,10 +185,3 @@ export default function MarketplacePage() {
     </AuthGate>
   );
 }
-
-
-
-
-
-
-
