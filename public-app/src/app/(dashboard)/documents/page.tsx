@@ -115,7 +115,7 @@ function DocumentsContent() {
       }
 
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς!');
-      
+
       // Redirect to financial page to see the new expense
       router.push(`/financial?building=${selectedBuilding.id}`);
     } catch (error: any) {

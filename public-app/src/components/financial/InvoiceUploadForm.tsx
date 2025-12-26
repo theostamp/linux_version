@@ -82,10 +82,10 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
 
   const handleFileSelect = async (files: File[]) => {
     if (files.length === 0) return;
-    
+
     const file = files[0];
     setSelectedFile(file);
-    
+
     const filename = file.name.toLowerCase();
     const isPdf = file.type === 'application/pdf' || filename.endsWith('.pdf');
     const isImage =
@@ -101,7 +101,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
     } else {
       setImagePreview(null);
     }
-    
+
     // Automatically trigger scan
     try {
       await scanInvoiceAsync(file);
@@ -125,7 +125,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
       shouldArchive,
       formData,
     });
-    
+
     if (onSave) {
       onSave(formData, selectedFile, shouldArchive);
     } else {
@@ -375,8 +375,8 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                         Καταχώρηση στο Ηλεκτρονικό Αρχείο
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        {shouldArchive 
-                          ? 'Το παραστατικό θα αποθηκευτεί αυτόματα στο ηλεκτρονικό αρχείο' 
+                        {shouldArchive
+                          ? 'Το παραστατικό θα αποθηκευτεί αυτόματα στο ηλεκτρονικό αρχείο'
                           : 'Το παραστατικό δεν θα αποθηκευτεί στο αρχείο'}
                       </p>
                     </div>

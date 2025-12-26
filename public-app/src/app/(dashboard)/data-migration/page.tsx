@@ -467,4 +467,3 @@ export default function DataMigrationPage() {
     </AuthGate>
   );
 }
-
