@@ -27,36 +27,36 @@ urlpatterns = [
         else HttpResponse(status=404),
         name='tenant-root',
     ),
-    
+
     # Health checks (production monitoring)
     path('health/', HealthCheckView.as_view(), name='health-check'),
     path('ready/', ReadinessCheckView.as_view(), name='readiness-check'),
     path('live/', LivenessCheckView.as_view(), name='liveness-check'),
-    
+
     # Authentication & User endpoints
     path('api/users/', include('users.urls')),
 
     # Building management
     path('api/buildings/', include('buildings.urls')),
-    
+
     # Public buildings endpoint (for kiosk mode)
     path('api/buildings/public/', include('buildings.public_urls')),
-    
+
     # Apartments management
     path('api/apartments/', include('apartments.urls')),
-    
+
     # Announcements
     path('api/announcements/', include('announcements.urls')),
-    
+
     # User requests
     path('api/user-requests/', include('user_requests.urls')),
-    
+
     # Obligations
     path('api/obligations/', include('obligations.urls')),
-    
+
     # Votes
     path('api/votes/', include('votes.urls')),
-    
+
     # Financial management
     path('api/financial/', include('financial.urls')),
 
@@ -65,7 +65,7 @@ urlpatterns = [
 
     # Online payments (Stripe charges)
     path('api/online-payments/', include('online_payments.urls')),
-    
+
     # Public info
     path('api/public-info/', legacy_api_views.public_info, name='public-info'),
     path('api/public-info/', include('public_info.urls')),
@@ -75,10 +75,10 @@ urlpatterns = [
 
     # Marketplace (public schema-backed, exposed via tenant routing)
     path('api/marketplace/', include('marketplace_public.urls')),
-    
+
     # Tenants
     path('api/tenants/', include('tenants.urls')),
-    
+
     # Residents
     path('api/residents/', include('residents.urls')),
 
@@ -87,10 +87,10 @@ urlpatterns = [
 
     # Teams management
     path('api/teams/', include('teams.urls')),
-    
+
     # Collaborators management
     path('api/collaborators/', include('collaborators.urls')),
-    
+
     # Maintenance management
     path('api/maintenance/', include('maintenance.urls')),
 
@@ -99,13 +99,13 @@ urlpatterns = [
 
     # Todo management
     path('api/todos/', include('todo_management.urls')),
-    
+
     # Events management
     path('api/events/', include('events.urls')),
 
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),
-    
+
     # Legacy kiosk utilities (base64 uploads for kiosk displays)
     path('api/kiosk/upload-bill/', kiosk_bill_views.upload_common_expense_bill, name='kiosk-upload-bill'),
     path('api/kiosk/latest-bill/', kiosk_bill_views.get_latest_common_expense_bill, name='kiosk-latest-bill'),
