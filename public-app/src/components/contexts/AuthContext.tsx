@@ -360,6 +360,21 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 }
 
 export function useAuth() {
+  // During SSR, return default values to prevent errors
+  if (typeof window === 'undefined') {
+    return {
+      user: null,
+      login: async () => { throw new Error('Login not available during SSR'); },
+      loginWithToken: async () => { throw new Error('Login not available during SSR'); },
+      logout: async () => {},
+      isLoading: true,
+      isAuthReady: false,
+      isAuthenticated: false,
+      refreshUser: async () => undefined,
+      setUser: () => {},
+    };
+  }
+  
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
