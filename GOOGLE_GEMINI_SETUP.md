@@ -93,3 +93,7 @@ curl -X POST https://your-backend.railway.app/api/financial/expenses/scan/ \
 - Upgrade to paid plan if needed
 - Implement rate limiting if necessary
 
+### Error: "models/... is not found" / "not supported for generateContent"
+- Your API key may not have access to the default model IDs (or they're deprecated for your API version).
+- Set `GOOGLE_GEMINI_MODEL` in your backend environment to one of the model IDs returned by `genai.list_models()` (check backend logs on startup).
+- Common fallbacks for image parsing include `gemini-1.0-pro-vision-latest` or `gemini-pro-vision`.

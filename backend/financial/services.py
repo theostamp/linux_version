@@ -3246,8 +3246,43 @@ supplier: (string, name of the company/person)
 category: (string, strictly one of: 'DEH', 'EYDAP', 'HEATING', 'CLEANING', 'MAINTENANCE', 'ELEVATOR', 'OTHER')
 description: (string, brief description in Greek)
 
-If a field is not found, return null."""
-    
+    If a field is not found, return null."""
+
+    @staticmethod
+    def _normalize_model_id(model_id: Optional[str]) -> str:
+        model_id = (model_id or "").strip()
+        if model_id.startswith("models/"):
+            return model_id[len("models/"):]
+        return model_id
+
+    @staticmethod
+    def _model_preference_sort_key(model_id: str) -> tuple:
+        model = model_id.lower()
+        penalty = 0
+
+        if "gemini" not in model:
+            penalty += 1000
+        if "experimental" in model or "preview" in model or model.endswith("-exp") or "-exp-" in model:
+            penalty += 500
+        if "deprecated" in model:
+            penalty += 500
+
+        if model.startswith("gemini-2"):
+            penalty -= 200
+        elif model.startswith("gemini-1.5"):
+            penalty -= 150
+        elif model.startswith("gemini-1.0"):
+            penalty -= 100
+
+        if "flash" in model:
+            penalty -= 120
+        if "pro" in model:
+            penalty -= 80
+        if "vision" in model:
+            penalty -= 40
+
+        return (penalty, len(model_id), model_id)
+
     def __init__(self):
         """Initialize the Gemini API client with API key from environment"""
         import google.generativeai as genai
@@ -3264,16 +3299,83 @@ If a field is not found, return null."""
         self.api_key = api_key
         
         # Try to list available models to verify API connection and see what's available
+        self.available_model_ids: list[str] = []
         try:
-            available_models = genai.list_models()
+            available_models = list(genai.list_models())
             model_names = [m.name for m in available_models]
             logger.info(f"Available Gemini models: {model_names}")
+
+            for model in available_models:
+                model_name = getattr(model, "name", None)
+                if not model_name:
+                    continue
+                supported_methods = getattr(model, "supported_generation_methods", None)
+                if supported_methods and "generateContent" not in supported_methods:
+                    continue
+                self.available_model_ids.append(self._normalize_model_id(model_name))
         except Exception as list_error:
             logger.warning(f"Could not list models (non-critical, will use fallback): {list_error}")
         
         # Don't initialize model here - will be done lazily in parse_invoice with fallback
         self.model = None
         logger.info("InvoiceParser initialized (model will be created on first use)")
+
+    def _get_model_configs(self) -> list[tuple[str, str]]:
+        configured_model = self._normalize_model_id(
+            os.getenv("GOOGLE_GEMINI_MODEL") or os.getenv("GEMINI_MODEL")
+        )
+
+        preferred = [
+            ("gemini-2.0-flash", "Gemini 2.0 Flash"),
+            ("gemini-2.0-flash-lite", "Gemini 2.0 Flash Lite"),
+            ("gemini-1.5-flash", "Gemini 1.5 Flash"),
+            ("gemini-1.5-flash-latest", "Gemini 1.5 Flash (latest)"),
+            ("gemini-1.5-flash-8b", "Gemini 1.5 Flash 8B"),
+            ("gemini-1.5-pro", "Gemini 1.5 Pro"),
+            ("gemini-1.5-pro-latest", "Gemini 1.5 Pro (latest)"),
+            ("gemini-1.0-pro-vision-latest", "Gemini 1.0 Pro Vision (latest)"),
+            ("gemini-1.0-pro-vision", "Gemini 1.0 Pro Vision"),
+            ("gemini-pro-vision", "Gemini Pro Vision"),
+        ]
+
+        preferred_desc_by_id = {
+            self._normalize_model_id(model_id): desc for model_id, desc in preferred
+        }
+
+        model_configs: list[tuple[str, str]] = []
+        seen: set[str] = set()
+
+        def add(model_id: str, description: str) -> None:
+            normalized = self._normalize_model_id(model_id)
+            if not normalized or normalized in seen:
+                return
+            seen.add(normalized)
+            model_configs.append((normalized, description))
+
+        if configured_model:
+            add(configured_model, f"Configured Gemini model ({configured_model})")
+
+        available_ids = list(
+            dict.fromkeys(getattr(self, "available_model_ids", []) or [])
+        )
+        if available_ids:
+            sorted_available = sorted(
+                set(available_ids), key=self._model_preference_sort_key
+            )
+            for model_id in sorted_available[:10]:
+                if model_id == configured_model:
+                    continue
+                add(
+                    model_id,
+                    preferred_desc_by_id.get(model_id)
+                    or f"Available Gemini model ({model_id})",
+                )
+            return model_configs
+
+        for model_id, desc in preferred:
+            add(model_id, desc)
+
+        return model_configs
     
     def parse_invoice(self, image_file: UploadedFile) -> dict:
         """
@@ -3308,36 +3410,51 @@ If a field is not found, return null."""
             image = PILImage.open(io.BytesIO(image_bytes))
             
             # Try models in order with fallback
-            # We prioritize 1.5 Flash as it's the fastest and most cost-effective for this task
-            model_configs = [
-                ('gemini-1.5-flash', 'Gemini 1.5 Flash'),
-                ('gemini-1.5-flash-latest', 'Gemini 1.5 Flash (latest)'),
-                # Fallback to flash-8b if available (very fast)
-                ('gemini-1.5-flash-8b', 'Gemini 1.5 Flash 8B'),
-            ]
+            # We prioritize Flash models as they're the fastest/cost-effective for this task.
+            model_configs = self._get_model_configs()
             
             response = None
             errors = []
             used_model = None
+
+            prompt = "Extract the invoice fields into the required JSON object."
             
             for model_name, model_desc in model_configs:
                 try:
                     # Create model instance for this attempt with system instruction
                     # This is the recommended way in newer SDK versions
-                    attempt_model = self.genai.GenerativeModel(
-                        model_name=model_name,
-                        system_instruction=self.SYSTEM_INSTRUCTION
-                    )
+                    try:
+                        attempt_model = self.genai.GenerativeModel(
+                            model_name=model_name,
+                            system_instruction=self.SYSTEM_INSTRUCTION,
+                        )
+                    except TypeError:
+                        attempt_model = self.genai.GenerativeModel(model_name=model_name)
                     
                     # Generate content
-                    response = attempt_model.generate_content(
-                        [image],
-                        generation_config={
-                            "temperature": 0.1,
-                            "max_output_tokens": 1000, # Increased token limit
-                            "response_mime_type": "application/json", # Force JSON response
-                        }
-                    )
+                    generation_config = {
+                        "temperature": 0.1,
+                        "max_output_tokens": 1000,
+                        "response_mime_type": "application/json",
+                    }
+
+                    try:
+                        response = attempt_model.generate_content(
+                            [prompt, image],
+                            generation_config=generation_config,
+                        )
+                    except Exception as generate_error:
+                        error_text = str(generate_error)
+                        if "response_mime_type" in error_text or "responseMimeType" in error_text:
+                            response = attempt_model.generate_content(
+                                [prompt, image],
+                                generation_config={
+                                    "temperature": 0.1,
+                                    "max_output_tokens": 1000,
+                                },
+                            )
+                        else:
+                            raise
                     
                     # If successful, cache this model for future use (though we recreate it each time here for safety)
                     self.model = attempt_model
@@ -3361,11 +3478,17 @@ If a field is not found, return null."""
                 error_details = "; ".join(errors)
                 raise Exception(
                     f"All Gemini models failed. Errors: {error_details}. "
-                    f"Please ensure google-generativeai SDK is up to date and API key is valid."
+                    f"Set GOOGLE_GEMINI_MODEL to one of genai.list_models() results, "
+                    f"ensure the Generative Language API is enabled, and verify GOOGLE_API_KEY."
                 )
             
             # Extract text response
-            response_text = response.text.strip()
+            response_text = (getattr(response, "text", None) or "").strip()
+            if not response_text:
+                try:
+                    response_text = response.candidates[0].content.parts[0].text.strip()
+                except Exception:
+                    response_text = str(response).strip()
             
             # Clean up markdown formatting if present (Gemini sometimes wraps JSON in ```json```)
             # Remove markdown code blocks
