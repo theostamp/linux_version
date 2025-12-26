@@ -60,6 +60,9 @@ urlpatterns = [
     # Financial management
     path('api/financial/', include('financial.urls')),
 
+    # Archive (Electronic Document Archive)
+    path('api/archive/', include('archive.urls')),
+
     # Online payments (Stripe charges)
     path('api/online-payments/', include('online_payments.urls')),
     
