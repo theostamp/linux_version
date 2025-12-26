@@ -3249,7 +3249,7 @@ description: (string, brief description in Greek)
 If a field is not found, return null."""
     
     def __init__(self):
-        """Initialize the Gemini model with API key from environment"""
+        """Initialize the Gemini API client with API key from environment"""
         import google.generativeai as genai
         
         api_key = os.getenv('GOOGLE_API_KEY')
@@ -3257,55 +3257,23 @@ If a field is not found, return null."""
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
         
         # Configure with API key
-        # Try to use v1 API instead of v1beta by configuring client options
+        genai.configure(api_key=api_key)
+        self.genai = genai
+        
+        # Store API key for later use
+        self.api_key = api_key
+        
+        # Try to list available models to verify API connection and see what's available
         try:
-            # For newer SDK versions, configure for v1 API compatibility
-            genai.configure(api_key=api_key)
-            
-            # Try to list available models to verify API connection
-            # This helps identify which API version is being used
-            try:
-                available_models = genai.list_models()
-                logger.debug(f"Available Gemini models: {[m.name for m in available_models]}")
-            except Exception as list_error:
-                logger.debug(f"Could not list models (non-critical): {list_error}")
-        except Exception as config_error:
-            logger.warning(f"Failed to configure Gemini API: {config_error}")
-            raise ValueError(f"Failed to configure Gemini API: {config_error}")
+            available_models = genai.list_models()
+            model_names = [m.name for m in available_models]
+            logger.info(f"Available Gemini models: {model_names}")
+        except Exception as list_error:
+            logger.warning(f"Could not list models (non-critical, will use fallback): {list_error}")
         
-        # Try models in order: newest first, then fallback to older compatible models
-        model_names = [
-            ('gemini-1.5-flash', 'Gemini 1.5 Flash (standard)'),
-            ('gemini-1.5-flash-002', 'Gemini 1.5 Flash (002)'),
-            ('gemini-1.5-flash-latest', 'Gemini 1.5 Flash (latest)'),
-            ('gemini-pro-vision', 'Gemini Pro Vision (legacy fallback)'),  # Older model that works with v1beta
-            ('gemini-pro', 'Gemini Pro (legacy fallback)'),  # Last resort
-        ]
-        
+        # Don't initialize model here - will be done lazily in parse_invoice with fallback
         self.model = None
-        last_error = None
-        
-        for model_name, model_desc in model_names:
-            try:
-                self.model = genai.GenerativeModel(model_name)
-                logger.info(f"InvoiceParser initialized with {model_desc}: {model_name}")
-                break
-            except Exception as e:
-                last_error = e
-                logger.debug(f"Failed to initialize {model_name}: {e}")
-                continue
-        
-        if self.model is None:
-            error_msg = (
-                f"Failed to initialize any Gemini model. "
-                f"Tried: {', '.join([name for name, _ in model_names])}. "
-                f"Last error: {last_error}. "
-                f"Please ensure: 1) GOOGLE_API_KEY is set correctly, "
-                f"2) google-generativeai SDK is updated (pip install --upgrade google-generativeai), "
-                f"3) Generative Language API is enabled in Google Cloud Console."
-            )
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        logger.info("InvoiceParser initialized (model will be created on first use)")
     
     def parse_invoice(self, image_file: UploadedFile) -> dict:
         """
@@ -3339,14 +3307,58 @@ If a field is not found, return null."""
             # Convert bytes to PIL Image
             image = PILImage.open(io.BytesIO(image_bytes))
             
-            # Generate content with system instruction
-            response = self.model.generate_content(
-                [self.SYSTEM_INSTRUCTION, image],
-                generation_config={
-                    "temperature": 0.1,  # Low temperature for consistent extraction
-                    "max_output_tokens": 500,
-                }
-            )
+            # Try models in order with fallback - the error happens during generate_content, not initialization
+            # So we need to try each model when calling generate_content
+            model_configs = [
+                ('gemini-1.5-flash', 'Gemini 1.5 Flash'),
+                ('gemini-1.5-flash-002', 'Gemini 1.5 Flash (002)'),
+                ('gemini-1.5-flash-latest', 'Gemini 1.5 Flash (latest)'),
+                ('gemini-pro-vision', 'Gemini Pro Vision (v1beta compatible)'),
+                ('gemini-pro', 'Gemini Pro'),
+            ]
+            
+            response = None
+            last_error = None
+            used_model = None
+            
+            for model_name, model_desc in model_configs:
+                try:
+                    # Create model instance for this attempt
+                    attempt_model = self.genai.GenerativeModel(model_name)
+                    
+                    # Generate content with system instruction
+                    response = attempt_model.generate_content(
+                        [self.SYSTEM_INSTRUCTION, image],
+                        generation_config={
+                            "temperature": 0.1,  # Low temperature for consistent extraction
+                            "max_output_tokens": 500,
+                        }
+                    )
+                    
+                    # If successful, cache this model for future use
+                    self.model = attempt_model
+                    used_model = model_desc
+                    logger.info(f"Successfully used {model_desc} ({model_name}) for invoice parsing")
+                    break
+                    
+                except Exception as e:
+                    last_error = e
+                    error_str = str(e)
+                    # Check if it's a model not found error
+                    if '404' in error_str or 'not found' in error_str.lower() or 'not supported' in error_str.lower():
+                        logger.warning(f"Model {model_name} not available (likely v1beta API issue), trying next model...")
+                    else:
+                        logger.warning(f"Failed to use {model_name}: {e}")
+                    # Continue to next model
+                    continue
+            
+            if response is None:
+                raise Exception(
+                    f"All Gemini models failed. Tried: {', '.join([name for name, _ in model_configs])}. "
+                    f"Last error: {last_error}. "
+                    f"This usually means the SDK is using v1beta API which doesn't support gemini-1.5 models. "
+                    f"Please upgrade google-generativeai SDK: pip install --upgrade google-generativeai"
+                )
             
             # Extract text response
             response_text = response.text.strip()
