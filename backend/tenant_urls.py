@@ -81,6 +81,9 @@ urlpatterns = [
     # Document parser
     path('api/parser/', include('document_parser.urls')),
 
+    # Electronic archive
+    path('api/archive/', include('archive.urls')),
+
     # Billing & Subscriptions
     path('api/billing/', include('billing.urls')),
 

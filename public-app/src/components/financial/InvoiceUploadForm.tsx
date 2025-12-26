@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Upload, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 
 interface InvoiceUploadFormProps {
-  onSave?: (data: ScannedInvoiceData) => void;
+  onSave?: (data: ScannedInvoiceData, file: File | null) => void;
   onCancel?: () => void;
 }
 
@@ -39,6 +39,14 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   [ExpenseCategory.MISCELLANEOUS]: 'Διάφορες Δαπάνες',
 };
 
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  invoice: 'Τιμολόγιο',
+  receipt: 'Απόδειξη',
+  credit_note: 'Πιστωτικό',
+  debit_note: 'Χρεωστικό',
+  other: 'Άλλο',
+};
+
 export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, onCancel }) => {
   const { scanInvoiceAsync, isLoading, error, data: scannedData, reset } = useInvoiceScan();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -47,6 +55,9 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
     amount: null,
     date: null,
     supplier: null,
+    supplier_vat: null,
+    document_number: null,
+    document_type: null,
     category: null,
     description: null,
   });
@@ -58,6 +69,9 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
         amount: scannedData.amount,
         date: scannedData.date,
         supplier: scannedData.supplier,
+        supplier_vat: scannedData.supplier_vat ?? null,
+        document_number: scannedData.document_number ?? null,
+        document_type: scannedData.document_type ?? null,
         category: scannedData.category ? CATEGORY_MAPPING[scannedData.category] || null : null,
         description: scannedData.description,
       });
@@ -103,7 +117,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
 
   const handleSave = () => {
     if (onSave) {
-      onSave(formData);
+      onSave(formData, selectedFile);
     } else {
       // Mock save action
       console.log('Saving expense data:', formData);
@@ -118,6 +132,9 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
       amount: null,
       date: null,
       supplier: null,
+      supplier_vat: null,
+      document_number: null,
+      document_type: null,
       category: null,
       description: null,
     });
@@ -262,6 +279,50 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                       onChange={(e) => handleInputChange('supplier', e.target.value || null)}
                       placeholder="Όνομα εταιρείας/προμηθευτή"
                     />
+                  </div>
+
+                  {/* Supplier VAT */}
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier-vat">ΑΦΜ Προμηθευτή</Label>
+                    <Input
+                      id="supplier-vat"
+                      type="text"
+                      value={formData.supplier_vat ?? ''}
+                      onChange={(e) => handleInputChange('supplier_vat', e.target.value || null)}
+                      placeholder="π.χ. 094123123"
+                    />
+                  </div>
+
+                  {/* Document Number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="document-number">Αριθμός Παραστατικού</Label>
+                    <Input
+                      id="document-number"
+                      type="text"
+                      value={formData.document_number ?? ''}
+                      onChange={(e) => handleInputChange('document_number', e.target.value || null)}
+                      placeholder="π.χ. 12345"
+                    />
+                  </div>
+
+                  {/* Document Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="document-type">Είδος Παραστατικού</Label>
+                    <Select
+                      value={formData.document_type ?? ''}
+                      onValueChange={(value) => handleInputChange('document_type', value || null)}
+                    >
+                      <SelectTrigger id="document-type">
+                        <SelectValue placeholder="Επιλέξτε είδος" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(DOCUMENT_TYPE_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Category */}

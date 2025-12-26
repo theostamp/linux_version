@@ -2074,6 +2074,37 @@ export async function scanInvoice(file: File): Promise<import('@/types/financial
   );
 }
 
+// ============================================================================
+// Electronic Archive API Functions
+// ============================================================================
+
+export async function fetchArchiveDocuments(
+  params?: Record<string, unknown>,
+): Promise<{ results?: import('@/types/archive').ArchiveDocument[] } | import('@/types/archive').ArchiveDocument[]> {
+  return await apiGet('/archive/documents/', params);
+}
+
+export async function fetchArchiveCategories(): Promise<{ value: string; label: string }[]> {
+  return await apiGet('/archive/documents/categories/');
+}
+
+export async function fetchArchiveDocumentTypes(): Promise<{ value: string; label: string }[]> {
+  return await apiGet('/archive/documents/document_types/');
+}
+
+export async function createArchiveDocument(
+  formData: FormData,
+): Promise<import('@/types/archive').ArchiveDocument> {
+  return await apiPost<import('@/types/archive').ArchiveDocument>(
+    '/archive/documents/',
+    formData,
+  );
+}
+
+export async function deleteArchiveDocument(id: number): Promise<void> {
+  await apiDelete(`/archive/documents/${id}/`);
+}
+
 export async function fetchApartmentsWithFinancialData(buildingId: number, month?: string): Promise<any[]> {
   console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId, 'month:', month);
   

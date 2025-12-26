@@ -177,6 +177,9 @@ export interface ScannedInvoiceData {
   amount: number | null;
   date: string | null;
   supplier: string | null;
+  supplier_vat?: string | null;
+  document_number?: string | null;
+  document_type?: string | null;
   category: string | null;
   description: string | null;
 }

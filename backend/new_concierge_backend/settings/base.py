@@ -90,6 +90,9 @@ TENANT_APPS = [
     
     # 📄 Document Parser
     'document_parser',
+
+    # 🗂️ Electronic Archive
+    'archive',
     
     # 💰 Οικονομικό σύστημα
     'financial',

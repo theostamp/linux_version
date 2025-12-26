@@ -27,6 +27,7 @@ import {
   Wrench,
   Euro,
   FileText,
+  FolderArchive,
   Users,
   UserCheck,
   Truck,
@@ -170,6 +171,13 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
         isBeta: true,
         tooltip: 'Διαχείριση παραστατικών και οικονομικών εγγράφων',
+      },
+      {
+        href: '/archive',
+        label: 'Ηλεκτρονικό Αρχείο',
+        icon: <FolderArchive className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Οργάνωση και αναζήτηση αρχείων πολυκατοικίας',
       },
     ]
   },

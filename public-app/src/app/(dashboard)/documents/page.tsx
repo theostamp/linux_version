@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { FileText, Sparkles } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useExpenses } from '@/hooks/useExpenses';
+import { createArchiveDocument } from '@/lib/api';
 import { ScannedInvoiceData } from '@/types/financial';
 import { ExpenseFormData } from '@/types/financial';
 import { toast } from 'sonner';
@@ -18,7 +19,7 @@ function DocumentsContent() {
   const { selectedBuilding } = useBuilding();
   const { createExpense, isLoading } = useExpenses(selectedBuilding?.id);
 
-  const handleSave = async (scannedData: ScannedInvoiceData) => {
+  const handleSave = async (scannedData: ScannedInvoiceData, file: File | null) => {
     if (!selectedBuilding?.id) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
       return;
@@ -41,7 +42,50 @@ function DocumentsContent() {
         notes: scannedData.description || undefined,
       };
 
-      await createExpense(expenseData);
+      const createdExpense = await createExpense(expenseData);
+
+      if (createdExpense && file) {
+        const archiveData = new FormData();
+        archiveData.append('building', selectedBuilding.id.toString());
+        archiveData.append('category', 'expense_receipt');
+        archiveData.append('file', file);
+
+        if (scannedData.document_type) {
+          archiveData.append('document_type', scannedData.document_type);
+        }
+        if (scannedData.document_number) {
+          archiveData.append('document_number', scannedData.document_number);
+        }
+        if (scannedData.supplier) {
+          archiveData.append('supplier_name', scannedData.supplier);
+        }
+        if (scannedData.supplier_vat) {
+          archiveData.append('supplier_vat', scannedData.supplier_vat);
+        }
+        if (scannedData.date) {
+          archiveData.append('document_date', scannedData.date);
+        }
+        if (scannedData.amount !== null && scannedData.amount !== undefined) {
+          archiveData.append('amount', scannedData.amount.toString());
+        }
+
+        const title =
+          scannedData.description ||
+          scannedData.supplier ||
+          file.name ||
+          'Παραστατικό Δαπάνης';
+        archiveData.append('title', title);
+
+        archiveData.append('linked_expense', createdExpense.id.toString());
+
+        try {
+          await createArchiveDocument(archiveData);
+        } catch (archiveError: any) {
+          console.error('Error archiving document:', archiveError);
+          toast.error(archiveError?.message || 'Σφάλμα κατά την αρχειοθέτηση του παραστατικού');
+        }
+      }
+
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς!');
       
       // Redirect to financial page to see the new expense

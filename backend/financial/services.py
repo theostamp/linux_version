@@ -3243,6 +3243,9 @@ class InvoiceParser:
 amount: (decimal, final total to pay)
 date: (string, YYYY-MM-DD)
 supplier: (string, name of the company/person)
+supplier_vat: (string, Greek VAT/AFM number, digits only)
+document_number: (string, invoice/receipt number)
+document_type: (string, strictly one of: 'invoice', 'receipt', 'credit_note', 'debit_note', 'other')
 category: (string, strictly one of: 'DEH', 'EYDAP', 'HEATING', 'CLEANING', 'MAINTENANCE', 'ELEVATOR', 'OTHER')
 description: (string, brief description in Greek)
 
@@ -3546,10 +3549,21 @@ description: (string, brief description in Greek)
                     raise ValueError(f"Invalid JSON response from Gemini: {str(e)}")
             
             # Validate and normalize response structure
+            document_number = parsed_data.get('document_number') or parsed_data.get('invoice_number')
+            document_type = parsed_data.get('document_type') or parsed_data.get('invoice_type')
+            supplier_vat = (
+                parsed_data.get('supplier_vat')
+                or parsed_data.get('vat')
+                or parsed_data.get('afm')
+            )
+
             result = {
                 'amount': self._parse_amount(parsed_data.get('amount')),
                 'date': self._parse_date(parsed_data.get('date')),
                 'supplier': parsed_data.get('supplier'),
+                'supplier_vat': self._parse_supplier_vat(supplier_vat),
+                'document_number': self._parse_document_number(document_number),
+                'document_type': self._parse_document_type(document_type),
                 'category': parsed_data.get('category'),
                 'description': parsed_data.get('description'),
             }
@@ -3613,3 +3627,36 @@ description: (string, brief description in Greek)
         except Exception as e:
             logger.warning(f"Error parsing date {value}: {str(e)}")
             return None
+
+    def _parse_document_number(self, value) -> Optional[str]:
+        """Normalize document number"""
+        if value is None:
+            return None
+        cleaned = str(value).strip()
+        return cleaned or None
+
+    def _parse_supplier_vat(self, value) -> Optional[str]:
+        """Normalize Greek VAT/AFM number (digits only)"""
+        if value is None:
+            return None
+        digits = re.sub(r'\D', '', str(value))
+        return digits or None
+
+    def _parse_document_type(self, value) -> Optional[str]:
+        """Normalize document type to supported values"""
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        if not normalized:
+            return None
+        if normalized in {'invoice', 'receipt', 'credit_note', 'debit_note', 'other'}:
+            return normalized
+        if 'τιμολ' in normalized or 'invoice' in normalized:
+            return 'invoice'
+        if 'αποδει' in normalized or 'receipt' in normalized:
+            return 'receipt'
+        if 'πιστω' in normalized or 'credit' in normalized:
+            return 'credit_note'
+        if 'χρεω' in normalized or 'debit' in normalized:
+            return 'debit_note'
+        return 'other'
