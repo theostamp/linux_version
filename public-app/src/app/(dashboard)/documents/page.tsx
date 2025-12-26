@@ -19,7 +19,11 @@ function DocumentsContent() {
   const { selectedBuilding } = useBuilding();
   const { createExpense, isLoading } = useExpenses(selectedBuilding?.id);
 
-  const handleSave = async (scannedData: ScannedInvoiceData, file: File | null) => {
+  const handleSave = async (
+    scannedData: ScannedInvoiceData,
+    file: File | null,
+    shouldArchive: boolean
+  ) => {
     if (!selectedBuilding?.id) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
       return;
@@ -44,7 +48,7 @@ function DocumentsContent() {
 
       const createdExpense = await createExpense(expenseData);
 
-      if (createdExpense && file) {
+      if (shouldArchive && createdExpense && file) {
         const archiveData = new FormData();
         archiveData.append('building', selectedBuilding.id.toString());
         archiveData.append('category', 'expense_receipt');

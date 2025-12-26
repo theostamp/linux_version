@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { Loader2, Upload, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 
 interface InvoiceUploadFormProps {
-  onSave?: (data: ScannedInvoiceData, file: File | null) => void;
+  onSave?: (data: ScannedInvoiceData, file: File | null, shouldArchive: boolean) => void;
   onCancel?: () => void;
 }
 
@@ -51,6 +52,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
   const { scanInvoiceAsync, isLoading, error, data: scannedData, reset } = useInvoiceScan();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [shouldArchive, setShouldArchive] = useState(true);
   const [formData, setFormData] = useState<ScannedInvoiceData>({
     amount: null,
     date: null,
@@ -117,7 +119,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
 
   const handleSave = () => {
     if (onSave) {
-      onSave(formData, selectedFile);
+      onSave(formData, selectedFile, shouldArchive);
     } else {
       // Mock save action
       console.log('Saving expense data:', formData);
@@ -128,6 +130,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
   const handleReset = () => {
     setSelectedFile(null);
     setImagePreview(null);
+    setShouldArchive(true);
     setFormData({
       amount: null,
       date: null,
@@ -358,6 +361,22 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                   </div>
 
                   {/* Action Buttons */}
+                  <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/40 px-4 py-3">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="archive-toggle" className="text-sm font-medium">
+                        Καταχώρηση στο Ηλεκτρονικό Αρχείο
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Αποθήκευση του παραστατικού στο ηλεκτρονικό αρχείο.
+                      </p>
+                    </div>
+                    <Switch
+                      id="archive-toggle"
+                      checked={shouldArchive}
+                      onCheckedChange={(checked) => setShouldArchive(Boolean(checked))}
+                    />
+                  </div>
+
                   <div className="flex space-x-3 pt-4">
                     <Button
                       onClick={handleSave}
