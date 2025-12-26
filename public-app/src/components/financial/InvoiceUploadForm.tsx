@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Upload, FileImage, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 
 interface InvoiceUploadFormProps {
   onSave?: (data: ScannedInvoiceData) => void;
@@ -70,12 +70,21 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
     const file = files[0];
     setSelectedFile(file);
     
-    // Create image preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const filename = file.name.toLowerCase();
+    const isPdf = file.type === 'application/pdf' || filename.endsWith('.pdf');
+    const isImage =
+      file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name);
+
+    // Create preview (images only)
+    if (isImage && !isPdf) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
     
     // Automatically trigger scan
     try {
@@ -129,7 +138,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
                   <input
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
                         handleFileSelect(Array.from(e.target.files));
@@ -145,13 +154,13 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                     <Upload className="w-12 h-12 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-700">
-                        Κάντε κλικ για επιλογή εικόνας παραστατικού
+                        Κάντε κλικ για επιλογή εικόνας ή PDF παραστατικού
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         ή σύρετε το αρχείο εδώ
                       </p>
                       <p className="text-xs text-gray-400 mt-2">
-                        Υποστηριζόμενοι τύποι: JPG, PNG, WebP (μέχρι 10MB)
+                        Υποστηριζόμενοι τύποι: JPG, PNG, WebP, PDF (μέχρι 10MB)
                       </p>
                     </div>
                   </label>
@@ -168,13 +177,25 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                         Παρακαλώ περιμένετε
                       </p>
                     </div>
-                  ) : imagePreview ? (
+                  ) : (
                     <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Invoice preview"
-                        className="w-full rounded-lg border border-gray-200"
-                      />
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="Invoice preview"
+                          className="w-full rounded-lg border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-full rounded-lg border border-gray-200 bg-gray-50 p-6 flex items-center gap-3">
+                          <FileText className="w-6 h-6 text-gray-500" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">
+                              {selectedFile.name}
+                            </p>
+                            <p className="text-xs text-gray-500">PDF</p>
+                          </div>
+                        </div>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -184,7 +205,7 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                         Αλλαγή Αρχείου
                       </Button>
                     </div>
-                  ) : null}
+                  )}
                 </div>
               )}
 
@@ -302,4 +323,3 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
     </div>
   );
 };
-

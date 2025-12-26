@@ -118,6 +118,56 @@ const trimErrorBody = (body?: string) => {
     : body;
 };
 
+const extractErrorMessage = (body?: string): string | undefined => {
+  if (!body) return undefined;
+  const text = body.trim();
+  if (!text) return undefined;
+
+  const maybeJson = text.startsWith('{') || text.startsWith('[');
+  if (!maybeJson) return trimErrorBody(text);
+
+  try {
+    const parsed: any = JSON.parse(text);
+
+    // Some upstream proxies wrap a JSON string under `details`.
+    const details = parsed?.details;
+    if (typeof details === 'string' && details.trim()) {
+      try {
+        const inner: any = JSON.parse(details);
+        const innerMessage =
+          (typeof inner?.error === 'string' && inner.error) ||
+          (typeof inner?.detail === 'string' && inner.detail) ||
+          (typeof inner?.message === 'string' && inner.message);
+        if (innerMessage) return trimErrorBody(innerMessage);
+      } catch {
+        return trimErrorBody(details.trim());
+      }
+    }
+
+    const message =
+      (typeof parsed?.error === 'string' && parsed.error) ||
+      (typeof parsed?.detail === 'string' && parsed.detail) ||
+      (typeof parsed?.message === 'string' && parsed.message);
+    if (message) return trimErrorBody(message);
+
+    if (Array.isArray(parsed?.non_field_errors) && typeof parsed.non_field_errors[0] === 'string') {
+      return trimErrorBody(parsed.non_field_errors[0]);
+    }
+
+    // Fall back to the first string error in a field-error dict.
+    if (parsed && typeof parsed === 'object') {
+      for (const value of Object.values(parsed)) {
+        if (typeof value === 'string' && value.trim()) return trimErrorBody(value.trim());
+        if (Array.isArray(value) && typeof value[0] === 'string') return trimErrorBody(value[0]);
+      }
+    }
+  } catch {
+    // Ignore parse errors and fall back to raw text.
+  }
+
+  return trimErrorBody(text);
+};
+
 // Global flag to prevent multiple 401 error toasts from showing simultaneously
 let hasShown401Error = false;
 let last401ErrorTime = 0;
@@ -231,7 +281,8 @@ const createApiError = (
   body?: string,
 ): ApiError => {
   const trimmedBody = trimErrorBody(body);
-  const suffix = trimmedBody ? ` ${trimmedBody}` : "";
+  const extractedMessage = extractErrorMessage(body);
+  const suffix = extractedMessage ? ` ${extractedMessage}` : trimmedBody ? ` ${trimmedBody}` : "";
   const error = new Error(
     `${method.toUpperCase()} ${url} failed: ${status}${suffix}`,
   ) as ApiError;

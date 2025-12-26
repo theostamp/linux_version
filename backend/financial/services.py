@@ -3379,10 +3379,10 @@ description: (string, brief description in Greek)
     
     def parse_invoice(self, image_file: UploadedFile) -> dict:
         """
-        Parse invoice image and extract structured data.
+        Parse invoice document (image or PDF) and extract structured data.
         
         Args:
-            image_file: Django UploadedFile object containing the invoice image
+            image_file: Django UploadedFile object containing the invoice (image or PDF)
             
         Returns:
             dict with keys: amount, date, supplier, category, description
@@ -3396,7 +3396,7 @@ description: (string, brief description in Greek)
         import re
         
         try:
-            # Read image file as bytes
+            # Read file as bytes
             image_bytes = image_file.read()
             image_file.seek(0)  # Reset file pointer for potential reuse
             
@@ -3405,9 +3405,46 @@ description: (string, brief description in Greek)
             
             # Prepare the image part for Gemini
             from PIL import Image as PILImage
-            
-            # Convert bytes to PIL Image
-            image = PILImage.open(io.BytesIO(image_bytes))
+
+            content_type = (getattr(image_file, "content_type", None) or "").lower()
+            filename = (getattr(image_file, "name", None) or "").lower()
+            is_pdf = (
+                content_type == "application/pdf"
+                or filename.endswith(".pdf")
+                or image_bytes[:4] == b"%PDF"
+            )
+
+            if is_pdf:
+                try:
+                    import fitz  # PyMuPDF
+                except Exception as import_error:
+                    raise ValueError(
+                        "PDF uploads are not supported on this server (missing PyMuPDF)."
+                    ) from import_error
+
+                doc = None
+                try:
+                    doc = fitz.open(stream=image_bytes, filetype="pdf")
+                    if doc.page_count < 1:
+                        raise ValueError("PDF has no pages")
+                    page = doc.load_page(0)
+                    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+                    rendered_bytes = pix.tobytes("png")
+                finally:
+                    try:
+                        if doc is not None:
+                            doc.close()
+                    except Exception:
+                        pass
+
+                image = PILImage.open(io.BytesIO(rendered_bytes))
+            else:
+                # Convert bytes to PIL Image
+                image = PILImage.open(io.BytesIO(image_bytes))
+
+            # Ensure a consistent mode for the model
+            if image.mode not in ("RGB", "L"):
+                image = image.convert("RGB")
             
             # Try models in order with fallback
             # We prioritize Flash models as they're the fastest/cost-effective for this task.

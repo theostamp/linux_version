@@ -4573,7 +4573,7 @@ def cleanup_orphan_transactions(request):
 class ScanInvoiceView(APIView):
     """
     API endpoint για ανάλυση παραστατικών με Google Gemini AI.
-    Αποδέχεται εικόνα παραστατικού και επιστρέφει εξαγόμενα δεδομένα.
+    Αποδέχεται εικόνα ή PDF παραστατικού και επιστρέφει εξαγόμενα δεδομένα.
     """
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -4601,14 +4601,14 @@ class ScanInvoiceView(APIView):
             # Validate file presence
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'Δεν βρέθηκε αρχείο. Παρακαλώ επιλέξτε εικόνα παραστατικού.'},
+                    {'error': 'Δεν βρέθηκε αρχείο. Παρακαλώ επιλέξτε εικόνα ή PDF παραστατικού.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
             file = request.FILES['file']
             
-            # Validate file type (images only)
-            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            # Validate file type (images or PDF)
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
             if file.content_type not in allowed_types:
                 return Response(
                     {'error': f'Μη υποστηριζόμενος τύπος αρχείου: {file.content_type}. Επιτρέπονται: {", ".join(allowed_types)}'},

@@ -75,6 +75,7 @@ curl -X POST https://your-backend.railway.app/api/financial/expenses/scan/ \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -F "file=@invoice.jpg"
 ```
+Supported uploads: `image/jpeg`, `image/png`, `image/webp`, `application/pdf` (PDF will be rendered to an image server-side).
 
 ## Troubleshooting
 

@@ -81,8 +81,8 @@ function DocumentsContent() {
         </CardHeader>
         <CardContent>
           <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-            <li>Ανέβασε εικόνα παραστατικού (JPG, PNG, WebP)</li>
-            <li>Το AI αναλύει την εικόνα και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
+            <li>Ανέβασε εικόνα ή PDF παραστατικού (JPG, PNG, WebP, PDF)</li>
+            <li>Το AI αναλύει το παραστατικό και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
             <li>Ελέγξε και επεξεργάσου τα αποτελέσματα</li>
             <li>Αποθήκευσε τη δαπάνη με ένα κλικ</li>
           </ul>
@@ -104,4 +104,3 @@ export default function DocumentsPage() {
     </AuthGate>
   );
 }
-
