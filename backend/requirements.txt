@@ -82,7 +82,7 @@ google-api-python-client>=2.108.0
 google-cloud-documentai>=2.20.1
 
 # Google Gemini AI Integration
-google-generativeai>=0.3.0
+google-generativeai>=0.8.0
 
 # Celery for async task processing
 celery>=5.5.3

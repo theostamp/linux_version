@@ -3256,9 +3256,25 @@ If a field is not found, return null."""
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
         
+        # Configure with API key
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
-        logger.info("InvoiceParser initialized with Gemini 1.5 Flash")
+        
+        # Use the correct model name for the current API version
+        # For newer SDK versions (>=0.8.0), use 'gemini-1.5-flash' or 'gemini-1.5-flash-latest'
+        # The model name should work with both v1 and v1beta APIs
+        try:
+            # Try the standard model name first (most compatible)
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            logger.info("InvoiceParser initialized with Gemini 1.5 Flash")
+        except Exception as e:
+            # If that fails, try alternative names
+            logger.warning(f"Failed to initialize gemini-1.5-flash, trying alternatives: {e}")
+            try:
+                self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                logger.info("InvoiceParser initialized with Gemini 1.5 Flash (latest)")
+            except Exception as e2:
+                logger.error(f"Failed to initialize Gemini model: {e2}")
+                raise ValueError(f"Failed to initialize Gemini model. Please check your API key and SDK version. Error: {e2}")
     
     def parse_invoice(self, image_file: UploadedFile) -> dict:
         """
