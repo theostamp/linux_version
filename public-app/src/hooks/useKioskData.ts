@@ -178,7 +178,16 @@ export interface KioskData {
     scheduled_time: string | null;
     location?: string | null;
     status?: string;
+    actual_start_time?: string | null;
+    building_name?: string;
+    is_online?: boolean;
+    is_physical?: boolean;
+    meeting_link?: string | null;
     is_pre_voting_active?: boolean;
+    quorum_percentage?: number;
+    achieved_quorum_mills?: number;
+    required_quorum_mills?: number;
+    total_building_mills?: number;
     stats?: {
       total_apartments_invited?: number;
       pre_voted_count?: number;
@@ -190,8 +199,40 @@ export interface KioskData {
       order?: number;
       title: string;
       item_type: string;
+      status?: string;
       estimated_duration?: number | null;
+      started_at?: string | null;
+      ended_at?: string | null;
     }>;
+    current_item?: {
+      id: string;
+      order?: number;
+      title?: string;
+      item_type?: string;
+      status?: string;
+      estimated_duration?: number | null;
+      started_at?: string | null;
+      ended_at?: string | null;
+      voting_results?: {
+        approve: { count: number; mills: number };
+        reject: { count: number; mills: number };
+        abstain: { count: number; mills: number };
+        total: { count: number; mills: number };
+      } | null;
+      vote_roster?: Array<{
+        attendee: string;
+        apartment_number: string;
+        mills: number;
+        vote: 'approve' | 'reject' | 'abstain' | null;
+        vote_source: 'pre_vote' | 'live' | 'proxy' | null;
+      }>;
+    } | null;
+    attendees_stats?: {
+      total: number;
+      present: number;
+      voted: number;
+      quorum_participants?: number;
+    };
   } | null;
   statistics: {
     total_apartments: number;
@@ -333,14 +374,20 @@ export const useKioskData = (buildingId: number | null = 1) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const inFlightRef = useRef(false);
+  const pollModeRef = useRef<{ isLive: boolean; isVoting: boolean }>({
+    isLive: false,
+    isVoting: false,
+  });
 
   const fetchKioskData = useCallback(async () => {
     if (buildingId == null) return;
+    if (inFlightRef.current) return;
 
     const requestId = ++requestIdRef.current;
+    inFlightRef.current = true;
     setIsLoading(true);
     setError(null);
-    setData(null);
 
     try {
       const today = new Date();
@@ -611,6 +658,12 @@ export const useKioskData = (buildingId: number | null = 1) => {
 
       if (requestId !== requestIdRef.current) return;
 
+      pollModeRef.current = {
+        isLive: kioskData?.upcoming_assembly?.status === 'in_progress',
+        isVoting:
+          kioskData?.upcoming_assembly?.status === 'in_progress' &&
+          kioskData?.upcoming_assembly?.current_item?.item_type === 'voting',
+      };
       setData(kioskData);
 
     } catch (err: unknown) {
@@ -623,18 +676,11 @@ export const useKioskData = (buildingId: number | null = 1) => {
       if (requestId === requestIdRef.current) {
         setIsLoading(false);
       }
+      inFlightRef.current = false;
     }
   }, [buildingId]);
 
-  // Track if assembly is live for faster polling
-  const isLiveRef = useRef(false);
-  
-  // Update ref when status changes (without triggering re-render)
-  useEffect(() => {
-    isLiveRef.current = data?.upcoming_assembly?.status === 'in_progress';
-  }, [data?.upcoming_assembly?.status]);
-
-  // Auto-refresh data - faster when assembly is live
+  // Auto-refresh data - faster when assembly is live (and fastest when a voting item is active)
   useEffect(() => {
     let cancelled = false;
 
@@ -642,34 +688,33 @@ export const useKioskData = (buildingId: number | null = 1) => {
     setData(null);
     setError(null);
 
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const scheduleNext = () => {
+      const { isLive, isVoting } = pollModeRef.current;
+      const intervalTime = isVoting ? 3_000 : isLive ? 10_000 : 5 * 60_000; // 3s voting, 10s live, 5m otherwise
+
+      timeoutId = setTimeout(() => {
+        if (cancelled) return;
+        void run();
+      }, intervalTime);
+    };
+
     const run = async () => {
       try {
         await fetchKioskData();
       } catch {
-        if (cancelled) return;
+        // Errors are handled inside fetchKioskData; keep polling.
+      } finally {
+        if (!cancelled) scheduleNext();
       }
     };
 
-    run();
-
-    // Use dynamic interval based on live status
-    let intervalId: NodeJS.Timeout;
-    
-    const setupInterval = () => {
-      const intervalTime = isLiveRef.current ? 15 * 1000 : 5 * 60 * 1000; // 15s if live, 5m otherwise
-      intervalId = setTimeout(() => {
-        if (!cancelled) {
-          fetchKioskData();
-          setupInterval(); // Reschedule with potentially new interval
-        }
-      }, intervalTime);
-    };
-    
-    setupInterval();
+    void run();
 
     return () => {
       cancelled = true;
-      clearTimeout(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [fetchKioskData]); // Only depend on fetchKioskData, not on data
 
