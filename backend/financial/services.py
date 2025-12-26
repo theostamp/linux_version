@@ -3307,57 +3307,61 @@ If a field is not found, return null."""
             # Convert bytes to PIL Image
             image = PILImage.open(io.BytesIO(image_bytes))
             
-            # Try models in order with fallback - the error happens during generate_content, not initialization
-            # So we need to try each model when calling generate_content
+            # Try models in order with fallback
+            # We prioritize 1.5 Flash as it's the fastest and most cost-effective for this task
             model_configs = [
                 ('gemini-1.5-flash', 'Gemini 1.5 Flash'),
-                ('gemini-1.5-flash-002', 'Gemini 1.5 Flash (002)'),
                 ('gemini-1.5-flash-latest', 'Gemini 1.5 Flash (latest)'),
-                ('gemini-pro-vision', 'Gemini Pro Vision (v1beta compatible)'),
-                ('gemini-pro', 'Gemini Pro'),
+                # Fallback to flash-8b if available (very fast)
+                ('gemini-1.5-flash-8b', 'Gemini 1.5 Flash 8B'),
             ]
             
             response = None
-            last_error = None
+            errors = []
             used_model = None
             
             for model_name, model_desc in model_configs:
                 try:
-                    # Create model instance for this attempt
-                    attempt_model = self.genai.GenerativeModel(model_name)
+                    # Create model instance for this attempt with system instruction
+                    # This is the recommended way in newer SDK versions
+                    attempt_model = self.genai.GenerativeModel(
+                        model_name=model_name,
+                        system_instruction=self.SYSTEM_INSTRUCTION
+                    )
                     
-                    # Generate content with system instruction
+                    # Generate content
                     response = attempt_model.generate_content(
-                        [self.SYSTEM_INSTRUCTION, image],
+                        [image],
                         generation_config={
-                            "temperature": 0.1,  # Low temperature for consistent extraction
-                            "max_output_tokens": 500,
+                            "temperature": 0.1,
+                            "max_output_tokens": 1000, # Increased token limit
+                            "response_mime_type": "application/json", # Force JSON response
                         }
                     )
                     
-                    # If successful, cache this model for future use
+                    # If successful, cache this model for future use (though we recreate it each time here for safety)
                     self.model = attempt_model
                     used_model = model_desc
                     logger.info(f"Successfully used {model_desc} ({model_name}) for invoice parsing")
                     break
                     
                 except Exception as e:
-                    last_error = e
                     error_str = str(e)
+                    errors.append(f"{model_name}: {error_str}")
+                    
                     # Check if it's a model not found error
                     if '404' in error_str or 'not found' in error_str.lower() or 'not supported' in error_str.lower():
-                        logger.warning(f"Model {model_name} not available (likely v1beta API issue), trying next model...")
+                        logger.warning(f"Model {model_name} not available: {e}")
                     else:
                         logger.warning(f"Failed to use {model_name}: {e}")
                     # Continue to next model
                     continue
             
             if response is None:
+                error_details = "; ".join(errors)
                 raise Exception(
-                    f"All Gemini models failed. Tried: {', '.join([name for name, _ in model_configs])}. "
-                    f"Last error: {last_error}. "
-                    f"This usually means the SDK is using v1beta API which doesn't support gemini-1.5 models. "
-                    f"Please upgrade google-generativeai SDK: pip install --upgrade google-generativeai"
+                    f"All Gemini models failed. Errors: {error_details}. "
+                    f"Please ensure google-generativeai SDK is up to date and API key is valid."
                 )
             
             # Extract text response
