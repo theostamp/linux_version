@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters import rest_framework as filters
 from django_filters import DateFilter
 from datetime import datetime
@@ -23,7 +24,7 @@ from .serializers import (
     MeterReadingSerializer, SupplierSerializer,
     FinancialSummarySerializer, FinancialReceiptSerializer, MonthlyBalanceSerializer
 )
-from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
+from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService, InvoiceParser
 from buildings.models import Building
 from buildings.mixins import BuildingContextMixin, OptionalBuildingContextMixin  # NEW: Import mixin
 from apartments.models import Apartment
@@ -4567,3 +4568,86 @@ def cleanup_orphan_transactions(request):
     building_id = request.query_params.get('building_id', request.data.get('building_id'))
     
     return _cleanup_orphan_transactions(request.user, search_term, building_id)
+
+
+class ScanInvoiceView(APIView):
+    """
+    API endpoint για ανάλυση παραστατικών με Google Gemini AI.
+    Αποδέχεται εικόνα παραστατικού και επιστρέφει εξαγόμενα δεδομένα.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def post(self, request):
+        """
+        Ανάλυση παραστατικού από εικόνα.
+        
+        Expected input:
+        - file: Image file (multipart/form-data)
+        
+        Returns:
+        {
+            "amount": decimal or null,
+            "date": "YYYY-MM-DD" or null,
+            "supplier": string or null,
+            "category": string or null,
+            "description": string or null
+        }
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Validate file presence
+            if 'file' not in request.FILES:
+                return Response(
+                    {'error': 'Δεν βρέθηκε αρχείο. Παρακαλώ επιλέξτε εικόνα παραστατικού.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            file = request.FILES['file']
+            
+            # Validate file type (images only)
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            if file.content_type not in allowed_types:
+                return Response(
+                    {'error': f'Μη υποστηριζόμενος τύπος αρχείου: {file.content_type}. Επιτρέπονται: {", ".join(allowed_types)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate file size (max 10MB)
+            max_size = 10 * 1024 * 1024  # 10MB
+            if file.size > max_size:
+                return Response(
+                    {'error': f'Το αρχείο είναι πολύ μεγάλο. Μέγιστο μέγεθος: {max_size // (1024*1024)}MB'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Parse invoice using InvoiceParser
+            try:
+                parser = InvoiceParser()
+                parsed_data = parser.parse_invoice(file)
+                
+                return Response(parsed_data, status=status.HTTP_200_OK)
+                
+            except ValueError as e:
+                # API key missing or configuration error
+                logger.error(f"InvoiceParser configuration error: {str(e)}")
+                return Response(
+                    {'error': 'Σφάλμα ρύθμισης συστήματος ανάλυσης. Παρακαλώ επικοινωνήστε με τον διαχειριστή.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            except Exception as e:
+                # AI parsing failed
+                logger.error(f"Invoice parsing failed: {str(e)}", exc_info=True)
+                return Response(
+                    {'error': f'Αποτυχία ανάλυσης παραστατικού: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as e:
+            logger.error(f"Unexpected error in ScanInvoiceView: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Απρόσμενο σφάλμα κατά την επεξεργασία του αιτήματος.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

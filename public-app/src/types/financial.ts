@@ -172,6 +172,15 @@ export interface FinancialSummary {
   total_expenses_month?: number;
 }
 
+// Invoice scanning types
+export interface ScannedInvoiceData {
+  amount: number | null;
+  date: string | null;
+  supplier: string | null;
+  category: string | null;
+  description: string | null;
+}
+
 export interface ApartmentBalance {
   apartment_id: number;
   apartment_number: string;

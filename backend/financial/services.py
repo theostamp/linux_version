@@ -13,6 +13,9 @@ from .monthly_balance_service import MonthlyBalanceService
 
 import os
 import uuid
+import json
+import re
+import io
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
@@ -3227,3 +3230,163 @@ class DataIntegrityService:
                 'error': str(e),
                 'cleanup_performed': False
             }
+
+
+class InvoiceParser:
+    """
+    Service για την ανάλυση παραστατικών με Google Gemini 1.5 Flash.
+    Εξάγει δεδομένα από εικόνες παραστατικών για αυτόματη συμπλήρωση φορμών.
+    """
+    
+    SYSTEM_INSTRUCTION = """You are an expert accountant for Greek building management. Extract data from the invoice image. Return ONLY a raw JSON object (no markdown formatting) with these keys:
+
+amount: (decimal, final total to pay)
+date: (string, YYYY-MM-DD)
+supplier: (string, name of the company/person)
+category: (string, strictly one of: 'DEH', 'EYDAP', 'HEATING', 'CLEANING', 'MAINTENANCE', 'ELEVATOR', 'OTHER')
+description: (string, brief description in Greek)
+
+If a field is not found, return null."""
+    
+    def __init__(self):
+        """Initialize the Gemini model with API key from environment"""
+        import google.generativeai as genai
+        
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+        
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        logger.info("InvoiceParser initialized with Gemini 1.5 Flash")
+    
+    def parse_invoice(self, image_file: UploadedFile) -> dict:
+        """
+        Parse invoice image and extract structured data.
+        
+        Args:
+            image_file: Django UploadedFile object containing the invoice image
+            
+        Returns:
+            dict with keys: amount, date, supplier, category, description
+            Values can be None if not found
+            
+        Raises:
+            ValueError: If API key is missing or file is invalid
+            Exception: If Gemini API call fails
+        """
+        import json
+        import re
+        
+        try:
+            # Read image file as bytes
+            image_bytes = image_file.read()
+            image_file.seek(0)  # Reset file pointer for potential reuse
+            
+            if not image_bytes:
+                raise ValueError("Image file is empty")
+            
+            # Prepare the image part for Gemini
+            from PIL import Image as PILImage
+            
+            # Convert bytes to PIL Image
+            image = PILImage.open(io.BytesIO(image_bytes))
+            
+            # Generate content with system instruction
+            response = self.model.generate_content(
+                [self.SYSTEM_INSTRUCTION, image],
+                generation_config={
+                    "temperature": 0.1,  # Low temperature for consistent extraction
+                    "max_output_tokens": 500,
+                }
+            )
+            
+            # Extract text response
+            response_text = response.text.strip()
+            
+            # Clean up markdown formatting if present (Gemini sometimes wraps JSON in ```json```)
+            # Remove markdown code blocks
+            response_text = re.sub(r'```json\s*', '', response_text)
+            response_text = re.sub(r'```\s*', '', response_text)
+            response_text = response_text.strip()
+            
+            # Parse JSON
+            try:
+                parsed_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response: {response_text[:200]}")
+                # Try to extract JSON from text if wrapped
+                json_match = re.search(r'\{[^{}]*\}', response_text, re.DOTALL)
+                if json_match:
+                    parsed_data = json.loads(json_match.group())
+                else:
+                    raise ValueError(f"Invalid JSON response from Gemini: {str(e)}")
+            
+            # Validate and normalize response structure
+            result = {
+                'amount': self._parse_amount(parsed_data.get('amount')),
+                'date': self._parse_date(parsed_data.get('date')),
+                'supplier': parsed_data.get('supplier'),
+                'category': parsed_data.get('category'),
+                'description': parsed_data.get('description'),
+            }
+            
+            logger.info(f"Invoice parsed successfully: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error parsing invoice: {str(e)}", exc_info=True)
+            raise Exception(f"Failed to parse invoice: {str(e)}")
+    
+    def _parse_amount(self, value) -> Optional[Decimal]:
+        """Parse amount value to Decimal"""
+        if value is None:
+            return None
+        
+        try:
+            # Handle string values like "123.45" or "123,45"
+            if isinstance(value, str):
+                # Replace comma with dot for Greek number format
+                value = value.replace(',', '.')
+                # Remove currency symbols and whitespace
+                value = re.sub(r'[€$€\s]', '', value)
+            
+            return Decimal(str(value))
+        except (ValueError, TypeError):
+            logger.warning(f"Could not parse amount: {value}")
+            return None
+    
+    def _parse_date(self, value) -> Optional[str]:
+        """Parse date value to YYYY-MM-DD format"""
+        if value is None:
+            return None
+        
+        try:
+            # If already in YYYY-MM-DD format, return as-is
+            if isinstance(value, str) and re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                return value
+            
+            # Try to parse various date formats
+            from datetime import datetime
+            
+            # Common Greek date formats
+            date_formats = [
+                '%Y-%m-%d',
+                '%d/%m/%Y',
+                '%d-%m-%Y',
+                '%d.%m.%Y',
+                '%Y/%m/%d',
+            ]
+            
+            for fmt in date_formats:
+                try:
+                    dt = datetime.strptime(str(value), fmt)
+                    return dt.strftime('%Y-%m-%d')
+                except ValueError:
+                    continue
+            
+            logger.warning(f"Could not parse date: {value}")
+            return None
+        except Exception as e:
+            logger.warning(f"Error parsing date {value}: {str(e)}")
+            return None

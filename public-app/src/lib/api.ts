@@ -2009,6 +2009,20 @@ export async function deleteServiceReceipt(id: number): Promise<void> {
 // Apartment Financial Data API Functions
 // ============================================================================
 
+/**
+ * Scan invoice image using Google Gemini AI
+ * Returns extracted data: amount, date, supplier, category, description
+ */
+export async function scanInvoice(file: File): Promise<import('@/types/financial').ScannedInvoiceData> {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  return await apiPost<import('@/types/financial').ScannedInvoiceData>(
+    '/financial/expenses/scan/',
+    formData
+  );
+}
+
 export async function fetchApartmentsWithFinancialData(buildingId: number, month?: string): Promise<any[]> {
   console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId, 'month:', month);
   

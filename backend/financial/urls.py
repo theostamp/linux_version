@@ -6,7 +6,7 @@ from .views import (
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
     SystemHealthCheckView, auto_fix_system_issues, financial_overview,
     FinancialReceiptViewSet, MonthlyBalanceViewSet, my_apartment_data,
-    cleanup_orphan_transactions, database_cleanup
+    cleanup_orphan_transactions, database_cleanup, ScanInvoiceView
 )
 from .backup_views import backup_database, restore_database, backup_history, backup_detail
 from .tests_views import (
@@ -28,6 +28,8 @@ router.register(r'receipts', FinancialReceiptViewSet)
 router.register(r'monthly-balances', MonthlyBalanceViewSet, basename='monthly-balances')
 
 urlpatterns = [
+    # Invoice scanning endpoint (before router to avoid conflicts)
+    path('expenses/scan/', ScanInvoiceView.as_view(), name='scan-invoice'),
     path('', include(router.urls)),
     # Custom URL pattern for apartment transactions
     path('apartments/<int:apartment_id>/transactions/', 
