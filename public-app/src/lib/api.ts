@@ -2075,6 +2075,56 @@ export async function scanInvoice(file: File): Promise<import('@/types/financial
 }
 
 // ============================================================================
+// Data Migration API Functions
+// ============================================================================
+
+import type {
+  MigrationAnalysisResult,
+  MigrationBuildingInfo,
+  MigrationApartment,
+  MigrationResident,
+  MigrationValidationResult,
+  MigrationImportResponse,
+} from '@/types/dataMigration';
+
+export async function analyzeMigrationImages(files: File[]): Promise<MigrationAnalysisResult> {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append('images', file);
+  });
+
+  const response = await apiPost<{ success: boolean; data: MigrationAnalysisResult }>(
+    '/data-migration/analyze-images/',
+    formData
+  );
+
+  return response.data;
+}
+
+export async function validateMigrationData(payload: {
+  building_info: MigrationBuildingInfo;
+  apartments: MigrationApartment[];
+  residents: MigrationResident[];
+}): Promise<MigrationValidationResult> {
+  return await apiPost<MigrationValidationResult>(
+    '/data-migration/validate-data/',
+    payload
+  );
+}
+
+export async function importMigrationData(payload: {
+  building_info: MigrationBuildingInfo;
+  apartments: MigrationApartment[];
+  residents: MigrationResident[];
+  target_building_id: 'new' | number | string;
+}): Promise<MigrationImportResponse> {
+  return await apiPost<MigrationImportResponse>(
+    '/data-migration/import-data/',
+    payload
+  );
+}
+
+// ============================================================================
 // Electronic Archive API Functions
 // ============================================================================
 

@@ -90,6 +90,10 @@ class FormAnalyzer:
         extracted_data['apartments'] = apartments
         extracted_data['residents'] = residents
         
+        # Αν δεν βρέθηκε αριθμός διαμερισμάτων, χρησιμοποίησε το πλήθος
+        if not building_info.get('apartments_count') and apartments:
+            building_info['apartments_count'] = len(apartments)
+        
         # Υπολογισμός confidence score
         confidence = self._calculate_confidence_score(extracted_data)
         extracted_data['confidence_score'] = confidence
@@ -202,22 +206,64 @@ class FormAnalyzer:
         Εξάγει πληροφορίες κτιρίου από λογαριασμό κοινοχρήστων
         """
         building_info = {}
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-                
+
+        def normalize_phone(value: str) -> str:
+            digits = re.sub(r'\D', '', value)
+            if digits.startswith('30') and len(digits) > 10:
+                digits = digits[2:]
+            return digits[-10:] if len(digits) >= 10 else digits
+
+        def looks_like_section_title(value: str) -> bool:
+            value_lower = value.lower()
+            return any(keyword in value_lower for keyword in [
+                'φύλλο', 'κοινοχρήσ', 'ανάλυση', 'στατισ', 'εξαγωγή',
+                'πληρωτέο', 'παραδοσιακή', 'ειδοποιητήριο'
+            ])
+
+        lines_clean = [line.strip() for line in lines if line.strip()]
+        last_context = None
+
+        for idx, line in enumerate(lines_clean):
             line_lower = line.lower()
-            
+
             # Όνομα κτιρίου - αναζήτηση σε διάφορα σημεία του λογαριασμού
-            if any(keyword in line_lower for keyword in ['κτίριο', 'οικοδομή', 'συγκρότημα', 'οικοδομικό', 'πολυκατοικία', 'διαχείριση']):
-                # Αφαίρεση των keywords για να πάρουμε μόνο το όνομα
+            if not building_info.get('name') and any(keyword in line_lower for keyword in ['κτίριο', 'οικοδομή', 'συγκρότημα', 'οικοδομικό', 'πολυκατοικία']):
                 clean_name = line
-                for keyword in ['κτίριο', 'οικοδομή', 'συγκρότημα', 'οικοδομικό', 'πολυκατοικία', 'διαχείριση']:
+                for keyword in ['κτίριο', 'οικοδομή', 'συγκρότημα', 'οικοδομικό', 'πολυκατοικία']:
                     clean_name = clean_name.replace(keyword, '').replace(keyword.upper(), '').strip()
-                if clean_name and len(clean_name) > 2:
+                if clean_name and len(clean_name) > 2 and not looks_like_section_title(clean_name):
                     building_info['name'] = clean_name
+                else:
+                    # Αν το label είναι μόνο του, πάρε την επόμενη γραμμή
+                    for next_idx in range(idx + 1, len(lines_clean)):
+                        candidate = lines_clean[next_idx].strip()
+                        if candidate and not looks_like_section_title(candidate):
+                            building_info['name'] = candidate
+                            break
+            
+            # Όνομα γραφείου διαχείρισης
+            if (not building_info.get('management_office_name')
+                and 'διαχείριση' in line_lower
+                and 'διαχειριστ' not in line_lower):
+                clean_office = line.strip()
+                for keyword in ['γραφείο', 'εταιρεία']:
+                    clean_office = clean_office.replace(keyword, '').replace(keyword.upper(), '').strip()
+                if clean_office and len(clean_office) > 2:
+                    building_info['management_office_name'] = clean_office
+                    last_context = 'management_office'
+            
+            # Εσωτερικός διαχειριστής
+            if 'διαχειριστ' in line_lower and 'διαχείριση' not in line_lower:
+                clean_manager = line
+                for keyword in ['διαχειριστής', 'διαχειριστησ', 'διαχειριστ', 'κτιρίου', 'κτιριου']:
+                    clean_manager = clean_manager.replace(keyword, '').replace(keyword.upper(), '').strip()
+                if clean_manager and len(clean_manager) > 2:
+                    building_info['internal_manager_name'] = clean_manager
+                last_context = 'internal_manager'
+
+                apartment_match = re.search(r'διαμ\.?\s*(\d+)', line_lower)
+                if apartment_match and not building_info.get('internal_manager_apartment'):
+                    building_info['internal_manager_apartment'] = apartment_match.group(1)
             
             # Διεύθυνση - αναζήτηση σε διάφορα σημεία
             # Προτεραιότητα 1: Διεύθυνση διαχείρισης
@@ -246,10 +292,56 @@ class FormAnalyzer:
                     number = address_match.group(2).strip()
                     if len(street) > 2 and street.lower() not in ['α/α', 'κωδ', 'μέτρα', 'θερμάνση']:
                         building_info['address'] = f"{street} {number}"
+
+            # Πιθανή πλήρης διεύθυνση με πόλη/ΤΚ (π.χ. "Οδός 6, Αθήνα 10562")
+            if ',' in line and (
+                not building_info.get('address')
+                or not building_info.get('city')
+                or not building_info.get('postal_code')
+            ):
+                postal_match = re.search(r'\b\d{3}\s?\d{2}\b', line)
+                if postal_match:
+                    parts = [part.strip() for part in line.split(',') if part.strip()]
+                    if parts and not building_info.get('address'):
+                        building_info['address'] = parts[0]
+                    if not building_info.get('postal_code'):
+                        building_info['postal_code'] = postal_match.group().replace(' ', '')
+                    city_match = re.search(r'([Α-ΩΆΈΉΊΌΎΏ][^0-9,]+)\s*\d{3}\s?\d{2}', line)
+                    if city_match and not building_info.get('city'):
+                        building_info['city'] = city_match.group(1).strip()
             
             # Πόλη - επεκτεταμένη λίστα ελληνικών πόλεων
-            if any(city in line_lower for city in ['αθήνα', 'θεσσαλονίκη', 'πάτρα', 'ηράκλειο', 'λαρίσα', 'βόλος', 'ιοάννινα', 'χαλκίδα', 'λαμία', 'κομοτηνή', 'αλεξανδρούπολη', 'καβάλα', 'κέρκυρα', 'χανιά', 'ρόδος', 'κως', 'μύκονος', 'σάντορίνη', 'νίκαια', 'κορυδαλλός', 'περαία', 'καλλιθέα', 'αγία βαρβάρα', 'αγίοι αναργυροι']):
-                building_info['city'] = line.strip()
+            city_map = {
+                'αθήνα': 'Αθήνα',
+                'θεσσαλονίκη': 'Θεσσαλονίκη',
+                'πάτρα': 'Πάτρα',
+                'ηράκλειο': 'Ηράκλειο',
+                'λαρίσα': 'Λάρισα',
+                'βόλος': 'Βόλος',
+                'ιοάννινα': 'Ιωάννινα',
+                'χαλκίδα': 'Χαλκίδα',
+                'λαμία': 'Λαμία',
+                'κομοτηνή': 'Κομοτηνή',
+                'αλεξανδρούπολη': 'Αλεξανδρούπολη',
+                'καβάλα': 'Καβάλα',
+                'κέρκυρα': 'Κέρκυρα',
+                'χανιά': 'Χανιά',
+                'ρόδος': 'Ρόδος',
+                'κως': 'Κως',
+                'μύκονος': 'Μύκονος',
+                'σάντορίνη': 'Σαντορίνη',
+                'νίκαια': 'Νίκαια',
+                'κορυδαλλός': 'Κορυδαλλός',
+                'περαία': 'Περαία',
+                'καλλιθέα': 'Καλλιθέα',
+                'αγία βαρβάρα': 'Αγία Βαρβάρα',
+                'αγίοι αναργυροι': 'Άγιοι Ανάργυροι',
+            }
+            if not building_info.get('city'):
+                for key, value in city_map.items():
+                    if key in line_lower:
+                        building_info['city'] = value
+                        break
             
             # ΤΚ - αναζήτηση για ελληνικούς ταχυδρομικούς κώδικες
             tk_match = re.search(r'\b\d{3}\s?\d{2}\b', line)  # Ελληνικός ΤΚ format: 12345
@@ -271,20 +363,22 @@ class FormAnalyzer:
                 if apt_match:
                     building_info['apartments_count'] = int(apt_match.group(1))
                     break
-            
-            # Πληροφορίες διαχείρισης
-            if 'διαχειριστής' in line_lower or 'διαχείριση' in line_lower:
-                # Αφαίρεση των keywords
-                clean_manager = line
-                for keyword in ['διαχειριστής:', 'διαχείριση:', 'διαχειριστής', 'διαχείριση']:
-                    clean_manager = clean_manager.replace(keyword, '').replace(keyword.upper(), '').strip()
-                if clean_manager and len(clean_manager) > 2:
-                    building_info['management_office_name'] = clean_manager
-            
-            # Τηλέφωνο διαχείρισης
-            phone_match = re.search(r'τηλ[.:]\s*(\d+)', line_lower)
+
+            # Ωράριο είσπραξης (π.χ. "Δευ-Παρ 9:00-17:00")
+            schedule_match = re.search(r'(Δευ|Τρι|Τετ|Πεμ|Παρ|Σαβ|Κυρ)[^0-9]*\d{1,2}:\d{2}', line)
+            if schedule_match and not building_info.get('internal_manager_collection_schedule'):
+                building_info['internal_manager_collection_schedule'] = line.strip()
+
+            # Τηλέφωνο - γενική αναζήτηση
+            phone_match = re.search(r'(\+?\d[\d\s\-]{8,}\d)', line)
             if phone_match:
-                building_info['management_office_phone'] = phone_match.group(1)
+                phone_value = normalize_phone(phone_match.group(1))
+                if last_context == 'internal_manager' and not building_info.get('internal_manager_phone'):
+                    building_info['internal_manager_phone'] = phone_value
+                elif last_context == 'management_office' and not building_info.get('management_office_phone'):
+                    building_info['management_office_phone'] = phone_value
+                elif not building_info.get('management_office_phone'):
+                    building_info['management_office_phone'] = phone_value
         
         return building_info
     
@@ -329,7 +423,7 @@ class FormAnalyzer:
             apt_found = False
             
             # Μορφή 1: "1 ΒΑΛΤΗΣ" (απλή αρίθμηση)
-            apt_match1 = re.search(r'^(\d+)\s+([Α-Ωα-ω\s]+)', line)
+            apt_match1 = re.search(r'^(\d+)\s+([^\d€]+)', line)
             if apt_match1:
                 apt_number = apt_match1.group(1)
                 resident_name = apt_match1.group(2).strip()
@@ -337,7 +431,7 @@ class FormAnalyzer:
             
             # Μορφή 2: "1-1 ΚΑΡΑΣΑΒΒΙΔΟΥ" (κωδικός διαμερίσματος)
             elif not apt_found:
-                apt_match2 = re.search(r'^(\d+-\d+)\s+([Α-Ωα-ω\s]+)', line)
+                apt_match2 = re.search(r'^(\d+-\d+)\s+([^\d€]+)', line)
                 if apt_match2:
                     apt_number = apt_match2.group(1)
                     resident_name = apt_match2.group(2).strip()
@@ -345,7 +439,7 @@ class FormAnalyzer:
             
             # Μορφή 3: "1 ΚΑΡΑΣΑΒΒΙΔΟΥ" με επιπλέον δεδομένα
             elif not apt_found:
-                apt_match3 = re.search(r'^(\d+)\s+([Α-Ωα-ω\s]+?)(?:\s+\d+\.\d+|\s+\d+|\s*$)', line)
+                apt_match3 = re.search(r'^(\d+)\s+([^\d€]+?)(?:\s+\d+\.\d+|\s+\d+|\s*$)', line)
                 if apt_match3:
                     apt_number = apt_match3.group(1)
                     resident_name = apt_match3.group(2).strip()

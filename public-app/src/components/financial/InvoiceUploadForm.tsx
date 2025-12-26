@@ -118,6 +118,14 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
   };
 
   const handleSave = () => {
+    console.log('[InvoiceUploadForm] handleSave called:', {
+      hasFile: !!selectedFile,
+      fileName: selectedFile?.name,
+      fileSize: selectedFile?.size,
+      shouldArchive,
+      formData,
+    });
+    
     if (onSave) {
       onSave(formData, selectedFile, shouldArchive);
     } else {
@@ -360,23 +368,29 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
                     />
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/40 px-4 py-3">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="archive-toggle" className="text-sm font-medium">
+                  {/* Archive Toggle - More Visible */}
+                  <div className="flex items-center justify-between gap-4 rounded-lg border-2 border-primary/20 bg-primary/5 px-4 py-3">
+                    <div className="space-y-0.5 flex-1">
+                      <Label htmlFor="archive-toggle" className="text-sm font-semibold text-foreground">
                         Καταχώρηση στο Ηλεκτρονικό Αρχείο
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        Αποθήκευση του παραστατικού στο ηλεκτρονικό αρχείο.
+                        {shouldArchive 
+                          ? 'Το παραστατικό θα αποθηκευτεί αυτόματα στο ηλεκτρονικό αρχείο' 
+                          : 'Το παραστατικό δεν θα αποθηκευτεί στο αρχείο'}
                       </p>
                     </div>
                     <Switch
                       id="archive-toggle"
                       checked={shouldArchive}
-                      onCheckedChange={(checked) => setShouldArchive(Boolean(checked))}
+                      onCheckedChange={(checked) => {
+                        console.log('[InvoiceUploadForm] Archive toggle changed:', checked);
+                        setShouldArchive(Boolean(checked));
+                      }}
                     />
                   </div>
 
+                  {/* Action Buttons */}
                   <div className="flex space-x-3 pt-4">
                     <Button
                       onClick={handleSave}

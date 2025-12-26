@@ -48,7 +48,16 @@ function DocumentsContent() {
 
       const createdExpense = await createExpense(expenseData);
 
+      console.log('[DocumentsPage] Expense created:', {
+        expenseId: createdExpense?.id,
+        shouldArchive,
+        hasFile: !!file,
+        fileName: file?.name,
+        fileSize: file?.size,
+      });
+
       if (shouldArchive && createdExpense && file) {
+        console.log('[DocumentsPage] Preparing archive document...');
         const archiveData = new FormData();
         archiveData.append('building', selectedBuilding.id.toString());
         archiveData.append('category', 'expense_receipt');
@@ -82,12 +91,27 @@ function DocumentsContent() {
 
         archiveData.append('linked_expense', createdExpense.id.toString());
 
+        // Debug FormData contents
+        console.log('[DocumentsPage] FormData contents:');
+        for (const [key, value] of archiveData.entries()) {
+          console.log(`  ${key}: ${value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value}`);
+        }
+
         try {
-          await createArchiveDocument(archiveData);
+          console.log('[DocumentsPage] Calling createArchiveDocument...');
+          const archivedDoc = await createArchiveDocument(archiveData);
+          console.log('[DocumentsPage] Document archived successfully:', archivedDoc);
+          toast.success('Το παραστατικό αποθηκεύτηκε στο ηλεκτρονικό αρχείο');
         } catch (archiveError: any) {
-          console.error('Error archiving document:', archiveError);
+          console.error('[DocumentsPage] Error archiving document:', archiveError);
           toast.error(archiveError?.message || 'Σφάλμα κατά την αρχειοθέτηση του παραστατικού');
         }
+      } else {
+        console.log('[DocumentsPage] Archive skipped:', {
+          shouldArchive,
+          hasExpense: !!createdExpense,
+          hasFile: !!file,
+        });
       }
 
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς!');

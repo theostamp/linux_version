@@ -184,6 +184,8 @@ def import_migrated_data(request):
                 city=building_data.get('city', ''),
                 postal_code=building_data.get('postal_code', ''),
                 apartments_count=building_data.get('apartments_count', 0),
+                internal_manager_apartment=building_data.get('internal_manager_apartment', ''),
+                internal_manager_collection_schedule=building_data.get('internal_manager_collection_schedule', ''),
                 internal_manager_name=building_data.get('internal_manager_name', ''),
                 internal_manager_phone=building_data.get('internal_manager_phone', ''),
                 management_office_name=building_data.get('management_office_name', ''),
