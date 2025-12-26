@@ -3259,16 +3259,14 @@ If a field is not found, return null."""
         # Configure with API key
         genai.configure(api_key=api_key)
         
-        # Use the correct model name for the current API version
-        # For newer SDK versions (>=0.8.0), use 'gemini-1.5-flash' or 'gemini-1.5-flash-latest'
-        # The model name should work with both v1 and v1beta APIs
+        # Use gemini-1.5-flash-002 which is compatible with v1beta API
+        # This is the specific version that works reliably with the current API
         try:
-            # Try the standard model name first (most compatible)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
-            logger.info("InvoiceParser initialized with Gemini 1.5 Flash")
+            self.model = genai.GenerativeModel('gemini-1.5-flash-002')
+            logger.info("InvoiceParser initialized with Gemini 1.5 Flash (002)")
         except Exception as e:
-            # If that fails, try alternative names
-            logger.warning(f"Failed to initialize gemini-1.5-flash, trying alternatives: {e}")
+            # Fallback to other model names if 002 doesn't work
+            logger.warning(f"Failed to initialize gemini-1.5-flash-002, trying alternatives: {e}")
             try:
                 self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
                 logger.info("InvoiceParser initialized with Gemini 1.5 Flash (latest)")
