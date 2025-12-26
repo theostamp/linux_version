@@ -7,7 +7,7 @@ import { ReactNode } from 'react';
 interface AuthGateProps {
   children: ReactNode;
   fallback?: ReactNode;
-  role?: 'manager' | 'resident' | 'staff' | 'admin' | 'superuser' | 'any';
+  role?: 'manager' | 'resident' | 'staff' | 'admin' | 'superuser' | 'any' | Array<'manager' | 'resident' | 'staff' | 'admin' | 'superuser'>;
   /** Requires Ultra Admin (is_superuser=true && is_staff=true) */
   requiresUltraAdmin?: boolean;
 }
@@ -57,6 +57,19 @@ export default function AuthGate({
       );
     }
     // Ultra Admin has access, render children
+    return <>{children}</>;
+  }
+
+  // Handle array of roles
+  if (Array.isArray(role)) {
+    const hasAccess = role.includes(userRole as any) || (role.includes('superuser' as any) && isUltraAdmin(user));
+    if (!hasAccess) {
+      return (
+        <div className="p-6 text-red-600">
+          ⛔ Δεν έχετε πρόσβαση σε αυτή τη σελίδα. (Απαιτείται ρόλος: {role.join(', ')})
+        </div>
+      );
+    }
     return <>{children}</>;
   }
 
