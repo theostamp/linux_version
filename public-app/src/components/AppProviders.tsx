@@ -26,8 +26,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = (pathname?.startsWith('/kiosk') || pathname?.startsWith('/kiosk-display')) && !pathname?.startsWith('/kiosk-widgets') && !pathname?.startsWith('/kiosk-management');
 
-  // Routes that should NOT have sidebar (landing pages, auth pages, payment pages)
-  const noSidebarRoutes = [
+  // Public routes (no auth providers / no dashboard shell)
+  const publicRoutes = [
     '/',
     '/login',
     '/register',
@@ -35,36 +35,29 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/plans',
     '/payment',
     '/marketplace',
-    '/auth/callback',
-    '/auth/verify-email',
+    '/auth',
     '/logout',
     '/verify-payment',
     '/forgot-password',
     '/accept-invitation',
-    '/advertise'
-  ];
-  
-  // Auth pages that should NOT show the loading spinner (they handle their own auth)
-  const noAuthLoadingRoutes = [
-    '/login',
-    '/signup',
-    '/forgot-password',
-    '/accept-invitation',
-    '/auth/verify-email',
     '/advertise',
-    '/marketplace/offer-request',
-    '/'
+    '/tenant',
+    '/magic-login',
+    '/unauthorized',
+    '/m',
+    '/vote-by-email',
+    '/backend-proxy',
   ];
-  
-  const isNoAuthLoadingRoute = noAuthLoadingRoutes.some(route =>
+
+  const isPublicRoute = publicRoutes.some(route =>
     pathname === route || (route !== '/' && pathname?.startsWith(route))
   );
 
+  const isNoAuthLoadingRoute = isPublicRoute;
+  const isNoSidebarRoute = isPublicRoute;
+
   // Treat any non-public route as a dashboard route to avoid manual route lists.
-  const isDashboard = Boolean(pathname) && !isKioskMode && !isInfoScreen && !isNoSidebarRoute && !isPlasmicHost;
-  const isNoSidebarRoute = noSidebarRoutes.some(route =>
-    pathname === route || (route !== '/' && pathname?.startsWith(route))
-  );
+  const isDashboard = Boolean(pathname) && !isKioskMode && !isInfoScreen && !isPublicRoute && !isPlasmicHost;
 
   // Debug logging
   useEffect(() => {
@@ -113,7 +106,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // Route layouts handle the app shell; avoid applying LayoutWrapper by default.
   const shouldUseLayoutWrapper = false;
 
-  // For auth pages (login, signup, etc.), skip AuthProvider to avoid loading spinner
+  // For public pages, skip AuthProvider to avoid loading spinner
   if (isNoAuthLoadingRoute) {
     return (
       <LoadingProvider>
