@@ -2,8 +2,10 @@ import cv2
 import numpy as np
 import pytesseract
 import re
+import os
 from typing import Dict, Any, List, Tuple
 import logging
+from django.core.files.storage import default_storage
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +27,26 @@ class FormAnalyzer:
         for image_path in image_paths:
             try:
                 # Ανάγνωση εικόνας
-                image = cv2.imread(image_path)
+                image = self._load_image(image_path)
                 if image is None:
+                    logger.error(f"Unable to read image for OCR: {image_path}")
                     continue
                 
                 # Προεπεξεργασία εικόνας
                 processed_image = self._preprocess_image(image)
                 
                 # OCR ανάλυση
-                text = pytesseract.image_to_string(processed_image, lang='ell')
+                text = pytesseract.image_to_string(
+                    processed_image,
+                    lang='ell+eng',
+                    config='--psm 6 --oem 1'
+                )
+                if not text.strip():
+                    text = pytesseract.image_to_string(
+                        image,
+                        lang='ell+eng',
+                        config='--psm 6 --oem 1'
+                    )
                 all_text.append(text)
                 
             except Exception as e:
@@ -54,6 +67,13 @@ class FormAnalyzer:
         """
         # Μετατροπή σε grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Upscale μικρά κείμενα για καλύτερο OCR
+        height, width = gray.shape[:2]
+        max_dim = max(height, width)
+        if max_dim < 1800:
+            scale = 2.0
+            gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         
         # Αφαίρεση θορύβου
         denoised = cv2.medianBlur(gray, 3)
@@ -63,9 +83,43 @@ class FormAnalyzer:
         enhanced = clahe.apply(denoised)
         
         # Διγκοποίηση
-        _, binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        binary = cv2.adaptiveThreshold(
+            enhanced,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            31,
+            2
+        )
         
         return binary
+
+    def _load_image(self, image_path: str) -> np.ndarray | None:
+        """
+        Φορτώνει εικόνα από local path ή storage (για σωστό OCR).
+        """
+        if not image_path:
+            return None
+
+        if isinstance(image_path, (bytes, bytearray)):
+            data = np.frombuffer(image_path, np.uint8)
+            return cv2.imdecode(data, cv2.IMREAD_COLOR)
+
+        if isinstance(image_path, str):
+            if os.path.exists(image_path):
+                image = cv2.imread(image_path)
+                if image is not None:
+                    return image
+
+            try:
+                if default_storage.exists(image_path):
+                    with default_storage.open(image_path, 'rb') as handle:
+                        data = np.frombuffer(handle.read(), np.uint8)
+                    return cv2.imdecode(data, cv2.IMREAD_COLOR)
+            except Exception as error:
+                logger.error(f"Storage read failed for {image_path}: {error}")
+
+        return None
     
     def _extract_data_from_text(self, text: str) -> Dict[str, Any]:
         """
