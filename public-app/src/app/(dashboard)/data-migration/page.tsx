@@ -18,6 +18,7 @@ import {
   analyzeMigrationImages,
   importMigrationData,
   validateMigrationData,
+  fetchBuilding,
 } from '@/lib/api';
 import type {
   MigrationAnalysisResult,
@@ -60,7 +61,7 @@ const normalizeBuildingInfo = (
 
 export default function DataMigrationPage() {
   const router = useRouter();
-  const { refreshBuildings } = useBuilding();
+  const { refreshBuildings, buildings, setSelectedBuilding } = useBuilding();
   const [files, setFiles] = useState<File[]>([]);
   const [analysis, setAnalysis] = useState<MigrationAnalysisResult | null>(null);
   const [buildingInfo, setBuildingInfo] = useState<MigrationBuildingInfo>(emptyBuildingInfo);
@@ -141,7 +142,20 @@ export default function DataMigrationPage() {
         target_building_id: 'new',
       });
       toast.success(response.message || 'Η εισαγωγή ολοκληρώθηκε.');
+
+      // Refresh buildings list first
       await refreshBuildings();
+
+      // Fetch the newly created building directly from API and set it as selected
+      // This ensures the building is available even if refreshBuildings hasn't updated the state yet
+      try {
+        const newBuilding = await fetchBuilding(response.building_id);
+        setSelectedBuilding(newBuilding);
+      } catch (err) {
+        console.error('[DataMigration] Failed to fetch new building:', err);
+        // Continue anyway - the EditBuildingPage will fetch it
+      }
+
       router.push(`/buildings/${response.building_id}/edit`);
     } catch (error: any) {
       console.error('Migration import failed:', error);

@@ -29,25 +29,31 @@ export default function EditBuildingPage() {
   const loadingRef = useRef(false);
 
   // Check if the ID in URL matches available buildings
+  // IMPORTANT: Only redirect if we've tried to load the building and it failed
+  // Don't redirect just because the building isn't in the list yet (e.g., after creating a new building)
   useEffect(() => {
-    // Wait for buildings to load
-    if (buildingsLoading || loading || initialData || error) return;
+    // Wait for buildings to load AND for the building fetch attempt to complete
+    if (buildingsLoading || loading) return;
 
-    // If we have buildings loaded, check if the URL ID is valid
-    if (buildings.length > 0) {
+    // If we successfully loaded the building, don't redirect
+    if (initialData) return;
+
+    // Only redirect if we have an error AND the building is not in the list
+    // This prevents redirecting when a new building is created but not yet in the list
+    if (error && !buildingsLoading && buildings.length > 0) {
       const urlBuilding = buildings.find(b => b.id === id);
 
-      // If URL ID doesn't match any building, redirect to the selected building or first building
+      // Only redirect if building is not in list AND we have an error
       if (!urlBuilding) {
         const targetBuilding = selectedBuilding || buildings[0];
         if (targetBuilding && targetBuilding.id !== id) {
-          console.log(`[EditBuilding] URL ID ${id} not found. Redirecting to building ${targetBuilding.id}`);
+          console.log(`[EditBuilding] URL ID ${id} not found and fetch failed. Redirecting to building ${targetBuilding.id}`);
           router.replace(`/buildings/${targetBuilding.id}/edit`);
           return;
         }
       }
     }
-  }, [id, buildings, selectedBuilding, buildingsLoading, router]);
+  }, [id, buildings, selectedBuilding, buildingsLoading, loading, initialData, error, router]);
 
   // Load building data - only depends on id
   useEffect(() => {
