@@ -31,22 +31,12 @@ class FormAnalyzer:
                 if image is None:
                     logger.error(f"Unable to read image for OCR: {image_path}")
                     continue
-                
-                # Προεπεξεργασία εικόνας
-                processed_image = self._preprocess_image(image)
-                
-                # OCR ανάλυση
-                text = pytesseract.image_to_string(
-                    processed_image,
-                    lang='ell+eng',
-                    config='--psm 6 --oem 1'
-                )
-                if not text.strip():
-                    text = pytesseract.image_to_string(
-                        image,
-                        lang='ell+eng',
-                        config='--psm 6 --oem 1'
-                    )
+
+                # Αυτόματο crop του εγγράφου για καλύτερο OCR
+                cropped_image = self._auto_crop_document(image)
+
+                # OCR ανάλυση με πολλαπλά passes
+                text = self._extract_text_from_image(cropped_image)
                 all_text.append(text)
                 
             except Exception as e:
@@ -71,8 +61,8 @@ class FormAnalyzer:
         # Upscale μικρά κείμενα για καλύτερο OCR
         height, width = gray.shape[:2]
         max_dim = max(height, width)
-        if max_dim < 1800:
-            scale = 2.0
+        if max_dim < 2200:
+            scale = max(2.0, 2200 / max_dim)
             gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         
         # Αφαίρεση θορύβου
@@ -120,6 +110,97 @@ class FormAnalyzer:
                 logger.error(f"Storage read failed for {image_path}: {error}")
 
         return None
+
+    def _auto_crop_document(self, image: np.ndarray) -> np.ndarray:
+        """
+        Προσπαθεί να κόψει το κύριο έγγραφο από τη φωτογραφία.
+        """
+        try:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            edges = cv2.Canny(blurred, 50, 150)
+
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not contours:
+                return image
+
+            contours = sorted(contours, key=cv2.contourArea, reverse=True)
+            for contour in contours[:5]:
+                perimeter = cv2.arcLength(contour, True)
+                approx = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
+                if len(approx) == 4:
+                    return self._four_point_transform(image, approx.reshape(4, 2))
+        except Exception as error:
+            logger.error(f"Auto crop failed: {error}")
+
+        return image
+
+    def _four_point_transform(self, image: np.ndarray, points: np.ndarray) -> np.ndarray:
+        rect = self._order_points(points)
+        (tl, tr, br, bl) = rect
+
+        width_a = np.linalg.norm(br - bl)
+        width_b = np.linalg.norm(tr - tl)
+        max_width = int(max(width_a, width_b))
+
+        height_a = np.linalg.norm(tr - br)
+        height_b = np.linalg.norm(tl - bl)
+        max_height = int(max(height_a, height_b))
+
+        destination = np.array([
+            [0, 0],
+            [max_width - 1, 0],
+            [max_width - 1, max_height - 1],
+            [0, max_height - 1],
+        ], dtype="float32")
+
+        transform = cv2.getPerspectiveTransform(rect, destination)
+        return cv2.warpPerspective(image, transform, (max_width, max_height))
+
+    def _order_points(self, points: np.ndarray) -> np.ndarray:
+        rect = np.zeros((4, 2), dtype="float32")
+        sum_points = points.sum(axis=1)
+        rect[0] = points[np.argmin(sum_points)]
+        rect[2] = points[np.argmax(sum_points)]
+
+        diff_points = np.diff(points, axis=1)
+        rect[1] = points[np.argmin(diff_points)]
+        rect[3] = points[np.argmax(diff_points)]
+        return rect
+
+    def _extract_text_from_image(self, image: np.ndarray) -> str:
+        """
+        Τρέχει OCR με πολλαπλές ρυθμίσεις και επιστρέφει συνδυασμένο κείμενο.
+        """
+        if image is None:
+            return ''
+
+        processed = self._preprocess_image(image)
+        variants = [
+            processed,
+            cv2.cvtColor(image, cv2.COLOR_BGR2GRAY),
+            image,
+        ]
+        configs = [
+            '--psm 6 --oem 1',
+            '--psm 4 --oem 1',
+        ]
+
+        texts: List[str] = []
+        for variant in variants:
+            for config in configs:
+                try:
+                    text = pytesseract.image_to_string(
+                        variant,
+                        lang='ell+eng',
+                        config=config
+                    )
+                    if text.strip():
+                        texts.append(text)
+                except Exception as error:
+                    logger.error(f"OCR pass failed: {error}")
+
+        return '\n'.join(texts)
     
     def _extract_data_from_text(self, text: str) -> Dict[str, Any]:
         """
