@@ -59,6 +59,8 @@ export interface MigrationValidationResult {
     owned_apartments?: number;
     empty_apartments?: number;
     total_residents?: number;
+    total_mills?: number;
+    mills_status?: 'correct' | 'incorrect' | 'missing';
   };
 }
 

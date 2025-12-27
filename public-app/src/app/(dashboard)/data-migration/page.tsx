@@ -288,6 +288,32 @@ export default function DataMigrationPage() {
                         </Alert>
                       )}
 
+                      {/* Ειδική ειδοποίηση για χιλιοστά */}
+                      {validation.statistics?.mills_status && validation.statistics.mills_status !== 'missing' && (
+                        <Alert variant={validation.statistics.mills_status === 'correct' ? 'default' : 'destructive'}>
+                          <AlertDescription className="space-y-1 text-sm">
+                            <div className="font-semibold">
+                              {validation.statistics.mills_status === 'correct' ? (
+                                <>
+                                  <CheckCircle className="w-4 h-4 inline mr-2 text-emerald-600" />
+                                  Χιλιοστά: Σωστά ({validation.statistics.total_mills?.toFixed(2)} / 1000)
+                                </>
+                              ) : (
+                                <>
+                                  <AlertCircle className="w-4 h-4 inline mr-2 text-red-600" />
+                                  Χιλιοστά: Λάθος ({validation.statistics.total_mills?.toFixed(2)} / 1000)
+                                </>
+                              )}
+                            </div>
+                            {validation.statistics.mills_status === 'incorrect' && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Το άθροισμα των χιλιοστών πρέπει να είναι ακριβώς 1000 (100%)
+                              </div>
+                            )}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
                       {validation.warnings.length > 0 && (
                         <Alert>
                           <AlertDescription className="space-y-1 text-sm">
