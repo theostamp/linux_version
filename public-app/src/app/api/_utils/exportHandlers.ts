@@ -14,11 +14,11 @@ type ProxyHandler = (
  */
 export function exportHandlers(
   handlers: Partial<Record<HttpMethod, ProxyHandler>>,
-  methods: HttpMethod[],
+  methods: readonly HttpMethod[],
   routeName: string,
 ): Record<HttpMethod, ProxyHandler> {
   const exports: Partial<Record<HttpMethod, ProxyHandler>> = {};
-  
+
   for (const method of methods) {
     if (!handlers[method]) {
       throw new Error(
@@ -27,7 +27,7 @@ export function exportHandlers(
     }
     exports[method] = handlers[method]!;
   }
-  
+
   return exports as Record<HttpMethod, ProxyHandler>;
 }
 

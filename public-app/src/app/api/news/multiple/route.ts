@@ -61,13 +61,15 @@ const FALLBACK_NEWS = [
 // Simple XML parser using regex
 function parseRSSFeedSimple(text: string): string[] {
   const titles: string[] = [];
-  
+
   // Extract titles from RSS feed using regex
-  const itemRegex = /<item[^>]*>(.*?)<\/item>/gis;
-  
+  // NOTE: Avoid the `s` (dotAll) flag so this stays compatible with TS target ES2017.
+  // Equivalent of `.` matching newlines: use [\s\S].
+  const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+
   // First try to get titles from items
   const items = text.match(itemRegex) || [];
-  
+
   items.forEach((item, index) => {
     if (index < 15) { // Limit to 15 headlines per source
       const titleMatch = item.match(/<title[^>]*>(.*?)<\/title>/i);
@@ -81,17 +83,17 @@ function parseRSSFeedSimple(text: string): string[] {
           .replace(/&#39;/g, "'")
           .replace(/&[^;]+;/g, ' ') // Replace other HTML entities
           .trim();
-        
+
         // Filter out RSS metadata and ensure it's a real news headline
-        if (title.length > 15 && title.length < 200 && 
-            !title.includes('RSS') && !title.includes('Feed') && 
+        if (title.length > 15 && title.length < 200 &&
+            !title.includes('RSS') && !title.includes('Feed') &&
             !title.includes('Ειδήσεις') && !title.includes('Αρχική')) {
           titles.push(title);
         }
       }
     }
   });
-  
+
   return titles;
 }
 
@@ -115,14 +117,14 @@ async function parseRSSFeed(url: string): Promise<string[]> {
 
     const text = await response.text();
     const titles = parseRSSFeedSimple(text);
-    
+
     // Only return if we got meaningful content
     if (titles.length > 0) {
       return titles;
     }
-    
+
     return [];
-    
+
   } catch (error) {
     console.warn(`Error fetching RSS feed ${url}:`, error);
     return [];
@@ -133,7 +135,7 @@ async function parseRSSFeed(url: string): Promise<string[]> {
 async function fetchFreshNews(): Promise<string[]> {
   const allNews: string[] = [];
   let successfulSources = 0;
-  
+
   // Try to fetch from each news source
   for (const source of NEWS_SOURCES) {
     try {
@@ -149,19 +151,19 @@ async function fetchFreshNews(): Promise<string[]> {
       console.warn(`❌ Error fetching from ${source.name}:`, error);
     }
   }
-  
+
   console.log(`📊 Fetched news from ${successfulSources}/${NEWS_SOURCES.length} sources`);
-  
+
   // If no fresh news fetched, return fallback news
   if (allNews.length === 0) {
     console.log('📰 No RSS news available, using fallback news');
     return FALLBACK_NEWS;
   }
-  
+
   // Shuffle and return unique news items
   const uniqueNews = [...new Set(allNews)];
   const finalNews = uniqueNews.sort(() => Math.random() - 0.5).slice(0, 50);
-  
+
   console.log(`📰 Returning ${finalNews.length} unique news items`);
   return finalNews;
 }
@@ -170,20 +172,20 @@ export async function GET() {
   try {
     console.log('📰 Starting news API request...');
     const newsItems = await fetchFreshNews();
-    
+
     const response = {
       items: newsItems,
       timestamp: new Date().toISOString(),
       source: 'fresh-news-api',
       count: newsItems.length
     };
-    
+
     console.log(`📰 News API response: ${newsItems.length} items`);
     return NextResponse.json(response);
-    
+
   } catch (error) {
     console.error('❌ Error in news API:', error);
-    
+
     // Return fallback news
     const response = {
       items: FALLBACK_NEWS,
@@ -192,8 +194,8 @@ export async function GET() {
       count: FALLBACK_NEWS.length,
       error: 'RSS feeds unavailable'
     };
-    
+
     console.log('📰 Returning fallback news due to error');
     return NextResponse.json(response);
   }
-} 
+}

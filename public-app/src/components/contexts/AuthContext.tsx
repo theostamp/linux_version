@@ -38,7 +38,13 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 // Global flag to prevent multiple AuthProvider instances from initializing simultaneously
 let globalAuthInitializing = false;
 
-export function AuthProvider({ children }: { readonly children: ReactNode }) {
+export function AuthProvider({
+  children,
+  showInitialSpinner = true,
+}: {
+  readonly children: ReactNode;
+  readonly showInitialSpinner?: boolean;
+}) {
   const pathname = usePathname();
   const [userState, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -352,7 +358,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   // Εμφάνιση του spinner μόνο κατά το αρχικό φόρτωμα για πολύ σύντομο διάστημα
   // Αν το isAuthReady δεν έχει γίνει true μετά από λίγο, προχωράμε κανονικά
   // για να αποφύγουμε το infinite loading
-  if (isLoading && !isAuthReady) {
+  if (showInitialSpinner && isLoading && !isAuthReady) {
     return <FullPageSpinner message="Συνδέουμε τον λογαριασμό..." />;
   }
 
@@ -360,12 +366,19 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 }
 
 export function useAuth() {
-  // During SSR, return default values to prevent errors
+  const ctx = useContext(AuthContext);
+
+  // During SSR, return default values to prevent errors.
+  // NOTE: We still call useContext unconditionally to satisfy react-hooks/rules-of-hooks.
   if (typeof window === 'undefined') {
     return {
       user: null,
-      login: async () => { throw new Error('Login not available during SSR'); },
-      loginWithToken: async () => { throw new Error('Login not available during SSR'); },
+      login: async () => {
+        throw new Error('Login not available during SSR');
+      },
+      loginWithToken: async () => {
+        throw new Error('Login not available during SSR');
+      },
       logout: async () => {},
       isLoading: true,
       isAuthReady: false,
@@ -375,7 +388,6 @@ export function useAuth() {
     };
   }
 
-  const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

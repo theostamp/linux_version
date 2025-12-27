@@ -30,12 +30,12 @@ export async function resolveParams(
   params: ProxyRouteContext["params"]
 ): Promise<Record<string, string | string[] | undefined>> {
   if (!params) return {};
-  
+
   // Check if params is a Promise by looking for .then method
   if (typeof params === 'object' && 'then' in params && typeof params.then === 'function') {
     return await params;
   }
-  
+
   return params as Record<string, string | string[] | undefined>;
 }
 
@@ -79,12 +79,12 @@ const normalizeBackendPath = (
   if (!path || typeof path !== "string") {
     throw new Error("[tenantProxy] Invalid path provided to normalizeBackendPath");
   }
-  
+
   const cleaned = path.replace(/^\/+/, "").trim();
   if (!cleaned) {
     throw new Error("[tenantProxy] Empty path after normalization");
   }
-  
+
   const prefixed = cleaned.startsWith("api/") ? cleaned : `api/${cleaned}`;
   if (!ensureTrailingSlash) return prefixed;
   return prefixed.endsWith("/") ? prefixed : `${prefixed}/`;
@@ -114,7 +114,7 @@ const buildTargetUrl = async (
   const base = resolveBackendBase();
   const search = config.forwardSearchParams === false ? "" : request.nextUrl.search;
   const finalUrl = `${base}/${normalizedPath}${search}`;
-  
+
   // Log URL construction for debugging (ALWAYS log in production too for debugging)
   const logger = createLogger(config.logLabel ?? "unknown");
   logger.info("URL constructed", {
@@ -126,13 +126,13 @@ const buildTargetUrl = async (
     finalUrl,
     ensureTrailingSlash: config.ensureTrailingSlash ?? true,
   });
-  
+
   return finalUrl;
 };
 
 const createForwardHeaders = (request: NextRequest) => {
   const headers = new Headers(request.headers);
-  
+
   // ✅ If the client explicitly provides a tenant host, prefer it.
   // This enables multi-tenant routing even when the app is served from a single public domain
   // (e.g. newconcierge.app) while the tenant schema lives under {schema}.newconcierge.app.
@@ -149,7 +149,7 @@ const createForwardHeaders = (request: NextRequest) => {
   // Priority: Origin > Referer > Host header > x-forwarded-host
   // Origin header is the most reliable source for the public domain
   let publicHostname = explicitTenantHost || requestHost;
-  
+
   // First, try Origin header (most reliable for CORS requests)
   if (!explicitTenantHost && origin) {
     try {
@@ -160,7 +160,7 @@ const createForwardHeaders = (request: NextRequest) => {
       // Invalid origin URL, continue with other options
     }
   }
-  
+
   // If Host header looks like internal Vercel/Railway URL, try referer
   if (!explicitTenantHost && (publicHostname.includes("railway.app") || publicHostname.includes("vercel.app")) && referer) {
     try {
@@ -171,15 +171,15 @@ const createForwardHeaders = (request: NextRequest) => {
       // Invalid referer URL, keep using current hostname
     }
   }
-  
+
   // Only use x-forwarded-host if it's a public domain (not Railway/Vercel internal)
-  if (!explicitTenantHost && forwardedHost && 
-      !forwardedHost.includes("railway.app") && 
+  if (!explicitTenantHost && forwardedHost &&
+      !forwardedHost.includes("railway.app") &&
       !forwardedHost.includes("vercel.app")) {
     publicHostname = forwardedHost;
     console.log(`[tenantProxy:headers] Using X-Forwarded-Host header: ${publicHostname}`);
   }
-  
+
   const finalHost = publicHostname;
   const subdomain = finalHost.split('.')[0];
 
@@ -193,7 +193,7 @@ const createForwardHeaders = (request: NextRequest) => {
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
   );
-  
+
   // Log headers for debugging (ALWAYS log in production for debugging)
   const logger = createLogger("headers");
   logger.info("Forward headers created", {
@@ -204,10 +204,10 @@ const createForwardHeaders = (request: NextRequest) => {
     forwardedHost,
     referer,
     origin,
-    decision: origin 
-      ? "using-origin" 
+    decision: origin
+      ? "using-origin"
       : (requestHost.includes("railway.app") || requestHost.includes("vercel.app"))
-        ? "using-referer-or-host" 
+        ? "using-referer-or-host"
         : "using-host",
   });
 
@@ -217,7 +217,7 @@ const createForwardHeaders = (request: NextRequest) => {
 function createLogger(logLabel: string) {
   const prefix = logLabel ? `[tenantProxy:${logLabel}]` : "[tenantProxy]";
   const isProduction = process.env.NODE_ENV === "production";
-  
+
   return {
     info: (message: string, meta?: Record<string, unknown>) => {
       const logData = {
@@ -262,7 +262,7 @@ async function proxyTenantRequest(
 ) {
   const logger = createLogger(config.logLabel ?? "unknown");
   const startTime = Date.now();
-  
+
   const targetUrl = await buildTargetUrl(request, method, config, context);
   const headers = createForwardHeaders(request);
   const host = request.headers.get("host") ?? "unknown";
@@ -316,7 +316,7 @@ async function proxyTenantRequest(
     if (!response.ok) {
       const cloned = response.clone();
       const errorText = await cloned.text();
-      
+
       logger.error("Upstream error response", undefined, {
         method,
         path: request.nextUrl.pathname,
@@ -327,7 +327,7 @@ async function proxyTenantRequest(
         errorBody: errorText.substring(0, 500),
         errorBodyLength: errorText.length,
       });
-      
+
       return NextResponse.json(
         {
           error: `Upstream request failed: ${response.status} ${response.statusText}`,
@@ -339,14 +339,14 @@ async function proxyTenantRequest(
     }
 
     const responseHeaders = stripHopByHopHeaders(new Headers(response.headers));
-    
+
     logger.info("Response forwarded successfully", {
       method,
       path: request.nextUrl.pathname,
       status: response.status,
       durationMs: duration,
     });
-    
+
     return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -354,7 +354,7 @@ async function proxyTenantRequest(
     });
   } catch (error) {
     const duration = Date.now() - startTime;
-    
+
     logger.error("Proxy request failed", error, {
       method,
       path: request.nextUrl.pathname,
@@ -376,7 +376,7 @@ async function proxyTenantRequest(
 
 export function createTenantProxyHandlers(
   config: TenantProxyConfig,
-  methods: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  methods: readonly HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 ): Partial<Record<HttpMethod, ProxyHandler>> {
   const handlers = methods.reduce<Partial<Record<HttpMethod, ProxyHandler>>>(
     (acc, method) => {
@@ -386,7 +386,7 @@ export function createTenantProxyHandlers(
     },
     {},
   );
-  
+
   // Ensure all requested methods exist
   for (const method of methods) {
     if (!handlers[method]) {
@@ -395,6 +395,6 @@ export function createTenantProxyHandlers(
       );
     }
   }
-  
+
   return handlers;
 }

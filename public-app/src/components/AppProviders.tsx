@@ -49,8 +49,10 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/backend-proxy',
   ];
 
+  // NOTE: Use a strict subpath match (`/route/...`) to avoid accidental matches like:
+  // - route "/m" matching "/map-visualization", "/maintenance", "/my-profile", etc.
   const isPublicRoute = publicRoutes.some(route =>
-    pathname === route || (route !== '/' && pathname?.startsWith(route))
+    pathname === route || (route !== '/' && pathname?.startsWith(`${route}/`))
   );
 
   const isNoAuthLoadingRoute = isPublicRoute;
@@ -106,11 +108,12 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // Route layouts handle the app shell; avoid applying LayoutWrapper by default.
   const shouldUseLayoutWrapper = false;
 
-  // For public pages, skip AuthProvider to avoid loading spinner
+  // For public pages, keep AuthProvider available (some public pages use useAuth),
+  // but disable its initial full-page spinner to avoid blocking marketing/auth screens.
   if (isNoAuthLoadingRoute) {
     return (
       <LoadingProvider>
-        {children}
+        <AuthProvider showInitialSpinner={false}>{children}</AuthProvider>
         <Toaster position="top-right" richColors closeButton />
       </LoadingProvider>
     );
