@@ -226,13 +226,16 @@ def import_migrated_data(request):
         # Δημιουργία χρηστών για κατοίκους (αν χρειάζεται)
         created_users = []
         for resident_data in residents_data:
+            email = (resident_data.get('email') or '').strip()
+            if not email:
+                continue
             # Έλεγχος αν υπάρχει ήδη χρήστης με αυτό το email
             user, created = CustomUser.objects.get_or_create(
-                email=resident_data['email'],
+                email=email,
                 defaults={
                     'first_name': resident_data['name'].split()[0],
                     'last_name': ' '.join(resident_data['name'].split()[1:]) if len(resident_data['name'].split()) > 1 else '',
-                    'phone': resident_data['phone'],
+                    'username': email,
                     'is_active': True
                 }
             )
