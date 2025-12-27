@@ -133,6 +133,8 @@ export default function CreateBuildingForm({
   const [showApartmentsDropdown, setShowApartmentsDropdown] = useState(false);
   const apartmentDropdownRef = useRef<HTMLDivElement>(null);
 
+  const hasResidentsWithPhone = residents.some((resident) => (resident.phone || '').trim().length > 0);
+
   // Φόρτωση ενοίκων, διαμερισμάτων και χρηστών του κτιρίου
   useEffect(() => {
     if (buildingId) {
@@ -214,7 +216,7 @@ export default function CreateBuildingForm({
   };
 
   // Φιλτραρισμένη λίστα χρηστών βάσει αναζήτησης
-  const filteredUsers = allUsers.filter(u => 
+  const filteredUsers = allUsers.filter(u =>
     u.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
     `${u.first_name} ${u.last_name}`.toLowerCase().includes(userSearchTerm.toLowerCase())
   );
@@ -239,7 +241,7 @@ export default function CreateBuildingForm({
       const updates: Partial<BuildingPayload> = {
         internal_manager_apartment: resident.apartment_number,
       };
-      
+
       // Αν ο resident έχει user account, χρησιμοποιούμε internal_manager_id
       if (resident.user_id) {
         updates.internal_manager_id = resident.user_id;
@@ -252,7 +254,7 @@ export default function CreateBuildingForm({
         updates.internal_manager_name = resident.name;
         updates.internal_manager_phone = resident.phone;
       }
-      
+
       return { ...prev, ...updates };
     });
     setShowResidentsDropdown(false);
@@ -397,30 +399,30 @@ export default function CreateBuildingForm({
 
       // Προσθήκη συντεταγμένων αν υπάρχουν - ensure they are numbers
       if (coordinates && coordinates.lat && coordinates.lng) {
-        const lat = typeof coordinates.lat === 'number' 
-          ? coordinates.lat 
+        const lat = typeof coordinates.lat === 'number'
+          ? coordinates.lat
           : parseFloat(String(coordinates.lat));
-        const lng = typeof coordinates.lng === 'number' 
-          ? coordinates.lng 
+        const lng = typeof coordinates.lng === 'number'
+          ? coordinates.lng
           : parseFloat(String(coordinates.lng));
-        
+
         if (Number.isFinite(lat) && Number.isFinite(lng)) {
           payload.latitude = lat;
           payload.longitude = lng;
         }
       } else if (formData.latitude !== undefined || formData.longitude !== undefined) {
         // Fallback: use formData coordinates if coordinates state is not set
-        const lat = typeof formData.latitude === 'number' 
-          ? formData.latitude 
+        const lat = typeof formData.latitude === 'number'
+          ? formData.latitude
           : typeof formData.latitude === 'string'
           ? parseFloat(formData.latitude)
           : null;
-        const lng = typeof formData.longitude === 'number' 
-          ? formData.longitude 
+        const lng = typeof formData.longitude === 'number'
+          ? formData.longitude
           : typeof formData.longitude === 'string'
           ? parseFloat(formData.longitude)
           : null;
-        
+
         if (lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng)) {
           payload.latitude = lat;
           payload.longitude = lng;
@@ -819,7 +821,7 @@ export default function CreateBuildingForm({
           Στοιχεία Διαχειριστή (Προαιρετικά)
         </h3>
 
-        {buildingId && (
+        {buildingId ? (
           <div className="bg-primary/10 border-0 rounded-none shadow-sm p-4 mb-4">
             <div className="flex items-start space-x-2">
               <Users className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -831,13 +833,20 @@ export default function CreateBuildingForm({
               </div>
             </div>
           </div>
+        ) : (
+          <div className="bg-muted/50 border border-slate-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-muted-foreground">
+              ℹ️ Για να επιλέξετε <strong>εσωτερικό διαχειριστή</strong> από λίστα ενοίκων/ιδιοκτητών, αποθηκεύστε πρώτα το κτίριο.
+              Μετά την αποθήκευση θα εμφανιστεί η λίστα (αφού υπάρχουν διαμερίσματα/στοιχεία).
+            </p>
+          </div>
         )}
 
         {/* Αναζήτηση χρήστη με email για σύνδεση ως internal_manager */}
         {buildingId && (
           <div className={`rounded-xl p-4 mb-4 transition-all ${
-            formData.internal_manager_id 
-              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400' 
+            formData.internal_manager_id
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400'
               : 'bg-amber-50 border-2 border-amber-200'
           }`}>
             <div className="flex items-start space-x-2 mb-3">
@@ -846,18 +855,18 @@ export default function CreateBuildingForm({
               </div>
               <div className="flex-1">
                 <p className={`text-sm font-semibold ${formData.internal_manager_id ? 'text-green-800' : 'text-amber-800'}`}>
-                  {formData.internal_manager_id 
-                    ? '✅ Χρήστης συνδεδεμένος ως Εσωτερικός Διαχειριστής' 
+                  {formData.internal_manager_id
+                    ? '✅ Χρήστης συνδεδεμένος ως Εσωτερικός Διαχειριστής'
                     : '⚠️ Αναζήτηση χρήστη με email (για σύνδεση ρόλου)'}
                 </p>
                 <p className={`text-xs mt-1 ${formData.internal_manager_id ? 'text-green-600' : 'text-amber-700'}`}>
-                  {formData.internal_manager_id 
+                  {formData.internal_manager_id
                     ? 'Ο χρήστης θα αποκτήσει αυτόματα ρόλο Εσωτερικού Διαχειριστή μετά την αποθήκευση.'
                     : 'Για να λειτουργήσει σωστά ο ρόλος, πρέπει να επιλέξετε χρήστη από τη λίστα.'}
                 </p>
               </div>
             </div>
-            
+
             <div className="relative" ref={usersDropdownRef}>
               <Input
                 type="text"
@@ -876,7 +885,7 @@ export default function CreateBuildingForm({
                 placeholder="Αναζήτηση χρήστη με email..."
                 className={`bg-white ${formData.internal_manager_id ? 'border-green-300' : 'border-amber-300'}`}
               />
-              
+
               {showUsersDropdown && (
                 <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {loadingUsers ? (
@@ -914,7 +923,7 @@ export default function CreateBuildingForm({
                 </div>
               )}
             </div>
-            
+
             {formData.internal_manager_id && (
               <div className="mt-2 flex items-center gap-2">
                 <span className="text-xs text-green-700">
@@ -960,7 +969,7 @@ export default function CreateBuildingForm({
                       >
                         <div className="font-medium text-gray-900">{resident.name}</div>
                         <div className="text-sm text-gray-600">{resident.display_text}</div>
-                        <div className="text-xs text-gray-500">{resident.phone}</div>
+                        <div className="text-xs text-gray-500">{resident.phone || '—'}</div>
                       </button>
                     ))}
                   </div>
@@ -982,7 +991,15 @@ export default function CreateBuildingForm({
             )}
 
             {buildingId && !loadingResidents && residents.length === 0 && (
-              <p className="text-xs text-gray-500 mt-1">Δεν βρέθηκαν ενοίκους με στοιχεία επικοινωνίας</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Δεν βρέθηκαν ένοικοι/ιδιοκτήτες στο κτίριο. Συμπληρώστε διαμερίσματα & στοιχεία και δοκιμάστε ξανά.
+              </p>
+            )}
+
+            {buildingId && !loadingResidents && residents.length > 0 && !hasResidentsWithPhone && (
+              <p className="text-xs text-amber-700 mt-1">
+                Βρέθηκαν ονόματα αλλά δεν βρέθηκαν τηλέφωνα. Επιλέξτε όνομα και συμπληρώστε το τηλέφωνο χειροκίνητα.
+              </p>
             )}
           </div>
 
@@ -1090,33 +1107,33 @@ export default function CreateBuildingForm({
         {/* Toggle για δικαίωμα καταχώρησης πληρωμών */}
         {(formData.internal_manager_id || formData.internal_manager_name) && (
           <div className={`rounded-xl p-5 mt-4 transition-all duration-300 ${
-            formData.internal_manager_can_record_payments 
-              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 shadow-lg shadow-green-100' 
+            formData.internal_manager_can_record_payments
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 shadow-lg shadow-green-100'
               : 'bg-slate-50 border-2 border-slate-200'
           }`}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-start space-x-3">
                 <div className={`p-2 rounded-lg transition-colors ${
-                  formData.internal_manager_can_record_payments 
-                    ? 'bg-green-500 text-white' 
+                  formData.internal_manager_can_record_payments
+                    ? 'bg-green-500 text-white'
                     : 'bg-slate-300 text-slate-600'
                 }`}>
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
                   <p className={`font-semibold ${
-                    formData.internal_manager_can_record_payments 
-                      ? 'text-green-800' 
+                    formData.internal_manager_can_record_payments
+                      ? 'text-green-800'
                       : 'text-slate-700'
                   }`}>
                     Δικαίωμα Καταχώρησης Πληρωμών
                   </p>
                   <p className={`text-sm mt-1 ${
-                    formData.internal_manager_can_record_payments 
-                      ? 'text-green-600' 
+                    formData.internal_manager_can_record_payments
+                      ? 'text-green-600'
                       : 'text-slate-500'
                   }`}>
-                    {formData.internal_manager_can_record_payments 
+                    {formData.internal_manager_can_record_payments
                       ? '✅ Ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές κοινοχρήστων.'
                       : 'Επιτρέπει στον εσωτερικό διαχειριστή να καταχωρεί πληρωμές κοινοχρήστων στο σύστημα.'
                     }
@@ -1124,19 +1141,19 @@ export default function CreateBuildingForm({
                 </div>
               </div>
               <div className={`transition-all duration-300 ${
-                formData.internal_manager_can_record_payments 
-                  ? 'scale-110' 
+                formData.internal_manager_can_record_payments
+                  ? 'scale-110'
                   : 'scale-100'
               }`}>
                 <Switch
                   checked={formData.internal_manager_can_record_payments || false}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setFormData(prev => ({ ...prev, internal_manager_can_record_payments: checked }))
                   }
                   disabled={loading}
                   className={`${
-                    formData.internal_manager_can_record_payments 
-                      ? 'data-[state=checked]:bg-green-500' 
+                    formData.internal_manager_can_record_payments
+                      ? 'data-[state=checked]:bg-green-500'
                       : ''
                   }`}
                 />
