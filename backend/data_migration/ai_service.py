@@ -218,6 +218,8 @@ class FormAnalyzer:
         
         # Εξαγωγή πληροφοριών κτιρίου από λογαριασμό κοινοχρήστων
         building_info = self._extract_building_info_from_expenses(lines)
+        if building_info.get('address') and not building_info.get('name'):
+            building_info['name'] = building_info['address']
         extracted_data['building_info'] = building_info
         
         # Εξαγωγή διαμερισμάτων και κατοίκων από τον πίνακα
@@ -523,6 +525,44 @@ class FormAnalyzer:
         Εστιάζει στα πεδία: όνομα, αριθμός διαμερίσματος, χιλιοστά, διεύθυνση
         Υποστηρίζει διαφορετικές μορφές πινάκων
         """
+        def parse_numeric(value: str) -> float | None:
+            clean = value.replace(' ', '')
+            if ',' in clean and '.' in clean:
+                clean = clean.replace('.', '').replace(',', '.')
+            elif ',' in clean:
+                clean = clean.replace(',', '.')
+            try:
+                return float(clean)
+            except ValueError:
+                return None
+
+        def extract_mills(text: str) -> float | None:
+            candidates = re.findall(r'\d{1,4}(?:[.,]\d{1,3})?', text)
+            for candidate in candidates:
+                value = parse_numeric(candidate)
+                if value is not None and 0 < value <= 1000:
+                    return value
+            return None
+
+        def parse_apartment_row(line_text: str) -> Tuple[str, str, float | None] | None:
+            match = re.match(r'^\s*(\d{1,3})\s*[).|:\-]*\s+(.+)$', line_text)
+            if not match:
+                return None
+            apt_number = match.group(1)
+            remainder = match.group(2).strip()
+            remainder_lower = remainder.lower()
+            if any(keyword in remainder_lower for keyword in ['σύνολο', 'συνολα', 'αθροισμα']):
+                return None
+            name_match = re.match(r"^([Α-ΩΆΈΉΊΌΎΏA-Za-z\s\.'\-]+)", remainder)
+            if not name_match:
+                return None
+            owner_name = name_match.group(1).strip()
+            if len(owner_name) < 2:
+                return None
+            numbers_segment = remainder[name_match.end():]
+            mills = extract_mills(numbers_segment)
+            return apt_number, owner_name, mills
+
         apartments = []
         residents = []
         
@@ -531,7 +571,7 @@ class FormAnalyzer:
         current_apartment = {}
         
         for line in lines:
-            line = line.strip()
+            line = ' '.join(line.strip().split())
             if not line:
                 continue
             
@@ -552,6 +592,40 @@ class FormAnalyzer:
                 break
             
             if not table_started:
+                parsed = parse_apartment_row(line)
+                if not parsed:
+                    continue
+                table_started = True
+            else:
+                parsed = parse_apartment_row(line)
+
+            if parsed:
+                apt_number, resident_name, mills_value = parsed
+
+                if current_apartment:
+                    apartments.append(current_apartment)
+
+                current_apartment = {
+                    'number': apt_number,
+                    'identifier': apt_number,
+                    'owner_name': resident_name,
+                    'owner_phone': '',
+                    'owner_email': '',
+                    'is_rented': False,
+                    'is_closed': False,
+                    'ownership_percentage': mills_value,
+                    'square_meters': 0,
+                    'bedrooms': 0
+                }
+
+                residents.append({
+                    'name': resident_name,
+                    'email': '',
+                    'phone': '',
+                    'apartment': apt_number,
+                    'role': 'owner'
+                })
+
                 continue
             
             # Έλεγχος για νέα γραμμή διαμερίσματος - πολλαπλές μορφές
