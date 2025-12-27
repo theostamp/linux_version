@@ -13,6 +13,7 @@ import Pagination from '@/components/Pagination';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import EditTenantModal from '@/components/apartments/EditTenantModal';
@@ -71,7 +72,7 @@ const getStatusBadge = (apartment: ApartmentList) => {
 // Check if apartment belongs to internal manager
 const isInternalManagerApartment = (apartment: ApartmentList, internalManagerApartment?: string): boolean => {
   if (!internalManagerApartment) return false;
-  return apartment.number === internalManagerApartment || 
+  return apartment.number === internalManagerApartment ||
          apartment.identifier === internalManagerApartment;
 };
 
@@ -84,16 +85,16 @@ const InternalManagerBadge = () => (
 );
 
 // Component για email με ένδειξη καταχώρησης και resend
-const EmailWithStatus = ({ 
-  email, 
-  isRegistered, 
+const EmailWithStatus = ({
+  email,
+  isRegistered,
   buildingId,
   apartmentId,
   canInvite,
   isTenant = false,
   onChanged
-}: { 
-  email: string; 
+}: {
+  email: string;
   isRegistered: boolean;
   buildingId?: number;
   apartmentId?: number;
@@ -107,9 +108,9 @@ const EmailWithStatus = ({
   const handleResend = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!canInvite || !email) return;
-    
+
     setIsResending(true);
     try {
       await resendInvitation({
@@ -119,18 +120,18 @@ const EmailWithStatus = ({
       });
       toast.success('Η πρόσκληση στάλθηκε επιτυχώς');
     } catch (err) {
-      const error = err as { 
-        response?: { data?: Record<string, string | string[]> }; 
+      const error = err as {
+        response?: { data?: Record<string, string | string[]> };
         message?: string;
         detail?: string;
       };
-      
+
       let errorMessage = 'Αποτυχία επαναποστολής πρόσκλησης';
-      
+
       const errorData = error?.response?.data || error;
       if (errorData) {
         if (typeof errorData === 'object') {
-          const firstKey = Object.keys(errorData).find(key => 
+          const firstKey = Object.keys(errorData).find(key =>
             key !== 'response' && key !== 'message' && errorData[key]
           );
           if (firstKey) {
@@ -145,11 +146,11 @@ const EmailWithStatus = ({
           }
         }
       }
-      
+
       if (errorMessage === 'Αποτυχία επαναποστολής πρόσκλησης' && error?.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setIsResending(false);
@@ -207,7 +208,7 @@ const EmailWithStatus = ({
         </div>
       ) : canInvite ? (
         <div className="flex items-center gap-1">
-          <Link 
+          <Link
             href={`/users?invite=${encodeURIComponent(email)}&building=${buildingId || ''}&apartment=${apartmentId || ''}`}
             className="text-primary hover:text-primary/80 transition-colors"
             title="Πρόσκληση χρήστη"
@@ -237,9 +238,9 @@ const EmailWithStatus = ({
 };
 
 const renderContactBlock = (
-  label: string, 
-  name?: string, 
-  phone?: string, 
+  label: string,
+  name?: string,
+  phone?: string,
   email?: string,
   isRegistered?: boolean,
   hasAccess?: boolean,
@@ -271,8 +272,8 @@ const renderContactBlock = (
         </a>
       )}
       {email && (
-        <EmailWithStatus 
-          email={email} 
+        <EmailWithStatus
+          email={email}
           isRegistered={isRegistered || false}
           buildingId={buildingId}
           apartmentId={apartmentId}
@@ -291,7 +292,7 @@ const ApartmentsPageContent = () => {
   const { user } = useAuth();
   const activeBuilding = selectedBuilding || currentBuilding;
   const buildingId = activeBuilding?.id;
-  
+
   // Get internal manager apartment number from building
   const internalManagerApartment = activeBuilding?.internal_manager_apartment;
 
@@ -372,6 +373,83 @@ const ApartmentsPageContent = () => {
       avgSize: Number.isFinite(avgSizeRaw) ? Number(avgSizeRaw.toFixed(1)) : 0,
       totalMills: Number(totalMills.toFixed(0)),
     };
+  }, [apartments]);
+
+  const millsValidation = useMemo(() => {
+    const TARGET = 1000;
+    if (!apartments.length) {
+      return {
+        issues: [] as Array<{
+          key: 'participation' | 'heating' | 'elevator';
+          label: string;
+          total: number;
+          missingCount: number;
+          diff: number; // TARGET - total (positive = missing, negative = extra)
+        }>,
+      };
+    }
+
+    let participationTotal = 0;
+    let heatingTotal = 0;
+    let elevatorTotal = 0;
+
+    let hasHeating = false;
+    let hasElevator = false;
+
+    let missingParticipation = 0;
+    let missingHeating = 0;
+    let missingElevator = 0;
+
+    for (const apt of apartments) {
+      if (typeof apt.participation_mills === 'number') {
+        participationTotal += apt.participation_mills;
+      } else {
+        missingParticipation += 1;
+      }
+
+      if (typeof apt.heating_mills === 'number') {
+        heatingTotal += apt.heating_mills;
+        hasHeating = true;
+      } else {
+        missingHeating += 1;
+      }
+
+      if (typeof apt.elevator_mills === 'number') {
+        elevatorTotal += apt.elevator_mills;
+        hasElevator = true;
+      } else {
+        missingElevator += 1;
+      }
+    }
+
+    const issues: Array<{
+      key: 'participation' | 'heating' | 'elevator';
+      label: string;
+      total: number;
+      missingCount: number;
+      diff: number;
+    }> = [];
+
+    const pushIfInvalid = (
+      key: 'participation' | 'heating' | 'elevator',
+      label: string,
+      total: number,
+      shouldCheck: boolean,
+      missingCount: number,
+    ) => {
+      if (!shouldCheck) return;
+      if (total === TARGET) return;
+      issues.push({ key, label, total, missingCount, diff: TARGET - total });
+    };
+
+    // Πάντα ελέγχουμε τα χιλιοστά συμμετοχής (κοινόχρηστα).
+    pushIfInvalid('participation', 'Συμμετοχή (κοινόχρηστα)', participationTotal, true, missingParticipation);
+
+    // Ελέγχουμε θέρμανση/ανελκυστήρα μόνο αν υπάρχουν τιμές (έστω σε 1 διαμέρισμα).
+    pushIfInvalid('heating', 'Χιλιοστά θέρμανσης', heatingTotal, hasHeating, missingHeating);
+    pushIfInvalid('elevator', 'Χιλιοστά ανελκυστήρα', elevatorTotal, hasElevator, missingElevator);
+
+    return { issues };
   }, [apartments]);
 
   const filteredApartments = useMemo(() => {
@@ -542,6 +620,39 @@ const ApartmentsPageContent = () => {
         />
       </div>
 
+      {millsValidation.issues.length > 0 && (
+        <Alert className="bg-amber-50 text-amber-950 border border-amber-200 rounded-xl">
+          <AlertTriangle className="h-4 w-4 text-amber-700" />
+          <AlertTitle>Έλεγχος χιλιοστών: απαιτείται διόρθωση (στόχος: 1000‰)</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-1">
+              {millsValidation.issues.map((issue) => {
+                const diffAbs = Math.abs(issue.diff);
+                const diffLabel =
+                  issue.diff > 0 ? `λείπουν ${diffAbs}‰` : `περισσεύουν ${diffAbs}‰`;
+                return (
+                  <div key={issue.key} className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{issue.label}:</span>
+                    <span>
+                      σύνολο <span className="font-semibold">{issue.total}‰</span> / 1000‰
+                    </span>
+                    <span className="text-amber-800">({diffLabel})</span>
+                    {issue.missingCount > 0 && (
+                      <span className="text-amber-800">• {issue.missingCount} κενά</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-amber-900">
+              {canManage
+                ? 'Διόρθωση: άνοιξε “Επεξεργασία ιδιοκτήτη” σε κάθε διαμέρισμα και συμπλήρωσε/διόρθωσε τα χιλιοστά.'
+                : 'Ζήτησε από τη διαχείριση να διορθώσει τα χιλιοστά.'}
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Main Content Area - Filters & Table */}
       <div className="space-y-6">
               {/* Filters Bar */}
@@ -585,7 +696,7 @@ const ApartmentsPageContent = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-2 border-t border-border/30">
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
@@ -698,8 +809,8 @@ const ApartmentsPageContent = () => {
                                     <div className="flex items-center gap-3">
                                       <div className={cn(
                                         "w-10 h-10 rounded-lg flex items-center justify-center",
-                                        isInternalManagerApartment(apartment, internalManagerApartment) 
-                                          ? 'bg-amber-500/10' 
+                                        isInternalManagerApartment(apartment, internalManagerApartment)
+                                          ? 'bg-amber-500/10'
                                           : 'bg-primary/10'
                                       )}>
                                         {isInternalManagerApartment(apartment, internalManagerApartment) ? (
@@ -749,7 +860,7 @@ const ApartmentsPageContent = () => {
                                         </a>
                                       )}
                                       {apartment.owner_email && (
-                                        <EmailWithStatus 
+                                        <EmailWithStatus
                                           email={apartment.owner_email}
                                           isRegistered={!!apartment.owner_user}
                                           buildingId={buildingId}
@@ -788,7 +899,7 @@ const ApartmentsPageContent = () => {
                                         </a>
                                       )}
                                       {apartment.tenant_email && (
-                                        <EmailWithStatus 
+                                        <EmailWithStatus
                                           email={apartment.tenant_email}
                                           isRegistered={!!apartment.tenant_user}
                                           buildingId={buildingId}
@@ -802,7 +913,7 @@ const ApartmentsPageContent = () => {
                                   </div>
                                 </td>
                                 <td>
-                                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                  <div className="grid grid-cols-3 gap-x-4 gap-y-2">
                                     <div>
                                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Τ.μ.</p>
                                       <p className="text-sm font-semibold text-foreground">
@@ -814,6 +925,22 @@ const ApartmentsPageContent = () => {
                                       <p className="text-sm font-semibold text-foreground">
                                         {typeof apartment.participation_mills === 'number'
                                           ? `${apartment.participation_mills}‰`
+                                          : '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Θέρμανση</p>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        {typeof apartment.heating_mills === 'number'
+                                          ? `${apartment.heating_mills}‰`
+                                          : '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Ανελκυστήρας</p>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        {typeof apartment.elevator_mills === 'number'
+                                          ? `${apartment.elevator_mills}‰`
                                           : '—'}
                                       </p>
                                     </div>
@@ -897,8 +1024,8 @@ const ApartmentsPageContent = () => {
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
                               <div className={`w-12 h-12 rounded-lg shadow-sm flex items-center justify-center ${
-                                isInternalManagerApartment(apartment, internalManagerApartment) 
-                                  ? 'bg-amber-500/10' 
+                                isInternalManagerApartment(apartment, internalManagerApartment)
+                                  ? 'bg-amber-500/10'
                                   : 'bg-primary/10'
                               }`}>
                                 {isInternalManagerApartment(apartment, internalManagerApartment) ? (
@@ -923,9 +1050,9 @@ const ApartmentsPageContent = () => {
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-border/30 py-4">
                             {renderContactBlock(
-                              'Ιδιοκτήτης', 
-                              apartment.owner_name, 
-                              apartment.owner_phone, 
+                              'Ιδιοκτήτης',
+                              apartment.owner_name,
+                              apartment.owner_phone,
                               apartment.owner_email,
                               !!apartment.owner_user,
                               !!apartment.owner_has_access,
@@ -951,12 +1078,27 @@ const ApartmentsPageContent = () => {
                           </div>
                           <div className="grid grid-cols-3 gap-4 text-sm">
                             <div>
-                              <p className="text-xs text-muted-foreground">Συμμετοχή</p>
-                              <p className="font-semibold text-foreground">
-                                {typeof apartment.participation_mills === 'number'
-                                  ? `${apartment.participation_mills}‰`
-                                  : '—'}
-                              </p>
+                              <p className="text-xs text-muted-foreground">Χιλιοστά (‰)</p>
+                              <div className="space-y-0.5">
+                                <p className="font-semibold text-foreground">
+                                  Συμ.:{' '}
+                                  {typeof apartment.participation_mills === 'number'
+                                    ? `${apartment.participation_mills}‰`
+                                    : '—'}
+                                </p>
+                                <p className="font-semibold text-foreground">
+                                  Θέρμ.:{' '}
+                                  {typeof apartment.heating_mills === 'number'
+                                    ? `${apartment.heating_mills}‰`
+                                    : '—'}
+                                </p>
+                                <p className="font-semibold text-foreground">
+                                  Ανελκ.:{' '}
+                                  {typeof apartment.elevator_mills === 'number'
+                                    ? `${apartment.elevator_mills}‰`
+                                    : '—'}
+                                </p>
+                              </div>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">Τετρ. μέτρα</p>
