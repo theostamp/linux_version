@@ -38,7 +38,8 @@ def analyze_form_images(request):
 
         # Πραγματική ανάλυση με AI
         from .ai_service import form_analyzer
-        extracted_data = form_analyzer.analyze_form_images(saved_files)
+        use_vision = request.query_params.get('parser', '').lower() != 'ocr'
+        extracted_data = form_analyzer.analyze_form_images(saved_files, use_vision=use_vision)
 
         # Καθαρισμός προσωρινών αρχείων
         for file_path in saved_files:

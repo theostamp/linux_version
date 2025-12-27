@@ -1,4 +1,6 @@
 import cv2
+import io
+import json
 import numpy as np
 import pytesseract
 import re
@@ -17,11 +19,18 @@ class FormAnalyzer:
     def __init__(self):
         # Ρύθμιση pytesseract για ελληνικά
         pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+        self._vision_parser = None
+        self._vision_parser_initialized = False
         
-    def analyze_form_images(self, image_paths: List[str]) -> Dict[str, Any]:
+    def analyze_form_images(self, image_paths: List[str], use_vision: bool = True) -> Dict[str, Any]:
         """
         Αναλύει εικόνες φορμών και εξάγει δεδομένα
         """
+        if use_vision:
+            vision_data = self._extract_data_with_vision(image_paths)
+            if vision_data and self._has_useful_data(vision_data):
+                return self._finalize_extracted_data(vision_data)
+
         all_text = []
         
         for image_path in image_paths:
@@ -50,6 +59,32 @@ class FormAnalyzer:
         extracted_data = self._extract_data_from_text(combined_text)
         
         return extracted_data
+
+    def _has_useful_data(self, extracted_data: Dict[str, Any]) -> bool:
+        building_info = extracted_data.get('building_info', {})
+        if extracted_data.get('apartments'):
+            return True
+        return bool(building_info.get('address') or building_info.get('name'))
+
+    def _get_vision_parser(self):
+        if not self._vision_parser_initialized:
+            self._vision_parser_initialized = True
+            try:
+                self._vision_parser = CommonExpensesVisionParser()
+            except ValueError as error:
+                logger.warning(f"Gemini vision parser unavailable: {error}")
+                self._vision_parser = None
+        return self._vision_parser
+
+    def _extract_data_with_vision(self, image_paths: List[str]) -> Dict[str, Any] | None:
+        parser = self._get_vision_parser()
+        if not parser:
+            return None
+        try:
+            return parser.analyze_images(image_paths)
+        except Exception as error:
+            logger.error(f"Gemini vision analysis failed: {error}")
+            return None
     
     def _preprocess_image(self, image: np.ndarray) -> np.ndarray:
         """
@@ -218,8 +253,6 @@ class FormAnalyzer:
         
         # Εξαγωγή πληροφοριών κτιρίου από λογαριασμό κοινοχρήστων
         building_info = self._extract_building_info_from_expenses(lines)
-        if building_info.get('address') and not building_info.get('name'):
-            building_info['name'] = building_info['address']
         extracted_data['building_info'] = building_info
         
         # Εξαγωγή διαμερισμάτων και κατοίκων από τον πίνακα
@@ -227,26 +260,37 @@ class FormAnalyzer:
         extracted_data['apartments'] = apartments
         extracted_data['residents'] = residents
         
-        # Αν δεν βρέθηκε αριθμός διαμερισμάτων, χρησιμοποίησε το πλήθος
+        return self._finalize_extracted_data(extracted_data)
+
+    def _finalize_extracted_data(self, extracted_data: Dict[str, Any]) -> Dict[str, Any]:
+        building_info = extracted_data.get('building_info') or {}
+        apartments = extracted_data.get('apartments') or []
+        residents = extracted_data.get('residents') or []
+
+        extracted_data['building_info'] = building_info
+        extracted_data['apartments'] = apartments
+        extracted_data['residents'] = residents
+        extracted_data['extraction_notes'] = list(extracted_data.get('extraction_notes') or [])
+
+        if building_info.get('address') and not building_info.get('name'):
+            building_info['name'] = building_info['address']
+        if building_info.get('name') and not building_info.get('address'):
+            building_info['address'] = building_info['name']
+
         if not building_info.get('apartments_count') and apartments:
             building_info['apartments_count'] = len(apartments)
-        
-        # Υπολογισμός confidence score
-        confidence = self._calculate_confidence_score(extracted_data)
-        extracted_data['confidence_score'] = confidence
-        
-        # Προσθήκη σημειώσεων ανάλογα με την ποιότητα της εξαγωγής
+
+        extracted_data['confidence_score'] = self._calculate_confidence_score(extracted_data)
+
         if not building_info.get('name'):
             extracted_data['extraction_notes'].append('Δεν βρέθηκε όνομα κτιρίου - απαιτείται χειροκίνητη εισαγωγή')
         if not building_info.get('address'):
             extracted_data['extraction_notes'].append('Δεν βρέθηκε διεύθυνση κτιρίου - απαιτείται χειροκίνητη εισαγωγή')
         if not apartments:
             extracted_data['extraction_notes'].append('Δεν βρέθηκαν διαμερίσματα - απαιτείται χειροκίνητη εισαγωγή')
-        
-        # Αν δεν βρέθηκε τίποτα, προσθήκη προεπιλεγμένων τιμών για testing
+
         if not building_info.get('name') and not building_info.get('address') and not apartments:
             extracted_data['extraction_notes'].append('Δεν ήταν δυνατή η εξαγωγή δεδομένων - χρησιμοποιήστε πραγματικές εικόνες λογαριασμών κοινοχρήστων')
-            # Προσθήκη προεπιλεγμένων τιμών για testing
             extracted_data['building_info'] = {
                 'name': 'Κτίριο (απαιτείται εισαγωγή)',
                 'address': 'Διεύθυνση (απαιτείται εισαγωγή)',
@@ -254,7 +298,7 @@ class FormAnalyzer:
                 'postal_code': '10000',
                 'apartments_count': 0
             }
-        
+
         return extracted_data
     
     def _extract_building_info(self, lines: List[str]) -> Dict[str, Any]:
@@ -746,6 +790,461 @@ class FormAnalyzer:
             apartments.append(current_apartment)
         
         return apartments, residents
+
+class CommonExpensesVisionParser:
+    """
+    Vision parser για φύλλα κοινοχρήστων με Gemini.
+    """
+
+    SYSTEM_INSTRUCTION = """You are an expert in reading Greek common-expense sheets ("Φύλλο Κοινοχρήστων").
+Extract only the data needed for building creation. Return ONLY a raw JSON object (no markdown) with this schema:
+
+{
+  "building_info": {
+    "address": string | null,
+    "name": string | null,
+    "city": string | null,
+    "postal_code": string | null
+  },
+  "apartments": [
+    {
+      "number": string | null,
+      "owner_name": string | null,
+      "ownership_percentage": number | null
+    }
+  ]
+}
+
+Rules:
+- Focus on the apartment table where the first column is A/A.
+- Use the A/A value as "number".
+- "ownership_percentage" is the mills/χιλιοστά (0-1000) from the relevant column; if unsure, return null.
+- Do not invent data; use null when not found.
+- If a building name is not explicitly shown, set "name" equal to the address.
+"""
+
+    def __init__(self):
+        import google.generativeai as genai
+
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+
+        genai.configure(api_key=api_key)
+        self.genai = genai
+        self.api_key = api_key
+
+        self.available_model_ids: list[str] = []
+        try:
+            available_models = list(genai.list_models())
+            model_names = [m.name for m in available_models]
+            logger.info(f"Available Gemini models: {model_names}")
+
+            for model in available_models:
+                model_name = getattr(model, "name", None)
+                if not model_name:
+                    continue
+                supported_methods = getattr(model, "supported_generation_methods", None)
+                if supported_methods and "generateContent" not in supported_methods:
+                    continue
+                self.available_model_ids.append(self._normalize_model_id(model_name))
+        except Exception as list_error:
+            logger.warning(f"Could not list Gemini models (non-critical, will use fallback): {list_error}")
+
+        self.model = None
+        logger.info("CommonExpensesVisionParser initialized (model will be created on first use)")
+
+    @staticmethod
+    def _normalize_model_id(model_id: str | None) -> str:
+        model_id = (model_id or "").strip()
+        if model_id.startswith("models/"):
+            return model_id[len("models/"):]
+        return model_id
+
+    @staticmethod
+    def _model_preference_sort_key(model_id: str) -> tuple:
+        model = model_id.lower()
+        penalty = 0
+
+        if "gemini" not in model:
+            penalty += 1000
+        if "experimental" in model or "preview" in model or model.endswith("-exp") or "-exp-" in model:
+            penalty += 500
+        if "deprecated" in model:
+            penalty += 500
+
+        if model.startswith("gemini-2"):
+            penalty -= 200
+        elif model.startswith("gemini-1.5"):
+            penalty -= 150
+        elif model.startswith("gemini-1.0"):
+            penalty -= 100
+
+        if "flash" in model:
+            penalty -= 120
+        if "pro" in model:
+            penalty -= 80
+        if "vision" in model:
+            penalty -= 40
+
+        return (penalty, len(model_id), model_id)
+
+    def _get_model_configs(self) -> list[tuple[str, str]]:
+        configured_model = self._normalize_model_id(
+            os.getenv("GOOGLE_GEMINI_MODEL") or os.getenv("GEMINI_MODEL")
+        )
+
+        preferred = [
+            ("gemini-2.0-flash", "Gemini 2.0 Flash"),
+            ("gemini-2.0-flash-lite", "Gemini 2.0 Flash Lite"),
+            ("gemini-1.5-flash", "Gemini 1.5 Flash"),
+            ("gemini-1.5-flash-latest", "Gemini 1.5 Flash (latest)"),
+            ("gemini-1.5-flash-8b", "Gemini 1.5 Flash 8B"),
+            ("gemini-1.5-pro", "Gemini 1.5 Pro"),
+            ("gemini-1.5-pro-latest", "Gemini 1.5 Pro (latest)"),
+            ("gemini-1.0-pro-vision-latest", "Gemini 1.0 Pro Vision (latest)"),
+            ("gemini-1.0-pro-vision", "Gemini 1.0 Pro Vision"),
+            ("gemini-pro-vision", "Gemini Pro Vision"),
+        ]
+
+        preferred_desc_by_id = {
+            self._normalize_model_id(model_id): desc for model_id, desc in preferred
+        }
+
+        model_configs: list[tuple[str, str]] = []
+        seen: set[str] = set()
+
+        def add(model_id: str, description: str) -> None:
+            normalized = self._normalize_model_id(model_id)
+            if not normalized or normalized in seen:
+                return
+            seen.add(normalized)
+            model_configs.append((normalized, description))
+
+        if configured_model:
+            add(configured_model, f"Configured Gemini model ({configured_model})")
+
+        available_ids = list(
+            dict.fromkeys(getattr(self, "available_model_ids", []) or [])
+        )
+        if available_ids:
+            sorted_available = sorted(
+                set(available_ids), key=self._model_preference_sort_key
+            )
+            for model_id in sorted_available[:10]:
+                if model_id == configured_model:
+                    continue
+                add(
+                    model_id,
+                    preferred_desc_by_id.get(model_id)
+                    or f"Available Gemini model ({model_id})",
+                )
+            return model_configs
+
+        for model_id, desc in preferred:
+            add(model_id, desc)
+
+        return model_configs
+
+    def analyze_images(self, image_paths: List[str]) -> Dict[str, Any]:
+        building_info: Dict[str, Any] = {}
+        apartments: List[Dict[str, Any]] = []
+        apartments_by_number: Dict[str, Dict[str, Any]] = {}
+
+        for image_path in image_paths:
+            image_bytes = self._load_image_bytes(image_path)
+            if not image_bytes:
+                continue
+            try:
+                parsed_data = self._parse_image_bytes(image_bytes)
+            except Exception as error:
+                logger.warning(f"Gemini vision failed for {image_path}: {error}")
+                continue
+
+            normalized = self._normalize_parsed_data(parsed_data)
+            normalized_building = normalized.get('building_info', {})
+            for key in ['address', 'name', 'city', 'postal_code']:
+                if normalized_building.get(key) and not building_info.get(key):
+                    building_info[key] = normalized_building[key]
+
+            for apartment in normalized.get('apartments', []):
+                number = apartment.get('number')
+                if not number:
+                    continue
+                existing = apartments_by_number.get(number)
+                if not existing:
+                    apartments_by_number[number] = apartment
+                    apartments.append(apartment)
+                else:
+                    if not existing.get('owner_name') and apartment.get('owner_name'):
+                        existing['owner_name'] = apartment['owner_name']
+                    if existing.get('ownership_percentage') is None and apartment.get('ownership_percentage') is not None:
+                        existing['ownership_percentage'] = apartment['ownership_percentage']
+
+        residents = self._build_residents(apartments)
+        return {
+            'building_info': building_info,
+            'apartments': apartments,
+            'residents': residents
+        }
+
+    def _load_image_bytes(self, image_path: str) -> bytes | None:
+        if not image_path:
+            return None
+
+        if isinstance(image_path, (bytes, bytearray)):
+            return bytes(image_path)
+
+        if isinstance(image_path, str):
+            if os.path.exists(image_path):
+                try:
+                    with open(image_path, 'rb') as handle:
+                        return handle.read()
+                except Exception as error:
+                    logger.error(f"Failed to read image {image_path}: {error}")
+
+            try:
+                if default_storage.exists(image_path):
+                    with default_storage.open(image_path, 'rb') as handle:
+                        return handle.read()
+            except Exception as error:
+                logger.error(f"Storage read failed for {image_path}: {error}")
+
+        return None
+
+    def _parse_image_bytes(self, image_bytes: bytes) -> Dict[str, Any]:
+        import re
+        from PIL import Image as PILImage
+
+        image = PILImage.open(io.BytesIO(image_bytes))
+        if image.mode not in ("RGB", "L"):
+            image = image.convert("RGB")
+
+        model_configs = self._get_model_configs()
+        response = None
+        errors = []
+
+        prompt = "Extract building info and apartment rows into the required JSON object."
+
+        for model_name, model_desc in model_configs:
+            try:
+                try:
+                    attempt_model = self.genai.GenerativeModel(
+                        model_name=model_name,
+                        system_instruction=self.SYSTEM_INSTRUCTION,
+                    )
+                except TypeError:
+                    attempt_model = self.genai.GenerativeModel(model_name=model_name)
+
+                generation_config = {
+                    "temperature": 0.1,
+                    "max_output_tokens": 2000,
+                    "response_mime_type": "application/json",
+                }
+
+                try:
+                    response = attempt_model.generate_content(
+                        [prompt, image],
+                        generation_config=generation_config,
+                    )
+                except Exception as generate_error:
+                    error_text = str(generate_error)
+                    if "response_mime_type" in error_text or "responseMimeType" in error_text:
+                        response = attempt_model.generate_content(
+                            [prompt, image],
+                            generation_config={
+                                "temperature": 0.1,
+                                "max_output_tokens": 2000,
+                            },
+                        )
+                    else:
+                        raise
+
+                self.model = attempt_model
+                logger.info(f"Successfully used {model_desc} ({model_name}) for common expenses parsing")
+                break
+
+            except Exception as error:
+                error_str = str(error)
+                errors.append(f"{model_name}: {error_str}")
+                if '404' in error_str or 'not found' in error_str.lower() or 'not supported' in error_str.lower():
+                    logger.warning(f"Model {model_name} not available: {error}")
+                else:
+                    logger.warning(f"Failed to use {model_name}: {error}")
+                continue
+
+        if response is None:
+            error_details = "; ".join(errors)
+            raise Exception(
+                f"All Gemini models failed. Errors: {error_details}. "
+                f"Set GOOGLE_GEMINI_MODEL to one of genai.list_models() results, "
+                f"ensure the Generative Language API is enabled, and verify GOOGLE_API_KEY."
+            )
+
+        response_text = (getattr(response, "text", None) or "").strip()
+        if not response_text:
+            try:
+                response_text = response.candidates[0].content.parts[0].text.strip()
+            except Exception:
+                response_text = str(response).strip()
+
+        response_text = re.sub(r'```json\s*', '', response_text)
+        response_text = re.sub(r'```\s*', '', response_text)
+        response_text = response_text.strip()
+
+        try:
+            parsed_data = json.loads(response_text)
+        except json.JSONDecodeError as error:
+            logger.error(f"Failed to parse JSON response: {response_text[:200]}")
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                parsed_data = json.loads(json_match.group())
+            else:
+                raise ValueError(f"Invalid JSON response from Gemini: {str(error)}")
+
+        if not isinstance(parsed_data, dict):
+            raise ValueError("Gemini response is not a JSON object")
+
+        return parsed_data
+
+    def _normalize_parsed_data(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(parsed_data, dict):
+            return {'building_info': {}, 'apartments': []}
+
+        building_info = parsed_data.get('building_info') or {}
+        if not building_info and any(
+            key in parsed_data for key in ['address', 'name', 'city', 'postal_code']
+        ):
+            building_info = {
+                'address': parsed_data.get('address'),
+                'name': parsed_data.get('name'),
+                'city': parsed_data.get('city'),
+                'postal_code': parsed_data.get('postal_code'),
+            }
+
+        normalized_building = {
+            'address': self._clean_text(building_info.get('address')),
+            'name': self._clean_text(building_info.get('name')),
+            'city': self._clean_text(building_info.get('city')),
+            'postal_code': self._clean_text(building_info.get('postal_code')),
+        }
+
+        apartments_raw = parsed_data.get('apartments') or []
+        if isinstance(apartments_raw, dict):
+            apartments_raw = apartments_raw.get('items') or []
+        if not isinstance(apartments_raw, list):
+            apartments_raw = []
+
+        apartments = []
+        for item in apartments_raw:
+            apartment = self._normalize_apartment(item)
+            if apartment:
+                apartments.append(apartment)
+
+        return {
+            'building_info': normalized_building,
+            'apartments': apartments
+        }
+
+    def _normalize_apartment(self, item: Any) -> Dict[str, Any] | None:
+        if not isinstance(item, dict):
+            return None
+
+        number = (
+            item.get('number')
+            or item.get('identifier')
+            or item.get('apartment')
+            or item.get('apartment_number')
+        )
+        if not number:
+            number = self._find_key_value(item, {'a/a', 'aa', 'α/α', 'α/α.'})
+
+        number = self._clean_text(number)
+        if not number:
+            return None
+
+        owner_name = (
+            item.get('owner_name')
+            or item.get('name')
+            or item.get('resident_name')
+            or item.get('owner')
+        )
+        owner_name = self._clean_text(owner_name) or ''
+
+        mills_value = (
+            item.get('ownership_percentage')
+            or item.get('mills')
+            or item.get('thousandths')
+            or item.get('χιλιοστά')
+            or item.get('χιλιοστα')
+        )
+        mills_value = self._parse_numeric(mills_value)
+
+        return {
+            'number': number,
+            'identifier': number,
+            'owner_name': owner_name,
+            'owner_phone': '',
+            'owner_email': '',
+            'is_rented': False,
+            'is_closed': False,
+            'ownership_percentage': mills_value,
+            'square_meters': 0,
+            'bedrooms': 0
+        }
+
+    def _find_key_value(self, item: Dict[str, Any], targets: set[str]) -> Any:
+        for key, value in item.items():
+            normalized = str(key).strip().lower().replace(' ', '')
+            if normalized in targets:
+                return value
+        return None
+
+    def _clean_text(self, value: Any) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            value = str(value)
+        if not isinstance(value, str):
+            return None
+        cleaned = ' '.join(value.strip().split())
+        return cleaned or None
+
+    def _parse_numeric(self, value: Any) -> float | None:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if not isinstance(value, str):
+            return None
+        clean = value.strip()
+        if not clean:
+            return None
+        clean = clean.replace('€', '').replace('%', '')
+        clean = clean.replace(' ', '')
+        if ',' in clean and '.' in clean:
+            clean = clean.replace('.', '').replace(',', '.')
+        elif ',' in clean:
+            clean = clean.replace(',', '.')
+        try:
+            return float(clean)
+        except ValueError:
+            return None
+
+    def _build_residents(self, apartments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        residents = []
+        for apartment in apartments:
+            name = apartment.get('owner_name')
+            if not name:
+                continue
+            residents.append({
+                'name': name,
+                'email': apartment.get('owner_email', ''),
+                'phone': apartment.get('owner_phone', ''),
+                'apartment': apartment.get('number'),
+                'role': 'owner'
+            })
+        return residents
 
 # Global instance
 form_analyzer = FormAnalyzer() 
