@@ -57,7 +57,7 @@ function getCacheKey(url: string, options: Record<string, unknown> = {}): string
 function getInFlightRequest<T>(cacheKey: string): Promise<T> | null {
   const cached = API_CALL_CACHE.get(cacheKey);
   if (!cached) return null;
-  
+
   // Only return in-flight promises, never cached data
   return cached.promise as Promise<T>;
 }
@@ -70,7 +70,7 @@ function getInFlightRequest<T>(cacheKey: string): Promise<T> | null {
 export function invalidateApiCache(pathPattern?: string | RegExp): void {
   // Increment generation to invalidate all in-flight requests
   CACHE_GENERATION++;
-  
+
   if (!pathPattern) {
     // Clear all cache
     console.log(`[API CACHE] Clearing all cache (generation: ${CACHE_GENERATION})`);
@@ -90,22 +90,22 @@ export function invalidateApiCache(pathPattern?: string | RegExp): void {
 
   let cleared = 0;
   const keysToDelete: string[] = [];
-  
+
   for (const [key] of API_CALL_CACHE.entries()) {
     // Cache key format: "url_options" where url is the full URL
     // Extract the URL part (before the first underscore followed by {)
     const urlMatch = key.match(/^([^_]+(?:_[^{])*)/);
     const url = urlMatch ? urlMatch[1] : key;
-    
+
     if (pattern.test(url) || pattern.test(key)) {
       keysToDelete.push(key);
       cleared++;
     }
   }
-  
+
   // Delete outside the iteration to avoid iterator issues
   keysToDelete.forEach(key => API_CALL_CACHE.delete(key));
-  
+
   if (cleared > 0) {
     console.log(`[API CACHE] Cleared ${cleared} cache entries matching pattern: ${pathPattern} (generation: ${CACHE_GENERATION})`);
   }
@@ -221,7 +221,7 @@ async function refreshAccessToken(): Promise<string | null> {
       // Store new access token
       localStorage.setItem('access_token', newAccessToken);
       localStorage.setItem('access', newAccessToken);
-      
+
       // If a new refresh token was returned (rotation enabled), store it too
       if (data.refresh) {
         localStorage.setItem('refresh_token', data.refresh);
@@ -249,21 +249,21 @@ async function refreshAccessToken(): Promise<string | null> {
 function handle401Error(): void {
   // Only show toast in browser environment
   if (typeof window === 'undefined') return;
-  
+
   const now = Date.now();
-  
+
   // Check if we've shown a 401 error recently (within cooldown period)
   if (hasShown401Error && (now - last401ErrorTime) < ERROR_TOAST_COOLDOWN) {
     return;
   }
-  
+
   // Dynamically import errorMessages to avoid circular dependencies
   // and to ensure it's only loaded in browser environment
   import('@/lib/errorMessages').then(({ showBuildingError }) => {
     showBuildingError('SESSION_EXPIRED');
     hasShown401Error = true;
     last401ErrorTime = now;
-    
+
     // Reset flag after cooldown period
     setTimeout(() => {
       hasShown401Error = false;
@@ -288,12 +288,12 @@ const createApiError = (
   ) as ApiError;
   error.status = status;
   error.response = { status, body: trimmedBody };
-  
+
   // Handle 401 errors with user-friendly message
   if (status === 401) {
     handle401Error();
   }
-  
+
   return error;
 };
 
@@ -327,12 +327,12 @@ const isNotFoundError = (error: unknown): boolean => {
 
 const normalizeApiPath = (path: string): string => {
   if (!path) return "/api/";
-  
+
   const [rawPath, ...queryParts] = path.split("?");
   const queryString = queryParts.length > 0 ? queryParts.join("?") : "";
-  
+
   const prefixed = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  
+
   let normalizedPath: string;
   if (prefixed.startsWith("/api")) {
     // Ensure trailing slash for DRF compatibility
@@ -342,7 +342,7 @@ const normalizeApiPath = (path: string): string => {
     const withApiPrefix = `/api${prefixed}`;
     normalizedPath = withApiPrefix.endsWith("/") ? withApiPrefix : `${withApiPrefix}/`;
   }
-  
+
   return queryString ? `${normalizedPath}?${queryString}` : normalizedPath;
 };
 
@@ -358,8 +358,8 @@ export function getApiBase(): string {
 }
 
 // Export API_BASE_URL for components that need it
-export const API_BASE_URL = typeof window !== 'undefined' 
-  ? '/api' 
+export const API_BASE_URL = typeof window !== 'undefined'
+  ? '/api'
   : getApiBase();
 
 /**
@@ -396,12 +396,12 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  
+
   if (typeof window !== "undefined") {
     // Add auth token if available
     const token =
-      localStorage.getItem("access_token") || 
-      localStorage.getItem("access") || 
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("access") ||
       localStorage.getItem("accessToken");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
@@ -444,7 +444,7 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
         headers["X-Tenant-Host"] = hostname.trim();
       }
     }
-    
+
     // Add CSRF token for mutation requests
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
       const csrfToken = getCookie('csrftoken');
@@ -453,7 +453,7 @@ function getHeaders(method: string = 'GET'): Record<string, string> {
       }
     }
   }
-  
+
   return headers;
 }
 
@@ -494,13 +494,13 @@ export async function apiGet<T>(
   const apiUrl = getApiUrl(path);
   const url = new URL(apiUrl);
   const normalizedParams = normalizeQueryParams(params);
-  
+
   // Preserve trailing slash - URL constructor removes it from pathname
   const hadTrailingSlash = apiUrl.endsWith('/') && !apiUrl.includes('?');
   if (hadTrailingSlash && !url.pathname.endsWith('/')) {
     url.pathname = `${url.pathname}/`;
   }
-  
+
   if (normalizedParams) {
     Object.entries(normalizedParams).forEach(([k, v]) => {
       // Filter out undefined and null values
@@ -512,20 +512,20 @@ export async function apiGet<T>(
       }
     });
   }
-  
+
   const urlString = url.toString();
   const cacheKey = getCacheKey(urlString, normalizedParams);
-  
+
   // Check for in-flight request (deduplication only)
   const inFlight = getInFlightRequest<T>(cacheKey);
   if (inFlight) {
     console.log(`[API DEDUP] Returning in-flight request for ${cacheKey}`);
     return inFlight;
   }
-  
+
   // Capture current generation at request start
   const requestGeneration = CACHE_GENERATION;
-  
+
   // Create fetch promise
   const fetchPromise = (async () => {
     try {
@@ -534,12 +534,12 @@ export async function apiGet<T>(
         headers: getHeaders('GET'),
         credentials: "include",
       });
-      
+
       // Handle 401 with token refresh (only if not already retrying)
       if (res.status === 401 && !skipTokenRefresh) {
         console.log(`[API] Got 401 for ${urlString}, attempting token refresh...`);
         const newToken = await refreshAccessToken();
-        
+
         if (newToken) {
           // Retry the request with the new token
           console.log(`[API] Retrying request with new token...`);
@@ -550,17 +550,17 @@ export async function apiGet<T>(
           });
         }
       }
-      
+
       if (!res.ok) {
         resetRetryDelay(urlString);
         throw createApiError("GET", urlString, res.status);
       }
-      
+
       const data = attachApiResponseData(await res.json() as T);
-      
+
       // Reset retry delay on success
       resetRetryDelay(urlString);
-      
+
       // ✅ RACE CONDITION PROTECTION: Don't cache if generation changed (invalidation happened)
       if (requestGeneration === CACHE_GENERATION) {
         // Remove from cache after successful completion (no data caching)
@@ -568,7 +568,7 @@ export async function apiGet<T>(
       } else {
         console.log(`[API CACHE] Ignoring stale response for ${cacheKey} (gen ${requestGeneration} vs ${CACHE_GENERATION})`);
       }
-      
+
       return data;
     } catch (error) {
       // Remove promise from cache on error
@@ -576,14 +576,79 @@ export async function apiGet<T>(
       throw error;
     }
   })();
-  
+
   // Store promise in cache for in-flight deduplication only
   API_CALL_CACHE.set(cacheKey, {
     promise: fetchPromise,
     generation: requestGeneration,
   });
-  
+
   return fetchPromise;
+}
+
+/**
+ * GET request helper for binary responses (Blob) with token refresh support.
+ * Useful for previews/downloads where using a plain <a href> would drop the Authorization header.
+ */
+export async function apiGetBlob(
+  path: string,
+  params?: Record<string, unknown> | { params?: Record<string, unknown> },
+  skipTokenRefresh: boolean = false,
+): Promise<Blob> {
+  const apiUrl = getApiUrl(path);
+  const url = new URL(apiUrl);
+  const normalizedParams = normalizeQueryParams(params);
+
+  // Preserve trailing slash - URL constructor removes it from pathname
+  const hadTrailingSlash = apiUrl.endsWith("/") && !apiUrl.includes("?");
+  if (hadTrailingSlash && !url.pathname.endsWith("/")) {
+    url.pathname = `${url.pathname}/`;
+  }
+
+  if (normalizedParams) {
+    Object.entries(normalizedParams).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        url.searchParams.set(k, String(v));
+      }
+    });
+  }
+
+  const urlString = url.toString();
+
+  let res = await fetch(urlString, {
+    method: "GET",
+    headers: getHeaders("GET"),
+    credentials: "include",
+  });
+
+  // Handle 401 with token refresh (only if not already retrying)
+  if (res.status === 401 && !skipTokenRefresh) {
+    console.log(`[API] Got 401 for BLOB ${urlString}, attempting token refresh...`);
+    const newToken = await refreshAccessToken();
+
+    if (newToken) {
+      console.log(`[API] Retrying BLOB request with new token...`);
+      res = await fetch(urlString, {
+        method: "GET",
+        headers: getHeaders("GET"), // picks up refreshed token from localStorage
+        credentials: "include",
+      });
+    }
+  }
+
+  if (!res.ok) {
+    resetRetryDelay(urlString);
+    let errorText: string | undefined;
+    try {
+      errorText = await res.text();
+    } catch {
+      // ignore
+    }
+    throw createApiError("GET", urlString, res.status, errorText);
+  }
+
+  resetRetryDelay(urlString);
+  return await res.blob();
 }
 
 /**
@@ -591,14 +656,14 @@ export async function apiGet<T>(
  */
 export async function apiPost<T>(path: string, body: unknown, maxRetries: number = 3, skipTokenRefresh: boolean = false): Promise<T> {
   const url = getApiUrl(path);
-  
+
   let lastError: Error | null = null;
   let tokenRefreshAttempted = false;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-      
+
       if (isFormData) {
         console.log(`[API POST] Sending FormData to ${url}`);
         // Debug FormData content
@@ -628,13 +693,13 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
       let res = await fetch(url, {
         ...requestInit,
       });
-      
+
       // Handle 401 with token refresh (only once per request)
       if (res.status === 401 && !skipTokenRefresh && !tokenRefreshAttempted) {
         console.log(`[API] Got 401 for POST ${url}, attempting token refresh...`);
         tokenRefreshAttempted = true;
         const newToken = await refreshAccessToken();
-        
+
         if (newToken) {
           // Retry the request with the new token
           console.log(`[API] Retrying POST request with new token...`);
@@ -646,13 +711,13 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
             method: "POST",
             headers: retryHeaders,
             credentials: "include",
-            body: body !== undefined && body !== null 
-              ? (isFormData ? (body as FormData) : JSON.stringify(body)) 
+            body: body !== undefined && body !== null
+              ? (isFormData ? (body as FormData) : JSON.stringify(body))
               : undefined,
           });
         }
       }
-      
+
       if (!res.ok) {
         // Handle rate limiting (429) with exponential backoff
         if (res.status === 429 && attempt < maxRetries) {
@@ -661,27 +726,27 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
-        
+
         const text = await res.text();
         console.error(`[API POST] Error ${res.status} from ${url}:`, text);
         throw createApiError("POST", url, res.status, text);
       }
-      
+
       // Reset retry delay on success
       resetRetryDelay(url);
-      
+
       const responseData = await res.json();
       console.log(`[API POST] ✓ Success ${res.status} from ${url}:`, responseData);
       const data = attachApiResponseData(responseData as T);
-      
+
       // Invalidate ALL cache after successful mutation to ensure fresh data
       // Selective invalidation had issues with pattern matching
       invalidateApiCache(); // Clear entire cache
-      
+
       return data;
     } catch (error) {
       lastError = error as Error;
-      
+
       // Retry on network errors
       if (attempt < maxRetries && error instanceof TypeError) {
         const delay = await exponentialBackoff(attempt, maxRetries);
@@ -689,11 +754,11 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
-      
+
       throw error;
     }
   }
-  
+
   throw lastError || new Error('Max retry attempts exceeded');
 }
 
@@ -732,12 +797,12 @@ export async function apiPut<T>(path: string, body: unknown, skipTokenRefresh: b
   }
 
   let res = await fetch(url, requestInit);
-  
+
   // Handle 401 with token refresh
   if (res.status === 401 && !skipTokenRefresh) {
     console.log(`[API] Got 401 for PUT ${url}, attempting token refresh...`);
     const newToken = await refreshAccessToken();
-    
+
     if (newToken) {
       console.log(`[API] Retrying PUT request with new token...`);
       const retryHeaders = getHeaders('PUT');
@@ -748,23 +813,23 @@ export async function apiPut<T>(path: string, body: unknown, skipTokenRefresh: b
         method: "PUT",
         headers: retryHeaders,
         credentials: "include",
-        body: body !== undefined && body !== null 
-          ? (isFormData ? (body as FormData) : JSON.stringify(body)) 
+        body: body !== undefined && body !== null
+          ? (isFormData ? (body as FormData) : JSON.stringify(body))
           : undefined,
       });
     }
   }
-  
+
   if (!res.ok) {
     const text = await res.text();
     throw createApiError("PUT", url, res.status, text);
   }
-  
+
   const data = attachApiResponseData(await res.json() as T);
-  
+
   // Invalidate ALL cache after successful mutation to ensure fresh data
   invalidateApiCache(); // Clear entire cache
-  
+
   return data;
 }
 
@@ -791,12 +856,12 @@ export async function apiPatch<T>(path: string, body: unknown, skipTokenRefresh:
 
   console.log(`[API CALL] PATCH ${url}`, body ? { body } : '');
   let res = await fetch(url, requestInit);
-  
+
   // Handle 401 with token refresh
   if (res.status === 401 && !skipTokenRefresh) {
     console.log(`[API] Got 401 for PATCH ${url}, attempting token refresh...`);
     const newToken = await refreshAccessToken();
-    
+
     if (newToken) {
       console.log(`[API] Retrying PATCH request with new token...`);
       const retryHeaders = getHeaders('PATCH');
@@ -807,25 +872,25 @@ export async function apiPatch<T>(path: string, body: unknown, skipTokenRefresh:
         method: "PATCH",
         headers: retryHeaders,
         credentials: "include",
-        body: body !== undefined && body !== null 
-          ? (isFormData ? (body as FormData) : JSON.stringify(body)) 
+        body: body !== undefined && body !== null
+          ? (isFormData ? (body as FormData) : JSON.stringify(body))
           : undefined,
       });
     }
   }
-  
+
   if (!res.ok) {
     const text = await res.text();
     console.error(`[API CALL] PATCH ${url} failed:`, res.status, text);
     throw createApiError("PATCH", url, res.status, text);
   }
-  
+
   const data = attachApiResponseData(await res.json() as T);
   console.log(`[API CALL] ✓ PATCH ${url} successful`, data);
-  
+
   // Invalidate ALL cache after successful mutation to ensure fresh data
   invalidateApiCache(); // Clear entire cache
-  
+
   return data;
 }
 
@@ -834,18 +899,18 @@ export async function apiPatch<T>(path: string, body: unknown, skipTokenRefresh:
  */
 export async function apiDelete<T>(path: string, skipTokenRefresh: boolean = false): Promise<T> {
   const url = getApiUrl(path);
-  
+
   let res = await fetch(url, {
     method: "DELETE",
     headers: getHeaders('DELETE'),
     credentials: "include",
   });
-  
+
   // Handle 401 with token refresh
   if (res.status === 401 && !skipTokenRefresh) {
     console.log(`[API] Got 401 for DELETE ${url}, attempting token refresh...`);
     const newToken = await refreshAccessToken();
-    
+
     if (newToken) {
       console.log(`[API] Retrying DELETE request with new token...`);
       res = await fetch(url, {
@@ -855,21 +920,21 @@ export async function apiDelete<T>(path: string, skipTokenRefresh: boolean = fal
       });
     }
   }
-  
+
   if (!res.ok) {
     const text = await res.text();
     throw createApiError("DELETE", url, res.status, text);
   }
-  
+
   // Invalidate ALL cache after successful deletion to ensure fresh data
   invalidateApiCache(); // Clear entire cache
-  
+
   // DELETE might not return a body
   if (res.headers.get("content-type")?.includes("application/json")) {
     const data = attachApiResponseData(await res.json() as T);
     return data;
   }
-  
+
   return {} as T;
 }
 
@@ -913,7 +978,7 @@ export async function getCurrentUser(): Promise<User> {
   }
 
   console.log('[API CALL] Attempting to fetch /api/users/me/');
-  
+
   getCurrentUserPromise = (async () => {
     try {
       const data = await apiGet<User>('/users/me/');
@@ -948,7 +1013,7 @@ export async function loginUser(
 
   // Get user data using the access token
   const userData = await getCurrentUser();
-  
+
   return {
     access: data.access,
     refresh: data.refresh,
@@ -959,7 +1024,7 @@ export async function loginUser(
 export async function logoutUser(): Promise<void> {
   console.log('[API CALL] Attempting logout.');
   const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') || localStorage.getItem('refresh') : null;
-  
+
   if (refresh) {
     try {
       await apiPost('/users/logout/', { refresh });
@@ -1100,13 +1165,13 @@ async function apiGetPublic<T>(
   const apiUrl = getApiUrl(path);
   const url = new URL(apiUrl);
   const normalizedParams = normalizeQueryParams(params);
-  
+
   // Preserve trailing slash
   const hadTrailingSlash = apiUrl.endsWith('/') && !apiUrl.includes('?');
   if (hadTrailingSlash && !url.pathname.endsWith('/')) {
     url.pathname = `${url.pathname}/`;
   }
-  
+
   if (normalizedParams) {
     Object.entries(normalizedParams).forEach(([k, v]) => {
       if (v !== undefined && v !== null) {
@@ -1114,9 +1179,9 @@ async function apiGetPublic<T>(
       }
     });
   }
-  
+
   const urlString = url.toString();
-  
+
   const res = await fetch(urlString, {
     method: "GET",
     headers: {
@@ -1124,49 +1189,49 @@ async function apiGetPublic<T>(
     },
     credentials: "include",
   });
-  
+
   if (!res.ok) {
     throw createApiError("GET", urlString, res.status);
   }
-  
+
   return await res.json() as T;
 }
 
 export async function fetchAllBuildingsPublic(): Promise<Building[]> {
   const params = { page_size: 1000, page: 1 };
-  
+
   // Try public endpoint first
   try {
     console.log('[API CALL] Fetching buildings from /buildings/public/');
     const data = await apiGetPublic<Paginated<Building>>('/buildings/public/', params);
-    
+
     let buildings: Building[] = extractResults(data);
     const paginated = data as BuildingsResponse;
-    
+
     // Handle pagination if needed
     if (paginated.next && paginated.count && buildings.length < paginated.count) {
       console.log('[API CALL] Pagination detected, fetching all pages...');
       let allBuildings = [...buildings];
       let nextUrl = paginated.next;
-      
+
       while (nextUrl && allBuildings.length < paginated.count) {
         const nextPath = nextUrl.startsWith('http')
           ? new URL(nextUrl).pathname.replace('/api', '')
           : nextUrl.replace('/api', '');
-        
+
         const nextData = await apiGetPublic<Paginated<Building>>(nextPath);
         const nextBuildings = extractResults(nextData);
         allBuildings = [...allBuildings, ...nextBuildings];
-        
+
         const nextPaginated = nextData as BuildingsResponse;
         nextUrl = nextPaginated.next || '';
-        
+
         if (allBuildings.length >= paginated.count) break;
       }
-      
+
       buildings = allBuildings;
     }
-    
+
     return buildings;
   } catch (error) {
     console.error('[API CALL] Error fetching buildings from /buildings/public/:', error);
@@ -1185,20 +1250,20 @@ export async function fetchMyBuildings(): Promise<Building[]> {
   try {
     console.log('[API CALL] Fetching user buildings from /buildings/my-buildings/');
     const data = await apiGet<Building[]>('/buildings/my-buildings/');
-    
+
     // The endpoint returns an array directly (not paginated)
     if (Array.isArray(data)) {
       console.log('[API CALL] Found', data.length, 'user buildings');
       return data;
     }
-    
+
     // Handle if it returns paginated response
     if ('results' in data && Array.isArray((data as Paginated<Building>).results)) {
       const buildings = (data as Paginated<Building>).results;
       console.log('[API CALL] Found', buildings.length, 'user buildings (paginated)');
       return buildings;
     }
-    
+
     console.warn('[API CALL] Unexpected response format from my-buildings:', data);
     return [];
   } catch (error) {
@@ -1226,7 +1291,7 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
 
 export async function fetchBuilding(id: number): Promise<Building> {
   const response = await apiGet<Building | BuildingsResponse>(`/buildings/list/${id}/`);
-  
+
   // Handle both single object and list response (workaround for routing issues)
   if ('results' in response && Array.isArray(response.results)) {
     // If we got a list response, find the building by ID
@@ -1237,7 +1302,7 @@ export async function fetchBuilding(id: number): Promise<Building> {
     console.log(`[fetchBuilding] Extracted building ${id} from list response`);
     return building;
   }
-  
+
   // Single object response (expected format)
   return response as Building;
 }
@@ -1533,7 +1598,7 @@ export async function createUserRequest(payload: CreateUserRequestPayload): Prom
   // If we have photos, we MUST use FormData
   if (payload.photos && payload.photos.length > 0) {
     const formData = new FormData();
-    
+
     // Add all fields to FormData
     Object.entries(payload).forEach(([key, value]) => {
       if (key === 'photos' && Array.isArray(value)) {
@@ -1544,10 +1609,10 @@ export async function createUserRequest(payload: CreateUserRequestPayload): Prom
         formData.append(key, String(value));
       }
     });
-    
+
     return apiPost<UserRequest>(url, formData);
   }
-  
+
   // Standard JSON request
   return apiPost<UserRequest>(url, payload);
 }
@@ -1795,7 +1860,7 @@ export const api = {
    * @example
    * // Simple GET
    * const data = await api.get('/users/me/');
-   * 
+   *
    * // GET with direct params (recommended)
    * const scheduled = await api.get('/maintenance/scheduled/', {
    *   building: 1,
@@ -1804,7 +1869,7 @@ export const api = {
    *   ordering: 'scheduled_date',
    *   limit: 100
    * });
-   * 
+   *
    * // GET with axios-style params (backward compatibility)
    * const offers = await api.get('/projects/offers/', { params: { status: 'submitted' } });
    */
@@ -1838,11 +1903,11 @@ export const makeRequestWithRetry = async (
   maxAttempts: number = 3
 ): Promise<{ data: unknown }> => {
   let lastError: unknown = null;
-  
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       let result: unknown;
-      
+
       switch (requestConfig.method.toLowerCase()) {
         case 'get':
           result = await apiGet(requestConfig.url);
@@ -1862,14 +1927,14 @@ export const makeRequestWithRetry = async (
         default:
           throw new Error(`Unsupported method: ${requestConfig.method}`);
       }
-      
+
       // Reset retry delay on successful request
       resetRetryDelay(requestConfig.url || 'unknown');
       return { data: result };
     } catch (error: unknown) {
       lastError = error;
       const apiError = error as { status?: number; response?: { status?: number } };
-      
+
       // Only retry on 429 (rate limit) or certain network errors
       if (apiError?.status === 429 || apiError?.response?.status === 429) {
         if (attempt < maxAttempts) {
@@ -1877,21 +1942,21 @@ export const makeRequestWithRetry = async (
             status: apiError?.status || apiError?.response?.status,
             url: requestConfig.url,
           });
-          
+
           // Use exponential backoff for 429 errors per endpoint
           const delayMs = getRetryDelay(requestConfig.url || 'unknown');
           console.log(`[429 BACKOFF] Waiting ${delayMs}ms for ${requestConfig.url}`);
-          
+
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
         }
       }
-      
+
       // Don't retry on other errors
       throw error;
     }
   }
-  
+
   // If we get here, all attempts failed
   throw lastError || new Error('Request failed after all retry attempts');
 };
@@ -1945,7 +2010,7 @@ export async function fetchScheduledMaintenances(params: { buildingId?: number; 
   if (params.buildingId) searchParams.building = params.buildingId;
   if (params.priority) searchParams.priority = params.priority;
   if (params.ordering) searchParams.ordering = params.ordering;
-  
+
   const data = await api.get<ScheduledMaintenance[] | { results: ScheduledMaintenance[] }>('/api/maintenance/scheduled/', searchParams);
   return Array.isArray(data) ? data : data?.results || [];
 }
@@ -1989,7 +2054,7 @@ export type ServiceReceipt = {
 export async function fetchServiceReceipts(params: { buildingId?: number } = {}): Promise<ServiceReceipt[]> {
   const searchParams: Record<string, string | number | undefined> = {};
   if (params.buildingId) searchParams.building = params.buildingId;
-  
+
   const data = await api.get<ServiceReceipt[] | { results: ServiceReceipt[] }>('/api/maintenance/receipts/', searchParams);
   return Array.isArray(data) ? data : data?.results || [];
 }
@@ -2022,25 +2087,25 @@ export async function createServiceReceipt(payload: {
   if (payload.receipt_file) form.append('receipt_file', payload.receipt_file);
   if (typeof payload.expense === 'number') form.append('expense', String(payload.expense));
   if (typeof payload.scheduled_maintenance === 'number') form.append('scheduled_maintenance', String(payload.scheduled_maintenance));
-  
+
   // Use fetch directly for FormData (can't use api.post with FormData)
   const url = getApiUrl('/api/maintenance/receipts/');
   const headers = getHeaders('POST');
   // Remove Content-Type header to let browser set it with boundary for FormData
   delete headers['Content-Type'];
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers,
     credentials: 'include',
     body: form,
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     throw createApiError('POST', url, response.status, errorText);
   }
-  
+
   const data = attachApiResponseData(await response.json() as ServiceReceipt);
   return data;
 }
@@ -2067,7 +2132,7 @@ export async function deleteServiceReceipt(id: number): Promise<void> {
 export async function scanInvoice(file: File): Promise<import('@/types/financial').ScannedInvoiceData> {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   return await apiPost<import('@/types/financial').ScannedInvoiceData>(
     '/financial/expenses/scan/',
     formData
@@ -2157,7 +2222,7 @@ export async function deleteArchiveDocument(id: number): Promise<void> {
 
 export async function fetchApartmentsWithFinancialData(buildingId: number, month?: string): Promise<any[]> {
   console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId, 'month:', month);
-  
+
   try {
     // Use the apartment_balances endpoint which has expense_share data
     const params: Record<string, string> = {
@@ -2166,19 +2231,19 @@ export async function fetchApartmentsWithFinancialData(buildingId: number, month
     if (month) {
       params.month = month;
     }
-    
+
     // The apiGet returns data directly
     const response = await apiGet<{ apartments?: any[] } | any[]>(`/financial/dashboard/apartment_balances/`, params);
-    
+
     // Handle both object with apartments property and direct array
     const result = Array.isArray(response) ? response : (response as { apartments?: any[] }).apartments || [];
-    
+
     console.log('[API CALL] Successfully fetched apartments with financial data:', {
       resultType: typeof result,
       isArray: Array.isArray(result),
       length: Array.isArray(result) ? result.length : 'N/A',
     });
-    
+
     return Array.isArray(result) ? result : [];
   } catch (error: any) {
     // If the optimized endpoint doesn't exist, fall back to individual calls
@@ -2190,19 +2255,19 @@ export async function fetchApartmentsWithFinancialData(buildingId: number, month
 // Fallback method with throttling to prevent rate limiting
 async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Promise<any[]> {
   console.log('[API CALL] Using fallback method with throttling for building:', buildingId);
-  
+
   try {
     // Get apartments first
     const apartments = await fetchApartments(buildingId);
-    
+
     // Process apartments in batches to avoid rate limiting
     const apartmentsWithFinancialData = [];
     const BATCH_SIZE = 3;
     const DELAY_BETWEEN_BATCHES = 500;
-    
+
     for (let i = 0; i < apartments.length; i += BATCH_SIZE) {
       const batch = apartments.slice(i, i + BATCH_SIZE);
-      
+
       const batchPromises = batch.map(async (apartment: any) => {
         try {
           // The apiGet returns data directly
@@ -2210,11 +2275,11 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
             building_id: buildingId.toString(),
             apartment: apartment.id.toString()
           });
-          
-          const payments = Array.isArray(paymentsResponse) 
-            ? paymentsResponse 
+
+          const payments = Array.isArray(paymentsResponse)
+            ? paymentsResponse
             : (paymentsResponse as { results?: any[] }).results || [];
-          
+
           const sortedPayments = Array.isArray(payments)
             ? [...payments].sort((a, b) => {
                 const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -2225,7 +2290,7 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
               })
             : [];
           const latestPayment = sortedPayments.length > 0 ? sortedPayments[0] : null;
-          
+
           return {
             id: apartment.id,
             number: apartment.number,
@@ -2258,16 +2323,16 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
           };
         }
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       apartmentsWithFinancialData.push(...batchResults);
-      
+
       // Delay between batches to avoid rate limiting
       if (i + BATCH_SIZE < apartments.length) {
         await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
       }
     }
-    
+
     return apartmentsWithFinancialData;
   } catch (error) {
     console.error('[API CALL] Error in fallback method:', error);
@@ -2306,15 +2371,15 @@ export async function fetchServicePackages(buildingId?: number): Promise<Service
     if (buildingId) {
       params.building_id = buildingId.toString();
     }
-    
+
     // The apiGet returns data directly
     const response = await apiGet<ServicePackagesResponse | ServicePackage[]>(`/buildings/service-packages/`, params);
-    
+
     // Handle both paginated and non-paginated responses
     if (Array.isArray(response)) {
       return response;
     }
-    
+
     const paginatedResponse = response as ServicePackagesResponse;
     return paginatedResponse.results || [];
   } catch (error) {
@@ -2419,7 +2484,7 @@ export type Contractor = {
 export async function fetchSuppliers(buildingId?: number): Promise<Supplier[]> {
   const params: Record<string, string | number | undefined> = {};
   if (buildingId) params.building = buildingId;
-  
+
   const response = await api.get<Supplier[] | { results: Supplier[] }>('/api/financial/suppliers/', params);
   return Array.isArray(response) ? response : response?.results || [];
 }
@@ -2531,14 +2596,14 @@ export async function activateUser(userId: number): Promise<{ message: string }>
  * Remove a user from a specific building (deletes BuildingMembership).
  * This does NOT deactivate the user - they can still access other buildings.
  */
-export async function removeUserFromBuilding(userId: number, buildingId: number): Promise<{ 
-  message: string; 
-  remaining_buildings: number; 
+export async function removeUserFromBuilding(userId: number, buildingId: number): Promise<{
+  message: string;
+  remaining_buildings: number;
   user_still_active: boolean;
 }> {
   // Use actions/ path to ensure clean matching
   return await apiPost<{ message: string; remaining_buildings: number; user_still_active: boolean }>(
-    `/buildings/actions/remove-membership/`, 
+    `/buildings/actions/remove-membership/`,
     { user_id: userId, building_id: buildingId }
   );
 }
@@ -2546,13 +2611,13 @@ export async function removeUserFromBuilding(userId: number, buildingId: number)
 /**
  * Add a user to a building (creates BuildingMembership).
  */
-export async function addUserToBuilding(userId: number, buildingId: number, role: string = 'resident'): Promise<{ 
-  message: string; 
+export async function addUserToBuilding(userId: number, buildingId: number, role: string = 'resident'): Promise<{
+  message: string;
   membership_id: number;
 }> {
   // Use actions/ path to ensure clean matching
   return await apiPost<{ message: string; membership_id: number }>(
-    `/buildings/actions/add-membership/`, 
+    `/buildings/actions/add-membership/`,
     { user_id: userId, building_id: buildingId, role }
   );
 }
@@ -2595,13 +2660,13 @@ export async function deleteUser(userId: number): Promise<void> {
 // 📋 ASSEMBLIES (Γενικές Συνελεύσεις)
 // ============================================================
 
-export type AssemblyStatus = 
-  | 'draft' 
-  | 'scheduled' 
-  | 'convened' 
-  | 'in_progress' 
-  | 'completed' 
-  | 'cancelled' 
+export type AssemblyStatus =
+  | 'draft'
+  | 'scheduled'
+  | 'convened'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
   | 'adjourned';
 
 export type AssemblyType = 'regular' | 'extraordinary' | 'continuation';
@@ -2751,10 +2816,10 @@ export type Assembly = {
   updated_at: string;
 };
 
-export type AssemblyListItem = Pick<Assembly, 
+export type AssemblyListItem = Pick<Assembly,
   'id' | 'title' | 'building' | 'building_name' | 'assembly_type' | 'assembly_type_display' |
   'scheduled_date' | 'scheduled_time' | 'estimated_duration' | 'status' | 'status_display' |
-  'is_physical' | 'is_online' | 'location' | 'quorum_percentage' | 'quorum_achieved' | 
+  'is_physical' | 'is_online' | 'location' | 'quorum_percentage' | 'quorum_achieved' |
   'quorum_status' | 'is_upcoming' | 'is_pre_voting_active' | 'pre_voting_enabled' |
   'invitation_sent' | 'created_at'
 > & {
@@ -2862,7 +2927,7 @@ export async function endAssembly(assemblyId: string): Promise<{ message: string
 }
 
 export async function adjournAssembly(
-  assemblyId: string, 
+  assemblyId: string,
   continuationDate?: string
 ): Promise<{ message: string; continuation_assembly?: { id: string; title: string; scheduled_date: string } }> {
   return await apiPost(`/assemblies/${assemblyId}/adjourn/`, { continuation_date: continuationDate });
@@ -2887,7 +2952,7 @@ export async function getAssemblyQuorum(assemblyId: string): Promise<{
 }
 
 export async function generateAssemblyMinutes(
-  assemblyId: string, 
+  assemblyId: string,
   options?: { template_id?: string; secretary_name?: string; chairman_name?: string }
 ): Promise<{ message?: string; minutes_text: string; approved?: boolean }> {
   if (options) {
@@ -2905,11 +2970,11 @@ export async function downloadAssemblyMinutes(assemblyId: string): Promise<Blob>
     method: "GET",
     headers: getHeaders("GET"),
   });
-  
+
   if (!response.ok) {
     throw new Error('Failed to download PDF');
   }
-  
+
   return await response.blob();
 }
 
@@ -2950,7 +3015,7 @@ export async function startAgendaItem(itemId: string): Promise<{ message: string
 }
 
 export async function endAgendaItem(
-  itemId: string, 
+  itemId: string,
   options?: { decision?: string; decision_type?: string }
 ): Promise<{ message: string; ended_at: string; actual_duration: number }> {
   return await apiPost(`/agenda-items/${itemId}/end/`, options || {});
@@ -3007,7 +3072,7 @@ export async function fetchAssemblyAttendees(assemblyId: string): Promise<Assemb
 }
 
 export async function attendeeCheckIn(
-  attendeeId: string, 
+  attendeeId: string,
   attendanceType: AttendanceType = 'in_person'
 ): Promise<{ message: string; checked_in_at: string; assembly_quorum: { achieved_mills: number; quorum_achieved: boolean } }> {
   return await apiPost(`/assembly-attendees/${attendeeId}/check_in/`, { attendance_type: attendanceType });
@@ -3018,23 +3083,23 @@ export async function attendeeCheckOut(attendeeId: string): Promise<{ message: s
 }
 
 export async function attendeeRSVP(
-  attendeeId: string, 
-  status: RSVPStatus, 
+  attendeeId: string,
+  status: RSVPStatus,
   notes?: string
 ): Promise<{ message: string; rsvp_status: RSVPStatus; rsvp_at: string }> {
   return await apiPost(`/assembly-attendees/${attendeeId}/rsvp/`, { rsvp_status: status, notes });
 }
 
 export async function attendeeCastVote(
-  attendeeId: string, 
-  agendaItemId: string, 
-  vote: VoteChoice, 
+  attendeeId: string,
+  agendaItemId: string,
+  vote: VoteChoice,
   notes?: string
 ): Promise<{ message: string; vote: AssemblyVote; created?: boolean; updated?: boolean; previous_vote?: VoteChoice }> {
-  return await apiPost(`/assembly-attendees/${attendeeId}/vote/`, { 
-    agenda_item_id: agendaItemId, 
-    vote, 
-    notes 
+  return await apiPost(`/assembly-attendees/${attendeeId}/vote/`, {
+    agenda_item_id: agendaItemId,
+    vote,
+    notes
   });
 }
 
@@ -3082,17 +3147,17 @@ export async function fetchTenants(): Promise<Tenant[]> {
  */
 export function isUltraAdmin(): boolean {
   if (typeof window === 'undefined') return false;
-  
+
   try {
     const cached = localStorage.getItem('user');
     if (!cached) return false;
-    
-    const parsed = JSON.parse(cached) as { 
-      role?: string; 
-      is_superuser?: boolean; 
-      is_staff?: boolean 
+
+    const parsed = JSON.parse(cached) as {
+      role?: string;
+      is_superuser?: boolean;
+      is_staff?: boolean
     };
-    
+
     return (
       (String(parsed?.role || '').toLowerCase() === 'admin' || Boolean(parsed?.is_superuser)) &&
       Boolean(parsed?.is_staff)
@@ -3117,7 +3182,7 @@ export function getUltraAdminTenantOverride(): string | null {
  */
 export function setUltraAdminTenantOverride(host: string | null): void {
   if (typeof window === 'undefined') return;
-  
+
   const trimmed = (host || '').trim();
   if (trimmed) {
     localStorage.setItem('ultra_admin_tenant_host_override', trimmed);

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, Upload, Search, ExternalLink } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { createArchiveDocument, fetchArchiveDocuments, fetchArchiveCategories, fetchArchiveDocumentTypes, extractResults } from '@/lib/api';
+import { apiGetBlob, createArchiveDocument, fetchArchiveDocuments, fetchArchiveCategories, fetchArchiveDocumentTypes, extractResults } from '@/lib/api';
 import type { ArchiveDocument, ArchiveDocumentCategory, ArchiveDocumentType } from '@/types/archive';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
@@ -79,6 +79,7 @@ export default function ArchivePage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [uploadForm, setUploadForm] = useState<UploadFormState>(initialUploadState);
   const [isUploading, setIsUploading] = useState(false);
+  const [openingDocId, setOpeningDocId] = useState<number | null>(null);
 
   const categoriesQ = useQuery({
     queryKey: ['archive-categories'],
@@ -126,6 +127,33 @@ export default function ArchivePage() {
 
   const handleFileChange = (file: File | null) => {
     setUploadForm((prev) => ({ ...prev, file }));
+  };
+
+  const handlePreview = async (doc: ArchiveDocument) => {
+    if (!doc?.id || !doc.file_url) return;
+
+    // Open immediately to avoid popup blockers (the fetch is async)
+    const previewWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
+    if (!previewWindow) {
+      toast.error('Το πρόγραμμα περιήγησης μπλοκάρει το άνοιγμα νέας καρτέλας. Επιτρέψτε τα popups και δοκιμάστε ξανά.');
+      return;
+    }
+
+    setOpeningDocId(doc.id);
+    try {
+      const blob = await apiGetBlob(doc.file_url);
+      const objectUrl = URL.createObjectURL(blob);
+      previewWindow.location.href = objectUrl;
+
+      // Give the new tab time to load before revoking.
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (error) {
+      previewWindow.close();
+      console.error('[Archive] Preview failed', error);
+      toast.error('Αποτυχία προβολής αρχείου');
+    } finally {
+      setOpeningDocId((prev) => (prev === doc.id ? null : prev));
+    }
   };
 
   const handleUpload = async () => {
@@ -389,11 +417,14 @@ export default function ArchivePage() {
                         <TableCell>{formatDate(doc.document_date)}</TableCell>
                         <TableCell className="text-right">
                           {doc.file_url ? (
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={doc.file_url} target="_blank" rel="noreferrer">
-                                <ExternalLink className="w-4 h-4 mr-1" />
-                                Προβολή
-                              </a>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePreview(doc)}
+                              disabled={openingDocId === doc.id}
+                            >
+                              <ExternalLink className="w-4 h-4 mr-1" />
+                              {openingDocId === doc.id ? 'Άνοιγμα…' : 'Προβολή'}
                             </Button>
                           ) : (
                             '—'
