@@ -43,14 +43,14 @@ export interface BuildingContextData {
   address: string;
   city: string;
   postal_code: string;
-  
+
   // Management
   manager_id: number | null;
   internal_manager_name: string;
   internal_manager_phone: string;
   management_office_name: string;
   management_office_phone: string;
-  
+
   // Financial settings
   current_reserve: number;
   management_fee_per_apartment: number;
@@ -60,7 +60,7 @@ export interface BuildingContextData {
   reserve_fund_goal: number | null;
   reserve_fund_duration_months: number | null;
   grace_day_of_month: number;
-  
+
   // Permissions
   permissions: BuildingPermissions;
 }
@@ -76,12 +76,12 @@ interface BuildingContextType {
   refreshBuildings: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  
+
   // NEW: Enhanced context data
   buildingContext: BuildingContextData | null;
   permissions: BuildingPermissions | null;
   refreshBuildingContext: () => Promise<void>;
-  
+
   // NEW: Loading states για context
   isLoadingContext: boolean;
   contextError: string | null;
@@ -98,12 +98,12 @@ const BuildingContext = createContext<BuildingContextType>({
   refreshBuildings: async () => {},
   isLoading: false,
   error: null,
-  
+
   // NEW: Enhanced context
   buildingContext: null,
   permissions: null,
   refreshBuildingContext: async () => {},
-  
+
   // NEW: Loading states
   isLoadingContext: false,
   contextError: null,
@@ -134,15 +134,15 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState<boolean>(false);
   const [hasInitialized, setHasInitialized] = useState<boolean>(false);
-  
+
   // NEW: Enhanced context state
   const [buildingContext, setBuildingContext] = useState<BuildingContextData | null>(null);
   const [permissions, setPermissions] = useState<BuildingPermissions | null>(null);
-  
+
   // NEW: Loading states για context
   const [isLoadingContext, setIsLoadingContext] = useState<boolean>(false);
   const [contextError, setContextError] = useState<string | null>(null);
-  
+
   // NEW: AbortController για request cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -151,16 +151,22 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
 
   // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
-  const loadBuildings = useCallback(async () => {
-    // Enhanced guard clause: prevent duplicate calls
-    if (authLoading || !user || isLoadingBuildings || hasInitialized) {
+  const loadBuildings = useCallback(async (options?: { force?: boolean }) => {
+    const shouldSkip =
+      authLoading ||
+      !user ||
+      isLoadingBuildings ||
+      (!options?.force && hasInitialized);
+
+    // Enhanced guard clause: prevent duplicate calls unless forced
+    if (shouldSkip) {
       return;
     }
 
     try {
       setIsLoading(true);
       setIsLoadingBuildings(true);
-      
+
       // IMPORTANT:
       // Residents/internal managers should see ONLY their buildings (via BuildingMembership / apartment links).
       // Office admins/staff can see all buildings in the tenant.
@@ -173,18 +179,18 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       const data = isManagementStaff ? await fetchAllBuildings() : await fetchMyBuildings();
       console.log('[BuildingContext] Loaded buildings:', data.length, 'buildings');
       setBuildings(data);
-      
+
       // Always try to select a building if we have buildings
       if (data.length > 0) {
         // Restore selected building from localStorage or default to first building
         const storedBuildingId = getStoredSelectedBuildingId();
         let buildingToSelect: Building | null = null;
-        
+
         if (storedBuildingId) {
           // Try to find the stored building
           buildingToSelect = data.find(building => building.id === storedBuildingId) || null;
         }
-        
+
         // If stored building not found, default to first building
         if (!buildingToSelect) {
           buildingToSelect = data[0];
@@ -192,10 +198,10 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
         } else {
           console.log(`[BuildingContext] Restored stored building: ${buildingToSelect.name} (ID: ${buildingToSelect.id})`);
         }
-        
+
         setCurrentBuilding(buildingToSelect);
         setSelectedBuilding(buildingToSelect);
-        
+
         // Update localStorage with the selected building (both keys for compatibility)
         setStoredSelectedBuildingId(buildingToSelect.id);
         // Also update activeBuildingId for backward compatibility with getActiveBuildingId()
@@ -210,7 +216,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
         setSelectedBuilding(null);
         setStoredSelectedBuildingId(null);
       }
-      
+
       setError(null);
       setHasInitialized(true);
     } catch (err: unknown) {
@@ -240,67 +246,67 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   // Refresh buildings function
   const refreshBuildings = useCallback(async () => {
     console.log('[BuildingContext] Refreshing buildings...');
-    await loadBuildings();
+    await loadBuildings({ force: true });
   }, [loadBuildings]);
-  
+
   // NEW: Debounced fetch building context with permissions from new API endpoint
   // Uses a ref to track the debounce timer
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const fetchBuildingContext = useCallback(async (buildingId: number) => {
     // Cancel previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     abortControllerRef.current = new AbortController();
-    
+
     try {
       setIsLoadingContext(true);
       setContextError(null);
-      
+
       console.log(`[BuildingContext] Fetching context for building ${buildingId}...`);
-      
+
       const response = await api.get<BuildingContextData>(
         `/buildings/current-context/?building_id=${buildingId}`
       );
       const data = response.data;
-      
+
       setBuildingContext(data);
       setPermissions(data.permissions);
-      
+
       console.log('[BuildingContext] Building context loaded:', {
         id: data.id,
         name: data.name,
         permissions: data.permissions,
       });
-      
+
     } catch (err: any) {
       // Ignore abort errors
       if (err.name === 'AbortError' || err.name === 'CanceledError') {
         console.log('[BuildingContext] Request cancelled');
         return;
       }
-      
+
       console.error('[BuildingContext] Failed to load building context:', err);
-      
+
       setBuildingContext(null);
       setPermissions(null);
-      
-      const errorMessage = err.response?.data?.detail || 
-                          err.message || 
+
+      const errorMessage = err.response?.data?.detail ||
+                          err.message ||
                           'Αποτυχία φόρτωσης δεδομένων κτιρίου';
       setContextError(errorMessage);
-      
+
       // Show toast for non-abort errors
       toast.error(errorMessage);
-      
+
     } finally {
       setIsLoadingContext(false);
       abortControllerRef.current = null;
     }
   }, []);
-  
+
   // NEW: Refresh building context
   const refreshBuildingContext = useCallback(async () => {
     if (selectedBuilding?.id) {
@@ -308,7 +314,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       await fetchBuildingContext(selectedBuilding.id);
     }
   }, [selectedBuilding?.id, fetchBuildingContext]);
-  
+
   // NEW: Debounced fetch function
   // Delays fetching by 300ms to avoid rapid API calls during quick building switches
   const debouncedFetchBuildingContext = useMemo(
@@ -318,7 +324,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current);
         }
-        
+
         // Set new debounce timer
         debounceTimerRef.current = setTimeout(() => {
           fetchBuildingContext(buildingId);
@@ -327,7 +333,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     },
     [fetchBuildingContext]
   );
-  
+
   // NEW: Auto-fetch context when selectedBuilding changes (with debouncing)
   useEffect(() => {
     if (selectedBuilding?.id) {
@@ -339,13 +345,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setPermissions(null);
       setContextError(null);
       setIsLoadingContext(false);
-      
+
       // Clear debounce timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     }
-    
+
     // Cleanup function - cancel ongoing requests and timers when component unmounts
     return () => {
       if (abortControllerRef.current) {
@@ -381,13 +387,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingBuildings(false);
       return;
     }
-    
+
     const role = (user as unknown as { role?: string })?.role;
     const isManagementStaff =
       !!(user as any)?.is_staff ||
       !!(user as any)?.is_superuser ||
       (typeof role === 'string' && ['manager', 'admin', 'office_staff', 'staff'].includes(role));
-    
+
     // If auth is ready and user exists but no tenant:
     // - For ultra/admin staff, we still want to load buildings (tenant is resolved via X-Tenant-Host).
     // - For regular users, stop loading (they might not have tenant yet).
@@ -401,7 +407,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       }
       return;
     }
-    
+
     // Only load buildings when:
     // 1. Auth is not loading
     // 2. User is authenticated
@@ -427,13 +433,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (selectedBuilding?.id) {
       console.log(`[BuildingContext] Building changed to ${selectedBuilding.id}, invalidating queries...`);
-      
+
       // Invalidate όλα τα queries που εξαρτώνται από buildingId
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         predicate: (query) => {
           // Invalidate queries που έχουν buildingId στο query key
           const queryKey = query.queryKey as unknown[];
-          return queryKey.some(key => 
+          return queryKey.some(key =>
             Array.isArray(key) ? key.includes(selectedBuilding.id) : false
           ) || (
             // Ή queries που έχουν building-related keys
@@ -450,7 +456,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
           );
         }
       });
-      
+
       console.log(`[BuildingContext] ✓ Queries invalidated for building ${selectedBuilding.id}`);
     }
   }, [selectedBuilding?.id, queryClient]);
@@ -497,25 +503,25 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       refreshBuildings,
       isLoading,
       error,
-      
+
       // NEW: Enhanced context
       buildingContext,
       permissions,
       refreshBuildingContext,
-      
+
       // NEW: Loading states
       isLoadingContext,
       contextError,
     }),
     [
-      buildings, 
-      currentBuilding, 
-      selectedBuilding, 
-      setCurrentBuildingWithStorage, 
-      setSelectedBuildingWithStorage, 
-      setBuildings, 
-      refreshBuildings, 
-      isLoading, 
+      buildings,
+      currentBuilding,
+      selectedBuilding,
+      setCurrentBuildingWithStorage,
+      setSelectedBuildingWithStorage,
+      setBuildings,
+      refreshBuildings,
+      isLoading,
       error,
       buildingContext,
       permissions,
@@ -535,4 +541,3 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 export const useBuilding = (): BuildingContextType => {
   return useContext(BuildingContext);
 };
-
