@@ -23,7 +23,7 @@ export default function EditBuildingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  
+
   // Use ref to track if we've already loaded data for this ID
   const loadedIdRef = useRef<number | null>(null);
   const loadingRef = useRef(false);
@@ -31,12 +31,12 @@ export default function EditBuildingPage() {
   // Check if the ID in URL matches available buildings
   useEffect(() => {
     // Wait for buildings to load
-    if (buildingsLoading) return;
+    if (buildingsLoading || loading || initialData || error) return;
 
     // If we have buildings loaded, check if the URL ID is valid
     if (buildings.length > 0) {
       const urlBuilding = buildings.find(b => b.id === id);
-      
+
       // If URL ID doesn't match any building, redirect to the selected building or first building
       if (!urlBuilding) {
         const targetBuilding = selectedBuilding || buildings[0];
@@ -60,11 +60,11 @@ export default function EditBuildingPage() {
       try {
         setLoading(true);
         setError(null);
-        
+
         console.log(`[EditBuilding] Fetching building ${id}...`);
         const data = await fetchBuilding(id);
         console.log(`[EditBuilding] Fetched building:`, data);
-        
+
         setInitialData(data);
         loadedIdRef.current = id;
       } catch (err: unknown) {
@@ -76,7 +76,7 @@ export default function EditBuildingPage() {
         loadingRef.current = false;
       }
     }
-    
+
     load();
   }, [id]); // Only re-run when id changes
 
@@ -93,7 +93,7 @@ export default function EditBuildingPage() {
 
   const handleDelete = async () => {
     if (!initialData) return;
-    
+
     const confirmed = window.confirm(
       `Είστε βέβαιοι ότι θέλετε να διαγράψετε το κτίριο "${initialData.name}";\n\n` +
       `⚠️ Προειδοποίηση: Αυτή η ενέργεια θα διαγράψει επίσης:\n` +
@@ -104,9 +104,9 @@ export default function EditBuildingPage() {
       `• Όλες τις οικονομικές κινήσεις\n\n` +
       `Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!`
     );
-    
+
     if (!confirmed) return;
-    
+
     setDeleting(true);
     try {
       await deleteBuilding(id);
@@ -190,7 +190,7 @@ export default function EditBuildingPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Delete Button */}
         <Button
           variant="destructive"

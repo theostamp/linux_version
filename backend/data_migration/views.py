@@ -19,10 +19,10 @@ def analyze_form_images(request):
     try:
         # Λήψη αρχείων από το request
         files = request.FILES.getlist('images')
-        
+
         if not files:
             return Response(
-                {'error': 'Δεν βρέθηκαν αρχεία εικόνων'}, 
+                {'error': 'Δεν βρέθηκαν αρχεία εικόνων'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -31,7 +31,7 @@ def analyze_form_images(request):
         for file in files:
             if file.content_type.startswith('image/'):
                 file_path = default_storage.save(
-                    f'temp_migration/{file.name}', 
+                    f'temp_migration/{file.name}',
                     ContentFile(file.read())
                 )
                 saved_files.append(file_path)
@@ -54,7 +54,7 @@ def analyze_form_images(request):
     except Exception as e:
         logger.error(f"Error in analyze_form_images: {str(e)}")
         return Response(
-            {'error': f'Σφάλμα κατά την ανάλυση: {str(e)}'}, 
+            {'error': f'Σφάλμα κατά την ανάλυση: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -179,12 +179,14 @@ def import_migrated_data(request):
 
         # Δημιουργία ή ενημέρωση κτιρίου
         if target_building_id == 'new':
+            manager_id = request.user.id if request.user and request.user.is_authenticated else None
             building = Building.objects.create(
                 name=building_data['name'],
                 address=building_data['address'],
                 city=building_data.get('city', ''),
                 postal_code=building_data.get('postal_code', ''),
                 apartments_count=building_data.get('apartments_count', 0),
+                manager_id=manager_id,
                 internal_manager_apartment=building_data.get('internal_manager_apartment', ''),
                 internal_manager_collection_schedule=building_data.get('internal_manager_collection_schedule', ''),
                 internal_manager_name=building_data.get('internal_manager_name', ''),
@@ -253,7 +255,7 @@ def import_migrated_data(request):
     except Exception as e:
         logger.error(f"Error in import_migrated_data: {str(e)}")
         return Response(
-            {'error': f'Σφάλμα κατά την εισαγωγή: {str(e)}'}, 
+            {'error': f'Σφάλμα κατά την εισαγωγή: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -285,12 +287,12 @@ def validate_migration_data(request):
         # Επικύρωση διαμερισμάτων
         apartments_data = data.get('apartments', [])
         apartment_numbers = []
-        
+
         for i, apt in enumerate(apartments_data):
             if not apt.get('number'):
                 validation_results['errors'].append(f'Διαμέρισμα {i+1}: Λείπει ο αριθμός')
                 validation_results['is_valid'] = False
-            
+
             if apt.get('number') in apartment_numbers:
                 validation_results['errors'].append(f'Διαμέρισμα {i+1}: Διπλός αριθμός διαμερίσματος')
                 validation_results['is_valid'] = False
@@ -321,7 +323,7 @@ def validate_migration_data(request):
     except Exception as e:
         logger.error(f"Error in validate_migration_data: {str(e)}")
         return Response(
-            {'error': f'Σφάλμα κατά την επικύρωση: {str(e)}'}, 
+            {'error': f'Σφάλμα κατά την επικύρωση: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -386,4 +388,4 @@ def get_migration_templates(request):
         'max_files': 10
     }
 
-    return Response(templates) 
+    return Response(templates)
