@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+.next
+out
+dist
+build
+
+# Generated files
+*.min.js
+*.min.css
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# Other
+coverage
+.vercel
+.turbo
+

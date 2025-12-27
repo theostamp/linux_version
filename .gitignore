@@ -30,6 +30,7 @@ credentials/
 !tsconfig.json
 !tsconfig.*.json
 !pyrightconfig.json
+!.prettierrc.json
 *-credentials.json
 *-secret.json
 *-key.json
