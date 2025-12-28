@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Upload, Search, ExternalLink, Trash2, Loader2 } from 'lucide-react';
+import { FileText, FolderArchive, Upload, Search, ExternalLink, Trash2, Loader2 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import {
   createArchiveDocument,
@@ -24,6 +24,7 @@ import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
+import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,7 +92,7 @@ function formatDate(value?: string | null) {
   }
 }
 
-export default function ArchivePage() {
+function ArchiveContent() {
   const { selectedBuilding } = useBuilding();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -295,9 +296,7 @@ export default function ArchivePage() {
   };
 
   return (
-    <AuthGate role={['manager', 'staff', 'superuser']}>
-      <SubscriptionGate requiredStatus="any">
-        <div className="space-y-6">
+    <div className="space-y-6">
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <FileText className="w-7 h-7" />
@@ -677,7 +676,70 @@ export default function ArchivePage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+    </div>
+  );
+}
+
+function ArchiveGate() {
+  const { buildingContext, isLoadingContext, selectedBuilding } = useBuilding();
+  const premiumEnabled = Boolean(
+    buildingContext?.billing?.kiosk_enabled ?? buildingContext?.premium_enabled ?? false
+  );
+  const upgradeHref = selectedBuilding?.id ? `/upgrade?building_id=${selectedBuilding.id}` : '/upgrade';
+
+  if (isLoadingContext && !buildingContext) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+          <p>Έλεγχος Premium...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!premiumEnabled) {
+    return (
+      <PremiumFeatureInfo
+        title="Ηλεκτρονικό Αρχείο Πολυκατοικίας"
+        description="Κράτα όλα τα έγγραφα σε ένα σημείο με κατηγορίες, μεταδεδομένα και ισχυρή αναζήτηση. Οργάνωσε πρακτικά, συμβάσεις και παραστατικά χωρίς χαμένο χρόνο."
+        note="Απαιτείται ενεργή Premium συνδρομή για το επιλεγμένο κτίριο."
+        bullets={[
+          'Κατηγοριοποίηση εγγράφων με ευέλικτα φίλτρα και προβολές.',
+          'Μεταδεδομένα (αριθμός, ΑΦΜ, ημερομηνία, ποσό) για εύκολη αναζήτηση.',
+          'Άμεσο preview PDF/εικόνων χωρίς εξαγωγές.',
+          'Σύνδεση με παραστατικά και οικονομικές κινήσεις.',
+        ]}
+        highlights={[
+          {
+            title: 'Ταξινόμηση & φίλτρα',
+            description: 'Βρες αμέσως ό,τι χρειάζεσαι με κατηγορίες και έξυπνη αναζήτηση.',
+          },
+          {
+            title: 'Ασφαλής πρόσβαση',
+            description: 'Ορισμός πρόσβασης ανά ρόλο και πλήρες ιστορικό ενεργειών.',
+          },
+          {
+            title: 'Προβολή αρχείων',
+            description: 'Άνοιξε έγγραφα σε νέα καρτέλα χωρίς να βαραίνει η εφαρμογή.',
+          },
+        ]}
+        tags={['Κατηγορίες', 'Μεταδεδομένα', 'Αναζήτηση', 'Preview']}
+        ctaHref={upgradeHref}
+        ctaLabel="Premium συνδρομή"
+        icon={<FolderArchive className="h-5 w-5" />}
+      />
+    );
+  }
+
+  return <ArchiveContent />;
+}
+
+export default function ArchivePage() {
+  return (
+    <AuthGate role={['manager', 'staff', 'superuser']}>
+      <SubscriptionGate requiredStatus="any">
+        <ArchiveGate />
       </SubscriptionGate>
     </AuthGate>
   );

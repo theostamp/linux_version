@@ -167,21 +167,6 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
         tooltip: 'Διαχείριση προσφορών και έργων',
       },
-      {
-        href: '/documents',
-        label: 'Παραστατικά',
-        icon: <FileText className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        isBeta: true,
-        tooltip: 'Διαχείριση παραστατικών και οικονομικών εγγράφων',
-      },
-      {
-        href: '/archive',
-        label: 'Ηλεκτρονικό Αρχείο',
-        icon: <FolderArchive className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        tooltip: 'Οργάνωση και αναζήτηση αρχείων πολυκατοικίας',
-      },
     ]
   },
   {
@@ -284,25 +269,25 @@ const navigationGroups: NavigationGroup[] = [
     ]
   },
   {
-    id: 'kiosk',
-    title: 'Kiosk',
+    id: 'premium',
+    title: 'Premium',
     colorKey: 'purple',
     links: [
       {
         href: '/kiosk-management',
-        label: 'Διαχείριση',
+        label: 'Διαχείριση info point',
         icon: <Settings className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         requiresPremium: true,
-        tooltip: 'Ρυθμίσεις και διαχείριση του Kiosk',
+        tooltip: 'Ρύθμιση scenes, widgets και προγράμματος προβολής για το info point εισόδου με live preview.',
       },
       {
         href: '/kiosk',
-        label: 'Display',
+        label: 'Display kiosk info point',
         icon: <Monitor className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         requiresPremium: true,
-        tooltip: 'Προβολή της οθόνης Kiosk',
+        tooltip: 'Άνοιγμα της οθόνης προβολής σε πλήρη οθόνη για TV/monitor στην είσοδο.',
       },
       {
         href: '/heating',
@@ -310,7 +295,24 @@ const navigationGroups: NavigationGroup[] = [
         icon: <Flame className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         requiresPremium: true,
-        tooltip: 'Έλεγχος κεντρικής θέρμανσης (IoT)',
+        tooltip: 'Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες, ζώνες και αυτοματισμούς IoT.',
+      },
+      {
+        href: '/documents',
+        label: 'Παραστατικά',
+        icon: <FileText className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        isBeta: true,
+        requiresPremium: true,
+        tooltip: 'Ψηφιοποίηση παραστατικών με AI/OCR, αυτόματη συμπλήρωση στοιχείων και δημιουργία δαπανών.',
+      },
+      {
+        href: '/archive',
+        label: 'Ηλεκτρονικό Αρχείο',
+        icon: <FolderArchive className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        requiresPremium: true,
+        tooltip: 'Κεντρικό αρχείο για πρακτικά, συμβάσεις και παραστατικά με κατηγοριοποίηση και αναζήτηση.',
       },
     ]
   },
@@ -472,6 +474,13 @@ export default function CollapsibleSidebar() {
   const getPremiumUpgradeHref = () => {
     const buildingId = selectedBuilding?.id;
     return buildingId ? `/upgrade?building_id=${buildingId}` : '/upgrade';
+  };
+
+  const getLockedHref = (link: NavigationLink) => {
+    if (link.href === '/documents' || link.href === '/archive') {
+      return link.href;
+    }
+    return getPremiumUpgradeHref();
   };
 
   const isLinkLocked = (link: NavigationLink): boolean => {
@@ -700,7 +709,7 @@ export default function CollapsibleSidebar() {
                     const isActive = pathname === link.href ||
                       (pathname && pathname.startsWith(link.href) && link.href !== '/dashboard');
                     const locked = isLinkLocked(link);
-                    const effectiveHref = locked ? getPremiumUpgradeHref() : link.href;
+                    const effectiveHref = locked ? getLockedHref(link) : link.href;
 
                     return (
                       <div key={link.href} className="relative group/item">
@@ -805,7 +814,7 @@ export default function CollapsibleSidebar() {
                             >
                               <p className="text-xs font-semibold">{link.label}</p>
                               {locked && (
-                                <p className="text-xs mt-1 text-muted-foreground">Απαιτείται Premium (Kiosk + AI)</p>
+                                <p className="text-xs mt-1 text-muted-foreground">Απαιτείται Premium (Kiosk + AI + Αρχείο)</p>
                               )}
                               {link.tooltip && (
                                 <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">{link.tooltip}</p>
@@ -929,7 +938,7 @@ export default function CollapsibleSidebar() {
                   {group.links.map((link) => {
                     const isActive = pathname === link.href;
                     const locked = isLinkLocked(link);
-                    const effectiveHref = locked ? getPremiumUpgradeHref() : link.href;
+                    const effectiveHref = locked ? getLockedHref(link) : link.href;
 
                     return (
                       <div key={link.href} className="relative flex items-center">

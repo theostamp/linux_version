@@ -12,6 +12,7 @@ import { createArchiveDocument } from '@/lib/api';
 import { api } from '@/lib/api';
 import { ScannedInvoiceData, ExpenseFormData } from '@/types/financial';
 import { toast } from 'sonner';
+import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -403,10 +404,55 @@ function DocumentsContent() {
 }
 
 export default function DocumentsPage() {
+  const { buildingContext, isLoadingContext, selectedBuilding } = useBuilding();
+  const premiumEnabled = Boolean(
+    buildingContext?.billing?.kiosk_enabled ?? buildingContext?.premium_enabled ?? false
+  );
+  const upgradeHref = selectedBuilding?.id ? `/upgrade?building_id=${selectedBuilding.id}` : '/upgrade';
+
   return (
     <AuthGate role={['manager', 'staff', 'superuser']}>
       <SubscriptionGate requiredStatus="any">
-        <DocumentsContent />
+        {isLoadingContext && !buildingContext ? (
+          <div className="min-h-[50vh] flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+              <p>Έλεγχος Premium...</p>
+            </div>
+          </div>
+        ) : premiumEnabled ? (
+          <DocumentsContent />
+        ) : (
+          <PremiumFeatureInfo
+            title="Παραστατικά με AI αναγνώριση"
+            description="Σάρωσε παραστατικά και μεταμόρφωσέ τα σε έτοιμες δαπάνες με ακρίβεια. Όλα καταγράφονται αυτόματα και συνδέονται με το ηλεκτρονικό αρχείο."
+            note="Απαιτείται ενεργή Premium συνδρομή για το επιλεγμένο κτίριο."
+            bullets={[
+              'Αυτόματη εξαγωγή ποσού, ημερομηνίας, προμηθευτή και ΑΦΜ.',
+              'Πρόταση κατηγορίας και δημιουργία δαπάνης με ένα κλικ.',
+              'Σύνδεση παραστατικού με το Ηλεκτρονικό Αρχείο.',
+              'Έλεγχος για πιθανές διπλο-καταχωρήσεις πριν την αποθήκευση.',
+            ]}
+            highlights={[
+              {
+                title: 'OCR + AI ανάλυση',
+                description: 'Διαβάζει εικόνες/PDF και μετατρέπει το παραστατικό σε δομημένα δεδομένα.',
+              },
+              {
+                title: 'Auto-fill δαπάνης',
+                description: 'Συμπληρώνει τα πεδία και μειώνει τα λάθη στις καταχωρήσεις.',
+              },
+              {
+                title: 'Σύνδεση με οικονομικά',
+                description: 'Κρατά την αλυσίδα παραστατικό → δαπάνη → αρχείο ενιαία.',
+              },
+            ]}
+            tags={['OCR', 'Auto-fill', 'Έλεγχος διπλών', 'Σύνδεση δαπανών']}
+            ctaHref={upgradeHref}
+            ctaLabel="Premium συνδρομή"
+            icon={<FileText className="h-5 w-5" />}
+          />
+        )}
       </SubscriptionGate>
     </AuthGate>
   );
