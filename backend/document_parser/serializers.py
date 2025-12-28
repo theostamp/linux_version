@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import DocumentUpload
+from core.file_hashing import sha256_hexdigest
 
 
 class DocumentUploadSerializer(serializers.ModelSerializer):
@@ -25,13 +26,33 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             validated_data['original_filename'] = file.name
             validated_data['file_size'] = file.size
             validated_data['mime_type'] = file.content_type
-            
+
             # Generate file URL for preview
             if hasattr(file, 'url'):
                 validated_data['original_file_url'] = file.url
-        
+
         return super().create(validated_data)
-    
+
+    def validate(self, attrs):
+        """
+        Prevent duplicate uploads for the same building based on file content hash (SHA-256).
+        """
+        building = attrs.get("building") or getattr(self.instance, "building", None)
+        uploaded_file = attrs.get("file")
+
+        if building and uploaded_file:
+            file_hash = sha256_hexdigest(uploaded_file)
+            attrs["file_hash"] = file_hash
+            qs = DocumentUpload.objects.filter(building=building, file_hash=file_hash)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError(
+                    {"file": "Το ίδιο αρχείο έχει ήδη ανέβει για αυτό το κτίριο."}
+                )
+
+        return attrs
+
     class Meta:
         model = DocumentUpload
         fields = [

@@ -1,5 +1,5 @@
 # backend/buildings/serializers.py
-from rest_framework import serializers 
+from rest_framework import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Building, ServicePackage
 from users.models import CustomUser
@@ -23,18 +23,18 @@ class BuildingMembershipSerializer(serializers.ModelSerializer):
 
 class CoordinateField(serializers.Field):
     """Custom field to handle coordinate conversion from float to Decimal"""
-    
+
     def to_internal_value(self, data):
         print(f"🔍 CoordinateField.to_internal_value called with: {data} (type: {type(data)})")
-        
+
         if data is None:
             return None
-            
+
         # Handle case where data is a list/array (take first element)
         if isinstance(data, (list, tuple)) and len(data) > 0:
             print(f"⚠️  CoordinateField received array data: {data}, using first element: {data[0]}")
             data = data[0]
-            
+
         try:
             # Convert to Decimal
             if isinstance(data, (int, float)):
@@ -43,7 +43,7 @@ class CoordinateField(serializers.Field):
                 decimal_value = Decimal(data)
             else:
                 raise serializers.ValidationError("Η τιμή πρέπει να είναι αριθμός.")
-            
+
             # Validate range based on field name
             field_name = self.field_name if hasattr(self, 'field_name') and self.field_name else ''
             if 'latitude' in field_name:
@@ -52,12 +52,12 @@ class CoordinateField(serializers.Field):
             elif 'longitude' in field_name:
                 if decimal_value < -180 or decimal_value > 180:
                     raise serializers.ValidationError("Το γεωγραφικό μήκος πρέπει να είναι μεταξύ -180 και 180 μοιρών.")
-            
+
             return decimal_value
         except (ValueError, InvalidOperation) as e:
             print(f"❌ CoordinateField conversion failed: {e}")
             raise serializers.ValidationError("Η τιμή πρέπει να είναι έγκυρος αριθμός.")
-    
+
     def to_representation(self, value):
         if value is None:
             return None
@@ -65,23 +65,23 @@ class CoordinateField(serializers.Field):
 
 class ServicePackageSerializer(serializers.ModelSerializer):
     """Serializer για τα πακέτα υπηρεσιών"""
-    
+
     services_list = serializers.SerializerMethodField()
     total_cost_for_building = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = ServicePackage
         fields = [
-            'id', 'name', 'description', 'fee_per_apartment', 
+            'id', 'name', 'description', 'fee_per_apartment',
             'services_included', 'services_list', 'total_cost_for_building',
             'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
-    
+
     def get_services_list(self, obj):
         """Επιστρέφει τη λίστα υπηρεσιών ως string"""
         return obj.get_services_list()
-    
+
     def get_total_cost_for_building(self, obj):
         """Υπολογίζει το συνολικό κόστος για το κτίριο"""
         building_id = self.context.get('building_id')
@@ -97,7 +97,7 @@ class ServicePackageSerializer(serializers.ModelSerializer):
 class InternalManagerSerializer(serializers.ModelSerializer):
     """Serializer για τον εσωτερικό διαχειριστή (nested)"""
     full_name = serializers.CharField(source='get_full_name', read_only=True)
-    
+
     class Meta:
         model = CustomUser
         fields = ['id', 'email', 'first_name', 'last_name', 'full_name']
@@ -112,7 +112,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         allow_null=True,
         default=serializers.CurrentUserDefault()
     )
-    
+
     # Εσωτερικός Διαχειριστής - ForeignKey
     internal_manager = InternalManagerSerializer(read_only=True)
     internal_manager_id = serializers.IntegerField(
@@ -120,13 +120,13 @@ class BuildingSerializer(serializers.ModelSerializer):
         allow_null=True,
         write_only=True
     )
-    
+
     # Δικαίωμα καταχώρησης πληρωμών για τον εσωτερικό διαχειριστή
     internal_manager_can_record_payments = serializers.BooleanField(required=False, default=False)
-    
+
     # Computed field: Όνομα εμφάνισης του εσωτερικού διαχειριστή
     internal_manager_display_name = serializers.SerializerMethodField()
-    
+
     # Προσθήκη nested serializer για το service_package
     service_package = ServicePackageSerializer(read_only=True)
     service_package_id = serializers.PrimaryKeyRelatedField(
@@ -136,16 +136,16 @@ class BuildingSerializer(serializers.ModelSerializer):
         allow_null=True,
         write_only=True
     )
-    
+
     # Use CoordinateField for latitude and longitude to handle proper conversion
     latitude = CoordinateField(required=False, allow_null=True)
     longitude = CoordinateField(required=False, allow_null=True)
-    
+
     class Meta:
         model = Building
         fields = [
-            'id', 'name', 'address', 'city', 'postal_code', 
-            'apartments_count', 
+            'id', 'name', 'address', 'city', 'postal_code',
+            'apartments_count',
             # Internal Manager - νέα πεδία
             'internal_manager', 'internal_manager_id', 'internal_manager_can_record_payments',
             'internal_manager_display_name',
@@ -173,21 +173,21 @@ class BuildingSerializer(serializers.ModelSerializer):
         """
         print(f"🔍 BuildingSerializer.create() called with validated_data: {validated_data}")
         print(f"🔍 Street view image in validated_data: {validated_data.get('street_view_image')}")
-        
+
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             user = request.user
-            
+
             # Auto-populate office details from user if not provided
             if not validated_data.get('management_office_name') and user.office_name:
                 validated_data['management_office_name'] = user.office_name
-            
+
             if not validated_data.get('management_office_phone') and user.office_phone:
                 validated_data['management_office_phone'] = user.office_phone
-            
+
             if not validated_data.get('management_office_address') and user.office_address:
                 validated_data['management_office_address'] = user.office_address
-        
+
         result = super().create(validated_data)
         print(f"🔍 BuildingSerializer.create() result: {result}")
         print(f"🔍 Result street view image: {result.street_view_image}")
@@ -199,7 +199,57 @@ class BuildingSerializer(serializers.ModelSerializer):
         """Additional validation for the entire building data"""
         import logging
         logger = logging.getLogger(__name__)
-        
+
+        # ============================================================
+        # Prevent duplicate building insertion (same address/city/postal)
+        # ============================================================
+        def _clean_text(value):
+            if value is None:
+                return None
+            if not isinstance(value, str):
+                value = str(value)
+            return " ".join(value.strip().split())
+
+        is_create = self.instance is None
+        should_check_duplicates = is_create or any(
+            key in data for key in ("name", "address", "city", "postal_code")
+        )
+
+        if should_check_duplicates:
+            name = _clean_text(data.get("name") if "name" in data else getattr(self.instance, "name", None))
+            address = _clean_text(data.get("address") if "address" in data else getattr(self.instance, "address", None))
+            city = _clean_text(data.get("city") if "city" in data else getattr(self.instance, "city", None))
+            postal_code = _clean_text(
+                data.get("postal_code") if "postal_code" in data else getattr(self.instance, "postal_code", None)
+            )
+
+            # Normalize provided inputs (avoid accidental duplicates due to whitespace)
+            if "name" in data and isinstance(data.get("name"), str) and name is not None:
+                data["name"] = name
+            if "address" in data and isinstance(data.get("address"), str) and address is not None:
+                data["address"] = address
+            if "city" in data and isinstance(data.get("city"), str) and city is not None:
+                data["city"] = city
+            if "postal_code" in data and isinstance(data.get("postal_code"), str) and postal_code is not None:
+                data["postal_code"] = postal_code
+
+            if address and city and postal_code:
+                dup_qs = Building.objects.filter(
+                    address__iexact=address,
+                    city__iexact=city,
+                    postal_code__iexact=postal_code,
+                )
+                if self.instance:
+                    dup_qs = dup_qs.exclude(id=self.instance.id)
+
+                existing = dup_qs.first()
+                if existing:
+                    raise serializers.ValidationError(
+                        {
+                            "address": f"Υπάρχει ήδη κτίριο με την ίδια διεύθυνση/πόλη/Τ.Κ. (ID: {existing.id})."
+                        }
+                    )
+
         # Manually resolve internal_manager_id since we changed it to IntegerField
         # to bypass DRF's PrimaryKeyRelatedField cross-schema limitations
         internal_manager_id = data.get('internal_manager_id')
@@ -221,14 +271,14 @@ class BuildingSerializer(serializers.ModelSerializer):
             # Handle clearing the internal manager
             data['internal_manager'] = None
             logger.info("ℹ️ [BuildingSerializer.validate] Clearing internal_manager")
-        
+
         # If both latitude and longitude are provided, ensure they're both valid
         latitude = data.get('latitude')
         longitude = data.get('longitude')
-        
+
         if (latitude is not None and longitude is None) or (latitude is None and longitude is not None):
             raise serializers.ValidationError("Τα γεωγραφικά πλάτος και μήκος πρέπει να παρέχονται μαζί ή κανένα από τα δύο.")
-        
+
         return data
 
     def update(self, instance, validated_data):
@@ -238,11 +288,11 @@ class BuildingSerializer(serializers.ModelSerializer):
         """
         import logging
         logger = logging.getLogger(__name__)
-        
+
         # Ελέγχουμε αν αλλάζει ο internal_manager
         new_internal_manager = validated_data.get('internal_manager')
         old_internal_manager = instance.internal_manager
-        
+
         # Αν αλλάζει ο internal_manager
         if 'internal_manager' in validated_data:
             # Αφαίρεση ρόλου από τον προηγούμενο internal_manager (αν υπήρχε)
@@ -256,13 +306,13 @@ class BuildingSerializer(serializers.ModelSerializer):
                         old_internal_manager.role = 'resident'
                         old_internal_manager.save(update_fields=['role'])
                         logger.info(f"Removed internal_manager role from user {old_internal_manager.email}")
-            
+
             # Ανάθεση ρόλου στον νέο internal_manager
             if new_internal_manager:
                 # Αλλαγή ρόλου σε internal_manager
                 if new_internal_manager.role != 'internal_manager':
                     new_internal_manager.role = 'internal_manager'
-                
+
                 # Αντιγραφή στοιχείων γραφείου από τον manager του κτιρίου
                 # ώστε ο internal_manager να βλέπει σωστά το logo και τα στοιχεία
                 manager = instance.manager
@@ -285,7 +335,7 @@ class BuildingSerializer(serializers.ModelSerializer):
                 else:
                     new_internal_manager.save(update_fields=['role'])
                     logger.info(f"Assigned internal_manager role to user {new_internal_manager.email}")
-                
+
                 # Δημιουργία BuildingMembership αν δεν υπάρχει
                 from buildings.models import BuildingMembership
                 membership, created = BuildingMembership.objects.get_or_create(
@@ -299,15 +349,15 @@ class BuildingSerializer(serializers.ModelSerializer):
                     logger.info(f"Updated BuildingMembership role to internal_manager for user {new_internal_manager.email}")
                 elif created:
                     logger.info(f"Created BuildingMembership for internal_manager {new_internal_manager.email}")
-        
+
         result = super().update(instance, validated_data)
-        
+
         # Debug: Log the result after update
         logger.warning(f"🔍 [BuildingSerializer.update] After save - internal_manager: {result.internal_manager}")
         if result.internal_manager:
             logger.warning(f"🔍 [BuildingSerializer.update] After save - internal_manager.id: {result.internal_manager.id}")
             logger.warning(f"🔍 [BuildingSerializer.update] After save - internal_manager.email: {result.internal_manager.email}")
-        
+
         return result
 
 
@@ -319,7 +369,7 @@ class BuildingPermissionsSerializer(serializers.Serializer):
     """
     Serializer για το BuildingPermissions DTO.
     Επιστρέφει τα permissions του user για το συγκεκριμένο building.
-    
+
     Ιεραρχία Ρόλων:
     - is_admin_level: Superuser/Staff/Office Manager
     - is_internal_manager: Εσωτερικός διαχειριστής
@@ -336,7 +386,7 @@ class BuildingPermissionsSerializer(serializers.Serializer):
     can_delete = serializers.BooleanField(
         help_text="Δικαίωμα διαγραφής του κτιρίου"
     )
-    
+
     # Financial permissions
     can_manage_financials = serializers.BooleanField(
         help_text="Δικαίωμα πλήρους διαχείρισης οικονομικών (Office Manager only)"
@@ -349,19 +399,19 @@ class BuildingPermissionsSerializer(serializers.Serializer):
         default=False,
         help_text="Δικαίωμα καταχώρησης πληρωμών (Office Manager ή Internal Manager με opt-in)"
     )
-    
+
     # Assembly/Meeting permissions
     can_create_assembly = serializers.BooleanField(
         default=False,
         help_text="Δικαίωμα δημιουργίας συνελεύσεων"
     )
-    
+
     # Offers/Projects permissions
     can_manage_offers = serializers.BooleanField(
         default=False,
         help_text="Δικαίωμα διαχείρισης προσφορών/έργων"
     )
-    
+
     # Role indicators
     is_admin_level = serializers.BooleanField(
         default=False,
@@ -380,21 +430,21 @@ class BuildingPermissionsSerializer(serializers.Serializer):
 class BuildingContextSerializer(serializers.Serializer):
     """
     Serializer για το BuildingDTO που επιστρέφεται στο frontend.
-    
+
     Αυτός ο serializer:
     - Επιστρέφει το canonical building context με permissions
     - Χρησιμοποιείται από τα API endpoints current-context, my-buildings
     - Περιέχει όλα τα απαραίτητα πεδία για business logic στο frontend
-    
+
     Usage:
         from buildings.dto import BuildingDTO
         from buildings.serializers import BuildingContextSerializer
-        
+
         building_dto = BuildingDTO.from_model(building, user=request.user)
         serializer = BuildingContextSerializer(building_dto.to_dict())
         return Response(serializer.data)
     """
-    
+
     # Core identification
     id = serializers.IntegerField(
         help_text="Building ID"
@@ -403,7 +453,7 @@ class BuildingContextSerializer(serializers.Serializer):
         max_length=255,
         help_text="Όνομα κτιρίου"
     )
-    
+
     # Building details
     apartments_count = serializers.IntegerField(
         help_text="Αριθμός διαμερισμάτων"
@@ -423,14 +473,14 @@ class BuildingContextSerializer(serializers.Serializer):
         allow_blank=True,
         help_text="Ταχυδρομικός κώδικας"
     )
-    
+
     # Management
     manager_id = serializers.IntegerField(
         allow_null=True,
         required=False,
         help_text="User ID του διαχειριστή"
     )
-    
+
     # Internal Manager - νέα πεδία
     internal_manager_id = serializers.IntegerField(
         allow_null=True,
@@ -447,7 +497,7 @@ class BuildingContextSerializer(serializers.Serializer):
         required=False,
         help_text="Όνομα εμφάνισης εσωτερικού διαχειριστή"
     )
-    
+
     # Legacy internal manager fields (για backward compatibility)
     internal_manager_name = serializers.CharField(
         max_length=255,
@@ -469,7 +519,7 @@ class BuildingContextSerializer(serializers.Serializer):
         allow_blank=True,
         help_text="Τηλέφωνο γραφείου διαχείρισης"
     )
-    
+
     # Financial settings
     current_reserve = serializers.DecimalField(
         max_digits=10,
@@ -486,7 +536,7 @@ class BuildingContextSerializer(serializers.Serializer):
         decimal_places=2,
         help_text="Εισφορά αποθεματικού ανά διαμέρισμα"
     )
-    
+
     # Heating system configuration
     heating_system = serializers.CharField(
         max_length=20,
@@ -495,7 +545,7 @@ class BuildingContextSerializer(serializers.Serializer):
     heating_fixed_percentage = serializers.IntegerField(
         help_text="Ποσοστό παγίου θέρμανσης (%)"
     )
-    
+
     # Reserve fund goal settings
     reserve_fund_goal = serializers.DecimalField(
         max_digits=10,
@@ -509,17 +559,17 @@ class BuildingContextSerializer(serializers.Serializer):
         required=False,
         help_text="Διάρκεια συλλογής αποθεματικού σε μήνες"
     )
-    
+
     # Grace period for payments
     grace_day_of_month = serializers.IntegerField(
         help_text="Ημέρα έναρξης οφειλής (1-31)"
     )
-    
+
     # Permissions (nested serializer)
     permissions = BuildingPermissionsSerializer(
         help_text="Δικαιώματα του τρέχοντος χρήστη για αυτό το κτίριο"
     )
-    
+
     class Meta:
         # This is a read-only serializer (no create/update)
         read_only = True
@@ -529,7 +579,7 @@ class BuildingContextListSerializer(serializers.Serializer):
     """
     Lightweight serializer για λίστες κτιρίων.
     Περιέχει μόνο τα βασικά πεδία για dropdown selections κλπ.
-    
+
     Usage:
         buildings = BuildingService.get_user_buildings(request.user)
         serializer = BuildingContextListSerializer(
@@ -538,13 +588,13 @@ class BuildingContextListSerializer(serializers.Serializer):
         )
         return Response(serializer.data)
     """
-    
+
     id = serializers.IntegerField()
     name = serializers.CharField()
     apartments_count = serializers.IntegerField()
     address = serializers.CharField()
     city = serializers.CharField()
-    
+
     # Simplified permissions (just the key ones)
     permissions = serializers.DictField(
         child=serializers.BooleanField()

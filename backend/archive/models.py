@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from buildings.models import Building
@@ -102,6 +103,14 @@ class ArchiveDocument(models.Model):
     original_filename = models.CharField(max_length=255, verbose_name=_("Αρχικό Όνομα"))
     file_size = models.PositiveIntegerField(verbose_name=_("Μέγεθος"))
     mime_type = models.CharField(max_length=100, verbose_name=_("MIME Type"))
+    file_hash = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name=_("Hash Αρχείου"),
+        help_text=_("SHA-256 hash για αποφυγή διπλών uploads"),
+    )
 
     metadata = models.JSONField(
         null=True,
@@ -125,6 +134,13 @@ class ArchiveDocument(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Archive Document"
         verbose_name_plural = "Archive Documents"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["building", "file_hash"],
+                condition=Q(file_hash__isnull=False) & ~Q(file_hash=""),
+                name="uniq_archive_document_building_file_hash",
+            ),
+        ]
 
     def __str__(self) -> str:
         label = self.title or self.original_filename
