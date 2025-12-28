@@ -1,7 +1,7 @@
 # backend/new_concierge_backend/settings.py
 import os
 from pathlib import Path
-from dotenv import load_dotenv  
+from dotenv import load_dotenv
 from datetime import timedelta
 
 load_dotenv()
@@ -81,47 +81,49 @@ TENANT_APPS = [
     'public_info',
     'core',
     'chat',
-    
+
     # 🔧 Νέα apps για επέκταση λειτουργιών
     'maintenance',
     'projects',
     'todo_management',
     'events',
-    
+    'ai_agent',  # 🤖 AI Assistant
+    'iot_heating', # 🌡️ Smart Heating (Premium)
+
     # 📄 Document Parser
     'document_parser',
 
     # 🗂️ Electronic Archive
     'archive',
-    
+
     # 💰 Οικονομικό σύστημα
     'financial',
 
     # 💳 Online payments (Stripe charges) - tenant schema
     'online_payments',
-    
+
     # 👥 Διαχείριση Ομάδων, Προμηθευτών & Συνεργατών
     'teams',
     'collaborators',
-    
+
     # 🖥️ Kiosk Widget Management
     'kiosk',
-    
+
     # 🔄 AI Data Migration
     'data_migration',
-    
+
     # 🔗 Integrations
     'integrations',
 
     # 📬 Notifications System
     'notifications',
-    
+
     # 📊 Office Analytics (Command Center for Management Offices)
     'office_analytics',
-    
+
     # 💼 Office Finance (Income/Expense Management for the Office)
     'office_finance',
-    
+
     # 📋 Assembly Management (Γενικές Συνελεύσεις)
     'assemblies.apps.AssembliesConfig',
 ]
@@ -133,24 +135,24 @@ INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_
 if DEBUG:
     # Only add debug tools if they're available
     debug_apps = []
-    
+
     # Temporarily disable debug_toolbar to fix subscription endpoint
     # try:
     #     import debug_toolbar
     #     debug_apps.append('debug_toolbar')
     # except ImportError:
     #     pass
-    
+
     try:
         import django_extensions
         debug_apps.append('django_extensions')
     except ImportError:
         pass
-    
-    
-    
+
+
+
     INSTALLED_APPS += debug_apps
-    
+
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',
         'core.middleware.CustomTenantMiddleware',
@@ -169,11 +171,11 @@ if DEBUG:
         'billing.middleware.PlanFeatureMiddleware',    # Check feature access
         'billing.middleware.UsageTrackingMiddleware',  # Track usage and enforce limits
     ]
-    
+
     # Temporarily disable debug_toolbar middleware
     # if 'debug_toolbar' in INSTALLED_APPS:
     #     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-    
+
 else:
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',
@@ -200,9 +202,9 @@ INTERNAL_IPS = [
     'localhost',
 ]
 
- 
 
- 
+
+
 
 # Cache Configuration
 TENANT_SCHEMA_NAME = os.getenv('TENANT_SCHEMA_NAME', 'demo')
@@ -233,7 +235,7 @@ CACHES = {
     },
 }
 
- 
+
 
 # Database Connection Pooling
 # Parse DATABASE_URL if provided (for Railway, Heroku, etc.)

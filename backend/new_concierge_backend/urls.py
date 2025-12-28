@@ -122,6 +122,8 @@ urlpatterns = [
 
     # Notifications (Email/SMS)
     path('api/notifications/', include('notifications.urls')),
+    path('api/ai/', include('ai_agent.urls')),  # 🤖 AI Agent Endpoints
+    path('api/iot/', include('iot_heating.urls')),  # 🌡️ IoT Premium Endpoints
 
     # Billing & Subscriptions
     path('api/billing/', include('billing.urls')),
