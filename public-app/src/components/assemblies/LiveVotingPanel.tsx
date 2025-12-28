@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Vote, CheckCircle, XCircle, MinusCircle, 
-  Loader2, Check, AlertCircle, Building2 
+import {
+  Vote, CheckCircle, XCircle, MinusCircle,
+  Loader2, Check, AlertCircle, Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,13 +20,13 @@ interface LiveVotingPanelProps {
   canManage?: boolean;
 }
 
-const voteOptions: { 
-  value: VoteChoice; 
-  label: string; 
-  icon: React.ReactNode; 
-  color: string; 
-  bgColor: string; 
-  borderColor: string; 
+const voteOptions: {
+  value: VoteChoice;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+  borderColor: string;
 }[] = [
   {
     value: 'approve',
@@ -54,9 +54,9 @@ const voteOptions: {
   },
 ];
 
-export default function LiveVotingPanel({ 
-  item, 
-  attendee, 
+export default function LiveVotingPanel({
+  item,
+  attendee,
   hasVoted,
   totalBuildingMills,
   onVoteSuccess,
@@ -183,7 +183,7 @@ export default function LiveVotingPanel({
           disabled={!selectedVote || castVoteMutation.isPending}
           className={cn(
             'w-full py-6 text-lg font-bold',
-            selectedVote 
+            selectedVote
               ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
               : ''
           )}
@@ -204,6 +204,7 @@ export default function LiveVotingPanel({
     </motion.div>
   );
 }
+
 
 
 

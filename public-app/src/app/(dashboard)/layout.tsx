@@ -6,6 +6,7 @@ import CollapsibleSidebar from '@/components/CollapsibleSidebar';
 import GlobalHeader from '@/components/GlobalHeader';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { AIAssistantChat } from '@/components/ai-assistant/AIAssistantChat';
 
 export default function DashboardLayout({
   children,
@@ -58,6 +59,9 @@ export default function DashboardLayout({
           {children}
         </div>
       </div>
+
+      {/* AI Assistant Chat Widget */}
+      <AIAssistantChat />
     </div>
   );
 }

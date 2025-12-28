@@ -43,6 +43,7 @@ import {
     Info,
     Mail,
     BarChart3,
+    Flame,
   } from 'lucide-react';
 import {
   Tooltip,
@@ -299,6 +300,13 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
         tooltip: 'Προβολή της οθόνης Kiosk',
       },
+      {
+        href: '/heating',
+        label: 'Smart Heating',
+        icon: <Flame className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        tooltip: 'Έλεγχος κεντρικής θέρμανσης (IoT)',
+      },
     ]
   },
   // Admin System Tools (for manager/admin/superuser)
@@ -379,7 +387,7 @@ export default function CollapsibleSidebar() {
     setSelectedBuilding,
     isLoading: buildingsIsLoading,
   } = useBuilding();
-  
+
   // Check if resident has multiple buildings
   const isResidentUser = isResident(user);
   const hasMultipleBuildings = buildings && buildings.length > 1;
@@ -448,10 +456,10 @@ export default function CollapsibleSidebar() {
   const staffHasPermission = (permissionKey: NavigationLink['staffPermission']): boolean => {
     if (!permissionKey) return true; // No permission required
     if (!user || userRole !== 'staff') return true; // Only check for staff role
-    
+
     const permissions = user.staff_permissions;
     if (!permissions || !permissions.is_active) return false;
-    
+
     return permissions[permissionKey] === true;
   };
 
@@ -466,12 +474,12 @@ export default function CollapsibleSidebar() {
       if (link.requiresUltraAdmin) {
         return isUltraAdminUser;
       }
-      
+
       // Then check staff permission if required
       if (link.staffPermission && userRole === 'staff') {
         return staffHasPermission(link.staffPermission);
       }
-      
+
       return true;
     })
   })).filter(group => group.links.length > 0);
@@ -589,8 +597,8 @@ export default function CollapsibleSidebar() {
           "transition-all duration-300 ease-in-out",
           "shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
           // Kaspersky mint background in light mode, dark slate in dark mode
-          !isExpanded 
-            ? "bg-[#e8f5f3] dark:bg-slate-900" 
+          !isExpanded
+            ? "bg-[#e8f5f3] dark:bg-slate-900"
             : "bg-[#e8f5f3] dark:bg-slate-900"
         )}
         style={{
@@ -599,32 +607,32 @@ export default function CollapsibleSidebar() {
         }}
       >
         {/* Header */}
-        <div 
+        <div
           className="p-4 border-b border-teal-100 dark:border-slate-700 flex items-center gap-3 h-20 bg-white/50 dark:bg-slate-800/50"
         >
-          <div 
+          <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md bg-teal-500 dark:bg-teal-600 text-white"
           >
             <Building2 className="h-6 w-6" />
           </div>
-          <div 
+          <div
             className={cn(
               "transition-all duration-300 overflow-hidden",
               isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
             )}
           >
-            <h1 
+            <h1
               className="font-bold tracking-tight whitespace-nowrap text-sm text-foreground"
             >
               Digital Concierge
             </h1>
-            <p 
+            <p
               className="tracking-wide whitespace-nowrap text-xs text-muted-foreground"
             >
               Διαχείριση Κτιρίων
             </p>
           </div>
-          
+
           {/* Expand/Collapse Toggle */}
           <button
             onClick={() => {
@@ -647,7 +655,7 @@ export default function CollapsibleSidebar() {
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
           {availableGroups.map((group) => {
             const colorClasses = getColorClasses(group.colorKey);
-            
+
             return (
               <div key={group.id} className="mb-4">
                 {/* Group Title - Only visible when expanded */}
@@ -662,13 +670,13 @@ export default function CollapsibleSidebar() {
                     {group.title}
                   </div>
                 )}
-                
+
                 {/* Links */}
                 <div className="space-y-1">
                   {group.links.map((link) => {
-                    const isActive = pathname === link.href || 
+                    const isActive = pathname === link.href ||
                       (pathname && pathname.startsWith(link.href) && link.href !== '/dashboard');
-                    
+
                     return (
                       <div key={link.href} className="relative group/item">
                         <Tooltip disableHoverableContent={isExpanded}>
@@ -689,7 +697,7 @@ export default function CollapsibleSidebar() {
                               }}
                             >
                               {/* Icon */}
-                              <span 
+                              <span
                                 className={cn(
                                   'transition-colors duration-200 flex-shrink-0',
                                   isExpanded && 'mr-3',
@@ -698,9 +706,9 @@ export default function CollapsibleSidebar() {
                               >
                                 {link.icon}
                               </span>
-                              
+
                               {/* Label */}
-                              <span 
+                              <span
                                 className={cn(
                                   "transition-all duration-300 overflow-hidden whitespace-nowrap",
                                   isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
@@ -708,7 +716,7 @@ export default function CollapsibleSidebar() {
                               >
                                 {link.label}
                               </span>
-                              
+
                               {/* Info Icon with Tooltip */}
                               {link.tooltip && isExpanded && (
                                 <Tooltip disableHoverableContent>
@@ -727,8 +735,8 @@ export default function CollapsibleSidebar() {
                                       <Info className="w-3.5 h-3.5" />
                                     </button>
                                   </TooltipTrigger>
-                                  <TooltipContent 
-                                    side="right" 
+                                  <TooltipContent
+                                    side="right"
                                     className="max-w-xs z-50 bg-popover text-popover-foreground border-border shadow-lg"
                                     sideOffset={8}
                                   >
@@ -736,10 +744,10 @@ export default function CollapsibleSidebar() {
                                   </TooltipContent>
                                 </Tooltip>
                               )}
-                              
+
                               {/* Beta Badge */}
                               {link.isBeta && isExpanded && (
-                                <span 
+                                <span
                                   className={cn(
                                     "px-2 py-0.5 rounded-full font-bold",
                                     link.tooltip ? "ml-2" : "ml-auto",
@@ -779,11 +787,11 @@ export default function CollapsibleSidebar() {
         </nav>
 
         {/* Calculator Tool */}
-        <div 
+        <div
           className="p-3 border-t border-teal-100 dark:border-slate-700 bg-white/30 dark:bg-slate-800/30"
         >
           <CalculatorModal>
-            <button 
+            <button
               title={!isExpanded ? 'Αριθμομηχανή' : undefined}
               className={cn(
                 'flex items-center w-full rounded-lg font-medium transition-all duration-200',
@@ -791,10 +799,10 @@ export default function CollapsibleSidebar() {
                 'text-sm text-gray-700 dark:text-gray-200 hover:bg-white/60 dark:hover:bg-slate-700/60'
               )}
             >
-              <Calculator 
+              <Calculator
                 className={cn('w-5 h-5 transition-colors text-teal-600 dark:text-teal-400', isExpanded && 'mr-3')}
               />
-              <span 
+              <span
                 className={cn(
                   "transition-all duration-300 overflow-hidden whitespace-nowrap",
                   isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
@@ -822,22 +830,22 @@ export default function CollapsibleSidebar() {
         }}
       >
         {/* Mobile Header */}
-        <div 
+        <div
           className="p-4 border-b border-teal-100 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-800/50 h-20"
         >
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-teal-500 dark:bg-teal-600 text-white"
             >
               <Building2 className="h-6 w-6" />
             </div>
             <div>
-              <h1 
+              <h1
                 className="font-bold tracking-tight text-sm text-gray-800 dark:text-gray-100"
               >
                 Digital Concierge
               </h1>
-              <p 
+              <p
                 className="text-xs text-gray-500 dark:text-gray-400"
               >
                 Διαχείριση Κτιρίων
@@ -868,7 +876,7 @@ export default function CollapsibleSidebar() {
         <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
           {availableGroups.map((group) => {
             const colorClasses = getColorClasses(group.colorKey);
-            
+
             return (
               <div key={group.id}>
                 <div
@@ -880,11 +888,11 @@ export default function CollapsibleSidebar() {
                 >
                   {group.title}
                 </div>
-                
+
                 <div className="space-y-1">
                   {group.links.map((link) => {
                     const isActive = pathname === link.href;
-                    
+
                     return (
                       <div key={link.href} className="relative flex items-center">
                         <button
@@ -923,8 +931,8 @@ export default function CollapsibleSidebar() {
                                 <Info className="w-3.5 h-3.5" />
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent 
-                              side="right" 
+                            <TooltipContent
+                              side="right"
                               className="max-w-xs z-[60] bg-popover text-popover-foreground border-border shadow-lg"
                               sideOffset={8}
                             >

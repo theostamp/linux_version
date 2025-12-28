@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  BarChart3, Plus, Clock, Users, CheckCircle, 
+import {
+  BarChart3, Plus, Clock, Users, CheckCircle,
   AlertCircle, ChevronRight, MessageSquare, Loader2,
   Calendar, Building2
 } from 'lucide-react';
@@ -184,6 +184,7 @@ export default function PollsPage() {
     </AuthGate>
   );
 }
+
 
 
 
