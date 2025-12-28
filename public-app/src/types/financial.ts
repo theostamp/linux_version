@@ -64,7 +64,7 @@ export interface Expense {
     receipt_type: string;
     amount: number;
   }>;
-  
+
   // Installment information
   has_installments?: boolean;
   linked_maintenance_projects?: Array<{
@@ -172,6 +172,28 @@ export interface FinancialSummary {
   total_expenses_month?: number;
 }
 
+// Building suggestion types (from invoice scan)
+export type BuildingSuggestionStatus = 'matched' | 'ambiguous' | 'unknown';
+
+export interface BuildingSuggestionCandidate {
+  building_id: number;
+  building_name: string;
+  confidence: number;
+}
+
+export interface BuildingSuggestion {
+  status: BuildingSuggestionStatus;
+  confidence: number | null;
+  building_id: number | null;
+  building_name: string | null;
+  candidates: BuildingSuggestionCandidate[];
+  signals?: {
+    service_address?: string | null;
+    service_city?: string | null;
+    service_postal_code?: string | null;
+  };
+}
+
 // Invoice scanning types
 export interface ScannedInvoiceData {
   amount: number | null;
@@ -182,6 +204,12 @@ export interface ScannedInvoiceData {
   document_type?: string | null;
   category: string | null;
   description: string | null;
+  // Best-effort building recognition (backend)
+  building_suggestion?: BuildingSuggestion | null;
+  // Signals used for building suggestion (optional; may be null)
+  service_address?: string | null;
+  service_city?: string | null;
+  service_postal_code?: string | null;
 }
 
 export interface ApartmentBalance {
@@ -335,13 +363,13 @@ export const ExpenseCategory = {
   GARBAGE_COLLECTION: 'garbage_collection',
   SECURITY: 'security',
   CONCIERGE: 'concierge',
-  
+
   // Δαπάνες Ανελκυστήρα
   ELEVATOR_MAINTENANCE: 'elevator_maintenance',
   ELEVATOR_REPAIR: 'elevator_repair',
   ELEVATOR_INSPECTION: 'elevator_inspection',
   ELEVATOR_MODERNIZATION: 'elevator_modernization',
-  
+
   // Δαπάνες Θέρμανσης
   HEATING_FUEL: 'heating_fuel',
   HEATING_GAS: 'heating_gas',
@@ -349,21 +377,21 @@ export const ExpenseCategory = {
   HEATING_REPAIR: 'heating_repair',
   HEATING_INSPECTION: 'heating_inspection',
   HEATING_MODERNIZATION: 'heating_modernization',
-  
+
   // Δαπάνες Ηλεκτρικών
   ELECTRICAL_MAINTENANCE: 'electrical_maintenance',
   ELECTRICAL_REPAIR: 'electrical_repair',
   ELECTRICAL_UPGRADE: 'electrical_upgrade',
   LIGHTING_COMMON: 'lighting_common',
   INTERCOM_SYSTEM: 'intercom_system',
-  
+
   // Δαπάνες Υδραυλικών
   PLUMBING_MAINTENANCE: 'plumbing_maintenance',
   PLUMBING_REPAIR: 'plumbing_repair',
   WATER_TANK_CLEANING: 'water_tank_cleaning',
   WATER_TANK_MAINTENANCE: 'water_tank_maintenance',
   SEWAGE_SYSTEM: 'sewage_system',
-  
+
   // Δαπάνες Κτιρίου
   BUILDING_INSURANCE: 'building_insurance',
   BUILDING_MAINTENANCE: 'building_maintenance',
@@ -376,7 +404,7 @@ export const ExpenseCategory = {
   GARDEN_MAINTENANCE: 'garden_maintenance',
   PARKING_MAINTENANCE: 'parking_maintenance',
   ENTRANCE_MAINTENANCE: 'entrance_maintenance',
-  
+
   // Έκτακτες Δαπάνες
   EMERGENCY_REPAIR: 'emergency_repair',
   STORM_DAMAGE: 'storm_damage',
@@ -384,7 +412,7 @@ export const ExpenseCategory = {
   FIRE_DAMAGE: 'fire_damage',
   EARTHQUAKE_DAMAGE: 'earthquake_damage',
   VANDALISM_REPAIR: 'vandalism_repair',
-  
+
   // Ειδικές Επισκευές
   LOCKSMITH: 'locksmith',
   GLASS_REPAIR: 'glass_repair',
@@ -392,14 +420,14 @@ export const ExpenseCategory = {
   WINDOW_REPAIR: 'window_repair',
   BALCONY_REPAIR: 'balcony_repair',
   STAIRCASE_REPAIR: 'staircase_repair',
-  
+
   // Ασφάλεια & Πρόσβαση
   SECURITY_SYSTEM: 'security_system',
   CCTV_INSTALLATION: 'cctv_installation',
   ACCESS_CONTROL: 'access_control',
   FIRE_ALARM: 'fire_alarm',
   FIRE_EXTINGUISHERS: 'fire_extinguishers',
-  
+
   // Διοικητικές & Νομικές
   LEGAL_FEES: 'legal_fees',
   NOTARY_FEES: 'notary_fees',
@@ -408,7 +436,7 @@ export const ExpenseCategory = {
   ENGINEER_FEES: 'engineer_fees',
   ACCOUNTING_FEES: 'accounting_fees',
   MANAGEMENT_FEES: 'management_fees',
-  
+
   // Ειδικές Εργασίες
   ASBESTOS_REMOVAL: 'asbestos_removal',
   LEAD_PAINT_REMOVAL: 'lead_paint_removal',
@@ -416,14 +444,14 @@ export const ExpenseCategory = {
   PEST_CONTROL: 'pest_control',
   TREE_TRIMMING: 'tree_trimming',
   SNOW_REMOVAL: 'snow_removal',
-  
+
   // Ενεργειακή Απόδοση
   ENERGY_UPGRADE: 'energy_upgrade',
   INSULATION_WORK: 'insulation_work',
   SOLAR_PANEL_INSTALLATION: 'solar_panel_installation',
   LED_LIGHTING: 'led_lighting',
   SMART_SYSTEMS: 'smart_systems',
-  
+
   // Δαπάνες Συντήρησης (Legacy)
   MAINTENANCE_GENERAL: 'maintenance_general',
   MAINTENANCE_PLUMBING: 'maintenance_plumbing',
@@ -433,55 +461,55 @@ export const ExpenseCategory = {
   MAINTENANCE_FACADE: 'maintenance_facade',
   MAINTENANCE_GARDEN: 'maintenance_garden',
   MAINTENANCE_PARKING: 'maintenance_parking',
-  
+
   // Δαπάνες Ασφάλειας (Legacy)
   INSURANCE_BUILDING: 'insurance_building',
   INSURANCE_LIABILITY: 'insurance_liability',
   INSURANCE_EQUIPMENT: 'insurance_equipment',
-  
+
   // Δαπάνες Διοίκησης (Legacy)
   MEETING_EXPENSES: 'meeting_expenses',
-  
+
   // Δαπάνες Τηλεπικοινωνιών
   INTERNET_COMMON: 'internet_common',
   PHONE_COMMON: 'phone_common',
   TV_ANTENNA: 'tv_antenna',
-  
+
   // Δαπάνες Εξοπλισμού
   EQUIPMENT_PURCHASE: 'equipment_purchase',
   EQUIPMENT_REPAIR: 'equipment_repair',
   EQUIPMENT_MAINTENANCE: 'equipment_maintenance',
-  
+
   // Δαπάνες Καθαρισμού
   CLEANING_SUPPLIES: 'cleaning_supplies',
   CLEANING_EQUIPMENT: 'cleaning_equipment',
   CLEANING_SERVICES: 'cleaning_services',
-  
+
   // Δαπάνες Ασφάλειας & Πυρασφάλειας (Legacy)
   FIRE_SAFETY: 'fire_safety',
   SECURITY_SYSTEMS: 'security_systems',
   CCTV: 'cctv',
-  
+
   // Δαπάνες Ενέργειας (Legacy)
   ENERGY_AUDIT: 'energy_audit',
   ENERGY_UPGRADES: 'energy_upgrades',
   SOLAR_PANELS: 'solar_panels',
-  
+
   // Δαπάνες Περιβάλλοντος
   WASTE_MANAGEMENT: 'waste_management',
   RECYCLING: 'recycling',
   GREEN_SPACES: 'green_spaces',
-  
+
   // Δαπάνες Τεχνολογίας (Legacy)
   SMART_HOME: 'smart_home',
   AUTOMATION: 'automation',
-  
+
   // Δαπάνες Ιδιοκτητών
   SPECIAL_CONTRIBUTION: 'special_contribution',
   RESERVE_FUND: 'reserve_fund',
   EMERGENCY_FUND: 'emergency_fund',
   RENOVATION_FUND: 'renovation_fund',
-  
+
   // Άλλες Δαπάνες
   MISCELLANEOUS: 'miscellaneous',
   CONSULTING_FEES: 'consulting_fees',

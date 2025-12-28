@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import ArchiveDocument
 from core.file_hashing import sha256_hexdigest
+import re
 
 
 class ArchiveDocumentSerializer(serializers.ModelSerializer):
@@ -39,13 +40,12 @@ class ArchiveDocumentSerializer(serializers.ModelSerializer):
         """
         Prevent duplicate archive documents:
         - Same file content (SHA-256) within the same building
-        - Same supplier_vat + document_number + document_date within the same building (when provided)
         """
         building = attrs.get("building") or getattr(self.instance, "building", None)
 
         # Normalize important string fields (avoid duplicates due to whitespace)
         if "supplier_vat" in attrs and isinstance(attrs.get("supplier_vat"), str):
-            attrs["supplier_vat"] = attrs["supplier_vat"].strip()
+            attrs["supplier_vat"] = re.sub(r"\D", "", attrs["supplier_vat"].strip())
         if "document_number" in attrs and isinstance(attrs.get("document_number"), str):
             attrs["document_number"] = attrs["document_number"].strip()
 
@@ -59,24 +59,6 @@ class ArchiveDocumentSerializer(serializers.ModelSerializer):
             if qs.exists():
                 raise serializers.ValidationError(
                     {"file": "Το ίδιο αρχείο υπάρχει ήδη στο Ηλεκτρονικό Αρχείο για αυτό το κτίριο."}
-                )
-
-        supplier_vat = (attrs.get("supplier_vat") or getattr(self.instance, "supplier_vat", "") or "").strip()
-        document_number = (attrs.get("document_number") or getattr(self.instance, "document_number", "") or "").strip()
-        document_date = attrs.get("document_date") if "document_date" in attrs else getattr(self.instance, "document_date", None)
-
-        if building and supplier_vat and document_number and document_date:
-            qs = ArchiveDocument.objects.filter(
-                building=building,
-                supplier_vat__iexact=supplier_vat,
-                document_number__iexact=document_number,
-                document_date=document_date,
-            )
-            if self.instance:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise serializers.ValidationError(
-                    {"document_number": "Υπάρχει ήδη παραστατικό με ίδιο ΑΦΜ, αριθμό και ημερομηνία για αυτό το κτίριο."}
                 )
 
         return attrs

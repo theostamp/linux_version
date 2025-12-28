@@ -11,6 +11,7 @@ from .serializers import ArchiveDocumentSerializer
 import logging
 import os
 import mimetypes
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,80 @@ class ArchiveDocumentViewSet(viewsets.ModelViewSet):
     ]
     ordering_fields = ["created_at", "document_date", "amount"]
     ordering = ["-created_at"]
+
+    def create(self, request, *args, **kwargs):
+        """
+        Soft duplicate protection for metadata-based duplicates.
+
+        We keep `file_hash` duplicates as a hard block (serializer + DB constraint),
+        but for "probable duplicates" (same document_type + document_number, or same
+        supplier_vat + document_number + document_date) we require explicit user confirmation.
+
+        Frontend can bypass this check by sending `allow_duplicate=true` in multipart form-data.
+        """
+
+        def truthy(value) -> bool:
+            if value is None:
+                return False
+            return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+        allow_duplicate = truthy(request.data.get("allow_duplicate"))
+        if allow_duplicate:
+            return super().create(request, *args, **kwargs)
+
+        building_id = request.data.get("building")
+        if not building_id:
+            return super().create(request, *args, **kwargs)
+
+        document_type = (request.data.get("document_type") or "").strip()
+        document_number = (request.data.get("document_number") or "").strip()
+        supplier_vat = re.sub(r"\D", "", (request.data.get("supplier_vat") or "").strip())
+        document_date = request.data.get("document_date") or ""
+
+        # 1) Probable duplicate: same (document_type, document_number) within the same building
+        if document_type and document_number:
+            qs = ArchiveDocument.objects.filter(
+                building_id=building_id,
+                document_type__iexact=document_type,
+                document_number__iexact=document_number,
+            ).order_by("-created_at")
+
+            if qs.exists():
+                existing_ids = list(qs.values_list("id", flat=True)[:5])
+                return Response(
+                    {
+                        "error": "Πιθανό διπλό παραστατικό: υπάρχει ήδη καταχώρηση με ίδιο είδος και αριθμό για αυτό το κτίριο.",
+                        "code": "PROBABLE_DUPLICATE",
+                        "reason": "document_type+document_number",
+                        "existing_ids": existing_ids,
+                        "hint": "Αν θέλετε να συνεχίσετε, υποβάλετε ξανά με allow_duplicate=true.",
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+        # 2) Probable duplicate (legacy strong match): same (supplier_vat, document_number, document_date)
+        if supplier_vat and document_number and document_date:
+            qs = ArchiveDocument.objects.filter(
+                building_id=building_id,
+                supplier_vat__iexact=supplier_vat,
+                document_number__iexact=document_number,
+                document_date=document_date,
+            ).order_by("-created_at")
+
+            if qs.exists():
+                existing_ids = list(qs.values_list("id", flat=True)[:5])
+                return Response(
+                    {
+                        "error": "Πιθανό διπλό παραστατικό: υπάρχει ήδη καταχώρηση με ίδιο ΑΦΜ, αριθμό και ημερομηνία για αυτό το κτίριο.",
+                        "code": "PROBABLE_DUPLICATE",
+                        "reason": "supplier_vat+document_number+document_date",
+                        "existing_ids": existing_ids,
+                        "hint": "Αν θέλετε να συνεχίσετε, υποβάλετε ξανά με allow_duplicate=true.",
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)

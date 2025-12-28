@@ -62,6 +62,10 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
     document_type: null,
     category: null,
     description: null,
+    building_suggestion: null,
+    service_address: null,
+    service_city: null,
+    service_postal_code: null,
   });
 
   // Update form data when scan completes
@@ -76,6 +80,10 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
         document_type: scannedData.document_type ?? null,
         category: scannedData.category ? CATEGORY_MAPPING[scannedData.category] || null : null,
         description: scannedData.description,
+        building_suggestion: scannedData.building_suggestion ?? null,
+        service_address: scannedData.service_address ?? null,
+        service_city: scannedData.service_city ?? null,
+        service_postal_code: scannedData.service_postal_code ?? null,
       });
     }
   }, [scannedData]);
@@ -148,6 +156,10 @@ export const InvoiceUploadForm: React.FC<InvoiceUploadFormProps> = ({ onSave, on
       document_type: null,
       category: null,
       description: null,
+      building_suggestion: null,
+      service_address: null,
+      service_city: null,
+      service_postal_code: null,
     });
     reset();
   };

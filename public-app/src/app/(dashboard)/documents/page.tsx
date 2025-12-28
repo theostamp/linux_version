@@ -1,127 +1,260 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { InvoiceUploadForm } from '@/components/financial/InvoiceUploadForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Sparkles } from 'lucide-react';
+import { FileText, Sparkles, Loader2 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { useExpenses } from '@/hooks/useExpenses';
 import { createArchiveDocument } from '@/lib/api';
-import { ScannedInvoiceData } from '@/types/financial';
-import { ExpenseFormData } from '@/types/financial';
+import { api } from '@/lib/api';
+import { ScannedInvoiceData, ExpenseFormData } from '@/types/financial';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type PendingSave = {
+  scannedData: ScannedInvoiceData;
+  file: File | null;
+  shouldArchive: boolean;
+};
+
+const AUTO_BUILDING_CONFIDENCE = 0.85;
+
+function parseApiErrorBody(error: any): any | null {
+  const body = error?.response?.body;
+  if (!body || typeof body !== 'string') return null;
+  try {
+    return JSON.parse(body);
+  } catch {
+    return null;
+  }
+}
 
 function DocumentsContent() {
   const router = useRouter();
-  const { selectedBuilding } = useBuilding();
-  const { createExpense, isLoading } = useExpenses(selectedBuilding?.id);
+  const { selectedBuilding, buildings, setSelectedBuilding } = useBuilding();
 
-  const handleSave = async (
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Building confirmation dialog (when we can't confidently detect a building)
+  const [buildingDialogOpen, setBuildingDialogOpen] = useState(false);
+  const [buildingChoiceId, setBuildingChoiceId] = useState<number | null>(null);
+  const [pendingSave, setPendingSave] = useState<PendingSave | null>(null);
+
+  // Duplicate confirmation dialog (probable duplicate in archive)
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [pendingDuplicate, setPendingDuplicate] = useState<{ buildingId: number; save: PendingSave } | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<{ reason?: string; existing_ids?: number[] } | null>(null);
+
+  const hasMultipleBuildings = useMemo(() => (buildings?.length ?? 0) > 1, [buildings]);
+
+  const buildExpenseFormData = (expenseData: ExpenseFormData) => {
+    const formData = new FormData();
+    formData.append('building', expenseData.building.toString());
+    formData.append('title', expenseData.title);
+    formData.append('amount', expenseData.amount.toString());
+    formData.append('date', expenseData.date);
+    formData.append('category', expenseData.category);
+    formData.append('distribution_type', expenseData.distribution_type);
+    if (expenseData.notes) formData.append('notes', expenseData.notes);
+    return formData;
+  };
+
+  const buildArchiveFormData = (
+    buildingId: number,
     scannedData: ScannedInvoiceData,
-    file: File | null,
-    shouldArchive: boolean
+    file: File,
+    allowDuplicate: boolean,
   ) => {
-    if (!selectedBuilding?.id) {
+    const archiveData = new FormData();
+    archiveData.append('building', buildingId.toString());
+    archiveData.append('category', 'expense_receipt');
+    archiveData.append('file', file);
+    if (allowDuplicate) archiveData.append('allow_duplicate', 'true');
+
+    if (scannedData.document_type) archiveData.append('document_type', scannedData.document_type);
+    if (scannedData.document_number) archiveData.append('document_number', scannedData.document_number);
+    if (scannedData.supplier) archiveData.append('supplier_name', scannedData.supplier);
+    if (scannedData.supplier_vat) archiveData.append('supplier_vat', scannedData.supplier_vat);
+    if (scannedData.date) archiveData.append('document_date', scannedData.date);
+    if (scannedData.amount !== null && scannedData.amount !== undefined) {
+      archiveData.append('amount', scannedData.amount.toString());
+    }
+
+    const title =
+      scannedData.description ||
+      scannedData.supplier ||
+      file.name ||
+      'Παραστατικό Δαπάνης';
+    archiveData.append('title', title);
+
+    return archiveData;
+  };
+
+  const performSave = async (
+    buildingId: number,
+    save: PendingSave,
+    options?: { allowDuplicate?: boolean }
+  ) => {
+    if (isSaving) return;
+
+    const { scannedData, file, shouldArchive } = save;
+
+    if (!buildingId) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
       return;
     }
-
     if (!scannedData.amount || !scannedData.date) {
       toast.error('Παρακαλώ συμπληρώστε το ποσό και την ημερομηνία');
       return;
     }
 
+    setIsSaving(true);
+    let archivedDoc: any | null = null;
+
     try {
-      // Convert ScannedInvoiceData to ExpenseFormData
+      if (shouldArchive && file) {
+        const archiveData = buildArchiveFormData(buildingId, scannedData, file, Boolean(options?.allowDuplicate));
+        try {
+          archivedDoc = await createArchiveDocument(archiveData);
+        } catch (archiveError: any) {
+          const parsed = parseApiErrorBody(archiveError);
+          const statusCode = archiveError?.status ?? archiveError?.response?.status;
+
+          if (statusCode === 409 && parsed?.code === 'PROBABLE_DUPLICATE') {
+            setDuplicateInfo({
+              reason: parsed?.reason,
+              existing_ids: parsed?.existing_ids,
+            });
+            setPendingDuplicate({ buildingId, save });
+            setDuplicateDialogOpen(true);
+            toast.warning('Βρέθηκε πιθανό διπλό παραστατικό. Επιβεβαιώστε για να συνεχίσετε.');
+            return;
+          }
+
+          throw archiveError;
+        }
+      }
+
       const expenseData: ExpenseFormData = {
-        building: selectedBuilding.id,
+        building: buildingId,
         title: scannedData.description || scannedData.supplier || 'Δαπάνη από παραστατικό',
         amount: scannedData.amount,
         date: scannedData.date,
         category: scannedData.category || 'miscellaneous',
-        distribution_type: 'by_participation_mills', // Default distribution
+        distribution_type: 'by_participation_mills',
         notes: scannedData.description || undefined,
       };
 
-      const createdExpense = await createExpense(expenseData);
+      const createdExpense = await api.post<any>('/financial/expenses/', buildExpenseFormData(expenseData));
+      const createdExpenseId = createdExpense?.id ?? createdExpense?.data?.id;
 
-      console.log('[DocumentsPage] Expense created:', {
-        expenseId: createdExpense?.id,
-        shouldArchive,
-        hasFile: !!file,
-        fileName: file?.name,
-        fileSize: file?.size,
-      });
-
-      if (shouldArchive && createdExpense && file) {
-        console.log('[DocumentsPage] Preparing archive document...');
-        const archiveData = new FormData();
-        archiveData.append('building', selectedBuilding.id.toString());
-        archiveData.append('category', 'expense_receipt');
-        archiveData.append('file', file);
-
-        if (scannedData.document_type) {
-          archiveData.append('document_type', scannedData.document_type);
-        }
-        if (scannedData.document_number) {
-          archiveData.append('document_number', scannedData.document_number);
-        }
-        if (scannedData.supplier) {
-          archiveData.append('supplier_name', scannedData.supplier);
-        }
-        if (scannedData.supplier_vat) {
-          archiveData.append('supplier_vat', scannedData.supplier_vat);
-        }
-        if (scannedData.date) {
-          archiveData.append('document_date', scannedData.date);
-        }
-        if (scannedData.amount !== null && scannedData.amount !== undefined) {
-          archiveData.append('amount', scannedData.amount.toString());
-        }
-
-        const title =
-          scannedData.description ||
-          scannedData.supplier ||
-          file.name ||
-          'Παραστατικό Δαπάνης';
-        archiveData.append('title', title);
-
-        archiveData.append('linked_expense', createdExpense.id.toString());
-
-        // Debug FormData contents
-        console.log('[DocumentsPage] FormData contents:');
-        for (const [key, value] of archiveData.entries()) {
-          console.log(`  ${key}: ${value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value}`);
-        }
-
+      if (archivedDoc?.id && createdExpenseId) {
+        // Best-effort link (don’t fail the whole flow if linking fails)
         try {
-          console.log('[DocumentsPage] Calling createArchiveDocument...');
-          const archivedDoc = await createArchiveDocument(archiveData);
-          console.log('[DocumentsPage] Document archived successfully:', archivedDoc);
-          toast.success('Το παραστατικό αποθηκεύτηκε στο ηλεκτρονικό αρχείο');
-        } catch (archiveError: any) {
-          console.error('[DocumentsPage] Error archiving document:', archiveError);
-          toast.error(archiveError?.message || 'Σφάλμα κατά την αρχειοθέτηση του παραστατικού');
+          const linkForm = new FormData();
+          linkForm.append('linked_expense', createdExpenseId.toString());
+          await api.patch(`/archive/documents/${archivedDoc.id}/`, linkForm);
+        } catch (linkError) {
+          console.warn('[DocumentsPage] Failed to link archived document to expense:', linkError);
         }
-      } else {
-        console.log('[DocumentsPage] Archive skipped:', {
-          shouldArchive,
-          hasExpense: !!createdExpense,
-          hasFile: !!file,
-        });
+        toast.success('Το παραστατικό αποθηκεύτηκε στο ηλεκτρονικό αρχείο');
       }
 
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς!');
-
-      // Redirect to financial page to see the new expense
-      router.push(`/financial?building=${selectedBuilding.id}`);
+      router.push(`/financial?building=${buildingId}`);
     } catch (error: any) {
       console.error('Error creating expense:', error);
       toast.error(error?.message || 'Σφάλμα κατά τη δημιουργία της δαπάνης');
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleSave = async (scannedData: ScannedInvoiceData, file: File | null, shouldArchive: boolean) => {
+    if (isSaving) return;
+
+    const save: PendingSave = { scannedData, file, shouldArchive };
+
+    // 1) Auto-select building when confidence is high
+    const suggestion = scannedData.building_suggestion;
+    const suggestedBuildingId =
+      suggestion?.status === 'matched' &&
+      typeof suggestion?.confidence === 'number' &&
+      suggestion.confidence >= AUTO_BUILDING_CONFIDENCE &&
+      typeof suggestion.building_id === 'number'
+        ? suggestion.building_id
+        : null;
+
+    let targetBuildingId: number | null = selectedBuilding?.id ?? null;
+
+    if (suggestedBuildingId) {
+      targetBuildingId = suggestedBuildingId;
+      if (selectedBuilding?.id !== suggestedBuildingId) {
+        const matched = buildings?.find((b) => b.id === suggestedBuildingId) ?? null;
+        if (matched) {
+          setSelectedBuilding(matched);
+          toast.message(`Επιλέχθηκε αυτόματα το κτίριο: ${matched.name}`);
+        } else {
+          toast.message('Επιλέχθηκε αυτόματα κτίριο (αναγνώριση παραστατικού)');
+        }
+      }
+    } else if (hasMultipleBuildings) {
+      // 2) Not confidently recognized → require explicit confirmation before saving
+      setPendingSave(save);
+      setBuildingChoiceId(selectedBuilding?.id ?? buildings?.[0]?.id ?? null);
+      setBuildingDialogOpen(true);
+      toast.info('Δεν αναγνωρίστηκε με βεβαιότητα το κτίριο. Επιβεβαιώστε πριν την καταχώρηση.');
+      return;
+    }
+
+    if (!targetBuildingId) {
+      toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
+      return;
+    }
+
+    await performSave(targetBuildingId, save, { allowDuplicate: false });
+  };
+
+  const handleConfirmBuilding = async () => {
+    const save = pendingSave;
+    const chosenId = buildingChoiceId;
+
+    if (!save) return;
+    if (!chosenId) {
+      toast.error('Παρακαλώ επιλέξτε κτίριο');
+      return;
+    }
+
+    const matched = buildings?.find((b) => b.id === chosenId) ?? null;
+    if (matched) {
+      setSelectedBuilding(matched);
+    }
+
+    setBuildingDialogOpen(false);
+    setPendingSave(null);
+
+    await performSave(chosenId, save, { allowDuplicate: false });
+  };
+
+  const handleConfirmDuplicateContinue = async () => {
+    const ctx = pendingDuplicate;
+    if (!ctx) return;
+    setDuplicateDialogOpen(false);
+    setPendingDuplicate(null);
+    await performSave(ctx.buildingId, ctx.save, { allowDuplicate: true });
   };
 
   return (
@@ -163,6 +296,108 @@ function DocumentsContent() {
 
       {/* Invoice Upload Form */}
       <InvoiceUploadForm onSave={handleSave} />
+
+      {/* Building confirmation (when recognition is not confident) */}
+      <AlertDialog
+        open={buildingDialogOpen}
+        onOpenChange={(open) => {
+          setBuildingDialogOpen(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Επιβεβαίωση κτιρίου</AlertDialogTitle>
+            <AlertDialogDescription>
+              Δεν αναγνωρίστηκε με βεβαιότητα το κτίριο από το παραστατικό. Επιβεβαιώστε το σωστό κτίριο για να συνεχίσετε.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2">
+            <Select
+              value={buildingChoiceId ? buildingChoiceId.toString() : ''}
+              onValueChange={(value) => setBuildingChoiceId(parseInt(value, 10))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Επιλέξτε κτίριο" />
+              </SelectTrigger>
+              <SelectContent>
+                {(buildings ?? []).map((b) => (
+                  <SelectItem key={b.id} value={b.id.toString()}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isSaving}
+              onClick={() => {
+                setPendingSave(null);
+              }}
+            >
+              Ακύρωση
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBuilding}
+              disabled={!buildingChoiceId || isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Αποθήκευση...
+                </>
+              ) : (
+                'Συνέχεια'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Probable duplicate confirmation */}
+      <AlertDialog
+        open={duplicateDialogOpen}
+        onOpenChange={(open) => {
+          setDuplicateDialogOpen(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Πιθανό διπλό παραστατικό</AlertDialogTitle>
+            <AlertDialogDescription>
+              Βρέθηκε πιθανή διπλο-καταχώρηση στο Ηλεκτρονικό Αρχείο. Θέλετε να συνεχίσετε και να καταχωρηθεί ξανά;
+              {duplicateInfo?.existing_ids?.length ? (
+                <span className="block mt-2 text-xs text-muted-foreground">
+                  Ενδεικτικά IDs: {duplicateInfo.existing_ids.join(', ')}
+                </span>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isSaving}
+              onClick={() => {
+                setDuplicateInfo(null);
+                setPendingDuplicate(null);
+              }}
+            >
+              Ακύρωση
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDuplicateContinue} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Αποθήκευση...
+                </>
+              ) : (
+                'Ναι, συνέχισε'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
