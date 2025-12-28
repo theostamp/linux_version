@@ -18,53 +18,53 @@ class UsageTrackingMiddleware(MiddlewareMixin):
     """
     Middleware για την παρακολούθηση usage και enforcement των plan limits
     """
-    
+
     # API endpoints που πρέπει να παρακολουθούνται
     TRACKED_ENDPOINTS = {
         # Building management
         '/api/buildings/': 'buildings',
         '/api/buildings/public/': 'buildings',
-        
-        # Apartment management  
+
+        # Apartment management
         '/api/apartments/': 'apartments',
-        
+
         # User management
         '/api/users/': 'users',
-        
+
         # Financial management
         '/api/financial/': 'api_calls',
-        
+
         # Maintenance management
         '/api/maintenance/': 'api_calls',
-        
+
         # Announcements
         '/api/announcements/': 'api_calls',
-        
+
         # User requests
         '/api/user-requests/': 'api_calls',
-        
+
         # Votes
         '/api/votes/': 'api_calls',
-        
+
         # Chat
         '/api/chat/': 'api_calls',
-        
+
         # Teams
         '/api/teams/': 'api_calls',
-        
+
         # Collaborators
         '/api/collaborators/': 'api_calls',
-        
+
         # Projects
         '/api/projects/': 'api_calls',
-        
+
         # Todos
         '/api/todos/': 'api_calls',
-        
+
         # Events
         '/api/events/': 'api_calls',
     }
-    
+
     # Endpoints που δεν πρέπει να παρακολουθούνται
     EXCLUDED_ENDPOINTS = [
         '/api/billing/',  # Billing endpoints δεν μετράνε ως usage
@@ -77,7 +77,7 @@ class UsageTrackingMiddleware(MiddlewareMixin):
         '/api/users/verify-email/',  # Email verification δεν μετράει
         '/api/users/password-reset/',  # Password reset δεν μετράει
     ]
-    
+
     def process_request(self, request):
         """
         Process request και track usage
@@ -85,23 +85,23 @@ class UsageTrackingMiddleware(MiddlewareMixin):
         # Skip για non-API requests
         if not request.path.startswith('/api/'):
             return None
-        
+
         # Skip για excluded endpoints
         for excluded in self.EXCLUDED_ENDPOINTS:
             if request.path.startswith(excluded):
                 return None
-        
+
         # Skip για anonymous users
         if not request.user or not request.user.is_authenticated:
             return None
-        
+
         # Skip για superusers (unlimited access)
         if request.user.is_superuser:
             return None
-        
+
         # Track API calls
         self._track_api_usage(request)
-        
+
         # Check limits
         if not self._check_usage_limits(request):
             return JsonResponse({
@@ -109,9 +109,9 @@ class UsageTrackingMiddleware(MiddlewareMixin):
                 'message': 'You have exceeded your plan limits. Please upgrade your subscription to continue.',
                 'limit_type': self._get_limit_type(request)
             }, status=429)
-        
+
         return None
-    
+
     def _track_api_usage(self, request):
         """
         Track API usage για authenticated user
@@ -120,18 +120,18 @@ class UsageTrackingMiddleware(MiddlewareMixin):
             subscription = BillingService.get_user_subscription(request.user)
             if not subscription:
                 return
-            
+
             # Track API calls
             BillingService.increment_usage(subscription, 'api_calls', 1)
-            
+
             # Track specific resource usage based on endpoint
             resource_type = self._get_resource_type(request.path)
             if resource_type and resource_type != 'api_calls':
                 BillingService.increment_usage(subscription, resource_type, 1)
-                
+
         except Exception as e:
             logger.error(f"Error tracking usage for user {request.user.email}: {e}")
-    
+
     def _check_usage_limits(self, request):
         """
         Check αν ο user έχει ξεπεράσει τα limits του plan
@@ -140,23 +140,23 @@ class UsageTrackingMiddleware(MiddlewareMixin):
             subscription = BillingService.get_user_subscription(request.user)
             if not subscription:
                 return True  # No subscription = no limits
-            
+
             # Check API calls limit
             if not BillingService.check_usage_limits(subscription, 'api_calls', 1):
                 return False
-            
+
             # Check specific resource limits
             resource_type = self._get_resource_type(request.path)
             if resource_type and resource_type != 'api_calls':
                 if not BillingService.check_usage_limits(subscription, resource_type, 1):
                     return False
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error checking usage limits for user {request.user.email}: {e}")
             return True  # Allow on error
-    
+
     def _get_resource_type(self, path):
         """
         Determine resource type από το API path
@@ -165,13 +165,13 @@ class UsageTrackingMiddleware(MiddlewareMixin):
             if path.startswith(endpoint):
                 return resource_type
         return 'api_calls'  # Default to API calls
-    
+
     def _get_limit_type(self, request):
         """
         Get the type of limit that was exceeded
         """
         resource_type = self._get_resource_type(request.path)
-        
+
         limit_messages = {
             'api_calls': 'API calls per month',
             'buildings': 'Buildings',
@@ -179,7 +179,7 @@ class UsageTrackingMiddleware(MiddlewareMixin):
             'users': 'Users per account',
             'storage_gb': 'Storage (GB)'
         }
-        
+
         return limit_messages.get(resource_type, 'Unknown limit')
 
 
@@ -187,26 +187,26 @@ class PlanFeatureMiddleware(MiddlewareMixin):
     """
     Middleware για τον έλεγχο feature access βασισμένο στο subscription plan
     """
-    
+
     # Feature restrictions per endpoint
     FEATURE_RESTRICTIONS = {
         # Analytics features (Professional/Enterprise only)
         '/api/financial/analytics/': ['professional', 'enterprise'],
         '/api/financial/reports/': ['professional', 'enterprise'],
-        
+
         # Custom integrations (Enterprise only)
         '/api/integrations/custom/': ['enterprise'],
-        
+
         # White-label features (Enterprise only)
         '/api/white-label/': ['enterprise'],
-        
+
         # Advanced maintenance features (Professional/Enterprise)
         '/api/maintenance/advanced/': ['professional', 'enterprise'],
-        
+
         # Team management features (Professional/Enterprise)
         '/api/teams/advanced/': ['professional', 'enterprise'],
     }
-    
+
     def process_request(self, request):
         """
         Check feature access based on subscription plan
@@ -214,15 +214,15 @@ class PlanFeatureMiddleware(MiddlewareMixin):
         # Skip για non-API requests
         if not request.path.startswith('/api/'):
             return None
-        
+
         # Skip για anonymous users
         if not request.user or not request.user.is_authenticated:
             return None
-        
+
         # Skip για superusers (unlimited access)
         if request.user.is_superuser:
             return None
-        
+
         # Check feature restrictions
         if not self._check_feature_access(request):
             return JsonResponse({
@@ -231,9 +231,9 @@ class PlanFeatureMiddleware(MiddlewareMixin):
                 'feature': self._get_feature_name(request.path),
                 'required_plans': self._get_required_plans(request.path)
             }, status=403)
-        
+
         return None
-    
+
     def _check_feature_access(self, request):
         """
         Check αν ο user έχει access στο feature
@@ -242,18 +242,18 @@ class PlanFeatureMiddleware(MiddlewareMixin):
             subscription = BillingService.get_user_subscription(request.user)
             if not subscription:
                 return False  # No subscription = no advanced features
-            
+
             required_plans = self.FEATURE_RESTRICTIONS.get(request.path)
             if not required_plans:
                 return True  # No restrictions
-            
+
             user_plan = subscription.plan.plan_type
             return user_plan in required_plans
-            
+
         except Exception as e:
             logger.error(f"Error checking feature access for user {request.user.email}: {e}")
             return False
-    
+
     def _get_feature_name(self, path):
         """
         Get human-readable feature name
@@ -267,7 +267,7 @@ class PlanFeatureMiddleware(MiddlewareMixin):
             '/api/teams/advanced/': 'Advanced Team Management',
         }
         return feature_names.get(path, 'Advanced Feature')
-    
+
     def _get_required_plans(self, path):
         """
         Get required plans για το feature
@@ -279,7 +279,7 @@ class BillingStatusMiddleware(MiddlewareMixin):
     """
     Middleware για τον έλεγχο billing status και trial expiration
     """
-    
+
     def process_request(self, request):
         """
         Check billing status και trial expiration
@@ -287,19 +287,21 @@ class BillingStatusMiddleware(MiddlewareMixin):
         # Skip για non-API requests
         if not request.path.startswith('/api/'):
             return None
-        
+
         # Skip για anonymous users
         if not request.user or not request.user.is_authenticated:
             return None
-        
+
         # Skip για superusers
         if request.user.is_superuser:
             return None
-        
+
         # Skip για billing endpoints (to avoid loops)
         if request.path.startswith('/api/billing/'):
             return None
-        
+
+        safe_method = request.method in ['GET', 'HEAD', 'OPTIONS']
+
         # 1. Έλεγχος σε επίπεδο Tenant (ΝΕΑ ΠΡΟΣΘΗΚΗ)
         try:
             tenant = get_tenant(request)
@@ -307,26 +309,37 @@ class BillingStatusMiddleware(MiddlewareMixin):
                 # Το on_trial ελέγχει αν ο tenant είναι σε δοκιμαστική περίοδο.
                 # Το is_active και paid_until ελέγχουν την ενεργή συνδρομή.
                 is_tenant_active = tenant.is_active and tenant.paid_until and tenant.paid_until >= timezone.now().date()
-                
+
                 if not is_tenant_active and not getattr(tenant, 'on_trial', False):
+                    # Read-only mode: allow SAFE methods, block writes with Payment Required.
+                    if safe_method:
+                        setattr(request, 'read_only_mode', True)
+                        return None
                     return JsonResponse({
                         'error': 'Tenant Subscription Inactive',
-                        'message': 'The subscription for this organization is inactive or has expired. Please contact your administrator.'
-                    }, status=403) # 403 Forbidden είναι πιο κατάλληλο για άρνηση πρόσβασης σε επίπεδο tenant.
+                        'code': 'TENANT_SUBSCRIPTION_INACTIVE',
+                        'message': 'Η συνδρομή του οργανισμού είναι ανενεργή ή έχει λήξει. Αναβαθμίστε για να συνεχίσετε.',
+                        'read_only': True,
+                    }, status=402)
         except Exception as e:
             # Αν δεν μπορούμε να πάρουμε το tenant, συνεχίζουμε
             logger.warning(f"Could not get tenant for request: {e}")
-        
+
         # Check subscription status
         if not self._check_subscription_status(request):
+            # Read-only mode: allow SAFE methods, block writes with Payment Required.
+            if safe_method:
+                setattr(request, 'read_only_mode', True)
+                return None
             return JsonResponse({
                 'error': 'Subscription required',
-                'message': 'Your subscription has expired or is inactive. Please renew your subscription.',
+                'code': 'SUBSCRIPTION_REQUIRED',
+                'message': 'Η συνδρομή σας είναι ανενεργή ή έχει λήξει. Αναβαθμίστε για να συνεχίσετε.',
                 'subscription_status': self._get_subscription_status(request.user)
             }, status=402)  # Payment Required
-        
+
         return None
-    
+
     def _check_subscription_status(self, request):
         """
         Check αν το subscription είναι active
@@ -334,15 +347,15 @@ class BillingStatusMiddleware(MiddlewareMixin):
         # Skip για non-API requests
         if not request.path.startswith('/api/'):
             return None
-        
+
         # Skip για anonymous users
         if not request.user or not request.user.is_authenticated:
             return None
-        
+
         # Skip για superusers
         if request.user.is_superuser:
             return None
-        
+
         # Skip για billing endpoints (to avoid loops)
         if request.path.startswith('/api/billing/'):
             return None
@@ -350,11 +363,11 @@ class BillingStatusMiddleware(MiddlewareMixin):
             subscription = BillingService.get_user_subscription(request.user)
             if not subscription:
                 return False  # No subscription
-            
+
             # Check if subscription is active
             if subscription.status not in ['trial', 'active']:
                 return False
-            
+
             # Check trial expiration
             if subscription.is_trial and subscription.trial_end:
                 if timezone.now() > subscription.trial_end:
@@ -362,13 +375,13 @@ class BillingStatusMiddleware(MiddlewareMixin):
                     subscription.status = 'trial_expired'
                     subscription.save()
                     return False
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error checking subscription status for user {request.user.email}: {e}")
             return False
-    
+
     def _get_subscription_status(self, user):
         """
         Get current subscription status

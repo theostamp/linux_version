@@ -8,7 +8,7 @@ from django.db import models, connection
 
 from .models import KioskWidget, KioskDisplaySettings, KioskScene, WidgetPlacement
 from .serializers import (
-    KioskWidgetSerializer, 
+    KioskWidgetSerializer,
     KioskDisplaySettingsSerializer,
     KioskSceneSerializer,
     KioskSceneListSerializer,
@@ -16,6 +16,85 @@ from .serializers import (
 )
 from buildings.models import Building
 from datetime import datetime, timedelta
+
+
+def _tenant_subscription_active(request) -> bool:
+    """
+    Tenant-level subscription check for public (unauthenticated) kiosk endpoints.
+    Mirrors the logic in billing middleware but can be used without auth.
+    """
+    tenant = getattr(request, 'tenant', None)
+    if not tenant:
+        return False
+
+    # Defensive: tenant might be the public schema during mis-routing
+    schema_name = getattr(tenant, 'schema_name', None)
+    if schema_name == 'public':
+        return False
+
+    today = timezone.now().date()
+    is_active = bool(getattr(tenant, 'is_active', False))
+    on_trial = bool(getattr(tenant, 'on_trial', False))
+    paid_until = getattr(tenant, 'paid_until', None)
+
+    return is_active and (on_trial or (paid_until and paid_until >= today))
+
+
+def _require_kiosk_premium(request, building_id: int):
+    """
+    Enforce: Kiosk features are Premium and Premium is only available for office accounts.
+    Returns a DRF Response when access is denied, otherwise None.
+    """
+    # Superuser bypass for authenticated requests (admin troubleshooting)
+    try:
+        if getattr(request, 'user', None) and getattr(request.user, 'is_superuser', False):
+            return None
+    except Exception:
+        pass
+
+    # Tenant checks (office-only + active subscription)
+    tenant = getattr(request, 'tenant', None)
+    account_type = getattr(tenant, 'account_type', 'office')
+    if account_type != 'office':
+        return Response(
+            {
+                'error': 'Premium λειτουργίες (Kiosk/AI) είναι διαθέσιμες μόνο για γραφεία διαχείρισης.',
+                'code': 'OFFICE_REQUIRED',
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if not _tenant_subscription_active(request):
+        return Response(
+            {
+                'error': 'Η συνδρομή του οργανισμού είναι ανενεργή ή έχει λήξει.',
+                'code': 'SUBSCRIPTION_INACTIVE',
+            },
+            status=status.HTTP_402_PAYMENT_REQUIRED,
+        )
+
+    # Building-level premium flag
+    try:
+        building = Building.objects.only('id', 'premium_enabled').filter(id=building_id).first()
+    except Exception:
+        building = None
+
+    if not building:
+        return Response(
+            {'error': 'Το κτίριο δεν βρέθηκε.', 'code': 'BUILDING_NOT_FOUND'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if not bool(getattr(building, 'premium_enabled', False)):
+        return Response(
+            {
+                'error': 'Απαιτείται Premium για το συγκεκριμένο κτίριο (Kiosk + AI).',
+                'code': 'PREMIUM_REQUIRED',
+            },
+            status=status.HTTP_402_PAYMENT_REQUIRED,
+        )
+
+    return None
 
 
 class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
@@ -31,18 +110,24 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
         """Filter widgets by building if specified"""
         queryset = super().get_queryset()
         building_id = self.request.query_params.get('building_id')
-        
+
         if building_id:
             try:
                 building = Building.objects.get(id=building_id)
                 queryset = queryset.filter(building=building)
             except Building.DoesNotExist:
                 queryset = queryset.none()
-        
+
         return queryset.order_by('order', 'name')
 
     def list(self, request, *args, **kwargs):
         """List all widgets with optional building filter"""
+        building_id = request.query_params.get('building_id')
+        if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
+
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response({
@@ -56,6 +141,9 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
         building_id = request.data.get('buildingId')
         building = None
         if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
             try:
                 building = Building.objects.get(id=building_id)
             except Building.DoesNotExist:
@@ -73,20 +161,24 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
         widget_data = request.data.copy()
         widget_data['building'] = building.pk if building else None
         widget_data['created_by'] = request.user.pk
-        
+
         serializer = self.get_serializer(data=widget_data)
         serializer.is_valid(raise_exception=True)
         widget = serializer.save(
             building=building,
             created_by=None  # Public endpoint - no authenticated user
         )
-        
+
         return Response(widget.to_dict(), status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         """Update widget configuration"""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        if instance.building_id:
+            deny = _require_kiosk_premium(request, int(instance.building_id))
+            if deny:
+                return deny
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -103,6 +195,10 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """Delete widget configuration"""
         widget = self.get_object()
+        if widget.building_id:
+            deny = _require_kiosk_premium(request, int(widget.building_id))
+            if deny:
+                return deny
         widget.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -111,21 +207,24 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
         """Sync multiple widgets at once"""
         widgets_data = request.data.get('widgets', [])
         building_id = request.data.get('buildingId')
-        
+
         building = None
         if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
             try:
                 building = Building.objects.get(id=building_id)
             except Building.DoesNotExist:
                 pass
 
         synced_widgets = []
-        
+
         for widget_data in widgets_data:
             widget_id = widget_data.get('id')
             if not widget_id:
                 continue
-            
+
             # Try to get existing widget
             try:
                 widget = KioskWidget.objects.get(widget_id=widget_id)
@@ -141,9 +240,9 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
                 widget_data['created_by'] = request.user.pk
                 widget = KioskWidget.from_dict(widget_data, request.user, building)
                 widget.save()
-            
+
             synced_widgets.append(widget.to_dict())
-        
+
         return Response({
             'synced': len(synced_widgets),
             'widgets': synced_widgets
@@ -158,12 +257,16 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
                 {'error': 'building_id parameter is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        deny = _require_kiosk_premium(request, int(building_id))
+        if deny:
+            return deny
+
         try:
             building = Building.objects.get(id=building_id)
             widgets = KioskWidget.objects.filter(building=building)
             serializer = self.get_serializer(widgets, many=True)
-            
+
             return Response({
                 'widgets': serializer.data,
                 'building': {
@@ -191,10 +294,10 @@ class KioskDisplayConfigViewSet(viewsets.ModelViewSet):
         """Filter by building if specified"""
         queryset = super().get_queryset()
         building_id = self.request.query_params.get('building_id')
-        
+
         if building_id:
             queryset = queryset.filter(building_id=building_id)
-        
+
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -205,10 +308,14 @@ class KioskDisplayConfigViewSet(viewsets.ModelViewSet):
                 {'error': 'buildingId is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        deny = _require_kiosk_premium(request, int(building_id))
+        if deny:
+            return deny
+
         try:
             building = Building.objects.get(id=building_id)
-            
+
             # Try to get existing config
             try:
                 config = KioskDisplaySettings.objects.get(building=building)
@@ -224,9 +331,9 @@ class KioskDisplayConfigViewSet(viewsets.ModelViewSet):
                     building=building,
                     updated_by=request.user
                 )
-            
+
             return Response(config.to_dict())
-            
+
         except Building.DoesNotExist:
             return Response(
                 {'error': 'Building not found'},
@@ -248,7 +355,7 @@ class PublicKioskWidgetConfigViewSet(viewsets.ReadOnlyModelViewSet):
         """Filter by building if specified"""
         queryset = super().get_queryset()
         building_id = self.request.query_params.get('building_id')
-        
+
         if building_id:
             try:
                 building = Building.objects.get(id=building_id)
@@ -258,14 +365,20 @@ class PublicKioskWidgetConfigViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(enabled=True, is_custom=False)
         else:
             queryset = queryset.filter(enabled=True)
-        
+
         return queryset.order_by('order', 'name')
 
     def list(self, request, *args, **kwargs):
         """List all enabled widgets"""
+        building_id = request.query_params.get('building_id')
+        if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
+
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        
+
         return Response({
             'widgets': serializer.data,
             'count': queryset.count(),
@@ -280,42 +393,52 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
     queryset = KioskScene.objects.all()
     serializer_class = KioskSceneSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         """Filter scenes by building if specified"""
         queryset = super().get_queryset()
         building_id = self.request.query_params.get('building_id')
-        
+
         if building_id:
             try:
                 building = Building.objects.get(id=building_id)
                 queryset = queryset.filter(building=building)
             except Building.DoesNotExist:
                 queryset = queryset.none()
-        
+
         return queryset.prefetch_related('placements__widget')
-    
+
     def get_serializer_class(self):
         """Use list serializer for list action"""
         if self.action == 'list':
             return KioskSceneListSerializer
         return KioskSceneSerializer
-    
+
     def list(self, request, *args, **kwargs):
         """List all scenes with optional building filter"""
+        building_id = request.query_params.get('building_id')
+        if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
+
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             'scenes': serializer.data,
             'count': queryset.count()
         })
-    
+
     def retrieve(self, request, *args, **kwargs):
         """Get a single scene with full details"""
         scene = self.get_object()
+        if scene.building_id:
+            deny = _require_kiosk_premium(request, int(scene.building_id))
+            if deny:
+                return deny
         serializer = KioskSceneSerializer(scene)
         return Response(serializer.data)
-    
+
     def create(self, request, *args, **kwargs):
         """Create a new scene"""
         building_id = request.data.get('buildingId')
@@ -324,7 +447,11 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 {'error': 'buildingId is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        deny = _require_kiosk_premium(request, int(building_id))
+        if deny:
+            return deny
+
         try:
             building = Building.objects.get(id=building_id)
         except Building.DoesNotExist:
@@ -332,7 +459,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 {'error': 'Building not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Create scene
         scene = KioskScene.objects.create(
             building=building,
@@ -345,7 +472,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
             active_end_time=request.data.get('activeEndTime'),
             created_by=None  # Public endpoint - no authenticated user
         )
-        
+
         # Create placements if provided
         placements_data = request.data.get('placements', [])
         for placement_data in placements_data:
@@ -363,14 +490,18 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 )
             except KioskWidget.DoesNotExist:
                 pass
-        
+
         serializer = KioskSceneSerializer(scene)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     def update(self, request, *args, **kwargs):
         """Update a scene"""
         scene = self.get_object()
-        
+        if scene.building_id:
+            deny = _require_kiosk_premium(request, int(scene.building_id))
+            if deny:
+                return deny
+
         # Update scene fields
         scene.name = request.data.get('name', scene.name)
         scene.order = request.data.get('order', scene.order)
@@ -380,12 +511,12 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
         scene.active_start_time = request.data.get('activeStartTime', scene.active_start_time)
         scene.active_end_time = request.data.get('activeEndTime', scene.active_end_time)
         scene.save()
-        
+
         # Update placements if provided
         if 'placements' in request.data:
             # Delete existing placements
             scene.placements.all().delete()
-            
+
             # Create new placements
             placements_data = request.data.get('placements', [])
             for placement_data in placements_data:
@@ -403,21 +534,31 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                     )
                 except KioskWidget.DoesNotExist:
                     pass
-        
+
         serializer = KioskSceneSerializer(scene)
         return Response(serializer.data)
-    
+
     def destroy(self, request, *args, **kwargs):
         """Delete a scene"""
         scene = self.get_object()
+        if scene.building_id:
+            deny = _require_kiosk_premium(request, int(scene.building_id))
+            if deny:
+                return deny
         scene.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
     @action(detail=False, methods=['post'])
     def reorder(self, request):
         """Reorder scenes by providing an array of scene IDs"""
         scene_ids = request.data.get('sceneIds', [])
-        
+        # For safety, require building_id (otherwise cannot reliably enforce per-building premium)
+        building_id = request.data.get('buildingId')
+        if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
+
         for index, scene_id in enumerate(scene_ids):
             try:
                 scene = KioskScene.objects.get(id=scene_id)
@@ -425,9 +566,9 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 scene.save()
             except KioskScene.DoesNotExist:
                 pass
-        
+
         return Response({'success': True})
-    
+
     @action(detail=False, methods=['post'])
     def create_default_scene(self, request):
         """Create default morning overview scene"""
@@ -437,7 +578,11 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 {'error': 'buildingId is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        deny = _require_kiosk_premium(request, int(building_id))
+        if deny:
+            return deny
+
         try:
             building = Building.objects.get(id=building_id)
         except Building.DoesNotExist:
@@ -445,7 +590,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 {'error': 'Building not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Check if scenes already exist
         existing_scenes = KioskScene.objects.filter(building=building).count()
         if existing_scenes > 0:
@@ -453,7 +598,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 {'error': 'Scenes already exist for this building'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Create the default "Πρωινή Επισκόπηση" scene
         scene = KioskScene.objects.create(
             building=building,
@@ -464,7 +609,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
             is_enabled=True,
             created_by=None  # Public endpoint - no authenticated user
         )
-        
+
         # Create a default widget for the scene if none exist
         default_widget = None
         try:
@@ -473,7 +618,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 building=building,
                 widget_id='dashboard_overview'
             ).first()
-            
+
             if not default_widget:
                 # Try to find any enabled main_slides widget
                 default_widget = KioskWidget.objects.filter(
@@ -481,7 +626,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                     enabled=True,
                     category='main_slides'
                 ).first()
-            
+
             if not default_widget:
                 # Create a default morning overview widget
                 default_widget = KioskWidget.objects.create(
@@ -501,7 +646,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                     building=building,
                     created_by=None  # Public endpoint - no authenticated user
                 )
-            
+
             # Create placement for the widget (full screen)
             WidgetPlacement.objects.create(
                 scene=scene,
@@ -512,11 +657,11 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 grid_col_end=13,  # Full width
                 z_index=0
             )
-            
+
         except Exception:
             # If widget creation fails, still create the scene
             pass
-        
+
         serializer = KioskSceneSerializer(scene)
         return Response({
             'scene': serializer.data,
@@ -551,48 +696,48 @@ def normalize_greek_name(name: str) -> str:
     """
     if not name:
         return ''
-    
+
     # Convert to uppercase
     name = name.upper()
-    
+
     # Remove accents (tonos) - NFD decomposition separates base char from accent
     name = unicodedata.normalize('NFD', name)
     name = ''.join(c for c in name if unicodedata.category(c) != 'Mn')
-    
+
     # Remove extra whitespace
     name = ' '.join(name.split())
-    
+
     return name
 
 
 def names_match(input_name: str, stored_name: str, threshold: float = 0.7) -> bool:
     """
     Check if two Greek names match with fuzzy logic.
-    
+
     Handles:
     - Case insensitivity (ΓΙΩΡΓΟΣ = γιώργος)
     - Accent insensitivity (Γιώργος = Γιωργος)
     - Common name variations (Γεώργιος = Γιώργος)
     - First name only matching (Γιώργος Παπαδόπουλος matches if user enters just Γιώργος)
     - Partial matching (Γιωργ matches Γιώργος)
-    
+
     Returns True if names match within threshold.
     """
     if not input_name or not stored_name:
         return False
-    
+
     # Normalize both names
     input_norm = normalize_greek_name(input_name)
     stored_norm = normalize_greek_name(stored_name)
-    
+
     # Exact match after normalization
     if input_norm == stored_norm:
         return True
-    
+
     # Split into words (first name, last name)
     input_parts = input_norm.split()
     stored_parts = stored_norm.split()
-    
+
     # Check if any input word matches any stored word (for first name or last name match)
     for input_part in input_parts:
         for stored_part in stored_parts:
@@ -602,7 +747,7 @@ def names_match(input_name: str, stored_name: str, threshold: float = 0.7) -> bo
             # Partial match (input is contained in stored or vice versa) - min 3 chars
             if len(input_part) >= 3 and (input_part in stored_part or stored_part in input_part):
                 return True
-    
+
     # Check common Greek name variations
     greek_name_variants = {
         'ΓΕΩΡΓΙΟΣ': ['ΓΙΩΡΓΟΣ', 'ΓΙΩΡΓΗΣ', 'ΓΚΕΟΡΓΚ'],
@@ -628,7 +773,7 @@ def names_match(input_name: str, stored_name: str, threshold: float = 0.7) -> bo
         'ΣΤΑΜΑΤΙΟΣ': ['ΣΤΑΜΑΤΗΣ', 'ΣΤΑΜΟΣ'],
         'ΣΤΑΜΑΤΗΣ': ['ΣΤΑΜΑΤΙΟΣ'],
     }
-    
+
     # Check for variant matches
     for input_part in input_parts:
         for stored_part in stored_parts:
@@ -640,7 +785,7 @@ def names_match(input_name: str, stored_name: str, threshold: float = 0.7) -> bo
             if stored_part in greek_name_variants:
                 if input_part in greek_name_variants[stored_part]:
                     return True
-    
+
     return False
 
 
@@ -651,10 +796,10 @@ def normalize_phone(phone: str) -> str:
     """
     if not phone:
         return ''
-    
+
     # Remove common separators
     phone = re.sub(r'[\s\-\.\(\)]+', '', phone)
-    
+
     # Remove leading + and country code (30 for Greece)
     if phone.startswith('+30'):
         phone = phone[3:]
@@ -662,11 +807,11 @@ def normalize_phone(phone: str) -> str:
         phone = phone[4:]
     elif phone.startswith('30') and len(phone) > 10:
         phone = phone[2:]
-    
+
     # Remove leading zero if present (Greek mobile numbers)
     if phone.startswith('0') and len(phone) == 11:
         phone = phone[1:]
-    
+
     return phone
 
 
@@ -675,7 +820,7 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
     Verify a person by their phone number.
     Searches all apartments in the building for matching owner_phone or tenant_phone.
     Now returns ALL matching apartments (for owners with multiple properties).
-    
+
     Returns:
         dict with keys:
         - 'verified': bool - True if phone matches owner or tenant
@@ -694,9 +839,9 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
             'owner_name': None,
             'error': 'Το τηλέφωνο είναι υποχρεωτικό'
         }
-    
+
     normalized_input = normalize_phone(phone)
-    
+
     if len(normalized_input) < 10:
         return {
             'verified': False,
@@ -706,14 +851,14 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
             'owner_name': None,
             'error': 'Παρακαλώ εισάγετε έγκυρο αριθμό τηλεφώνου (10 ψηφία)'
         }
-    
+
     try:
         # Get all apartments for this building
         apartments = Apartment.objects.filter(building_id=building_id)
-        
+
         # Collect ALL matching apartments
         matches = []
-        
+
         for apartment in apartments:
             # Check owner phone
             if apartment.owner_phone:
@@ -725,7 +870,7 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
                         'name': apartment.owner_name or ''
                     })
                     continue  # Don't check tenant if owner matches
-            
+
             # Check tenant phone (if rented)
             if apartment.is_rented and apartment.tenant_phone:
                 normalized_tenant = normalize_phone(apartment.tenant_phone)
@@ -735,13 +880,13 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
                         'match_type': 'tenant',
                         'name': apartment.tenant_name or ''
                     })
-        
+
         if matches:
             # Return first match as primary, but include all matches
             primary = matches[0]
             apartment_numbers = ', '.join([m['apartment'].number for m in matches])
             kiosk_logger.info(f"Phone {phone} matched {len(matches)} apartment(s): {apartment_numbers}")
-            
+
             return {
                 'verified': True,
                 'apartment': primary['apartment'],
@@ -750,7 +895,7 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
                 'owner_name': primary['name'],
                 'error': None
             }
-        
+
         # Phone not found
         return {
             'verified': False,
@@ -760,7 +905,7 @@ def verify_by_phone(building_id: int, phone: str) -> dict:
             'owner_name': None,
             'error': 'Το τηλέφωνο δεν βρέθηκε στα καταχωρημένα στοιχεία του κτιρίου. Παρακαλώ επικοινωνήστε με τη διαχείριση.'
         }
-        
+
     except Exception as e:
         kiosk_logger.error(f"Error verifying by phone: {e}")
         return {
@@ -777,7 +922,7 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
     """
     Verify if a person is the owner or tenant of an apartment.
     (Legacy function - kept for backwards compatibility)
-    
+
     Returns:
         dict with keys:
         - 'verified': bool - True if name matches owner or tenant
@@ -790,7 +935,7 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
             building_id=building_id,
             number__iexact=apartment_number.strip()
         ).first()
-        
+
         if not apartment:
             # Try with normalized number (remove spaces, convert to uppercase)
             normalized_number = apartment_number.strip().upper().replace(' ', '')
@@ -800,7 +945,7 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
                 where=["UPPER(REPLACE(number, ' ', '')) = %s"],
                 params=[normalized_number]
             ).first()
-        
+
         if not apartment:
             return {
                 'verified': False,
@@ -808,7 +953,7 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
                 'match_type': None,
                 'error': f'Το διαμέρισμα "{apartment_number}" δεν βρέθηκε στο κτίριο'
             }
-        
+
         # Check owner name
         if apartment.owner_name and names_match(full_name, apartment.owner_name):
             return {
@@ -817,7 +962,7 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
                 'match_type': 'owner',
                 'error': None
             }
-        
+
         # Check tenant name (if rented)
         if apartment.is_rented and apartment.tenant_name and names_match(full_name, apartment.tenant_name):
             return {
@@ -826,21 +971,21 @@ def verify_apartment_resident(building_id: int, apartment_number: str, full_name
                 'match_type': 'tenant',
                 'error': None
             }
-        
+
         # Name doesn't match - provide helpful message
         registered_names = []
         if apartment.owner_name:
             registered_names.append(f"Ιδιοκτήτης: {apartment.owner_name}")
         if apartment.is_rented and apartment.tenant_name:
             registered_names.append(f"Ένοικος: {apartment.tenant_name}")
-        
+
         return {
             'verified': False,
             'apartment': apartment,
             'match_type': None,
             'error': f'Το όνομα "{full_name}" δεν ταιριάζει με τα καταχωρημένα στοιχεία του διαμερίσματος {apartment_number}'
         }
-        
+
     except Exception as e:
         kiosk_logger.error(f"Error verifying apartment resident: {e}")
         return {
@@ -875,11 +1020,11 @@ def validate_kiosk_token(building_id: str, token: str) -> bool:
 def kiosk_register(request):
     """
     Kiosk resident self-registration endpoint.
-    
+
     Allows a resident to register themselves by scanning the QR code
     displayed on the building's kiosk. The registration is auto-approved
     when the provided phone matches the registered owner or tenant phone.
-    
+
     Flow:
     1. User scans QR code on kiosk
     2. User enters: email + phone number
@@ -893,33 +1038,33 @@ def kiosk_register(request):
     building_id = request.data.get('building_id')
     token = request.data.get('token', '')
     phone = request.data.get('phone', '').strip()
-    
+
     # Validation
     if not email:
         return Response(
             {'error': 'Το email είναι υποχρεωτικό'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     if not building_id:
         return Response(
             {'error': 'Μη έγκυρο αίτημα - λείπει το building_id'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     if not phone:
         return Response(
             {'error': 'Το τηλέφωνο είναι υποχρεωτικό'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Validate the kiosk token
     if not validate_kiosk_token(building_id, token):
         return Response(
             {'error': 'Μη έγκυρο token. Παρακαλώ σαρώστε ξανά το QR code.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Check if building exists
     try:
         building = Building.objects.get(id=building_id)
@@ -928,37 +1073,42 @@ def kiosk_register(request):
             {'error': 'Το κτίριο δεν βρέθηκε'},
             status=status.HTTP_404_NOT_FOUND
         )
-    
+
+    # Enforce Premium entitlement (Kiosk is premium-only and office-only)
+    deny = _require_kiosk_premium(request, int(building_id))
+    if deny:
+        return deny
+
     # Verify phone number against building apartments
     verification = verify_by_phone(building_id, phone)
-    
+
     if not verification['verified']:
         kiosk_logger.warning(f"Phone verification failed for {email}: {verification['error']}")
         return Response(
             {'error': verification['error']},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Get all matching apartments (owner might have multiple properties)
     all_matches = verification.get('apartments', [])
     apartment = verification['apartment']  # Primary apartment
     match_type = verification['match_type']  # 'owner' or 'tenant'
     owner_name = verification['owner_name']  # Name from matched record
-    
+
     # Log all matched apartments
     if len(all_matches) > 1:
         apt_numbers = ', '.join([m['apartment'].number for m in all_matches])
         kiosk_logger.info(f"Phone verified: {email} owns/rents {len(all_matches)} apartments: {apt_numbers}")
     else:
         kiosk_logger.info(f"Phone verified: {email} is {match_type} of apartment {apartment.number}")
-    
+
     # Auto-register email for ALL matching apartments
     # Phone is the "truth evidence" - if it matches, we trust the user
     email_updated = False
     for match in all_matches:
         apt = match['apartment']
         apt_match_type = match['match_type']
-        
+
         if apt_match_type == 'owner':
             if not apt.owner_email:
                 apt.owner_email = email
@@ -983,29 +1133,29 @@ def kiosk_register(request):
                 apt.save(update_fields=['tenant_email'])
                 email_updated = True
                 kiosk_logger.info(f"Updated tenant email from {old_email} to {email} for apartment {apt.number}")
-    
+
     # Check if there are already registered users for this apartment (Option C)
     from buildings.models import BuildingMembership
     existing_apartment_users = BuildingMembership.objects.filter(
         building_id=building_id,
         apartment=apartment.number
     ).select_related('resident')
-    
+
     has_existing_apartment_users = existing_apartment_users.exists()
     if has_existing_apartment_users:
         kiosk_logger.info(f"Apartment {apartment.number} already has {existing_apartment_users.count()} registered user(s)")
-    
+
     # Check if user already exists
     existing_user = CustomUser.objects.filter(email=email).first()
     if existing_user:
         # User exists - ensure they have access to this building and ALL their apartments
         kiosk_logger.info(f"User {email} already exists, ensuring building access for {len(all_matches)} apartment(s)")
-        
+
         try:
             from django_tenants.utils import schema_context
             from buildings.models import BuildingMembership
             from rest_framework_simplejwt.tokens import RefreshToken
-            
+
             # Get tenant - priority: user.tenant > connection.tenant
             tenant = None
             if hasattr(existing_user, 'tenant') and existing_user.tenant:
@@ -1019,9 +1169,9 @@ def kiosk_register(request):
                     existing_user.tenant = tenant
                     existing_user.save(update_fields=['tenant'])
                     kiosk_logger.info(f"Updated user {email} tenant to {tenant.schema_name}")
-            
+
             linked_apartments = []
-            
+
             if tenant:
                 with schema_context(tenant.schema_name):
                     # Check/Create BuildingMembership for THIS building
@@ -1032,12 +1182,12 @@ def kiosk_register(request):
                     )
                     if created:
                         kiosk_logger.info(f"Created BuildingMembership for {email} in building {building.name}")
-                    
+
                     # Link user to ALL matching apartments in this building
                     for match in all_matches:
                         apt = match['apartment']
                         apt_match_type = match['match_type']
-                        
+
                         if apt_match_type == 'owner':
                             if apt.owner_user != existing_user:
                                 apt.owner_user = existing_user
@@ -1051,16 +1201,16 @@ def kiosk_register(request):
                                 apt.save(update_fields=['tenant_user', 'is_rented'])
                                 kiosk_logger.info(f"Linked {email} as tenant_user of apartment {apt.number}")
                             linked_apartments.append(apt.number)
-                    
+
                     # AUTO-DISCOVER: Find and link user to OTHER buildings where their email appears
                     from apartments.models import Apartment
                     from django.db.models import Q
-                    
+
                     other_buildings_with_user = Building.objects.filter(
-                        Q(apartments__owner_email__iexact=email) | 
+                        Q(apartments__owner_email__iexact=email) |
                         Q(apartments__tenant_email__iexact=email)
                     ).exclude(pk=building.pk).distinct()
-                    
+
                     for other_building in other_buildings_with_user:
                         # Create membership for other building
                         other_membership, other_created = BuildingMembership.objects.get_or_create(
@@ -1070,14 +1220,14 @@ def kiosk_register(request):
                         )
                         if other_created:
                             kiosk_logger.info(f"AUTO-DISCOVERED: Created BuildingMembership for {email} in building {other_building.name}")
-                        
+
                         # Link to apartments in other building
                         other_apartments = Apartment.objects.filter(
                             building=other_building
                         ).filter(
                             Q(owner_email__iexact=email) | Q(tenant_email__iexact=email)
                         )
-                        
+
                         for apt in other_apartments:
                             if apt.owner_email and apt.owner_email.lower() == email.lower():
                                 if apt.owner_user != existing_user:
@@ -1093,26 +1243,26 @@ def kiosk_register(request):
             else:
                 kiosk_logger.warning(f"No tenant found for user {email}, skipping building/apartment linking")
                 linked_apartments = [apartment.number]
-            
+
             # Generate JWT token for instant login (phone verification is our trust anchor)
             # The user has proven they have access to the registered phone number
             refresh = RefreshToken.for_user(existing_user)
             access_token = str(refresh.access_token)
-            
+
             kiosk_logger.info(f"Generated instant login token for existing user {email}")
-            
+
             # Build response message based on number of apartments
             if len(all_matches) > 1:
                 apt_list = ', '.join([m['apartment'].number for m in all_matches])
                 message = f'Καλώς ήρθατε! Βρέθηκαν {len(all_matches)} διαμερίσματα ({apt_list}).'
             else:
                 message = f'Καλώς ήρθατε! Μεταφέρεστε στο διαμέρισμά σας...'
-            
+
             # Get tenant URL for cross-subdomain redirect
             tenant_url = None
             if hasattr(existing_user, 'tenant') and existing_user.tenant:
                 tenant_url = f"{existing_user.tenant.schema_name}.newconcierge.app"
-            
+
             # Return token for instant login - no email verification needed
             return Response({
                 'message': message,
@@ -1138,20 +1288,20 @@ def kiosk_register(request):
                 'message': 'Έχετε ήδη λογαριασμό. Ελέγξτε το email σας για σύνδεση.',
                 'status': 'existing_user'
             })
-    
+
     # Check for pending invitation
     pending_invitation = UserInvitation.objects.filter(
         email=email,
         building_id=building_id,
         status=UserInvitation.InvitationStatus.PENDING
     ).first()
-    
+
     if pending_invitation:
         # Update apartment_id if not set
         if not pending_invitation.apartment_id:
             pending_invitation.apartment_id = apartment.id
             pending_invitation.save(update_fields=['apartment_id'])
-        
+
         # Resend the invitation email
         kiosk_logger.info(f"Pending invitation exists for {email}, resending")
         try:
@@ -1166,71 +1316,71 @@ def kiosk_register(request):
                 {'error': 'Σφάλμα κατά την αποστολή email. Παρακαλώ δοκιμάστε ξανά.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     # Get building manager as the "invited_by" user
     # Fall back to any staff/superuser if no manager exists
     invited_by = None
-    
+
     # Try to get the building's internal manager first
     if hasattr(building, 'internal_manager') and building.internal_manager:
         invited_by = building.internal_manager
-    
+
     # If no internal manager, try to get the first staff user
     if not invited_by:
         invited_by = CustomUser.objects.filter(
-            is_staff=True, 
+            is_staff=True,
             is_active=True
         ).first()
-    
+
     # If still no user, create as system user (for kiosk registrations)
     if not invited_by:
         invited_by = CustomUser.objects.filter(
-            is_superuser=True, 
+            is_superuser=True,
             is_active=True
         ).first()
-    
+
     if not invited_by:
         kiosk_logger.error("No staff/superuser found for kiosk registration")
         return Response(
             {'error': 'Σφάλμα ρύθμισης συστήματος. Παρακαλώ επικοινωνήστε με τη διαχείριση.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    
+
     # Parse owner_name into first_name and last_name
     name_parts = owner_name.split() if owner_name else []
     first_name = name_parts[0] if name_parts else ''
     last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
-    
+
     # Create auto-approved invitation (verified by apartment matching)
     try:
         # Get tenant schema for cross-domain invitation acceptance
         # Priority: 1) invited_by.tenant, 2) connection.tenant, 3) connection.schema_name
         current_tenant_schema = None
-        
+
         # First: Try from invited_by user (most reliable)
         if invited_by and hasattr(invited_by, 'tenant') and invited_by.tenant:
             current_tenant_schema = invited_by.tenant.schema_name
             kiosk_logger.info(f"Got tenant from invited_by: {current_tenant_schema}")
-        
+
         # Second: Try from connection.tenant object
         conn_tenant = getattr(connection, 'tenant', None)
         if not current_tenant_schema and conn_tenant:
             current_tenant_schema = conn_tenant.schema_name
             kiosk_logger.info(f"Got tenant from connection.tenant: {current_tenant_schema}")
-        
+
         # Third: Fallback to schema_name (but not 'public')
         if not current_tenant_schema:
             schema_name = getattr(connection, 'schema_name', None)
             if schema_name and schema_name != 'public':
                 current_tenant_schema = schema_name
                 kiosk_logger.info(f"Got tenant from schema_name: {current_tenant_schema}")
-        
+
         if not current_tenant_schema:
             kiosk_logger.warning(f"Could not determine tenant for kiosk registration of {email}")
-        
+
         # Store all apartment IDs that match this phone (for multi-apartment owners)
         all_apartment_ids = [m['apartment'].id for m in all_matches]
-        
+
         invitation = UserInvitation.objects.create(
             email=email,
             first_name=first_name,
@@ -1245,11 +1395,11 @@ def kiosk_register(request):
             tenant_schema_name=current_tenant_schema,  # Store tenant for cross-domain acceptance
             expires_at=timezone.now() + timedelta(days=7)
         )
-        
+
         kiosk_logger.info(f"Created kiosk invitation for {email} with tenant_schema_name: {current_tenant_schema}, apartments: {all_apartment_ids}")
-        
+
         kiosk_logger.info(f"Created kiosk registration invitation for {email} ({match_type}) in apt {apartment.number}")
-        
+
         # Send registration email
         try:
             EmailService.send_kiosk_registration_email(invitation, building, apartment)
@@ -1261,7 +1411,7 @@ def kiosk_register(request):
                 {'error': 'Σφάλμα κατά την αποστολή email. Παρακαλώ δοκιμάστε ξανά.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
         # Notify admin if apartment already has registered users (Option C)
         if has_existing_apartment_users:
             existing_names = [m.resident.get_full_name() or m.resident.email for m in existing_apartment_users]
@@ -1277,7 +1427,7 @@ def kiosk_register(request):
             except Exception as e:
                 kiosk_logger.error(f"Error sending admin notification: {e}")
                 # Don't fail the registration, just log the error
-        
+
         # Build response message based on number of apartments
         all_apt_numbers = [m['apartment'].number for m in all_matches]
         if len(all_matches) > 1:
@@ -1285,7 +1435,7 @@ def kiosk_register(request):
             message = f'Επιτυχία! Βρέθηκαν {len(all_matches)} διαμερίσματα ({apt_list}) με το τηλέφωνό σας. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.'
         else:
             message = f'Επιτυχία! Βρέθηκε το τηλέφωνό σας στο διαμέρισμα {apartment.number}. Ελέγξτε το email σας για να ολοκληρώσετε την εγγραφή.'
-        
+
         return Response({
             'message': message,
             'status': 'created',
@@ -1293,14 +1443,14 @@ def kiosk_register(request):
             'apartments': all_apt_numbers,
             'match_type': match_type
         }, status=status.HTTP_201_CREATED)
-        
+
     except Exception as e:
         kiosk_logger.error(f"Error creating kiosk registration: {e}")
         return Response(
             {'error': 'Σφάλμα κατά τη δημιουργία εγγραφής. Παρακαλώ δοκιμάστε ξανά.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    
+
     @action(detail=False, methods=['get'])
     def check_scenes_exist(self, request):
         """Check if scenes exist for a building"""
@@ -1310,11 +1460,11 @@ def kiosk_register(request):
                 {'error': 'building_id parameter is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             building = Building.objects.get(id=building_id)
             scenes_count = KioskScene.objects.filter(building=building).count()
-            
+
             return Response({
                 'buildingId': building.pk,
                 'buildingName': building.name,
@@ -1335,12 +1485,12 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = KioskScene.objects.all()
     serializer_class = KioskSceneSerializer
     permission_classes = []  # No authentication required
-    
+
     def get_queryset(self):
         """Filter active scenes by building and time constraints"""
         queryset = super().get_queryset()
         building_id = self.request.query_params.get('building_id')
-        
+
         # Filter by building
         if building_id:
             try:
@@ -1348,13 +1498,13 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(building=building)
             except Building.DoesNotExist:
                 queryset = queryset.none()
-        
+
         # Filter by enabled status
         queryset = queryset.filter(is_enabled=True)
-        
+
         # Filter by time constraints if specified
         current_time = datetime.now().time()
-        
+
         # Include scenes with no time constraints or scenes within their active time
         queryset = queryset.filter(
             models.Q(active_start_time__isnull=True, active_end_time__isnull=True) |
@@ -1362,21 +1512,36 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
             models.Q(active_start_time__isnull=True, active_end_time__gte=current_time) |
             models.Q(active_start_time__lte=current_time, active_end_time__isnull=True)
         )
-        
+
         return queryset.prefetch_related('placements__widget').order_by('order')
-    
+
+    def list(self, request, *args, **kwargs):
+        """List public scenes (requires premium entitlement for the building)"""
+        building_id = request.query_params.get('building_id')
+        if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
+        return super().list(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'])
     def active(self, request):
         """Get all active scenes for current time"""
+        building_id = request.query_params.get('building_id')
+        if building_id:
+            deny = _require_kiosk_premium(request, int(building_id))
+            if deny:
+                return deny
+
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        
+
         return Response({
             'scenes': serializer.data,
             'count': queryset.count(),
             'timestamp': timezone.now().isoformat()
         })
-    
+
     @action(detail=False, methods=['get'])
     def check_scenes_exist(self, request):
         """Check if scenes exist for a building"""
@@ -1386,11 +1551,15 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'building_id parameter is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        deny = _require_kiosk_premium(request, int(building_id))
+        if deny:
+            return deny
+
         try:
             building = Building.objects.get(id=building_id)
             scenes_count = KioskScene.objects.filter(building=building).count()
-            
+
             return Response({
                 'buildingId': building.pk,
                 'buildingName': building.name,
@@ -1402,7 +1571,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'Building not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-    
+
     @action(detail=False, methods=['post'])
     def create_default_scene(self, request):
         """Create default morning overview scene"""
@@ -1412,7 +1581,11 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'buildingId is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        deny = _require_kiosk_premium(request, int(building_id))
+        if deny:
+            return deny
+
         try:
             building = Building.objects.get(id=building_id)
         except Building.DoesNotExist:
@@ -1420,7 +1593,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'Building not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Check if scenes already exist
         existing_scenes = KioskScene.objects.filter(building=building).count()
         if existing_scenes > 0:
@@ -1428,7 +1601,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'Scenes already exist for this building'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Create the default "Πρωινή Επισκόπηση" scene
         scene = KioskScene.objects.create(
             building=building,
@@ -1439,7 +1612,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
             is_enabled=True,
             created_by=None  # Public endpoint - no authenticated user
         )
-        
+
         # Create a default widget for the scene if none exist
         default_widget = None
         try:
@@ -1448,7 +1621,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 building=building,
                 widget_id='dashboard_overview'
             ).first()
-            
+
             if not default_widget:
                 # Try to find any enabled main_slides widget
                 default_widget = KioskWidget.objects.filter(
@@ -1456,7 +1629,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                     enabled=True,
                     category='main_slides'
                 ).first()
-            
+
             if not default_widget:
                 # Create a default morning overview widget
                 default_widget = KioskWidget.objects.create(
@@ -1476,7 +1649,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                     building=building,
                     created_by=None  # Public endpoint - no authenticated user
                 )
-            
+
             # Create placement for the widget (full screen)
             WidgetPlacement.objects.create(
                 scene=scene,
@@ -1487,11 +1660,11 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 grid_col_end=13,  # Full width
                 z_index=0
             )
-            
+
         except Exception:
             # If widget creation fails, still create the scene
             pass
-        
+
         serializer = KioskSceneSerializer(scene)
         return Response({
             'scene': serializer.data,

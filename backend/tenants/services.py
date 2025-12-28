@@ -21,11 +21,11 @@ class TenantService:
     Service class for managing tenant creation and subscription setup.
     Consolidates logic from signals.py, forms.py, and admin_views.py.
     """
-    
+
     def create_tenant_and_subscription(self, schema_name, user, plan_id, stripe_customer_id, stripe_subscription_id, stripe_checkout_session_id=None):
         """
         Creates a tenant, domain, and subscription for a user.
-        
+
         Args:
             schema_name (str): The schema name for the tenant
             user (CustomUser): The user who will own the tenant
@@ -33,10 +33,10 @@ class TenantService:
             stripe_customer_id (str): Stripe customer ID
             stripe_subscription_id (str): Stripe subscription ID
             stripe_checkout_session_id (str): Stripe checkout session ID for idempotency
-            
+
         Returns:
             tuple: (tenant, subscription) objects
-            
+
         Raises:
             ValidationError: If tenant creation fails
             Exception: For other errors
@@ -48,27 +48,27 @@ class TenantService:
                     plan = SubscriptionPlan.objects.get(id=plan_id)
                 except SubscriptionPlan.DoesNotExist:
                     raise ValidationError(f"Subscription plan with ID {plan_id} not found")
-                
+
                 # Step 2: Create the tenant
                 tenant = self._create_tenant(schema_name, user)
-                
+
                 # Step 3: Create the domain
                 domain = self._create_domain(tenant, schema_name)
-                
+
                 # Step 4: Run tenant migrations
                 self._run_tenant_migrations(schema_name)
-                
+
                 # Step 5: Create the user subscription
                 subscription = self._create_user_subscription(
                     user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id
                 )
-                
+
                 # Step 6: Create initial user in tenant schema
                 self._create_tenant_user(user, schema_name, stripe_checkout_session_id)
-                
+
                 # Step 7: Create demo data (Αλκμάνος 22 building)
                 self._create_demo_data(schema_name)
-                
+
                 # Step 8: Send welcome email with secure access link
                 try:
                     from users.services import EmailService
@@ -77,14 +77,14 @@ class TenantService:
                 except Exception as email_error:
                     logger.error(f"Failed to send welcome email: {email_error}")
                     # Don't fail provisioning if email fails
-                
+
                 logger.info(f"Successfully created tenant '{schema_name}' and subscription for user {user.email}")
                 return tenant, subscription
-                
+
         except Exception as e:
             logger.error(f"Failed to create tenant and subscription: {e}")
             raise
-    
+
     def _create_tenant(self, schema_name, user):
         """Create the tenant (Client) object."""
         # Ensure schema name is unique and RFC compliant (use hyphens, not underscores)
@@ -104,24 +104,24 @@ class TenantService:
 
         logger.info(f"Created tenant: {tenant.name} (schema: {tenant.schema_name})")
         return tenant
-    
+
     def _create_domain(self, tenant, schema_name):
         """Create the domain for the tenant."""
         # Determine the base domain from environment variable
         # Default to localhost for development, newconcierge.app for production
         base_domain = os.getenv("TENANT_BASE_DOMAIN", "localhost")
-        
+
         domain_name = f"{schema_name}.{base_domain}"
-        
+
         domain = Domain.objects.create(
             domain=domain_name,
             tenant=tenant,
             is_primary=True
         )
-        
+
         logger.info(f"Created domain: {domain_name} (base_domain: {base_domain})")
         return domain
-    
+
     def _run_tenant_migrations(self, schema_name):
         """Run migrations for the new tenant schema."""
         try:
@@ -133,14 +133,14 @@ class TenantService:
                 verbosity=1  # Increased verbosity to see migration output
             )
             logger.info(f"✓ Successfully ran migrations for schema: {schema_name}")
-            
+
             # Verify that buildings table exists after migrations
             with schema_context(schema_name):
                 from django.db import connection
                 with connection.cursor() as cursor:
                     cursor.execute("""
                         SELECT EXISTS (
-                            SELECT FROM information_schema.tables 
+                            SELECT FROM information_schema.tables
                             WHERE table_schema = current_schema()
                             AND table_name = 'buildings_building'
                         );
@@ -152,21 +152,21 @@ class TenantService:
         except Exception as e:
             logger.error(f"Failed to run migrations for schema {schema_name}: {e}", exc_info=True)
             raise
-    
+
     def _create_user_subscription(self, user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id=None):
         """Create the UserSubscription object."""
         # Calculate pricing based on plan
         price = plan.monthly_price  # Default to monthly
         currency = 'EUR'
-        
+
         # Set trial dates
         trial_start = timezone.now()
         trial_end = trial_start + timezone.timedelta(days=plan.trial_days)
-        
+
         # Set billing period
         current_period_start = timezone.now()
         current_period_end = current_period_start + timezone.timedelta(days=30)  # Monthly
-        
+
         subscription = UserSubscription.objects.create(
             user=user,
             plan=plan,
@@ -181,16 +181,17 @@ class TenantService:
             stripe_checkout_session_id=stripe_checkout_session_id,
             price=price,
             currency=currency,
-            tenant_domain=f"{tenant.schema_name}.localhost"
+            # Keep consistent with Domain creation (TENANT_BASE_DOMAIN).
+            tenant_domain=f"{tenant.schema_name}.{os.getenv('TENANT_BASE_DOMAIN', 'localhost')}"
         )
-        
+
         logger.info(f"Created subscription for user {user.email}: {subscription.id}")
         return subscription
-    
+
     def _create_tenant_user(self, user, schema_name, stripe_checkout_session_id=None):
         """
         Create the user account inside the tenant schema with SAME credentials as public schema.
-        
+
         Uses plain password from temporary storage if available, otherwise falls back to
         copying the hashed password from public schema user.
         """
@@ -257,7 +258,7 @@ class TenantService:
         except Exception as e:
             logger.error(f"Failed to create tenant user in schema {schema_name}: {e}")
             # Don't raise here - tenant creation can still succeed without this
-    
+
     def generate_unique_schema_name(self, base_name):
         """
         Generate a unique schema name from a base name.
@@ -283,14 +284,14 @@ class TenantService:
             counter += 1
 
         return schema_name
-    
+
     def get_tenant_by_schema(self, schema_name):
         """Get a tenant by its schema name."""
         try:
             return Client.objects.get(schema_name=schema_name)
         except Client.DoesNotExist:
             return None
-    
+
     def is_schema_available(self, schema_name):
         """Check if a schema name is available."""
         return not Client.objects.filter(schema_name=schema_name).exists()
@@ -379,14 +380,14 @@ class TenantService:
                 from buildings.models import Building, BuildingMembership
                 from apartments.models import Apartment
                 from django.contrib.auth import get_user_model
-                
+
                 User = get_user_model()
-                
+
                 # Check if demo data already exists
                 if Building.objects.filter(name__icontains='Αλκμάνος').exists() or Building.objects.filter(name__icontains='Βουλής').exists():
                     logger.info(f"Demo data already exists in schema {schema_name}")
                     return
-                
+
                 # Get the tenant user (manager) - try multiple methods
                 tenant_user = User.objects.filter(is_staff=True).first()
                 if not tenant_user:
@@ -396,12 +397,12 @@ class TenantService:
                     logger.error(f"CRITICAL: No user found in schema {schema_name} for demo data creation. Cannot create demo building.")
                     # Don't return - try to create building anyway, BuildingMembership will be skipped
                     tenant_user = None
-                
+
                 # Create Αλκμάνος 22 - Demo building with full data matching auto_initialization.py
                 from datetime import date
                 today = date.today()
                 financial_start_date = today.replace(day=1)  # First day of current month
-                
+
                 building = Building.objects.create(
                     name='Αλκμάνος 22 - Demo',
                     address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
@@ -416,7 +417,7 @@ class TenantService:
                     financial_system_start_date=financial_start_date
                 )
                 logger.info(f"✅ Created building 'Αλκμάνος 22 - Demo' with financial_system_start_date={financial_start_date}")
-                
+
                 # Create building membership for tenant user (if user exists)
                 if tenant_user:
                     BuildingMembership.objects.get_or_create(
@@ -427,38 +428,38 @@ class TenantService:
                     logger.info(f"Created BuildingMembership for user {tenant_user.email} in schema {schema_name}")
                 else:
                     logger.warning(f"No user available to create BuildingMembership in schema {schema_name}")
-                
+
                 # Validate mills function (same as auto_initialization.py)
                 def validate_all_mills(apartments_data, building_name):
                     """Επικύρωση ότι όλα τα χιλιοστά έχουν συνολικό άθροισμα 1000"""
                     total_participation = sum(apt['participation_mills'] for apt in apartments_data)
                     total_heating = sum(apt['heating_mills'] for apt in apartments_data)
                     total_elevator = sum(apt['elevator_mills'] for apt in apartments_data)
-                    
+
                     logger.info(f"🔍 Validating mills for {building_name}:")
                     logger.info(f"   Participation: {total_participation} mills")
                     logger.info(f"   Heating: {total_heating} mills")
                     logger.info(f"   Elevator: {total_elevator} mills")
-                    
+
                     all_correct = True
-                    
+
                     if total_participation != 1000:
                         logger.error(f"❌ ERROR: Participation mills = {total_participation} (must be 1000)")
                         all_correct = False
-                    
+
                     if total_heating != 1000:
                         logger.error(f"❌ ERROR: Heating mills = {total_heating} (must be 1000)")
                         all_correct = False
-                    
+
                     if total_elevator != 1000:
                         logger.error(f"❌ ERROR: Elevator mills = {total_elevator} (must be 1000)")
                         all_correct = False
-                    
+
                     if all_correct:
                         logger.info(f"✅ All mills are correct for {building_name}")
-                    
+
                     return all_correct
-                
+
                 # Create apartments with full data from auto_initialization.py - Total mills: 1000
                 apartments_data = [
                     {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '6936868236', 'owner_email': '', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
@@ -472,11 +473,11 @@ class TenantService:
                     {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2109876543', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '6944567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
                     {'number': 'Δ1', 'floor': 3, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
                 ]
-                
+
                 # Validate mills before creating apartments
                 if not validate_all_mills(apartments_data, building.name):
                     raise ValueError(f"Invalid mills for building {building.name}")
-                
+
                 for apt_data in apartments_data:
                     apartment, created = Apartment.objects.get_or_create(
                         building=building,
@@ -505,9 +506,9 @@ class TenantService:
                         logger.info(f"✅ Created apartment: {apt_data['number']} (Αλκμάνος 22 - Demo)")
                     else:
                         logger.info(f"ℹ️ Apartment {apt_data['number']} already exists, skipping creation")
-                
+
                 logger.info(f"Created demo building 'Αλκμάνος 22 - Demo' with 10 apartments and full data in schema {schema_name}")
-                
+
                 # Create Βουλής 6 -Demo building with 15 apartments
                 building_voulis = Building.objects.create(
                     name='Βουλής 6 -Demo',
@@ -523,7 +524,7 @@ class TenantService:
                     financial_system_start_date=financial_start_date
                 )
                 logger.info(f"✅ Created building 'Βουλής 6 -Demo' with financial_system_start_date={financial_start_date}")
-                
+
                 # Create building membership for tenant user (if user exists)
                 if tenant_user:
                     BuildingMembership.objects.get_or_create(
@@ -532,7 +533,7 @@ class TenantService:
                         defaults={'role': 'manager'}
                     )
                     logger.info(f"Created BuildingMembership for user {tenant_user.email} in schema {schema_name} for Βουλής 6 -Demo")
-                
+
                 # Create 15 apartments for Βουλής 6 -Demo with realistic Greek names
                 # First apartment has 100 mills and email thodoris_st@hotmail.com
                 # Remaining 14 apartments need to sum to 900 mills total
@@ -554,11 +555,11 @@ class TenantService:
                     {'number': '14', 'floor': 4, 'owner_name': 'Κωνσταντίνος Γεωργίου', 'owner_phone': '6989012345', 'owner_email': 'konstantinos.georgiou@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 65, 'heating_mills': 66, 'elevator_mills': 65},
                     {'number': '15', 'floor': 4, 'owner_name': 'Αικατερίνη Αλεξίου', 'owner_phone': '6990123456', 'owner_email': 'katerina.alexiou@email.com', 'tenant_name': 'Ιωάννης Κωνσταντίνου', 'tenant_phone': '6991234567', 'tenant_email': 'giannis.konstantinou@email.com', 'is_rented': True, 'square_meters': 83, 'bedrooms': 2, 'participation_mills': 65, 'heating_mills': 66, 'elevator_mills': 65}
                 ]
-                
+
                 # Validate mills before creating apartments
                 if not validate_all_mills(vouli_apartments_data, building_voulis.name):
                     raise ValueError(f"Invalid mills for building {building_voulis.name}")
-                
+
                 for apt_data in vouli_apartments_data:
                     apartment, created = Apartment.objects.get_or_create(
                         building=building_voulis,
@@ -587,9 +588,9 @@ class TenantService:
                         logger.info(f"✅ Created apartment: {apt_data['number']} (Βουλής 6 -Demo)")
                     else:
                         logger.info(f"ℹ️ Apartment {apt_data['number']} already exists, skipping creation")
-                
+
                 logger.info(f"Created demo building 'Βουλής 6 -Demo' with 15 apartments and full data in schema {schema_name}")
-                
+
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}", exc_info=True)
             # Check if it's a table missing error - if so, migrations didn't run properly

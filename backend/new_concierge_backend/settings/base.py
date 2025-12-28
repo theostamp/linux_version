@@ -507,7 +507,18 @@ RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@vercel.app')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
-STRIPE_MOCK_MODE = os.getenv('STRIPE_MOCK_MODE', 'True') == 'True'  # Default to mock mode for development
+# IMPORTANT: Default to False for production safety.
+# Enable explicitly in development/test environments if needed.
+STRIPE_MOCK_MODE = os.getenv('STRIPE_MOCK_MODE', 'False').lower() == 'true'
+
+# Per-apartment billing (Web per apartment + Premium add-on per apartment)
+# Defaults are mock/dev-safe. In production, set real Stripe Price IDs.
+PER_APARTMENT_BILLING_ENABLED = os.getenv('PER_APARTMENT_BILLING_ENABLED', 'False').lower() == 'true'
+STRIPE_WEB_PER_APARTMENT_PRICE_ID = os.getenv('STRIPE_WEB_PER_APARTMENT_PRICE_ID', 'price_web_per_apartment_dev')
+STRIPE_PREMIUM_ADDON_PER_APARTMENT_PRICE_ID = os.getenv(
+    'STRIPE_PREMIUM_ADDON_PER_APARTMENT_PRICE_ID',
+    'price_premium_addon_per_apartment_dev'
+)
 
 # Stripe settings
 STRIPE_CURRENCY = 'eur'  # Euro currency

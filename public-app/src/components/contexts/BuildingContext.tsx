@@ -40,6 +40,7 @@ export interface BuildingContextData {
   id: number;
   name: string;
   apartments_count: number;
+  premium_enabled?: boolean;
   address: string;
   city: string;
   postal_code: string;
@@ -63,6 +64,19 @@ export interface BuildingContextData {
 
   // Permissions
   permissions: BuildingPermissions;
+
+  // Billing / Entitlements (tenant-level + building-level)
+  billing?: {
+    account_type: 'individual' | 'office' | string | null;
+    tenant_is_active: boolean | null;
+    tenant_on_trial: boolean | null;
+    tenant_paid_until: string | null;
+    tenant_subscription_active: boolean | null;
+    premium_enabled: boolean;
+    premium_allowed: boolean | null;
+    kiosk_enabled: boolean | null;
+    ai_enabled: boolean | null;
+  };
 }
 
 interface BuildingContextType {

@@ -88,6 +88,13 @@ class Building(models.Model):
         default=0
     )
 
+    # 💎 SaaS Entitlements (Premium ανά πολυκατοικία)
+    premium_enabled = models.BooleanField(
+        _("Premium Ενεργό (Kiosk + AI)"),
+        default=False,
+        help_text=_("Αν είναι ενεργό, το συγκεκριμένο κτίριο έχει πρόσβαση σε Premium λειτουργίες (Kiosk + AI)."),
+    )
+
     # 👤 Εσωτερικός Διαχειριστής - Σύνδεση με User
     internal_manager = models.ForeignKey(
         CustomUser,
@@ -98,7 +105,7 @@ class Building(models.Model):
         verbose_name=_("Εσωτερικός Διαχειριστής"),
         help_text=_("Ο χρήστης που είναι εσωτερικός διαχειριστής της πολυκατοικίας")
     )
-    
+
     # 💳 Δικαίωμα καταχώρησης πληρωμών (opt-in για τον εσωτερικό διαχειριστή)
     internal_manager_can_record_payments = models.BooleanField(
         _("Δικαίωμα Καταχώρησης Πληρωμών"),
@@ -270,7 +277,7 @@ class Building(models.Model):
         validators=[MinValueValidator(1)],
         help_text=_("Ημέρα του μήνα μετά την οποία οι οφειλές θεωρούνται καθυστερημένες")
     )
-    
+
     # 📅 Ημερομηνία Έναρξης Συστήματος
     financial_system_start_date = models.DateField(
         _("Ημερομηνία Έναρξης Συστήματος"),
@@ -288,7 +295,7 @@ class Building(models.Model):
         verbose_name=_("Πακέτο Υπηρεσιών"),
         help_text=_("Επιλεγμένο πακέτο υπηρεσιών διαχείρισης")
     )
-    
+
     service_package_start_date = models.DateField(
         _("Ημερομηνία Έναρξης Πακέτου"),
         null=True,
@@ -304,13 +311,13 @@ class Building(models.Model):
         null=True,
         help_text=_("ID του Google Calendar για αυτό το κτίριο")
     )
-    
+
     google_calendar_enabled = models.BooleanField(
         _("Google Calendar Ενεργό"),
         default=False,
         help_text=_("Ενεργοποίηση του Google Calendar για αυτό το κτίριο")
     )
-    
+
     google_calendar_sync_enabled = models.BooleanField(
         _("Αυτόματος Συγχρονισμός"),
         default=True,
@@ -340,13 +347,13 @@ class Building(models.Model):
     def can_internal_manager_record_payments(self):
         """Ελέγχει αν ο εσωτερικός διαχειριστής μπορεί να καταχωρεί πληρωμές"""
         return self.internal_manager is not None and self.internal_manager_can_record_payments
-    
+
     def get_google_calendar_url(self):
         """Επιστρέφει το Google Calendar URL αν υπάρχει"""
         if self.google_calendar_id:
             return f"https://calendar.google.com/calendar/embed?src={self.google_calendar_id}&ctz=Europe/Athens"
         return None
-        
+
     def get_google_calendar_public_url(self):
         """Επιστρέφει το δημόσιο Google Calendar URL"""
         if self.google_calendar_id:
@@ -367,51 +374,51 @@ class Building(models.Model):
     def get_effective_year_start(self, year):
         """
         Υπολογίζει την αποτελεσματική αρχή του έτους για οικονομικούς υπολογισμούς
-        
+
         Args:
             year: Το έτος για το οποίο υπολογίζουμε
-            
+
         Returns:
             date: Η αποτελεσματική αρχή του έτους
         """
         from datetime import date
-        
+
         # Αν υπάρχει ημερομηνία έναρξης συστήματος
         if self.financial_system_start_date:
             start_year = self.financial_system_start_date.year
-            
+
             # Αν το έτος είναι το ίδιο με την έναρξη συστήματος
             if year == start_year:
                 return self.financial_system_start_date
-            
+
             # Αν το έτος είναι μετά την έναρξη συστήματος
             elif year > start_year:
                 return date(year, 1, 1)
-            
+
             # Αν το έτος είναι πριν την έναρξη συστήματος
             else:
                 return None  # Δεν υπάρχουν δεδομένα για αυτό το έτος
-        
+
         # Αν δεν υπάρχει ημερομηνία έναρξης, χρησιμοποιούμε την 1η Ιανουαρίου
         return date(year, 1, 1)
-    
+
     def save(self, *args, **kwargs):
         """
         Custom save method για αυτόματο ορισμό financial_system_start_date
         και δημιουργία μελλοντικών μηνιαίων χρεώσεων
-        
+
         ΚΑΝΟΝΑΣ 1: Όταν ορίζεται management_fee_per_apartment (πακέτο διαχείρισης)
         και δεν υπάρχει financial_system_start_date, ορίζουμε αυτόματα στην 1η του τρέχοντος μήνα.
-        
+
         ΚΑΝΟΝΑΣ 2: Όταν ορίζεται ή αλλάζει management_fee_per_apartment,
         δημιουργούνται αυτόματα management fees για τους επόμενους 12 μήνες.
         """
         from datetime import date
-        
+
         # Track αν το management fee άλλαξε
         is_new = self.pk is None
         management_fee_changed = False
-        
+
         if not is_new:
             try:
                 old_building = Building.objects.get(pk=self.pk)
@@ -419,7 +426,7 @@ class Building(models.Model):
                     management_fee_changed = True
             except Building.DoesNotExist:
                 pass
-        
+
         # ✅ ΑΥΤΟΜΑΤΟΣ ΟΡΙΣΜΟΣ: financial_system_start_date
         # Αν δεν έχει οριστεί, υπολογίζουμε την 1η του μήνα που δημιουργήθηκε το κτίριο
         if not self.financial_system_start_date:
@@ -436,39 +443,39 @@ class Building(models.Model):
                 today = date.today()
                 self.financial_system_start_date = today.replace(day=1)
                 print(f"✅ Auto-set financial_system_start_date = {self.financial_system_start_date} (fallback: 1η τρέχοντος μήνα) for building {self.name}")
-        
+
         # 🔧 ΕΠΙΣΗ: Εξασφαλίζουμε ότι η ημερομηνία είναι πάντα η 1η του μήνα
         if self.financial_system_start_date:
             self.financial_system_start_date = self.financial_system_start_date.replace(day=1)
-        
+
         super().save(*args, **kwargs)
-        
+
         # 📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Αφαίρεση αυτόματης δημιουργίας μελλοντικών δαπανών
         # Οι μελλοντικές δαπάνες διαχείρισης προκαλούσαν σύγχυση στους υπολογισμούς
         # Τώρα δημιουργούνται μόνο για τον ΤΡΕΧΟΝΤΑ μήνα (αν δεν υπάρχουν ήδη)
         if (is_new or management_fee_changed) and self.management_fee_per_apartment > 0:
             self._create_current_month_management_fees()
-    
+
     def _create_current_month_management_fees(self):
         """
         Δημιουργεί management fee expense ΜΟΝΟ για τον τρέχοντα μήνα
-        
+
         📝 ΔΙΟΡΘΩΣΗ 2025-12-05: Δεν δημιουργούνται πλέον μελλοντικές δαπάνες
         που προκαλούσαν σύγχυση στο αποθεματικό
         """
         from datetime import date
         from financial.monthly_charge_service import MonthlyChargeService
-        
+
         try:
             current_month = date.today().replace(day=1)
-            
+
             result = MonthlyChargeService.create_monthly_charges(self, current_month)
-            
+
             if result.get('management_fees_created'):
                 print(f"✅ Created management fee expense for {self.name} - {current_month.strftime('%B %Y')}")
             else:
                 print(f"ℹ️ Management fee already exists for {self.name} - {current_month.strftime('%B %Y')}")
-            
+
         except Exception as e:
             # Δεν θέλουμε να σταματήσει το save αν αποτύχει η δημιουργία
             print(f"⚠️ Error creating management fees: {e}")

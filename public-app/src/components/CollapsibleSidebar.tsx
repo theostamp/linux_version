@@ -37,6 +37,7 @@ import {
   Monitor,
   Settings,
   Send,
+  Lock,
     User,
     CreditCard,
     ChevronRight,
@@ -60,6 +61,7 @@ interface NavigationLink {
   roles: string[];
   isBeta?: boolean;
   requiresUltraAdmin?: boolean;
+  requiresPremium?: boolean;
   // Staff permission required (for staff role only)
   staffPermission?: 'can_access_office_finance' | 'can_view_financials' | 'can_manage_requests';
   // Tooltip description
@@ -291,6 +293,7 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Διαχείριση',
         icon: <Settings className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        requiresPremium: true,
         tooltip: 'Ρυθμίσεις και διαχείριση του Kiosk',
       },
       {
@@ -298,6 +301,7 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Display',
         icon: <Monitor className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        requiresPremium: true,
         tooltip: 'Προβολή της οθόνης Kiosk',
       },
       {
@@ -305,6 +309,7 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Smart Heating',
         icon: <Flame className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
+        requiresPremium: true,
         tooltip: 'Έλεγχος κεντρικής θέρμανσης (IoT)',
       },
     ]
@@ -386,6 +391,7 @@ export default function CollapsibleSidebar() {
     selectedBuilding,
     setSelectedBuilding,
     isLoading: buildingsIsLoading,
+    buildingContext,
   } = useBuilding();
 
   // Check if resident has multiple buildings
@@ -461,6 +467,23 @@ export default function CollapsibleSidebar() {
     if (!permissions || !permissions.is_active) return false;
 
     return permissions[permissionKey] === true;
+  };
+
+  const getPremiumUpgradeHref = () => {
+    const buildingId = selectedBuilding?.id;
+    return buildingId ? `/upgrade?building_id=${buildingId}` : '/upgrade';
+  };
+
+  const isLinkLocked = (link: NavigationLink): boolean => {
+    if (!link.requiresPremium) return false;
+
+    // If we don't have a resolved building context yet, be conservative and lock.
+    const kioskEnabled =
+      buildingContext?.billing?.kiosk_enabled ??
+      buildingContext?.premium_enabled ??
+      false;
+
+    return !kioskEnabled;
   };
 
   // Filter available groups and links based on user role AND staff permissions
@@ -676,17 +699,20 @@ export default function CollapsibleSidebar() {
                   {group.links.map((link) => {
                     const isActive = pathname === link.href ||
                       (pathname && pathname.startsWith(link.href) && link.href !== '/dashboard');
+                    const locked = isLinkLocked(link);
+                    const effectiveHref = locked ? getPremiumUpgradeHref() : link.href;
 
                     return (
                       <div key={link.href} className="relative group/item">
                         <Tooltip disableHoverableContent={isExpanded}>
                           <TooltipTrigger asChild>
                             <button
-                              onClick={() => handleNavigation(link.href)}
+                              onClick={() => handleNavigation(effectiveHref)}
                               className={cn(
                                 'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
                                 isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
                                 isActive && 'shadow-md',
+                                locked && 'opacity-60',
                                 // Ensure readable text in dark mode (some themes map muted-foreground too dark)
                                 isActive
                                   ? colorClasses.active
@@ -716,6 +742,13 @@ export default function CollapsibleSidebar() {
                               >
                                 {link.label}
                               </span>
+
+                              {/* Premium Lock */}
+                              {locked && isExpanded && (
+                                <span className="ml-2 flex items-center">
+                                  <Lock className="w-4 h-4 text-muted-foreground dark:text-slate-300" />
+                                </span>
+                              )}
 
                               {/* Info Icon with Tooltip */}
                               {link.tooltip && isExpanded && (
@@ -771,6 +804,9 @@ export default function CollapsibleSidebar() {
                               sideOffset={10}
                             >
                               <p className="text-xs font-semibold">{link.label}</p>
+                              {locked && (
+                                <p className="text-xs mt-1 text-muted-foreground">Απαιτείται Premium (Kiosk + AI)</p>
+                              )}
                               {link.tooltip && (
                                 <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">{link.tooltip}</p>
                               )}
@@ -892,13 +928,16 @@ export default function CollapsibleSidebar() {
                 <div className="space-y-1">
                   {group.links.map((link) => {
                     const isActive = pathname === link.href;
+                    const locked = isLinkLocked(link);
+                    const effectiveHref = locked ? getPremiumUpgradeHref() : link.href;
 
                     return (
                       <div key={link.href} className="relative flex items-center">
                         <button
-                          onClick={() => handleNavigation(link.href)}
+                          onClick={() => handleNavigation(effectiveHref)}
                           className={cn(
                             "flex items-center flex-1 px-3 py-2.5 rounded-lg font-medium transition-all duration-200",
+                            locked && "opacity-60",
                             // Ensure readable text in dark mode (some themes map muted-foreground too dark)
                             isActive
                               ? colorClasses.active
@@ -912,6 +951,7 @@ export default function CollapsibleSidebar() {
                             {link.icon}
                           </span>
                           <span>{link.label}</span>
+                          {locked && <Lock className="ml-2 w-4 h-4 text-muted-foreground dark:text-slate-300" />}
                         </button>
                         {/* Info Icon with Tooltip for Mobile */}
                         {link.tooltip && (

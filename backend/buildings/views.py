@@ -1,13 +1,13 @@
 # backend/buildings/views.py
 
-from rest_framework import viewsets, status  
-from rest_framework.response import Response  
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt  
-from django.http import JsonResponse  
-from django.utils import timezone  
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.http import JsonResponse
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
 from django.db.models import Sum, Q
@@ -37,14 +37,14 @@ def _get_current_context_logic(request):
     """
     from .services import BuildingService
     from .serializers import BuildingContextSerializer
-    
+
     try:
         # Resolve building από request (not required)
         building_dto = BuildingService.resolve_building_from_request(
             request,
             required=False
         )
-        
+
         if not building_dto:
             return Response(
                 {
@@ -53,12 +53,58 @@ def _get_current_context_logic(request):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Serialize το DTO
         serializer = BuildingContextSerializer(building_dto.to_dict())
-        
-        return Response(serializer.data)
-        
+        payload = serializer.data
+
+        # --------------------------------------------------------------------
+        # Billing/Entitlements context (tenant-level + building-level)
+        # --------------------------------------------------------------------
+        try:
+            tenant = getattr(request, 'tenant', None)
+            today = timezone.now().date()
+
+            account_type = getattr(tenant, 'account_type', None) or 'office'
+            tenant_on_trial = bool(getattr(tenant, 'on_trial', False))
+            tenant_paid_until = getattr(tenant, 'paid_until', None)
+            tenant_is_active_flag = bool(getattr(tenant, 'is_active', False))
+
+            tenant_subscription_active = tenant_is_active_flag and (
+                tenant_on_trial or (tenant_paid_until and tenant_paid_until >= today)
+            )
+
+            is_office_account = account_type == 'office'
+            premium_enabled = bool(payload.get('premium_enabled', False))
+
+            payload['billing'] = {
+                'account_type': account_type,
+                'tenant_is_active': tenant_is_active_flag,
+                'tenant_on_trial': tenant_on_trial,
+                'tenant_paid_until': tenant_paid_until.isoformat() if tenant_paid_until else None,
+                'tenant_subscription_active': tenant_subscription_active,
+                # Building-level premium flags
+                'premium_enabled': premium_enabled,
+                'premium_allowed': is_office_account,
+                'kiosk_enabled': is_office_account and premium_enabled and tenant_subscription_active,
+                'ai_enabled': is_office_account and premium_enabled and tenant_subscription_active,
+            }
+        except Exception:
+            # Fail open (do not break building context endpoint if billing info fails)
+            payload['billing'] = {
+                'account_type': None,
+                'tenant_is_active': None,
+                'tenant_on_trial': None,
+                'tenant_paid_until': None,
+                'tenant_subscription_active': None,
+                'premium_enabled': bool(payload.get('premium_enabled', False)),
+                'premium_allowed': None,
+                'kiosk_enabled': None,
+                'ai_enabled': None,
+            }
+
+        return Response(payload)
+
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"Error in get_current_context: {e}", exc_info=True)
@@ -80,11 +126,11 @@ def public_buildings_list(request):
     try:
         from django_tenants.utils import schema_context
         from tenants.models import Client, Domain as TenantDomain
-        
+
         # Determine which tenant schema to use
         schema_name = 'demo'  # Default fallback
         resolved_from = 'default'
-        
+
         # Prefer tenant derived from request host (matches Django tenant routing)
         # Priority: X-Tenant-Host > x-forwarded-host > host (same as tenant middleware)
         # Note: Use request.META instead of request.headers to match middleware behavior
@@ -92,7 +138,7 @@ def public_buildings_list(request):
         tenant_host = request.META.get('HTTP_X_TENANT_HOST', '')
         forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
         http_host = request.META.get('HTTP_HOST', '')
-        
+
         # Priority: X-Tenant-Host > X-Forwarded-Host > HTTP_HOST
         if tenant_host:
             host = tenant_host.split(':')[0].lower()
@@ -106,7 +152,7 @@ def public_buildings_list(request):
         else:
             host = request.get_host().split(':')[0].lower()
             print(f"🔍 [PUBLIC BUILDINGS] Using get_host(): '{host}'")
-        
+
         # Filter out internal Railway hostnames - they don't have tenant domains
         if host and ('railway.app' in host or 'up.railway.app' in host):
             # If we got an internal Railway hostname, try to get the actual domain from X-Tenant-Host
@@ -118,7 +164,7 @@ def public_buildings_list(request):
                 # If no X-Tenant-Host, we can't determine tenant, use default
                 print(f"⚠️ [PUBLIC BUILDINGS] Got internal Railway hostname '{host}' but no X-Tenant-Host header, using default schema")
                 host = None
-        
+
         if host:
             # Query must be done in public schema context for Domain model
             domain_entry = (
@@ -133,24 +179,24 @@ def public_buildings_list(request):
                 print(f"🔍 [PUBLIC BUILDINGS] Resolved schema '{schema_name}' from domain '{host}'")
             else:
                 print(f"⚠️ [PUBLIC BUILDINGS] No domain entry found for host '{host}', will use default schema")
-        
+
         # If host lookup failed, try to use authenticated user's tenant
         if resolved_from == 'default' and hasattr(request, 'user') and request.user.is_authenticated:
             if hasattr(request.user, 'tenant') and request.user.tenant:
                 schema_name = request.user.tenant.schema_name
                 resolved_from = 'user'
                 print(f"🔍 [PUBLIC BUILDINGS] Using authenticated user's tenant: {schema_name}")
-        
+
         # Verify schema exists before using it
         if not Client.objects.filter(schema_name=schema_name).exists():
             print(f"⚠️ [PUBLIC BUILDINGS] Schema {schema_name} (resolved via {resolved_from}) does not exist, falling back to demo")
             schema_name = 'demo'
             resolved_from = 'default'
-        
+
         with schema_context(schema_name):
             # Get all buildings from database
             buildings = Building.objects.all().order_by('name')
-            
+
             buildings_data = []
             for building in buildings:
                 building_data = {
@@ -172,10 +218,10 @@ def public_buildings_list(request):
                     'updated_at': building.updated_at.isoformat() if building.updated_at else None
                 }
                 buildings_data.append(building_data)
-            
+
             print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from tenant: {schema_name} (resolved via {resolved_from})")
             return JsonResponse(buildings_data, safe=False)
-        
+
     except Exception as e:
         print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
         # Fallback to empty list if database error
@@ -188,7 +234,7 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
     serializer_class = ServicePackageSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['is_active']
-    
+
     def get_serializer_context(self):
         """Προσθήκη building_id στο context για τον υπολογισμό κόστους"""
         context = super().get_serializer_context()
@@ -196,13 +242,13 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
         if building_id:
             context['building_id'] = building_id
         return context
-    
+
     @action(detail=True, methods=['post'])
     def apply_to_building(self, request, pk=None):
         """Εφαρμογή πακέτου σε κτίριο"""
         try:
             service_package = self.get_object()
-            
+
             # Handle both DRF request and Django request
             if hasattr(request, 'data'):
                 building_id = request.data.get('building_id')
@@ -213,21 +259,21 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
                     building_id = data.get('building_id')
                 except (json.JSONDecodeError, UnicodeDecodeError):
                     building_id = request.POST.get('building_id')
-            
+
             if not building_id:
                 return Response(
-                    {'error': 'building_id is required'}, 
+                    {'error': 'building_id is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             from datetime import date
-            
+
             building = Building.objects.get(id=building_id)
             building.service_package = service_package
             building.management_fee_per_apartment = service_package.fee_per_apartment
             building.service_package_start_date = date.today()  # Ημερομηνία έναρξης = σήμερα
             building.save()
-            
+
             return Response({
                 'message': f'Πακέτο "{service_package.name}" εφαρμόστηκε επιτυχώς',
                 'building_id': building.id,
@@ -235,15 +281,15 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
                 'new_fee': float(service_package.fee_per_apartment),
                 'start_date': building.service_package_start_date.isoformat() if building.service_package_start_date else None
             })
-            
+
         except Building.DoesNotExist:
             return Response(
-                {'error': 'Building not found'}, 
+                {'error': 'Building not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': str(e)}, 
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -341,14 +387,14 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 Latitude from request: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
         print(f"🔍 Longitude from request: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
         print(f"🔍 Street view image from request: {request.data.get('street_view_image')} (type: {type(request.data.get('street_view_image'))})")
-        
+
         # Check if data is a QueryDict (which might cause the array issue)
         if hasattr(request.data, 'getlist'):
             print("⚠️  Request.data is a QueryDict-like object")
             print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
             print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
             print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")
-        
+
         response = super().create(request, *args, **kwargs)
         print(f"🔍 BuildingViewSet.create() response: {response.data}")
         print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
@@ -365,7 +411,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 Latitude from request: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
         print(f"🔍 Longitude from request: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
         print(f"🔍 Street view image from request: {request.data.get('street_view_image')} (type: {type(request.data.get('street_view_image'))})")
-        
+
         # Check if data is a QueryDict (which might cause the array issue)
         if hasattr(request.data, 'getlist'):
             print("⚠️  Request.data is a QueryDict-like object")
@@ -373,7 +419,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
             print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
             print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
             print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")
-        
+
         response = super().update(request, *args, **kwargs)
         print(f"🔍 BuildingViewSet.update() response: {response.data}")
         print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
@@ -587,36 +633,36 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 Request data type: {type(request.data)}")
         print(f"🔍 Latitude: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
         print(f"🔍 Longitude: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
-        
+
         return Response({
             "message": "Test completed",
             "received_data": request.data,
             "latitude_type": str(type(request.data.get('latitude'))),
             "longitude_type": str(type(request.data.get('longitude')))
         })
-    
+
     # ========================================================================
     # NEW: Building Context API Endpoints
     # ========================================================================
-    
+
     @action(detail=False, methods=['get'], url_path='current-context')
     def get_current_context(self, request):
         """
         Επιστρέφει το τρέχον building context με permissions.
-        
+
         Χρήση από frontend για να πάρει το canonical building context.
-        
+
         Query params:
         - building_id (optional): Συγκεκριμένο building ID
         - Χωρίς param: Πρώτο available building του user
-        
+
         Returns:
             BuildingDTO serialized με BuildingContextSerializer
-        
+
         Examples:
             GET /api/buildings/current-context/
             GET /api/buildings/current-context/?building_id=1
-        
+
         Response:
             {
                 "id": 1,
@@ -632,24 +678,24 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
             }
         """
         return _get_current_context_logic(request)
-    
+
     @action(detail=False, methods=['get'], url_path='my-buildings')
     def get_my_buildings(self, request):
         """
         Επιστρέφει όλα τα κτίρια του χρήστη με permissions.
-        
+
         Χρήση από frontend για dropdown selections, building switcher κλπ.
-        
+
         Query params:
         - lightweight (optional): Αν true, επιστρέφει BuildingContextListSerializer
-        
+
         Returns:
             List of BuildingDTO serialized
-        
+
         Examples:
             GET /api/buildings/my-buildings/
             GET /api/buildings/my-buildings/?lightweight=true
-        
+
         Response:
             [
                 {
@@ -670,14 +716,14 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         """
         from .services import BuildingService
         from .serializers import BuildingContextSerializer, BuildingContextListSerializer
-        
+
         try:
             # Get all user buildings
             buildings = BuildingService.get_user_buildings(request.user, as_dto=True)
-            
+
             # Choose serializer based on query param
             lightweight = request.query_params.get('lightweight', 'false').lower() == 'true'
-            
+
             if lightweight:
                 # Lightweight serializer (για dropdowns)
                 serializer = BuildingContextListSerializer(
@@ -690,9 +736,9 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
                     [b.to_dict() for b in buildings],
                     many=True
                 )
-            
+
             return Response(serializer.data)
-            
+
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Error in get_my_buildings: {e}", exc_info=True)
@@ -703,23 +749,23 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=True, methods=['get'], url_path='context')
     def get_building_context(self, request, pk=None):
         """
         Επιστρέφει το context για συγκεκριμένο building (με ID).
-        
+
         Χρήση από frontend όταν θέλει να πάρει το context για specific building.
-        
+
         URL:
             GET /api/buildings/{id}/context/
-        
+
         Returns:
             BuildingDTO serialized με BuildingContextSerializer
-        
+
         Examples:
             GET /api/buildings/1/context/
-        
+
         Response:
             {
                 "id": 1,
@@ -730,19 +776,19 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         """
         from .services import BuildingService
         from .serializers import BuildingContextSerializer
-        
+
         try:
             # Get building με το ID και validate access
             building_dto = BuildingService.validate_building_access_or_fail(
                 request,
                 building_id=int(pk)
             )
-            
+
             # Serialize το DTO
             serializer = BuildingContextSerializer(building_dto.to_dict())
-            
+
             return Response(serializer.data)
-            
+
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Error in get_building_context for building {pk}: {e}", exc_info=True)
@@ -775,23 +821,23 @@ def get_my_buildings_view(request):
     """
     Standalone view function for /api/buildings/my-buildings/ endpoint.
     Returns all buildings the user has access to with permissions.
-    
+
     Query params:
         - lightweight (optional): If true, returns minimal data for dropdowns
-    
+
     Returns:
         List of buildings with permissions
     """
     from .services import BuildingService
     from .serializers import BuildingContextSerializer, BuildingContextListSerializer
-    
+
     try:
         # Get all user buildings
         buildings = BuildingService.get_user_buildings(request.user, as_dto=True)
-        
+
         # Choose serializer based on query param
         lightweight = request.query_params.get('lightweight', 'false').lower() == 'true'
-        
+
         if lightweight:
             serializer = BuildingContextListSerializer(
                 [b.to_dict() for b in buildings],
@@ -802,9 +848,9 @@ def get_my_buildings_view(request):
                 [b.to_dict() for b in buildings],
                 many=True
             )
-        
+
         return Response(serializer.data)
-        
+
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"Error in get_my_buildings_view: {e}", exc_info=True)
@@ -822,10 +868,10 @@ def get_my_buildings_view(request):
 def add_user_to_building(request):
     """
     POST /api/buildings/add-membership/
-    
+
     Προσθέτει έναν υπάρχοντα χρήστη σε κτίριο (δημιουργεί BuildingMembership).
     Μόνο για managers και superusers.
-    
+
     Body:
         {
             "user_id": 123,
@@ -834,26 +880,26 @@ def add_user_to_building(request):
         }
     """
     from core.permissions import IsManagerOrSuperuser
-    
+
     # Έλεγχος δικαιωμάτων
     if not IsManagerOrSuperuser().has_permission(request, None):
         return Response({
             'error': 'Μόνο οι διαχειριστές μπορούν να προσθέσουν χρήστες σε κτίρια.'
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     user_id = request.data.get('user_id')
     building_id = request.data.get('building_id')
     role = request.data.get('role', 'resident')
-    
+
     if not user_id or not building_id:
         return Response({
             'error': 'Απαιτούνται user_id και building_id'
         }, status=status.HTTP_400_BAD_REQUEST)
-    
+
     try:
         user = CustomUser.objects.get(id=user_id)
         building = Building.objects.get(id=building_id)
-        
+
         # Έλεγχος αν υπάρχει ήδη membership
         existing = BuildingMembership.objects.filter(resident=user, building=building).first()
         if existing:
@@ -861,22 +907,22 @@ def add_user_to_building(request):
                 'message': f'Ο χρήστης {user.email} είναι ήδη μέλος του κτιρίου {building.name}',
                 'membership_id': existing.id
             }, status=status.HTTP_200_OK)
-        
+
         # Δημιουργία membership
         membership = BuildingMembership.objects.create(
             resident=user,
             building=building,
             role=role
         )
-        
+
         logger = logging.getLogger(__name__)
         logger.info(f"Created membership: user={user.email}, building={building.name}, role={role}")
-        
+
         return Response({
             'message': f'Ο χρήστης {user.email} προστέθηκε στο κτίριο {building.name}',
             'membership_id': membership.id
         }, status=status.HTTP_201_CREATED)
-        
+
     except CustomUser.DoesNotExist:
         return Response({
             'error': f'Δεν βρέθηκε χρήστης με ID {user_id}'
@@ -898,13 +944,13 @@ def add_user_to_building(request):
 def remove_membership(request):
     """
     POST /api/buildings/remove-membership/
-    
+
     Αφαιρεί έναν χρήστη από κτίριο (διαγράφει BuildingMembership).
     Αυτό ΔΕΝ απενεργοποιεί τον χρήστη, απλά αφαιρεί την πρόσβασή του στο συγκεκριμένο κτίριο.
     Ο χρήστης μπορεί να έχει ακόμα πρόσβαση σε άλλα κτίρια.
-    
+
     Μόνο για managers και superusers.
-    
+
     Body:
         {
             "user_id": 123,
@@ -912,47 +958,47 @@ def remove_membership(request):
         }
     """
     from core.permissions import IsManagerOrSuperuser
-    
+
     # Έλεγχος δικαιωμάτων
     if not IsManagerOrSuperuser().has_permission(request, None):
         return Response({
             'error': 'Μόνο οι διαχειριστές μπορούν να αφαιρέσουν χρήστες από κτίρια.'
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     user_id = request.data.get('user_id')
     building_id = request.data.get('building_id')
-    
+
     if not user_id or not building_id:
         return Response({
             'error': 'Απαιτούνται user_id και building_id'
         }, status=status.HTTP_400_BAD_REQUEST)
-    
+
     try:
         user = CustomUser.objects.get(id=user_id)
         building = Building.objects.get(id=building_id)
-        
+
         # Βρες και διέγραψε το membership
         membership = BuildingMembership.objects.filter(resident=user, building=building).first()
-        
+
         if not membership:
             return Response({
                 'message': f'Ο χρήστης {user.email} δεν είναι μέλος του κτιρίου {building.name}'
             }, status=status.HTTP_200_OK)
-        
+
         membership.delete()
-        
+
         logger = logging.getLogger(__name__)
         logger.info(f"Removed membership: user={user.email} from building={building.name}")
-        
+
         # Έλεγχος αν ο χρήστης έχει ακόμα πρόσβαση σε άλλα κτίρια
         remaining_memberships = BuildingMembership.objects.filter(resident=user).count()
-        
+
         return Response({
             'message': f'Ο χρήστης {user.email} αφαιρέθηκε από το κτίριο {building.name}',
             'remaining_buildings': remaining_memberships,
             'user_still_active': user.is_active
         }, status=status.HTTP_200_OK)
-        
+
     except CustomUser.DoesNotExist:
         return Response({
             'error': f'Δεν βρέθηκε χρήστης με ID {user_id}'

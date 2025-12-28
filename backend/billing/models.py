@@ -13,7 +13,7 @@ User = get_user_model()
 class PricingTier(models.Model):
     """
     Κλιμακωτή τιμολόγηση βάσει αριθμού διαμερισμάτων.
-    
+
     Παράδειγμα:
     - Cloud: 8-20 διαμ → €18, 21-30 διαμ → €22, 31+ → €25
     - Kiosk: 8-20 διαμ → €28, 21-30 διαμ → €35, 31+ → €40
@@ -23,31 +23,31 @@ class PricingTier(models.Model):
         ('cloud', 'Cloud'),
         ('kiosk', 'Info Point (Kiosk)'),
     ]
-    
+
     plan_category = models.CharField(
         max_length=20,
         choices=PLAN_CATEGORY_CHOICES,
         verbose_name='Κατηγορία Πακέτου'
     )
-    
+
     min_apartments = models.PositiveIntegerField(
         verbose_name='Ελάχιστα Διαμερίσματα',
         help_text='Κάτω όριο διαμερισμάτων για αυτό το tier'
     )
-    
+
     max_apartments = models.PositiveIntegerField(
         null=True,
         blank=True,
         verbose_name='Μέγιστα Διαμερίσματα',
         help_text='Άνω όριο (null = απεριόριστα)'
     )
-    
+
     monthly_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         verbose_name='Μηνιαία Τιμή (€)'
     )
-    
+
     yearly_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -56,7 +56,7 @@ class PricingTier(models.Model):
         verbose_name='Ετήσια Τιμή (€)',
         help_text='Αν είναι null, υπολογίζεται αυτόματα με έκπτωση'
     )
-    
+
     yearly_discount_percent = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -64,43 +64,43 @@ class PricingTier(models.Model):
         verbose_name='Ετήσια Έκπτωση (%)',
         help_text='Έκπτωση για ετήσια πληρωμή (default: 2 μήνες δωρεάν = 16.67%)'
     )
-    
+
     # Stripe Price IDs για κάθε tier
     stripe_price_id_monthly = models.CharField(
         max_length=100,
         blank=True,
         verbose_name='Stripe Price ID (Monthly)'
     )
-    
+
     stripe_price_id_yearly = models.CharField(
         max_length=100,
         blank=True,
         verbose_name='Stripe Price ID (Yearly)'
     )
-    
+
     is_active = models.BooleanField(
         default=True,
         verbose_name='Ενεργό'
     )
-    
+
     display_order = models.PositiveIntegerField(
         default=0,
         verbose_name='Σειρά Εμφάνισης'
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = 'Κλίμακα Τιμολόγησης'
         verbose_name_plural = 'Κλίμακες Τιμολόγησης'
         ordering = ['plan_category', 'min_apartments']
         unique_together = ['plan_category', 'min_apartments']
-    
+
     def __str__(self):
         max_str = str(self.max_apartments) if self.max_apartments else '∞'
         return f"{self.get_plan_category_display()} | {self.min_apartments}-{max_str} διαμ. | €{self.monthly_price}/μήνα"
-    
+
     @property
     def calculated_yearly_price(self):
         """Υπολογισμός ετήσιας τιμής με έκπτωση"""
@@ -109,23 +109,23 @@ class PricingTier(models.Model):
         yearly_full = self.monthly_price * 12
         discount = yearly_full * (self.yearly_discount_percent / 100)
         return yearly_full - discount
-    
+
     @property
     def tier_label(self):
         """Human-readable label για το tier"""
         if self.max_apartments:
             return f"{self.min_apartments}-{self.max_apartments} διαμερίσματα"
         return f"{self.min_apartments}+ διαμερίσματα"
-    
+
     @classmethod
     def get_tier_for_apartments(cls, plan_category: str, apartment_count: int):
         """
         Βρίσκει το κατάλληλο tier βάσει αριθμού διαμερισμάτων.
-        
+
         Args:
             plan_category: 'free', 'cloud', ή 'kiosk'
             apartment_count: Αριθμός διαμερισμάτων
-            
+
         Returns:
             PricingTier ή None
         """
@@ -134,23 +134,23 @@ class PricingTier(models.Model):
             is_active=True,
             min_apartments__lte=apartment_count
         ).filter(
-            models.Q(max_apartments__gte=apartment_count) | 
+            models.Q(max_apartments__gte=apartment_count) |
             models.Q(max_apartments__isnull=True)
         ).first()
-    
+
     @classmethod
     def get_price_for_apartments(cls, plan_category: str, apartment_count: int, yearly: bool = False):
         """
         Επιστρέφει την τιμή για συγκεκριμένο αριθμό διαμερισμάτων.
-        
+
         Returns:
             dict με price, tier_label, stripe_price_id
         """
         tier = cls.get_tier_for_apartments(plan_category, apartment_count)
-        
+
         if not tier:
             return None
-        
+
         if yearly:
             return {
                 'price': tier.calculated_yearly_price,
@@ -170,9 +170,9 @@ class PricingTier(models.Model):
 class SubscriptionPlan(models.Model):
     """
     Model για τα διαθέσιμα subscription plans.
-    
-    ΣΗΜΕΙΩΣΗ: Τα πεδία monthly_price/yearly_price διατηρούνται για 
-    backward compatibility, αλλά η πραγματική τιμολόγηση γίνεται 
+
+    ΣΗΜΕΙΩΣΗ: Τα πεδία monthly_price/yearly_price διατηρούνται για
+    backward compatibility, αλλά η πραγματική τιμολόγηση γίνεται
     μέσω του PricingTier model (κλιμακωτή τιμολόγηση).
     """
     PLAN_TYPES = [
@@ -184,28 +184,28 @@ class SubscriptionPlan(models.Model):
         ('professional', 'Professional'),
         ('enterprise', 'Enterprise'),
     ]
-    
+
     BILLING_INTERVALS = [
         ('month', 'Monthly'),
         ('year', 'Yearly'),
     ]
-    
+
     name = models.CharField(
         max_length=100,
         help_text='Plan name (e.g., Free, Cloud, Info Point)'
     )
-    
+
     plan_type = models.CharField(
         max_length=20,
         choices=PLAN_TYPES,
         unique=True,
         help_text='Unique plan identifier'
     )
-    
+
     description = models.TextField(
         help_text='Plan description and features'
     )
-    
+
     # Pricing (legacy - για backward compatibility)
     # Η πραγματική τιμολόγηση γίνεται μέσω PricingTier
     monthly_price = models.DecimalField(
@@ -214,118 +214,118 @@ class SubscriptionPlan(models.Model):
         default=Decimal('0.00'),
         help_text='Base monthly price (legacy - use PricingTier for tiered pricing)'
     )
-    
+
     yearly_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=Decimal('0.00'),
         help_text='Base yearly price (legacy - use PricingTier for tiered pricing)'
     )
-    
+
     # Νέα πεδία για tier-based pricing
     uses_tiered_pricing = models.BooleanField(
         default=True,
         help_text='If True, pricing is determined by PricingTier based on apartment count'
     )
-    
+
     includes_kiosk_hardware = models.BooleanField(
         default=False,
         help_text='If True, plan includes Kiosk hardware and installation'
     )
-    
+
     max_buildings_online_signup = models.PositiveIntegerField(
         default=5,
         help_text='Max buildings for online signup (more = "Contact Us")'
     )
-    
+
     # Features and limits
     max_buildings = models.IntegerField(
         default=1,
         help_text='Maximum number of buildings allowed (999999 for unlimited)'
     )
-    
+
     max_apartments = models.IntegerField(
         default=10,
         help_text='Maximum number of apartments allowed (999999 for unlimited)'
     )
-    
+
     max_users = models.IntegerField(
         default=5,
         help_text='Maximum number of users allowed (999999 for unlimited)'
     )
-    
+
     max_api_calls = models.PositiveIntegerField(
         default=10000,
         help_text='Maximum API calls per month'
     )
-    
+
     max_storage_gb = models.PositiveIntegerField(
         default=1,
         help_text='Maximum storage in GB'
     )
-    
+
     # Features
     has_analytics = models.BooleanField(
         default=False,
         help_text='Advanced analytics features'
     )
-    
+
     has_custom_integrations = models.BooleanField(
         default=False,
         help_text='Custom API integrations'
     )
-    
+
     has_priority_support = models.BooleanField(
         default=False,
         help_text='Priority customer support'
     )
-    
+
     has_white_label = models.BooleanField(
         default=False,
         help_text='White-label solution'
     )
-    
+
     # Status
     is_active = models.BooleanField(
         default=True,
         help_text='Whether this plan is available for new subscriptions'
     )
-    
+
     trial_days = models.PositiveIntegerField(
         default=14,
         help_text='Free trial period in days'
     )
-    
+
     # Stripe integration
     stripe_price_id_monthly = models.CharField(
         max_length=100,
         blank=True,
         help_text='Stripe price ID for monthly billing'
     )
-    
+
     stripe_price_id_yearly = models.CharField(
         max_length=100,
         blank=True,
         help_text='Stripe price ID for yearly billing'
     )
-    
+
     stripe_product_id = models.CharField(
         max_length=100,
         blank=True,
         help_text='Stripe product ID'
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = 'Subscription Plan'
         verbose_name_plural = 'Subscription Plans'
         ordering = ['monthly_price']
-    
+
     def __str__(self):
         return f"{self.name} (€{self.monthly_price}/month)"
-    
+
     @property
     def yearly_discount_percentage(self):
         """Calculate yearly discount percentage"""
@@ -347,99 +347,99 @@ class UserSubscription(models.Model):
         ('unpaid', 'Unpaid'),
         ('paused', 'Paused'),
     ]
-    
+
     BILLING_INTERVALS = [
         ('month', 'Monthly'),
         ('year', 'Yearly'),
     ]
-    
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False
     )
-    
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='subscriptions',
         help_text='User who owns this subscription'
     )
-    
+
     plan = models.ForeignKey(
         SubscriptionPlan,
         on_delete=models.PROTECT,
         related_name='subscriptions',
         help_text='Subscription plan'
     )
-    
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='trial',
         help_text='Current subscription status'
     )
-    
+
     billing_interval = models.CharField(
         max_length=10,
         choices=BILLING_INTERVALS,
         default='month',
         help_text='Billing frequency'
     )
-    
+
     # Dates
     trial_start = models.DateTimeField(
         null=True,
         blank=True,
         help_text='Trial period start date'
     )
-    
+
     trial_end = models.DateTimeField(
         null=True,
         blank=True,
         help_text='Trial period end date'
     )
-    
+
     current_period_start = models.DateTimeField(
         help_text='Current billing period start'
     )
-    
+
     current_period_end = models.DateTimeField(
         help_text='Current billing period end'
     )
-    
+
     canceled_at = models.DateTimeField(
         null=True,
         blank=True,
         help_text='When subscription was canceled'
     )
-    
+
     # Payment
     stripe_subscription_id = models.CharField(
         max_length=255,
         blank=True,
         help_text='Stripe subscription ID'
     )
-    
+
     stripe_customer_id = models.CharField(
         max_length=255,
         blank=True,
         help_text='Stripe customer ID'
     )
-    
+
     payment_method_id = models.CharField(
         max_length=255,
         blank=True,
         help_text='Default payment method ID'
     )
-    
+
     # Pricing
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         help_text='Current subscription price'
     )
-    
+
     currency = models.CharField(
         max_length=3,
         default='EUR',
@@ -454,6 +454,32 @@ class UserSubscription(models.Model):
         help_text='Tenant domain for this subscription (e.g., etherm2021.localhost)'
     )
 
+    # ------------------------------------------------------------------
+    # Per-apartment billing (Stripe subscription items)
+    # ------------------------------------------------------------------
+    # We keep the legacy `plan` + `price` fields for backward compatibility,
+    # but the canonical billing model is:
+    # - web_per_apartment (quantity = total_apartments)
+    # - premium_addon_per_apartment (quantity = premium_apartments)
+    stripe_subscription_item_id_web = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Stripe subscription item ID for Web per-apartment line item'
+    )
+    stripe_subscription_item_id_premium = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Stripe subscription item ID for Premium add-on per-apartment line item'
+    )
+    billing_total_apartments = models.PositiveIntegerField(
+        default=0,
+        help_text='Last synced total apartments (sum of Building.apartments_count across tenant)'
+    )
+    billing_premium_apartments = models.PositiveIntegerField(
+        default=0,
+        help_text='Last synced premium apartments (sum of Building.apartments_count where premium_enabled=true)'
+    )
+
     # Stripe checkout session ID for idempotency
     stripe_checkout_session_id = models.CharField(
         max_length=255,
@@ -465,7 +491,7 @@ class UserSubscription(models.Model):
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = 'User Subscription'
         verbose_name_plural = 'User Subscriptions'
@@ -475,22 +501,22 @@ class UserSubscription(models.Model):
             models.Index(fields=['stripe_subscription_id']),
             models.Index(fields=['current_period_end']),
         ]
-    
+
     def __str__(self):
         return f"{self.user.email} - {self.plan.name} ({self.status})"
-    
+
     @property
     def is_trial(self):
         """Check if subscription is in trial period"""
         if not self.trial_end:
             return False
         return timezone.now() < self.trial_end
-    
+
     @property
     def is_active(self):
         """Check if subscription is active"""
         return self.status in ['trial', 'active']
-    
+
     @property
     def days_until_renewal(self):
         """Days until next billing cycle"""
@@ -498,12 +524,12 @@ class UserSubscription(models.Model):
             delta = self.current_period_end - timezone.now()
             return max(0, delta.days)
         return 0
-    
+
     def start_trial(self, days=None):
         """Start trial period"""
         if days is None:
             days = self.plan.trial_days
-        
+
         self.trial_start = timezone.now()
         self.trial_end = self.trial_start + timezone.timedelta(days=days)
         self.status = 'trial'
@@ -520,83 +546,83 @@ class BillingCycle(models.Model):
         ('failed', 'Failed'),
         ('refunded', 'Refunded'),
     ]
-    
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False
     )
-    
+
     subscription = models.ForeignKey(
         UserSubscription,
         on_delete=models.CASCADE,
         related_name='billing_cycles',
         help_text='Associated subscription'
     )
-    
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='pending',
         help_text='Billing cycle status'
     )
-    
+
     # Period
     period_start = models.DateTimeField(
         help_text='Billing period start date'
     )
-    
+
     period_end = models.DateTimeField(
         help_text='Billing period end date'
     )
-    
+
     # Amounts
     subtotal = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         help_text='Subtotal before tax'
     )
-    
+
     tax_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0,
         help_text='Tax amount'
     )
-    
+
     total_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         help_text='Total amount including tax'
     )
-    
+
     currency = models.CharField(
         max_length=3,
         default='EUR',
         help_text='Currency code'
     )
-    
+
     # Payment
     stripe_invoice_id = models.CharField(
         max_length=255,
         blank=True,
         help_text='Stripe invoice ID'
     )
-    
+
     paid_at = models.DateTimeField(
         null=True,
         blank=True,
         help_text='When payment was completed'
     )
-    
+
     # Dates
     due_date = models.DateTimeField(
         help_text='Payment due date'
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = 'Billing Cycle'
         verbose_name_plural = 'Billing Cycles'
@@ -606,7 +632,7 @@ class BillingCycle(models.Model):
             models.Index(fields=['due_date']),
             models.Index(fields=['stripe_invoice_id']),
         ]
-    
+
     def __str__(self):
         return f"{self.subscription.user.email} - {self.period_start.date()} ({self.status})"
 
@@ -622,41 +648,41 @@ class UsageTracking(models.Model):
         ('apartments', 'Apartments'),
         ('users', 'Users'),
     ]
-    
+
     subscription = models.ForeignKey(
         UserSubscription,
         on_delete=models.CASCADE,
         related_name='usage_records',
         help_text='Associated subscription'
     )
-    
+
     metric_type = models.CharField(
         max_length=20,
         choices=METRIC_TYPES,
         help_text='Type of usage metric'
     )
-    
+
     usage_count = models.PositiveIntegerField(
         help_text='Usage count for this metric'
     )
-    
+
     usage_limit = models.PositiveIntegerField(
         help_text='Usage limit for this metric'
     )
-    
+
     period_start = models.DateTimeField(
         help_text='Usage tracking period start'
     )
-    
+
     period_end = models.DateTimeField(
         help_text='Usage tracking period end'
     )
-    
+
     recorded_at = models.DateTimeField(
         auto_now_add=True,
         help_text='When this usage was recorded'
     )
-    
+
     class Meta:
         verbose_name = 'Usage Tracking'
         verbose_name_plural = 'Usage Tracking'
@@ -666,17 +692,17 @@ class UsageTracking(models.Model):
             models.Index(fields=['period_start', 'period_end']),
         ]
         unique_together = ['subscription', 'metric_type', 'period_start']
-    
+
     def __str__(self):
         return f"{self.subscription.user.email} - {self.metric_type}: {self.usage_count}/{self.usage_limit}"
-    
+
     @property
     def usage_percentage(self):
         """Calculate usage as percentage of limit"""
         if self.usage_limit == 0:
             return 0
         return min(100, (self.usage_count / self.usage_limit) * 100)
-    
+
     @property
     def is_over_limit(self):
         """Check if usage exceeds limit"""
@@ -693,66 +719,66 @@ class PaymentMethod(models.Model):
         ('paypal', 'PayPal'),
         ('bank_transfer', 'Bank Transfer'),
     ]
-    
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='payment_methods',
         help_text='User who owns this payment method'
     )
-    
+
     payment_type = models.CharField(
         max_length=20,
         choices=PAYMENT_TYPES,
         help_text='Type of payment method'
     )
-    
+
     # Stripe payment method ID
     stripe_payment_method_id = models.CharField(
         max_length=255,
         blank=True,
         help_text='Stripe payment method ID'
     )
-    
+
     # Card details (for display purposes only)
     card_brand = models.CharField(
         max_length=20,
         blank=True,
         help_text='Card brand (Visa, Mastercard, etc.)'
     )
-    
+
     card_last4 = models.CharField(
         max_length=4,
         blank=True,
         help_text='Last 4 digits of card'
     )
-    
+
     card_exp_month = models.PositiveIntegerField(
         null=True,
         blank=True,
         validators=[MinValueValidator(1), MaxValueValidator(12)],
         help_text='Card expiration month'
     )
-    
+
     card_exp_year = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text='Card expiration year'
     )
-    
+
     is_default = models.BooleanField(
         default=False,
         help_text='Default payment method for this user'
     )
-    
+
     is_active = models.BooleanField(
         default=True,
         help_text='Whether this payment method is active'
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = 'Payment Method'
         verbose_name_plural = 'Payment Methods'
@@ -761,12 +787,12 @@ class PaymentMethod(models.Model):
             models.Index(fields=['user', 'is_active']),
             models.Index(fields=['stripe_payment_method_id']),
         ]
-    
+
     def __str__(self):
         if self.payment_type == 'card' and self.card_last4:
             return f"{self.card_brand} •••• {self.card_last4}"
         return f"{self.get_payment_type_display()}"
-    
+
     def save(self, *args, **kwargs):
         # Ensure only one default payment method per user
         if self.is_default:
