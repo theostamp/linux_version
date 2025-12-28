@@ -183,8 +183,10 @@ export const AIAssistantChat = () => {
                       {msg.role === 'user' ? (
                         <AvatarFallback>ME</AvatarFallback>
                       ) : (
-                        <AvatarImage src="/bot-avatar.png" />
-                        <AvatarFallback className="bg-violet-100 text-violet-600"><Bot className="w-4 h-4" /></AvatarFallback>
+                        <>
+                          <AvatarImage src="/bot-avatar.png" />
+                          <AvatarFallback className="bg-violet-100 text-violet-600"><Bot className="w-4 h-4" /></AvatarFallback>
+                        </>
                       )}
                     </Avatar>
 
