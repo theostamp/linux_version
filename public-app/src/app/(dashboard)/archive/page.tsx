@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FileText, Upload, Search, ExternalLink, Trash2, Loader2 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import {
-  apiGetBlob,
   createArchiveDocument,
   deleteArchiveDocument,
   fetchArchiveDocuments,
@@ -225,23 +224,27 @@ export default function ArchivePage() {
   const handlePreview = async (doc: ArchiveDocument) => {
     if (!doc?.id || !doc.file_url) return;
 
-    // Open immediately to avoid popup blockers (the fetch is async)
-    const previewWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
-    if (!previewWindow) {
-      toast.error('Το πρόγραμμα περιήγησης μπλοκάρει το άνοιγμα νέας καρτέλας. Επιτρέψτε τα popups και δοκιμάστε ξανά.');
-      return;
-    }
-
     setOpeningDocId(doc.id);
     try {
-      const blob = await apiGetBlob(doc.file_url);
-      const objectUrl = URL.createObjectURL(blob);
-      previewWindow.location.href = objectUrl;
+      const token =
+        localStorage.getItem('access_token') ||
+        localStorage.getItem('access') ||
+        localStorage.getItem('accessToken');
 
-      // Give the new tab time to load before revoking.
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      if (!token) {
+        toast.error('Δεν βρέθηκαν διαπιστευτήρια. Παρακαλώ συνδεθείτε ξανά.');
+        return;
+      }
+
+      // Stream the file directly (no Blob-in-memory). This avoids white/blank tabs for large files.
+      const url = new URL(doc.file_url, window.location.origin);
+      url.searchParams.set('token', token);
+
+      const previewWindow = window.open(url.toString(), '_blank', 'noopener,noreferrer');
+      if (!previewWindow) {
+        toast.error('Το πρόγραμμα περιήγησης μπλοκάρει το άνοιγμα νέας καρτέλας. Επιτρέψτε τα popups και δοκιμάστε ξανά.');
+      }
     } catch (error) {
-      previewWindow.close();
       console.error('[Archive] Preview failed', error);
       toast.error('Αποτυχία προβολής αρχείου');
     } finally {
