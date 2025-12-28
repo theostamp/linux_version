@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,32 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Upload, Search, ExternalLink } from 'lucide-react';
+import { FileText, Upload, Search, ExternalLink, Trash2, Loader2 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { apiGetBlob, createArchiveDocument, fetchArchiveDocuments, fetchArchiveCategories, fetchArchiveDocumentTypes, extractResults } from '@/lib/api';
+import {
+  apiGetBlob,
+  createArchiveDocument,
+  deleteArchiveDocument,
+  fetchArchiveDocuments,
+  fetchArchiveCategories,
+  fetchArchiveDocumentTypes,
+  extractResults,
+} from '@/lib/api';
 import type { ArchiveDocument, ArchiveDocumentCategory, ArchiveDocumentType } from '@/types/archive';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const FALLBACK_CATEGORIES: { value: ArchiveDocumentCategory; label: string }[] = [
   { value: 'assembly_minutes', label: 'Πρακτικά Γενικής Συνέλευσης' },
@@ -80,6 +99,12 @@ export default function ArchivePage() {
   const [uploadForm, setUploadForm] = useState<UploadFormState>(initialUploadState);
   const [isUploading, setIsUploading] = useState(false);
   const [openingDocId, setOpeningDocId] = useState<number | null>(null);
+  const [selectedDocIds, setSelectedDocIds] = useState<number[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<ArchiveDocument | null>(null);
+  const [deletingDocId, setDeletingDocId] = useState<number | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const categoriesQ = useQuery({
     queryKey: ['archive-categories'],
@@ -110,6 +135,15 @@ export default function ArchivePage() {
     enabled: Boolean(selectedBuilding?.id),
   });
 
+  const documents = documentsQ.data ?? [];
+  const allSelected = documents.length > 0 && selectedDocIds.length === documents.length;
+  const isAnyDeleting = Boolean(deletingDocId) || isBulkDeleting;
+
+  // Safety: if filters change, clear selection to avoid bulk actions on hidden rows
+  useEffect(() => {
+    setSelectedDocIds([]);
+  }, [selectedBuilding?.id, categoryFilter, searchTerm]);
+
   const categories = categoriesQ.data && categoriesQ.data.length > 0 ? categoriesQ.data : FALLBACK_CATEGORIES;
   const documentTypes = documentTypesQ.data && documentTypesQ.data.length > 0 ? documentTypesQ.data : FALLBACK_DOCUMENT_TYPES;
 
@@ -127,6 +161,65 @@ export default function ArchivePage() {
 
   const handleFileChange = (file: File | null) => {
     setUploadForm((prev) => ({ ...prev, file }));
+  };
+
+  const toggleDocSelection = (docId: number) => {
+    setSelectedDocIds((prev) => (prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]));
+  };
+
+  const handleToggleSelectAllVisible = (shouldSelect?: boolean) => {
+    const next = typeof shouldSelect === 'boolean' ? shouldSelect : !allSelected;
+    setSelectedDocIds(next ? documents.map((d) => d.id) : []);
+  };
+
+  const requestSingleDelete = (doc: ArchiveDocument) => {
+    setDocToDelete(doc);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmSingleDelete = async () => {
+    if (!docToDelete?.id) return;
+    const docId = docToDelete.id;
+    setDeletingDocId(docId);
+    try {
+      await deleteArchiveDocument(docId);
+      toast.success('Το αρχείο διαγράφηκε');
+      setSelectedDocIds((prev) => prev.filter((id) => id !== docId));
+      setDeleteDialogOpen(false);
+      setDocToDelete(null);
+      documentsQ.refetch();
+    } catch (error: any) {
+      console.error('Archive delete failed:', error);
+      toast.error(error?.message || 'Σφάλμα κατά τη διαγραφή');
+    } finally {
+      setDeletingDocId(null);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedDocIds.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const results = await Promise.allSettled(selectedDocIds.map((id) => deleteArchiveDocument(id)));
+      const failed = results.filter((r) => r.status === 'rejected');
+      const succeeded = results.length - failed.length;
+
+      if (succeeded > 0) {
+        toast.success(`Διαγράφηκαν ${succeeded} ${succeeded === 1 ? 'αρχείο' : 'αρχεία'}`);
+      }
+      if (failed.length > 0) {
+        toast.error(`Αποτυχία διαγραφής ${failed.length} ${failed.length === 1 ? 'αρχείου' : 'αρχείων'}`);
+      }
+
+      setSelectedDocIds([]);
+      setBulkDeleteDialogOpen(false);
+      documentsQ.refetch();
+    } catch (error: any) {
+      console.error('Archive bulk delete failed:', error);
+      toast.error(error?.message || 'Σφάλμα κατά τη μαζική διαγραφή');
+    } finally {
+      setIsBulkDeleting(false);
+    }
   };
 
   const handlePreview = async (doc: ArchiveDocument) => {
@@ -381,6 +474,49 @@ export default function ArchivePage() {
                 </Select>
               </div>
 
+              {documents.length > 0 ? (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="text-sm text-muted-foreground">
+                    {selectedDocIds.length > 0 ? (
+                      <>
+                        <span className="font-medium text-foreground">{selectedDocIds.length}</span> επιλεγμένα
+                      </>
+                    ) : (
+                      <>
+                        Σύνολο: <span className="font-medium text-foreground">{documents.length}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleSelectAllVisible()}
+                      disabled={documents.length === 0 || isAnyDeleting}
+                    >
+                      {allSelected ? 'Αποεπιλογή όλων' : 'Επιλογή όλων'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedDocIds([])}
+                      disabled={selectedDocIds.length === 0 || isAnyDeleting}
+                    >
+                      Καθαρισμός
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setBulkDeleteDialogOpen(true)}
+                      disabled={selectedDocIds.length === 0 || isAnyDeleting}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Διαγραφή ({selectedDocIds.length})
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
               {documentsQ.isLoading ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
                   Φόρτωση αρχείου...
@@ -393,18 +529,34 @@ export default function ArchivePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[44px]">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={(v) => handleToggleSelectAllVisible(Boolean(v))}
+                          disabled={documents.length === 0 || isAnyDeleting}
+                          aria-label="Επιλογή όλων"
+                        />
+                      </TableHead>
                       <TableHead>Τίτλος</TableHead>
                       <TableHead>Κατηγορία</TableHead>
                       <TableHead>Είδος</TableHead>
                       <TableHead>Αριθμός</TableHead>
                       <TableHead>ΑΦΜ</TableHead>
                       <TableHead>Ημερομηνία</TableHead>
-                      <TableHead className="text-right">Αρχείο</TableHead>
+                      <TableHead className="text-right">Ενέργειες</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {(documentsQ.data ?? []).map((doc) => (
                       <TableRow key={doc.id}>
+                        <TableCell className="align-top">
+                          <Checkbox
+                            checked={selectedDocIds.includes(doc.id)}
+                            onCheckedChange={() => toggleDocSelection(doc.id)}
+                            disabled={isAnyDeleting}
+                            aria-label={`Επιλογή αρχείου ${doc.id}`}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">
                           {doc.title || doc.original_filename || '—'}
                         </TableCell>
@@ -416,19 +568,28 @@ export default function ArchivePage() {
                         <TableCell>{doc.supplier_vat || '—'}</TableCell>
                         <TableCell>{formatDate(doc.document_date)}</TableCell>
                         <TableCell className="text-right">
-                          {doc.file_url ? (
+                          <div className="flex justify-end gap-2">
+                            {doc.file_url ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handlePreview(doc)}
+                                disabled={openingDocId === doc.id || isAnyDeleting}
+                              >
+                                <ExternalLink className="w-4 h-4 mr-1" />
+                                {openingDocId === doc.id ? 'Άνοιγμα…' : 'Προβολή'}
+                              </Button>
+                            ) : null}
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handlePreview(doc)}
-                              disabled={openingDocId === doc.id}
+                              onClick={() => requestSingleDelete(doc)}
+                              disabled={isAnyDeleting}
                             >
-                              <ExternalLink className="w-4 h-4 mr-1" />
-                              {openingDocId === doc.id ? 'Άνοιγμα…' : 'Προβολή'}
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Διαγραφή
                             </Button>
-                          ) : (
-                            '—'
-                          )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -437,6 +598,82 @@ export default function ArchivePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Single delete confirmation */}
+          <AlertDialog
+            open={deleteDialogOpen}
+            onOpenChange={(open) => {
+              setDeleteDialogOpen(open);
+              if (!open) setDocToDelete(null);
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Διαγραφή αρχείου</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Θέλετε σίγουρα να διαγράψετε το αρχείο{' '}
+                  <span className="font-medium text-foreground">
+                    {docToDelete?.title || docToDelete?.original_filename || `#${docToDelete?.id ?? ''}`}
+                  </span>
+                  ; Η ενέργεια είναι μη αναστρέψιμη.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={Boolean(deletingDocId)}>Ακύρωση</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleConfirmSingleDelete}
+                  disabled={Boolean(deletingDocId)}
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                >
+                  {Boolean(deletingDocId) ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Διαγραφή...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Διαγραφή
+                    </>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Bulk delete confirmation */}
+          <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Διαγραφή επιλεγμένων</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Θα διαγραφούν οριστικά{' '}
+                  <span className="font-medium text-foreground">{selectedDocIds.length}</span>{' '}
+                  {selectedDocIds.length === 1 ? 'αρχείο' : 'αρχεία'}. Η ενέργεια είναι μη αναστρέψιμη.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isBulkDeleting}>Ακύρωση</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleConfirmBulkDelete}
+                  disabled={isBulkDeleting || selectedDocIds.length === 0}
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                >
+                  {isBulkDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Διαγραφή...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Διαγραφή
+                    </>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </SubscriptionGate>
     </AuthGate>

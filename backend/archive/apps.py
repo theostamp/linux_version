@@ -5,3 +5,6 @@ class ArchiveConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "archive"
     verbose_name = "Electronic Archive"
+
+    def ready(self):
+        from . import signals  # noqa: F401
