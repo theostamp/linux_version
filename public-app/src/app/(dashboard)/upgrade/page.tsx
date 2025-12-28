@@ -21,6 +21,7 @@ import {
   Lock,
   Mail,
   Monitor,
+  ShieldCheck,
   Sparkles,
   Users,
 } from 'lucide-react';
