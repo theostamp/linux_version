@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Building, Flame, Monitor, Settings } from 'lucide-react';
+import { ArrowRight, Archive, Building, Flame, Monitor, Settings, Sparkles } from 'lucide-react';
 
 const premiumFeatures = [
   {
@@ -31,6 +31,26 @@ const premiumFeatures = [
       'Βελτιστοποίηση κατανάλωσης και κόστους.',
     ],
     icon: Flame,
+  },
+  {
+    title: 'AI Παραστατικά & Αυτόματη Τιμολόγηση',
+    description: 'Σάρωση παραστατικών και αυτόματη καταχώρηση δαπανών με ενημέρωση υπολοίπων.',
+    bullets: [
+      'AI εξαγωγή ποσού, ημερομηνίας, προμηθευτή και κατηγορίας.',
+      'Δημιουργία δαπάνης με ένα κλικ + ενημέρωση υπολοίπων.',
+      'Αυτόματη αρχειοθέτηση στο Ηλεκτρονικό Αρχείο.',
+    ],
+    icon: Sparkles,
+  },
+  {
+    title: 'Ηλεκτρονικό Αρχείο Πολυκατοικίας',
+    description: 'Κεντρικό repository για πρακτικά, συμβάσεις και παραστατικά με εύκολη αναζήτηση.',
+    bullets: [
+      'Κατηγοριοποίηση και μεταδεδομένα ανά αρχείο.',
+      'Γρήγορο preview PDF/εικόνων χωρίς downloads.',
+      'Ασφαλής πρόσβαση για όλη την ομάδα.',
+    ],
+    icon: Archive,
   },
 ];
 
@@ -64,10 +84,10 @@ export default function PricingPage() {
               Premium εμπειρία
             </span>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-              Info point & Smart Heating σε μία συνδρομή
+              Premium λειτουργίες για κάθε πολυκατοικία
             </h1>
             <p className="text-sm text-slate-300 sm:text-base">
-              Αναβάθμισε την πολυκατοικία με premium λειτουργίες: οθόνη εισόδου, live ενημέρωση και έξυπνο έλεγχο θέρμανσης.
+              Αναβάθμισε την πολυκατοικία με info point, smart heating, AI αυτοματισμούς και ηλεκτρονικό αρχείο.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Link
@@ -91,7 +111,8 @@ export default function PricingPage() {
               <li>Info point management με scenes & widgets</li>
               <li>Full-screen kiosk display για όλους τους ενοίκους</li>
               <li>Smart heating με χρονοπρογραμματισμό & IoT</li>
-              <li>Premium εμπειρία ανά κτίριο, με υποστήριξη</li>
+              <li>AI παραστατικά με ενημέρωση υπολοίπων & αρχειοθέτηση</li>
+              <li>Ηλεκτρονικό αρχείο πολυκατοικίας με αναζήτηση</li>
             </ul>
           </div>
         </div>
@@ -104,7 +125,7 @@ export default function PricingPage() {
             Τα modules που ξεκλειδώνεις με το Premium πακέτο.
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {premiumFeatures.map((feature) => {
             const Icon = feature.icon;
             return (
@@ -125,6 +146,34 @@ export default function PricingPage() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-xl shadow-emerald-500/10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold tracking-tight">Ήδη συνδρομητής;</h2>
+              <p className="text-sm text-slate-400">
+                Προχώρησε σε αναβάθμιση Premium ανά κτίριο ή δες τη συνδρομή σου.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/upgrade"
+                className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400"
+              >
+                Αναβάθμιση Premium
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/my-subscription"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/40"
+              >
+                Η συνδρομή μου
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </main>
