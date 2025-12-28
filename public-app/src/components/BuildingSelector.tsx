@@ -2,22 +2,22 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Building, Tenant } from '@/lib/api';
-import { 
-  fetchAllBuildingsPublic, 
-  fetchMyBuildings, 
+import {
+  fetchAllBuildingsPublic,
+  fetchMyBuildings,
   fetchTenants,
   isUltraAdmin,
   getUltraAdminTenantOverride,
-  setUltraAdminTenantOverride 
+  setUltraAdminTenantOverride
 } from '@/lib/api';
-import { 
-  Search, 
-  Building as BuildingIcon, 
-  Check, 
-  X, 
-  MapPin, 
-  Users, 
-  ChevronRight, 
+import {
+  Search,
+  Building as BuildingIcon,
+  Check,
+  X,
+  MapPin,
+  Users,
+  ChevronRight,
   ArrowLeft,
   Globe,
   Shield
@@ -46,6 +46,8 @@ export default function BuildingSelector({
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTenants, setIsLoadingTenants] = useState(false);
+  const [tenantsError, setTenantsError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredBuildings, setFilteredBuildings] = useState<Building[]>([]);
   const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([]);
@@ -57,7 +59,7 @@ export default function BuildingSelector({
 
   // Check if user is Ultra Admin
   const isUltraAdminUser = useMemo(() => isUltraAdmin(), []);
-  
+
   // Get current tenant override
   const currentTenantOverride = useMemo(() => getUltraAdminTenantOverride(), []);
 
@@ -96,8 +98,10 @@ export default function BuildingSelector({
 
   const loadTenants = async () => {
     if (!isUltraAdminUser) return;
-    
+
     try {
+      setIsLoadingTenants(true);
+      setTenantsError(null);
       console.log('[BuildingSelector] Loading tenants for Ultra Admin');
       const tenantsData = await fetchTenants();
       console.log('[BuildingSelector] Loaded tenants:', tenantsData.length);
@@ -105,6 +109,9 @@ export default function BuildingSelector({
     } catch (error) {
       console.error('Error loading tenants:', error);
       setTenants([]);
+      setTenantsError(error instanceof Error ? error.message : 'Αποτυχία φόρτωσης tenants');
+    } finally {
+      setIsLoadingTenants(false);
     }
   };
 
@@ -142,11 +149,11 @@ export default function BuildingSelector({
       setFilteredBuildings([]);
       return;
     }
-    
-    const buildingsToFilter = currentBuilding 
+
+    const buildingsToFilter = currentBuilding
       ? buildings.filter(b => b.id !== currentBuilding.id)
       : buildings;
-    
+
     if (!searchTerm.trim()) {
       if (buildings.length > 0) {
         console.log('[BuildingSelector] Filtered buildings (no search):', buildingsToFilter.length, 'out of', buildings.length);
@@ -169,7 +176,7 @@ export default function BuildingSelector({
       setFilteredTenants([]);
       return;
     }
-    
+
     if (!searchTerm.trim()) {
       setFilteredTenants(tenants);
     } else {
@@ -219,16 +226,16 @@ export default function BuildingSelector({
   const handleTenantSelect = (tenant: Tenant) => {
     console.log('[BuildingSelector] Tenant selected:', tenant.schema_name);
     setSelectedTenant(tenant);
-    
+
     // Set the tenant override and reload
     setUltraAdminTenantOverride(tenant.primary_domain);
-    
+
     // Clear building selection and reload the page
     localStorage.removeItem('selectedBuildingId');
     localStorage.removeItem('activeBuildingId');
-    
+
     onClose();
-    
+
     // Reload to apply new tenant context
     if (typeof window !== 'undefined') {
       window.location.reload();
@@ -240,7 +247,7 @@ export default function BuildingSelector({
     localStorage.removeItem('selectedBuildingId');
     localStorage.removeItem('activeBuildingId');
     onClose();
-    
+
     if (typeof window !== 'undefined') {
       window.location.reload();
     }
@@ -249,20 +256,20 @@ export default function BuildingSelector({
   if (!isOpen) return null;
 
   // Find current tenant from override
-  const currentTenant = currentTenantOverride 
+  const currentTenant = currentTenantOverride
     ? tenants.find(t => t.primary_domain === currentTenantOverride)
     : null;
 
   return (
     <>
-      <div 
+      <div
         className="fixed inset-0 bg-slate-900/10 z-[100] backdrop-blur-[2px]"
         onClick={handleBackdropClick}
       />
-      <div 
+      <div
         className="fixed inset-0 flex items-start justify-center z-[110] p-4 pt-24 pointer-events-none"
       >
-        <div 
+        <div
           ref={modalRef}
           className="bg-white dark:bg-slate-900 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] w-full max-w-md max-h-[calc(100vh-8rem)] overflow-hidden transform transition-all duration-200 border border-slate-200 dark:border-slate-800 pointer-events-auto"
         >
@@ -358,14 +365,30 @@ export default function BuildingSelector({
 
         {/* Content */}
         <div className="overflow-y-auto max-h-96">
-          {isLoading ? (
+          {(viewMode === 'tenants' ? isLoadingTenants : isLoading) ? (
             <div className="p-4 text-center text-muted-foreground">
               {viewMode === 'tenants' ? 'Φόρτωση tenants...' : 'Φόρτωση κτιρίων...'}
             </div>
           ) : viewMode === 'tenants' ? (
             /* Tenants List (Ultra Admin only) */
             <>
-              {filteredTenants.length === 0 ? (
+              {tenantsError ? (
+                <div className="p-4 text-center">
+                  <div className="text-sm font-medium text-destructive">
+                    Αποτυχία φόρτωσης tenants
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground break-words">
+                    {tenantsError}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadTenants}
+                    className="mt-3 inline-flex items-center justify-center px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors"
+                  >
+                    Δοκίμασε ξανά
+                  </button>
+                </div>
+              ) : filteredTenants.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   {searchTerm ? 'Δεν βρέθηκαν tenants' : 'Δεν υπάρχουν διαθέσιμα tenants'}
                 </div>
@@ -380,8 +403,8 @@ export default function BuildingSelector({
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-md flex items-center justify-center shadow-sm ${
-                        tenant.on_trial 
-                          ? 'bg-amber-500 text-white' 
+                        tenant.on_trial
+                          ? 'bg-amber-500 text-white'
                           : 'bg-emerald-500 text-white'
                       }`}>
                         <Users className="w-4 h-4" />
@@ -434,7 +457,7 @@ export default function BuildingSelector({
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {tenants.length} διαθέσιμα tenants
+                          {tenantsError ? 'Σφάλμα φόρτωσης tenants' : `${tenants.length} διαθέσιμα tenants`}
                         </div>
                       </div>
                     </div>
@@ -461,7 +484,7 @@ export default function BuildingSelector({
                           {shouldUseMyBuildings ? 'Όλες οι ιδιοκτησίες μου' : 'Όλα τα Κτίρια'}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {shouldUseMyBuildings 
+                          {shouldUseMyBuildings
                             ? `Προβολή και των ${buildings.length} κτιρίων`
                             : 'Προβολή όλων των κτιρίων'
                           }
@@ -520,7 +543,7 @@ export default function BuildingSelector({
               {/* Λίστα κτιρίων */}
               <div className="px-4 py-2 bg-muted border-b border-slate-200/50">
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {shouldUseMyBuildings 
+                  {shouldUseMyBuildings
                     ? (currentBuilding ? 'Άλλες ιδιοκτησίες' : 'Οι ιδιοκτησίες μου')
                     : 'Άλλα κτίρια'
                   }
@@ -529,7 +552,7 @@ export default function BuildingSelector({
               {filteredBuildings.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   {searchTerm ? 'Δεν βρέθηκαν κτίρια' : (
-                    isUltraAdminUser && !currentTenantOverride 
+                    isUltraAdminUser && !currentTenantOverride
                       ? 'Επιλέξτε πρώτα ένα tenant για να δείτε κτίρια'
                       : 'Δεν υπάρχουν διαθέσιμα κτίρια'
                   )}
@@ -571,7 +594,7 @@ export default function BuildingSelector({
             {viewMode === 'tenants' ? (
               'Επιλέξτε έναν tenant για να δείτε τα κτίριά του'
             ) : shouldUseMyBuildings ? (
-              buildings.length > 1 
+              buildings.length > 1
                 ? 'Επιλέξτε ένα κτίριο για προβολή ή "Όλες οι ιδιοκτησίες" για συνολική εικόνα'
                 : 'Εμφανίζονται μόνο τα κτίρια στα οποία έχετε πρόσβαση'
             ) : (

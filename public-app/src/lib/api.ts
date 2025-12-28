@@ -3131,15 +3131,10 @@ export type TenantsResponse = {
  * Returns list of active tenants with their domains and building counts
  */
 export async function fetchTenants(): Promise<Tenant[]> {
-  try {
-    console.log('[API CALL] Fetching tenants from /tenants/list/');
-    const data = await apiGet<TenantsResponse>('/tenants/list/');
-    console.log('[API CALL] Found', data.tenants?.length || 0, 'tenants');
-    return data.tenants || [];
-  } catch (error) {
-    console.error('[API CALL] Failed to fetch tenants:', error);
-    return [];
-  }
+  console.log('[API CALL] Fetching tenants from /tenants/list/');
+  const data = await apiGet<TenantsResponse>('/tenants/list/');
+  console.log('[API CALL] Found', data.tenants?.length || 0, 'tenants');
+  return data.tenants || [];
 }
 
 /**

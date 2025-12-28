@@ -25,7 +25,7 @@ from core.media_views import serve_media
 urlpatterns = [
     # Admin panel (μόνο για public tenant)
     path('admin/', admin.site.urls),
-    
+
     # Dev convenience: avoid confusing 404 on backend root.
     # In production the public root is handled by the Next.js app.
     path(
@@ -35,16 +35,16 @@ urlpatterns = [
         else HttpResponse(status=404),
         name='public-root',
     ),
-    
+
     # Authentication & User endpoints (διαθέσιμο και στο public tenant)
     path('api/users/', include('users.urls')),
-    
+
     # Public buildings endpoint (διαθέσιμο στο public tenant)
     path('api/buildings/public/', include('buildings.public_urls')),
-    
+
     # Core endpoints (CSRF token) - διαθέσιμο στο public tenant
     path('api/', include('core.urls')),
-    
+
     # Billing endpoints (shared across all tenants)
     path('api/billing/', include('billing.urls')),
 
@@ -55,18 +55,22 @@ urlpatterns = [
 
     # Automated Ad Portal (public schema)
     path('api/ad-portal/', include('ad_portal.urls')),
-    
+
     # Office Staff Management (shared across all tenants)
     path('api/office/', include('office_staff.urls')),
 
     # Marketplace (public schema)
     path('api/marketplace/', include('marketplace_public.urls')),
-    
+
     # Internal API endpoints (accessible from public schema only)
     path('api/internal/tenants/', include('tenants.internal_urls')),
-    
+
     # Tenant accept invite endpoint
     path('api/tenants/accept-invite/', include('tenants.urls')),
+    # Ultra Admin tenant management (e.g. GET /api/tenants/list/)
+    # Needs to be available on the public schema so Ultra Admin can pick a tenant
+    # even before any tenant is resolved via hostname.
+    path('api/tenants/', include('tenants.urls')),
 ]
 
 if settings.DEBUG:
