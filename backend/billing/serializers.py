@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Dict, Any
 
 from .models import (
-    SubscriptionPlan, UserSubscription, BillingCycle, 
+    SubscriptionPlan, UserSubscription, BillingCycle,
     UsageTracking, PaymentMethod, PricingTier
 )
 from users.models import CustomUser
@@ -22,7 +22,7 @@ class PricingTierSerializer(serializers.ModelSerializer):
     plan_category_display = serializers.CharField(
         source='get_plan_category_display', read_only=True
     )
-    
+
     class Meta:
         model = PricingTier
         fields = [
@@ -69,7 +69,7 @@ class PriceCalculationResponseSerializer(serializers.Serializer):
     plan_category_display = serializers.CharField()
     apartment_count = serializers.IntegerField()
     building_count = serializers.IntegerField()
-    
+
     # Τιμολόγηση
     monthly_price_per_building = serializers.DecimalField(max_digits=10, decimal_places=2)
     total_monthly_price = serializers.DecimalField(max_digits=10, decimal_places=2)
@@ -77,15 +77,15 @@ class PriceCalculationResponseSerializer(serializers.Serializer):
     total_yearly_price = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
     yearly_discount_percent = serializers.DecimalField(max_digits=5, decimal_places=2)
     yearly_savings = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
-    
+
     # Tier info
     tier_label = serializers.CharField()
     tier_id = serializers.IntegerField()
-    
+
     # Stripe
     stripe_price_id_monthly = serializers.CharField(allow_blank=True)
     stripe_price_id_yearly = serializers.CharField(allow_blank=True)
-    
+
     # Flags
     requires_contact = serializers.BooleanField()
     contact_reason = serializers.CharField(allow_blank=True, allow_null=True)
@@ -96,7 +96,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     """
     Serializer για subscription plans
     """
-    
+
     class Meta:
         model = SubscriptionPlan
         fields = [
@@ -119,7 +119,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
     """
     plan = SubscriptionPlanSerializer(read_only=True)
     plan_id = serializers.IntegerField(write_only=True)
-    
+
     class Meta:
         model = UserSubscription
         fields = [
@@ -143,7 +143,7 @@ class BillingCycleSerializer(serializers.ModelSerializer):
     """
     Serializer για billing cycles
     """
-    
+
     class Meta:
         model = BillingCycle
         fields = [
@@ -162,7 +162,7 @@ class UsageTrackingSerializer(serializers.ModelSerializer):
     """
     Serializer για usage tracking
     """
-    
+
     class Meta:
         model = UsageTracking
         fields = [
@@ -179,7 +179,7 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
     """
     Serializer για payment methods
     """
-    
+
     class Meta:
         model = PaymentMethod
         fields = [
@@ -206,7 +206,7 @@ class CreateSubscriptionSerializer(serializers.Serializer):
         required=False,
         help_text='Stripe payment method ID'
     )
-    
+
     def validate_plan_id(self, value):
         """
         Επαλήθευση ότι το plan υπάρχει και είναι active
@@ -216,24 +216,24 @@ class CreateSubscriptionSerializer(serializers.Serializer):
             return value
         except SubscriptionPlan.DoesNotExist:
             raise serializers.ValidationError("Invalid or inactive plan")
-    
+
     def validate(self, attrs):
         """
         Επαλήθευση ότι ο user δεν έχει ήδη active subscription
         """
         user = self.context['request'].user
-        
+
         # Check if user already has active subscription
         existing_subscription = UserSubscription.objects.filter(
             user=user,
             status__in=['trial', 'active']
         ).first()
-        
+
         if existing_subscription:
             raise serializers.ValidationError(
                 "User already has an active subscription"
             )
-        
+
         return attrs
 
 
@@ -242,7 +242,7 @@ class UpdateSubscriptionSerializer(serializers.Serializer):
     Serializer για ενημέρωση subscription
     """
     plan_id = serializers.IntegerField()
-    
+
     def validate_plan_id(self, value):
         """
         Επαλήθευση ότι το plan υπάρχει και είναι active
@@ -252,29 +252,29 @@ class UpdateSubscriptionSerializer(serializers.Serializer):
             return value
         except SubscriptionPlan.DoesNotExist:
             raise serializers.ValidationError("Invalid or inactive plan")
-    
+
     def validate(self, attrs):
         """
         Επαλήθευση ότι ο user έχει active subscription
         """
         user = self.context['request'].user
-        
+
         subscription = UserSubscription.objects.filter(
             user=user,
             status__in=['trial', 'active']
         ).first()
-        
+
         if not subscription:
             raise serializers.ValidationError(
                 "No active subscription found"
             )
-        
+
         # Check if trying to change to same plan
         if subscription.plan.id == attrs['plan_id']:
             raise serializers.ValidationError(
                 "Cannot change to the same plan"
             )
-        
+
         return attrs
 
 
@@ -283,23 +283,23 @@ class CancelSubscriptionSerializer(serializers.Serializer):
     Serializer για ακύρωση subscription
     """
     cancel_at_period_end = serializers.BooleanField(default=True)
-    
+
     def validate(self, attrs):
         """
         Επαλήθευση ότι ο user έχει active subscription
         """
         user = self.context['request'].user
-        
+
         subscription = UserSubscription.objects.filter(
             user=user,
             status__in=['trial', 'active']
         ).first()
-        
+
         if not subscription:
             raise serializers.ValidationError(
                 "No active subscription found"
             )
-        
+
         return attrs
 
 
@@ -310,7 +310,7 @@ class AddPaymentMethodSerializer(serializers.Serializer):
     payment_method_id = serializers.CharField(
         help_text='Stripe payment method ID'
     )
-    
+
     def validate_payment_method_id(self, value):
         """
         Basic validation για Stripe payment method ID format
@@ -336,25 +336,28 @@ class SubscriptionSummarySerializer(serializers.Serializer):
     """
     subscription = UserSubscriptionSerializer()
     billing_cycles = BillingCycleSerializer(many=True)
+    # UsageTracking related_name on UserSubscription is `usage_records`
+    # Keep API key name as `usage_tracking` for backwards compatibility.
     usage_tracking = UsageTrackingSerializer(many=True)
     payment_methods = PaymentMethodSerializer(many=True)
-    
+
     def to_representation(self, instance):
         """
         Custom representation για subscription summary
         """
         subscription = instance
-        
+
         return {
             'subscription': UserSubscriptionSerializer(subscription).data,
             'billing_cycles': BillingCycleSerializer(
                 subscription.billing_cycles.all()[:5], many=True
             ).data,
             'usage_tracking': UsageTrackingSerializer(
-                subscription.usage_tracking.all(), many=True
+                subscription.usage_records.all(), many=True
             ).data,
             'payment_methods': PaymentMethodSerializer(
-                PaymentMethod.objects.filter(user=subscription.user), many=True
+                # Prefer using the reverse relation for easier prefetching (user__payment_methods)
+                subscription.user.payment_methods.filter(is_active=True), many=True
             ).data,
             'plan_features': {
                 'has_analytics': subscription.plan.has_analytics,
