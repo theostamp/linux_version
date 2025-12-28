@@ -15,6 +15,7 @@ type PremiumFeatureInfoProps = {
   highlights: HighlightItem[];
   ctaHref: string;
   ctaLabel: string;
+  ctaExternal?: boolean;
   icon: React.ReactNode;
   tags?: string[];
   note?: string;
@@ -28,6 +29,7 @@ export default function PremiumFeatureInfo({
   highlights,
   ctaHref,
   ctaLabel,
+  ctaExternal = false,
   icon,
   tags,
   note,
@@ -49,13 +51,25 @@ export default function PremiumFeatureInfo({
               {note ? <p className="text-xs text-slate-400">{note}</p> : null}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href={ctaHref}
-                className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
-              >
-                {ctaLabel}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {ctaExternal ? (
+                <a
+                  href={ctaHref}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
+                >
+                  {ctaLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : (
+                <Link
+                  href={ctaHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
+                >
+                  {ctaLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
               <span className="text-xs text-slate-400">Ενεργοποίηση ανά κτίριο</span>
             </div>
             <ul className="space-y-2 text-sm text-slate-200/90">

@@ -29,6 +29,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // Public routes (no auth providers / no dashboard shell)
   const publicRoutes = [
     '/',
+    '/pricing',
     '/login',
     '/register',
     '/signup',

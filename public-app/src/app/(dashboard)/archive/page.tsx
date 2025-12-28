@@ -681,11 +681,11 @@ function ArchiveContent() {
 }
 
 function ArchiveGate() {
-  const { buildingContext, isLoadingContext, selectedBuilding } = useBuilding();
+  const { buildingContext, isLoadingContext } = useBuilding();
   const premiumEnabled = Boolean(
     buildingContext?.billing?.kiosk_enabled ?? buildingContext?.premium_enabled ?? false
   );
-  const upgradeHref = selectedBuilding?.id ? `/upgrade?building_id=${selectedBuilding.id}` : '/upgrade';
+  const pricingHref = 'https://newconcierge.app/pricing';
 
   if (isLoadingContext && !buildingContext) {
     return (
@@ -725,8 +725,9 @@ function ArchiveGate() {
           },
         ]}
         tags={['Κατηγορίες', 'Μεταδεδομένα', 'Αναζήτηση', 'Preview']}
-        ctaHref={upgradeHref}
+        ctaHref={pricingHref}
         ctaLabel="Premium συνδρομή"
+        ctaExternal
         icon={<FolderArchive className="h-5 w-5" />}
       />
     );

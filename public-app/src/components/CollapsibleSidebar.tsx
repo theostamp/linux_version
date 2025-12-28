@@ -477,7 +477,10 @@ export default function CollapsibleSidebar() {
   };
 
   const getLockedHref = (link: NavigationLink) => {
-    if (link.href === '/documents' || link.href === '/archive') {
+    if (link.href === '/kiosk') {
+      return `${link.href}?promo=1`;
+    }
+    if (['/documents', '/archive', '/kiosk-management', '/heating'].includes(link.href)) {
       return link.href;
     }
     return getPremiumUpgradeHref();

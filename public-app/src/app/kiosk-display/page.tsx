@@ -2,12 +2,14 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Monitor } from 'lucide-react';
 import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import type { Building } from '@/lib/api';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useKioskData } from '@/hooks/useKioskData';
 import BuildingSelector from '@/components/BuildingSelector';
+import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -28,7 +30,7 @@ function KioskDisplayPageContent() {
   const pathname = usePathname();
   const [isBuildingSelectorOpen, setIsBuildingSelectorOpen] = useState(false);
   const [effectiveBuildingId, setEffectiveBuildingId] = useState<number>(1);
-  
+
   // Track if we have a URL parameter - this takes absolute priority
   const hasUrlParam = useRef<boolean>(false);
   // Track the last building ID we set to avoid infinite loops
@@ -41,7 +43,7 @@ function KioskDisplayPageContent() {
   }, [searchParams]);
 
   const { selectedBuilding, setSelectedBuilding, currentBuilding } = useBuilding();
-  
+
   // Fetch kiosk data to get real building info
   const { data: kioskData } = useKioskData(effectiveBuildingId ?? 1);
 
@@ -49,13 +51,13 @@ function KioskDisplayPageContent() {
   // URL parameter ALWAYS overrides context - this prevents BuildingContext from resetting the building
   useEffect(() => {
     console.log('[KioskDisplay] 🔍 URL buildingParam:', buildingParam);
-    
+
     if (buildingParam !== null) {
       hasUrlParam.current = true;
       setEffectiveBuildingId(buildingParam);
-      
+
       console.log(`[KioskDisplay] ✅ Setting effectiveBuildingId from URL: ${buildingParam}`);
-      
+
       // Only update context if it's different from what we last set
       // This prevents infinite loops
       if (lastSetBuildingId.current !== buildingParam) {
@@ -90,7 +92,7 @@ function KioskDisplayPageContent() {
     if (kioskData?.building_info && selectedBuilding?.id === kioskData.building_info.id) {
       // Check if current selectedBuilding is a stub (has "Κτίριο #" name)
       const isStubBuilding = selectedBuilding.name.startsWith('Κτίριο #');
-      
+
       if (isStubBuilding && kioskData.building_info.name) {
         console.log(`[KioskDisplay] 🔄 Updating stub building with real info: ${kioskData.building_info.name}`);
         const realBuilding: Building = {
@@ -169,6 +171,49 @@ function KioskDisplayPageContent() {
   );
 }
 
+function PromoKioskDisplay() {
+  return (
+    <main className="min-h-screen bg-slate-950 px-4 py-10 sm:px-6 lg:px-10">
+      <PremiumFeatureInfo
+        title="Display kiosk info point"
+        description="Η οθόνη εισόδου που ενημερώνει όλους χωρίς login, με δυναμικό περιεχόμενο και μοντέρνα παρουσία."
+        note="Απαιτείται ενεργή Premium συνδρομή για το επιλεγμένο κτίριο."
+        bullets={[
+          'Πλήρης οθόνη ενημέρωσης με αυτόματη εναλλαγή scenes.',
+          'Εμφάνιση ανακοινώσεων, ψηφοφοριών, οικονομικών και καιρού.',
+          'QR σύνδεση για onboarding κατοίκων χωρίς αναμονή.',
+          'Branding και προσαρμογή θεμάτων ανά κτίριο.',
+        ]}
+        highlights={[
+          {
+            title: 'Always-on ενημέρωση',
+            description: 'Μόνιμη προβολή πληροφοριών στην είσοδο της πολυκατοικίας.',
+          },
+          {
+            title: 'Dynamic περιεχόμενο',
+            description: 'Αλλαγές σε πραγματικό χρόνο, χωρίς manual updates στην οθόνη.',
+          },
+          {
+            title: 'Εύκολη εγκατάσταση',
+            description: 'Απλό setup σε TV/monitor με ασφαλές public link.',
+          },
+        ]}
+        tags={['Fullscreen', 'Scenes', 'QR Connect', 'Branding']}
+        ctaHref="https://newconcierge.app/pricing"
+        ctaLabel="Premium συνδρομή"
+        ctaExternal
+        icon={<Monitor className="h-5 w-5" />}
+      />
+    </main>
+  );
+}
+
+function KioskDisplayRouter() {
+  const searchParams = useSearchParams();
+  const isPromo = searchParams?.get('promo') === '1';
+  return isPromo ? <PromoKioskDisplay /> : <KioskDisplayPageContent />;
+}
+
 // Loading fallback component
 function KioskDisplayLoading() {
   return (
@@ -185,7 +230,7 @@ function KioskDisplayLoading() {
 export default function KioskDisplayPage() {
   return (
     <Suspense fallback={<KioskDisplayLoading />}>
-      <KioskDisplayPageContent />
+      <KioskDisplayRouter />
     </Suspense>
   );
 }
