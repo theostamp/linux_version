@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Archive, Building, Flame, Monitor, Settings, Sparkles } from 'lucide-react';
+import { typography } from '@/lib/typography';
 
 const premiumFeatures = [
   {
@@ -83,7 +84,7 @@ export default function PricingPage() {
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300">
               Premium εμπειρία
             </span>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className={typography.heroTitle}>
               Premium λειτουργίες για κάθε πολυκατοικία
             </h1>
             <p className="text-sm text-slate-300 sm:text-base">
@@ -120,7 +121,7 @@ export default function PricingPage() {
 
       <section className="mx-auto max-w-6xl space-y-6 px-4 pb-20 pt-10 sm:px-6">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Premium λειτουργίες</h2>
+          <h2 className={typography.sectionHeaderDark}>Premium λειτουργίες</h2>
           <p className="text-sm text-slate-400">
             Τα modules που ξεκλειδώνεις με το Premium πακέτο.
           </p>
@@ -136,7 +137,7 @@ export default function PricingPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-emerald-300">{feature.title}</h3>
+                <h3 className={`mt-4 ${typography.featureCardTitle}`}>{feature.title}</h3>
                 <p className="mt-2 text-sm text-slate-400">{feature.description}</p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-200">
                   {feature.bullets.map((item) => (

@@ -13,9 +13,21 @@
 export const typography = {
   // Headings - Main content hierarchy (Play)
   pageTitle: 'text-3xl font-semibold tracking-tight text-left text-emerald-600 dark:text-emerald-500',
+
+  // Hero titles for dark backgrounds
+  heroTitle: 'text-3xl font-semibold tracking-tight text-emerald-300 sm:text-4xl lg:text-5xl', // For dark backgrounds
+  heroTitleLight: 'text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-500 sm:text-4xl lg:text-5xl', // For light backgrounds
+
+  // Kiosk/Premium feature titles
   kioskTitle: 'text-3xl font-semibold tracking-tight text-emerald-300 sm:text-4xl', // For dark backgrounds (more visible)
   kioskTitleLight: 'text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-500 sm:text-4xl', // For light backgrounds
+
+  // Feature card titles for dark backgrounds
+  featureCardTitle: 'text-lg font-semibold text-emerald-300', // For dark backgrounds
+
+  // Section headers
   sectionHeader: 'text-2xl font-semibold tracking-tight text-foreground font-[var(--font-play)]',
+  sectionHeaderDark: 'text-2xl font-semibold tracking-tight text-emerald-300', // For dark backgrounds
   subsectionHeader: 'text-xl font-semibold text-foreground font-[var(--font-play)]',
   cardTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
   modalTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
