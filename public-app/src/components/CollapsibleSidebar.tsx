@@ -472,9 +472,23 @@ export default function CollapsibleSidebar() {
 
   // Determine user role
   const userRole = getEffectiveRole(user);
+  // Ultra Admin check: role='admin' OR (is_superuser AND is_staff)
   const isUltraAdminUser = Boolean(
-    user?.role?.toLowerCase() === 'admin' && user?.is_superuser && user?.is_staff
+    (user?.role?.toLowerCase() === 'admin' && user?.is_superuser && user?.is_staff) ||
+    (user?.is_superuser && user?.is_staff && userRole === 'superuser')
   );
+
+  // Debug logging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Sidebar] User check:', {
+      email: user?.email,
+      role: user?.role,
+      is_superuser: user?.is_superuser,
+      is_staff: user?.is_staff,
+      effectiveRole: userRole,
+      isUltraAdminUser,
+    });
+  }
 
   // Check if staff has a specific permission
   const staffHasPermission = (permissionKey: NavigationLink['staffPermission']): boolean => {
