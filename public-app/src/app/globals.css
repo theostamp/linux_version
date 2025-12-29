@@ -222,7 +222,7 @@ html {
 h1, h2, h3, h4, h5, h6 {
   font-family: inherit;
   font-weight: 600;
-  color: var(--heading-color);
+  color: hsl(var(--heading-color));
 }
 
 h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
