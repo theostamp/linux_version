@@ -478,8 +478,8 @@ export default function CollapsibleSidebar() {
     (user?.is_superuser && user?.is_staff && userRole === 'superuser')
   );
 
-  // Debug logging (remove in production)
-  if (process.env.NODE_ENV === 'development') {
+  // Debug logging - always enabled for troubleshooting
+  useEffect(() => {
     console.log('[Sidebar] User check:', {
       email: user?.email,
       role: user?.role,
@@ -487,8 +487,9 @@ export default function CollapsibleSidebar() {
       is_staff: user?.is_staff,
       effectiveRole: userRole,
       isUltraAdminUser,
+      userObject: user,
     });
-  }
+  }, [user, userRole, isUltraAdminUser]);
 
   // Check if staff has a specific permission
   const staffHasPermission = (permissionKey: NavigationLink['staffPermission']): boolean => {
@@ -533,11 +534,31 @@ export default function CollapsibleSidebar() {
     ...group,
     links: group.links.filter(link => {
       // First check role
-      if (!userRole || !link.roles.includes(userRole)) return false;
+      if (!userRole || !link.roles.includes(userRole)) {
+        if (link.href === '/admin/network-usage') {
+          console.log('[Sidebar] Network Usage link filtered out - role check failed:', {
+            userRole,
+            linkRoles: link.roles,
+            requiresUltraAdmin: link.requiresUltraAdmin,
+          });
+        }
+        return false;
+      }
 
       // Ultra admin gating (extra hard check, not just role mapping)
       if (link.requiresUltraAdmin) {
-        return isUltraAdminUser;
+        const hasAccess = isUltraAdminUser;
+        if (link.href === '/admin/network-usage') {
+          console.log('[Sidebar] Network Usage link Ultra Admin check:', {
+            hasAccess,
+            isUltraAdminUser,
+            userRole,
+            userRoleLower: user?.role?.toLowerCase(),
+            is_superuser: user?.is_superuser,
+            is_staff: user?.is_staff,
+          });
+        }
+        return hasAccess;
       }
 
       // Then check staff permission if required
