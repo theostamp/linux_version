@@ -45,6 +45,7 @@ import {
     Mail,
     BarChart3,
     Flame,
+    Activity,
   } from 'lucide-react';
 import {
   Tooltip,
@@ -290,14 +291,6 @@ const navigationGroups: NavigationGroup[] = [
         tooltip: 'Άνοιγμα της οθόνης προβολής σε πλήρη οθόνη για TV/monitor στην είσοδο.',
       },
       {
-        href: '/heating',
-        label: 'Smart Heating',
-        icon: <Flame className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        requiresPremium: true,
-        tooltip: 'Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες, ζώνες και αυτοματισμούς IoT.',
-      },
-      {
         href: '/documents',
         label: 'Παραστατικά',
         icon: <FileText className="w-5 h-5" />,
@@ -315,6 +308,21 @@ const navigationGroups: NavigationGroup[] = [
         tooltip: 'Κεντρικό αρχείο για πρακτικά, συμβάσεις και παραστατικά με κατηγοριοποίηση και αναζήτηση.',
       },
     ]
+  },
+  {
+    id: 'iot',
+    title: 'IoT',
+    colorKey: 'cyan',
+    links: [
+      {
+        href: '/heating',
+        label: 'Smart Heating',
+        icon: <Flame className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'],
+        requiresPremium: true,
+        tooltip: 'Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες, ζώνες και αυτοματισμούς IoT.',
+      },
+    ],
   },
   // Admin System Tools (for manager/admin/superuser)
   {
@@ -335,6 +343,14 @@ const navigationGroups: NavigationGroup[] = [
         icon: <TestTube2 className="w-5 h-5" />,
         roles: ['manager', 'superuser'], // Admin (mapped to manager) and superuser
         tooltip: 'Εκκαθάριση και βελτιστοποίηση της βάσης δεδομένων',
+      },
+      {
+        href: '/admin/network-usage',
+        label: 'Network Usage',
+        icon: <Activity className="w-5 h-5" />,
+        roles: ['manager', 'staff', 'superuser'], // Admin (mapped to manager), staff, superuser
+        requiresUltraAdmin: true,
+        tooltip: 'Μετρήσεις network traffic και controls για Kiosk Data Sync (Ultra Admin μόνο)',
       },
     ]
   },
