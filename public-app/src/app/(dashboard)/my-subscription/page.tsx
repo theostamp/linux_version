@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { Loader2, CreditCard, Shield, TrendingUp, CheckCircle, AlertTriangle, RefreshCcw } from 'lucide-react';
+import { typography } from '@/lib/typography';
 
 type SubscriptionPlan = {
   id: number;
@@ -232,7 +233,7 @@ export default function MySubscriptionPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Η συνδρομή μου</h1>
+          <h1 className={typography.pageTitle}>Η συνδρομή μου</h1>
           <p className="text-muted-foreground">
             Διαχείριση πλάνου, χρεώσεων και ορίων χρήσης για το workspace σου.
           </p>

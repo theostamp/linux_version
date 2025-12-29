@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatCard } from '@/components/ui/stat-card';
+import { typography } from '@/lib/typography';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -213,16 +214,16 @@ function ScheduledMaintenanceDashboard() {
 
   const handleDeleteTask = async () => {
     if (!taskToDelete) return;
-    
+
     try {
       setIsDeleting(true);
       await api.delete(`/maintenance/scheduled/${taskToDelete.id}/`);
-      
+
       toast({
         title: 'Διαγραφή Επιτυχής',
         description: `Το έργο "${taskToDelete.title}" διαγράφηκε επιτυχώς μαζί με όλα τα σχετικά πεδία.`,
       });
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance-list'] });
       await queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
@@ -245,7 +246,7 @@ function ScheduledMaintenanceDashboard() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Προγραμματισμένες εργασίες</h1>
+          <h1 className={typography.pageTitle}>Προγραμματισμένες εργασίες</h1>
           <p className="text-muted-foreground">
             Παρακολούθησε προληπτικές εργασίες συντήρησης, προτεραιότητες και κατάσταση έργων.
           </p>

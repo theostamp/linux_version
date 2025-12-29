@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { typography } from '@/lib/typography';
 import { Badge } from '@/components/ui/badge';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { Separator } from '@/components/ui/separator';
@@ -124,7 +125,7 @@ export default function UpgradePage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Αναβάθμιση</h1>
+          <h1 className={typography.pageTitle}>Αναβάθμιση</h1>
           <p className="text-muted-foreground">
             Ξεκλείδωσε Premium λειτουργίες (Kiosk + AI) ανά πολυκατοικία.
           </p>
