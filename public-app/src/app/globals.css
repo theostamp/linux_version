@@ -21,6 +21,9 @@ html {
   --primary-foreground: 0 0% 100%;     /* White on primary */
   --primary-hover: 174 63% 35%;        /* Darker teal on hover */
 
+  /* Headings - Veggie green */
+  --heading-color: var(--color-emerald-300);
+
   /* Secondary - Soft navy */
   --secondary: 217 25% 90%;            /* Soft gray-blue */
   --secondary-foreground: 217 25% 25%;
@@ -41,7 +44,7 @@ html {
   /* Semantic - Destructive */
   --destructive: 0 72% 51%;            /* Red */
   --destructive-foreground: 0 0% 100%;
-  
+
   /* Semantic - Success */
   --success: 142 71% 45%;              /* #4CAF50 - green */
   --success-foreground: 0 0% 100%;
@@ -65,15 +68,15 @@ html {
   --category-security: 207 90% 96%;    /* #E3F2FD - soft cyan */
   --category-security-border: 207 50% 85%;
   --category-security-text: 207 90% 35%;
-  
+
   --category-performance: 291 47% 96%; /* #F3E5F5 - soft lavender */
   --category-performance-border: 291 30% 85%;
   --category-performance-text: 291 47% 35%;
-  
+
   --category-privacy: 14 100% 96%;     /* #FBE9E7 - soft coral */
   --category-privacy-border: 14 50% 85%;
   --category-privacy-text: 14 70% 40%;
-  
+
   --category-warning: 45 100% 94%;     /* #FFF8E1 - soft amber */
   --category-warning-border: 45 60% 80%;
   --category-warning-text: 45 80% 30%;
@@ -139,15 +142,15 @@ html {
   --category-security: 207 50% 18%;
   --category-security-border: 207 40% 25%;
   --category-security-text: 207 70% 70%;
-  
+
   --category-performance: 291 30% 18%;
   --category-performance-border: 291 25% 25%;
   --category-performance-text: 291 50% 70%;
-  
+
   --category-privacy: 14 40% 18%;
   --category-privacy-border: 14 35% 25%;
   --category-privacy-text: 14 60% 70%;
-  
+
   --category-warning: 45 50% 18%;
   --category-warning-border: 45 40% 25%;
   --category-warning-text: 45 70% 70%;
@@ -163,7 +166,7 @@ html {
   --success-foreground: 0 0% 100%;
   --warning: 38 92% 50%;
   --warning-foreground: 0 0% 100%;
-  
+
   /* Shadows in dark mode */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
   --shadow: 0 2px 8px 0 rgb(0 0 0 / 0.25);
@@ -199,12 +202,12 @@ html {
   --color-warning-foreground: var(--warning-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  
+
   --radius-xl: var(--radius-xl);
   --radius-lg: var(--radius-lg);
   --radius-md: var(--radius-md);
   --radius-sm: var(--radius-sm);
-  
+
   --shadow-sm: var(--shadow-sm);
   --shadow: var(--shadow);
   --shadow-md: var(--shadow-md);
@@ -215,14 +218,14 @@ html {
    TYPOGRAPHY
    ======================================== */
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5, h6 {
   font-family: inherit;
   font-weight: 600;
+  color: var(--heading-color);
 }
 
 h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
   text-align: center;
-  color: hsl(var(--foreground));
 }
 
 body {
