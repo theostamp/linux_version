@@ -21,8 +21,8 @@ html {
   --primary-foreground: 0 0% 100%;     /* White on primary */
   --primary-hover: 174 63% 35%;        /* Darker teal on hover */
 
-  /* Headings - Veggie green */
-  --heading-color: var(--color-emerald-300);
+  /* Headings - Veggie green (emerald-300 equivalent) */
+  --heading-color: 142 76% 36%;              /* Emerald-300: #10B981 */
 
   /* Secondary - Soft navy */
   --secondary: 217 25% 90%;            /* Soft gray-blue */
@@ -202,6 +202,7 @@ html {
   --color-warning-foreground: var(--warning-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-emerald-300: var(--heading-color);
 
   --radius-xl: var(--radius-xl);
   --radius-lg: var(--radius-lg);
