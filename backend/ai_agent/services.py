@@ -1,4 +1,3 @@
-from django.conf import settings
 import google.generativeai as genai
 import os
 import logging
@@ -16,15 +15,19 @@ class AIService:
 
     def _initialize(self):
         """Initialize Gemini API client"""
-        api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
+        # Backwards compatible env var lookup:
+        # - Preferred: GOOGLE_GEMINI_API_KEY
+        # - Legacy/used elsewhere in this repo: GOOGLE_API_KEY
+        api_key = os.getenv('GOOGLE_GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
         if not api_key:
-            logger.warning("GOOGLE_GEMINI_API_KEY not found in environment variables")
+            logger.warning("Gemini API key not found (expected GOOGLE_GEMINI_API_KEY or GOOGLE_API_KEY)")
             self.model = None
             return
 
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
-        logger.info("Gemini AI model initialized successfully")
+        model_name = os.getenv('GOOGLE_GEMINI_MODEL') or 'gemini-pro'
+        self.model = genai.GenerativeModel(model_name)
+        logger.info(f"Gemini AI model initialized successfully: {model_name}")
 
     def generate_response(self, prompt, context=None):
         """
@@ -35,7 +38,8 @@ class AIService:
             context (dict): Optional context about the user/building/situation
         """
         if not self.model:
-            return "AI service is not configured properly."
+            # User-facing message (Greek), but keep it actionable for ops as well.
+            return "Η υπηρεσία AI δεν είναι διαθέσιμη αυτή τη στιγμή (λείπει ρύθμιση API key στο backend)."
 
         try:
             # Build system instruction based on context
