@@ -478,7 +478,7 @@ export default function CollapsibleSidebar() {
 
   const getLockedHref = (link: NavigationLink) => {
     if (link.href === '/kiosk') {
-      return `${link.href}?promo=1`;
+      return '/kiosk-display-promo';
     }
     if (['/documents', '/archive', '/kiosk-management', '/heating'].includes(link.href)) {
       return link.href;

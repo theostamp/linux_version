@@ -2,14 +2,12 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Monitor } from 'lucide-react';
 import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import type { Building } from '@/lib/api';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useKioskData } from '@/hooks/useKioskData';
 import BuildingSelector from '@/components/BuildingSelector';
-import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -171,47 +169,22 @@ function KioskDisplayPageContent() {
   );
 }
 
-function PromoKioskDisplay() {
-  return (
-    <main className="min-h-screen bg-slate-950 px-4 py-10 sm:px-6 lg:px-10">
-      <PremiumFeatureInfo
-        title="Display kiosk info point"
-        description="Η οθόνη εισόδου που ενημερώνει όλους χωρίς login, με δυναμικό περιεχόμενο και μοντέρνα παρουσία."
-        note="Απαιτείται ενεργή Premium συνδρομή για το επιλεγμένο κτίριο."
-        bullets={[
-          'Πλήρης οθόνη ενημέρωσης με αυτόματη εναλλαγή scenes.',
-          'Εμφάνιση ανακοινώσεων, ψηφοφοριών, οικονομικών και καιρού.',
-          'QR σύνδεση για onboarding κατοίκων χωρίς αναμονή.',
-          'Branding και προσαρμογή θεμάτων ανά κτίριο.',
-        ]}
-        highlights={[
-          {
-            title: 'Always-on ενημέρωση',
-            description: 'Μόνιμη προβολή πληροφοριών στην είσοδο της πολυκατοικίας.',
-          },
-          {
-            title: 'Dynamic περιεχόμενο',
-            description: 'Αλλαγές σε πραγματικό χρόνο, χωρίς manual updates στην οθόνη.',
-          },
-          {
-            title: 'Εύκολη εγκατάσταση',
-            description: 'Απλό setup σε TV/monitor με ασφαλές public link.',
-          },
-        ]}
-        tags={['Fullscreen', 'Scenes', 'QR Connect', 'Branding']}
-        ctaHref="https://newconcierge.app/pricing"
-        ctaLabel="Premium συνδρομή"
-        ctaExternal
-        icon={<Monitor className="h-5 w-5" />}
-      />
-    </main>
-  );
-}
-
 function KioskDisplayRouter() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isPromo = searchParams?.get('promo') === '1';
-  return isPromo ? <PromoKioskDisplay /> : <KioskDisplayPageContent />;
+
+  useEffect(() => {
+    if (isPromo) {
+      router.replace('/kiosk-display-promo');
+    }
+  }, [isPromo, router]);
+
+  if (isPromo) {
+    return <KioskDisplayLoading />;
+  }
+
+  return <KioskDisplayPageContent />;
 }
 
 // Loading fallback component

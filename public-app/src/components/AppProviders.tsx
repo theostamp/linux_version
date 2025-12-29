@@ -58,6 +58,10 @@ export default function AppProviders({ children }: { readonly children: ReactNod
 
   const isNoAuthLoadingRoute = isPublicRoute;
   const isNoSidebarRoute = isPublicRoute;
+  const publicRoutesWithoutAuthProvider = ['/pricing'];
+  const shouldSkipAuthProvider = publicRoutesWithoutAuthProvider.some(route =>
+    pathname === route || pathname?.startsWith(`${route}/`)
+  );
 
   // Treat any non-public route as a dashboard route to avoid manual route lists.
   const isDashboard = Boolean(pathname) && !isKioskMode && !isInfoScreen && !isPublicRoute && !isPlasmicHost;
@@ -112,6 +116,14 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   // For public pages, keep AuthProvider available (some public pages use useAuth),
   // but disable its initial full-page spinner to avoid blocking marketing/auth screens.
   if (isNoAuthLoadingRoute) {
+    if (shouldSkipAuthProvider) {
+      return (
+        <LoadingProvider>
+          {children}
+          <Toaster position="top-right" richColors closeButton />
+        </LoadingProvider>
+      );
+    }
     return (
       <LoadingProvider>
         <AuthProvider showInitialSpinner={false}>{children}</AuthProvider>
