@@ -136,7 +136,7 @@ export default function PricingPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className={`mt-4 text-lg font-semibold ${feature.title === 'Display kiosk info point' || feature.title === 'Διαχείριση info point' ? 'text-emerald-600 dark:text-emerald-500' : ''}`}>{feature.title}</h3>
+                <h3 className={`mt-4 text-lg font-semibold ${feature.title === 'Display kiosk info point' || feature.title === 'Διαχείριση info point' ? 'text-emerald-300' : ''}`}>{feature.title}</h3>
                 <p className="mt-2 text-sm text-slate-400">{feature.description}</p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-200">
                   {feature.bullets.map((item) => (

@@ -13,7 +13,8 @@
 export const typography = {
   // Headings - Main content hierarchy (Play)
   pageTitle: 'text-3xl font-semibold tracking-tight text-left text-emerald-600 dark:text-emerald-500',
-  kioskTitle: 'text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-500 sm:text-4xl',
+  kioskTitle: 'text-3xl font-semibold tracking-tight text-emerald-300 sm:text-4xl', // For dark backgrounds (more visible)
+  kioskTitleLight: 'text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-500 sm:text-4xl', // For light backgrounds
   sectionHeader: 'text-2xl font-semibold tracking-tight text-foreground font-[var(--font-play)]',
   subsectionHeader: 'text-xl font-semibold text-foreground font-[var(--font-play)]',
   cardTitle: 'text-lg font-semibold text-foreground font-[var(--font-play)]',
