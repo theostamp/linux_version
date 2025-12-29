@@ -8,6 +8,7 @@ import type { Building } from '@/lib/api';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useKioskData } from '@/hooks/useKioskData';
 import BuildingSelector from '@/components/BuildingSelector';
+import KioskDataSyncController from '@/components/KioskDataSyncController';
 
 const FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -150,6 +151,17 @@ function KioskDisplayPageContent() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+      {/* Kiosk Data Sync Controller - handles efficient polling with ETag */}
+      {effectiveBuildingId && (
+        <KioskDataSyncController
+          buildingId={effectiveBuildingId}
+          onState={(state) => {
+            // Optional: handle state updates here if needed
+            // For now, the controller just syncs data efficiently
+            console.log('[KioskDisplay] State sync:', state?.version);
+          }}
+        />
+      )}
       <div className="text-white">
         <KioskSceneRenderer
           key={effectiveBuildingId ?? 'kiosk-default'}
