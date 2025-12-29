@@ -24,7 +24,9 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   }, [pathname]);
 
   const isInfoScreen = pathname?.startsWith('/info-screen');
-  const isKioskMode = (pathname?.startsWith('/kiosk') || pathname?.startsWith('/kiosk-display')) && !pathname?.startsWith('/kiosk-widgets') && !pathname?.startsWith('/kiosk-management');
+  const isKioskMode = ['/kiosk', '/kiosk-display'].some(route =>
+    pathname === route || pathname?.startsWith(`${route}/`)
+  );
 
   // Public routes (no auth providers / no dashboard shell)
   const publicRoutes = [
@@ -85,7 +87,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   }
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
-  // IMPORTANT: Only /kiosk and /test-kiosk routes, NOT /kiosk-widgets or /kiosk-management
+  // IMPORTANT: Only /kiosk and /kiosk-display routes (and their subpaths).
   if (isKioskMode) {
     return (
       <LoadingProvider>
