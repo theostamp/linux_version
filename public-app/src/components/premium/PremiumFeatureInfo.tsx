@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { typography } from '@/lib/typography';
 
 type HighlightItem = {
   title: string;
@@ -46,7 +47,7 @@ export default function PremiumFeatureInfo({
               {eyebrow}
             </span>
             <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+              <h1 className={typography.kioskTitle}>{title}</h1>
               <p className="text-sm text-slate-300 sm:text-base">{description}</p>
               {note ? <p className="text-xs text-slate-400">{note}</p> : null}
             </div>

@@ -33,7 +33,7 @@ interface KioskStats {
 function KioskManagementContent() {
   const { currentBuilding, selectedBuilding, buildings, isLoading: isBuildingLoading, isLoadingContext } = useBuilding();
   const building = selectedBuilding || currentBuilding;
-  
+
   const [stats, setStats] = useState<KioskStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +58,7 @@ function KioskManagementContent() {
 
       const widgets = widgetsRes.data.widgets || [];
       const scenes = scenesRes.data.scenes || [];
-      
+
       const enabledWidgets = widgets.filter((w: any) => w.enabled).length;
       const enabledScenes = scenes.filter((s: any) => s.isEnabled).length;
 
@@ -114,8 +114,8 @@ function KioskManagementContent() {
       <div className="bg-card rounded-xl p-6 border border-slate-200/50 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center text-foreground font-condensed">
-              <Monitor className="w-8 h-8 mr-3 text-primary" />
+            <h1 className="text-3xl font-bold mb-2 flex items-center text-emerald-600 dark:text-emerald-500 font-condensed">
+              <Monitor className="w-8 h-8 mr-3 text-emerald-600 dark:text-emerald-500" />
               Kiosk Management
             </h1>
             <p className="text-muted-foreground">
@@ -127,8 +127,8 @@ function KioskManagementContent() {
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Τρέχον Κτίριο</p>
               <p className="text-base font-bold text-foreground">{building.name}</p>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
@@ -143,7 +143,7 @@ function KioskManagementContent() {
 
       {/* Bento Grid Layout */}
       <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
-        
+
         {/* Row 1: Stats */}
         {isLoadingStats ? (
           // Using Bento Items for skeleton to maintain layout
