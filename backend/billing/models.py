@@ -671,6 +671,30 @@ class BillingCycle(models.Model):
     def __str__(self):
         return f"{self.subscription.user.email} - {self.period_start.date()} ({self.status})"
 
+    # ------------------------------------------------------------------
+    # Backward-compatible aliases (serializers/analytics expect these names)
+    # ------------------------------------------------------------------
+    @property
+    def amount_due(self):
+        """
+        Backward compatibility for older code/serializers.
+
+        Historically the code referenced `amount_due`; the canonical field is `total_amount`.
+        """
+        return self.total_amount
+
+    @property
+    def amount_paid(self):
+        """
+        Backward compatibility for older code/serializers.
+
+        This project does not model partial payments per billing cycle.
+        If the cycle is paid, treat `amount_paid` as `total_amount`, else 0.
+        """
+        if self.status == "paid":
+            return self.total_amount
+        return Decimal("0.00")
+
 
 class UsageTracking(models.Model):
     """
@@ -730,6 +754,19 @@ class UsageTracking(models.Model):
 
     def __str__(self):
         return f"{self.subscription.user.email} - {self.metric_type}: {self.usage_count}/{self.usage_limit}"
+
+    # ------------------------------------------------------------------
+    # Backward-compatible aliases (serializers/analytics expect these names)
+    # ------------------------------------------------------------------
+    @property
+    def current_value(self):
+        """Alias for `usage_count`."""
+        return self.usage_count
+
+    @property
+    def limit_value(self):
+        """Alias for `usage_limit`."""
+        return self.usage_limit
 
     @property
     def usage_percentage(self):
