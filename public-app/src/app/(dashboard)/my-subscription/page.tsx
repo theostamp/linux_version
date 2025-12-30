@@ -13,6 +13,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { Loader2, CreditCard, Shield, TrendingUp, CheckCircle, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { typography } from '@/lib/typography';
+import { getMonthlyPrice } from '@/lib/pricing';
 
 type SubscriptionPlan = {
   id: number;
@@ -338,13 +339,26 @@ export default function MySubscriptionPage() {
   }, [plans]);
 
   const buildingStats = React.useMemo(() => {
-    const stats = { total: 0, web: 0, premium: 0, premium_iot: 0 };
+    const stats = {
+      total: 0,
+      web: 0,
+      premium: 0,
+      premium_iot: 0,
+      apartments: { web: 0, premium: 0, premium_iot: 0 },
+      charges: { web: 0, premium: 0, premium_iot: 0, total: 0 },
+    };
     if (!buildings?.length) return stats;
     stats.total = buildings.length;
     for (const building of buildings) {
       const plan = resolveBuildingPlan(building);
       stats[plan] += 1;
+      const apartmentsCount = Math.max(0, building.apartments_count ?? 0);
+      stats.apartments[plan] += apartmentsCount;
     }
+    stats.charges.web = getMonthlyPrice('web', stats.apartments.web);
+    stats.charges.premium = getMonthlyPrice('premium', stats.apartments.premium);
+    stats.charges.premium_iot = getMonthlyPrice('premium_iot', stats.apartments.premium_iot);
+    stats.charges.total = stats.charges.web + stats.charges.premium + stats.charges.premium_iot;
     return stats;
   }, [buildings]);
 
@@ -634,85 +648,6 @@ export default function MySubscriptionPage() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Πολυκατοικίες & πλάνα</CardTitle>
-              <CardDescription>
-                Η χρέωση υπολογίζεται ανά διαμέρισμα και ανά πλάνο που έχει επιλεγεί σε κάθε κτίριο.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2 text-xs">
-                <Badge variant="outline">Σύνολο: {buildingStats.total}</Badge>
-                <Badge variant="secondary">Web: {buildingStats.web}</Badge>
-                <Badge variant="secondary">Premium: {buildingStats.premium}</Badge>
-                <Badge variant="secondary">Premium + IoT: {buildingStats.premium_iot}</Badge>
-              </div>
-
-              {buildingsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              ) : buildings && buildings.length > 0 ? (
-                <div className="space-y-3">
-                  {buildings.map((building) => {
-                    const planKey = resolveBuildingPlan(building);
-                    const planLabel = planLabels[planKey];
-                    const apartmentsCount = building.apartments_count ?? 0;
-                    const hasApartments = apartmentsCount > 0;
-                    const trialEndsAt = building.trial_ends_at ? new Date(building.trial_ends_at) : null;
-                    const trialActive = Boolean(trialEndsAt && trialEndsAt >= new Date());
-                    const premiumLocked = planKey !== 'web' && !hasApartments && !trialActive;
-
-                    return (
-                      <div
-                        key={building.id}
-                        className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="space-y-1">
-                          <p className="text-xs uppercase text-muted-foreground">Κτίριο</p>
-                          <p className="text-base font-semibold">{building.name}</p>
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline">{planLabel}</Badge>
-                            {planKey === 'premium_iot' && <Badge variant="secondary">IoT</Badge>}
-                            <span>Διαμερίσματα: {hasApartments ? apartmentsCount : '—'}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          {trialActive && (
-                            <Badge variant="secondary">
-                              Trial έως {formatDate(building.trial_ends_at)}
-                            </Badge>
-                          )}
-                          {premiumLocked && (
-                            <Badge variant="destructive">Premium κλειδωμένο</Badge>
-                          )}
-                          {!hasApartments && !trialActive && planKey !== 'web' && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Λείπουν διαμερίσματα
-                            </Badge>
-                          )}
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/buildings/${building.id}/edit`}>Ενημέρωση κτιρίου</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Δεν υπάρχουν καταχωρημένες πολυκατοικίες ακόμα.
-                </p>
-              )}
-
-              <p className="text-xs text-muted-foreground">
-                Μετά τη λήξη του trial, τα Premium features παραμένουν κλειδωμένα αν δεν έχουν
-                συμπληρωθεί διαμερίσματα στο αντίστοιχο κτίριο.
-              </p>
-            </CardContent>
-          </Card>
-
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -778,6 +713,116 @@ export default function MySubscriptionPage() {
               </div>
             </>
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Πολυκατοικίες & πλάνα</CardTitle>
+              <CardDescription>
+                Η χρέωση υπολογίζεται ανά διαμέρισμα και ανά πλάνο που έχει επιλεγεί σε κάθε κτίριο.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2 text-xs">
+                <Badge variant="outline">Σύνολο: {buildingStats.total}</Badge>
+                <Badge variant="secondary">Web: {buildingStats.web}</Badge>
+                <Badge variant="secondary">Premium: {buildingStats.premium}</Badge>
+                <Badge variant="secondary">Premium + IoT: {buildingStats.premium_iot}</Badge>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl border p-3 text-sm">
+                  <p className="text-xs uppercase text-muted-foreground">Web</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span>{buildingStats.apartments.web} διαμ.</span>
+                    <span className="font-semibold">{formatCurrency(buildingStats.charges.web)}</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border p-3 text-sm">
+                  <p className="text-xs uppercase text-muted-foreground">Premium</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span>{buildingStats.apartments.premium} διαμ.</span>
+                    <span className="font-semibold">{formatCurrency(buildingStats.charges.premium)}</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border p-3 text-sm">
+                  <p className="text-xs uppercase text-muted-foreground">Premium + IoT</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span>{buildingStats.apartments.premium_iot} διαμ.</span>
+                    <span className="font-semibold">{formatCurrency(buildingStats.charges.premium_iot)}</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border p-3 text-sm">
+                  <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span>{buildingStats.apartments.web + buildingStats.apartments.premium + buildingStats.apartments.premium_iot} διαμ.</span>
+                    <span className="font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {buildingsLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : buildings && buildings.length > 0 ? (
+                <div className="space-y-3">
+                  {buildings.map((building) => {
+                    const planKey = resolveBuildingPlan(building);
+                    const planLabel = planLabels[planKey];
+                    const apartmentsCount = building.apartments_count ?? 0;
+                    const hasApartments = apartmentsCount > 0;
+                    const trialEndsAt = building.trial_ends_at ? new Date(building.trial_ends_at) : null;
+                    const trialActive = Boolean(trialEndsAt && trialEndsAt >= new Date());
+                    const premiumLocked = planKey !== 'web' && !hasApartments && !trialActive;
+
+                    return (
+                      <div
+                        key={building.id}
+                        className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="space-y-1">
+                          <p className="text-xs uppercase text-muted-foreground">Κτίριο</p>
+                          <p className="text-base font-semibold">{building.name}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <Badge variant="outline">{planLabel}</Badge>
+                            {planKey === 'premium_iot' && <Badge variant="secondary">IoT</Badge>}
+                            <span>Διαμερίσματα: {hasApartments ? apartmentsCount : '—'}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {trialActive && (
+                            <Badge variant="secondary">
+                              Trial έως {formatDate(building.trial_ends_at)}
+                            </Badge>
+                          )}
+                          {premiumLocked && (
+                            <Badge variant="destructive">Premium κλειδωμένο</Badge>
+                          )}
+                          {!hasApartments && !trialActive && planKey !== 'web' && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Λείπουν διαμερίσματα
+                            </Badge>
+                          )}
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/buildings/${building.id}/edit`}>Ενημέρωση κτιρίου</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Δεν υπάρχουν καταχωρημένες πολυκατοικίες ακόμα.
+                </p>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Μετά τη λήξη του trial, τα Premium features παραμένουν κλειδωμένα αν δεν έχουν
+                συμπληρωθεί διαμερίσματα στο αντίστοιχο κτίριο.
+              </p>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
