@@ -128,14 +128,14 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-gray-200 last:border-b-0">
+    <div className="rounded-xl bg-[var(--bg-white)] shadow-card-soft">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-emerald-400"
+        className="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:text-[var(--color-accent-primary)]"
       >
-        <span className="text-sm font-medium text-slate-50 sm:text-base">{question}</span>
+        <span className="text-sm font-medium text-[var(--text-dark-primary)] sm:text-base">{question}</span>
         <ChevronDown
-          className={`ml-4 h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300 ${
+          className={`ml-4 h-5 w-5 shrink-0 text-[var(--text-dark-secondary)] transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
@@ -145,8 +145,8 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
           isOpen ? "grid-rows-[1fr] pb-5" : "grid-rows-[0fr]"
         }`}
       >
-        <div className="overflow-hidden">
-          <p className="text-sm text-slate-400 sm:text-base">{answer}</p>
+        <div className="overflow-hidden px-6">
+          <p className="text-sm text-[var(--text-dark-secondary)] sm:text-base">{answer}</p>
         </div>
       </div>
     </div>
@@ -300,13 +300,19 @@ export default function LandingPage() {
               sizes="100vw"
               priority
             />
-            {/* Light blue gradient overlay for brightness */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-accent-primary/5 via-transparent to-bg-app-main/20" />
+            {/* Gradient overlay for better text readability */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(38,50,56,0.4) 0%, rgba(38,50,56,0.6) 50%, rgba(38,50,56,0.4) 100%)",
+              }}
+            />
           </div>
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl bg-bg-app-main p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
+            <div className="w-full space-y-8 rounded-3xl bg-slate-900/70 p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
                   <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
@@ -317,22 +323,22 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-                  <span className="text-text-primary">Η πολυκατοικία σου γίνεται</span>
+                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--bg-white)] sm:text-5xl md:text-6xl lg:text-7xl">
+                  <span>Η πολυκατοικία σου γίνεται</span>
                   <br />
-                  <span className="text-accent-secondary">κοινότητα.</span>
+                  <span>κοινότητα.</span>
                 </h1>
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                <p className="text-center text-base leading-relaxed text-text-secondary sm:text-lg md:text-xl lg:text-2xl">
+                <p className="text-center text-base leading-relaxed text-[var(--bg-white)] sm:text-lg md:text-xl lg:text-2xl">
                   Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
                   συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
                 </p>
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
-                <ul className="grid gap-3 text-base text-text-primary sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                <ul className="grid gap-3 text-base text-slate-200 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                   {[
                     "Ενημέρωση για όλους (info point στην είσοδο, email & κινητό)",
                     "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
@@ -377,7 +383,7 @@ export default function LandingPage() {
                   {stats.map((stat) => (
                     <div key={stat.label} className="text-center">
                       <p className="text-2xl font-bold text-accent-primary sm:text-3xl">{stat.value}</p>
-                      <p className="mt-1 text-sm text-text-secondary">{stat.label}</p>
+                      <p className="mt-1 text-sm text-slate-300">{stat.label}</p>
                     </div>
                   ))}
                 </div>
@@ -599,20 +605,20 @@ export default function LandingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="border-b border-gray-200 bg-slate-950">
+      <section id="pricing" className="border-b border-gray-200 bg-[var(--bg-white)]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
               <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
                 Τιμολόγηση
               </span>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">
                 Απλή τιμολόγηση, χωρίς κρυφές χρεώσεις
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-dark-primary)] sm:text-lg">
                 Χρέωση ανά διαμέρισμα, χωρίς πολύπλοκες κλίμακες. Σύρε το slider για να δεις την τιμή σου.
                 <br />
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-[var(--text-dark-primary)]">
                   Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
                 </span>
               </p>
@@ -871,22 +877,22 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="border-b border-gray-200 bg-slate-950">
+      <section id="faq" className="border-b border-gray-200 bg-[var(--bg-main-light)]">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
               <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
                 Απορίες
               </span>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">Συχνές ερωτήσεις</h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
+              <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">Συχνές ερωτήσεις</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
                 Μερικές από τις πιο συχνές απορίες γύρω από το Info Point και την πλατφόρμα.
               </p>
             </div>
           </AnimatedSection>
 
           <AnimatedSection delay={200}>
-            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 px-6">
+            <div className="space-y-4">
               {faqs.map((item) => (
                 <FaqItem key={item.question} question={item.question} answer={item.answer} />
               ))}

@@ -141,26 +141,26 @@ export function PricingCalculator({
     <div className={`w-full ${compact ? "" : "max-w-4xl mx-auto"}`}>
       {/* Header */}
       <div className="text-center mb-8">
-        <h3 className="text-xl font-bold text-slate-50 sm:text-2xl">
+        <h3 className="text-xl font-bold text-[var(--text-dark-primary)] sm:text-2xl">
           Υπολόγισε το κόστος
         </h3>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-[var(--text-dark-primary)]">
           Σύρε το slider για να δεις την τιμή για την πολυκατοικία σου
         </p>
       </div>
 
       {/* Slider Section */}
-      <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6 backdrop-blur-sm">
+      <div className="rounded-2xl border border-gray-200 bg-[var(--bg-main-light)] p-6 shadow-card-soft">
         {/* Apartment Count Display */}
         <div className="mb-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2">
-            <Home className="h-4 w-4 text-emerald-400" />
-            <span className="text-2xl font-bold text-emerald-400">
+          <div className="inline-flex items-center gap-2 rounded-full bg-accent-primary/10 px-4 py-2">
+            <Home className="h-4 w-4 text-accent-primary" />
+            <span className="text-2xl font-bold text-accent-primary">
               {apartments}
             </span>
-            <span className="text-sm text-slate-400">διαμερίσματα</span>
+            <span className="text-sm text-[var(--text-dark-secondary)]">διαμερίσματα</span>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-[var(--text-dark-secondary)]">
             Τιμολόγηση ανά διαμέρισμα
           </p>
         </div>
@@ -173,25 +173,25 @@ export function PricingCalculator({
             max="60"
             value={apartments}
             onChange={(e) => setApartments(parseInt(e.target.value))}
-            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer
+            className="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer
                        [&::-webkit-slider-thumb]:appearance-none
                        [&::-webkit-slider-thumb]:w-6
                        [&::-webkit-slider-thumb]:h-6
                        [&::-webkit-slider-thumb]:rounded-full
-                       [&::-webkit-slider-thumb]:bg-emerald-500
+                       [&::-webkit-slider-thumb]:bg-accent-primary
                        [&::-webkit-slider-thumb]:shadow-lg
-                       [&::-webkit-slider-thumb]:shadow-emerald-500/50
+                       [&::-webkit-slider-thumb]:shadow-accent-primary/50
                        [&::-webkit-slider-thumb]:cursor-pointer
                        [&::-webkit-slider-thumb]:transition-transform
                        [&::-webkit-slider-thumb]:hover:scale-110
                        [&::-moz-range-thumb]:w-6
                        [&::-moz-range-thumb]:h-6
                        [&::-moz-range-thumb]:rounded-full
-                       [&::-moz-range-thumb]:bg-emerald-500
+                       [&::-moz-range-thumb]:bg-accent-primary
                        [&::-moz-range-thumb]:border-0
                        [&::-moz-range-thumb]:cursor-pointer"
           />
-          <div className="mt-2 flex justify-between text-xs text-slate-500">
+          <div className="mt-2 flex justify-between text-xs text-[var(--text-dark-secondary)]">
             <span>1</span>
             <span>7</span>
             <span>20</span>
@@ -202,11 +202,11 @@ export function PricingCalculator({
 
         {/* Free Tier Notice */}
         {freeEligible && (
-          <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
-            <p className="text-sm font-medium text-emerald-400">
+          <div className="mb-6 rounded-xl border border-accent-secondary/30 bg-accent-secondary/10 p-4 text-center">
+            <p className="text-sm font-medium text-accent-secondary">
               🎉 Η πολυκατοικία σου χωράει στο δωρεάν πακέτο!
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">
               Έως 7 διαμερίσματα - Βασικό φύλλο κοινοχρήστων
             </p>
           </div>
@@ -215,31 +215,31 @@ export function PricingCalculator({
         {/* Plan Selection */}
         {!freeEligible && (
           <div className="mb-6">
-            <p className="mb-3 text-sm text-slate-400">Επίλεξε πακέτο:</p>
+            <p className="mb-3 text-sm text-[var(--text-dark-secondary)]">Επίλεξε πακέτο:</p>
             <div className="grid gap-3 md:grid-cols-3">
               {/* Web Option */}
               <button
                 onClick={() => setSelectedPlan("web")}
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "web"
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
+                    ? "border-accent-primary bg-accent-primary/10"
+                    : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Building className="h-5 w-5 text-slate-300" />
-                  <span className="font-medium text-slate-200">Web</span>
+                  <Building className="h-5 w-5 text-[var(--text-dark-secondary)]" />
+                  <span className="font-medium text-[var(--text-dark-primary)]">Web</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">Χωρίς οθόνη</p>
-                <p className="mt-2 text-lg font-bold text-emerald-400">
+                <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Χωρίς οθόνη</p>
+                <p className="mt-2 text-lg font-bold text-accent-primary">
                   €{webPrice}
-                  <span className="text-xs font-normal text-slate-500">
+                  <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
                     /μήνα
                   </span>
                 </p>
                 {selectedPlan === "web" && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
-                    <Check className="h-3 w-3 text-slate-950" />
+                  <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
+                    <Check className="h-3 w-3 text-white" />
                   </div>
                 )}
               </button>
@@ -249,28 +249,28 @@ export function PricingCalculator({
                 onClick={() => setSelectedPlan("premium")}
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "premium"
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
+                    ? "border-accent-primary bg-accent-primary/10"
+                    : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 {/* Badge */}
-                <span className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                <span className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
                   Δημοφιλές
                 </span>
                 <div className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-slate-300" />
-                  <span className="font-medium text-slate-200">Premium</span>
+                  <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
+                  <span className="font-medium text-[var(--text-dark-primary)]">Premium</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">Web + Kiosk + AI + Αρχείο</p>
-                <p className="mt-2 text-lg font-bold text-emerald-400">
+                <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Web + Kiosk + AI + Αρχείο</p>
+                <p className="mt-2 text-lg font-bold text-accent-primary">
                   €{premiumPrice}
-                  <span className="text-xs font-normal text-slate-500">
+                  <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
                     /μήνα
                   </span>
                 </p>
                 {selectedPlan === "premium" && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
-                    <Check className="h-3 w-3 text-slate-950" />
+                  <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
+                    <Check className="h-3 w-3 text-white" />
                   </div>
                 )}
               </button>
@@ -280,24 +280,24 @@ export function PricingCalculator({
                 onClick={() => setSelectedPlan("premium_iot")}
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "premium_iot"
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
+                    ? "border-accent-primary bg-accent-primary/10"
+                    : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-slate-300" />
-                  <span className="font-medium text-slate-200">Premium + IoT</span>
+                  <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
+                  <span className="font-medium text-[var(--text-dark-primary)]">Premium + IoT</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">Smart Heating</p>
-                <p className="mt-2 text-lg font-bold text-emerald-400">
+                <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Smart Heating</p>
+                <p className="mt-2 text-lg font-bold text-accent-primary">
                   €{premiumIotPrice}
-                  <span className="text-xs font-normal text-slate-500">
+                  <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
                     /μήνα
                   </span>
                 </p>
                 {selectedPlan === "premium_iot" && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
-                    <Check className="h-3 w-3 text-slate-950" />
+                  <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
+                    <Check className="h-3 w-3 text-white" />
                   </div>
                 )}
               </button>
@@ -309,14 +309,14 @@ export function PricingCalculator({
         {!freeEligible && (
           <div className="mb-6 flex items-center justify-center gap-3">
             <span
-              className={`text-sm ${!isYearly ? "text-slate-200" : "text-slate-500"}`}
+              className={`text-sm ${!isYearly ? "text-[var(--text-dark-primary)]" : "text-[var(--text-dark-secondary)]"}`}
             >
               Μηνιαία
             </span>
             <button
               onClick={() => setIsYearly(!isYearly)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                isYearly ? "bg-emerald-500" : "bg-slate-700"
+                isYearly ? "bg-accent-primary" : "bg-slate-300"
               }`}
             >
               <span
@@ -326,12 +326,12 @@ export function PricingCalculator({
               />
             </button>
             <span
-              className={`text-sm ${isYearly ? "text-slate-200" : "text-slate-500"}`}
+              className={`text-sm ${isYearly ? "text-[var(--text-dark-primary)]" : "text-[var(--text-dark-secondary)]"}`}
             >
               Ετήσια
             </span>
             {isYearly && yearlySavings && (
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-400">
+              <span className="rounded-full bg-accent-primary/20 px-2 py-0.5 text-xs font-medium text-accent-primary">
                 -€{yearlySavings}
               </span>
             )}
@@ -339,25 +339,25 @@ export function PricingCalculator({
         )}
 
         {/* Price Display */}
-        <div className="rounded-xl bg-slate-950 p-6 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="rounded-xl bg-[var(--bg-white)] p-6 text-center shadow-card-soft">
+          <p className="text-sm text-[var(--text-dark-secondary)]">
             {freeEligible ? "Το πακέτο σου:" : "Συνολικό κόστος:"}
           </p>
           <div className="mt-2 flex items-baseline justify-center gap-1">
-            <span className="text-4xl font-bold text-emerald-400">
+            <span className="text-4xl font-bold text-accent-primary">
               €{freeEligible ? 0 : displayPrice}
             </span>
-            <span className="text-slate-500">
+            <span className="text-accent-primary">
               /{isYearly ? "έτος" : "μήνα"}
             </span>
           </div>
           {!freeEligible && isYearly && yearlySavings && (
-            <p className="mt-1 text-xs text-emerald-400">
+            <p className="mt-1 text-xs text-accent-primary">
               Εξοικονόμηση €{yearlySavings}/έτος (2 μήνες δωρεάν)
             </p>
           )}
           {!freeEligible && (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-accent-primary">
               {apartments} διαμερίσματα × {selectedPlan === "web" ? "Web" : selectedPlan === "premium" ? "Premium" : "Premium + IoT"}
             </p>
           )}
@@ -367,7 +367,7 @@ export function PricingCalculator({
         {showCTA && (
           <button
             onClick={handleSelectPlan}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-[1.02]"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/25 transition-all hover:opacity-90 hover:shadow-accent-primary/30 hover:scale-[1.02]"
           >
             {freeEligible ? "Ξεκίνα δωρεάν" : "Ξεκίνα τώρα"}
             <ChevronRight className="h-4 w-4" />
@@ -376,11 +376,11 @@ export function PricingCalculator({
 
         {/* Contact for 5+ buildings */}
         <div className="mt-4 text-center">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-dark-secondary)]">
             Για γραφεία διαχείρισης με 5+ πολυκατοικίες:{" "}
             <a
               href="#cta"
-              className="text-emerald-400 hover:text-emerald-300 transition-colors"
+              className="text-accent-primary transition-colors hover:opacity-80"
             >
               Επικοινωνήστε μαζί μας
             </a>
@@ -390,8 +390,8 @@ export function PricingCalculator({
 
       {/* Features Comparison (optional, show on full mode) */}
       {!compact && selectedPlan && !freeEligible && (
-        <div className="mt-6 rounded-xl border border-gray-200 bg-slate-900/50 p-4">
-          <p className="mb-3 text-sm font-medium text-slate-300">
+        <div className="mt-6 rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft">
+          <p className="mb-3 text-sm font-medium text-[var(--text-dark-primary)]">
             {selectedPlan === "premium"
               ? "Premium"
               : selectedPlan === "premium_iot"
@@ -404,9 +404,9 @@ export function PricingCalculator({
               (feature) => (
                 <li
                   key={feature}
-                  className="flex items-center gap-2 text-xs text-slate-400"
+                  className="flex items-center gap-2 text-xs text-[var(--text-dark-secondary)]"
                 >
-                  <Check className="h-3 w-3 text-emerald-400" />
+                  <Check className="h-3 w-3 text-accent-secondary" />
                   {feature}
                 </li>
               )
