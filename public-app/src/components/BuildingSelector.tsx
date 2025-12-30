@@ -33,6 +33,49 @@ interface BuildingSelectorProps {
 }
 
 type ViewMode = 'buildings' | 'tenants';
+type PlanKey = 'web' | 'premium' | 'premium_iot';
+
+const resolveBuildingPlan = (building: Building): PlanKey => {
+  if (building.premium_enabled) {
+    return building.iot_enabled ? 'premium_iot' : 'premium';
+  }
+  return 'web';
+};
+
+const planLabels: Record<PlanKey, string> = {
+  web: 'Web',
+  premium: 'Premium',
+  premium_iot: 'Premium + IoT',
+};
+
+const planBadgeClasses: Record<PlanKey, string> = {
+  web: 'border-sky-200 text-sky-700 bg-sky-50/70',
+  premium: 'border-emerald-200 text-emerald-700 bg-emerald-50/70',
+  premium_iot: 'border-amber-200 text-amber-700 bg-amber-50/70',
+};
+
+const badgeBaseClasses = 'text-[10px] px-2 py-0.5 rounded-full border font-medium';
+
+const statusBadgeClasses = {
+  trial: 'border-slate-200 text-slate-700 bg-slate-50/70',
+  locked: 'border-rose-200 text-rose-700 bg-rose-50/70',
+};
+
+const getPlanMeta = (building: Building, now: number) => {
+  const planKey = resolveBuildingPlan(building);
+  const planLabel = planLabels[planKey];
+  const apartmentsCount = building.apartments_count ?? 0;
+  const trialEndsAt = building.trial_ends_at ? new Date(building.trial_ends_at).getTime() : null;
+  const trialActive = Boolean(trialEndsAt && trialEndsAt >= now);
+  const premiumLocked = planKey !== 'web' && apartmentsCount === 0 && !trialActive;
+
+  return {
+    planKey,
+    planLabel,
+    trialActive,
+    premiumLocked,
+  };
+};
 
 export default function BuildingSelector({
   isOpen,
@@ -254,6 +297,8 @@ export default function BuildingSelector({
   };
 
   if (!isOpen) return null;
+  const now = Date.now();
+  const currentPlanMeta = currentBuilding ? getPlanMeta(currentBuilding, now) : null;
 
   // Find current tenant from override
   const currentTenant = currentTenantOverride
@@ -520,11 +565,24 @@ export default function BuildingSelector({
                         <MapPin className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-medium text-foreground flex items-center gap-2">
-                          {currentBuilding.name}
+                        <div className="font-medium text-foreground flex flex-wrap items-center gap-2">
+                          <span>{currentBuilding.name}</span>
                           <span className="text-xs bg-success/20 text-success-foreground px-2 py-1 rounded-full border border-success/20">
                             Τρέχον
                           </span>
+                          {currentPlanMeta && (
+                            <span className={`${badgeBaseClasses} ${planBadgeClasses[currentPlanMeta.planKey]}`}>
+                              {currentPlanMeta.planLabel}
+                            </span>
+                          )}
+                          {currentPlanMeta?.trialActive && (
+                            <span className={`${badgeBaseClasses} ${statusBadgeClasses.trial}`}>Trial</span>
+                          )}
+                          {currentPlanMeta?.premiumLocked && (
+                            <span className={`${badgeBaseClasses} ${statusBadgeClasses.locked}`}>
+                              Premium κλειδωμένο
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {currentBuilding.address}
@@ -558,31 +616,48 @@ export default function BuildingSelector({
                   )}
                 </div>
               ) : (
-                filteredBuildings.map((building) => (
-                  <div
-                    key={building.id}
-                    onClick={() => handleBuildingSelect(building)}
-                    className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
-                      selectedBuilding?.id === building.id ? 'bg-primary/5 border-r-4 border-primary' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm text-primary-foreground">
-                        <BuildingIcon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-foreground">{building.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {building.address}
-                          {building.city && `, ${building.city}`}
+                filteredBuildings.map((building) => {
+                  const planMeta = getPlanMeta(building, now);
+
+                  return (
+                    <div
+                      key={building.id}
+                      onClick={() => handleBuildingSelect(building)}
+                      className={`flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        selectedBuilding?.id === building.id ? 'bg-primary/5 border-r-4 border-primary' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shadow-sm text-primary-foreground">
+                          <BuildingIcon className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground flex flex-wrap items-center gap-2">
+                            <span>{building.name}</span>
+                            <span className={`${badgeBaseClasses} ${planBadgeClasses[planMeta.planKey]}`}>
+                              {planMeta.planLabel}
+                            </span>
+                            {planMeta.trialActive && (
+                              <span className={`${badgeBaseClasses} ${statusBadgeClasses.trial}`}>Trial</span>
+                            )}
+                            {planMeta.premiumLocked && (
+                              <span className={`${badgeBaseClasses} ${statusBadgeClasses.locked}`}>
+                                Premium κλειδωμένο
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {building.address}
+                            {building.city && `, ${building.city}`}
+                          </div>
                         </div>
                       </div>
+                      {selectedBuilding?.id === building.id && (
+                        <Check className="w-5 h-5 text-primary" />
+                      )}
                     </div>
-                    {selectedBuilding?.id === building.id && (
-                      <Check className="w-5 h-5 text-primary" />
-                    )}
-                  </div>
-                ))
+                  );
+                })
               )}
             </>
           )}
