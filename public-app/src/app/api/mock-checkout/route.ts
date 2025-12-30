@@ -11,7 +11,36 @@ export async function POST(req: NextRequest) {
 
     // Simulate successful checkout
     const mockSessionId = `cs_test_${Date.now()}`;
-    
+
+    const resolvePlanId = async () => {
+      const normalized = String(plan || '').toLowerCase();
+      const planTypeMapping: Record<string, string> = {
+        free: 'free',
+        web: 'web',
+        premium: 'premium',
+        premium_iot: 'premium_iot',
+        'premium + iot': 'premium_iot',
+        'premium +iot': 'premium_iot',
+      };
+
+      const planType = planTypeMapping[normalized] || 'web';
+      const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
+      if (!coreApiUrl) return 1;
+
+      try {
+        const plansResponse = await fetch(`${coreApiUrl}/api/billing/plans/`);
+        if (!plansResponse.ok) return 1;
+        const payload = await plansResponse.json();
+        const plans = Array.isArray(payload) ? payload : payload?.results || payload?.plans || [];
+        const match = plans.find((entry: any) => entry.plan_type === planType);
+        return match?.id || 1;
+      } catch {
+        return 1;
+      }
+    };
+
+    const planId = await resolvePlanId();
+
     // Simulate webhook call to create tenant
     setTimeout(async () => {
       try {
@@ -34,7 +63,7 @@ export async function POST(req: NextRequest) {
                 last_name: userData.lastName,
                 password: userData.password
               },
-              plan_id: plan === 'basic' ? 1 : plan === 'professional' ? 2 : 3,
+              plan_id: planId,
               stripe_customer_id: `cus_mock_${Date.now()}`,
               stripe_subscription_id: `sub_mock_${Date.now()}`
             })
@@ -47,7 +76,7 @@ export async function POST(req: NextRequest) {
       }
     }, 2000); // Simulate 2-second delay
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       url: `${process.env.NEXT_PUBLIC_APP_URL}/verify-payment/${mockSessionId}`,
       sessionId: mockSessionId
     });
@@ -57,7 +86,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create mock checkout' }, { status: 500 });
   }
 }
-
 
 
 

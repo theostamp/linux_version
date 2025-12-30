@@ -10,61 +10,61 @@ async function createStripeProducts() {
   console.log('🚀 Creating Stripe products and prices...');
 
   try {
-    // Create Basic Plan
-    const basicProduct = await stripe.products.create({
-      name: 'Basic Plan',
-      description: 'Perfect for small buildings - Up to 20 apartments',
+    // Create Web Plan (per apartment)
+    const webProduct = await stripe.products.create({
+      name: 'Concierge Web (per apartment)',
+      description: 'Full web management platform without kiosk hardware.',
     });
 
-    const basicPrice = await stripe.prices.create({
-      product: basicProduct.id,
-      unit_amount: 2900, // €29.00
+    const webPrice = await stripe.prices.create({
+      product: webProduct.id,
+      unit_amount: 100, // €1.00 per apartment
       currency: 'eur',
       recurring: { interval: 'month' },
     });
 
-    console.log('✅ Basic Plan created:');
-    console.log(`   Product ID: ${basicProduct.id}`);
-    console.log(`   Price ID: ${basicPrice.id}`);
+    console.log('✅ Web Plan created:');
+    console.log(`   Product ID: ${webProduct.id}`);
+    console.log(`   Price ID: ${webPrice.id}`);
 
-    // Create Professional Plan
-    const professionalProduct = await stripe.products.create({
-      name: 'Professional Plan',
-      description: 'Ideal for medium buildings - Up to 50 apartments',
+    // Create Premium Plan (per apartment)
+    const premiumProduct = await stripe.products.create({
+      name: 'Concierge Premium (per apartment)',
+      description: 'Kiosk + AI + Archive with per-apartment billing.',
     });
 
-    const professionalPrice = await stripe.prices.create({
-      product: professionalProduct.id,
-      unit_amount: 5900, // €59.00
+    const premiumPrice = await stripe.prices.create({
+      product: premiumProduct.id,
+      unit_amount: 180, // €1.80 per apartment
       currency: 'eur',
       recurring: { interval: 'month' },
     });
 
-    console.log('✅ Professional Plan created:');
-    console.log(`   Product ID: ${professionalProduct.id}`);
-    console.log(`   Price ID: ${professionalPrice.id}`);
+    console.log('✅ Premium Plan created:');
+    console.log(`   Product ID: ${premiumProduct.id}`);
+    console.log(`   Price ID: ${premiumPrice.id}`);
 
-    // Create Enterprise Plan
-    const enterpriseProduct = await stripe.products.create({
-      name: 'Enterprise Plan',
-      description: 'For large complexes - Unlimited apartments',
+    // Create Premium + IoT Plan (per apartment)
+    const premiumIotProduct = await stripe.products.create({
+      name: 'Concierge Premium + IoT (per apartment)',
+      description: 'Premium + Smart Heating with per-apartment billing.',
     });
 
-    const enterprisePrice = await stripe.prices.create({
-      product: enterpriseProduct.id,
-      unit_amount: 9900, // €99.00
+    const premiumIotPrice = await stripe.prices.create({
+      product: premiumIotProduct.id,
+      unit_amount: 230, // €2.30 per apartment
       currency: 'eur',
       recurring: { interval: 'month' },
     });
 
-    console.log('✅ Enterprise Plan created:');
-    console.log(`   Product ID: ${enterpriseProduct.id}`);
-    console.log(`   Price ID: ${enterprisePrice.id}`);
+    console.log('✅ Premium + IoT Plan created:');
+    console.log(`   Product ID: ${premiumIotProduct.id}`);
+    console.log(`   Price ID: ${premiumIotPrice.id}`);
 
-    console.log('\n📝 Update your create-checkout-session/route.ts with these Price IDs:');
-    console.log(`   Basic: ${basicPrice.id}`);
-    console.log(`   Professional: ${professionalPrice.id}`);
-    console.log(`   Enterprise: ${enterprisePrice.id}`);
+    console.log('\n📝 Update your checkout plan mapping with these Price IDs:');
+    console.log(`   Web: ${webPrice.id}`);
+    console.log(`   Premium: ${premiumPrice.id}`);
+    console.log(`   Premium + IoT: ${premiumIotPrice.id}`);
 
   } catch (error) {
     console.error('❌ Error creating Stripe products:', error.message);

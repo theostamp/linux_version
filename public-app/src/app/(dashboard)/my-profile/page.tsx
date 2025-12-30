@@ -6,7 +6,6 @@ import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIc
 import { api } from '@/lib/api';
 import type { User } from '@/types/user';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,9 +51,16 @@ export default function MyProfilePage() {
 
   const [formState, setFormState] = React.useState<ProfileFormState>(createFormState());
   const [initialState, setInitialState] = React.useState<ProfileFormState>(createFormState());
+  const [deleteEmail, setDeleteEmail] = React.useState('');
+  const [deletePhrase, setDeletePhrase] = React.useState('');
+  const [deletePassword, setDeletePassword] = React.useState('');
+  const [deleteTenant, setDeleteTenant] = React.useState(false);
   const roleLabel = getRoleLabel(user);
   const normalizedRole = getEffectiveRole(user);
   const isAdminRole = hasOfficeAdminAccess(user);
+  const canDeleteTenant = Boolean(
+    user?.tenant && (normalizedRole === 'manager' || normalizedRole === 'superuser')
+  );
   const { requestPermission, fcmToken, permission } = usePushNotifications();
 
   React.useEffect(() => {
@@ -86,11 +92,43 @@ export default function MyProfilePage() {
       const err = error as { status?: number; message?: string; response?: { data?: { detail?: string } } };
       const message = err?.response?.data?.detail || err?.message || 'Σφάλμα κατά την ενημέρωση';
       toast.error(message);
-      
+
       // If 401, suggest token clearing
       if (err?.status === 401) {
         toast.info('Το token έχει λήξει. Χρησιμοποίησε το κουμπί "Καθαρισμός token" για επανασύνδεση.');
       }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (payload: {
+      password?: string;
+      confirm_phrase: string;
+      confirm_email: string;
+      delete_tenant?: boolean;
+    }) =>
+      api.post<{
+        warnings?: string[];
+        tenant_deleted?: boolean;
+        deleted_users?: number;
+      }>('/users/profile/delete-account/', payload),
+    onSuccess: (data) => {
+      toast.success('Ο λογαριασμός διαγράφηκε οριστικά.');
+      if (data?.warnings?.length) {
+        toast.warning('Η συνδρομή δεν ακυρώθηκε πλήρως. Επικοινώνησε μαζί μας για έλεγχο.');
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+        window.location.href = '/login?deleted=1';
+      }
+    },
+    onError: (error: unknown) => {
+      const err = error as { message?: string; response?: { data?: { error?: string } } };
+      const message = err?.response?.data?.error || err?.message || 'Αποτυχία διαγραφής λογαριασμού';
+      toast.error(message);
     },
   });
 
@@ -110,6 +148,27 @@ export default function MyProfilePage() {
   };
 
   const isPristine = React.useMemo(() => JSON.stringify(formState) === JSON.stringify(initialState), [formState, initialState]);
+  const phraseNormalized = deletePhrase.trim().toUpperCase();
+  const isPhraseValid = phraseNormalized === 'DELETE' || phraseNormalized === 'ΔΙΑΓΡΑΦΗ';
+  const isEmailValid = Boolean(user?.email && deleteEmail.trim().toLowerCase() === user.email.toLowerCase());
+  const isDeleteDisabled = !isPhraseValid || !isEmailValid || deleteMutation.isPending;
+  const deleteLabel = deleteTenant && canDeleteTenant ? 'Διαγραφή λογαριασμού & workspace' : 'Διαγραφή λογαριασμού';
+
+  const handleDeleteAccount = () => {
+    if (!user || deleteMutation.isPending) return;
+    const confirmText =
+      deleteTenant && canDeleteTenant
+        ? 'Η ενέργεια θα διαγράψει ΟΛΟ το workspace και όλους τους χρήστες. Θέλεις να συνεχίσεις;'
+        : 'Η ενέργεια είναι μόνιμη. Θέλεις να συνεχίσεις;';
+    if (!window.confirm(confirmText)) return;
+
+    deleteMutation.mutate({
+      password: deletePassword || undefined,
+      confirm_phrase: deletePhrase.trim(),
+      confirm_email: deleteEmail.trim(),
+      delete_tenant: canDeleteTenant && deleteTenant,
+    });
+  };
 
   if (isLoading && !user) {
     return (
@@ -137,7 +196,7 @@ export default function MyProfilePage() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit}>
-        
+
         {/* Header Action Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-card p-6 rounded-xl border border-slate-200/50 shadow-sm">
           <div>
@@ -157,7 +216,7 @@ export default function MyProfilePage() {
         </div>
 
         <BentoGrid className="max-w-[1920px] auto-rows-auto gap-6">
-          
+
           {/* Basic Info */}
           <BentoGridItem
             className="md:col-span-2"
@@ -308,9 +367,9 @@ export default function MyProfilePage() {
                   {fcmToken ? (
                     <Badge variant="default" className="bg-green-600">Ενεργοποιημένες</Badge>
                   ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={requestPermission}
                       disabled={permission === 'denied'}
                     >
@@ -367,7 +426,86 @@ export default function MyProfilePage() {
 
         </BentoGrid>
       </form>
+
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardDescription>
+            Η διαγραφή λογαριασμού είναι <strong>μόνιμη</strong> και δεν μπορεί να αναιρεθεί.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          {canDeleteTenant ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+              <p className="font-medium text-destructive">Προσοχή: Διαγραφή ολόκληρου workspace</p>
+              <p className="text-muted-foreground mt-1">
+                Αν ενεργοποιήσεις αυτή την επιλογή, θα διαγραφούν όλα τα κτίρια, οι χρήστες και τα δεδομένα του tenant.
+              </p>
+              <label className="mt-3 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={deleteTenant}
+                  onChange={(event) => setDeleteTenant(event.target.checked)}
+                />
+                Διαγραφή ολόκληρου workspace
+              </label>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">
+              Θα διαγραφούν τα προσωπικά σου στοιχεία και η πρόσβαση στο σύστημα.
+            </p>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="delete-email">Επιβεβαίωσε το email σου</Label>
+              <Input
+                id="delete-email"
+                value={deleteEmail}
+                onChange={(event) => setDeleteEmail(event.target.value)}
+                placeholder={user?.email}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delete-phrase">Πληκτρολόγησε “DELETE” ή “ΔΙΑΓΡΑΦΗ”</Label>
+              <Input
+                id="delete-phrase"
+                value={deletePhrase}
+                onChange={(event) => setDeletePhrase(event.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="delete-password">Κωδικός πρόσβασης</Label>
+            <Input
+              id="delete-password"
+              type="password"
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              placeholder="Αν έχεις social login, άφησέ το κενό"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleteDisabled}
+              onClick={handleDeleteAccount}
+            >
+              {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {deleteLabel}
+            </Button>
+            {!isPhraseValid && deletePhrase.trim().length > 0 && (
+              <span className="text-xs text-destructive">Η φράση επιβεβαίωσης δεν είναι σωστή.</span>
+            )}
+            {deleteEmail.trim().length > 0 && !isEmailValid && (
+              <span className="text-xs text-destructive">Το email δεν ταιριάζει.</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

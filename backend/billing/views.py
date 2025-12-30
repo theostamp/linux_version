@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
 import json
@@ -34,12 +35,14 @@ from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
 
+PUBLIC_PLAN_TYPES = ['free', 'web', 'premium', 'premium_iot']
+
 
 class SubscriptionPlanViewSet(ReadOnlyModelViewSet):
     """
     ViewSet για subscription plans (μόνο read-only)
     """
-    queryset = SubscriptionPlan.objects.filter(is_active=True)
+    queryset = SubscriptionPlan.objects.filter(is_active=True, plan_type__in=PUBLIC_PLAN_TYPES)
     serializer_class = SubscriptionPlanSerializer
     permission_classes = [permissions.AllowAny]  # Public για να μπορούν να δουν τα plans
 
@@ -48,7 +51,7 @@ class PricingTierViewSet(ReadOnlyModelViewSet):
     """
     ViewSet για pricing tiers (κλιμακωτή τιμολόγηση)
     """
-    queryset = PricingTier.objects.filter(is_active=True)
+    queryset = PricingTier.objects.filter(is_active=True, plan_category__in=PUBLIC_PLAN_TYPES)
     serializer_class = PricingTierSerializer
     permission_classes = [permissions.AllowAny]  # Public endpoint
 
@@ -65,9 +68,6 @@ class PricingTierViewSet(ReadOnlyModelViewSet):
             'web': [],
             'premium': [],
             'premium_iot': [],
-            # Legacy buckets
-            'cloud': [],
-            'kiosk': [],
         }
 
         for tier in serializer.data:
@@ -121,12 +121,6 @@ class PriceCalculatorView(APIView):
     }
     """
     permission_classes = [permissions.AllowAny]  # Public endpoint για landing page
-    LEGACY_CATEGORY_MAP = {
-        'cloud': 'web',
-        'kiosk': 'premium',
-        'info_point': 'premium',
-        'infopoint': 'premium',
-    }
     PER_APARTMENT_CATEGORIES = {'web', 'premium', 'premium_iot'}
 
     def post(self, request):
@@ -140,8 +134,6 @@ class PriceCalculatorView(APIView):
         apartment_count = data['apartment_count']
         building_count = data.get('building_count', 1)
         yearly = data.get('yearly', False)
-
-        plan_category = self.LEGACY_CATEGORY_MAP.get(plan_category, plan_category)
 
         # Έλεγχος για "Καλέστε μας" (>5 πολυκατοικίες)
         if building_count > 5:
@@ -406,6 +398,39 @@ class UserSubscriptionViewSet(ModelViewSet):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def reactivate_subscription(self, request):
+        """
+        Reactivate subscription (clear cancel_at_period_end)
+        """
+        try:
+            subscription = BillingService.get_user_subscription(request.user)
+            if not subscription:
+                subscription = UserSubscription.objects.filter(user=request.user).order_by('-created_at').first()
+
+            if not subscription:
+                return Response({
+                    'error': 'No subscription found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            success = BillingService.reactivate_subscription(subscription)
+
+            if success:
+                response_serializer = UserSubscriptionSerializer(subscription)
+                return Response({
+                    'message': 'Subscription reactivated successfully',
+                    'subscription': response_serializer.data
+                })
+            return Response({
+                'error': 'Failed to reactivate subscription'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            logger.error(f"Error reactivating subscription: {e}")
+            return Response({
+                'error': 'Failed to reactivate subscription'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
     def current(self, request):
@@ -1190,7 +1215,7 @@ class AdminSubscriptionManagementView(APIView):
             elif action == 'reactivate':
                 subscription.status = 'active'
                 subscription.cancel_at_period_end = False
-                subscription.cancelled_at = None
+                subscription.canceled_at = None
                 subscription.save()
                 message = f'Subscription reactivated for {subscription.user.email}'
             elif action == 'extend_trial':
@@ -1491,6 +1516,42 @@ class PredictiveAnalyticsView(APIView):
             logger.error(f"Error getting predictive analytics: {e}")
             return Response({
                 'error': 'Failed to get predictive analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BillingPortalSessionView(APIView):
+    """
+    Create a Stripe Billing Portal session for the current user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            return_url = request.data.get('return_url')
+            if not return_url:
+                frontend_url = getattr(settings, 'FRONTEND_URL', '').rstrip('/')
+                return_url = f"{frontend_url}/my-subscription" if frontend_url else request.build_absolute_uri('/my-subscription')
+
+            subscription = UserSubscription.objects.filter(user=request.user).order_by('-created_at').first()
+            if not subscription or not subscription.stripe_customer_id:
+                return Response({
+                    'error': 'No Stripe customer found for this account'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            session = StripeService.create_billing_portal_session(subscription.stripe_customer_id, return_url)
+            if not session or not session.get('url'):
+                return Response({
+                    'error': 'Failed to create billing portal session'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({
+                'url': session['url']
+            })
+
+        except Exception as e:
+            logger.error(f"Error creating billing portal session: {e}")
+            return Response({
+                'error': 'Failed to create billing portal session'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

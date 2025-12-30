@@ -102,7 +102,7 @@ class StripeWebhookView(APIView):
         stripe_subscription_id = session.get('subscription')
         metadata = session.get('metadata', {})
         tenant_subdomain = metadata.get('tenant_subdomain')
-        plan_name = metadata.get('plan')  # Plan name from metadata (basic, professional, enterprise)
+        plan_name = metadata.get('plan')  # Plan name from metadata (free, web, premium, premium_iot)
         plan_id_from_metadata = metadata.get('plan_id')  # Plan ID if provided directly
         user_email = metadata.get('user_email')
         user_first_name = metadata.get('user_first_name', '')
@@ -115,10 +115,10 @@ class StripeWebhookView(APIView):
         if plan_name:
             plan_type_mapping = {
                 # Legacy plan names
-                'basic': 'starter',
-                'professional': 'professional',
-                'enterprise': 'enterprise',
-                'starter': 'starter',
+                'basic': 'web',
+                'starter': 'web',
+                'professional': 'premium',
+                'enterprise': 'premium_iot',
                 # New plan names (matching signup page)
                 'free': 'free',
                 'web': 'web',

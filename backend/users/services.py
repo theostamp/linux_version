@@ -1205,8 +1205,13 @@ class InvitationService:
             'errors': []
         }
 
+        # IMPORTANT: User & invitations live in PUBLIC schema (shared apps).
+        # If this service is invoked while the current connection schema is a tenant,
+        # we must force schema_context('public') for these operations.
+        from django_tenants.utils import schema_context
         try:
-            user = User.objects.get(id=user_id)
+            with schema_context('public'):
+                user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             raise ValueError(f"Χρήστης με ID {user_id} δεν βρέθηκε.")
 
@@ -1282,10 +1287,11 @@ class InvitationService:
 
         # 5. Ακύρωση pending invitations για αυτόν τον χρήστη (στο public schema)
         try:
-            cancelled = UserInvitation.objects.filter(
-                email=user.email,
-                status='pending'
-            ).update(status='cancelled')
+            with schema_context('public'):
+                cancelled = UserInvitation.objects.filter(
+                    email=user.email,
+                    status='pending'
+                ).update(status='cancelled')
             results['invitations_cancelled'] = cancelled
             if cancelled > 0:
                 logger.info(f"[REVOKE] Cancelled {cancelled} pending invitation(s)")
@@ -1297,16 +1303,17 @@ class InvitationService:
         # 6. Διαγραφή χρήστη (αν ζητήθηκε)
         if delete_user:
             try:
-                # Έλεγχος για protected users
-                if user.is_superuser:
-                    error_msg = "Δεν μπορεί να διαγραφεί superuser"
-                    results['errors'].append(error_msg)
-                    logger.warning(f"[REVOKE] {error_msg}")
-                else:
-                    user_email = user.email
-                    user.delete()
-                    results['user_deleted'] = True
-                    logger.info(f"[REVOKE] Deleted user: {user_email}")
+                with schema_context('public'):
+                    # Έλεγχος για protected users
+                    if user.is_superuser:
+                        error_msg = "Δεν μπορεί να διαγραφεί superuser"
+                        results['errors'].append(error_msg)
+                        logger.warning(f"[REVOKE] {error_msg}")
+                    else:
+                        user_email = user.email
+                        user.delete()
+                        results['user_deleted'] = True
+                        logger.info(f"[REVOKE] Deleted user: {user_email}")
             except Exception as e:
                 error_msg = f"Σφάλμα κατά τη διαγραφή χρήστη: {str(e)}"
                 results['errors'].append(error_msg)

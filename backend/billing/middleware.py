@@ -188,23 +188,31 @@ class PlanFeatureMiddleware(MiddlewareMixin):
     Middleware για τον έλεγχο feature access βασισμένο στο subscription plan
     """
 
+    PLAN_TYPE_ALIASES = {
+        'starter': 'web',
+        'cloud': 'web',
+        'professional': 'premium',
+        'kiosk': 'premium',
+        'enterprise': 'premium_iot',
+    }
+
     # Feature restrictions per endpoint
     FEATURE_RESTRICTIONS = {
-        # Analytics features (Professional/Enterprise only)
-        '/api/financial/analytics/': ['professional', 'enterprise'],
-        '/api/financial/reports/': ['professional', 'enterprise'],
+        # Analytics features (Premium/Premium+IoT only)
+        '/api/financial/analytics/': ['premium', 'premium_iot'],
+        '/api/financial/reports/': ['premium', 'premium_iot'],
 
-        # Custom integrations (Enterprise only)
-        '/api/integrations/custom/': ['enterprise'],
+        # Custom integrations (Premium + IoT only)
+        '/api/integrations/custom/': ['premium_iot'],
 
-        # White-label features (Enterprise only)
-        '/api/white-label/': ['enterprise'],
+        # White-label features (Premium + IoT only)
+        '/api/white-label/': ['premium_iot'],
 
-        # Advanced maintenance features (Professional/Enterprise)
-        '/api/maintenance/advanced/': ['professional', 'enterprise'],
+        # Advanced maintenance features (Premium/Premium+IoT)
+        '/api/maintenance/advanced/': ['premium', 'premium_iot'],
 
-        # Team management features (Professional/Enterprise)
-        '/api/teams/advanced/': ['professional', 'enterprise'],
+        # Team management features (Premium/Premium+IoT)
+        '/api/teams/advanced/': ['premium', 'premium_iot'],
     }
 
     def process_request(self, request):
@@ -247,7 +255,7 @@ class PlanFeatureMiddleware(MiddlewareMixin):
             if not required_plans:
                 return True  # No restrictions
 
-            user_plan = subscription.plan.plan_type
+            user_plan = self._normalize_plan_type(subscription.plan.plan_type)
             return user_plan in required_plans
 
         except Exception as e:
@@ -273,6 +281,9 @@ class PlanFeatureMiddleware(MiddlewareMixin):
         Get required plans για το feature
         """
         return self.FEATURE_RESTRICTIONS.get(path, [])
+
+    def _normalize_plan_type(self, plan_type: str) -> str:
+        return self.PLAN_TYPE_ALIASES.get(plan_type, plan_type)
 
 
 class BillingStatusMiddleware(MiddlewareMixin):

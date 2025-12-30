@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Optional, Dict, Any
 import logging
 import json
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -433,6 +434,66 @@ class StripeService:
             return None
 
     @staticmethod
+    def reactivate_subscription(subscription_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Reactivate Stripe subscription by clearing cancel_at_period_end.
+        """
+        # Mock subscriptions for development
+        if subscription_id.startswith('sub_mock_'):
+            logger.info(f"Using mock reactivation for subscription: {subscription_id}")
+            return {
+                'id': subscription_id,
+                'status': 'active',
+                'cancel_at_period_end': False,
+                'canceled_at': None
+            }
+
+        try:
+            subscription = stripe.Subscription.modify(
+                subscription_id,
+                cancel_at_period_end=False
+            )
+
+            logger.info(f"Reactivated Stripe subscription {subscription_id}")
+            return {
+                'id': subscription.id,
+                'status': subscription.status,
+                'cancel_at_period_end': subscription.cancel_at_period_end,
+                'canceled_at': subscription.canceled_at
+            }
+
+        except stripe.StripeError as e:
+            logger.error(f"Failed to reactivate subscription {subscription_id}: {e}")
+            return None
+
+    @staticmethod
+    def create_billing_portal_session(customer_id: str, return_url: str) -> Optional[Dict[str, Any]]:
+        """
+        Create a Stripe Billing Portal session for payment method management.
+        """
+        if not customer_id:
+            return None
+
+        if customer_id.startswith('cus_mock_') or not settings.STRIPE_SECRET_KEY:
+            mock_session_id = f"bps_mock_{uuid.uuid4().hex[:12]}"
+            logger.info(f"Created mock billing portal session {mock_session_id}")
+            return {
+                'id': mock_session_id,
+                'url': return_url
+            }
+
+        try:
+            session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=return_url
+            )
+            logger.info(f"Created billing portal session {session.id}")
+            return dict(session)
+        except stripe.StripeError as e:
+            logger.error(f"Failed to create billing portal session for {customer_id}: {e}")
+            return None
+
+    @staticmethod
     def retrieve_subscription(subscription_id: str) -> Optional[Dict[str, Any]]:
         """
         Ανάκτηση Stripe subscription details
@@ -574,19 +635,28 @@ class StripeService:
         Ανάκτηση Stripe price ID για ένα plan
         """
         # Σε ένα production environment, αυτά θα ήταν hardcoded ή θα έρχονταν από database
+        legacy_map = {
+            'starter': 'web',
+            'cloud': 'web',
+            'professional': 'premium',
+            'kiosk': 'premium',
+            'enterprise': 'premium_iot',
+        }
+        plan_type = legacy_map.get(plan_type, plan_type)
+
         price_mapping = {
-            'starter': {
-                'month': 'price_starter_monthly',  # Θα δημιουργηθεί στο Stripe
-                'year': 'price_starter_yearly'
+            'web': {
+                'month': 'price_web_monthly',  # Θα δημιουργηθεί στο Stripe
+                'year': 'price_web_yearly'
             },
-            'professional': {
-                'month': 'price_professional_monthly',
-                'year': 'price_professional_yearly'
+            'premium': {
+                'month': 'price_premium_monthly',
+                'year': 'price_premium_yearly'
             },
-            'enterprise': {
-                'month': 'price_enterprise_monthly',
-                'year': 'price_enterprise_yearly'
-            }
+            'premium_iot': {
+                'month': 'price_premium_iot_monthly',
+                'year': 'price_premium_iot_yearly'
+            },
         }
 
         try:
@@ -752,4 +822,3 @@ class StripeService:
         except Exception as e:
             logger.error(f"Unexpected error creating checkout session: {e}")
             raise
-

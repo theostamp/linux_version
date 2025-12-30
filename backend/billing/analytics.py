@@ -17,7 +17,7 @@ class UsageAnalyticsService:
     """
     Service για την ανάλυση usage data και generation reports
     """
-    
+
     @staticmethod
     def get_user_usage_summary(user) -> Dict[str, Any]:
         """
@@ -30,17 +30,17 @@ class UsageAnalyticsService:
                     'has_subscription': False,
                     'message': 'No active subscription found'
                 }
-            
+
             # Get current month usage
             current_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             next_month = (current_month + timedelta(days=32)).replace(day=1)
-            
+
             usage_data = UsageTracking.objects.filter(
                 subscription=subscription,
                 period_start__gte=current_month,
                 period_end__lt=next_month
             )
-            
+
             # Build usage summary
             summary = {
                 'subscription': {
@@ -59,32 +59,32 @@ class UsageAnalyticsService:
                 'overages': {},
                 'recommendations': []
             }
-            
+
             # Process each metric
             for usage in usage_data:
                 metric = usage.metric_type
                 current = usage.current_value
                 limit = usage.limit_value
-                
+
                 summary['usage'][metric] = current
                 summary['limits'][metric] = limit
-                
+
                 # Calculate utilization percentage
                 if limit > 0:
                     utilization = (current / limit) * 100
                     summary['utilization'][metric] = round(utilization, 2)
-                    
+
                     # Check for overages
                     if current > limit:
                         summary['overages'][metric] = current - limit
-                        
+
                         # Add recommendation
                         summary['recommendations'].append({
                             'type': 'overage',
                             'metric': metric,
                             'message': f'You have exceeded your {metric} limit by {current - limit}. Consider upgrading your plan.'
                         })
-                    
+
                     # Add utilization warnings
                     elif utilization > 80:
                         summary['recommendations'].append({
@@ -94,25 +94,29 @@ class UsageAnalyticsService:
                         })
                 else:
                     summary['utilization'][metric] = 0  # Unlimited
-            
+
             # Add plan upgrade recommendations
-            if subscription.plan.plan_type == 'starter' and any(
+            plan_type = subscription.plan.plan_type
+            if plan_type in {'starter', 'cloud'}:
+                plan_type = 'web'
+
+            if plan_type == 'web' and any(
                 util > 70 for util in summary['utilization'].values() if util is not None
             ):
                 summary['recommendations'].append({
                     'type': 'upgrade',
-                    'message': 'Consider upgrading to Professional plan for better limits and features.'
+                    'message': 'Consider upgrading to the Premium plan for better limits and features.'
                 })
-            
+
             return summary
-            
+
         except Exception as e:
             logger.error(f"Error getting usage summary for user {user.email}: {e}")
             return {
                 'error': 'Failed to get usage summary',
                 'message': str(e)
             }
-    
+
     @staticmethod
     def get_usage_trends(user, days: int = 30) -> Dict[str, Any]:
         """
@@ -122,28 +126,28 @@ class UsageAnalyticsService:
             subscription = BillingService.get_user_subscription(user)
             if not subscription:
                 return {'error': 'No active subscription found'}
-            
+
             end_date = timezone.now()
             start_date = end_date - timedelta(days=days)
-            
+
             # Get usage data for the period
             usage_data = UsageTracking.objects.filter(
                 subscription=subscription,
                 period_start__gte=start_date,
                 period_end__lte=end_date
             ).order_by('period_start', 'metric_type')
-            
+
             # Group by metric type and date
             trends = {}
             for usage in usage_data:
                 metric = usage.metric_type
                 date = usage.period_start.date()
-                
+
                 if metric not in trends:
                     trends[metric] = {}
-                
+
                 trends[metric][str(date)] = usage.current_value
-            
+
             return {
                 'period': {
                     'start_date': start_date.date(),
@@ -156,11 +160,11 @@ class UsageAnalyticsService:
                     'plan_type': subscription.plan.plan_type
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Error getting usage trends for user {user.email}: {e}")
             return {'error': 'Failed to get usage trends', 'message': str(e)}
-    
+
     @staticmethod
     def get_plan_comparison(user) -> Dict[str, Any]:
         """
@@ -170,14 +174,17 @@ class UsageAnalyticsService:
             subscription = BillingService.get_user_subscription(user)
             if not subscription:
                 return {'error': 'No active subscription found'}
-            
+
             current_plan = subscription.plan
             current_usage = UsageAnalyticsService.get_user_usage_summary(user)
-            
+
             # Get all available plans
             from .models import SubscriptionPlan
-            all_plans = SubscriptionPlan.objects.filter(is_active=True).order_by('monthly_price')
-            
+            all_plans = SubscriptionPlan.objects.filter(
+                is_active=True,
+                plan_type__in=['free', 'web', 'premium', 'premium_iot']
+            ).order_by('monthly_price')
+
             comparison = {
                 'current_plan': {
                     'name': current_plan.name,
@@ -202,7 +209,7 @@ class UsageAnalyticsService:
                 'available_plans': [],
                 'recommendations': []
             }
-            
+
             # Add other plans
             for plan in all_plans:
                 if plan.plan_type != current_plan.plan_type:
@@ -227,7 +234,7 @@ class UsageAnalyticsService:
                         'trial_days': plan.trial_days
                     }
                     comparison['available_plans'].append(plan_data)
-            
+
             # Add upgrade/downgrade recommendations
             current_usage_data = current_usage.get('usage', {})
             for plan_data in comparison['available_plans']:
@@ -244,13 +251,13 @@ class UsageAnalyticsService:
                             'reason': 'Current usage exceeds plan limits',
                             'savings': f"€{plan_data['monthly_price'] - comparison['current_plan']['monthly_price']:.2f}/month additional cost"
                         })
-            
+
             return comparison
-            
+
         except Exception as e:
             logger.error(f"Error getting plan comparison for user {user.email}: {e}")
             return {'error': 'Failed to get plan comparison', 'message': str(e)}
-    
+
     @staticmethod
     def get_billing_history(user, months: int = 6) -> Dict[str, Any]:
         """
@@ -260,12 +267,12 @@ class UsageAnalyticsService:
             subscription = BillingService.get_user_subscription(user)
             if not subscription:
                 return {'error': 'No active subscription found'}
-            
+
             # Get billing cycles
             billing_cycles = BillingCycle.objects.filter(
                 subscription=subscription
             ).order_by('-period_start')[:months]
-            
+
             history = {
                 'subscription': {
                     'id': subscription.id,
@@ -280,7 +287,7 @@ class UsageAnalyticsService:
                     'failed_payments': 0
                 }
             }
-            
+
             for cycle in billing_cycles:
                 cycle_data = {
                     'id': cycle.id,
@@ -293,23 +300,23 @@ class UsageAnalyticsService:
                     'paid_at': cycle.paid_at
                 }
                 history['billing_cycles'].append(cycle_data)
-                
+
                 # Update summary
                 history['summary']['total_due'] += float(cycle.amount_due)
                 if cycle.amount_paid:
                     history['summary']['total_paid'] += float(cycle.amount_paid)
-                
+
                 if cycle.status == 'paid':
                     history['summary']['successful_payments'] += 1
                 elif cycle.status == 'failed':
                     history['summary']['failed_payments'] += 1
-            
+
             return history
-            
+
         except Exception as e:
             logger.error(f"Error getting billing history for user {user.email}: {e}")
             return {'error': 'Failed to get billing history', 'message': str(e)}
-    
+
     @staticmethod
     def get_admin_usage_stats(admin_user) -> Dict[str, Any]:
         """
@@ -319,12 +326,12 @@ class UsageAnalyticsService:
             # Only superusers can access admin stats
             if not admin_user.is_superuser:
                 return {'error': 'Admin access required'}
-            
+
             # Get all active subscriptions
             active_subscriptions = UserSubscription.objects.filter(
                 status__in=['trial', 'active']
             ).select_related('user', 'plan')
-            
+
             stats = {
                 'total_subscriptions': active_subscriptions.count(),
                 'plan_distribution': {},
@@ -340,29 +347,27 @@ class UsageAnalyticsService:
                     'cancelled': 0
                 }
             }
-            
+
             # Analyze subscriptions
             for subscription in active_subscriptions:
                 plan_type = subscription.plan.plan_type
-                
+
                 # Plan distribution
                 stats['plan_distribution'][plan_type] = stats['plan_distribution'].get(plan_type, 0) + 1
-                
+
                 # Status distribution
                 stats['subscription_status'][subscription.status] += 1
-                
+
                 # Revenue calculation
                 if subscription.billing_interval == 'month':
                     stats['revenue_summary']['monthly_recurring_revenue'] += float(subscription.price)
                 elif subscription.billing_interval == 'year':
                     stats['revenue_summary']['yearly_recurring_revenue'] += float(subscription.price)
-                
+
                 stats['revenue_summary']['total_revenue'] += float(subscription.price)
-            
+
             return stats
-            
+
         except Exception as e:
             logger.error(f"Error getting admin usage stats: {e}")
             return {'error': 'Failed to get admin stats', 'message': str(e)}
-
-

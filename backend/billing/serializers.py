@@ -41,8 +41,8 @@ class PriceCalculationRequestSerializer(serializers.Serializer):
     Serializer για αίτημα υπολογισμού τιμής
     """
     plan_category = serializers.ChoiceField(
-        choices=['free', 'web', 'premium', 'premium_iot', 'cloud', 'kiosk'],
-        help_text='Τύπος πακέτου: free, web, premium, premium_iot (legacy: cloud, kiosk)'
+        choices=['free', 'web', 'premium', 'premium_iot'],
+        help_text='Τύπος πακέτου: free, web, premium, premium_iot'
     )
     apartment_count = serializers.IntegerField(
         min_value=1,
@@ -126,14 +126,14 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             'id', 'plan', 'plan_id', 'status', 'billing_interval',
             'trial_start', 'trial_end', 'current_period_start', 'current_period_end',
             'price', 'currency', 'is_trial',
-            'canceled_at',
+            'canceled_at', 'cancel_at_period_end',
             'tenant_domain',  # Added for frontend redirect
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'plan', 'status', 'trial_start', 'trial_end',
             'current_period_start', 'current_period_end',
-            'price', 'currency', 'is_trial', 'canceled_at',
+            'price', 'currency', 'is_trial', 'canceled_at', 'cancel_at_period_end',
             'tenant_domain',  # Read-only field set by backend
             'created_at', 'updated_at'
         ]
@@ -373,4 +373,3 @@ class SubscriptionSummarySerializer(serializers.Serializer):
                 'storage_gb': subscription.plan.max_storage_gb,
             }
         }
-

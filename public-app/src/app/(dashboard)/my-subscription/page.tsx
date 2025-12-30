@@ -33,7 +33,7 @@ type SubscriptionPlan = {
 
 type UserSubscription = {
   id: number;
-  status: 'active' | 'trial' | 'trialing' | 'past_due' | 'canceled';
+  status: 'active' | 'trial' | 'trialing' | 'past_due' | 'canceled' | 'cancelled';
   billing_interval: 'month' | 'year';
   trial_start?: string | null;
   trial_end?: string | null;
@@ -158,6 +158,16 @@ const useSubscriptionPlans = () =>
     staleTime: 5 * 60_000,
   });
 
+const usePaymentMethods = () =>
+  useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: async () => {
+      const response = await api.get<ApiListResponse<PaymentMethod>>('/billing/payment-methods/');
+      return parseListResponse(response);
+    },
+    staleTime: 60_000,
+  });
+
 export default function MySubscriptionPage() {
   const {
     data: subscription,
@@ -171,6 +181,8 @@ export default function MySubscriptionPage() {
     refetch: refetchSummary,
   } = useSubscriptionSummary(subscription?.id);
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
+  const { data: paymentMethodsData } = usePaymentMethods();
+  const [billingInterval, setBillingInterval] = React.useState<'month' | 'year'>('month');
 
   const updateMutation = useMutation({
     mutationFn: async (planId: number) =>
@@ -184,6 +196,54 @@ export default function MySubscriptionPage() {
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Σφάλμα κατά την αλλαγή πλάνου';
+      toast.error(message);
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (payload: { planId: number; interval: 'month' | 'year' }) =>
+      api.post('/billing/subscriptions/create_subscription/', {
+        plan_id: payload.planId,
+        billing_interval: payload.interval,
+      }),
+    onSuccess: () => {
+      toast.success('Η συνδρομή ενεργοποιήθηκε επιτυχώς');
+      void refetchSubscription();
+      void refetchSummary();
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Σφάλμα κατά την ενεργοποίηση συνδρομής';
+      toast.error(message);
+    },
+  });
+
+  const portalMutation = useMutation({
+    mutationFn: async (returnUrl?: string) =>
+      api.post<{ url?: string }>('/billing/portal/', {
+        return_url: returnUrl,
+      }),
+    onSuccess: (data) => {
+      if (data?.url && typeof window !== 'undefined') {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error('Δεν ήταν δυνατή η δημιουργία σελίδας πληρωμής.');
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Σφάλμα κατά το άνοιγμα της σελίδας πληρωμής';
+      toast.error(message);
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: async () => api.post('/billing/subscriptions/reactivate_subscription/', {}),
+    onSuccess: () => {
+      toast.success('Η αυτόματη ανανέωση ενεργοποιήθηκε.');
+      void refetchSubscription();
+      void refetchSummary();
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Σφάλμα κατά την επανενεργοποίηση';
       toast.error(message);
     },
   });
@@ -204,18 +264,37 @@ export default function MySubscriptionPage() {
     },
   });
 
-  const isBusy = subscriptionLoading || updateMutation.isPending || cancelMutation.isPending;
+  const isBusy =
+    subscriptionLoading ||
+    updateMutation.isPending ||
+    cancelMutation.isPending ||
+    createMutation.isPending ||
+    portalMutation.isPending ||
+    reactivateMutation.isPending;
 
   const billingCycles = summary?.billing_cycles ?? [];
   const upcomingInvoice =
     billingCycles.find((cycle) => cycle.status !== 'paid') ?? billingCycles[0] ?? null;
-  const paymentMethods = summary?.payment_methods ?? [];
+  const paymentMethods = summary?.payment_methods?.length ? summary.payment_methods : paymentMethodsData ?? [];
   const usageTracking = summary?.usage_tracking ?? [];
+  const hasActiveSubscription = Boolean(subscription);
+  const hasPaymentMethod = paymentMethods.length > 0;
+  const portalLabel = hasPaymentMethod ? 'Διαχείριση κάρτας' : 'Προσθήκη κάρτας';
+  const canReactivate = Boolean(subscription?.cancel_at_period_end);
 
   const availablePlans = React.useMemo(() => {
     if (!plans?.length) return [];
-    return plans.sort((a, b) => parseFloat(a.monthly_price) - parseFloat(b.monthly_price));
+    const allowed = new Set(['web', 'premium', 'premium_iot']);
+    return plans
+      .filter((plan) => allowed.has(plan.plan_type))
+      .sort((a, b) => parseFloat(a.monthly_price) - parseFloat(b.monthly_price));
   }, [plans]);
+
+  React.useEffect(() => {
+    if (subscription?.billing_interval) {
+      setBillingInterval(subscription.billing_interval);
+    }
+  }, [subscription?.billing_interval]);
 
   if (subscriptionError) {
     return (
@@ -258,37 +337,52 @@ export default function MySubscriptionPage() {
         <div className="flex h-full min-h-[30vh] items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : !subscription ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Δεν έχεις ενεργή συνδρομή</CardTitle>
-            <CardDescription>
-              Επικοινώνησε με την ομάδα μας για να ενεργοποιήσουμε το κατάλληλο πλάνο ή για να
-              ξεκινήσεις νέα δοκιμή.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.location.href = 'mailto:sales@newconcierge.app?subject=New Concierge Subscription';
-                }
-              }}
-            >
-              Επικοινωνία με πωλήσεις
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                toast.info('Σύντομα θα υποστηρίζουμε self-serve ενεργοποίηση μέσα από το dashboard.');
-              }}
-            >
-              Μάθε περισσότερα
-            </Button>
-          </CardContent>
-        </Card>
       ) : (
         <>
+          {!subscription && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Δεν υπάρχει ενεργή συνδρομή</CardTitle>
+                <CardDescription>
+                  Μπορείς να επανενεργοποιήσεις τη συνδρομή σου επιλέγοντας νέο πλάνο παρακάτω ή να
+                  επικοινωνήσεις με την ομάδα μας.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      portalMutation.mutate(window.location.href);
+                    }
+                  }}
+                  disabled={portalMutation.isPending}
+                >
+                  {portalMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {portalLabel}
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.location.href = 'mailto:sales@newconcierge.app?subject=New Concierge Subscription';
+                    }
+                  }}
+                >
+                  Επικοινωνία με πωλήσεις
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast.info('Επίλεξε πλάνο παρακάτω για άμεση επανενεργοποίηση.');
+                  }}
+                >
+                  Επανενεργοποίηση τώρα
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {subscription && (
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -363,21 +457,34 @@ export default function MySubscriptionPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="destructive"
-                    onClick={() => cancelMutation.mutate(true)}
-                    disabled={cancelMutation.isPending || subscription.cancel_at_period_end === true}
-                  >
-                    {cancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Ακύρωση στο τέλος περιόδου
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => cancelMutation.mutate(false)}
-                    disabled={cancelMutation.isPending}
-                  >
-                    Σταμάτημα άμεσα
-                  </Button>
+                  {canReactivate ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => reactivateMutation.mutate()}
+                      disabled={reactivateMutation.isPending}
+                    >
+                      {reactivateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Επαναφορά αυτόματης ανανέωσης
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="destructive"
+                        onClick={() => cancelMutation.mutate(true)}
+                        disabled={cancelMutation.isPending || subscription.cancel_at_period_end === true}
+                      >
+                        {cancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Ακύρωση στο τέλος περιόδου
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => cancelMutation.mutate(false)}
+                        disabled={cancelMutation.isPending}
+                      >
+                        Σταμάτημα άμεσα
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -410,11 +517,25 @@ export default function MySubscriptionPage() {
                 <Separator />
 
                 <div className="space-y-3">
-                  <p className="text-xs uppercase text-muted-foreground">Τρόποι πληρωμής</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs uppercase text-muted-foreground">Τρόποι πληρωμής</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          portalMutation.mutate(window.location.href);
+                        }
+                      }}
+                      disabled={portalMutation.isPending}
+                    >
+                      {portalMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {portalLabel}
+                    </Button>
+                  </div>
                   {paymentMethods.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Δεν έχει αποθηκευτεί κάρτα ακόμη. Οι πληροφορίες αποθηκεύονται αυτόματα μετά το
-                      checkout στον Stripe.
+                      Δεν έχει αποθηκευτεί κάρτα ακόμη. Πρόσθεσε κάρτα για να ολοκληρώσεις την ενεργοποίηση.
                     </p>
                   ) : (
                     paymentMethods.map((method) => (
@@ -505,15 +626,37 @@ export default function MySubscriptionPage() {
               </CardContent>
             </Card>
           </div>
+          )}
 
           <Card>
             <CardHeader>
               <CardTitle>Διαθέσιμα πλάνα</CardTitle>
               <CardDescription>
-                Σύγκρινε τα πλάνα και αναβάθμισε απευθείας μέσα από το dashboard.
+                Σύγκρινε τα πλάνα και αναβάθμισε ή επανενεργοποίησε απευθείας μέσα από το dashboard.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!hasActiveSubscription && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Κύκλος χρέωσης:</span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={billingInterval === 'month' ? 'default' : 'outline'}
+                      onClick={() => setBillingInterval('month')}
+                    >
+                      Μηνιαία
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={billingInterval === 'year' ? 'default' : 'outline'}
+                      onClick={() => setBillingInterval('year')}
+                    >
+                      Ετήσια
+                    </Button>
+                  </div>
+                </div>
+              )}
               {plansLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               ) : availablePlans.length === 0 ? (
@@ -524,6 +667,17 @@ export default function MySubscriptionPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                   {availablePlans.map((plan) => {
                     const isCurrent = subscription?.plan.id === plan.id;
+                    const planPrice = billingInterval === 'year' ? plan.yearly_price : plan.monthly_price;
+                    const currentPrice = subscription?.plan?.monthly_price ?? '0';
+                    const isUpgrade = hasActiveSubscription && parseFloat(plan.monthly_price) > parseFloat(currentPrice);
+                    const actionLabel = hasActiveSubscription
+                      ? isCurrent
+                        ? 'Ενεργό πλάνο'
+                        : isUpgrade
+                          ? 'Αναβάθμιση'
+                          : 'Αλλαγή πλάνου'
+                      : 'Ενεργοποίηση πλάνου';
+
                     return (
                       <div key={plan.id} className="flex flex-col rounded-2xl border p-4">
                         <div className="mb-3 flex items-center justify-between">
@@ -534,8 +688,10 @@ export default function MySubscriptionPage() {
                           {isCurrent && <Badge>Τρέχον</Badge>}
                         </div>
                         <p className="text-3xl font-semibold">
-                          {formatCurrency(plan.monthly_price)}
-                          <span className="text-sm font-normal text-muted-foreground"> /μήνα</span>
+                          {formatCurrency(planPrice)}
+                          <span className="text-sm font-normal text-muted-foreground">
+                            {billingInterval === 'year' ? ' /έτος' : ' /μήνα'}
+                          </span>
                         </p>
                         <p className="text-sm text-muted-foreground">{plan.description}</p>
                         <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
@@ -550,10 +706,23 @@ export default function MySubscriptionPage() {
                           <Button
                             className="w-full"
                             variant={isCurrent ? 'outline' : 'default'}
-                            disabled={isCurrent || updateMutation.isPending}
-                            onClick={() => updateMutation.mutate(plan.id)}
+                            disabled={isCurrent || updateMutation.isPending || createMutation.isPending}
+                            onClick={() => {
+                              if (hasActiveSubscription) {
+                                updateMutation.mutate(plan.id);
+                              } else {
+                                if (!hasPaymentMethod && plan.plan_type !== 'free') {
+                                  toast.info('Πρόσθεσε κάρτα για να ενεργοποιήσεις συνδρομή.');
+                                  if (typeof window !== 'undefined') {
+                                    portalMutation.mutate(window.location.href);
+                                  }
+                                  return;
+                                }
+                                createMutation.mutate({ planId: plan.id, interval: billingInterval });
+                              }
+                            }}
                           >
-                            {isCurrent ? 'Ενεργό πλάνο' : 'Επιλογή πλάνου'}
+                            {actionLabel}
                           </Button>
                         </div>
                       </div>

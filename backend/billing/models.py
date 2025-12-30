@@ -434,6 +434,10 @@ class UserSubscription(models.Model):
         blank=True,
         help_text='When subscription was canceled'
     )
+    cancel_at_period_end = models.BooleanField(
+        default=False,
+        help_text='Whether subscription will cancel at period end'
+    )
 
     # Payment
     stripe_subscription_id = models.CharField(

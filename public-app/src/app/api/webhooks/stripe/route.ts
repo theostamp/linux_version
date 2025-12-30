@@ -119,7 +119,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     if (!coreApiUrl) {
       throw new Error('Backend API not configured');
     }
-    
+
     const coreApiResponse = await fetch(coreApiUrl, {
       method: 'POST',
       headers: {
@@ -135,7 +135,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           last_name: user_last_name || '',
           password: user_password || 'temp_password_123' // Use password from metadata or fallback
         },
-        plan_id: getPlanId(plan),
+        plan_id: await getPlanId(plan),
         stripe_customer_id: session.customer as string,
         stripe_subscription_id: session.subscription as string,
         stripe_checkout_session_id: session.id
@@ -155,7 +155,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // The backend should handle this, but we can also trigger it here if needed
     // The user should be created by the backend during tenant creation
     // and email verification should be sent automatically
-    
+
     // If backend doesn't send email automatically, trigger it:
     if (tenantData.user_id) {
       try {
@@ -202,11 +202,34 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_failed:', invoice.id);
 }
 
-function getPlanId(planName: string): number {
-  const planMapping: Record<string, number> = {
-    basic: 1,
-    professional: 2,
-    enterprise: 3,
+async function getPlanId(planName: string): Promise<number> {
+  const normalized = (planName || '').toLowerCase();
+  const planTypeMapping: Record<string, string> = {
+    free: 'free',
+    web: 'web',
+    premium: 'premium',
+    premium_iot: 'premium_iot',
+    'premium + iot': 'premium_iot',
+    'premium +iot': 'premium_iot',
   };
-  return planMapping[planName] || 2;
+  const planType = planTypeMapping[normalized] || 'web';
+
+  const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
+  if (!coreApiUrl) {
+    throw new Error('Backend API not configured');
+  }
+
+  const plansResponse = await fetch(`${coreApiUrl}/api/billing/plans/`);
+  if (!plansResponse.ok) {
+    throw new Error('Failed to fetch subscription plans');
+  }
+
+  const payload = await plansResponse.json();
+  const plans = Array.isArray(payload) ? payload : payload?.results || payload?.plans || [];
+  const match = plans.find((plan: any) => plan.plan_type === planType);
+  if (!match?.id) {
+    throw new Error(`Plan not found for type: ${planType}`);
+  }
+
+  return match.id;
 }

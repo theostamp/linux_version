@@ -334,7 +334,7 @@ export default function LandingPage() {
               <AnimatedSection delay={300}>
                 <ul className="grid gap-3 text-base text-slate-300 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                   {[
-                    "Ενημέρωση για όλους (είσοδος & κινητό)",
+                    "Ενημέρωση για όλους (info point στην είσοδο, email & κινητό)",
                     "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
                     "Ψηφοφορίες με καταγραφή και διαφάνεια",
                     "Αιτήματα / βλάβες με παρακολούθηση εξέλιξης",
@@ -630,7 +630,7 @@ export default function LandingPage() {
           <AnimatedSection delay={200}>
             <div className="rounded-2xl border border-gray-200 bg-slate-900/50 p-6 overflow-x-auto">
               <h3 className="mb-4 text-center text-lg font-semibold text-slate-50">
-                Γρήγορος οδηγός τιμολόγησης
+                Γρήγορος οδηγός τιμολόγησης / διαμέρισμα
               </h3>
               <table className="w-full min-w-[520px] text-sm">
                 <thead>

@@ -12,6 +12,8 @@ from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from django.contrib.admin.utils import unquote
 
+from django_tenants.utils import schema_context
+
 from .models import CustomUser
 from .models_invitation import TenantInvitation
 
@@ -22,7 +24,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
     actions = ['delete_invitations_only', 'revoke_user_access_action']
-    
+
     def is_protected(self, obj):
         """Visual indicator για προστατευμένους users"""
         if obj.email == self.PROTECTED_ADMIN_EMAIL:
@@ -86,7 +88,7 @@ class CustomUserAdmin(UserAdmin):
         """
         Override για να χειρίζεται το σφάλμα αν ο πίνακας buildings_buildingmembership δεν υπάρχει.
         Αυτό είναι workaround μέχρι να τρέξουν οι migrations.
-        
+
         Το Django admin περιμένει:
         - deleted_objects: nested list με structure [[obj_repr, [nested_related_objects]]]
         - model_count: dict {verbose_name: count}
@@ -103,7 +105,7 @@ class CustomUserAdmin(UserAdmin):
                 deleted_objects = []
                 for obj in objs:
                     deleted_objects.append([force_str(obj), []])
-                
+
                 model_count = {force_str(self.model._meta.verbose_name): len(objs)}
                 perms_needed = set()
                 protected = []
@@ -117,7 +119,7 @@ class CustomUserAdmin(UserAdmin):
         """
         if not ids:
             return
-        
+
         # Prepare IN clause for multiple IDs or single WHERE
         if len(ids) == 1:
             where_clause = "user_id = %s"
@@ -131,27 +133,33 @@ class CustomUserAdmin(UserAdmin):
             params = ids
             id_where_clause = f"id IN ({placeholders})"
             id_params = ids
-        
+
         # Delete related objects first
         # Each deletion in its own transaction to avoid "transaction aborted" errors
         # IMPORTANT ORDER:
         # 1. SET_NULL first (to remove FK references) - in ALL schemas
         # 2. CASCADE deletes (to remove dependent records) - in public schema
         # 3. Delete user last
-        
+
         # Get all tenant schemas for tenant-specific tables
         from tenants.models import Client
-        tenant_schemas = list(Client.objects.exclude(schema_name='public').values_list('schema_name', flat=True))
-        
+        # IMPORTANT: Client model/table lives in PUBLIC schema (shared app).
+        # If admin is accessed via a tenant domain, connection schema may be tenant,
+        # so we must force public schema for this query.
+        with schema_context('public'):
+            tenant_schemas = list(
+                Client.objects.exclude(schema_name='public').values_list('schema_name', flat=True)
+            )
+
         import logging
         logger = logging.getLogger(__name__)
         logger.info(f"Deleting user(s) {ids}, found {len(tenant_schemas)} tenant schemas")
-        
+
         # Tables with SET_NULL in PUBLIC schema
         set_null_public_tables = [
             ('votes_vote', 'creator_id'),  # Votes created by user (SET_NULL)
         ]
-        
+
         # Tables with SET_NULL in TENANT schemas (financial app is tenant-specific)
         set_null_tenant_tables = [
             ('financial_financialauditlog', 'user_id'),  # Financial audit logs (SET_NULL)
@@ -159,7 +167,7 @@ class CustomUserAdmin(UserAdmin):
             ('financial_unifiedreceipt', 'created_by_id'),  # Unified receipts (SET_NULL)
             ('financial_unifiedreceipt', 'cancelled_by_id'),  # Unified receipts cancelled (SET_NULL)
         ]
-        
+
         # Tables with CASCADE delete (in public schema)
         cascade_tables = [
             'django_admin_log',  # Admin log entries (CASCADE) - must be deleted first
@@ -170,12 +178,12 @@ class CustomUserAdmin(UserAdmin):
             'billing_usersubscription',  # User subscriptions (CASCADE)
             'todo_management_todo',  # Todos created by user (CASCADE)
         ]
-        
+
         # Tables with CASCADE delete in TENANT schemas
         cascade_tenant_tables = [
             'buildings_buildingmembership',  # Building memberships (CASCADE) - must be deleted before user
         ]
-        
+
         # STEP 1a: Set SET_NULL fields to NULL in PUBLIC schema
         for table, field in set_null_public_tables:
             try:
@@ -192,7 +200,7 @@ class CustomUserAdmin(UserAdmin):
                     logger.warning(f"Could not update public.{table}.{field}: {e}")
             except Exception as e:
                 logger.warning(f"Error updating public.{table}.{field}: {e}")
-        
+
         # STEP 1b: Set SET_NULL fields to NULL in ALL TENANT schemas
         for schema in tenant_schemas:
             for table, field in set_null_tenant_tables:
@@ -213,7 +221,7 @@ class CustomUserAdmin(UserAdmin):
                         logger.warning(f"Could not update {schema}.{table}.{field}: {e}")
                 except Exception as e:
                     logger.warning(f"Error updating {schema}.{table}.{field}: {e}")
-        
+
         # STEP 2a: Delete CASCADE tables in PUBLIC schema
         for table in cascade_tables:
             try:
@@ -221,9 +229,12 @@ class CustomUserAdmin(UserAdmin):
                     with connection.cursor() as cursor:
                         # django_admin_log uses user_id, not id
                         if table == 'django_admin_log':
-                            cursor.execute(f"DELETE FROM {table} WHERE user_id IN ({placeholders if len(ids) > 1 else '%s'})", params if len(ids) > 1 else [ids[0]])
+                            cursor.execute(
+                                f"DELETE FROM public.{table} WHERE user_id IN ({placeholders if len(ids) > 1 else '%s'})",
+                                params if len(ids) > 1 else [ids[0]],
+                            )
                         else:
-                            cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
+                            cursor.execute(f"DELETE FROM public.{table} WHERE {where_clause}", params)
                         if cursor.rowcount > 0:
                             logger.info(f"Deleted {cursor.rowcount} rows from public.{table} for user IDs {ids}")
             except ProgrammingError as e:
@@ -235,7 +246,7 @@ class CustomUserAdmin(UserAdmin):
             except Exception as e:
                 # Log other errors but continue
                 logger.warning(f"Error deleting from public.{table}: {e}")
-        
+
         # STEP 2b: Delete CASCADE tables in ALL TENANT schemas
         for schema in tenant_schemas:
             for table in cascade_tenant_tables:
@@ -264,16 +275,16 @@ class CustomUserAdmin(UserAdmin):
                         logger.warning(f"Could not delete from {schema}.{table}: {e}")
                 except Exception as e:
                     logger.warning(f"Error deleting from {schema}.{table}: {e}")
-        
+
         # STEP 3: Now delete the user in main transaction
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
                     if len(ids) == 1:
-                        cursor.execute("DELETE FROM users_customuser WHERE id = %s", [ids[0]])
+                        cursor.execute("DELETE FROM public.users_customuser WHERE id = %s", [ids[0]])
                     else:
                         placeholders = ','.join(['%s'] * len(ids))
-                        cursor.execute(f"DELETE FROM users_customuser WHERE id IN ({placeholders})", ids)
+                        cursor.execute(f"DELETE FROM public.users_customuser WHERE id IN ({placeholders})", ids)
         except Exception as e:
             # Log the error and re-raise so it can be caught by delete_view
             import logging
@@ -310,10 +321,10 @@ class CustomUserAdmin(UserAdmin):
             # Log before deletion only if we're deleting the currently logged-in user.
             if deleting_current_user:
                 pre_logged_entry = self.log_deletion(request, obj, obj_display)
-            
+
             import logging
             logger = logging.getLogger(__name__)
-            
+
             try:
                 logger.info(f"Attempting to delete user {obj.pk} ({obj.email})")
                 self._delete_user_rows([obj.pk])
@@ -394,12 +405,12 @@ class CustomUserAdmin(UserAdmin):
             )
             # Αφαιρούμε τον protected user από το queryset
             queryset = queryset.exclude(email=self.PROTECTED_ADMIN_EMAIL)
-        
+
         ids = list(queryset.values_list('pk', flat=True))
         objects = list(queryset)
         if not ids:
             return
-        
+
         current_user_pk = getattr(request.user, 'pk', None)
         pre_logged_ids = set()
         pre_logged_entries = []
@@ -409,7 +420,7 @@ class CustomUserAdmin(UserAdmin):
                     entry = self.log_deletion(request, obj, force_str(obj))
                     pre_logged_entries.append(entry)
                     pre_logged_ids.add(obj.pk)
-        
+
         try:
             self._delete_user_rows(ids)
         except ProgrammingError as e:
@@ -432,7 +443,7 @@ class CustomUserAdmin(UserAdmin):
             if obj.pk in pre_logged_ids:
                 continue
             self.log_deletion(request, obj, force_str(obj))
-        
+
         if protected_users.exists():
             messages.warning(
                 request,
@@ -446,29 +457,32 @@ class CustomUserAdmin(UserAdmin):
         """
         deleted_count = 0
         users_processed = 0
-        
-        for user in queryset:
-            # Βρες όλες τις προσκλήσεις που σχετίζονται με αυτόν τον χρήστη
-            invitations_by_email = TenantInvitation.objects.filter(email=user.email)
-            invitations_by_user = TenantInvitation.objects.filter(created_user=user)
-            invitations_sent_by_user = TenantInvitation.objects.filter(invited_by=user)
-            
-            all_invitations = (invitations_by_email | invitations_by_user | invitations_sent_by_user).distinct()
-            count = all_invitations.count()
-            
-            if count > 0:
-                all_invitations.delete()
-                deleted_count += count
-                users_processed += 1
-                self.message_user(
-                    request,
-                    _('Διαγράφηκαν %(count)d προσκλήσεις για τον χρήστη %(email)s') % {
-                        'count': count,
-                        'email': user.email
-                    },
-                    messages.SUCCESS
-                )
-        
+
+        # IMPORTANT: Invitations live in PUBLIC schema (shared app).
+        # Force public schema to avoid 500 if admin is accessed under a tenant schema.
+        with schema_context('public'):
+            for user in queryset:
+                # Βρες όλες τις προσκλήσεις που σχετίζονται με αυτόν τον χρήστη
+                invitations_by_email = TenantInvitation.objects.filter(email=user.email)
+                invitations_by_user = TenantInvitation.objects.filter(created_user=user)
+                invitations_sent_by_user = TenantInvitation.objects.filter(invited_by=user)
+
+                all_invitations = (invitations_by_email | invitations_by_user | invitations_sent_by_user).distinct()
+                count = all_invitations.count()
+
+                if count > 0:
+                    all_invitations.delete()
+                    deleted_count += count
+                    users_processed += 1
+                    self.message_user(
+                        request,
+                        _('Διαγράφηκαν %(count)d προσκλήσεις για τον χρήστη %(email)s') % {
+                            'count': count,
+                            'email': user.email
+                        },
+                        messages.SUCCESS
+                    )
+
         if deleted_count > 0:
             self.message_user(
                 request,
@@ -484,7 +498,7 @@ class CustomUserAdmin(UserAdmin):
                 _('ℹ️ Δεν βρέθηκαν προσκλήσεις για τους επιλεγμένους χρήστες.'),
                 messages.INFO
             )
-    
+
     delete_invitations_only.short_description = _('🗑️ Διαγραφή μόνο προσκλήσεων (όχι χρήστη)')
 
     def revoke_user_access_action(self, request, queryset):
@@ -496,7 +510,7 @@ class CustomUserAdmin(UserAdmin):
         - ΔΕΝ διαγράφει τον χρήστη
         """
         from .services import InvitationService
-        
+
         total_results = {
             'memberships_deleted': 0,
             'apartments_unlinked': 0,
@@ -505,7 +519,7 @@ class CustomUserAdmin(UserAdmin):
             'users_processed': 0,
             'errors': []
         }
-        
+
         for user in queryset:
             # Προστασία για superusers
             if user.is_superuser:
@@ -515,7 +529,7 @@ class CustomUserAdmin(UserAdmin):
                     messages.WARNING
                 )
                 continue
-            
+
             try:
                 results = InvitationService.revoke_user_access(
                     user_id=user.id,
@@ -523,20 +537,20 @@ class CustomUserAdmin(UserAdmin):
                     delete_user=False,
                     revoked_by=request.user
                 )
-                
+
                 total_results['memberships_deleted'] += results.get('memberships_deleted', 0)
                 total_results['apartments_unlinked'] += results.get('apartments_unlinked', 0)
                 if results.get('internal_manager_removed'):
                     total_results['internal_manager_removed'] += 1
                 total_results['invitations_cancelled'] += results.get('invitations_cancelled', 0)
                 total_results['users_processed'] += 1
-                
+
                 if results.get('errors'):
                     total_results['errors'].extend(results['errors'])
-                    
+
             except Exception as e:
                 total_results['errors'].append(f"Σφάλμα για {user.email}: {str(e)}")
-        
+
         # Μήνυμα αποτελέσματος
         if total_results['users_processed'] > 0:
             msg = _(
@@ -550,11 +564,11 @@ class CustomUserAdmin(UserAdmin):
                 'invitations': total_results['invitations_cancelled']
             }
             self.message_user(request, msg, messages.SUCCESS)
-        
+
         if total_results['errors']:
             for error in total_results['errors'][:5]:  # Μόνο τα πρώτα 5 errors
                 self.message_user(request, f"❌ {error}", messages.ERROR)
-    
+
     revoke_user_access_action.short_description = _('🚫 Αφαίρεση πρόσβασης (membership & διαμερίσματα)')
 
 admin.site.register(CustomUser, CustomUserAdmin)

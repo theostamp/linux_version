@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.db import transaction
 from django.contrib.auth.hashers import check_password, make_password
 import logging
 
@@ -22,14 +23,14 @@ class UserProfileView(APIView):
     User profile management
     """
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         """
         Get current user profile
         """
         try:
             user = request.user
-            
+
             # Get user's apartments/buildings
             apartments = []
             if hasattr(user, 'apartments'):
@@ -42,14 +43,14 @@ class UserProfileView(APIView):
                     }
                     for apt in user.apartments.all()
                 ]
-            
+
             # Get user's subscription
             subscription_data = None
             if hasattr(user, 'subscriptions'):
                 active_subscription = user.subscriptions.filter(
                     status__in=['trial', 'active']
                 ).first()
-                
+
                 if active_subscription:
                     subscription_data = {
                         'plan_name': active_subscription.plan.name,
@@ -58,7 +59,7 @@ class UserProfileView(APIView):
                         'price': float(active_subscription.price),
                         'currency': active_subscription.currency,
                     }
-            
+
             profile_data = {
                 'id': user.id,
                 'email': user.email,
@@ -76,33 +77,33 @@ class UserProfileView(APIView):
                 'apartments': apartments,
                 'subscription': subscription_data,
             }
-            
+
             return Response(profile_data)
-            
+
         except Exception as e:
             logger.error(f"Error getting user profile: {e}")
             return Response({
                 'error': 'Failed to get user profile'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     def put(self, request):
         """
         Update user profile
         """
         try:
             user = request.user
-            
+
             # Update allowed fields
             allowed_fields = ['first_name', 'last_name', 'phone', 'address']
-            
+
             for field in allowed_fields:
                 if field in request.data:
                     setattr(user, field, request.data[field])
-            
+
             user.save()
-            
+
             logger.info(f"Profile updated for user {user.email}")
-            
+
             return Response({
                 'message': 'Profile updated successfully',
                 'user': {
@@ -114,7 +115,7 @@ class UserProfileView(APIView):
                     'address': getattr(user, 'address', ''),
                 }
             })
-            
+
         except Exception as e:
             logger.error(f"Error updating user profile: {e}")
             return Response({
@@ -127,7 +128,7 @@ class UserChangePasswordView(APIView):
     Change user password
     """
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
         """
         Change user password
@@ -137,40 +138,40 @@ class UserChangePasswordView(APIView):
             current_password = request.data.get('current_password')
             new_password = request.data.get('new_password')
             confirm_password = request.data.get('confirm_password')
-            
+
             # Validate input
             if not all([current_password, new_password, confirm_password]):
                 return Response({
                     'error': 'All password fields are required'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             if new_password != confirm_password:
                 return Response({
                     'error': 'New password and confirmation do not match'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Check current password
             if not check_password(current_password, user.password):
                 return Response({
                     'error': 'Current password is incorrect'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Validate new password
             if len(new_password) < 8:
                 return Response({
                     'error': 'New password must be at least 8 characters long'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Update password
             user.password = make_password(new_password)
             user.save()
-            
+
             logger.info(f"Password changed for user {user.email}")
-            
+
             return Response({
                 'message': 'Password changed successfully'
             })
-            
+
         except Exception as e:
             logger.error(f"Error changing password: {e}")
             return Response({
@@ -183,14 +184,14 @@ class UserNotificationSettingsView(APIView):
     User notification settings
     """
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         """
         Get user notification settings
         """
         try:
             user = request.user
-            
+
             # In a real implementation, these would be stored in a separate model
             # For now, return default settings
             notification_settings = {
@@ -200,36 +201,36 @@ class UserNotificationSettingsView(APIView):
                 'community_updates': getattr(user, 'community_updates', True),
                 'emergency_alerts': getattr(user, 'emergency_alerts', True),
             }
-            
+
             return Response(notification_settings)
-            
+
         except Exception as e:
             logger.error(f"Error getting notification settings: {e}")
             return Response({
                 'error': 'Failed to get notification settings'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     def put(self, request):
         """
         Update user notification settings
         """
         try:
             user = request.user
-            
+
             # Update notification settings
             notification_fields = [
-                'email_notifications', 'payment_reminders', 
+                'email_notifications', 'payment_reminders',
                 'maintenance_notices', 'community_updates', 'emergency_alerts'
             ]
-            
+
             for field in notification_fields:
                 if field in request.data:
                     setattr(user, field, request.data[field])
-            
+
             user.save()
-            
+
             logger.info(f"Notification settings updated for user {user.email}")
-            
+
             return Response({
                 'message': 'Notification settings updated successfully',
                 'settings': {
@@ -240,7 +241,7 @@ class UserNotificationSettingsView(APIView):
                     'emergency_alerts': getattr(user, 'emergency_alerts', True),
                 }
             })
-            
+
         except Exception as e:
             logger.error(f"Error updating notification settings: {e}")
             return Response({
@@ -253,7 +254,7 @@ class UserActiveSessionsView(APIView):
     User active sessions management
     """
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         """
         Get user's active sessions
@@ -279,37 +280,37 @@ class UserActiveSessionsView(APIView):
                     'current': False,
                 }
             ]
-            
+
             return Response({
                 'sessions': active_sessions,
                 'total': len(active_sessions)
             })
-            
+
         except Exception as e:
             logger.error(f"Error getting active sessions: {e}")
             return Response({
                 'error': 'Failed to get active sessions'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     def delete(self, request):
         """
         Revoke a session
         """
         try:
             session_id = request.data.get('session_id')
-            
+
             if not session_id:
                 return Response({
                     'error': 'Session ID is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # In a real implementation, this would revoke the actual session
             logger.info(f"Session {session_id} revoked for user {request.user.email}")
-            
+
             return Response({
                 'message': 'Session revoked successfully'
             })
-            
+
         except Exception as e:
             logger.error(f"Error revoking session: {e}")
             return Response({
@@ -322,35 +323,117 @@ class UserAccountDeletionView(APIView):
     User account deletion
     """
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
         """
-        Request account deletion
+        Permanently delete the account and related data.
         """
         try:
             user = request.user
-            password = request.data.get('password')
-            
-            # Verify password
-            if not check_password(password, user.password):
+            confirm_phrase = (request.data.get('confirm_phrase') or '').strip()
+            confirm_email = (request.data.get('confirm_email') or '').strip()
+            password = request.data.get('password') or ''
+            delete_tenant_raw = request.data.get('delete_tenant', False)
+            if isinstance(delete_tenant_raw, str):
+                delete_tenant = delete_tenant_raw.strip().lower() in ['true', '1', 'yes']
+            else:
+                delete_tenant = bool(delete_tenant_raw)
+
+            valid_phrases = {'DELETE', 'ΔΙΑΓΡΑΦΗ'}
+            if confirm_phrase.upper() not in valid_phrases:
                 return Response({
-                    'error': 'Password is incorrect'
+                    'error': 'Invalid confirmation phrase.'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # In a real implementation, this would:
-            # 1. Mark account for deletion
-            # 2. Send confirmation email
-            # 3. Schedule actual deletion after grace period
-            
-            logger.info(f"Account deletion requested for user {user.email}")
-            
-            return Response({
-                'message': 'Account deletion request submitted. You will receive a confirmation email.',
-                'deletion_date': (timezone.now() + timezone.timedelta(days=30)).isoformat()
-            })
-            
+
+            if not confirm_email or confirm_email.lower() != (user.email or '').lower():
+                return Response({
+                    'error': 'Email confirmation does not match.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            has_oauth = bool(getattr(user, 'oauth_provider', None))
+            if not has_oauth:
+                if not password:
+                    return Response({
+                        'error': 'Password is required.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if not check_password(password, user.password):
+                    return Response({
+                        'error': 'Password is incorrect.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                if password and not check_password(password, user.password):
+                    return Response({
+                        'error': 'Password is incorrect.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            role = (getattr(user, 'role', '') or '').lower()
+            can_delete_tenant = user.is_superuser or role in ['manager', 'admin']
+            tenant = getattr(user, 'tenant', None)
+
+            if delete_tenant:
+                if not tenant:
+                    return Response({
+                        'error': 'No tenant associated with this account.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if not can_delete_tenant:
+                    return Response({
+                        'error': 'Δεν έχετε δικαίωμα διαγραφής του workspace.'
+                    }, status=status.HTTP_403_FORBIDDEN)
+
+            user_email = user.email
+            tenant_schema = tenant.schema_name if tenant else None
+            cancel_failures = []
+
+            from billing.services import BillingService
+            from billing.models import UserSubscription
+            from users.models import CustomUser
+
+            with transaction.atomic():
+                if delete_tenant and tenant:
+                    subscriptions = UserSubscription.objects.filter(user__tenant=tenant)
+                    for subscription in subscriptions:
+                        ok = BillingService.cancel_subscription(subscription, cancel_at_period_end=False)
+                        if not ok:
+                            cancel_failures.append(str(subscription.id))
+
+                    users_qs = CustomUser.objects.filter(tenant=tenant)
+                    deleted_users = users_qs.count()
+                    users_qs.delete()
+
+                    tenant.delete()
+
+                    logger.warning(
+                        "Tenant deletion executed by %s (tenant=%s, users=%s)",
+                        user_email,
+                        tenant_schema,
+                        deleted_users,
+                    )
+
+                    return Response({
+                        'message': 'Το workspace διαγράφηκε οριστικά μαζί με τους χρήστες του.',
+                        'tenant_deleted': True,
+                        'deleted_users': deleted_users,
+                        'warnings': cancel_failures,
+                    })
+
+                subscription = BillingService.get_user_subscription(user)
+                if subscription:
+                    ok = BillingService.cancel_subscription(subscription, cancel_at_period_end=False)
+                    if not ok:
+                        cancel_failures.append(str(subscription.id))
+
+                user.delete()
+
+                logger.warning("Account deleted for user %s", user_email)
+
+                return Response({
+                    'message': 'Ο λογαριασμός διαγράφηκε οριστικά.',
+                    'tenant_deleted': False,
+                    'warnings': cancel_failures,
+                })
+
         except Exception as e:
             logger.error(f"Error requesting account deletion: {e}")
             return Response({
-                'error': 'Failed to request account deletion'
+                'error': 'Failed to delete account'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
