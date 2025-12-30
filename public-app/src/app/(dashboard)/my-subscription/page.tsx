@@ -320,7 +320,7 @@ export default function MySubscriptionPage() {
 
   const updateBuildingPlanMutation = useMutation({
     mutationFn: async ({ buildingId, plan }: { buildingId: number; plan: PlanKey }) =>
-      api.patch(`/buildings/${buildingId}/`, planToFlags(plan)),
+      api.patch(`/buildings/list/${buildingId}/`, planToFlags(plan)),
     onMutate: ({ buildingId }) => {
       setUpdatingBuildingId(buildingId);
     },
