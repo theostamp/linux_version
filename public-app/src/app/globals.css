@@ -122,6 +122,13 @@ html {
 
   /* Shadow with Blue Tint */
   --shadow-card-soft: 0 4px 12px rgba(0, 145, 234, 0.08); /* Δίνει την αίσθηση αιώρησης με μπλε tint */
+
+  /* Aliases για Landing Page compatibility */
+  --bg-main-light: var(--bg-app-main);        /* #F5F7FA */
+  --bg-white: var(--bg-card);                 /* #FFFFFF */
+  --color-accent-teal: var(--color-accent-secondary); /* #00BFA5 */
+  --text-dark-primary: var(--text-primary);   /* #263238 */
+  --text-dark-secondary: var(--text-secondary); /* #546E7A */
 }
 
 .dark {
@@ -254,8 +261,8 @@ h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  background-color: var(--bg-app-main);  /* #F5F7FA */
+  color: var(--text-primary);             /* #263238 */
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

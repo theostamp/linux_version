@@ -197,43 +197,43 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
+    <main className="min-h-screen bg-bg-app-main text-text-primary">
       {/* NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-gray-200/80 bg-slate-950/80 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-xl shadow-sm">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
-              <Building className="h-5 w-5 text-slate-950" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-primary shadow-lg shadow-accent-primary/25">
+              <Building className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-slate-500">Ψηφιακός Θυρωρός</p>
-              <p className="text-lg font-bold text-slate-50">newconcierge.app</p>
+              <p className="text-xs uppercase tracking-widest text-text-secondary">Ψηφιακός Θυρωρός</p>
+              <p className="text-lg font-bold text-text-primary">newconcierge.app</p>
             </div>
           </div>
 
           {/* Desktop nav */}
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#how-it-works" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+            <a href="#how-it-works" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
               Πώς λειτουργεί
             </a>
-            <a href="#features" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+            <a href="#features" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
               Λειτουργίες
             </a>
-            <a href="#pricing" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+            <a href="#pricing" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
               Τιμές
             </a>
-            <a href="#testimonials" className="text-sm text-slate-300 transition-colors hover:text-emerald-400">
+            <a href="#testimonials" className="text-sm text-text-primary transition-colors hover:text-accent-primary">
               Κριτικές
             </a>
             <Link
               href="/login"
-              className="rounded-full border border-gray-200 px-5 py-2 text-sm font-medium text-slate-200 shadow-sm transition-all hover:border-slate-500 hover:bg-slate-900"
+              className="rounded-full border border-gray-200 px-5 py-2 text-sm font-medium text-text-primary shadow-sm transition-all hover:border-accent-primary hover:bg-bg-app-main"
             >
               Σύνδεση
             </Link>
             <Link
               href="/signup"
-              className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
+              className="rounded-full bg-accent-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-accent-primary/25 transition-all hover:opacity-90 hover:shadow-accent-primary/30"
             >
               Ξεκίνα δωρεάν
             </Link>
@@ -242,7 +242,7 @@ export default function LandingPage() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 md:hidden shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 md:hidden shadow-sm text-text-primary"
             aria-label={mobileMenuOpen ? "Κλείσιμο μενού" : "Άνοιγμα μενού"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
@@ -253,25 +253,25 @@ export default function LandingPage() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div id="mobile-menu" className="border-t border-gray-200 bg-slate-950 md:hidden">
+          <div id="mobile-menu" className="border-t border-gray-200 bg-white md:hidden">
             <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
-              <a href="#how-it-works" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              <a href="#how-it-works" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
                 Πώς λειτουργεί
               </a>
-              <a href="#features" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              <a href="#features" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
                 Λειτουργίες
               </a>
-              <a href="#pricing" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              <a href="#pricing" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
                 Τιμές
               </a>
-              <a href="#testimonials" className="text-sm text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              <a href="#testimonials" className="text-sm text-text-primary transition-colors hover:text-accent-primary" onClick={() => setMobileMenuOpen(false)}>
                 Κριτικές
               </a>
               <div className="flex gap-3 pt-2">
-                <Link href="/login" className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-center text-sm text-slate-200">
+                <Link href="/login" className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-center text-sm text-text-primary transition-colors hover:border-accent-primary">
                   Σύνδεση
                 </Link>
-                <Link href="/signup" className="flex-1 rounded-full bg-emerald-500 px-4 py-2 text-center text-sm font-semibold text-slate-950">
+                <Link href="/signup" className="flex-1 rounded-full bg-accent-primary px-4 py-2 text-center text-sm font-semibold text-white">
                   Ξεκίνα
                 </Link>
               </div>
@@ -300,13 +300,13 @@ export default function LandingPage() {
               sizes="100vw"
               priority
             />
-            {/* Very light overlay (only to soften contrast) */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-slate-950/10" />
+            {/* Light blue gradient overlay for brightness */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-accent-primary/5 via-transparent to-bg-app-main/20" />
           </div>
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl bg-slate-950/75 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-md sm:p-8 lg:p-10">
+            <div className="w-full space-y-8 rounded-3xl bg-bg-app-main p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
                   <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
@@ -318,21 +318,21 @@ export default function LandingPage() {
 
               <AnimatedSection delay={150}>
                 <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-                  <span className="text-white">Η πολυκατοικία σου γίνεται</span>
+                  <span className="text-text-primary">Η πολυκατοικία σου γίνεται</span>
                   <br />
-                  <span className="text-emerald-400">κοινότητα.</span>
+                  <span className="text-accent-secondary">κοινότητα.</span>
                 </h1>
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                <p className="text-center text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl lg:text-2xl">
+                <p className="text-center text-base leading-relaxed text-text-secondary sm:text-lg md:text-xl lg:text-2xl">
                   Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
                   συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
                 </p>
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
-                <ul className="grid gap-3 text-base text-slate-300 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                <ul className="grid gap-3 text-base text-text-primary sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                   {[
                     "Ενημέρωση για όλους (info point στην είσοδο, email & κινητό)",
                     "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
@@ -342,7 +342,7 @@ export default function LandingPage() {
                     "Επικοινωνία χωρίς παρεξηγήσεις",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-secondary/20 text-xs text-accent-secondary">
                         ✓
                       </span>
                       <span>{item}</span>
@@ -355,7 +355,7 @@ export default function LandingPage() {
                 <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
                   <a
                     href="#cta"
-                    className="group inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-105"
+                    className="group inline-flex items-center gap-2 rounded-full bg-accent-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/25 transition-all hover:opacity-90 hover:shadow-accent-primary/30 hover:scale-105"
                   >
                     Ζήτησε παρουσίαση
                     <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -376,8 +376,8 @@ export default function LandingPage() {
                 <div className="flex flex-wrap items-center justify-center gap-8 border-t border-gray-200 pt-6">
                   {stats.map((stat) => (
                     <div key={stat.label} className="text-center">
-                      <p className="text-2xl font-bold text-emerald-400 sm:text-3xl">{stat.value}</p>
-                      <p className="mt-1 text-sm text-slate-400">{stat.label}</p>
+                      <p className="text-2xl font-bold text-accent-primary sm:text-3xl">{stat.value}</p>
+                      <p className="mt-1 text-sm text-text-secondary">{stat.label}</p>
                     </div>
                   ))}
                 </div>
@@ -388,17 +388,17 @@ export default function LandingPage() {
 	      </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="border-b border-gray-200 bg-slate-950">
+      <section id="how-it-works" className="border-b border-gray-200 bg-gradient-to-b from-white to-bg-app-main">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="mb-4 inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Απλή διαδικασία
               </span>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-text-primary sm:text-3xl lg:text-4xl">
                 Πώς λειτουργεί ο Ψηφιακός Θυρωρός
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg">
                 Από την είσοδο της πολυκατοικίας μέχρι το κινητό του κάθε ενοίκου – σε τρία απλά βήματα.
               </p>
             </div>
@@ -429,13 +429,13 @@ export default function LandingPage() {
               },
             ].map((item, index) => (
               <AnimatedSection key={item.step} delay={index * 150}>
-                <div className="group relative h-full rounded-2xl border border-gray-200 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/50 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
-                  <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition-transform group-hover:scale-110">
+                <div className="group relative h-full rounded-2xl bg-bg-card p-6 shadow-card-soft transition-all duration-300 hover:shadow-lg hover:shadow-accent-primary/10">
+                  <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-full bg-accent-primary text-sm font-bold text-white shadow-lg shadow-accent-primary/25 transition-transform group-hover:scale-110">
                     {item.step}
                   </div>
-                  <div className="mb-4 pt-2 text-lg font-semibold text-emerald-400">{item.title}</div>
-                  <p className="mb-4 text-sm leading-relaxed text-slate-300 sm:text-base">{item.description}</p>
-                  <div className="rounded-xl border border-dashed border-gray-200 bg-slate-900/50 p-4 text-center text-xs text-slate-500">
+                  <div className="mb-4 pt-2 text-lg font-semibold text-text-primary">{item.title}</div>
+                  <p className="mb-4 text-sm leading-relaxed text-text-secondary sm:text-base">{item.description}</p>
+                  <div className="rounded-xl border-2 border-dashed border-accent-primary/30 bg-bg-app-main p-4 text-center text-xs text-text-secondary">
                     {item.placeholder}
                   </div>
                 </div>
@@ -993,17 +993,17 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-gray-200 bg-slate-950">
+      <footer className="border-t border-gray-200 bg-bg-app-main">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/25">
-                  <Building className="h-5 w-5 text-slate-950" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-primary shadow-lg shadow-accent-primary/25">
+                  <Building className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-slate-50">newconcierge.app</span>
+                <span className="text-lg font-bold text-text-primary">newconcierge.app</span>
               </div>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-text-secondary">
                 Μετατρέπουμε πολυκατοικίες σε κοινότητες. Με επίκεντρο τον ένοικο.
               </p>
               {/* Social proof in footer */}
@@ -1011,48 +1011,48 @@ export default function LandingPage() {
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                 ))}
-                <span className="ml-2 text-xs text-slate-500">4.9/5 από 50+ πολυκατοικίες</span>
+                <span className="ml-2 text-xs text-text-secondary">4.9/5 από 50+ πολυκατοικίες</span>
               </div>
             </div>
 
             <div>
-              <h3 className="mb-4 text-sm font-semibold text-slate-50">Προϊόν</h3>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#how-it-works" className="transition-colors hover:text-emerald-400">Πώς λειτουργεί</a></li>
-                <li><a href="#features" className="transition-colors hover:text-emerald-400">Λειτουργίες</a></li>
-                <li><a href="#pricing" className="transition-colors hover:text-emerald-400">Τιμές</a></li>
-                <li><a href="#testimonials" className="transition-colors hover:text-emerald-400">Κριτικές</a></li>
+              <h3 className="mb-4 text-sm font-semibold text-text-primary">Προϊόν</h3>
+              <ul className="space-y-2 text-sm text-text-secondary">
+                <li><a href="#how-it-works" className="transition-colors hover:text-accent-primary">Πώς λειτουργεί</a></li>
+                <li><a href="#features" className="transition-colors hover:text-accent-primary">Λειτουργίες</a></li>
+                <li><a href="#pricing" className="transition-colors hover:text-accent-primary">Τιμές</a></li>
+                <li><a href="#testimonials" className="transition-colors hover:text-accent-primary">Κριτικές</a></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="mb-4 text-sm font-semibold text-slate-50">Υποστήριξη</h3>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li><a href="#faq" className="transition-colors hover:text-emerald-400">Συχνές ερωτήσεις</a></li>
-                <li><a href="#cta" className="transition-colors hover:text-emerald-400">Επικοινωνία</a></li>
+              <h3 className="mb-4 text-sm font-semibold text-text-primary">Υποστήριξη</h3>
+              <ul className="space-y-2 text-sm text-text-secondary">
+                <li><a href="#faq" className="transition-colors hover:text-accent-primary">Συχνές ερωτήσεις</a></li>
+                <li><a href="#cta" className="transition-colors hover:text-accent-primary">Επικοινωνία</a></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="mb-4 text-sm font-semibold text-slate-50">Επικοινωνία</h3>
-              <ul className="space-y-2 text-sm text-slate-500">
+              <h3 className="mb-4 text-sm font-semibold text-text-primary">Επικοινωνία</h3>
+              <ul className="space-y-2 text-sm text-text-secondary">
                 <li className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  <a href="tel:+302100000000" className="transition-colors hover:text-emerald-400">210 000 0000</a>
+                  <a href="tel:+302100000000" className="transition-colors hover:text-accent-primary">210 000 0000</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4" />
-                  <a href="https://wa.me/306900000000" className="transition-colors hover:text-emerald-400">WhatsApp</a>
+                  <a href="https://wa.me/306900000000" className="transition-colors hover:text-accent-primary">WhatsApp</a>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row">
-            <p className="text-sm text-slate-600">© 2025 newconcierge.app. Όλα τα δικαιώματα διατηρούνται.</p>
-            <div className="flex gap-4 text-xs text-slate-600">
-              <a href="#" className="transition-colors hover:text-emerald-400">Πολιτική απορρήτου</a>
-              <a href="#" className="transition-colors hover:text-emerald-400">Όροι χρήσης</a>
+            <p className="text-sm text-text-secondary">© 2025 newconcierge.app. Όλα τα δικαιώματα διατηρούνται.</p>
+            <div className="flex gap-4 text-xs text-text-secondary">
+              <a href="#" className="transition-colors hover:text-accent-primary">Πολιτική απορρήτου</a>
+              <a href="#" className="transition-colors hover:text-accent-primary">Όροι χρήσης</a>
             </div>
           </div>
         </div>
