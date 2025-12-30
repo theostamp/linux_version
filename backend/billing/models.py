@@ -15,13 +15,18 @@ class PricingTier(models.Model):
     Κλιμακωτή τιμολόγηση βάσει αριθμού διαμερισμάτων.
 
     Παράδειγμα:
-    - Cloud: 8-20 διαμ → €18, 21-30 διαμ → €22, 31+ → €25
-    - Kiosk: 8-20 διαμ → €28, 21-30 διαμ → €35, 31+ → €40
+    - Web: €1.0/διαμέρισμα
+    - Premium: €1.8/διαμέρισμα
+    - Premium + IoT: €2.3/διαμέρισμα
     """
     PLAN_CATEGORY_CHOICES = [
         ('free', 'Free'),
-        ('cloud', 'Cloud'),
-        ('kiosk', 'Info Point (Kiosk)'),
+        ('web', 'Web'),
+        ('premium', 'Premium'),
+        ('premium_iot', 'Premium + IoT'),
+        # Legacy categories (backward compatibility)
+        ('cloud', 'Cloud (Legacy)'),
+        ('kiosk', 'Info Point (Legacy)'),
     ]
 
     plan_category = models.CharField(
@@ -123,7 +128,7 @@ class PricingTier(models.Model):
         Βρίσκει το κατάλληλο tier βάσει αριθμού διαμερισμάτων.
 
         Args:
-            plan_category: 'free', 'cloud', ή 'kiosk'
+            plan_category: 'free', 'web', 'premium', ή 'premium_iot'
             apartment_count: Αριθμός διαμερισμάτων
 
         Returns:
@@ -150,17 +155,29 @@ class PricingTier(models.Model):
 
         if not tier:
             return None
+        per_apartment_categories = {'web', 'premium', 'premium_iot'}
+        is_per_apartment = plan_category in per_apartment_categories
+
+        def _monthly_price():
+            return tier.monthly_price * apartment_count if is_per_apartment else tier.monthly_price
+
+        def _yearly_price():
+            if tier.yearly_price and not is_per_apartment:
+                return tier.yearly_price
+            yearly_full = _monthly_price() * 12
+            discount = yearly_full * (tier.yearly_discount_percent / 100)
+            return yearly_full - discount
 
         if yearly:
             return {
-                'price': tier.calculated_yearly_price,
+                'price': _yearly_price(),
                 'tier_label': tier.tier_label,
                 'stripe_price_id': tier.stripe_price_id_yearly,
                 'billing_interval': 'year'
             }
         else:
             return {
-                'price': tier.monthly_price,
+                'price': _monthly_price(),
                 'tier_label': tier.tier_label,
                 'stripe_price_id': tier.stripe_price_id_monthly,
                 'billing_interval': 'month'
@@ -177,8 +194,12 @@ class SubscriptionPlan(models.Model):
     """
     PLAN_TYPES = [
         ('free', 'Free'),
-        ('cloud', 'Cloud'),
-        ('kiosk', 'Info Point (Kiosk)'),
+        ('web', 'Web'),
+        ('premium', 'Premium'),
+        ('premium_iot', 'Premium + IoT'),
+        # Legacy types for backward compatibility
+        ('cloud', 'Cloud (Legacy)'),
+        ('kiosk', 'Info Point (Legacy)'),
         # Legacy types for backward compatibility
         ('starter', 'Starter'),
         ('professional', 'Professional'),
@@ -461,6 +482,7 @@ class UserSubscription(models.Model):
     # but the canonical billing model is:
     # - web_per_apartment (quantity = total_apartments)
     # - premium_addon_per_apartment (quantity = premium_apartments)
+    # - iot_addon_per_apartment (quantity = iot_apartments)
     stripe_subscription_item_id_web = models.CharField(
         max_length=255,
         blank=True,
@@ -471,6 +493,11 @@ class UserSubscription(models.Model):
         blank=True,
         help_text='Stripe subscription item ID for Premium add-on per-apartment line item'
     )
+    stripe_subscription_item_id_iot = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Stripe subscription item ID for IoT add-on per-apartment line item'
+    )
     billing_total_apartments = models.PositiveIntegerField(
         default=0,
         help_text='Last synced total apartments (sum of Building.apartments_count across tenant)'
@@ -478,6 +505,10 @@ class UserSubscription(models.Model):
     billing_premium_apartments = models.PositiveIntegerField(
         default=0,
         help_text='Last synced premium apartments (sum of Building.apartments_count where premium_enabled=true)'
+    )
+    billing_iot_apartments = models.PositiveIntegerField(
+        default=0,
+        help_text='Last synced IoT apartments (sum of Building.apartments_count where iot_enabled=true)'
     )
 
     # Stripe checkout session ID for idempotency

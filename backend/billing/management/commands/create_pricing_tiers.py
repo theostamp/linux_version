@@ -4,8 +4,9 @@ Management command για τη δημιουργία των κλιμακωτών 
 
 Τιμολογιακή Πολιτική:
 - Free: 1-7 διαμερίσματα → €0
-- Cloud: 8-20 → €18, 21-30 → €22, 31+ → €25
-- Kiosk: 8-20 → €28, 21-30 → €35, 31+ → €40
+- Web: €1.0/διαμέρισμα
+- Premium: €1.8/διαμέρισμα
+- Premium + IoT: €2.3/διαμέρισμα
 
 Usage:
     python manage.py create_pricing_tiers
@@ -18,7 +19,7 @@ from billing.models import PricingTier, SubscriptionPlan
 
 
 class Command(BaseCommand):
-    help = 'Δημιουργεί τα κλιμακωτά τιμολόγια (PricingTier) για Free, Cloud και Kiosk'
+    help = 'Δημιουργεί τα τιμολόγια (PricingTier) για Free, Web, Premium και Premium + IoT'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -47,57 +48,35 @@ class Command(BaseCommand):
                 'yearly_discount_percent': Decimal('0.00'),
                 'display_order': 1,
             },
-            
-            # CLOUD TIERS
+
+            # WEB (per apartment)
             {
-                'plan_category': 'cloud',
-                'min_apartments': 8,
-                'max_apartments': 20,
-                'monthly_price': Decimal('18.00'),
-                'yearly_discount_percent': Decimal('16.67'),  # 2 μήνες δωρεάν
+                'plan_category': 'web',
+                'min_apartments': 1,
+                'max_apartments': None,  # Απεριόριστα
+                'monthly_price': Decimal('1.00'),
+                'yearly_discount_percent': Decimal('16.67'),
                 'display_order': 10,
             },
+
+            # PREMIUM (per apartment)
             {
-                'plan_category': 'cloud',
-                'min_apartments': 21,
-                'max_apartments': 30,
-                'monthly_price': Decimal('22.00'),
-                'yearly_discount_percent': Decimal('16.67'),
-                'display_order': 11,
-            },
-            {
-                'plan_category': 'cloud',
-                'min_apartments': 31,
-                'max_apartments': None,  # Απεριόριστα
-                'monthly_price': Decimal('25.00'),
-                'yearly_discount_percent': Decimal('16.67'),
-                'display_order': 12,
-            },
-            
-            # KIOSK (INFO POINT) TIERS
-            {
-                'plan_category': 'kiosk',
-                'min_apartments': 8,
-                'max_apartments': 20,
-                'monthly_price': Decimal('28.00'),
+                'plan_category': 'premium',
+                'min_apartments': 1,
+                'max_apartments': None,
+                'monthly_price': Decimal('1.80'),
                 'yearly_discount_percent': Decimal('16.67'),
                 'display_order': 20,
             },
+
+            # PREMIUM + IOT (per apartment)
             {
-                'plan_category': 'kiosk',
-                'min_apartments': 21,
-                'max_apartments': 30,
-                'monthly_price': Decimal('35.00'),
+                'plan_category': 'premium_iot',
+                'min_apartments': 1,
+                'max_apartments': None,
+                'monthly_price': Decimal('2.30'),
                 'yearly_discount_percent': Decimal('16.67'),
-                'display_order': 21,
-            },
-            {
-                'plan_category': 'kiosk',
-                'min_apartments': 31,
-                'max_apartments': None,  # Απεριόριστα
-                'monthly_price': Decimal('40.00'),
-                'yearly_discount_percent': Decimal('16.67'),
-                'display_order': 22,
+                'display_order': 30,
             },
         ]
 
@@ -139,21 +118,31 @@ class Command(BaseCommand):
                 'max_buildings_online_signup': 1,
             },
             {
-                'plan_type': 'cloud',
-                'name': 'Concierge Cloud',
-                'description': 'Πλήρης πλατφόρμα διαχείρισης πολυκατοικίας χωρίς Kiosk hardware',
-                'monthly_price': Decimal('18.00'),  # Base tier price
-                'yearly_price': Decimal('180.00'),
+                'plan_type': 'web',
+                'name': 'Concierge Web',
+                'description': 'Πλήρης πλατφόρμα διαχείρισης χωρίς οθόνη εισόδου (χρέωση ανά διαμέρισμα)',
+                'monthly_price': Decimal('1.00'),
+                'yearly_price': Decimal('10.00'),
                 'uses_tiered_pricing': True,
                 'includes_kiosk_hardware': False,
                 'max_buildings_online_signup': 5,
             },
             {
-                'plan_type': 'kiosk',
-                'name': 'Info Point',
-                'description': 'Πλήρης πλατφόρμα με σημείο ενημέρωσης (οθόνη) στην είσοδο',
-                'monthly_price': Decimal('28.00'),  # Base tier price
-                'yearly_price': Decimal('280.00'),
+                'plan_type': 'premium',
+                'name': 'Concierge Premium',
+                'description': 'Kiosk + AI + Αρχείο (χρέωση ανά διαμέρισμα)',
+                'monthly_price': Decimal('1.80'),
+                'yearly_price': Decimal('18.00'),
+                'uses_tiered_pricing': True,
+                'includes_kiosk_hardware': True,
+                'max_buildings_online_signup': 5,
+            },
+            {
+                'plan_type': 'premium_iot',
+                'name': 'Concierge Premium + IoT',
+                'description': 'Premium + Smart Heating (χρέωση ανά διαμέρισμα)',
+                'monthly_price': Decimal('2.30'),
+                'yearly_price': Decimal('23.00'),
                 'uses_tiered_pricing': True,
                 'includes_kiosk_hardware': True,
                 'max_buildings_online_signup': 5,
@@ -182,18 +171,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE('\n' + '='*60))
         self.stdout.write(self.style.NOTICE('📊 ΣΥΝΟΠΤΙΚΟΣ ΠΙΝΑΚΑΣ ΤΙΜΟΛΟΓΗΣΗΣ'))
         self.stdout.write(self.style.NOTICE('='*60))
-        
-        self.stdout.write('\n┌─────────────┬──────────────┬────────────┬────────────┐')
-        self.stdout.write('│ Διαμερίσμ.  │ 🆓 Free      │ ☁️ Cloud   │ 📺 Kiosk   │')
-        self.stdout.write('├─────────────┼──────────────┼────────────┼────────────┤')
-        self.stdout.write('│   1-7       │     €0       │     -      │     -      │')
-        self.stdout.write('│   8-20      │     -        │    €18     │    €28     │')
-        self.stdout.write('│  21-30      │     -        │    €22     │    €35     │')
-        self.stdout.write('│   31+       │     -        │    €25     │    €40     │')
-        self.stdout.write('└─────────────┴──────────────┴────────────┴────────────┘\n')
+
+        self.stdout.write('\n┌─────────────┬──────────────┬──────────────┬──────────────┬──────────────┐')
+        self.stdout.write('│ Διαμερίσμ.  │ 🆓 Free      │ 🌐 Web       │ ⭐ Premium   │ 🔥 Premium+IoT │')
+        self.stdout.write('├─────────────┼──────────────┼──────────────┼──────────────┼──────────────┤')
+        self.stdout.write('│   1-7       │     €0       │   €1.0/apt   │   €1.8/apt   │   €2.3/apt   │')
+        self.stdout.write('│   8+        │     -        │   €1.0/apt   │   €1.8/apt   │   €2.3/apt   │')
+        self.stdout.write('└─────────────┴──────────────┴──────────────┴──────────────┴──────────────┘\n')
 
         self.stdout.write(self.style.SUCCESS(
             f'\n✅ Ολοκληρώθηκε! Δημιουργήθηκαν {created_count} νέα tiers, '
             f'ενημερώθηκαν {updated_count} υπάρχοντα.\n'
         ))
-

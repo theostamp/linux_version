@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Clock,
   FileText,
+  Flame,
   Lock,
   Mail,
   Monitor,
@@ -50,6 +51,13 @@ const aiFinanceBullets = [
   'Έλεγχος πιθανών διπλών παραστατικών για λιγότερα λάθη & τριβές',
 ];
 
+const iotBullets = [
+  'Smart Heating dashboard με ωράρια, ζώνες και χρονοπρογραμματισμούς.',
+  'Online ειδοποιήσεις βλάβης/διαρροών + προβολή στο kiosk.',
+  'Στατιστικά κατανάλωσης, συγκρίσεις και προβλέψεις.',
+  'Επεκτάσιμο IoT layer για νέους αυτοματισμούς.',
+];
+
 const archiveBullets = [
   'Ηλεκτρονικό Αρχείο ανά κτίριο: πρακτικά Γ.Σ., κανονισμός, κατόψεις, συμβάσεις, πιστοποιητικά, παραστατικά',
   'Μεταδεδομένα (τίτλος/κατηγορία/ημερομηνία/ποσό/ΑΦΜ προμηθευτή) + αναζήτηση/φίλτρα',
@@ -59,11 +67,15 @@ const archiveBullets = [
 const faqs: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: 'Το Premium ενεργοποιείται για όλο το γραφείο ή ανά κτίριο;',
-    a: 'Ανά κτίριο. Έτσι μπορείς να έχεις Premium (Kiosk + AI) σε συγκεκριμένες πολυκατοικίες, ενώ άλλες να μένουν μόνο στο Web.',
+    a: 'Ανά κτίριο. Έτσι μπορείς να έχεις Premium ή Premium + IoT σε συγκεκριμένες πολυκατοικίες, ενώ άλλες να μένουν μόνο στο Web.',
+  },
+  {
+    q: 'Πώς λειτουργεί το Premium + IoT;',
+    a: 'Είναι επέκταση του Premium στο ίδιο κτίριο και προσθέτει Smart Heating + IoT αυτοματισμούς. Ενεργοποιείται ανά κτίριο.',
   },
   {
     q: 'Πώς γίνεται η χρέωση;',
-    a: 'Η χρέωση γίνεται ανά διαμέρισμα. Για Premium, η χρέωση αφορά τα διαμερίσματα του κτιρίου που έχει ενεργό το Premium (με volume discounts σε μεγαλύτερες κλίμακες).',
+    a: 'Η χρέωση γίνεται ανά διαμέρισμα. Premium €1.8/διαμέρισμα, Premium + IoT €2.3/διαμέρισμα, για τα διαμερίσματα του κτιρίου που ενεργοποιείται (με volume discounts σε μεγαλύτερες κλίμακες).',
   },
   {
     q: 'Μπορώ να το ενεργοποιήσω μόνος μου;',
@@ -74,7 +86,7 @@ const faqs: Array<{ q: string; a: React.ReactNode }> = [
     a: (
       <span>
         Η πρόσβαση μένει <strong>read‑only</strong> (βλέπεις τα δεδομένα σου), αλλά τα writes μπλοκάρονται και
-        Premium λειτουργίες όπως Kiosk/AI απενεργοποιούνται μέχρι την ανανέωση.
+        Premium λειτουργίες όπως Kiosk/AI/IoT απενεργοποιούνται μέχρι την ανανέωση.
       </span>
     ),
   },
@@ -100,19 +112,22 @@ export default function UpgradePage() {
     billing?.premium_enabled ?? buildingContext?.premium_enabled ?? false;
   const kioskEnabled = billing?.kiosk_enabled ?? false;
   const aiEnabled = billing?.ai_enabled ?? false;
+  const iotEnabled = billing?.iot_enabled ?? false;
 
   const mailtoHref = React.useMemo(() => {
-    const subject = 'Αίτημα ενεργοποίησης Premium (Kiosk + AI) ανά κτίριο';
+    const subject = 'Αίτημα ενεργοποίησης Premium ή Premium + IoT ανά κτίριο';
     const bodyLines = [
       'Γεια σας,',
       '',
-      'Θέλω ενεργοποίηση Premium (Kiosk + AI) για το παρακάτω κτίριο:',
+      'Θέλω ενεργοποίηση Premium ή Premium + IoT για το παρακάτω κτίριο:',
       `- Κτίριο: ${resolvedBuildingName}`,
       resolvedBuildingId ? `- Building ID: ${resolvedBuildingId}` : null,
       resolvedApartmentsCount !== null ? `- Διαμερίσματα (count): ${resolvedApartmentsCount}` : null,
       accountType ? `- Account type: ${accountType}` : null,
       '',
-      'Παρακαλώ στείλτε μου τα επόμενα βήματα και την εκτίμηση χρέωσης ανά διαμέρισμα.',
+      'Ενδιαφέρομαι για: Premium / Premium + IoT (σημειώστε ποιο ισχύει).',
+      '',
+      'Παρακαλώ στείλτε μου τα επόμενα βήματα για την ενεργοποίηση.',
       '',
       'Ευχαριστώ,',
     ].filter(Boolean) as string[];
@@ -127,7 +142,7 @@ export default function UpgradePage() {
         <div>
           <h1 className={typography.pageTitle}>Αναβάθμιση</h1>
           <p className="text-muted-foreground">
-            Ξεκλείδωσε Premium λειτουργίες (Kiosk + AI) ανά πολυκατοικία.
+            Ξεκλείδωσε Premium λειτουργίες (Kiosk + AI + Αρχείο) ή Premium + IoT (Smart Heating).
           </p>
         </div>
         <Button asChild variant="outline">
@@ -162,6 +177,9 @@ export default function UpgradePage() {
               <Badge variant={aiEnabled ? 'default' : 'secondary'}>
                 AI: {aiEnabled ? 'Ενεργό' : 'Κλειδωμένο'}
               </Badge>
+              <Badge variant={iotEnabled ? 'default' : 'secondary'}>
+                IoT: {iotEnabled ? 'Ενεργό' : 'Κλειδωμένο'}
+              </Badge>
             </div>
 
             {!isOfficeAccount ? (
@@ -171,7 +189,7 @@ export default function UpgradePage() {
                   Premium μόνο για γραφεία διαχείρισης
                 </div>
                 <p className="mt-1 text-muted-foreground">
-                  Το Premium (Kiosk + AI) δεν είναι διαθέσιμο για μεμονωμένους διαχειριστές.
+                  Το Premium / Premium + IoT δεν είναι διαθέσιμο για μεμονωμένους διαχειριστές.
                 </p>
               </div>
             ) : null}
@@ -242,9 +260,9 @@ export default function UpgradePage() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold tracking-tight">Τι ξεκλειδώνεις με το Premium</h2>
+        <h2 className="text-xl font-semibold tracking-tight">Τι ξεκλειδώνεις με Premium & Premium + IoT</h2>
         <p className="text-sm text-muted-foreground">
-          Ενεργοποιείται <strong>ανά κτίριο</strong>. Η χρέωση γίνεται <strong>ανά διαμέρισμα</strong> (volume discounts σε μεγάλες κλίμακες).
+          Ενεργοποιείται <strong>ανά κτίριο</strong>. Η χρέωση γίνεται <strong>ανά διαμέρισμα</strong>. Το Premium + IoT προσθέτει Smart Heating.
         </p>
       </div>
 
@@ -315,7 +333,38 @@ export default function UpgradePage() {
         />
 
         <BentoGridItem
-          className="md:col-span-3"
+          className="md:col-span-1"
+          title={<span id="iot" className="scroll-mt-24">Smart Heating (IoT)</span>}
+          description="Έξυπνος έλεγχος κεντρικής θέρμανσης με ωράρια, ειδοποιήσεις και analytics."
+          icon={<Flame className="h-4 w-4" />}
+          header={
+            <div className="space-y-3">
+              <div className="rounded-xl border bg-card p-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">IoT</Badge>
+                  <Badge variant="secondary">Heating</Badge>
+                  <Badge variant="secondary">Alerts</Badge>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {iotBullets.map((t) => (
+                    <FeatureRow key={t} text={t} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline">
+                  <Link href="/heating">
+                    <Flame className="mr-2 h-4 w-4" />
+                    Δες το Smart Heating
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          }
+        />
+
+        <BentoGridItem
+          className="md:col-span-2"
           title={<span id="archive" className="scroll-mt-24">Ηλεκτρονικό Αρχείο Πολυκατοικίας</span>}
           description="Οργάνωσε έγγραφα, πρακτικά και παραστατικά—όλα σε ένα σημείο, με αναζήτηση και μεταδεδομένα."
           icon={<Archive className="h-4 w-4" />}
@@ -353,7 +402,7 @@ export default function UpgradePage() {
         <CardHeader>
           <CardTitle className="text-xl">Χρέωση & ενεργοποίηση</CardTitle>
           <CardDescription>
-            Premium ενεργοποίηση ανά κτίριο, με χρέωση ανά διαμέρισμα.
+            Premium / Premium + IoT ενεργοποίηση ανά κτίριο, με χρέωση ανά διαμέρισμα.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
@@ -364,7 +413,8 @@ export default function UpgradePage() {
                 Τιμολόγηση
               </div>
               <p className="mt-2 text-muted-foreground">
-                Χρέωση <strong>ανά διαμέρισμα</strong> (κλιμακωτή σε μεγάλες κλίμακες). Για Premium add‑on, αφορά τα διαμερίσματα του κτιρίου που ενεργοποιείται.
+                Premium: <strong>€1.8/διαμέρισμα</strong>. Premium + IoT: <strong>€2.3/διαμέρισμα</strong>.
+                Η χρέωση αφορά τα διαμερίσματα του κτιρίου που ενεργοποιείται.
               </p>
             </div>
             <div className="rounded-xl border bg-card p-4">
@@ -373,7 +423,7 @@ export default function UpgradePage() {
                 Ανά κτίριο
               </div>
               <p className="mt-2 text-muted-foreground">
-                Ιδανικό για γραφεία: μπορείς να έχεις μείξη (Premium σε 5 κτίρια, Web-only στα υπόλοιπα).
+                Ιδανικό για γραφεία: μπορείς να έχεις μείξη (Premium ή Premium + IoT σε συγκεκριμένα κτίρια, Web-only στα υπόλοιπα).
               </p>
             </div>
             <div className="rounded-xl border bg-card p-4">
@@ -413,7 +463,7 @@ export default function UpgradePage() {
       <Card id="faq" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="text-xl">FAQ</CardTitle>
-          <CardDescription>Συχνές ερωτήσεις για Premium ανά κτίριο.</CardDescription>
+          <CardDescription>Συχνές ερωτήσεις για Premium & Premium + IoT ανά κτίριο.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {faqs.map((item) => (
@@ -453,5 +503,3 @@ export default function UpgradePage() {
     </div>
   );
 }
-
-

@@ -94,6 +94,11 @@ class Building(models.Model):
         default=False,
         help_text=_("Αν είναι ενεργό, το συγκεκριμένο κτίριο έχει πρόσβαση σε Premium λειτουργίες (Kiosk + AI)."),
     )
+    iot_enabled = models.BooleanField(
+        _("Premium + IoT Ενεργό (Smart Heating)"),
+        default=False,
+        help_text=_("Αν είναι ενεργό, το συγκεκριμένο κτίριο έχει πρόσβαση σε Premium + IoT λειτουργίες (Smart Heating)."),
+    )
 
     # 👤 Εσωτερικός Διαχειριστής - Σύνδεση με User
     internal_manager = models.ForeignKey(

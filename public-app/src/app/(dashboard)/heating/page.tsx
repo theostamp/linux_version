@@ -7,27 +7,25 @@ import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 export default function IotHeatingPage() {
   const { buildingContext, isLoadingContext } = useBuilding();
-  const premiumEnabled = Boolean(
-    buildingContext?.billing?.kiosk_enabled ?? buildingContext?.premium_enabled ?? false
-  );
+  const iotEnabled = Boolean(buildingContext?.billing?.iot_enabled ?? false);
 
   if (isLoadingContext && !buildingContext) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="text-center text-muted-foreground">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
-          <p>Έλεγχος Premium...</p>
+          <p>Έλεγχος Premium + IoT...</p>
         </div>
       </div>
     );
   }
 
-  if (!premiumEnabled) {
+  if (!iotEnabled) {
     return (
       <PremiumFeatureInfo
         title="Smart Heating"
         description="Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες και αυτοματισμούς IoT για κάθε κτίριο."
-        note="Απαιτείται ενεργή Premium συνδρομή για το επιλεγμένο κτίριο."
+        note="Απαιτείται ενεργή Premium + IoT συνδρομή για το επιλεγμένο κτίριο."
         bullets={[
           'Χρονοπρογραμματισμός λειτουργίας ανά ημέρα και ζώνη.',
           'Ρύθμιση θερμοκρασιών και κανόνων λειτουργίας.',
@@ -50,7 +48,7 @@ export default function IotHeatingPage() {
         ]}
         tags={['IoT', 'Ωράρια', 'Ζώνες', 'Ειδοποιήσεις']}
         ctaHref="https://newconcierge.app/pricing"
-        ctaLabel="Premium συνδρομή"
+        ctaLabel="Premium + IoT"
         ctaExternal
         icon={<Flame className="h-5 w-5" />}
       />

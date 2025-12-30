@@ -141,17 +141,20 @@ class StripeService:
         subscription_id: str,
         web_price_id: str,
         premium_price_id: str,
+        iot_price_id: str,
         web_quantity: int,
         premium_quantity: int,
+        iot_quantity: int,
         proration_behavior: str = 'create_prorations',
         remove_other_items: bool = True,
     ) -> Dict[str, Any]:
         """
         Ensure a subscription has the correct per-apartment items and quantities.
 
-        Billing model (2 items):
+        Billing model (3 items):
         - web_per_apartment: quantity = total apartments (min 1 during setup/trial)
         - premium_addon_per_apartment: quantity = premium apartments (0 => item removed)
+        - iot_addon_per_apartment: quantity = iot apartments (0 => item removed)
 
         In development/mock mode, this returns a deterministic mock response without calling Stripe.
         """
@@ -163,6 +166,7 @@ class StripeService:
                 or subscription_id.startswith('sub_mock_')
                 or web_price_id.endswith('_dev')
                 or premium_price_id.endswith('_dev')
+                or iot_price_id.endswith('_dev')
             )
             if is_mock:
                 import uuid
@@ -170,21 +174,28 @@ class StripeService:
                 premium_item_id = (
                     f"si_mock_premium_{uuid.uuid4().hex[:12]}" if premium_quantity > 0 else None
                 )
+                iot_item_id = (
+                    f"si_mock_iot_{uuid.uuid4().hex[:12]}" if iot_quantity > 0 else None
+                )
                 logger.info(
-                    "[StripeService] Mock ensure_per_apartment_subscription_items: sub=%s web=%s(%s) premium=%s(%s)",
+                    "[StripeService] Mock ensure_per_apartment_subscription_items: sub=%s web=%s(%s) premium=%s(%s) iot=%s(%s)",
                     subscription_id,
                     web_price_id,
                     web_quantity,
                     premium_price_id,
                     premium_quantity,
+                    iot_price_id,
+                    iot_quantity,
                 )
                 return {
                     'ok': True,
                     'mock': True,
                     'web_item_id': web_item_id,
                     'premium_item_id': premium_item_id,
+                    'iot_item_id': iot_item_id,
                     'web_quantity': web_quantity,
                     'premium_quantity': premium_quantity,
+                    'iot_quantity': iot_quantity,
                 }
 
             # Retrieve subscription (include prices for matching)
@@ -202,7 +213,8 @@ class StripeService:
 
             web_item = _find_by_price(web_price_id)
             premium_item = _find_by_price(premium_price_id)
-            allowed_price_ids = {web_price_id, premium_price_id}
+            iot_item = _find_by_price(iot_price_id)
+            allowed_price_ids = {web_price_id, premium_price_id, iot_price_id}
             other_items = [it for it in items if it.get('price', {}).get('id') not in allowed_price_ids]
 
             update_items = []
@@ -245,6 +257,28 @@ class StripeService:
                         'deleted': True,
                     })
 
+            # IoT item: present only if quantity > 0
+            iot_item_id = None
+            if iot_quantity > 0:
+                if iot_item:
+                    update_items.append({
+                        'id': iot_item['id'],
+                        'price': iot_price_id,
+                        'quantity': int(iot_quantity),
+                    })
+                    iot_item_id = iot_item['id']
+                else:
+                    update_items.append({
+                        'price': iot_price_id,
+                        'quantity': int(iot_quantity),
+                    })
+            else:
+                if iot_item:
+                    update_items.append({
+                        'id': iot_item['id'],
+                        'deleted': True,
+                    })
+
             # Remove other legacy items to avoid double billing (when enabled)
             if remove_other_items:
                 for it in other_items:
@@ -264,14 +298,18 @@ class StripeService:
                     web_item_id = it.get('id')
                 if it.get('price', {}).get('id') == premium_price_id:
                     premium_item_id = it.get('id')
+                if it.get('price', {}).get('id') == iot_price_id:
+                    iot_item_id = it.get('id')
 
             return {
                 'ok': True,
                 'mock': False,
                 'web_item_id': web_item_id,
                 'premium_item_id': premium_item_id,
+                'iot_item_id': iot_item_id,
                 'web_quantity': int(web_quantity),
                 'premium_quantity': int(premium_quantity),
+                'iot_quantity': int(iot_quantity),
             }
         except Exception as e:
             logger.error(
@@ -714,5 +752,4 @@ class StripeService:
         except Exception as e:
             logger.error(f"Unexpected error creating checkout session: {e}")
             raise
-
 

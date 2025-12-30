@@ -147,6 +147,7 @@ class BuildingSerializer(serializers.ModelSerializer):
             'id', 'name', 'address', 'city', 'postal_code',
             'apartments_count',
             'premium_enabled',
+            'iot_enabled',
             # Internal Manager - νέα πεδία
             'internal_manager', 'internal_manager_id', 'internal_manager_can_record_payments',
             'internal_manager_display_name',
@@ -463,6 +464,10 @@ class BuildingContextSerializer(serializers.Serializer):
         default=False,
         help_text="Αν το κτίριο έχει Premium πρόσβαση (Kiosk + AI)"
     )
+    iot_enabled = serializers.BooleanField(
+        default=False,
+        help_text="Αν το κτίριο έχει Premium + IoT πρόσβαση (Smart Heating)"
+    )
     address = serializers.CharField(
         max_length=255,
         allow_blank=True,
@@ -598,6 +603,7 @@ class BuildingContextListSerializer(serializers.Serializer):
     name = serializers.CharField()
     apartments_count = serializers.IntegerField()
     premium_enabled = serializers.BooleanField(required=False)
+    iot_enabled = serializers.BooleanField(required=False)
     address = serializers.CharField()
     city = serializers.CharField()
 

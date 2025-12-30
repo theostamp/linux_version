@@ -108,7 +108,7 @@ function useScrollReveal() {
 // Animated section wrapper
 function AnimatedSection({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const { ref, isVisible } = useScrollReveal();
-  
+
   return (
     <div
       ref={ref}
@@ -523,7 +523,7 @@ export default function LandingPage() {
                 Εργαλεία για μια δυνατή κοινότητα
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-                Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να 
+                Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να
                 ενισχύουν τη συνεργασία και την επικοινωνία μεταξύ ενοίκων.
               </p>
             </div>
@@ -610,7 +610,7 @@ export default function LandingPage() {
                 Απλή τιμολόγηση, χωρίς κρυφές χρεώσεις
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-                Πληρώνεις ανάλογα με τον αριθμό διαμερισμάτων. Σύρε το slider για να δεις την τιμή σου.
+                Χρέωση ανά διαμέρισμα, χωρίς πολύπλοκες κλίμακες. Σύρε το slider για να δεις την τιμή σου.
                 <br />
                 <span className="text-xs text-slate-500">
                   Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
@@ -632,70 +632,70 @@ export default function LandingPage() {
               <h3 className="mb-4 text-center text-lg font-semibold text-slate-50">
                 Γρήγορος οδηγός τιμολόγησης
               </h3>
-              <table className="w-full min-w-[400px] text-sm">
+              <table className="w-full min-w-[520px] text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="py-3 text-left text-slate-400 font-medium">Διαμερίσματα</th>
-                    <th className="py-3 text-center text-slate-400 font-medium">
-                      <div className="flex items-center justify-center gap-2">
-                        <Home className="h-4 w-4" />
-                        Free
-                      </div>
-                    </th>
-                    <th className="py-3 text-center text-slate-400 font-medium">
-                      <div className="flex items-center justify-center gap-2">
-                        <Building className="h-4 w-4" />
-                        Cloud
-                      </div>
-                    </th>
-                    <th className="py-3 text-center text-slate-400 font-medium">
-                      <div className="flex items-center justify-center gap-2">
-                        <Monitor className="h-4 w-4" />
-                        Info Point
-                      </div>
-                    </th>
+                    <th className="py-3 text-left text-slate-400 font-medium">Πακέτο</th>
+                    <th className="py-3 text-center text-slate-400 font-medium">Τιμή/διαμέρισμα</th>
+                    <th className="py-3 text-right text-slate-400 font-medium">Κατάλληλο για</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-gray-200/50">
-                    <td className="py-3 text-slate-300">1-7</td>
+                    <td className="py-3 text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4 text-slate-400" />
+                        Free
+                      </div>
+                    </td>
                     <td className="py-3 text-center">
                       <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-400 font-semibold">
                         Δωρεάν
                       </span>
                     </td>
-                    <td className="py-3 text-center text-slate-500">-</td>
-                    <td className="py-3 text-center text-slate-500">-</td>
+                    <td className="py-3 text-right text-slate-500">Έως 7 διαμερίσματα</td>
                   </tr>
                   <tr className="border-b border-gray-200/50">
-                    <td className="py-3 text-slate-300">8-20</td>
-                    <td className="py-3 text-center text-slate-500">-</td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€18/μήνα</td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€28/μήνα</td>
+                    <td className="py-3 text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-slate-400" />
+                        Web
+                      </div>
+                    </td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€1.0</td>
+                    <td className="py-3 text-right text-slate-500">Πλήρης πλατφόρμα χωρίς οθόνη</td>
                   </tr>
                   <tr className="border-b border-gray-200/50">
-                    <td className="py-3 text-slate-300">21-30</td>
-                    <td className="py-3 text-center text-slate-500">-</td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€22/μήνα</td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€35/μήνα</td>
+                    <td className="py-3 text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4 text-slate-400" />
+                        Premium
+                      </div>
+                    </td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€1.8</td>
+                    <td className="py-3 text-right text-slate-500">Web + Kiosk + AI + Αρχείο</td>
                   </tr>
                   <tr>
-                    <td className="py-3 text-slate-300">31+</td>
-                    <td className="py-3 text-center text-slate-500">-</td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€25/μήνα</td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€40/μήνα</td>
+                    <td className="py-3 text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4 text-slate-400" />
+                        Premium + IoT
+                      </div>
+                    </td>
+                    <td className="py-3 text-center text-emerald-400 font-semibold">€2.3</td>
+                    <td className="py-3 text-right text-slate-500">Smart Heating & IoT αυτοματισμοί</td>
                   </tr>
                 </tbody>
               </table>
               <p className="mt-4 text-center text-xs text-slate-500">
-                * Ετήσια πληρωμή: 2 μήνες δωρεάν (16.67% έκπτωση)
+                * Χρέωση ανά διαμέρισμα • Ετήσια πληρωμή: 2 μήνες δωρεάν (16.67% έκπτωση)
               </p>
             </div>
           </AnimatedSection>
 
           {/* Feature Comparison */}
           <AnimatedSection delay={300}>
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {/* Free Features */}
               <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
@@ -714,21 +714,20 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              {/* Cloud Features */}
+              {/* Web Features */}
               <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
                     <Building className="h-4 w-4 text-emerald-400" />
                   </div>
-                  <h4 className="font-semibold text-slate-200">Cloud</h4>
+                  <h4 className="font-semibold text-slate-200">Web</h4>
                 </div>
                 <ul className="space-y-2">
                   {[
-                    "Απεριόριστα διαμερίσματα",
+                    "Dashboard διαχείρισης",
                     "Ανακοινώσεις & ψηφοφορίες",
                     "Αιτήματα συντήρησης",
-                    "Web & mobile πρόσβαση",
-                    "Έως 5 πολυκατοικίες"
+                    "Web & mobile πρόσβαση"
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
                       <Check className="h-3 w-3 text-emerald-400" />
@@ -738,24 +737,48 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              {/* Kiosk Features */}
+              {/* Premium Features */}
               <div className="rounded-xl border border-emerald-500/30 bg-slate-900 p-4 shadow-lg shadow-emerald-500/10">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
                     <Monitor className="h-4 w-4 text-emerald-400" />
                   </div>
-                  <h4 className="font-semibold text-slate-200">Info Point</h4>
+                  <h4 className="font-semibold text-slate-200">Premium</h4>
                   <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
                     Δημοφιλές
                   </span>
                 </div>
                 <ul className="space-y-2">
                   {[
-                    "Όλα τα Cloud features",
-                    "Οθόνη στην είσοδο",
-                    "Hardware & εγκατάσταση",
-                    "Ενσωματωμένο internet",
-                    "Τεχνική υποστήριξη 24/7"
+                    "Kiosk display στην είσοδο",
+                    "Scenes & widgets",
+                    "AI παραστατικά",
+                    "Ηλεκτρονικό αρχείο",
+                    "Όλα τα Web features"
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
+                      <Check className="h-3 w-3 text-emerald-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Premium + IoT Features */}
+              <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <Monitor className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <h4 className="font-semibold text-slate-200">Premium + IoT</h4>
+                </div>
+                <ul className="space-y-2">
+                  {[
+                    "Smart Heating dashboard",
+                    "IoT ειδοποιήσεις & alarms",
+                    "Στατιστικά κατανάλωσης",
+                    "Προβλέψεις & βελτιστοποίηση",
+                    "Όλα τα Premium features"
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
                       <Check className="h-3 w-3 text-emerald-400" />
@@ -910,7 +933,7 @@ export default function LandingPage() {
 
                 <div className="mx-auto mt-6 max-w-lg">
                   <p className="mb-4 text-center text-xs text-slate-500">Ή συμπλήρωσε τη φόρμα:</p>
-                  
+
                   {/* Simplified contact form */}
                   <form className="grid gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">

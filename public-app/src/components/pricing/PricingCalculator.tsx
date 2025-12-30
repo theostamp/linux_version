@@ -2,26 +2,21 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Building, Home, Monitor, Phone, ChevronRight, Check } from "lucide-react";
+import { getMonthlyPrice, getYearlyPrice, isFreeEligible, PlanId } from "@/lib/pricing";
 
 /**
  * Τιμολογιακή Πολιτική:
  * - Free: 1-7 διαμερίσματα → €0
- * - Cloud: 8-20 → €18, 21-30 → €22, 31+ → €25
- * - Kiosk: 8-20 → €28, 21-30 → €35, 31+ → €40
+ * - Web: €1.0/διαμέρισμα
+ * - Premium: €1.8/διαμέρισμα
+ * - Premium + IoT: €2.3/διαμέρισμα
  */
 
-interface PricingTier {
-  minApartments: number;
-  maxApartments: number | null;
-  monthlyPrice: number;
-}
-
 interface PlanCategory {
-  id: "free" | "cloud" | "kiosk";
+  id: PlanId;
   name: string;
   description: string;
   icon: React.ReactNode;
-  tiers: PricingTier[];
   features: string[];
   highlighted?: boolean;
   badge?: string;
@@ -33,7 +28,6 @@ const PRICING_DATA: PlanCategory[] = [
     name: "Free",
     description: "Βασικό φύλλο κοινοχρήστων",
     icon: <Home className="h-5 w-5" />,
-    tiers: [{ minApartments: 1, maxApartments: 7, monthlyPrice: 0 }],
     features: [
       "Έως 7 διαμερίσματα",
       "Βασικό φύλλο κοινοχρήστων",
@@ -41,66 +35,47 @@ const PRICING_DATA: PlanCategory[] = [
     ],
   },
   {
-    id: "cloud",
-    name: "Cloud",
+    id: "web",
+    name: "Web",
     description: "Πλήρης πλατφόρμα χωρίς οθόνη",
     icon: <Building className="h-5 w-5" />,
-    tiers: [
-      { minApartments: 8, maxApartments: 20, monthlyPrice: 18 },
-      { minApartments: 21, maxApartments: 30, monthlyPrice: 22 },
-      { minApartments: 31, maxApartments: null, monthlyPrice: 25 },
-    ],
     features: [
       "Απεριόριστα διαμερίσματα",
       "Ανακοινώσεις & ψηφοφορίες",
       "Αιτήματα συντήρησης",
       "Πρόσβαση ενοίκων (web/mobile)",
-      "Έως 5 πολυκατοικίες online",
+      "Dashboard διαχείρισης",
     ],
   },
   {
-    id: "kiosk",
-    name: "Info Point",
-    description: "Με σημείο ενημέρωσης στην είσοδο",
+    id: "premium",
+    name: "Premium",
+    description: "Web + kiosk + AI + αρχείο",
     icon: <Monitor className="h-5 w-5" />,
     highlighted: true,
     badge: "Δημοφιλές",
-    tiers: [
-      { minApartments: 8, maxApartments: 20, monthlyPrice: 28 },
-      { minApartments: 21, maxApartments: 30, monthlyPrice: 35 },
-      { minApartments: 31, maxApartments: null, monthlyPrice: 40 },
-    ],
     features: [
-      "Όλα τα Cloud features",
-      "Οθόνη ενημέρωσης στην είσοδο",
-      "Hardware & εγκατάσταση",
-      "Ενσωματωμένο internet",
-      "Τεχνική υποστήριξη 24/7",
+      "Όλα τα Web features",
+      "Kiosk display στην είσοδο",
+      "Διαχείριση scenes & widgets",
+      "AI παραστατικά & αυτοματισμοί",
+      "Ηλεκτρονικό αρχείο",
+    ],
+  },
+  {
+    id: "premium_iot",
+    name: "Premium + IoT",
+    description: "Premium + Smart Heating",
+    icon: <Monitor className="h-5 w-5" />,
+    features: [
+      "Όλα τα Premium features",
+      "Smart Heating dashboard",
+      "Ειδοποιήσεις βλάβης/διαρροών",
+      "Στατιστικά κατανάλωσης",
+      "Προβλέψεις & βελτιστοποίηση",
     ],
   },
 ];
-
-function getPriceForApartments(
-  plan: PlanCategory,
-  apartmentCount: number
-): number | null {
-  for (const tier of plan.tiers) {
-    if (
-      apartmentCount >= tier.minApartments &&
-      (tier.maxApartments === null || apartmentCount <= tier.maxApartments)
-    ) {
-      return tier.monthlyPrice;
-    }
-  }
-  return null;
-}
-
-function getTierLabel(apartmentCount: number): string {
-  if (apartmentCount <= 7) return "1-7";
-  if (apartmentCount <= 20) return "8-20";
-  if (apartmentCount <= 30) return "21-30";
-  return "31+";
-}
 
 interface PricingCalculatorProps {
   onSelectPlan?: (plan: string, apartments: number, price: number) => void;
@@ -116,43 +91,46 @@ export function PricingCalculator({
   compact = false,
 }: PricingCalculatorProps) {
   const [apartments, setApartments] = useState(initialApartments);
-  const [selectedPlan, setSelectedPlan] = useState<"cloud" | "kiosk">("kiosk");
+  const [selectedPlan, setSelectedPlan] = useState<"web" | "premium" | "premium_iot">("premium");
   const [isYearly, setIsYearly] = useState(false);
 
   // Determine if Free tier applies
-  const isFreeEligible = apartments <= 7;
+  const freeEligible = isFreeEligible(apartments);
 
   // Calculate prices
   const getPrice = useCallback(
-    (planId: "cloud" | "kiosk"): number | null => {
-      if (isFreeEligible && planId === "cloud") return 0;
-      const plan = PRICING_DATA.find((p) => p.id === planId);
-      if (!plan) return null;
-      return getPriceForApartments(plan, apartments);
+    (planId: "web" | "premium" | "premium_iot"): number | null => {
+      return getMonthlyPrice(planId, apartments);
     },
-    [apartments, isFreeEligible]
+    [apartments]
   );
 
-  const cloudPrice = getPrice("cloud");
-  const kioskPrice = getPrice("kiosk");
+  const webPrice = getPrice("web");
+  const premiumPrice = getPrice("premium");
+  const premiumIotPrice = getPrice("premium_iot");
 
-  const currentPrice = selectedPlan === "cloud" ? cloudPrice : kioskPrice;
-  const yearlyPrice = currentPrice ? currentPrice * 10 : null; // 2 μήνες δωρεάν
+  const currentPrice =
+    selectedPlan === "web"
+      ? webPrice
+      : selectedPlan === "premium"
+      ? premiumPrice
+      : premiumIotPrice;
+  const yearlyPrice = currentPrice ? getYearlyPrice(currentPrice) : null; // 2 μήνες δωρεάν
   const yearlySavings = currentPrice ? currentPrice * 2 : null;
 
   const displayPrice = isYearly ? yearlyPrice : currentPrice;
 
   // Handle plan selection - navigate to signup with params
   const handleSelectPlan = () => {
-    const effectivePlan = isFreeEligible ? "free" : selectedPlan;
+    const effectivePlan = freeEligible ? "free" : selectedPlan;
     const params = new URLSearchParams({
       plan: effectivePlan,
       apartments: apartments.toString(),
     });
-    
+
     // Navigate to signup
     window.location.href = `/signup?${params.toString()}`;
-    
+
     // Also call callback if provided
     if (onSelectPlan && currentPrice !== null) {
       onSelectPlan(effectivePlan, apartments, currentPrice);
@@ -183,7 +161,7 @@ export function PricingCalculator({
             <span className="text-sm text-slate-400">διαμερίσματα</span>
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            Κλίμακα: {getTierLabel(apartments)} διαμερίσματα
+            Τιμολόγηση ανά διαμέρισμα
           </p>
         </div>
 
@@ -217,13 +195,13 @@ export function PricingCalculator({
             <span>1</span>
             <span>7</span>
             <span>20</span>
-            <span>30</span>
+            <span>40</span>
             <span>60+</span>
           </div>
         </div>
 
         {/* Free Tier Notice */}
-        {isFreeEligible && (
+        {freeEligible && (
           <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
             <p className="text-sm font-medium text-emerald-400">
               🎉 Η πολυκατοικία σου χωράει στο δωρεάν πακέτο!
@@ -235,42 +213,42 @@ export function PricingCalculator({
         )}
 
         {/* Plan Selection */}
-        {!isFreeEligible && (
+        {!freeEligible && (
           <div className="mb-6">
             <p className="mb-3 text-sm text-slate-400">Επίλεξε πακέτο:</p>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Cloud Option */}
+            <div className="grid gap-3 md:grid-cols-3">
+              {/* Web Option */}
               <button
-                onClick={() => setSelectedPlan("cloud")}
+                onClick={() => setSelectedPlan("web")}
                 className={`relative rounded-xl border p-4 text-left transition-all ${
-                  selectedPlan === "cloud"
+                  selectedPlan === "web"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <Building className="h-5 w-5 text-slate-300" />
-                  <span className="font-medium text-slate-200">Cloud</span>
+                  <span className="font-medium text-slate-200">Web</span>
                 </div>
                 <p className="mt-1 text-xs text-slate-400">Χωρίς οθόνη</p>
                 <p className="mt-2 text-lg font-bold text-emerald-400">
-                  €{cloudPrice}
+                  €{webPrice}
                   <span className="text-xs font-normal text-slate-500">
                     /μήνα
                   </span>
                 </p>
-                {selectedPlan === "cloud" && (
+                {selectedPlan === "web" && (
                   <div className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
                     <Check className="h-3 w-3 text-slate-950" />
                   </div>
                 )}
               </button>
 
-              {/* Kiosk Option */}
+              {/* Premium Option */}
               <button
-                onClick={() => setSelectedPlan("kiosk")}
+                onClick={() => setSelectedPlan("premium")}
                 className={`relative rounded-xl border p-4 text-left transition-all ${
-                  selectedPlan === "kiosk"
+                  selectedPlan === "premium"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
                 }`}
@@ -281,16 +259,43 @@ export function PricingCalculator({
                 </span>
                 <div className="flex items-center gap-2">
                   <Monitor className="h-5 w-5 text-slate-300" />
-                  <span className="font-medium text-slate-200">Info Point</span>
+                  <span className="font-medium text-slate-200">Premium</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">Με οθόνη εισόδου</p>
+                <p className="mt-1 text-xs text-slate-400">Web + Kiosk + AI + Αρχείο</p>
                 <p className="mt-2 text-lg font-bold text-emerald-400">
-                  €{kioskPrice}
+                  €{premiumPrice}
                   <span className="text-xs font-normal text-slate-500">
                     /μήνα
                   </span>
                 </p>
-                {selectedPlan === "kiosk" && (
+                {selectedPlan === "premium" && (
+                  <div className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
+                    <Check className="h-3 w-3 text-slate-950" />
+                  </div>
+                )}
+              </button>
+
+              {/* Premium + IoT Option */}
+              <button
+                onClick={() => setSelectedPlan("premium_iot")}
+                className={`relative rounded-xl border p-4 text-left transition-all ${
+                  selectedPlan === "premium_iot"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-gray-200 bg-slate-800/50 hover:border-slate-600"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-5 w-5 text-slate-300" />
+                  <span className="font-medium text-slate-200">Premium + IoT</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-400">Smart Heating</p>
+                <p className="mt-2 text-lg font-bold text-emerald-400">
+                  €{premiumIotPrice}
+                  <span className="text-xs font-normal text-slate-500">
+                    /μήνα
+                  </span>
+                </p>
+                {selectedPlan === "premium_iot" && (
                   <div className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
                     <Check className="h-3 w-3 text-slate-950" />
                   </div>
@@ -301,7 +306,7 @@ export function PricingCalculator({
         )}
 
         {/* Billing Toggle */}
-        {!isFreeEligible && (
+        {!freeEligible && (
           <div className="mb-6 flex items-center justify-center gap-3">
             <span
               className={`text-sm ${!isYearly ? "text-slate-200" : "text-slate-500"}`}
@@ -336,24 +341,24 @@ export function PricingCalculator({
         {/* Price Display */}
         <div className="rounded-xl bg-slate-950 p-6 text-center">
           <p className="text-sm text-slate-400">
-            {isFreeEligible ? "Το πακέτο σου:" : "Συνολικό κόστος:"}
+            {freeEligible ? "Το πακέτο σου:" : "Συνολικό κόστος:"}
           </p>
           <div className="mt-2 flex items-baseline justify-center gap-1">
             <span className="text-4xl font-bold text-emerald-400">
-              €{isFreeEligible ? 0 : displayPrice}
+              €{freeEligible ? 0 : displayPrice}
             </span>
             <span className="text-slate-500">
               /{isYearly ? "έτος" : "μήνα"}
             </span>
           </div>
-          {!isFreeEligible && isYearly && yearlySavings && (
+          {!freeEligible && isYearly && yearlySavings && (
             <p className="mt-1 text-xs text-emerald-400">
               Εξοικονόμηση €{yearlySavings}/έτος (2 μήνες δωρεάν)
             </p>
           )}
-          {!isFreeEligible && (
+          {!freeEligible && (
             <p className="mt-2 text-xs text-slate-500">
-              {apartments} διαμερίσματα × {selectedPlan === "cloud" ? "Cloud" : "Info Point"}
+              {apartments} διαμερίσματα × {selectedPlan === "web" ? "Web" : selectedPlan === "premium" ? "Premium" : "Premium + IoT"}
             </p>
           )}
         </div>
@@ -364,7 +369,7 @@ export function PricingCalculator({
             onClick={handleSelectPlan}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30 hover:scale-[1.02]"
           >
-            {isFreeEligible ? "Ξεκίνα δωρεάν" : "Ξεκίνα τώρα"}
+            {freeEligible ? "Ξεκίνα δωρεάν" : "Ξεκίνα τώρα"}
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
@@ -384,10 +389,15 @@ export function PricingCalculator({
       </div>
 
       {/* Features Comparison (optional, show on full mode) */}
-      {!compact && selectedPlan && !isFreeEligible && (
+      {!compact && selectedPlan && !freeEligible && (
         <div className="mt-6 rounded-xl border border-gray-200 bg-slate-900/50 p-4">
           <p className="mb-3 text-sm font-medium text-slate-300">
-            {selectedPlan === "kiosk" ? "Info Point" : "Cloud"} περιλαμβάνει:
+            {selectedPlan === "premium"
+              ? "Premium"
+              : selectedPlan === "premium_iot"
+              ? "Premium + IoT"
+              : "Web"}{" "}
+            περιλαμβάνει:
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {PRICING_DATA.find((p) => p.id === selectedPlan)?.features.map(
@@ -409,4 +419,3 @@ export function PricingCalculator({
 }
 
 export default PricingCalculator;
-

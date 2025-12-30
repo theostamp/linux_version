@@ -1,59 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getMonthlyPrice, getYearlyPrice, isFreeEligible, PlanId, PLAN_RATES } from '@/lib/pricing';
 
 /**
  * Τιμολογιακή Πολιτική:
  * - Free: 1-7 διαμερίσματα → €0
- * - Cloud: 8-20 → €18, 21-30 → €22, 31+ → €25
- * - Kiosk: 8-20 → €28, 21-30 → €35, 31+ → €40
+ * - Web: €1.0/διαμέρισμα
+ * - Premium: €1.8/διαμέρισμα
+ * - Premium + IoT: €2.3/διαμέρισμα
  */
-
-interface PricingTier {
-  minApartments: number;
-  maxApartments: number | null;
-  monthlyPrice: number;
-}
-
-const PRICING_TIERS: Record<string, PricingTier[]> = {
-  free: [{ minApartments: 1, maxApartments: 7, monthlyPrice: 0 }],
-  cloud: [
-    { minApartments: 8, maxApartments: 20, monthlyPrice: 18 },
-    { minApartments: 21, maxApartments: 30, monthlyPrice: 22 },
-    { minApartments: 31, maxApartments: null, monthlyPrice: 25 },
-  ],
-  kiosk: [
-    { minApartments: 8, maxApartments: 20, monthlyPrice: 28 },
-    { minApartments: 21, maxApartments: 30, monthlyPrice: 35 },
-    { minApartments: 31, maxApartments: null, monthlyPrice: 40 },
-  ],
-};
-
-const PLAN_NAMES: Record<string, string> = {
+const PLAN_NAMES: Record<PlanId, string> = {
   free: 'Concierge Free',
-  cloud: 'Concierge Cloud',
-  kiosk: 'Concierge Info Point',
+  web: 'Concierge Web',
+  premium: 'Concierge Premium',
+  premium_iot: 'Concierge Premium + IoT',
 };
-
-function getPriceForApartments(plan: string, apartments: number): number | null {
-  const tiers = PRICING_TIERS[plan];
-  if (!tiers) return null;
-
-  for (const tier of tiers) {
-    if (
-      apartments >= tier.minApartments &&
-      (tier.maxApartments === null || apartments <= tier.maxApartments)
-    ) {
-      return tier.monthlyPrice;
-    }
-  }
-  return null;
-}
 
 function getTierLabel(apartments: number): string {
-  if (apartments <= 7) return '1-7 διαμερίσματα';
-  if (apartments <= 20) return '8-20 διαμερίσματα';
-  if (apartments <= 30) return '21-30 διαμερίσματα';
-  return '31+ διαμερίσματα';
+  return `${apartments} διαμερίσματα`;
 }
 
 export async function POST(request: NextRequest) {
@@ -70,11 +34,11 @@ export async function POST(request: NextRequest) {
     const stripe = new Stripe(apiKey, { apiVersion: '2025-09-30.clover' });
 
     const body = await request.json();
-    const { 
-      plan, 
+    const {
+      plan,
       apartments = 15,
       billingInterval = 'month',
-      userData, 
+      userData,
       tenantSubdomain,
       oauth = false  // Flag for OAuth users (no password needed)
     } = body;
@@ -87,21 +51,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate plan
-    const validPlans = ['free', 'cloud', 'kiosk'];
-    if (!validPlans.includes(plan)) {
+    const validPlans: PlanId[] = ['free', 'web', 'premium', 'premium_iot'];
+    if (!validPlans.includes(plan as PlanId)) {
       return NextResponse.json(
-        { error: 'Invalid plan. Must be free, cloud, or kiosk' },
+        { error: 'Invalid plan. Must be free, web, premium, or premium_iot' },
         { status: 400 }
       );
     }
+    const planId = plan as PlanId;
 
     // Handle Free plan (no payment needed)
-    if (plan === 'free') {
+    if (planId === 'free') {
+      if (!isFreeEligible(apartments)) {
+        return NextResponse.json(
+          { error: 'Free plan is available up to 7 apartments' },
+          { status: 400 }
+        );
+      }
       // For free plan, we should create the account directly via backend
       // without going through Stripe
       try {
         const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL?.replace(/\/$/, '');
-        
+
         const response = await fetch(`${coreApiUrl}/api/users/register/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -125,7 +96,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Account created successfully
-        return NextResponse.json({ 
+        return NextResponse.json({
           success: true,
           message: 'Account created successfully',
           redirectUrl: '/login?registered=true'
@@ -140,22 +111,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate price for paid plans
-    const monthlyPrice = getPriceForApartments(plan, apartments);
-    if (monthlyPrice === null) {
-      return NextResponse.json(
-        { error: 'Could not calculate price for the given apartments' },
-        { status: 400 }
-      );
-    }
+    const monthlyPrice = getMonthlyPrice(planId, apartments);
 
     // Calculate final price based on billing interval
     const isYearly = billingInterval === 'year';
-    const priceAmount = isYearly 
-      ? monthlyPrice * 10 * 100 // 10 months (2 free) in cents
+    const priceAmount = isYearly
+      ? getYearlyPrice(monthlyPrice) * 100 // 10 months (2 free) in cents
       : monthlyPrice * 100; // Monthly in cents
 
-    const planName = PLAN_NAMES[plan] || plan;
+    const planName = PLAN_NAMES[planId] || planId;
     const tierLabel = getTierLabel(apartments);
+    const planRate = planId === 'free' ? 0 : PLAN_RATES[planId];
 
     // Create Stripe customer
     const customer = await stripe.customers.create({
@@ -163,7 +129,7 @@ export async function POST(request: NextRequest) {
       name: `${userData.firstName} ${userData.lastName}`,
       metadata: {
         tenant_subdomain: tenantSubdomain,
-        plan: plan,
+        plan: planId,
         apartments: apartments.toString(),
         first_name: userData.firstName,
         last_name: userData.lastName
@@ -180,16 +146,17 @@ export async function POST(request: NextRequest) {
             currency: 'eur',
             product_data: {
               name: planName,
-              description: `${tierLabel} - ${isYearly ? 'Ετήσια συνδρομή (2 μήνες δωρεάν)' : 'Μηνιαία συνδρομή'}`,
+              description: `${tierLabel} • €${planRate}/διαμέρισμα • ${isYearly ? 'Ετήσια συνδρομή (2 μήνες δωρεάν)' : 'Μηνιαία συνδρομή'}`,
               metadata: {
-                plan: plan,
+                plan: planId,
                 apartments: apartments.toString(),
                 tier: tierLabel,
+                plan_rate: planRate.toString(),
               },
             },
             unit_amount: priceAmount,
-            recurring: { 
-              interval: isYearly ? 'year' : 'month' 
+            recurring: {
+              interval: isYearly ? 'year' : 'month'
             },
           },
           quantity: 1,
@@ -200,7 +167,7 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/signup?plan=${plan}&apartments=${apartments}`,
       metadata: {
         tenant_subdomain: tenantSubdomain,
-        plan: plan,
+        plan: planId,
         apartments: apartments.toString(),
         billing_interval: billingInterval,
         user_email: userData.email,
@@ -215,17 +182,17 @@ export async function POST(request: NextRequest) {
         trial_period_days: 14, // 14 ημέρες δοκιμαστική περίοδος
         metadata: {
           tenant_subdomain: tenantSubdomain,
-          plan: plan,
+          plan: planId,
           apartments: apartments.toString(),
           user_email: userData.email
         }
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       sessionId: session.id,
       url: session.url,
-      plan: plan,
+      plan: planId,
       apartments: apartments,
       monthlyPrice: monthlyPrice,
       billingInterval: billingInterval,

@@ -9,16 +9,49 @@ from core.permissions import IsUltraAdmin
 class IsPremiumIotEnabled(permissions.BasePermission):
     """
     Custom permission: Επιτρέπει πρόσβαση ΜΟΝΟ αν το κτίριο έχει ενεργό Premium IoT Plan.
-    Για την ώρα, περιορίζεται σε Ultra Admins και Demo Buildings.
+    Επιτρέπει staff/superuser και ενεργά IoT κτίρια με ενεργή συνδρομή tenant.
     """
     def has_permission(self, request, view):
-        # 1. Ultra Admins bypass checks
+        # 1. Admins bypass checks
         if request.user.is_superuser or getattr(request.user, 'is_staff', False):
             return True
 
-        # 2. Check Plan Features (Mock implementation for now)
-        # TODO: Integrate with billing.PlanFeatureMiddleware
-        return False  # Default deny for now as requested
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if not self._tenant_subscription_active(request):
+            return False
+
+        # Allow if user has access to at least one IoT-enabled building
+        try:
+            return request.user.buildings.filter(premium_enabled=True, iot_enabled=True).exists()
+        except Exception:
+            return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser or getattr(request.user, 'is_staff', False):
+            return True
+
+        if not self._tenant_subscription_active(request):
+            return False
+
+        building = getattr(obj, 'building', None)
+        if building is None and hasattr(obj, 'device'):
+            building = getattr(obj.device, 'building', None)
+        if building is None:
+            return False
+
+        return bool(getattr(building, 'premium_enabled', False)) and bool(getattr(building, 'iot_enabled', False))
+
+    def _tenant_subscription_active(self, request) -> bool:
+        tenant = getattr(request, 'tenant', None)
+        if not tenant or getattr(tenant, 'schema_name', None) == 'public':
+            return False
+        today = timezone.now().date()
+        return bool(getattr(tenant, 'is_active', False)) and (
+            getattr(tenant, 'on_trial', False)
+            or (getattr(tenant, 'paid_until', None) and tenant.paid_until >= today)
+        )
 
 class HeatingDeviceViewSet(viewsets.ModelViewSet):
     queryset = HeatingDevice.objects.all()
@@ -59,4 +92,3 @@ class HeatingDeviceViewSet(viewsets.ModelViewSet):
 
         device.save()
         return Response({'status': 'ok', 'current_state': device.current_status})
-

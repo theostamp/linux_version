@@ -9,10 +9,12 @@ It is intentionally "safe-by-default":
 Billing model:
 - web_per_apartment (quantity = total_apartments)
 - premium_addon_per_apartment (quantity = premium_apartments)
+- iot_addon_per_apartment (quantity = iot_apartments)
 
 Assumptions:
 - Billable apartments count is derived from Building.apartments_count (includes empty/archived).
 - Premium apartments count is derived from buildings where Building.premium_enabled=True.
+- IoT apartments count is derived from buildings where Building.iot_enabled=True.
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ logger = logging.getLogger(__name__)
 class ApartmentBillingCounts:
     total_apartments: int
     premium_apartments: int
+    iot_apartments: int
 
 
 def _get_price_id_web_per_apartment() -> str:
@@ -45,6 +48,9 @@ def _get_price_id_web_per_apartment() -> str:
 
 def _get_price_id_premium_addon_per_apartment() -> str:
     return getattr(settings, 'STRIPE_PREMIUM_ADDON_PER_APARTMENT_PRICE_ID', 'price_premium_addon_per_apartment_dev')
+
+def _get_price_id_iot_addon_per_apartment() -> str:
+    return getattr(settings, 'STRIPE_IOT_ADDON_PER_APARTMENT_PRICE_ID', 'price_iot_addon_per_apartment_dev')
 
 
 def calculate_counts_for_tenant_schema(schema_name: str) -> ApartmentBillingCounts:
@@ -55,15 +61,19 @@ def calculate_counts_for_tenant_schema(schema_name: str) -> ApartmentBillingCoun
         # Avoid heavy ORM aggregation with conditional sums because this is small.
         total_apartments = 0
         premium_apartments = 0
-        for b in Building.objects.only('apartments_count', 'premium_enabled'):
+        iot_apartments = 0
+        for b in Building.objects.only('apartments_count', 'premium_enabled', 'iot_enabled'):
             count = int(b.apartments_count or 0)
             total_apartments += count
             if bool(b.premium_enabled):
                 premium_apartments += count
+            if bool(getattr(b, 'iot_enabled', False)):
+                iot_apartments += count
 
     return ApartmentBillingCounts(
         total_apartments=total_apartments,
         premium_apartments=premium_apartments,
+        iot_apartments=iot_apartments,
     )
 
 
@@ -93,7 +103,8 @@ def sync_subscription_items_for_tenant(
     if not bool(getattr(settings, 'PER_APARTMENT_BILLING_ENABLED', False)):
         subscription.billing_total_apartments = counts.total_apartments
         subscription.billing_premium_apartments = counts.premium_apartments
-        subscription.save(update_fields=['billing_total_apartments', 'billing_premium_apartments', 'updated_at'])
+        subscription.billing_iot_apartments = counts.iot_apartments
+        subscription.save(update_fields=['billing_total_apartments', 'billing_premium_apartments', 'billing_iot_apartments', 'updated_at'])
         return {
             'ok': True,
             'counts': counts.__dict__,
@@ -103,17 +114,21 @@ def sync_subscription_items_for_tenant(
     # Stripe price IDs (configurable via env/settings)
     price_web = _get_price_id_web_per_apartment()
     price_premium = _get_price_id_premium_addon_per_apartment()
+    price_iot = _get_price_id_iot_addon_per_apartment()
 
     # Stripe quantities: keep web >= 1 to avoid edge cases during trial/setup (no charge until trial ends).
     web_qty = max(1, counts.total_apartments)
     premium_qty = max(0, counts.premium_apartments)
+    iot_qty = max(0, counts.iot_apartments)
 
     stripe_result = StripeService.ensure_per_apartment_subscription_items(
         subscription_id=subscription.stripe_subscription_id,
         web_price_id=price_web,
         premium_price_id=price_premium,
+        iot_price_id=price_iot,
         web_quantity=web_qty,
         premium_quantity=premium_qty,
+        iot_quantity=iot_qty,
         proration_behavior=proration_behavior,
         remove_other_items=True,
     )
@@ -129,14 +144,18 @@ def sync_subscription_items_for_tenant(
     # Persist IDs + last synced counts for visibility & future delta-based sync
     subscription.stripe_subscription_item_id_web = stripe_result.get('web_item_id') or subscription.stripe_subscription_item_id_web
     subscription.stripe_subscription_item_id_premium = stripe_result.get('premium_item_id') or subscription.stripe_subscription_item_id_premium
+    subscription.stripe_subscription_item_id_iot = stripe_result.get('iot_item_id') or subscription.stripe_subscription_item_id_iot
     subscription.billing_total_apartments = counts.total_apartments
     subscription.billing_premium_apartments = counts.premium_apartments
+    subscription.billing_iot_apartments = counts.iot_apartments
     subscription.save(
         update_fields=[
             'stripe_subscription_item_id_web',
             'stripe_subscription_item_id_premium',
+            'stripe_subscription_item_id_iot',
             'billing_total_apartments',
             'billing_premium_apartments',
+            'billing_iot_apartments',
             'updated_at',
         ]
     )
@@ -146,5 +165,4 @@ def sync_subscription_items_for_tenant(
         'counts': counts.__dict__,
         'stripe': stripe_result,
     }
-
 

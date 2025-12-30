@@ -76,6 +76,7 @@ export interface BuildingContextData {
     premium_allowed: boolean | null;
     kiosk_enabled: boolean | null;
     ai_enabled: boolean | null;
+    iot_enabled: boolean | null;
   };
 }
 

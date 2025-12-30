@@ -62,8 +62,12 @@ class PricingTierViewSet(ReadOnlyModelViewSet):
         # Ομαδοποίηση ανά κατηγορία
         grouped = {
             'free': [],
+            'web': [],
+            'premium': [],
+            'premium_iot': [],
+            # Legacy buckets
             'cloud': [],
-            'kiosk': []
+            'kiosk': [],
         }
 
         for tier in serializer.data:
@@ -76,8 +80,9 @@ class PricingTierViewSet(ReadOnlyModelViewSet):
             'grouped': grouped,
             'summary': {
                 'free': {'max_apartments': 7, 'price': 0},
-                'cloud': {'min_price': 18, 'max_price': 25},
-                'kiosk': {'min_price': 28, 'max_price': 40},
+                'web': {'price_per_apartment': 1.0},
+                'premium': {'price_per_apartment': 1.8},
+                'premium_iot': {'price_per_apartment': 2.3},
             }
         })
 
@@ -88,7 +93,7 @@ class PriceCalculatorView(APIView):
 
     POST /api/billing/calculate-price/
     {
-        "plan_category": "cloud",  // "free", "cloud", "kiosk"
+        "plan_category": "web",  // "free", "web", "premium", "premium_iot"
         "apartment_count": 25,
         "building_count": 1,
         "yearly": false
@@ -96,8 +101,8 @@ class PriceCalculatorView(APIView):
 
     Returns:
     {
-        "plan_category": "cloud",
-        "plan_category_display": "Cloud",
+        "plan_category": "web",
+        "plan_category_display": "Web",
         "apartment_count": 25,
         "building_count": 1,
         "monthly_price_per_building": 22.00,
@@ -106,8 +111,8 @@ class PriceCalculatorView(APIView):
         "total_yearly_price": 220.00,
         "yearly_discount_percent": 16.67,
         "yearly_savings": 44.00,
-        "tier_label": "21-30 διαμερίσματα",
-        "tier_id": 2,
+        "tier_label": "1+ διαμερίσματα",
+        "tier_id": 10,
         "stripe_price_id_monthly": "price_xxx",
         "stripe_price_id_yearly": "price_yyy",
         "requires_contact": false,
@@ -116,6 +121,13 @@ class PriceCalculatorView(APIView):
     }
     """
     permission_classes = [permissions.AllowAny]  # Public endpoint για landing page
+    LEGACY_CATEGORY_MAP = {
+        'cloud': 'web',
+        'kiosk': 'premium',
+        'info_point': 'premium',
+        'infopoint': 'premium',
+    }
+    PER_APARTMENT_CATEGORIES = {'web', 'premium', 'premium_iot'}
 
     def post(self, request):
         serializer = PriceCalculationRequestSerializer(data=request.data)
@@ -128,6 +140,8 @@ class PriceCalculatorView(APIView):
         apartment_count = data['apartment_count']
         building_count = data.get('building_count', 1)
         yearly = data.get('yearly', False)
+
+        plan_category = self.LEGACY_CATEGORY_MAP.get(plan_category, plan_category)
 
         # Έλεγχος για "Καλέστε μας" (>5 πολυκατοικίες)
         if building_count > 5:
@@ -152,7 +166,7 @@ class PriceCalculatorView(APIView):
             })
 
         # Έλεγχος για Free tier (1-7 διαμερίσματα)
-        if plan_category == 'free' or (apartment_count <= 7 and plan_category != 'kiosk'):
+        if plan_category == 'free' or (apartment_count <= 7 and plan_category in ['web', 'free']):
             tier = PricingTier.get_tier_for_apartments('free', apartment_count)
 
             if tier:
@@ -192,14 +206,20 @@ class PriceCalculatorView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
 
         # Υπολογισμός τιμών
-        monthly_per_building = tier.monthly_price
+        is_per_apartment = plan_category in self.PER_APARTMENT_CATEGORIES
+
+        if is_per_apartment:
+            monthly_per_building = tier.monthly_price * apartment_count
+            yearly_full = monthly_per_building * 12
+            yearly_per_building = yearly_full - (yearly_full * (tier.yearly_discount_percent / 100))
+        else:
+            monthly_per_building = tier.monthly_price
+            yearly_per_building = tier.calculated_yearly_price
+            yearly_full = monthly_per_building * 12
+
         total_monthly = monthly_per_building * building_count
-
-        yearly_per_building = tier.calculated_yearly_price
         total_yearly = yearly_per_building * building_count
-
-        yearly_full = monthly_per_building * 12 * building_count
-        yearly_savings = yearly_full - total_yearly
+        yearly_savings = (yearly_full * building_count) - total_yearly
 
         return Response({
             'plan_category': plan_category,
@@ -225,9 +245,9 @@ class PriceCalculatorView(APIView):
         """
         GET endpoint για quick price lookup με query parameters
 
-        GET /api/billing/calculate-price/?plan_category=cloud&apartment_count=25
+        GET /api/billing/calculate-price/?plan_category=web&apartment_count=25
         """
-        plan_category = request.query_params.get('plan_category', 'cloud')
+        plan_category = request.query_params.get('plan_category', 'web')
         apartment_count = int(request.query_params.get('apartment_count', 10))
         building_count = int(request.query_params.get('building_count', 1))
         yearly = request.query_params.get('yearly', 'false').lower() == 'true'

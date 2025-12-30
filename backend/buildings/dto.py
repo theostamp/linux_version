@@ -89,6 +89,7 @@ class BuildingDTO:
     # Building details
     apartments_count: int
     premium_enabled: bool = False
+    iot_enabled: bool = False
     address: str = ""
     city: str = ""
     postal_code: str = ""
@@ -154,6 +155,7 @@ class BuildingDTO:
             name=building.name,
             apartments_count=building.apartments_count,
             premium_enabled=getattr(building, 'premium_enabled', False),
+            iot_enabled=getattr(building, 'iot_enabled', False),
             address=building.address or "",
             city=building.city or "",
             postal_code=building.postal_code or "",
@@ -319,6 +321,7 @@ class BuildingDTO:
             'name': self.name,
             'apartments_count': self.apartments_count,
             'premium_enabled': self.premium_enabled,
+            'iot_enabled': self.iot_enabled,
             'address': self.address,
             'city': self.city,
             'postal_code': self.postal_code,
@@ -354,4 +357,3 @@ class BuildingDTO:
             f"apartments={self.apartments_count}, manager_id={self.manager_id}, "
             f"permissions={self.permissions})"
         )
-

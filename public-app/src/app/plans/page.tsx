@@ -6,27 +6,22 @@ import Link from 'next/link';
 import { Building, Home, Monitor, CheckCircle, ArrowRight, Loader2, Minus, Plus, ChevronLeft } from 'lucide-react';
 import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { getMonthlyPrice, getYearlyPrice, isFreeEligible, PlanId } from '@/lib/pricing';
 
 /**
  * Τιμολογιακή Πολιτική:
  * - Free: 1-7 διαμερίσματα → €0
- * - Cloud: 8-20 → €18, 21-30 → €22, 31+ → €25
- * - Kiosk: 8-20 → €28, 21-30 → €35, 31+ → €40
+ * - Web: €1.0/διαμέρισμα
+ * - Premium: €1.8/διαμέρισμα
+ * - Premium + IoT: €2.3/διαμέρισμα
  */
 
-type PlanType = 'free' | 'cloud' | 'kiosk';
-
-interface PricingTier {
-  minApartments: number;
-  maxApartments: number | null;
-  monthlyPrice: number;
-}
+type PlanType = PlanId;
 
 interface PlanInfo {
   name: string;
   description: string;
   icon: React.ReactNode;
-  tiers: PricingTier[];
   features: string[];
 }
 
@@ -35,68 +30,56 @@ const PLANS: Record<PlanType, PlanInfo> = {
     name: 'Free',
     description: 'Βασικό φύλλο κοινοχρήστων',
     icon: <Home className="h-6 w-6" />,
-    tiers: [{ minApartments: 1, maxApartments: 7, monthlyPrice: 0 }],
     features: [
       'Έως 7 διαμερίσματα',
       'Βασικό φύλλο κοινοχρήστων',
       '1 πολυκατοικία'
     ]
   },
-  cloud: {
-    name: 'Concierge Cloud',
+  web: {
+    name: 'Web',
     description: 'Πλήρης πλατφόρμα χωρίς οθόνη',
     icon: <Building className="h-6 w-6" />,
-    tiers: [
-      { minApartments: 8, maxApartments: 20, monthlyPrice: 18 },
-      { minApartments: 21, maxApartments: 30, monthlyPrice: 22 },
-      { minApartments: 31, maxApartments: null, monthlyPrice: 25 }
-    ],
     features: [
       'Απεριόριστα διαμερίσματα',
       'Ανακοινώσεις & ψηφοφορίες',
       'Αιτήματα συντήρησης',
       'Web & mobile πρόσβαση',
-      'Έως 5 πολυκατοικίες'
+      'Dashboard διαχείρισης'
     ]
   },
-  kiosk: {
-    name: 'Info Point',
-    description: 'Με σημείο ενημέρωσης στην είσοδο',
+  premium: {
+    name: 'Premium',
+    description: 'Web + kiosk + AI + αρχείο',
     icon: <Monitor className="h-6 w-6" />,
-    tiers: [
-      { minApartments: 8, maxApartments: 20, monthlyPrice: 28 },
-      { minApartments: 21, maxApartments: 30, monthlyPrice: 35 },
-      { minApartments: 31, maxApartments: null, monthlyPrice: 40 }
-    ],
     features: [
-      'Όλα τα Cloud features',
-      'Οθόνη ενημέρωσης στην είσοδο',
-      'Hardware & εγκατάσταση',
-      'Ενσωματωμένο internet',
-      'Τεχνική υποστήριξη 24/7'
+      'Όλα τα Web features',
+      'Kiosk display στην είσοδο',
+      'Scenes & widgets',
+      'AI παραστατικά',
+      'Ηλεκτρονικό αρχείο'
+    ]
+  },
+  premium_iot: {
+    name: 'Premium + IoT',
+    description: 'Premium + Smart Heating',
+    icon: <Monitor className="h-6 w-6" />,
+    features: [
+      'Όλα τα Premium features',
+      'Smart Heating dashboard',
+      'Ειδοποιήσεις βλάβης/διαρροών',
+      'Στατιστικά κατανάλωσης',
+      'Προβλέψεις & βελτιστοποίηση'
     ]
   }
 };
 
-function getPriceForApartments(plan: PlanType, apartmentCount: number): number | null {
-  const planInfo = PLANS[plan];
-  for (const tier of planInfo.tiers) {
-    if (
-      apartmentCount >= tier.minApartments &&
-      (tier.maxApartments === null || apartmentCount <= tier.maxApartments)
-    ) {
-      return tier.monthlyPrice;
-    }
-  }
-  return null;
-}
-
 function PlansContent() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  
+
   const [apartments, setApartments] = useState(15);
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('cloud');
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('web');
   const [isYearly, setIsYearly] = useState(false);
   const [subdomain, setSubdomain] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -111,18 +94,18 @@ function PlansContent() {
 
   // Auto-select plan based on apartments
   useEffect(() => {
-    if (apartments <= 7 && selectedPlan !== 'kiosk') {
+    if (!isFreeEligible(apartments) && selectedPlan === 'free') {
+      setSelectedPlan('web');
+    } else if (isFreeEligible(apartments) && selectedPlan === 'web') {
       setSelectedPlan('free');
-    } else if (apartments > 7 && selectedPlan === 'free') {
-      setSelectedPlan('cloud');
     }
   }, [apartments, selectedPlan]);
 
   // Calculate price
-  const isFreeEligible = apartments <= 7;
-  const effectivePlan = isFreeEligible && selectedPlan !== 'kiosk' ? 'free' : selectedPlan;
-  const monthlyPrice = effectivePlan === 'free' ? 0 : getPriceForApartments(effectivePlan, apartments) || 0;
-  const yearlyPrice = monthlyPrice * 10; // 2 μήνες δωρεάν
+  const freeEligible = isFreeEligible(apartments);
+  const effectivePlan = freeEligible && selectedPlan === 'web' ? 'free' : selectedPlan;
+  const monthlyPrice = effectivePlan === 'free' ? 0 : getMonthlyPrice(effectivePlan, apartments);
+  const yearlyPrice = getYearlyPrice(monthlyPrice); // 2 μήνες δωρεάν
   const displayPrice = isYearly ? yearlyPrice : monthlyPrice;
 
   const handleApartmentChange = (delta: number) => {
@@ -153,7 +136,7 @@ function PlansContent() {
     try {
       // Get access token from localStorage
       const accessToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      
+
       if (!accessToken) {
         throw new Error('Πρέπει να συνδεθείτε πρώτα');
       }
@@ -162,7 +145,7 @@ function PlansContent() {
         // Create free tenant directly
         const response = await fetch('/api/create-free-tenant', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
           },
@@ -246,7 +229,7 @@ function PlansContent() {
   if (!user) {
     // Check if tokens exist in localStorage (user might be loading)
     const hasTokens = typeof window !== 'undefined' && localStorage.getItem('access_token');
-    
+
     if (hasTokens) {
       // Tokens exist but user not loaded yet - show loading
       return (
@@ -258,7 +241,7 @@ function PlansContent() {
         </div>
       );
     }
-    
+
     // No tokens - actually not logged in
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -275,7 +258,7 @@ function PlansContent() {
   return (
     <div className="min-h-screen bg-slate-950 relative">
       <BuildingRevealBackground />
-      
+
       {/* Header */}
       <header className="border-b border-gray-200 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -355,16 +338,16 @@ function PlansContent() {
             {/* Plan Selection */}
             <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
               <h3 className="text-sm font-medium text-slate-400 mb-4">Επιλέξτε πακέτο</h3>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Free Plan */}
                 <button
                   type="button"
                   onClick={() => setSelectedPlan('free')}
-                  disabled={apartments > 7}
+                  disabled={!freeEligible}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
                     effectivePlan === 'free'
                       ? 'border-emerald-500 bg-emerald-500/10'
-                      : apartments > 7
+                      : !freeEligible
                       ? 'border-gray-200 bg-slate-800/30 opacity-50 cursor-not-allowed'
                       : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
                   }`}
@@ -375,33 +358,33 @@ function PlansContent() {
                   <span className="text-2xl font-bold text-emerald-400">€0</span>
                 </button>
 
-                {/* Cloud Plan */}
+                {/* Web Plan */}
                 <button
                   type="button"
-                  onClick={() => setSelectedPlan('cloud')}
-                  disabled={apartments <= 7}
+                  onClick={() => setSelectedPlan('web')}
+                  disabled={freeEligible}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
-                    effectivePlan === 'cloud'
+                    effectivePlan === 'web'
                       ? 'border-emerald-500 bg-emerald-500/10'
-                      : apartments <= 7
+                      : freeEligible
                       ? 'border-gray-200 bg-slate-800/30 opacity-50 cursor-not-allowed'
                       : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
                   }`}
                 >
                   <Building className="h-8 w-8 text-slate-300 mb-2" />
-                  <span className="font-medium text-slate-200">Cloud</span>
-                  <span className="text-xs text-slate-500 mb-2">8+ διαμερίσματα</span>
+                  <span className="font-medium text-slate-200">Web</span>
+                  <span className="text-xs text-slate-500 mb-2">Πλήρης πλατφόρμα</span>
                   <span className="text-2xl font-bold text-emerald-400">
-                    €{getPriceForApartments('cloud', Math.max(8, apartments))}
+                    €{getMonthlyPrice('web', apartments).toFixed(2)}
                   </span>
                 </button>
 
-                {/* Kiosk Plan */}
+                {/* Premium Plan */}
                 <button
                   type="button"
-                  onClick={() => setSelectedPlan('kiosk')}
+                  onClick={() => setSelectedPlan('premium')}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
-                    selectedPlan === 'kiosk'
+                    selectedPlan === 'premium'
                       ? 'border-emerald-500 bg-emerald-500/10'
                       : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
                   }`}
@@ -410,10 +393,31 @@ function PlansContent() {
                     Δημοφιλές
                   </span>
                   <Monitor className="h-8 w-8 text-slate-300 mb-2" />
-                  <span className="font-medium text-slate-200">Info Point</span>
-                  <span className="text-xs text-slate-500 mb-2">Με οθόνη</span>
+                  <span className="font-medium text-slate-200">Premium</span>
+                  <span className="text-xs text-slate-500 mb-2">Web + Kiosk + AI + Αρχείο</span>
                   <span className="text-2xl font-bold text-emerald-400">
-                    €{getPriceForApartments('kiosk', Math.max(8, apartments))}
+                    €{getMonthlyPrice('premium', apartments).toFixed(2)}
+                  </span>
+                </button>
+
+                {/* Premium + IoT Plan */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan('premium_iot')}
+                  className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
+                    selectedPlan === 'premium_iot'
+                      ? 'border-emerald-500 bg-emerald-500/10'
+                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
+                  }`}
+                >
+                  <span className="absolute -top-2 right-2 rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                    IoT
+                  </span>
+                  <Monitor className="h-8 w-8 text-slate-300 mb-2" />
+                  <span className="font-medium text-slate-200">Premium + IoT</span>
+                  <span className="text-xs text-slate-500 mb-2">Smart Heating</span>
+                  <span className="text-2xl font-bold text-emerald-400">
+                    €{getMonthlyPrice('premium_iot', apartments).toFixed(2)}
                   </span>
                 </button>
               </div>
@@ -481,7 +485,7 @@ function PlansContent() {
                 </div>
                 <div className="text-right">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-emerald-400">€{displayPrice}</span>
+                    <span className="text-3xl font-bold text-emerald-400">€{displayPrice.toFixed(2)}</span>
                     <span className="text-slate-500">/{isYearly ? 'έτος' : 'μήνα'}</span>
                   </div>
                   {effectivePlan !== 'free' && isYearly && (
@@ -546,4 +550,3 @@ export default function PlansPage() {
     </Suspense>
   );
 }
-

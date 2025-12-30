@@ -63,6 +63,7 @@ interface NavigationLink {
   isBeta?: boolean;
   requiresUltraAdmin?: boolean;
   requiresPremium?: boolean;
+  requiresIot?: boolean;
   // Staff permission required (for staff role only)
   staffPermission?: 'can_access_office_finance' | 'can_view_financials' | 'can_manage_requests';
   // Tooltip description
@@ -320,6 +321,7 @@ const navigationGroups: NavigationGroup[] = [
         icon: <Flame className="w-5 h-5" />,
         roles: ['manager', 'staff', 'superuser'],
         requiresPremium: true,
+        requiresIot: true,
         tooltip: 'Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες, ζώνες και αυτοματισμούς IoT.',
       },
     ],
@@ -518,15 +520,20 @@ export default function CollapsibleSidebar() {
   };
 
   const isLinkLocked = (link: NavigationLink): boolean => {
-    if (!link.requiresPremium) return false;
+    if (!link.requiresPremium && !link.requiresIot) return false;
 
     // If we don't have a resolved building context yet, be conservative and lock.
-    const kioskEnabled =
+    const premiumEnabled =
       buildingContext?.billing?.kiosk_enabled ??
       buildingContext?.premium_enabled ??
       false;
+    const iotEnabled = buildingContext?.billing?.iot_enabled ?? false;
 
-    return !kioskEnabled;
+    if (link.requiresIot) {
+      return !iotEnabled;
+    }
+
+    return !premiumEnabled;
   };
 
   // Filter available groups and links based on user role AND staff permissions
@@ -868,7 +875,9 @@ export default function CollapsibleSidebar() {
                             >
                               <p className="text-xs font-semibold">{link.label}</p>
                               {locked && (
-                                <p className="text-xs mt-1 text-muted-foreground">Απαιτείται Premium (Kiosk + AI + Αρχείο)</p>
+                                <p className="text-xs mt-1 text-muted-foreground">
+                                  {link.href === '/heating' ? 'Απαιτείται Premium + IoT' : 'Απαιτείται Premium'}
+                                </p>
                               )}
                               {link.tooltip && (
                                 <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">{link.tooltip}</p>

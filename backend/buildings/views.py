@@ -76,6 +76,7 @@ def _get_current_context_logic(request):
 
             is_office_account = account_type == 'office'
             premium_enabled = bool(payload.get('premium_enabled', False))
+            iot_enabled = bool(payload.get('iot_enabled', False))
 
             payload['billing'] = {
                 'account_type': account_type,
@@ -88,6 +89,7 @@ def _get_current_context_logic(request):
                 'premium_allowed': is_office_account,
                 'kiosk_enabled': is_office_account and premium_enabled and tenant_subscription_active,
                 'ai_enabled': is_office_account and premium_enabled and tenant_subscription_active,
+                'iot_enabled': is_office_account and premium_enabled and iot_enabled and tenant_subscription_active,
             }
         except Exception:
             # Fail open (do not break building context endpoint if billing info fails)
@@ -101,6 +103,7 @@ def _get_current_context_logic(request):
                 'premium_allowed': None,
                 'kiosk_enabled': None,
                 'ai_enabled': None,
+                'iot_enabled': bool(payload.get('iot_enabled', False)),
             }
 
         return Response(payload)

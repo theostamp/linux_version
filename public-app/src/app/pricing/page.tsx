@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Archive, Building, Flame, Monitor, Settings, Sparkles } from 'lucide-react';
+import { ArrowRight, Archive, Building, Monitor, Settings, Sparkles } from 'lucide-react';
 import { typography } from '@/lib/typography';
 
 const premiumFeatures = [
@@ -24,16 +24,6 @@ const premiumFeatures = [
     icon: Monitor,
   },
   {
-    title: 'Smart Heating',
-    description: 'Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες και αυτοματισμούς IoT.',
-    bullets: [
-      'Χρονοπρογραμματισμός και ζώνες λειτουργίας.',
-      'Απομακρυσμένος έλεγχος και ειδοποιήσεις.',
-      'Βελτιστοποίηση κατανάλωσης και κόστους.',
-    ],
-    icon: Flame,
-  },
-  {
     title: 'AI Παραστατικά & Αυτόματη Τιμολόγηση',
     description: 'Σάρωση παραστατικών και αυτόματη καταχώρηση δαπανών με ενημέρωση υπολοίπων.',
     bullets: [
@@ -53,6 +43,13 @@ const premiumFeatures = [
     ],
     icon: Archive,
   },
+];
+
+const iotFeatures = [
+  'Smart Heating dashboard με χρονοπρογραμματισμούς',
+  'Ειδοποιήσεις βλάβης / διαρροών online & στο kiosk',
+  'Στατιστικά κατανάλωσης και προβλέψεις',
+  'Επέκταση με νέες IoT λειτουργίες',
 ];
 
 export default function PricingPage() {
@@ -84,11 +81,9 @@ export default function PricingPage() {
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300">
               Premium εμπειρία
             </span>
-            <h1 className={typography.heroTitle}>
-              Premium λειτουργίες για κάθε πολυκατοικία
-            </h1>
+            <h1 className={typography.heroTitle}>Πλάνα Premium για κάθε πολυκατοικία</h1>
             <p className="text-sm text-slate-300 sm:text-base">
-              Αναβάθμισε την πολυκατοικία με info point, smart heating, AI αυτοματισμούς και ηλεκτρονικό αρχείο.
+              Αναβάθμισε με Premium (Kiosk, AI, Αρχείο) ή Premium + IoT για Smart Heating.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Link
@@ -111,15 +106,75 @@ export default function PricingPage() {
             <ul className="mt-4 space-y-3 text-sm text-slate-200">
               <li>Info point management με scenes & widgets</li>
               <li>Full-screen kiosk display για όλους τους ενοίκους</li>
-              <li>Smart heating με χρονοπρογραμματισμό & IoT</li>
               <li>AI παραστατικά με ενημέρωση υπολοίπων & αρχειοθέτηση</li>
               <li>Ηλεκτρονικό αρχείο πολυκατοικίας με αναζήτηση</li>
+              <li>Smart Heating (στο Premium + IoT)</li>
             </ul>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl space-y-6 px-4 pb-20 pt-10 sm:px-6">
+      <section className="mx-auto max-w-6xl space-y-6 px-4 pb-16 pt-10 sm:px-6">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold tracking-tight">Πλάνα συνδρομής</h2>
+          <p className="text-sm text-slate-400">Χρέωση ανά διαμέρισμα, χωρίς πολύπλοκες κλίμακες.</p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-emerald-500/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Premium</p>
+                <h3 className="mt-2 text-xl font-semibold">Kiosk + AI + Αρχείο</h3>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-semibold text-emerald-300">€1.8</div>
+                <div className="text-xs text-slate-400">/διαμέρισμα</div>
+              </div>
+            </div>
+            <ul className="mt-5 space-y-2 text-sm text-slate-200">
+              <li>Info point management με scenes & widgets</li>
+              <li>Display kiosk info point για όλους τους ενοίκους</li>
+              <li>AI παραστατικά & αυτόματη τιμολόγηση</li>
+              <li>Ηλεκτρονικό αρχείο πολυκατοικίας</li>
+            </ul>
+          </div>
+
+          <div className="rounded-3xl border border-emerald-400/30 bg-slate-900/80 p-6 shadow-xl shadow-emerald-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Premium + IoT</p>
+                <h3 className="mt-2 text-xl font-semibold">Smart Heating + IoT</h3>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-semibold text-emerald-300">€2.3</div>
+                <div className="text-xs text-slate-400">/διαμέρισμα</div>
+              </div>
+            </div>
+            <ul className="mt-5 space-y-2 text-sm text-slate-200">
+              <li>Όλα τα Premium features</li>
+              {iotFeatures.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Free</p>
+            <p className="mt-2 text-lg font-semibold">Έως 7 διαμερίσματα</p>
+            <p className="mt-2 text-sm text-slate-400">Βασικό φύλλο κοινοχρήστων, 1 πολυκατοικία.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Web</p>
+            <p className="mt-2 text-lg font-semibold">€1.0 / διαμέρισμα</p>
+            <p className="mt-2 text-sm text-slate-400">Πλήρης πλατφόρμα διαχείρισης χωρίς οθόνη εισόδου.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl space-y-6 px-4 pb-20 sm:px-6">
         <div className="space-y-2">
           <h2 className={typography.sectionHeaderDark}>Premium λειτουργίες</h2>
           <p className="text-sm text-slate-400">

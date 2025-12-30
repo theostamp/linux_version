@@ -24,14 +24,14 @@ class StripeWebhookView(APIView):
     """
     Handle Stripe webhook events for payment verification
     """
-    
+
     def post(self, request):
         """
         Process Stripe webhook events
         """
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-        
+
         try:
             # Verify webhook signature (only when signature header is present and webhook secret is configured)
             if settings.STRIPE_WEBHOOK_SECRET and sig_header:
@@ -61,7 +61,7 @@ class StripeWebhookView(APIView):
                 # In mock mode or testing mode (no signature), parse the payload directly
                 logger.info("Processing webhook in mock mode (no signature verification)")
                 event = json.loads(payload)
-            
+
             # Handle the event
             if event['type'] == 'checkout.session.completed':
                 self.handle_checkout_session_completed(event['data']['object'])
@@ -77,9 +77,9 @@ class StripeWebhookView(APIView):
                 self.handle_subscription_deleted(event['data']['object'])
             else:
                 logger.info(f'Unhandled event type: {event["type"]}')
-            
+
             return HttpResponse(status=200)
-            
+
         except ValueError as e:
             logger.error(f'Invalid JSON payload: {e}')
             return HttpResponse(status=400)
@@ -96,7 +96,7 @@ class StripeWebhookView(APIView):
         """
         from tenants.services import TenantService
         from billing.models import UserSubscription, SubscriptionPlan
-        
+
         stripe_checkout_session_id = session.get('id')
         stripe_customer_id = session.get('customer')
         stripe_subscription_id = session.get('subscription')
@@ -109,7 +109,7 @@ class StripeWebhookView(APIView):
         user_last_name = metadata.get('user_last_name', '')
         user_password = metadata.get('user_password')  # Password from signup form
         is_oauth = metadata.get('is_oauth') == 'true'  # OAuth users don't need password
-        
+
         # Convert plan name to plan_type for lookup
         plan_type = None
         if plan_name:
@@ -121,13 +121,20 @@ class StripeWebhookView(APIView):
                 'starter': 'starter',
                 # New plan names (matching signup page)
                 'free': 'free',
-                'cloud': 'cloud',
-                'kiosk': 'kiosk',
-                'info_point': 'kiosk',
-                'infopoint': 'kiosk',
-                # Names as they appear in the database
-                'concierge cloud': 'cloud',
-                'info point': 'kiosk',
+                'web': 'web',
+                'premium': 'premium',
+                'premium_iot': 'premium_iot',
+                # Legacy aliases
+                'cloud': 'web',
+                'kiosk': 'premium',
+                'info_point': 'premium',
+                'infopoint': 'premium',
+                # Names as they appear in the database / Stripe products
+                'concierge web': 'web',
+                'concierge premium': 'premium',
+                'concierge premium + iot': 'premium_iot',
+                'concierge premium +iot': 'premium_iot',
+                'premium + iot': 'premium_iot',
             }
             plan_type = plan_type_mapping.get(plan_name.lower())
             if not plan_type:
@@ -158,9 +165,9 @@ class StripeWebhookView(APIView):
                     if not plan_type:
                         logger.error(f"[WEBHOOK] Missing plan name in metadata")
                         return
-                    
+
                     logger.info(f"[WEBHOOK] Creating new user from metadata: {user_email} (OAuth: {is_oauth})")
-                    
+
                     # For OAuth users, they already exist (created during OAuth callback) or will use Google to login
                     # For regular users, use the password from metadata or fallback
                     if is_oauth:
@@ -172,7 +179,7 @@ class StripeWebhookView(APIView):
                         actual_password = user_password if user_password else 'temp_password_123'
                         if not user_password:
                             logger.warning(f"[WEBHOOK] No password in metadata for {user_email}, using temp password")
-                    
+
                     user = CustomUser.objects.create_user(
                         email=user_email,
                         password=actual_password,
@@ -197,7 +204,7 @@ class StripeWebhookView(APIView):
         existing_subscription = UserSubscription.objects.filter(
             stripe_checkout_session_id=stripe_checkout_session_id
         ).first()
-        
+
         if existing_subscription and existing_subscription.status in ['active', 'trial']:
             logger.info(f"[WEBHOOK] Subscription already processed for session: {stripe_checkout_session_id}")
             return
@@ -216,14 +223,14 @@ class StripeWebhookView(APIView):
                     logger.info(f"[WEBHOOK] Stored password for tenant user creation: {user.email}")
                 except Exception as e:
                     logger.warning(f"[WEBHOOK] Failed to store password: {e}")
-            
+
             with transaction.atomic():
                 # Δημιουργία tenant infrastructure
                 tenant_service = TenantService()
                 schema_name = tenant_subdomain or tenant_service.generate_unique_schema_name(
                     user.email.split('@')[0]
                 )
-                
+
                 # Get plan by plan_type (more reliable than ID)
                 try:
                     if plan_id_from_metadata:
@@ -252,7 +259,7 @@ class StripeWebhookView(APIView):
                 user.is_staff = True
                 user.is_superuser = False  # NO superuser rights (security fix)
                 user.role = 'manager'  # Tenant owner/admin role
-                
+
                 # OAuth users are active immediately (email verified by Google)
                 # Regular users need email verification
                 if is_oauth:
@@ -261,11 +268,11 @@ class StripeWebhookView(APIView):
                     logger.info(f"[WEBHOOK] OAuth user - activated immediately")
                 else:
                     user.is_active = False  # Needs email verification before activation
-                
+
                 user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role', 'is_active', 'email_verified'])
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
-                
+
                 # Send email verification only for non-OAuth users
                 if not is_oauth:
                     try:
@@ -284,13 +291,13 @@ class StripeWebhookView(APIView):
         except Exception as e:
             logger.error(f"[WEBHOOK] Provisioning failed: {e}", exc_info=True)
             # Webhook θα retry αυτόματα από Stripe
-    
+
     def handle_payment_intent_succeeded(self, payment_intent):
         """
         Handle successful payment intent
         """
         logger.info(f'Payment succeeded: {payment_intent["id"]}')
-        
+
         # Update subscription status if payment was successful
         try:
             # Find subscription by payment intent ID or customer ID
@@ -300,20 +307,20 @@ class StripeWebhookView(APIView):
                     stripe_customer_id=customer_id,
                     status='pending'
                 ).first()
-                
+
                 if subscription:
                     subscription.status = 'active'
                     subscription.save()
                     logger.info(f'Updated subscription {subscription.id} to active')
         except Exception as e:
             logger.error(f'Error updating subscription: {e}')
-    
+
     def handle_payment_intent_failed(self, payment_intent):
         """
         Handle failed payment intent
         """
         logger.warning(f'Payment failed: {payment_intent["id"]}')
-        
+
         # Update subscription status if payment failed
         try:
             customer_id = payment_intent.get('customer')
@@ -322,32 +329,32 @@ class StripeWebhookView(APIView):
                     stripe_customer_id=customer_id,
                     status='pending'
                 ).first()
-                
+
                 if subscription:
                     subscription.status = 'failed'
                     subscription.save()
                     logger.info(f'Updated subscription {subscription.id} to failed')
         except Exception as e:
             logger.error(f'Error updating subscription: {e}')
-    
+
     def handle_subscription_created(self, subscription_data):
         """
         Handle subscription created event
         """
         logger.info(f'Subscription created: {subscription_data["id"]}')
         # This is handled by our subscription creation flow
-    
+
     def handle_subscription_updated(self, subscription_data):
         """
         Handle subscription updated event
         """
         logger.info(f'Subscription updated: {subscription_data["id"]}')
-        
+
         try:
             subscription = UserSubscription.objects.filter(
                 stripe_subscription_id=subscription_data['id']
             ).first()
-            
+
             if subscription:
                 # Update subscription status based on Stripe status
                 stripe_status = subscription_data['status']
@@ -357,23 +364,23 @@ class StripeWebhookView(APIView):
                     subscription.status = 'canceled'
                 elif stripe_status == 'past_due':
                     subscription.status = 'past_due'
-                
+
                 subscription.save()
                 logger.info(f'Updated subscription {subscription.id} status to {stripe_status}')
         except Exception as e:
             logger.error(f'Error updating subscription: {e}')
-    
+
     def handle_subscription_deleted(self, subscription_data):
         """
         Handle subscription deleted event
         """
         logger.info(f'Subscription deleted: {subscription_data["id"]}')
-        
+
         try:
             subscription = UserSubscription.objects.filter(
                 stripe_subscription_id=subscription_data['id']
             ).first()
-            
+
             if subscription:
                 subscription.status = 'canceled'
                 subscription.save()
@@ -386,29 +393,29 @@ class PaymentVerificationView(APIView):
     """
     Verify payment status for subscription creation
     """
-    
+
     def post(self, request):
         """
         Verify payment method and return status
         """
         try:
             payment_method_id = request.data.get('payment_method_id')
-            
+
             if not payment_method_id:
                 return Response({
                     'error': 'Payment method ID is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Verify payment with Stripe
             verification_result = StripeService.verify_payment_status(payment_method_id)
-            
+
             return Response({
                 'verified': verification_result['verified'],
                 'status': verification_result['status'],
                 'message': verification_result['message'],
                 'timestamp': verification_result['timestamp']
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             logger.error(f'Payment verification error: {e}')
             return Response({

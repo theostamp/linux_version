@@ -519,6 +519,10 @@ STRIPE_PREMIUM_ADDON_PER_APARTMENT_PRICE_ID = os.getenv(
     'STRIPE_PREMIUM_ADDON_PER_APARTMENT_PRICE_ID',
     'price_premium_addon_per_apartment_dev'
 )
+STRIPE_IOT_ADDON_PER_APARTMENT_PRICE_ID = os.getenv(
+    'STRIPE_IOT_ADDON_PER_APARTMENT_PRICE_ID',
+    'price_iot_addon_per_apartment_dev'
+)
 
 # Stripe settings
 STRIPE_CURRENCY = 'eur'  # Euro currency

@@ -41,8 +41,8 @@ class PriceCalculationRequestSerializer(serializers.Serializer):
     Serializer για αίτημα υπολογισμού τιμής
     """
     plan_category = serializers.ChoiceField(
-        choices=['free', 'cloud', 'kiosk'],
-        help_text='Τύπος πακέτου: free, cloud, ή kiosk'
+        choices=['free', 'web', 'premium', 'premium_iot', 'cloud', 'kiosk'],
+        help_text='Τύπος πακέτου: free, web, premium, premium_iot (legacy: cloud, kiosk)'
     )
     apartment_count = serializers.IntegerField(
         min_value=1,
@@ -373,5 +373,4 @@ class SubscriptionSummarySerializer(serializers.Serializer):
                 'storage_gb': subscription.plan.max_storage_gb,
             }
         }
-
 
