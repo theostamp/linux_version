@@ -85,6 +85,7 @@ export default function PricingPage() {
             <p className="text-sm text-slate-300 sm:text-base">
               Αναβάθμισε με Premium (Kiosk, AI, Αρχείο) ή Premium + IoT για Smart Heating.
             </p>
+            <p className="text-xs text-emerald-200/80">14 ημέρες δοκιμή χωρίς κάρτα.</p>
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/signup"

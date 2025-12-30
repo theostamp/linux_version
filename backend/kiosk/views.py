@@ -15,6 +15,7 @@ from .serializers import (
     WidgetPlacementSerializer
 )
 from buildings.models import Building
+from buildings.entitlements import resolve_building_entitlements, resolve_tenant_state
 from datetime import datetime, timedelta
 
 
@@ -23,21 +24,8 @@ def _tenant_subscription_active(request) -> bool:
     Tenant-level subscription check for public (unauthenticated) kiosk endpoints.
     Mirrors the logic in billing middleware but can be used without auth.
     """
-    tenant = getattr(request, 'tenant', None)
-    if not tenant:
-        return False
-
-    # Defensive: tenant might be the public schema during mis-routing
-    schema_name = getattr(tenant, 'schema_name', None)
-    if schema_name == 'public':
-        return False
-
-    today = timezone.now().date()
-    is_active = bool(getattr(tenant, 'is_active', False))
-    on_trial = bool(getattr(tenant, 'on_trial', False))
-    paid_until = getattr(tenant, 'paid_until', None)
-
-    return is_active and (on_trial or (paid_until and paid_until >= today))
+    tenant_state = resolve_tenant_state(getattr(request, 'tenant', None))
+    return bool(tenant_state.get('tenant_subscription_active'))
 
 
 def _require_kiosk_premium(request, building_id: int):
@@ -53,9 +41,8 @@ def _require_kiosk_premium(request, building_id: int):
         pass
 
     # Tenant checks (office-only + active subscription)
-    tenant = getattr(request, 'tenant', None)
-    account_type = getattr(tenant, 'account_type', 'office')
-    if account_type != 'office':
+    tenant_state = resolve_tenant_state(getattr(request, 'tenant', None))
+    if not tenant_state.get('is_office_account'):
         return Response(
             {
                 'error': 'Premium λειτουργίες (Kiosk/AI) είναι διαθέσιμες μόνο για γραφεία διαχείρισης.',
@@ -64,7 +51,7 @@ def _require_kiosk_premium(request, building_id: int):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    if not _tenant_subscription_active(request):
+    if not tenant_state.get('tenant_subscription_active'):
         return Response(
             {
                 'error': 'Η συνδρομή του οργανισμού είναι ανενεργή ή έχει λήξει.',
@@ -75,7 +62,9 @@ def _require_kiosk_premium(request, building_id: int):
 
     # Building-level premium flag
     try:
-        building = Building.objects.only('id', 'premium_enabled').filter(id=building_id).first()
+        building = Building.objects.only(
+            'id', 'premium_enabled', 'iot_enabled', 'apartments_count', 'trial_ends_at'
+        ).filter(id=building_id).first()
     except Exception:
         building = None
 
@@ -85,7 +74,18 @@ def _require_kiosk_premium(request, building_id: int):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    if not bool(getattr(building, 'premium_enabled', False)):
+    entitlements = resolve_building_entitlements(building, getattr(request, 'tenant', None))
+    if not entitlements.get('premium_access'):
+        block_reason = entitlements.get('premium_blocked_reason')
+        if block_reason == 'APARTMENTS_REQUIRED':
+            return Response(
+                {
+                    'error': 'Συμπληρώστε αριθμό διαμερισμάτων για να ενεργοποιηθεί το Premium στο κτίριο.',
+                    'code': 'APARTMENTS_REQUIRED',
+                },
+                status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
+
         return Response(
             {
                 'error': 'Απαιτείται Premium για το συγκεκριμένο κτίριο (Kiosk + AI).',

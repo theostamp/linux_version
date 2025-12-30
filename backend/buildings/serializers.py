@@ -146,6 +146,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'address', 'city', 'postal_code',
             'apartments_count',
+            'trial_ends_at',
             'premium_enabled',
             'iot_enabled',
             # Internal Manager - νέα πεδία
@@ -163,7 +164,7 @@ class BuildingSerializer(serializers.ModelSerializer):
             'grace_day_of_month',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'current_reserve']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'current_reserve', 'trial_ends_at']
 
     def get_internal_manager_display_name(self, obj):
         """Επιστρέφει το όνομα εμφάνισης του εσωτερικού διαχειριστή"""
@@ -460,6 +461,11 @@ class BuildingContextSerializer(serializers.Serializer):
     apartments_count = serializers.IntegerField(
         help_text="Αριθμός διαμερισμάτων"
     )
+    trial_ends_at = serializers.DateField(
+        allow_null=True,
+        required=False,
+        help_text="Ημερομηνία λήξης trial ανά κτίριο"
+    )
     premium_enabled = serializers.BooleanField(
         default=False,
         help_text="Αν το κτίριο έχει Premium πρόσβαση (Kiosk + AI)"
@@ -602,6 +608,7 @@ class BuildingContextListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     apartments_count = serializers.IntegerField()
+    trial_ends_at = serializers.DateField(required=False, allow_null=True)
     premium_enabled = serializers.BooleanField(required=False)
     iot_enabled = serializers.BooleanField(required=False)
     address = serializers.CharField()

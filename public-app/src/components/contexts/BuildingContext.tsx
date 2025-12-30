@@ -40,7 +40,9 @@ export interface BuildingContextData {
   id: number;
   name: string;
   apartments_count: number;
+  trial_ends_at?: string | null;
   premium_enabled?: boolean;
+  iot_enabled?: boolean;
   address: string;
   city: string;
   postal_code: string;
@@ -74,9 +76,16 @@ export interface BuildingContextData {
     tenant_subscription_active: boolean | null;
     premium_enabled: boolean;
     premium_allowed: boolean | null;
+    building_plan_type?: 'web' | 'premium' | 'premium_iot' | string | null;
+    building_trial_ends_at?: string | null;
+    building_trial_active?: boolean | null;
+    building_has_apartments?: boolean | null;
+    premium_access?: boolean | null;
+    premium_blocked_reason?: string | null;
     kiosk_enabled: boolean | null;
     ai_enabled: boolean | null;
     iot_enabled: boolean | null;
+    iot_access?: boolean | null;
   };
 }
 

@@ -6,12 +6,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from django.utils import timezone
 from financial.models import Apartment
 from financial.services import CommonExpenseCalculator
 from decimal import Decimal
 from datetime import date
 from buildings.models import Building
+from buildings.entitlements import resolve_building_entitlements, resolve_tenant_state
 
 
 @api_view(['GET'])
@@ -43,13 +43,8 @@ def apartment_debts(request):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        today = timezone.now().date()
-        is_active = bool(getattr(tenant, 'is_active', False))
-        on_trial = bool(getattr(tenant, 'on_trial', False))
-        paid_until = getattr(tenant, 'paid_until', None)
-        tenant_subscription_active = is_active and (on_trial or (paid_until and paid_until >= today))
-
-        if not tenant_subscription_active:
+        tenant_state = resolve_tenant_state(tenant)
+        if not tenant_state.get('tenant_subscription_active'):
             return Response(
                 {
                     'error': 'Η συνδρομή του οργανισμού είναι ανενεργή ή έχει λήξει.',
@@ -58,13 +53,26 @@ def apartment_debts(request):
                 status=status.HTTP_402_PAYMENT_REQUIRED,
             )
 
-        building = Building.objects.only('id', 'premium_enabled').filter(id=int(building_id)).first()
+        building = Building.objects.only(
+            'id', 'premium_enabled', 'iot_enabled', 'apartments_count', 'trial_ends_at'
+        ).filter(id=int(building_id)).first()
         if not building:
             return Response(
                 {'error': 'Το κτίριο δεν βρέθηκε.', 'code': 'BUILDING_NOT_FOUND'},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        if not bool(getattr(building, 'premium_enabled', False)):
+        entitlements = resolve_building_entitlements(building, tenant)
+        if not entitlements.get('premium_access'):
+            block_reason = entitlements.get('premium_blocked_reason')
+            if block_reason == 'APARTMENTS_REQUIRED':
+                return Response(
+                    {
+                        'error': 'Συμπληρώστε αριθμό διαμερισμάτων για να ενεργοποιηθεί το Premium στο κτίριο.',
+                        'code': 'APARTMENTS_REQUIRED',
+                    },
+                    status=status.HTTP_402_PAYMENT_REQUIRED,
+                )
+
             return Response(
                 {
                     'error': 'Απαιτείται Premium για το συγκεκριμένο κτίριο (Kiosk + AI).',
@@ -155,4 +163,3 @@ def apartment_debts(request):
             {'error': f'Error fetching apartment debts: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-

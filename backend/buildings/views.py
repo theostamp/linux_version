@@ -36,6 +36,7 @@ def _get_current_context_logic(request):
     Χρησιμοποιείται και από το BuildingViewSet action και από το standalone view.
     """
     from .services import BuildingService
+    from .entitlements import resolve_building_entitlements
     from .serializers import BuildingContextSerializer
 
     try:
@@ -63,33 +64,27 @@ def _get_current_context_logic(request):
         # --------------------------------------------------------------------
         try:
             tenant = getattr(request, 'tenant', None)
-            today = timezone.now().date()
-
-            account_type = getattr(tenant, 'account_type', None) or 'office'
-            tenant_on_trial = bool(getattr(tenant, 'on_trial', False))
-            tenant_paid_until = getattr(tenant, 'paid_until', None)
-            tenant_is_active_flag = bool(getattr(tenant, 'is_active', False))
-
-            tenant_subscription_active = tenant_is_active_flag and (
-                tenant_on_trial or (tenant_paid_until and tenant_paid_until >= today)
-            )
-
-            is_office_account = account_type == 'office'
-            premium_enabled = bool(payload.get('premium_enabled', False))
-            iot_enabled = bool(payload.get('iot_enabled', False))
+            entitlements = resolve_building_entitlements(building_dto, tenant)
 
             payload['billing'] = {
-                'account_type': account_type,
-                'tenant_is_active': tenant_is_active_flag,
-                'tenant_on_trial': tenant_on_trial,
-                'tenant_paid_until': tenant_paid_until.isoformat() if tenant_paid_until else None,
-                'tenant_subscription_active': tenant_subscription_active,
-                # Building-level premium flags
-                'premium_enabled': premium_enabled,
-                'premium_allowed': is_office_account,
-                'kiosk_enabled': is_office_account and premium_enabled and tenant_subscription_active,
-                'ai_enabled': is_office_account and premium_enabled and tenant_subscription_active,
-                'iot_enabled': is_office_account and premium_enabled and iot_enabled and tenant_subscription_active,
+                'account_type': entitlements['account_type'],
+                'tenant_is_active': entitlements['tenant_is_active'],
+                'tenant_on_trial': entitlements['tenant_on_trial'],
+                'tenant_paid_until': entitlements['tenant_paid_until'].isoformat() if entitlements['tenant_paid_until'] else None,
+                'tenant_subscription_active': entitlements['tenant_subscription_active'],
+                # Building-level info
+                'premium_enabled': entitlements['premium_selected'],
+                'premium_allowed': entitlements['is_office_account'],
+                'building_plan_type': entitlements['plan_type'],
+                'building_trial_ends_at': entitlements['trial_ends_at'].isoformat() if entitlements['trial_ends_at'] else None,
+                'building_trial_active': entitlements['trial_active'],
+                'building_has_apartments': entitlements['has_apartments'],
+                'premium_access': entitlements['premium_access'],
+                'premium_blocked_reason': entitlements['premium_blocked_reason'],
+                'kiosk_enabled': entitlements['premium_access'],
+                'ai_enabled': entitlements['premium_access'],
+                'iot_enabled': entitlements['iot_access'],
+                'iot_access': entitlements['iot_access'],
             }
         except Exception:
             # Fail open (do not break building context endpoint if billing info fails)
@@ -101,9 +96,16 @@ def _get_current_context_logic(request):
                 'tenant_subscription_active': None,
                 'premium_enabled': bool(payload.get('premium_enabled', False)),
                 'premium_allowed': None,
+                'building_plan_type': None,
+                'building_trial_ends_at': payload.get('trial_ends_at'),
+                'building_trial_active': None,
+                'building_has_apartments': None,
+                'premium_access': None,
+                'premium_blocked_reason': None,
                 'kiosk_enabled': None,
                 'ai_enabled': None,
                 'iot_enabled': bool(payload.get('iot_enabled', False)),
+                'iot_access': None,
             }
 
         return Response(payload)

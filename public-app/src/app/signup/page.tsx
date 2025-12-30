@@ -527,6 +527,11 @@ function SignupForm() {
                       Εξοικονόμηση €{monthlyPrice * 2}/έτος
                     </p>
                   )}
+                  {effectivePlan !== 'free' && (
+                    <p className="mt-2 text-xs text-emerald-300">
+                      14 ημέρες δοκιμή χωρίς κάρτα.
+                    </p>
+                  )}
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-300">
@@ -762,11 +767,17 @@ function SignupForm() {
                       </>
                     ) : (
                       <>
-                        {effectivePlan === 'free' ? 'Δημιουργία Λογαριασμού' : 'Συνέχεια στην Πληρωμή'}
+                        {effectivePlan === 'free' ? 'Δημιουργία Λογαριασμού' : 'Ξεκίνα δοκιμή'}
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
                   </button>
+
+                  {effectivePlan !== 'free' && (
+                    <p className="text-xs text-slate-500 text-center">
+                      Η κάρτα ζητείται μόνο αν συνεχίσεις μετά τη δοκιμή.
+                    </p>
+                  )}
 
                   {/* Terms */}
                   <p className="text-xs text-slate-500 text-center">

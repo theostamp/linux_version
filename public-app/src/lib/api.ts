@@ -1070,6 +1070,9 @@ export type Building = {
   longitude?: number | null;
   total_apartments?: number;
   apartments_count?: number;
+  trial_ends_at?: string | null;
+  premium_enabled?: boolean;
+  iot_enabled?: boolean;
   heating_system?: string;
   heating_fixed_percentage?: number;
   // Νέα πεδία για εσωτερικό διαχειριστή (ForeignKey)

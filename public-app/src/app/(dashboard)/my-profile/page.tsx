@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon, Bell } from 'lucide-react';
+import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon, Bell, AlertTriangle } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { User } from '@/types/user';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
@@ -419,6 +419,18 @@ export default function MyProfilePage() {
                     <Shield className="mr-2 h-4 w-4" />
                     Καθαρισμός token
                   </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      const target = document.getElementById('danger-zone');
+                      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="w-full justify-start"
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Μετάβαση στο Danger Zone
+                  </Button>
                 </div>
               </div>
             }
@@ -427,7 +439,7 @@ export default function MyProfilePage() {
         </BentoGrid>
       </form>
 
-      <Card className="border-destructive/50 bg-destructive/5">
+      <Card id="danger-zone" className="scroll-mt-24 border-destructive/50 bg-destructive/5">
         <CardHeader>
           <CardTitle className="text-destructive">Danger Zone</CardTitle>
           <CardDescription>

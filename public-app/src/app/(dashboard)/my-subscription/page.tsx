@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,6 +71,19 @@ type PaymentMethod = {
   is_default: boolean;
 };
 
+type PlanKey = 'web' | 'premium' | 'premium_iot';
+
+type SubscriptionBuilding = {
+  id: number;
+  name: string;
+  apartments_count?: number;
+  trial_ends_at?: string | null;
+  premium_enabled?: boolean;
+  iot_enabled?: boolean;
+  address?: string;
+  city?: string;
+};
+
 type SubscriptionSummary = {
   subscription: UserSubscription;
   billing_cycles: BillingCycle[];
@@ -126,6 +140,19 @@ const parseListResponse = <T,>(payload: ApiListResponse<T>) => {
   return [];
 };
 
+const resolveBuildingPlan = (building: SubscriptionBuilding): PlanKey => {
+  if (building.premium_enabled) {
+    return building.iot_enabled ? 'premium_iot' : 'premium';
+  }
+  return 'web';
+};
+
+const planLabels: Record<PlanKey, string> = {
+  web: 'Web',
+  premium: 'Premium',
+  premium_iot: 'Premium + IoT',
+};
+
 const useCurrentSubscription = () =>
   useQuery({
     queryKey: ['subscription-current'],
@@ -168,6 +195,16 @@ const usePaymentMethods = () =>
     staleTime: 60_000,
   });
 
+const useSubscriptionBuildings = () =>
+  useQuery({
+    queryKey: ['subscription-buildings'],
+    queryFn: async () => {
+      const response = await api.get<ApiListResponse<SubscriptionBuilding>>('/buildings/my-buildings/');
+      return parseListResponse(response);
+    },
+    staleTime: 60_000,
+  });
+
 export default function MySubscriptionPage() {
   const {
     data: subscription,
@@ -182,6 +219,7 @@ export default function MySubscriptionPage() {
   } = useSubscriptionSummary(subscription?.id);
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
   const { data: paymentMethodsData } = usePaymentMethods();
+  const { data: buildings, isLoading: buildingsLoading } = useSubscriptionBuildings();
   const [billingInterval, setBillingInterval] = React.useState<'month' | 'year'>('month');
 
   const updateMutation = useMutation({
@@ -279,7 +317,16 @@ export default function MySubscriptionPage() {
   const usageTracking = summary?.usage_tracking ?? [];
   const hasActiveSubscription = Boolean(subscription);
   const hasPaymentMethod = paymentMethods.length > 0;
-  const portalLabel = hasPaymentMethod ? 'Διαχείριση κάρτας' : 'Προσθήκη κάρτας';
+  const isTrial = Boolean(
+    subscription &&
+      (subscription.status === 'trial' || subscription.status === 'trialing' || subscription.is_trial)
+  );
+  const trialEndsAt = subscription?.trial_end ?? null;
+  const portalLabel = hasPaymentMethod
+    ? 'Διαχείριση κάρτας'
+    : isTrial
+      ? 'Προσθήκη κάρτας (προαιρετικά)'
+      : 'Προσθήκη κάρτας';
   const canReactivate = Boolean(subscription?.cancel_at_period_end);
 
   const availablePlans = React.useMemo(() => {
@@ -289,6 +336,17 @@ export default function MySubscriptionPage() {
       .filter((plan) => allowed.has(plan.plan_type))
       .sort((a, b) => parseFloat(a.monthly_price) - parseFloat(b.monthly_price));
   }, [plans]);
+
+  const buildingStats = React.useMemo(() => {
+    const stats = { total: 0, web: 0, premium: 0, premium_iot: 0 };
+    if (!buildings?.length) return stats;
+    stats.total = buildings.length;
+    for (const building of buildings) {
+      const plan = resolveBuildingPlan(building);
+      stats[plan] += 1;
+    }
+    return stats;
+  }, [buildings]);
 
   React.useEffect(() => {
     if (subscription?.billing_interval) {
@@ -383,7 +441,8 @@ export default function MySubscriptionPage() {
           )}
 
           {subscription && (
-          <div className="grid gap-6 lg:grid-cols-3">
+            <>
+              <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -431,6 +490,16 @@ export default function MySubscriptionPage() {
                     </p>
                   </div>
                 </div>
+
+                {isTrial && (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-900">
+                    <p className="font-medium">Δοκιμή σε εξέλιξη</p>
+                    <p className="mt-1 text-emerald-900/80">
+                      {trialEndsAt ? `Λήγει στις ${formatDate(trialEndsAt)}.` : 'Η δοκιμή είναι ενεργή.'}{' '}
+                      Στην trial περίοδο δεν απαιτείται κάρτα — θα ζητηθεί πριν τη λήξη.
+                    </p>
+                  </div>
+                )}
 
                 <Separator />
 
@@ -535,7 +604,9 @@ export default function MySubscriptionPage() {
                   </div>
                   {paymentMethods.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Δεν έχει αποθηκευτεί κάρτα ακόμη. Πρόσθεσε κάρτα για να ολοκληρώσεις την ενεργοποίηση.
+                      {isTrial
+                        ? 'Είσαι σε δοκιμαστική περίοδο. Δεν απαιτείται κάρτα τώρα — θα ζητηθεί πριν τη λήξη.'
+                        : 'Δεν έχει αποθηκευτεί κάρτα ακόμη. Πρόσθεσε κάρτα για να ολοκληρώσεις την ενεργοποίηση.'}
                     </p>
                   ) : (
                     paymentMethods.map((method) => (
@@ -562,6 +633,85 @@ export default function MySubscriptionPage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Πολυκατοικίες & πλάνα</CardTitle>
+              <CardDescription>
+                Η χρέωση υπολογίζεται ανά διαμέρισμα και ανά πλάνο που έχει επιλεγεί σε κάθε κτίριο.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2 text-xs">
+                <Badge variant="outline">Σύνολο: {buildingStats.total}</Badge>
+                <Badge variant="secondary">Web: {buildingStats.web}</Badge>
+                <Badge variant="secondary">Premium: {buildingStats.premium}</Badge>
+                <Badge variant="secondary">Premium + IoT: {buildingStats.premium_iot}</Badge>
+              </div>
+
+              {buildingsLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : buildings && buildings.length > 0 ? (
+                <div className="space-y-3">
+                  {buildings.map((building) => {
+                    const planKey = resolveBuildingPlan(building);
+                    const planLabel = planLabels[planKey];
+                    const apartmentsCount = building.apartments_count ?? 0;
+                    const hasApartments = apartmentsCount > 0;
+                    const trialEndsAt = building.trial_ends_at ? new Date(building.trial_ends_at) : null;
+                    const trialActive = Boolean(trialEndsAt && trialEndsAt >= new Date());
+                    const premiumLocked = planKey !== 'web' && !hasApartments && !trialActive;
+
+                    return (
+                      <div
+                        key={building.id}
+                        className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="space-y-1">
+                          <p className="text-xs uppercase text-muted-foreground">Κτίριο</p>
+                          <p className="text-base font-semibold">{building.name}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <Badge variant="outline">{planLabel}</Badge>
+                            {planKey === 'premium_iot' && <Badge variant="secondary">IoT</Badge>}
+                            <span>Διαμερίσματα: {hasApartments ? apartmentsCount : '—'}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {trialActive && (
+                            <Badge variant="secondary">
+                              Trial έως {formatDate(building.trial_ends_at)}
+                            </Badge>
+                          )}
+                          {premiumLocked && (
+                            <Badge variant="destructive">Premium κλειδωμένο</Badge>
+                          )}
+                          {!hasApartments && !trialActive && planKey !== 'web' && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Λείπουν διαμερίσματα
+                            </Badge>
+                          )}
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/buildings/${building.id}/edit`}>Ενημέρωση κτιρίου</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Δεν υπάρχουν καταχωρημένες πολυκατοικίες ακόμα.
+                </p>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Μετά τη λήξη του trial, τα Premium features παραμένουν κλειδωμένα αν δεν έχουν
+                συμπληρωθεί διαμερίσματα στο αντίστοιχο κτίριο.
+              </p>
+            </CardContent>
+          </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
@@ -625,7 +775,8 @@ export default function MySubscriptionPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+              </div>
+            </>
           )}
 
           <Card>
@@ -655,6 +806,9 @@ export default function MySubscriptionPage() {
                       Ετήσια
                     </Button>
                   </div>
+                  <span className="text-xs text-muted-foreground">
+                    Ξεκινάς trial χωρίς κάρτα — θα ζητηθεί πριν τη λήξη.
+                  </span>
                 </div>
               )}
               {plansLoading ? (
@@ -712,11 +866,7 @@ export default function MySubscriptionPage() {
                                 updateMutation.mutate(plan.id);
                               } else {
                                 if (!hasPaymentMethod && plan.plan_type !== 'free') {
-                                  toast.info('Πρόσθεσε κάρτα για να ενεργοποιήσεις συνδρομή.');
-                                  if (typeof window !== 'undefined') {
-                                    portalMutation.mutate(window.location.href);
-                                  }
-                                  return;
+                                  toast.info('Η δοκιμή ξεκινά χωρίς κάρτα. Θα ζητηθεί πριν τη λήξη.');
                                 }
                                 createMutation.mutate({ planId: plan.id, interval: billingInterval });
                               }

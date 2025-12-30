@@ -5,6 +5,8 @@ from decimal import Decimal
 
 
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from datetime import timedelta
 
 
 from users.models import CustomUser
@@ -86,6 +88,14 @@ class Building(models.Model):
     apartments_count = models.PositiveIntegerField(
         _("Σύνολο Διαμερισμάτων"),
         default=0
+    )
+
+    # 🧪 Trial period ανά πολυκατοικία (για self-serve onboarding)
+    trial_ends_at = models.DateField(
+        _("Λήξη Trial"),
+        null=True,
+        blank=True,
+        help_text=_("Λήξη trial ανά πολυκατοικία (default: +14 ημέρες)"),
     )
 
     # 💎 SaaS Entitlements (Premium ανά πολυκατοικία)
@@ -422,6 +432,8 @@ class Building(models.Model):
 
         # Track αν το management fee άλλαξε
         is_new = self.pk is None
+        if is_new and not self.trial_ends_at:
+            self.trial_ends_at = (timezone.now() + timedelta(days=14)).date()
         management_fee_changed = False
 
         if not is_new:

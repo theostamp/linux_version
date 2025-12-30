@@ -493,6 +493,9 @@ function PlansContent() {
                       Εξοικονόμηση €{monthlyPrice * 2}/έτος
                     </p>
                   )}
+                  {effectivePlan !== 'free' && (
+                    <p className="text-xs text-emerald-300">14 ημέρες δοκιμή χωρίς κάρτα.</p>
+                  )}
                 </div>
               </div>
 
@@ -527,11 +530,16 @@ function PlansContent() {
                 </>
               ) : (
                 <>
-                  Συνέχεια στην Πληρωμή
+                  Ξεκίνα δοκιμή
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </>
               )}
             </button>
+            {effectivePlan !== 'free' && (
+              <p className="mt-2 text-xs text-slate-500 text-center">
+                Η κάρτα ζητείται μόνο αν συνεχίσεις μετά τη δοκιμή.
+              </p>
+            )}
           </form>
         </div>
       </main>

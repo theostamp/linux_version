@@ -5,6 +5,7 @@ from django.utils import timezone
 from .models import HeatingDevice, HeatingSession, TelemetryLog
 from .serializers import HeatingDeviceSerializer, HeatingSessionSerializer
 from core.permissions import IsUltraAdmin
+from buildings.entitlements import resolve_building_entitlements, resolve_tenant_state
 
 class IsPremiumIotEnabled(permissions.BasePermission):
     """
@@ -24,7 +25,14 @@ class IsPremiumIotEnabled(permissions.BasePermission):
 
         # Allow if user has access to at least one IoT-enabled building
         try:
-            return request.user.buildings.filter(premium_enabled=True, iot_enabled=True).exists()
+            buildings = request.user.buildings.only(
+                'id', 'premium_enabled', 'iot_enabled', 'apartments_count', 'trial_ends_at'
+            )
+            for building in buildings:
+                entitlements = resolve_building_entitlements(building, getattr(request, 'tenant', None))
+                if entitlements.get('iot_access'):
+                    return True
+            return False
         except Exception:
             return False
 
@@ -41,17 +49,12 @@ class IsPremiumIotEnabled(permissions.BasePermission):
         if building is None:
             return False
 
-        return bool(getattr(building, 'premium_enabled', False)) and bool(getattr(building, 'iot_enabled', False))
+        entitlements = resolve_building_entitlements(building, getattr(request, 'tenant', None))
+        return bool(entitlements.get('iot_access'))
 
     def _tenant_subscription_active(self, request) -> bool:
-        tenant = getattr(request, 'tenant', None)
-        if not tenant or getattr(tenant, 'schema_name', None) == 'public':
-            return False
-        today = timezone.now().date()
-        return bool(getattr(tenant, 'is_active', False)) and (
-            getattr(tenant, 'on_trial', False)
-            or (getattr(tenant, 'paid_until', None) and tenant.paid_until >= today)
-        )
+        tenant_state = resolve_tenant_state(getattr(request, 'tenant', None))
+        return bool(tenant_state.get('tenant_subscription_active'))
 
 class HeatingDeviceViewSet(viewsets.ModelViewSet):
     queryset = HeatingDevice.objects.all()

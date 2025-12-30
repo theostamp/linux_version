@@ -21,6 +21,7 @@ Usage:
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 from decimal import Decimal
+from datetime import date
 
 
 @dataclass
@@ -88,6 +89,7 @@ class BuildingDTO:
 
     # Building details
     apartments_count: int
+    trial_ends_at: Optional[date] = None
     premium_enabled: bool = False
     iot_enabled: bool = False
     address: str = ""
@@ -154,6 +156,7 @@ class BuildingDTO:
             id=building.id,
             name=building.name,
             apartments_count=building.apartments_count,
+            trial_ends_at=getattr(building, 'trial_ends_at', None),
             premium_enabled=getattr(building, 'premium_enabled', False),
             iot_enabled=getattr(building, 'iot_enabled', False),
             address=building.address or "",
@@ -320,6 +323,7 @@ class BuildingDTO:
             'id': self.id,
             'name': self.name,
             'apartments_count': self.apartments_count,
+            'trial_ends_at': self.trial_ends_at.isoformat() if self.trial_ends_at else None,
             'premium_enabled': self.premium_enabled,
             'iot_enabled': self.iot_enabled,
             'address': self.address,
