@@ -688,69 +688,6 @@ export default function MySubscriptionPage() {
             </Card>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Χρήση πλατφόρμας</CardTitle>
-                <CardDescription>Παρακολούθηση βασικών μετρικών</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {usageTracking.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Δεν υπάρχουν μετρήσεις χρήσης διαθέσιμες.
-                  </p>
-                ) : (
-                  usageTracking.map((metric) => (
-                    <div
-                      key={metric.id}
-                      className="rounded-lg border px-3 py-2 text-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium capitalize">{metric.metric_type.replace('_', ' ')}</p>
-                        <Badge variant="outline">
-                          {metric.current_value}/{metric.limit_value}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Περίοδος {formatDate(metric.period_start)} → {formatDate(metric.period_end)}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Χρήσιμες ενέργειες</CardTitle>
-                <CardDescription>Υποστήριξη και χρέωση</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="rounded-lg border bg-muted/50 p-3">
-                  <p className="font-medium">Χρειάζεσαι βοήθεια;</p>
-                  <p className="text-muted-foreground">
-                    Η ομάδα μας είναι διαθέσιμη για αναβαθμίσεις, εξατομίκευση ή ερωτήσεις χρέωσης.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        window.open('mailto:support@newconcierge.app', '_blank');
-                      }}
-                    >
-                      Επικοινωνία υποστήριξης
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => window.open('https://newconcierge.app/pricing', '_blank')}
-                    >
-                      Πλάνα & τιμολόγηση
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-              </div>
             </>
           )}
 
@@ -1056,6 +993,71 @@ export default function MySubscriptionPage() {
               )}
             </CardContent>
           </Card>
+          {subscription && (
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Χρήση πλατφόρμας</CardTitle>
+                  <CardDescription>Παρακολούθηση βασικών μετρικών</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {usageTracking.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Δεν υπάρχουν μετρήσεις χρήσης διαθέσιμες.
+                    </p>
+                  ) : (
+                    usageTracking.map((metric) => (
+                      <div
+                        key={metric.id}
+                        className="rounded-lg border px-3 py-2 text-sm"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium capitalize">{metric.metric_type.replace('_', ' ')}</p>
+                          <Badge variant="outline">
+                            {metric.current_value}/{metric.limit_value}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Περίοδος {formatDate(metric.period_start)} → {formatDate(metric.period_end)}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Χρήσιμες ενέργειες</CardTitle>
+                  <CardDescription>Υποστήριξη και χρέωση</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="rounded-lg border bg-muted/50 p-3">
+                    <p className="font-medium">Χρειάζεσαι βοήθεια;</p>
+                    <p className="text-muted-foreground">
+                      Η ομάδα μας είναι διαθέσιμη για αναβαθμίσεις, εξατομίκευση ή ερωτήσεις χρέωσης.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          window.open('mailto:support@newconcierge.app', '_blank');
+                        }}
+                      >
+                        Επικοινωνία υποστήριξης
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open('https://newconcierge.app/pricing', '_blank')}
+                      >
+                        Πλάνα & τιμολόγηση
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </>
       )}
     </div>
