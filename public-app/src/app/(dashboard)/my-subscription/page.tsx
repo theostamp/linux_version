@@ -83,6 +83,9 @@ type SubscriptionBuilding = {
   iot_enabled?: boolean;
   address?: string;
   city?: string;
+  permissions?: {
+    can_edit?: boolean;
+  };
 };
 
 type SubscriptionSummary = {
@@ -153,6 +156,16 @@ const planLabels: Record<PlanKey, string> = {
   premium: 'Premium',
   premium_iot: 'Premium + IoT',
 };
+const planBadgeClasses: Record<PlanKey, string> = {
+  web: 'border-sky-200 text-sky-700 bg-sky-50/70',
+  premium: 'border-emerald-200 text-emerald-700 bg-emerald-50/70',
+  premium_iot: 'border-amber-200 text-amber-700 bg-amber-50/70',
+};
+
+const planToFlags = (plan: PlanKey) => ({
+  premium_enabled: plan !== 'web',
+  iot_enabled: plan === 'premium_iot',
+});
 
 const useCurrentSubscription = () =>
   useQuery({
@@ -220,8 +233,10 @@ export default function MySubscriptionPage() {
   } = useSubscriptionSummary(subscription?.id);
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
   const { data: paymentMethodsData } = usePaymentMethods();
-  const { data: buildings, isLoading: buildingsLoading } = useSubscriptionBuildings();
+  const { data: buildings, isLoading: buildingsLoading, refetch: refetchBuildings } = useSubscriptionBuildings();
   const [billingInterval, setBillingInterval] = React.useState<'month' | 'year'>('month');
+  const [planChanges, setPlanChanges] = React.useState<Record<number, PlanKey>>({});
+  const [updatingBuildingId, setUpdatingBuildingId] = React.useState<number | null>(null);
 
   const updateMutation = useMutation({
     mutationFn: async (planId: number) =>
@@ -303,13 +318,38 @@ export default function MySubscriptionPage() {
     },
   });
 
+  const updateBuildingPlanMutation = useMutation({
+    mutationFn: async ({ buildingId, plan }: { buildingId: number; plan: PlanKey }) =>
+      api.patch(`/buildings/${buildingId}/`, planToFlags(plan)),
+    onMutate: ({ buildingId }) => {
+      setUpdatingBuildingId(buildingId);
+    },
+    onSuccess: (_data, variables) => {
+      toast.success('Το πλάνο ενημερώθηκε.');
+      setPlanChanges((prev) => {
+        const next = { ...prev };
+        delete next[variables.buildingId];
+        return next;
+      });
+      void refetchBuildings();
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Αποτυχία ενημέρωσης πλάνου.';
+      toast.error(message);
+    },
+    onSettled: () => {
+      setUpdatingBuildingId(null);
+    },
+  });
+
   const isBusy =
     subscriptionLoading ||
     updateMutation.isPending ||
     cancelMutation.isPending ||
     createMutation.isPending ||
     portalMutation.isPending ||
-    reactivateMutation.isPending;
+    reactivateMutation.isPending ||
+    updateBuildingPlanMutation.isPending;
 
   const billingCycles = summary?.billing_cycles ?? [];
   const upcomingInvoice =
@@ -730,32 +770,76 @@ export default function MySubscriptionPage() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-xl border p-3 text-sm">
+                <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-sm text-sky-900">
                   <p className="text-xs uppercase text-muted-foreground">Web</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span>{buildingStats.apartments.web} διαμ.</span>
-                    <span className="font-semibold">{formatCurrency(buildingStats.charges.web)}</span>
+                  <div className="mt-2 space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Κτίρια</span>
+                      <span className="font-semibold">{buildingStats.web}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Διαμερίσματα</span>
+                      <span className="font-semibold">{buildingStats.apartments.web}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Κόστος</span>
+                      <span className="font-semibold">{formatCurrency(buildingStats.charges.web)}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border p-3 text-sm">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-900">
                   <p className="text-xs uppercase text-muted-foreground">Premium</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span>{buildingStats.apartments.premium} διαμ.</span>
-                    <span className="font-semibold">{formatCurrency(buildingStats.charges.premium)}</span>
+                  <div className="mt-2 space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Κτίρια</span>
+                      <span className="font-semibold">{buildingStats.premium}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Διαμερίσματα</span>
+                      <span className="font-semibold">{buildingStats.apartments.premium}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Κόστος</span>
+                      <span className="font-semibold">{formatCurrency(buildingStats.charges.premium)}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border p-3 text-sm">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-900">
                   <p className="text-xs uppercase text-muted-foreground">Premium + IoT</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span>{buildingStats.apartments.premium_iot} διαμ.</span>
-                    <span className="font-semibold">{formatCurrency(buildingStats.charges.premium_iot)}</span>
+                  <div className="mt-2 space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Κτίρια</span>
+                      <span className="font-semibold">{buildingStats.premium_iot}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Διαμερίσματα</span>
+                      <span className="font-semibold">{buildingStats.apartments.premium_iot}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Κόστος</span>
+                      <span className="font-semibold">{formatCurrency(buildingStats.charges.premium_iot)}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border p-3 text-sm">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-900">
                   <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span>{buildingStats.apartments.web + buildingStats.apartments.premium + buildingStats.apartments.premium_iot} διαμ.</span>
-                    <span className="font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
+                  <div className="mt-2 space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Κτίρια</span>
+                      <span className="font-semibold">{buildingStats.total}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Διαμερίσματα</span>
+                      <span className="font-semibold">
+                        {buildingStats.apartments.web +
+                          buildingStats.apartments.premium +
+                          buildingStats.apartments.premium_iot}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Κόστος</span>
+                      <span className="font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -772,6 +856,10 @@ export default function MySubscriptionPage() {
                     const trialEndsAt = building.trial_ends_at ? new Date(building.trial_ends_at) : null;
                     const trialActive = Boolean(trialEndsAt && trialEndsAt >= new Date());
                     const premiumLocked = planKey !== 'web' && !hasApartments && !trialActive;
+                    const selectedPlan = planChanges[building.id] ?? planKey;
+                    const canEditPlan = building.permissions?.can_edit ?? false;
+                    const hasPlanChange = selectedPlan !== planKey;
+                    const isUpdating = updatingBuildingId === building.id;
 
                     return (
                       <div
@@ -782,13 +870,16 @@ export default function MySubscriptionPage() {
                           <p className="text-xs uppercase text-muted-foreground">Κτίριο</p>
                           <p className="text-base font-semibold">{building.name}</p>
                           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline">{planLabel}</Badge>
+                            <Badge variant="outline" className={planBadgeClasses[planKey]}>
+                              {planLabel}
+                            </Badge>
                             {planKey === 'premium_iot' && <Badge variant="secondary">IoT</Badge>}
                             <span>Διαμερίσματα: {hasApartments ? apartmentsCount : '—'}</span>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-col items-start gap-2 sm:items-end">
+                          <div className="flex flex-wrap items-center gap-2">
                           {trialActive && (
                             <Badge variant="secondary">
                               Trial έως {formatDate(building.trial_ends_at)}
@@ -803,9 +894,47 @@ export default function MySubscriptionPage() {
                               Λείπουν διαμερίσματα
                             </Badge>
                           )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-muted-foreground" htmlFor={`plan-${building.id}`}>
+                              Πλάνο
+                            </label>
+                            <select
+                              id={`plan-${building.id}`}
+                              className="h-8 rounded-md border bg-background px-2 text-xs"
+                              value={selectedPlan}
+                              disabled={!canEditPlan || isUpdating}
+                              onChange={(event) =>
+                                setPlanChanges((prev) => ({
+                                  ...prev,
+                                  [building.id]: event.target.value as PlanKey,
+                                }))
+                              }
+                            >
+                              <option value="web">Web</option>
+                              <option value="premium">Premium</option>
+                              <option value="premium_iot">Premium + IoT</option>
+                            </select>
+                            {hasPlanChange && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                disabled={!canEditPlan || isUpdating}
+                                onClick={() =>
+                                  updateBuildingPlanMutation.mutate({
+                                    buildingId: building.id,
+                                    plan: selectedPlan,
+                                  })
+                                }
+                              >
+                                {isUpdating ? '...' : 'Αλλαγή'}
+                              </Button>
+                            )}
                           <Button asChild size="sm" variant="outline">
                             <Link href={`/buildings/${building.id}/edit`}>Ενημέρωση κτιρίου</Link>
                           </Button>
+                        </div>
                         </div>
                       </div>
                     );
