@@ -50,6 +50,20 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Cool Clarity Theme - New Design Tokens
+        'bg-app-main': 'var(--bg-app-main)',
+        'bg-sidebar': 'var(--bg-sidebar)',
+        'bg-card': 'var(--bg-card)',
+        'accent-primary': 'var(--color-accent-primary)',
+        'accent-secondary': 'var(--color-accent-secondary)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'trial-banner-bg': 'var(--bg-trial-banner)',
+        'trial-banner-text': 'var(--text-trial-banner)',
+      },
+      // -- BOX SHADOW --
+      boxShadow: {
+        'card-soft': 'var(--shadow-card-soft)',
       },
       // -- BORDER RADIUS --
       borderRadius: {

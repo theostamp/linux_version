@@ -655,9 +655,9 @@ export default function CollapsibleSidebar() {
           <Menu className="w-5 h-5 text-foreground" />
         </button>
 
-        {/* Loading Sidebar - Kaspersky mint style */}
+        {/* Loading Sidebar - Cool Clarity theme */}
         <aside
-          className="hidden lg:flex fixed left-0 top-0 h-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] flex-col justify-center items-center z-40 bg-[#e8f5f3] dark:bg-slate-900 transition-colors duration-300"
+          className="hidden lg:flex fixed left-0 top-0 h-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] flex-col justify-center items-center z-40 bg-bg-sidebar dark:bg-slate-900 transition-colors duration-300"
           style={{
             width: '80px',
           }}
@@ -689,10 +689,8 @@ export default function CollapsibleSidebar() {
           "hidden lg:flex sticky top-0 h-screen flex-col z-40 overflow-hidden shrink-0",
           "transition-all duration-300 ease-in-out",
           "shadow-[0_4px_20px_rgba(0,0,0,0.06)]",
-          // Kaspersky mint background in light mode, dark slate in dark mode
-          !isExpanded
-            ? "bg-[#e8f5f3] dark:bg-slate-900"
-            : "bg-[#e8f5f3] dark:bg-slate-900"
+          // Cool Clarity theme background
+          "bg-bg-sidebar dark:bg-slate-900"
         )}
         style={{
           width: isExpanded ? '256px' : '80px',
@@ -781,15 +779,15 @@ export default function CollapsibleSidebar() {
                               className={cn(
                                 'flex items-center w-full rounded-lg font-medium transition-all duration-200 group relative',
                                 isExpanded ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
-                                isActive && 'shadow-md',
                                 locked && 'opacity-60',
-                                // Ensure readable text in dark mode (some themes map muted-foreground too dark)
+                                // Cool Clarity theme: active state with left border
                                 isActive
-                                  ? colorClasses.active
-                                  : `text-muted-foreground dark:text-slate-200 ${colorClasses.hover} hover:text-foreground`
+                                  ? 'border-l-4 text-accent-primary bg-accent-primary/10'
+                                  : 'text-text-secondary hover:bg-accent-primary/10'
                               )}
                               style={{
                                 fontSize: designSystem.typography.fontSize.sm,
+                                borderLeftColor: isActive ? 'var(--color-accent-primary)' : 'transparent',
                               }}
                             >
                               {/* Icon */}
@@ -797,7 +795,7 @@ export default function CollapsibleSidebar() {
                                 className={cn(
                                   'transition-colors duration-200 flex-shrink-0',
                                   isExpanded && 'mr-3',
-                                  !isActive && colorClasses.icon
+                                  isActive ? 'text-accent-primary' : 'text-text-secondary'
                                 )}
                               >
                                 {link.icon}
@@ -831,8 +829,8 @@ export default function CollapsibleSidebar() {
                                       className={cn(
                                         "ml-auto p-1 rounded transition-colors flex-shrink-0",
                                         isActive
-                                          ? "hover:bg-white/10 text-white/80"
-                                          : "hover:bg-muted text-muted-foreground dark:text-slate-200"
+                                          ? "hover:bg-accent-primary/20 text-accent-primary"
+                                          : "hover:bg-muted text-text-secondary dark:text-slate-200"
                                       )}
                                     >
                                       <Info className="w-3.5 h-3.5" />
@@ -854,12 +852,12 @@ export default function CollapsibleSidebar() {
                                   className={cn(
                                     "px-2 py-0.5 rounded-full font-bold",
                                     link.tooltip ? "ml-2" : "ml-auto",
-                                    !isActive && colorClasses.bg,
-                                    !isActive && colorClasses.text
+                                    isActive
+                                      ? "bg-accent-primary/20 text-accent-primary"
+                                      : "bg-accent-primary/10 text-accent-primary"
                                   )}
                                   style={{
                                     fontSize: designSystem.typography.fontSize.xs,
-                                    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : undefined,
                                   }}
                                 >
                                   BETA
@@ -929,7 +927,7 @@ export default function CollapsibleSidebar() {
           "lg:hidden fixed left-0 top-0 h-full w-64 flex flex-col z-[70]",
           "shadow-[0_4px_24px_rgba(0,0,0,0.12)]",
           // Kaspersky mint background
-          "bg-[#e8f5f3] dark:bg-slate-900",
+          "bg-bg-sidebar dark:bg-slate-900",
           "transform transition-transform duration-300",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -1010,16 +1008,17 @@ export default function CollapsibleSidebar() {
                           className={cn(
                             "flex items-center flex-1 px-3 py-2.5 rounded-lg font-medium transition-all duration-200",
                             locked && "opacity-60",
-                            // Ensure readable text in dark mode (some themes map muted-foreground too dark)
+                            // Cool Clarity theme: active state with left border
                             isActive
-                              ? colorClasses.active
-                              : `text-muted-foreground dark:text-slate-200 ${colorClasses.hover} hover:text-foreground`
+                              ? 'border-l-4 text-accent-primary bg-accent-primary/10'
+                              : 'text-text-secondary hover:bg-accent-primary/10'
                           )}
                           style={{
                             fontSize: designSystem.typography.fontSize.sm,
+                            borderLeftColor: isActive ? 'var(--color-accent-primary)' : 'transparent',
                           }}
                         >
-                          <span className={cn("mr-3", !isActive && colorClasses.icon)}>
+                          <span className={cn("mr-3", isActive ? 'text-accent-primary' : 'text-text-secondary')}>
                             {link.icon}
                           </span>
                           <span>{link.label}</span>
@@ -1036,8 +1035,8 @@ export default function CollapsibleSidebar() {
                                 className={cn(
                                   "p-1 rounded transition-colors flex-shrink-0 ml-2",
                                   isActive
-                                    ? "hover:bg-white/10 text-white/80"
-                                    : "hover:bg-muted text-muted-foreground dark:text-slate-200"
+                                    ? "hover:bg-accent-primary/20 text-accent-primary"
+                                    : "hover:bg-muted text-text-secondary dark:text-slate-200"
                                 )}
                               >
                                 <Info className="w-3.5 h-3.5" />

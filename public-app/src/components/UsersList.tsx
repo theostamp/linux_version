@@ -60,7 +60,7 @@ export default function UsersList() {
       toast.error('Παρακαλώ επιλέξτε κτίριο πρώτα');
       return;
     }
-    
+
     setRemovingUserId(user.id);
     try {
       const result = await removeUserFromBuilding(user.id, selectedBuilding.id);
@@ -155,7 +155,7 @@ export default function UsersList() {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Mail className="h-4 w-4 text-text-secondary" />
                     <span className="font-medium">{user.email}</span>
                   </div>
                 </TableCell>
@@ -168,7 +168,7 @@ export default function UsersList() {
                 </TableCell>
                 <TableCell>
                   {user.is_active !== false ? (
-                    <Badge className="bg-green-500/10 text-green-600 dark:text-green-400">
+                    <Badge variant="active">
                       <UserCheck className="h-3 w-3 mr-1" />
                       Ενεργός
                     </Badge>
@@ -215,8 +215,8 @@ export default function UsersList() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className={user.is_active !== false 
-                              ? 'text-orange-600 dark:text-orange-400 hover:bg-orange-500/10' 
+                            className={user.is_active !== false
+                              ? 'text-orange-600 dark:text-orange-400 hover:bg-orange-500/10'
                               : 'text-green-600 dark:text-green-400 hover:bg-green-500/10'
                             }
                             onClick={() => handleToggleUserStatus(user)}
@@ -238,7 +238,7 @@ export default function UsersList() {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {user.is_active !== false 
+                          {user.is_active !== false
                             ? <><p>Απενεργοποίηση <strong>παντού</strong></p><p className="text-xs text-muted-foreground">Ο χρήστης δεν θα μπορεί να συνδεθεί σε κανένα κτίριο</p></>
                             : 'Ο χρήστης θα μπορεί ξανά να συνδεθεί'}
                         </TooltipContent>

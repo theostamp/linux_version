@@ -19,6 +19,8 @@ const badgeVariants = cva(
         warning:
           "bg-amber-100 text-amber-700 hover:bg-amber-200",
         outline: "text-foreground/90 bg-card/60 backdrop-blur-sm shadow-sm ring-1 ring-border/30",
+        // Cool Clarity theme: Active status badge with accent-secondary
+        active: "bg-accent-secondary/15 text-accent-secondary hover:bg-accent-secondary/20",
       },
     },
     defaultVariants: {

@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid'; // Import BentoGrid
-import { 
-  CommonExpenseCalculatorNew, 
-  ExpenseForm, 
+import {
+  CommonExpenseCalculatorNew,
+  ExpenseForm,
   TransactionHistory,
   ChartsContainer,
   BulkImportWizard,
@@ -21,16 +21,16 @@ import { ApartmentBalancesTab } from './ApartmentBalancesTab';
 
 import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
-import { 
+import {
   AlertTriangle,
   Building2,
-  Calculator, 
+  Calculator,
   Calendar,
   DollarSign,
   History,
   HelpCircle,
   PieChart,
-  Plus, 
+  Plus,
   RefreshCw,
   TrendingUp,
   X
@@ -80,8 +80,8 @@ const MOBILE_TAB_BASE_CLASSES =
   'group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-card/60 backdrop-blur-sm text-sm text-foreground shadow-md ring-1 ring-border/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background';
 const MOBILE_TAB_INACTIVE_CLASSES = 'hover:ring-1 hover:ring-border/30';
 const TAB_ACTIVE_SHARED_CLASSES = 'shadow-lg ring-2 ring-offset-1 ring-offset-background';
-const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-muted-foreground';
-const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-muted-foreground';
+const DESKTOP_ICON_BASE_CLASSES = 'mb-2 p-2 rounded-full transition-colors bg-muted text-text-secondary';
+const MOBILE_ICON_BASE_CLASSES = 'flex items-center justify-center h-7 w-7 rounded-full transition-colors bg-muted text-text-secondary';
 const DESKTOP_LABEL_BASE_CLASSES = 'font-semibold text-xs font-condensed transition-colors duration-200';
 const MOBILE_LABEL_BASE_CLASSES = 'font-medium text-xs whitespace-nowrap transition-colors duration-200';
 const DESCRIPTION_BASE_CLASSES = 'text-[10px] text-muted-foreground text-center mt-0.5 transition-colors duration-200';
@@ -191,7 +191,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const router = useRouter();
   const { buildings, currentBuilding, selectedBuilding } = useBuilding();
   const queryClient = useQueryClient();
-  
+
   // Use selectedBuilding ID if available, otherwise use the passed buildingId
   // But validate that the buildingId exists in available buildings
   const [activeBuildingId, setActiveBuildingId] = useState(() => {
@@ -203,7 +203,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     });
     return initialId;
   });
-  
+
   // Validate buildingId exists in available buildings
   // Priority: URL parameter > prop buildingId > selectedBuilding
   useEffect(() => {
@@ -214,11 +214,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       const validUrlBuildingId = urlBuildingIdNum && !isNaN(urlBuildingIdNum) && buildings.some(b => b.id === urlBuildingIdNum)
         ? urlBuildingIdNum
         : null;
-      
+
       // Priority: URL > prop > selectedBuilding
       const targetId = validUrlBuildingId || buildingId || selectedBuilding?.id;
       const buildingExists = targetId && buildings.some(b => b.id === targetId);
-      
+
       if (!buildingExists || !targetId) {
         // Use first available building if target doesn't exist
         const targetBuilding = buildings[0];
@@ -237,7 +237,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           if (validUrlBuildingId) {
             console.log(`[FinancialPage] Using URL buildingId: ${validUrlBuildingId}`);
             setActiveBuildingId(validUrlBuildingId);
-          } 
+          }
           // If prop buildingId is different, use it (second priority)
           else if (buildingId && buildingId !== activeBuildingId) {
             console.log(`[FinancialPage] Using prop buildingId: ${buildingId}`);
@@ -257,7 +257,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     const params = new URLSearchParams(window.location.search);
     return params.get('tab') || 'calculator';
   });
-  
+
   // Use custom hook for modal management
   const expenseModal = useModalState({
     modalKey: 'expense-form',
@@ -281,32 +281,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   });
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(0); // No hardcoded default - will be set from building data
-  
+
   // State for maintenance overview modal
   const [maintenanceOverviewOpen, setMaintenanceOverviewOpen] = useState(false);
   const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<number | null>(null);
   const { canCreateExpense, canAccessReports, canCalculateCommonExpenses } = useFinancialPermissions();
-  
 
-  
+
+
   // Refs for refreshing components
   const buildingOverviewRef = useRef<{ refresh: () => void }>(null);
 
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
-  
+
   // Event listener for opening maintenance overview modal
   useEffect(() => {
     const handleOpenMaintenanceOverview = async (event: Event) => {
       const customEvent = event as CustomEvent;
       console.log('🎯 FinancialPage received open-maintenance-overview event:', customEvent.detail);
       const maintenanceId = customEvent.detail.maintenanceId;
-      
+
       if (!maintenanceId) {
         console.warn('⚠️ No maintenance ID provided in event');
         return;
       }
-      
+
       // Validate that the maintenance exists before opening the modal
       try {
         console.log('🔍 Validating maintenance ID:', maintenanceId);
@@ -325,16 +325,16 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         }
       }
     };
-    
+
     console.log('👂 FinancialPage setting up open-maintenance-overview event listener');
     window.addEventListener('open-maintenance-overview', handleOpenMaintenanceOverview);
-    
+
     return () => {
       console.log('🧹 FinancialPage cleaning up open-maintenance-overview event listener');
       window.removeEventListener('open-maintenance-overview', handleOpenMaintenanceOverview);
     };
   }, []);
-  
+
   // Auto-refresh financial data when expenses change
   useFinancialAutoRefresh(
     {
@@ -351,14 +351,14 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       componentName: 'FinancialPage'
     }
   );
-  
+
   // Force refresh when building changes
   useEffect(() => {
     // Trigger refresh of all data when activeBuildingId changes
     if (buildingOverviewRef.current) {
       buildingOverviewRef.current.refresh();
     }
-    
+
     // Load apartments for the new building
     const loadApartments = async () => {
       try {
@@ -369,7 +369,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         setApartments([]);
       }
     };
-    
+
     loadApartments();
   }, [activeBuildingId]);
 
@@ -381,7 +381,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Monitor selectedMonth changes and refresh components
   useEffect(() => {
     console.log('Selected month changed to:', selectedMonth);
-    
+
     // Αφαιρέθηκε το notification για αλλαγή μήνα
     // Show a brief notification for month change
     // const showNotification = () => {
@@ -394,12 +394,12 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     //     </div>
     //   `;
     //   document.body.appendChild(notification);
-    //   
+    //
     //   // Animate in
     //   requestAnimationFrame(() => {
     //     notification.classList.remove('translate-x-full');
     //   });
-    //   
+    //
     //   // Remove after 3 seconds
     //   setTimeout(() => {
     //     notification.classList.add('translate-x-full');
@@ -416,16 +416,16 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     //   showNotification();
     // }
   }, [selectedMonth]);
-  
+
   // Handle URL parameters for browser navigation (not initial load - that's handled in useState)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     const monthParam = searchParams.get('month');
-    
+
     if (tabParam) {
       setActiveTab(tabParam);
     }
-    
+
     // Only update if monthParam differs from current AND it's a valid format
     // This prevents double renders on initial load since useState already reads URL
     if (monthParam && /^\d{4}-\d{2}$/.test(monthParam) && monthParam !== selectedMonth) {
@@ -433,7 +433,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       setSelectedMonth(monthParam);
     }
   }, [searchParams, selectedMonth]);
-  
+
   // Scroll to tab content when page loads with a specific tab
   useEffect(() => {
     if (activeTab && activeTab !== 'calculator') {
@@ -444,7 +444,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           // Scroll to just before the tab content, keeping tabs visible
           const elementTop = tabContent.getBoundingClientRect().top + window.pageYOffset;
           const offsetPosition = elementTop - 200; // Keep tabs visible with some padding (header + tabs + extra)
-          
+
           window.scrollTo({
             top: offsetPosition,
             behavior: 'smooth'
@@ -453,11 +453,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       }, 200);
     }
   }, [activeTab]);
-  
+
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    
+
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', value);
     // Remove modal parameter when changing tabs
@@ -467,7 +467,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       params.set('building', activeBuildingId.toString());
     }
     router.push(`/financial?${params.toString()}`);
-    
+
     // Scroll to the tab content after a short delay to ensure DOM is updated
     setTimeout(() => {
       const tabContent = document.querySelector(`[data-tab="${value}"]`);
@@ -475,7 +475,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         // Scroll to just before the tab content, keeping tabs visible
         const elementTop = tabContent.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementTop - 200; // Keep tabs visible with some padding (header + tabs + extra)
-        
+
         window.scrollTo({
           top: offsetPosition,
           behavior: 'smooth'
@@ -483,11 +483,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       }
     }, 100);
   };
-  
+
   // Update URL when month changes
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
-    
+
     const params = new URLSearchParams(searchParams.toString());
     params.set('month', month);
     // Preserve existing parameters
@@ -499,7 +499,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     }
     router.push(`/financial?${params.toString()}`);
   };
-  
+
   const handleExpenseSuccess = () => {
     expenseModal.closeModal();
     // Refresh expense list data
@@ -511,7 +511,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       buildingOverviewRef.current.refresh();
     }
   };
-  
+
   const handleExpenseCancel = () => {
     expenseModal.closeModal();
   };
@@ -521,10 +521,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   useEffect(() => {
     fetchApartments(activeBuildingId).then(setApartments).catch(() => setApartments([]));
   }, [activeBuildingId]);
-  
+
   // Get current building name
   const currentBuildingName = (selectedBuilding || currentBuilding)?.name || 'Άγνωστο Κτίριο';
-  
+
 	  return (
 	    <div className="space-y-6" key={`financial-${activeBuildingId}`}>
 	      {/* Enhanced Header with Building & Month Context */}
@@ -546,39 +546,39 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 	              onClick={async () => {
 	                // ✅ Clear API cache FIRST, then React Query cache
 	                invalidateApiCache(/\/financial\//);
-	                
+
 	                // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
-	                await queryClient.invalidateQueries({ 
-	                  queryKey: ['financial'] 
+	                await queryClient.invalidateQueries({
+	                  queryKey: ['financial']
 	                });
-	                await queryClient.invalidateQueries({ 
-	                  queryKey: ['apartment-balances'] 
+	                await queryClient.invalidateQueries({
+	                  queryKey: ['apartment-balances']
 	                });
-	                await queryClient.invalidateQueries({ 
-	                  queryKey: ['expenses'] 
+	                await queryClient.invalidateQueries({
+	                  queryKey: ['expenses']
 	                });
-	                await queryClient.invalidateQueries({ 
-	                  queryKey: ['transactions'] 
+	                await queryClient.invalidateQueries({
+	                  queryKey: ['transactions']
 	                });
-	                await queryClient.refetchQueries({ 
-	                  queryKey: ['financial'] 
+	                await queryClient.refetchQueries({
+	                  queryKey: ['financial']
 	                });
-	                await queryClient.refetchQueries({ 
-	                  queryKey: ['apartment-balances'] 
+	                await queryClient.refetchQueries({
+	                  queryKey: ['apartment-balances']
 	                });
-	                await queryClient.refetchQueries({ 
-	                  queryKey: ['expenses'] 
+	                await queryClient.refetchQueries({
+	                  queryKey: ['expenses']
 	                });
-	                await queryClient.refetchQueries({ 
-	                  queryKey: ['transactions'] 
+	                await queryClient.refetchQueries({
+	                  queryKey: ['transactions']
 	                });
-	                
+
 	                console.log(`🧹 FinancialPage: API cache and React Query cache cleared, data refetched`);
-	                
+
 	                // Refresh components
 	                if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
 	                if (expenseListRef.current) expenseListRef.current.refresh();
-	                
+
 	                // Show success message
 	                toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
 	                  description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
@@ -593,7 +593,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 	            </Button>
 	          </div>
 	        </div>
-        
+
         {/* Context Banner - Building & Month */}
         <div className="flex flex-col sm:flex-row gap-4 p-4 bg-indigo-500/10 dark:bg-indigo-950/40 rounded-lg shadow-md">
           {/* Building Info */}
@@ -668,14 +668,14 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </div>
         </div>
       </div>
-      
 
-      
 
-      
+
+
+
       {/* Main Content - Bento Grid Layout */}
       <BentoGrid className="max-w-[1920px] auto-rows-auto gap-6">
-        
+
         {/* Left Column - Main Tabs Content */}
         <BentoGridItem
           className="md:col-span-2 md:row-span-2 order-2 md:order-1"
@@ -780,26 +780,26 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 {/* Tab Contents */}
                 <TabsContent value="calculator" className="space-y-4" data-tab="calculator">
                   <ProtectedFinancialRoute requiredPermission="financial_write">
-                    <CommonExpenseCalculatorNew 
-                      buildingId={activeBuildingId} 
-                      selectedMonth={selectedMonth} 
+                    <CommonExpenseCalculatorNew
+                      buildingId={activeBuildingId}
+                      selectedMonth={selectedMonth}
                       reserveFundMonthlyAmount={reserveFundMonthlyAmount}
                     />
                   </ProtectedFinancialRoute>
                 </TabsContent>
-                
+
                 <TabsContent value="balances" className="space-y-4" data-tab="balances">
                   <ProtectedFinancialRoute requiredPermission="financial_read">
-                    <ApartmentBalancesTab 
-                      buildingId={activeBuildingId} 
+                    <ApartmentBalancesTab
+                      buildingId={activeBuildingId}
                       selectedMonth={selectedMonth}
                     />
                   </ProtectedFinancialRoute>
                 </TabsContent>
-                
+
                 <TabsContent value="expenses" className="space-y-4" data-tab="expenses">
                   <ProtectedFinancialRoute requiredPermission="expense_manage">
-                    <ExpenseList 
+                    <ExpenseList
                       ref={expenseListRef}
                       selectedMonth={selectedMonth}
                       onMonthChange={handleMonthChange}
@@ -811,7 +811,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                     />
                   </ProtectedFinancialRoute>
                 </TabsContent>
-                
+
                 <TabsContent value="meters" className="space-y-4" data-tab="meters">
                   <ProtectedFinancialRoute requiredPermission="financial_write">
                     <div className="space-y-6">
@@ -820,13 +820,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                     </div>
                   </ProtectedFinancialRoute>
                 </TabsContent>
-                
+
                 <TabsContent value="history" className="space-y-4" data-tab="history">
                   <ProtectedFinancialRoute requiredPermission="financial_read">
                     <TransactionHistory limit={20} selectedMonth={selectedMonth} />
                   </ProtectedFinancialRoute>
                 </TabsContent>
-                
+
                 <TabsContent value="charts" className="space-y-4" data-tab="charts">
                   <ProtectedFinancialRoute requiredPermission="financial_read">
                     <ChartsContainer selectedMonth={selectedMonth} />
@@ -849,7 +849,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           }
           description="Συνολική οικονομική εικόνα του κτιρίου"
           header={
-            <BuildingOverviewSection 
+            <BuildingOverviewSection
               ref={buildingOverviewRef}
               buildingId={activeBuildingId}
               selectedMonth={selectedMonth}
@@ -858,29 +858,29 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           }
         />
       </BentoGrid>
-      
+
       {/* Expense Form Modal */}
       <ConditionalRender permission="expense_manage">
         {expenseModal.isOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
             onClick={handleExpenseCancel}
           >
-	            <div 
+	            <div
 	              className="bg-card/90 backdrop-blur-md rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl ring-1 ring-border/20"
 	              onClick={(e) => e.stopPropagation()}
 	            >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-foreground">Νέα Δαπάνη</h2>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleExpenseCancel}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <ExpenseForm 
+              <ExpenseForm
                 selectedMonth={selectedMonth}
                 onSuccess={handleExpenseSuccess}
                 onCancel={handleExpenseCancel}
@@ -889,7 +889,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </div>
         )}
       </ConditionalRender>
-      
+
       {/* Maintenance Overview Modal - TODO: Uncomment when ScheduledMaintenanceOverviewModal is created */}
       {/* <ScheduledMaintenanceOverviewModal
         open={maintenanceOverviewOpen}

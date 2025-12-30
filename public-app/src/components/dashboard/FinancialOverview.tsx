@@ -13,14 +13,14 @@ interface FinancialOverviewProps {
 
 export function FinancialOverview({ data, loading = false }: FinancialOverviewProps) {
   const financialSummary = data?.financial_summary;
-  
+
   if (loading) {
     return (
-      <div className="mb-8 rounded-2xl border border-gray-300 bg-card/50 p-4 md:p-6">
+      <div className="mb-8 rounded-3xl bg-bg-card shadow-card-soft p-4 md:p-6">
         <h2 className="text-xl font-semibold text-foreground mb-4">Οικονομική Επισκόπηση</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse bg-card border border-gray-300">
+            <Card key={i} className="animate-pulse bg-bg-card shadow-card-soft">
               <CardHeader className="pb-3">
                 <div className="h-4 w-24 rounded bg-muted" />
               </CardHeader>
@@ -34,27 +34,27 @@ export function FinancialOverview({ data, loading = false }: FinancialOverviewPr
       </div>
     );
   }
-  
+
   if (!financialSummary) {
     return null;
   }
-  
+
   const totalReserve = financialSummary.total_reserve || 0;
   const totalPendingExpenses = financialSummary.total_pending_expenses || 0;
   const totalPendingObligations = financialSummary.total_pending_obligations || 0;
   const collectionRate = financialSummary.collection_rate || 0;
-  
+
   return (
-    <div className="mb-8 rounded-2xl border border-gray-300 bg-card/50 p-4 md:p-6">
+    <div className="mb-8 rounded-3xl bg-bg-card shadow-card-soft p-4 md:p-6">
       <h2 className="text-xl font-semibold text-foreground mb-4">
         💰 Οικονομική Επισκόπηση
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Reserve Card */}
-        <Card className="bg-card border border-gray-300 shadow-sm">
+        <Card className="bg-bg-card shadow-card-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-foreground">
+            <CardTitle className="text-sm font-medium text-accent-primary">
               Συνολικό Αποθεματικό
             </CardTitle>
             <DollarSign className="h-4 w-4 text-primary" />
@@ -78,11 +78,11 @@ export function FinancialOverview({ data, loading = false }: FinancialOverviewPr
             </p>
           </CardContent>
         </Card>
-        
+
         {/* Pending Expenses Card */}
-        <Card className="bg-card border border-gray-300 shadow-sm">
+        <Card className="bg-bg-card shadow-card-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-foreground">
+            <CardTitle className="text-sm font-medium text-accent-primary">
               Ανέκδοτες Δαπάνες
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -96,11 +96,11 @@ export function FinancialOverview({ data, loading = false }: FinancialOverviewPr
             </p>
           </CardContent>
         </Card>
-        
+
         {/* Collection Rate Card */}
-        <Card className="bg-card border border-gray-300 shadow-sm">
+        <Card className="bg-bg-card shadow-card-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-medium text-foreground">
+            <CardTitle className="text-sm font-medium text-accent-primary">
               Ποσοστό Είσπραξης
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-primary" />

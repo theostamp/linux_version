@@ -18,29 +18,29 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
   const { selectedBuilding } = useBuilding();
-  
+
   // Check if this is an assembly announcement
-  const isAssembly = announcement.title?.includes('Συνέλευση') || 
+  const isAssembly = announcement.title?.includes('Συνέλευση') ||
                      announcement.title?.includes('Σύγκληση') ||
                      announcement.description?.includes('ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ');
-  
+
   // Extract assembly topics
   const extractAssemblyTopics = () => {
     if (!isAssembly) return [];
-    
+
     const topicsSection = announcement.description.match(/\*\*ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:\*\*([\s\S]*?)\*\*Σημαντικό:\*\*/);
     if (!topicsSection) return [];
-    
+
     const topicsContent = topicsSection[1];
     const topicMatches = topicsContent.match(/###\s*Θέμα:\s*([^\n]+)/g);
-    
-    return topicMatches ? topicMatches.map(match => 
+
+    return topicMatches ? topicMatches.map(match =>
       match.replace(/###\s*Θέμα:\s*/, '').trim()
     ) : [];
   };
-  
+
   const assemblyTopics = extractAssemblyTopics();
-  
+
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—';
     const date = new Date(dateStr);
@@ -72,16 +72,16 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
-    
+
     const isGlobal = (announcement as { building_name?: string }).building_name === "Όλα τα κτίρια";
-    const confirmMessage = isGlobal 
+    const confirmMessage = isGlobal
       ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την ΚΑΘΟΛΙΚΗ ανακοίνωση "${announcement.title}" από όλα τα κτίρια;`
       : `Είστε σίγουροι ότι θέλετε να διαγράψετε την ανακοίνωση "${announcement.title}";`;
-    
+
     if (!confirm(confirmMessage)) {
       return;
     }
-    
+
     setIsDeleting(true);
     try {
       const message = await deleteAnnouncement(announcement.id);
@@ -103,8 +103,8 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
   return (
     <motion.div
       className={`p-4 rounded-xl shadow-sm text-foreground relative ${
-        isAssembly 
-          ? 'bg-purple-500/5 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-900' 
+        isAssembly
+          ? 'bg-purple-500/5 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-900'
           : 'bg-card border border-border'
       }`}
       initial={{ opacity: 0, y: 10 }}
@@ -120,7 +120,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
       {!selectedBuilding && (announcement as { building_name?: string }).building_name && (
         <div className="absolute top-3 left-3 z-10">
           <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
-            isAssembly 
+            isAssembly
               ? 'bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300'
               : 'bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300'
           }`}>
@@ -154,7 +154,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         <span
           className={`text-xs font-medium px-3 py-1 rounded-full border ${
             isCurrentlyActive
-              ? 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30'
+              ? 'bg-accent-secondary/15 text-accent-secondary border-accent-secondary/30'
               : 'bg-muted text-muted-foreground border-border'
           }`}
         >
@@ -189,8 +189,8 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           Ενεργό από <strong>{formatDate(announcement.start_date)}</strong> έως{' '}
           <strong>{formatDate(announcement.end_date)}</strong>
         </div>
-        
-        <Link 
+
+        <Link
           href={`/announcements/${announcement.id}`}
           className={typography.linkText}
         >

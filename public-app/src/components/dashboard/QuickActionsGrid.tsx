@@ -23,7 +23,7 @@ interface QuickActionsGridProps {
 
 export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProps) {
   const router = useRouter();
-  
+
   const actions: QuickAction[] = [
     {
       key: 'announcements',
@@ -62,7 +62,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
       description: `${data?.urgent_items || 0} προς επίλυση`,
     },
   ];
-  
+
   if (loading) {
     return (
       <div className="mb-8">
@@ -71,7 +71,7 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="rounded-xl p-4 border-0 shadow-sm bg-muted animate-pulse"
+              className="rounded-3xl p-4 shadow-card-soft bg-bg-card animate-pulse"
             >
               <div className="h-10 bg-muted-foreground/20 rounded-none mb-3" />
               <div className="h-8 w-12 bg-muted-foreground/20 rounded-none mb-1" />
@@ -82,31 +82,31 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
       </div>
     );
   }
-  
+
   return (
     <div className="mb-8">
       <h2 className="text-xl font-semibold text-foreground mb-4">
         🚀 Γρήγορες Ενέργειες
       </h2>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action) => (
           <div
             key={action.key}
             onClick={() => router.push(action.link)}
             className={cn(
-              "cursor-pointer rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-[1.02]",
-              "bg-[hsl(var(--card))] border border-gray-300"
+              "cursor-pointer rounded-3xl p-4 shadow-card-soft hover:shadow-card-soft transition-all duration-200 group hover:scale-[1.02]",
+              "bg-bg-card"
             )}
           >
             {/* Icon & Arrow */}
             <div className="flex items-center justify-between mb-3">
               <div
                 className="p-2 rounded-lg shadow-sm"
-                style={{ 
+                style={{
                   color: action.accent,
-                  backgroundColor: action.accent.startsWith('#') 
-                    ? `${action.accent}1f` 
+                  backgroundColor: action.accent.startsWith('#')
+                    ? `${action.accent}1f`
                     : `color-mix(in srgb, ${action.accent}, transparent 90%)`
                 }}
               >
@@ -115,11 +115,11 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
               <ArrowRight
                 className={cn(
                   "w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-                  "text-muted-foreground"
+                  "text-text-secondary"
                 )}
               />
             </div>
-            
+
             {/* Count */}
             <div
               className="text-2xl font-bold mb-1"
@@ -127,15 +127,15 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
             >
               {action.count}
             </div>
-            
+
             {/* Label */}
-            <div className="text-sm font-medium text-foreground">
+            <div className="text-sm font-medium text-accent-primary">
               {action.label}
             </div>
-            
+
             {/* Description */}
             {action.description && (
-              <div className="text-xs mt-1 text-muted-foreground">
+              <div className="text-xs mt-1 text-text-secondary">
                 {action.description}
               </div>
             )}

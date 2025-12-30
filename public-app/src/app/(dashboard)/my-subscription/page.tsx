@@ -505,7 +505,7 @@ export default function MySubscriptionPage() {
                     {subscription.plan.description || 'Τρέχον πλάνο workspace'}
                   </CardDescription>
                 </div>
-                <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
+                <Badge variant={subscription.status === 'active' ? 'active' : 'secondary'}>
                   {subscription.status === 'active' ? 'Ενεργή' : subscription.status}
                 </Badge>
               </CardHeader>
@@ -546,9 +546,9 @@ export default function MySubscriptionPage() {
                 </div>
 
                 {isTrial && (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-900">
+                  <div className="rounded-lg border border-trial-banner-text/20 bg-trial-banner-bg p-4 text-sm text-trial-banner-text">
                     <p className="font-medium">Δοκιμή σε εξέλιξη</p>
-                    <p className="mt-1 text-emerald-900/80">
+                    <p className="mt-1 text-trial-banner-text/80">
                       {trialEndsAt ? `Λήγει στις ${formatDate(trialEndsAt)}.` : 'Η δοκιμή είναι ενεργή.'}{' '}
                       Στην trial περίοδο δεν απαιτείται κάρτα — θα ζητηθεί πριν τη λήξη.
                     </p>

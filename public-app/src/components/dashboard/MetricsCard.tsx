@@ -36,19 +36,18 @@ export function MetricsCard({
     pending: { accent: '#f59e0b' },
   };
   const scheme = schemes[colorScheme] || schemes.buildings;
-  
+
   const isClickable = !!onClick;
-  
+
   if (loading) {
     return (
-      <div 
+      <div
         className={cn(
-          "rounded-xl p-6 border",
-          "animate-pulse"
+          "rounded-3xl p-6",
+          "animate-pulse shadow-card-soft"
         )}
         style={{
-          backgroundColor: 'hsl(var(--card))',
-          borderColor: 'hsl(var(--border))',
+          backgroundColor: 'var(--bg-card)',
         }}
       >
         <div className="flex items-start justify-between mb-4">
@@ -60,29 +59,27 @@ export function MetricsCard({
       </div>
     );
   }
-  
+
   return (
     <div
       onClick={onClick}
       className={cn(
-        "rounded-xl p-6 border transition-all duration-200",
-        isClickable && "cursor-pointer hover:shadow-lg hover:scale-[1.02]",
-        !isClickable && "shadow-sm"
+        "rounded-3xl p-6 transition-all duration-200 shadow-card-soft",
+        isClickable && "cursor-pointer hover:shadow-card-soft hover:scale-[1.02]",
+        !isClickable && ""
       )}
       style={{
-        backgroundColor: 'hsl(var(--card))',
-        borderColor: 'hsl(var(--border))',
+        backgroundColor: 'var(--bg-card)',
       }}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <h3 
-          className="text-sm font-medium"
-          style={{ color: 'hsl(var(--muted-foreground))' }}
+        <h3
+          className="text-sm font-medium text-accent-primary"
         >
           {title}
         </h3>
-        <div 
+        <div
           className="w-10 h-10 rounded-lg flex items-center justify-center"
           style={{
             backgroundColor: `${scheme.accent}26`,
@@ -92,28 +89,28 @@ export function MetricsCard({
           <Icon className="w-5 h-5" />
         </div>
       </div>
-      
+
       {/* Value */}
-      <div 
+      <div
         className="text-3xl font-bold mb-2"
         style={{ color: 'hsl(var(--foreground))' }}
       >
         {value}
       </div>
-      
+
       {/* Subtitle & Trend */}
       <div className="flex items-center justify-between">
         {subtitle && (
-          <p 
+          <p
             className="text-xs opacity-75"
             style={{ color: 'hsl(var(--muted-foreground))' }}
           >
             {subtitle}
           </p>
         )}
-        
+
         {trend && (
-          <div 
+          <div
             className={cn(
               "text-xs font-medium flex items-center gap-1",
               trend.direction === 'up' && "text-green-600",

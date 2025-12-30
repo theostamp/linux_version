@@ -105,7 +105,7 @@ export default function DashboardCards({ data, cards }: Props) {
         // Use category if provided, otherwise fall back to legacy props or default
         const category = card.category || 'default';
         const styles = categoryStyles[category];
-        
+
         // Allow legacy props to override category styles
         const bgClass = card.bgColor || styles.bg;
         const borderClass = card.borderColor || styles.border;
@@ -115,7 +115,7 @@ export default function DashboardCards({ data, cards }: Props) {
           <div
             key={card.key}
             onClick={handleClick}
-            className={`cursor-pointer rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 group hover:scale-[1.02] hover:-translate-y-0.5 ${bgClass} ${borderClass}`}
+            className={`cursor-pointer rounded-3xl p-4 shadow-card-soft hover:shadow-card-soft transition-all duration-200 group hover:scale-[1.02] hover:-translate-y-0.5 ${bgClass}`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className={`p-2 rounded-lg ${styles.icon}`}>
@@ -126,7 +126,7 @@ export default function DashboardCards({ data, cards }: Props) {
             <div className={`text-2xl font-bold mb-1 ${textClass}`}>
               {count}
             </div>
-            <div className={`text-sm font-medium ${styles.label}`}>
+            <div className={`text-sm font-medium text-accent-primary`}>
               {card.label}
             </div>
             {card.description && (

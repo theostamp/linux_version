@@ -22,12 +22,12 @@ const colorClasses = {
   info: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
 };
 
-export function StatCard({ 
-  title, 
-  value, 
+export function StatCard({
+  title,
+  value,
   description,
   subtitle,
-  icon, 
+  icon,
   color = "default",
   href,
   className
@@ -51,7 +51,7 @@ export function StatCard({
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <span className="text-xs font-medium text-muted-foreground">{title}</span>
+        <span className="text-xs font-medium text-accent-primary">{title}</span>
         <div className="flex items-baseline gap-1.5">
           <span className="text-xl font-bold text-foreground">{value}</span>
           {(description || subtitle) && (
@@ -63,7 +63,7 @@ export function StatCard({
   );
 
   const cardClasses = cn(
-    "px-4 py-3 rounded-xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
+    "px-4 py-3 rounded-3xl bg-bg-card shadow-card-soft transition-all duration-200 hover:shadow-card-soft",
     href && "cursor-pointer",
     className
   );

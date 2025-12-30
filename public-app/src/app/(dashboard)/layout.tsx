@@ -45,7 +45,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-bg-app-main flex">
       {/* Collapsible Sidebar - Gets user from AuthContext */}
       <CollapsibleSidebar />
 

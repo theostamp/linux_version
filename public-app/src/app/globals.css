@@ -14,7 +14,7 @@ html {
 :root {
   /* Light Mode - Kaspersky Soft Palette */
   --background: 216 28% 97%;           /* #F5F7FA - soft gray-blue */
-  --foreground: 224 54% 15%;           /* Dark text */
+  --foreground: 200 19% 18%;           /* #263238 - Cool Clarity text-primary */
 
   /* Primary - Teal (Kaspersky mint/teal accent) */
   --primary: 174 63% 40%;              /* #26A69A - teal */
@@ -30,7 +30,7 @@ html {
 
   /* Muted - Very soft backgrounds */
   --muted: 210 20% 94%;                /* #EEF1F5 */
-  --muted-foreground: 215 16% 47%;     /* #6B7280 */
+  --muted-foreground: 200 18% 40%;     /* #546E7A - Cool Clarity text-secondary */
 
   /* Accent - Mint tint (Kaspersky sidebar color) */
   --accent: 168 34% 93%;               /* #E8F5F3 - soft mint */
@@ -98,6 +98,30 @@ html {
   --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.06);
   --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.08);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+
+  /* ========================================
+     COOL CLARITY THEME - New Design Tokens
+     ======================================== */
+
+  /* Background Colors - Cool Tones */
+  --bg-app-main: #F5F7FA;        /* Πολύ ανοιχτό ψυχρό γκρι - για το γενικό φόντο */
+  --bg-sidebar: #EEF2F7;         /* Ελαφρώς πιο σκούρο ψυχρό γκρι - για το αριστερό μενού */
+  --bg-card: #FFFFFF;            /* Καθαρό λευκό - για κάρτες και panels */
+
+  /* Accent Colors */
+  --color-accent-primary: #0091EA;   /* Έντονο Ocean Blue - για κύρια κουμπιά και active states */
+  --color-accent-secondary: #00BFA5; /* Cyan/Teal - για θετικά status π.χ., 'Ενεργό' */
+
+  /* Text Colors */
+  --text-primary: #263238;       /* Σκούρο ανθρακί - όχι μαύρο */
+  --text-secondary: #546E7A;      /* Μεσαίο ψυχρό γκρι - για υπότιτλους/εικονίδια */
+
+  /* Trial Banner Colors */
+  --bg-trial-banner: #E1F5FE;    /* Πολύ απαλό παγωμένο γαλάζιο */
+  --text-trial-banner: #01579B;  /* Σκούρο μπλε για το κείμενο του trial */
+
+  /* Shadow with Blue Tint */
+  --shadow-card-soft: 0 4px 12px rgba(0, 145, 234, 0.08); /* Δίνει την αίσθηση αιώρησης με μπλε tint */
 }
 
 .dark {
@@ -232,7 +256,7 @@ h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-play), var(--font-geist-sans), sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

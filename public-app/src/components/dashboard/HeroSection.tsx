@@ -15,11 +15,11 @@ interface HeroSectionProps {
 
 export function HeroSection({ data, loading = false, showWelcome = true }: HeroSectionProps) {
   const { user } = useAuth();
-  
+
   // Determine if balances are positive or negative for display
   const balanceValue = data?.total_balance || 0;
   const obligationsValue = data?.pending_obligations || 0;
-  
+
   return (
     <div className="mb-8">
       {/* Welcome Text */}
@@ -33,9 +33,9 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
           </p>
         </div>
       )}
-      
+
       {/* Key Metrics Grid */}
-      <div className="rounded-2xl border border-gray-300 bg-card/50 p-4 md:p-6">
+      <div className="rounded-3xl bg-bg-card shadow-card-soft p-4 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricsCard
             title="Κτίρια"
@@ -45,7 +45,7 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
             colorScheme="buildings"
             loading={loading}
           />
-          
+
           <MetricsCard
             title="Διαμερίσματα"
             value={data?.apartments_count || 0}
@@ -54,7 +54,7 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
             colorScheme="apartments"
             loading={loading}
           />
-          
+
           <MetricsCard
             title="Αποθεματικό"
             value={formatCurrency(balanceValue)}
@@ -64,7 +64,7 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
             loading={loading}
             trend={undefined}
           />
-          
+
           <MetricsCard
             title="Οφειλές"
             value={formatCurrency(Math.abs(obligationsValue))}

@@ -7,10 +7,10 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
-    variants: {
-      variant: {
-        // Primary - Teal (Kaspersky style)
-        default: 'bg-teal-500 text-white hover:bg-teal-600 shadow-sm hover:shadow-md dark:bg-teal-600 dark:hover:bg-teal-500',
+      variants: {
+        variant: {
+          // Primary - Cool Clarity theme: Ocean Blue
+          default: 'bg-accent-primary text-white hover:bg-accent-primary/90 shadow-sm hover:shadow-md dark:bg-accent-primary dark:hover:bg-accent-primary/90',
         // Secondary - Soft gray
         secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 shadow-sm dark:bg-slate-800 dark:text-gray-200 dark:border-slate-700 dark:hover:bg-slate-700',
         // Destructive - Red
