@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
 /**
@@ -13,6 +13,17 @@ import { gsap } from 'gsap';
 export default function BuildingRevealBackground() {
   const svgRef = useRef<SVGSVGElement>(null);
   const animationRef = useRef<gsap.core.Timeline | null>(null);
+
+  // Get CSS variable value for SVG stroke (SVG doesn't reliably support CSS variables in attributes)
+  const [strokeColor, setStrokeColor] = useState('#546E7A'); // Fallback: --text-secondary default value
+
+  useEffect(() => {
+    // Get CSS variable value on client side
+    if (typeof window !== 'undefined') {
+      const color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#546E7A';
+      setStrokeColor(color);
+    }
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -103,7 +114,7 @@ export default function BuildingRevealBackground() {
             x2="950"
             y2="150"
             className="b-edge h-edge-1"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -115,7 +126,7 @@ export default function BuildingRevealBackground() {
             x2="950"
             y2="300"
             className="b-edge h-edge-2"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -127,7 +138,7 @@ export default function BuildingRevealBackground() {
             x2="980"
             y2="500"
             className="b-edge h-edge-3"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -143,7 +154,7 @@ export default function BuildingRevealBackground() {
             x2="780"
             y2="500"
             className="b-edge v-edge-1"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -155,7 +166,7 @@ export default function BuildingRevealBackground() {
             x2="950"
             y2="350"
             className="b-edge v-edge-2"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -167,7 +178,7 @@ export default function BuildingRevealBackground() {
             x2="980"
             y2="500"
             className="b-edge v-edge-3"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -179,7 +190,7 @@ export default function BuildingRevealBackground() {
             x2="850"
             y2="500"
             className="b-edge v-edge-4"
-            stroke="var(--text-secondary)"
+            style={{ stroke: strokeColor }}
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -198,7 +209,7 @@ export default function BuildingRevealBackground() {
           y1="-10"
           x2="1100"
           y2="-10"
-          stroke="var(--text-secondary)"
+          style={{ stroke: strokeColor }}
         />
         {/* Vertical scanner (moves horizontally) */}
         <line
@@ -207,7 +218,7 @@ export default function BuildingRevealBackground() {
           y1="-100"
           x2="-10"
           y2="700"
-          stroke="var(--text-secondary)"
+          style={{ stroke: strokeColor }}
         />
       </g>
     </svg>
