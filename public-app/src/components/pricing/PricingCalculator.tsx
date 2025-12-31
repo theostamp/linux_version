@@ -144,7 +144,7 @@ export function PricingCalculator({
         <h3 className="text-xl font-bold text-[var(--text-dark-primary)] sm:text-2xl">
           Υπολόγισε το κόστος
         </h3>
-        <p className="mt-2 text-sm text-[var(--text-dark-primary)]">
+        <p className="mt-2 text-sm text-[var(--text-dark-secondary)]">
           Σύρε το slider για να δεις την τιμή για την πολυκατοικία σου
         </p>
       </div>
@@ -173,7 +173,7 @@ export function PricingCalculator({
             max="60"
             value={apartments}
             onChange={(e) => setApartments(parseInt(e.target.value))}
-            className="w-full h-2 bg-slate-300 rounded-lg appearance-none cursor-pointer
+            className="w-full h-2 bg-[var(--bg-sidebar)] rounded-lg appearance-none cursor-pointer
                        [&::-webkit-slider-thumb]:appearance-none
                        [&::-webkit-slider-thumb]:w-6
                        [&::-webkit-slider-thumb]:h-6
@@ -223,7 +223,7 @@ export function PricingCalculator({
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "web"
                     ? "border-accent-primary bg-accent-primary/10"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ export function PricingCalculator({
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "premium"
                     ? "border-accent-primary bg-accent-primary/10"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
                 }`}
               >
                 {/* Badge */}
@@ -281,7 +281,7 @@ export function PricingCalculator({
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   selectedPlan === "premium_iot"
                     ? "border-accent-primary bg-accent-primary/10"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -316,7 +316,7 @@ export function PricingCalculator({
             <button
               onClick={() => setIsYearly(!isYearly)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                isYearly ? "bg-accent-primary" : "bg-slate-300"
+                isYearly ? "bg-accent-primary" : "bg-[var(--bg-sidebar)]"
               }`}
             >
               <span

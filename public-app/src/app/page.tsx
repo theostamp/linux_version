@@ -286,7 +286,7 @@ export default function LandingPage() {
         className="relative border-b border-gray-200"
       >
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-accent-primary/10 via-[var(--bg-dark-main)] to-[var(--bg-dark-main)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-accent-primary/12 via-[var(--bg-dark-surface)] to-[var(--bg-dark-main)]" />
         <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-accent-primary/20 blur-3xl" />
 
         <div className="relative">
@@ -305,7 +305,7 @@ export default function LandingPage() {
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(31,77,122,0.32) 0%, rgba(31,77,122,0.55) 50%, rgba(31,77,122,0.38) 100%)",
+                  "linear-gradient(180deg, rgba(31,77,122,0.28) 0%, rgba(31,77,122,0.5) 50%, rgba(31,77,122,0.34) 100%)",
               }}
             />
           </div>
@@ -518,7 +518,7 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="border-b border-gray-200 bg-[var(--bg-dark-main)]">
+      <section id="features" className="border-b border-gray-200 bg-gradient-to-b from-[var(--bg-dark-main)] via-[var(--bg-dark-surface)] to-[var(--bg-dark-main)]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -902,7 +902,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA FINAL */}
-      <section id="cta" className="bg-[var(--bg-dark-main)]">
+      <section id="cta" className="bg-gradient-to-b from-[var(--bg-dark-main)] via-[var(--bg-dark-surface)] to-[var(--bg-dark-main)]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="relative overflow-hidden rounded-3xl border border-accent-primary/30 bg-gradient-to-br from-accent-primary/15 via-[var(--bg-dark-surface)] to-[var(--bg-dark-main)] p-8 sm:p-10 text-[var(--text-on-dark)]">

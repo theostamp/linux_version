@@ -5,7 +5,7 @@ import { gsap } from 'gsap';
 
 /**
  * BuildingRevealBackground Component
- * 
+ *
  * Animated SVG background with scanning lines that reveal a building shape.
  * The building is positioned on the right side (1/4 of the screen width).
  * Uses GSAP for synchronized animations with infinite loop.
@@ -33,7 +33,7 @@ export default function BuildingRevealBackground() {
     // Animation settings
     const scanDurationH = 6; // Horizontal scanner (moves vertically)
     const scanDurationV = 5; // Vertical scanner (moves horizontally)
-    
+
     // Total distance based on viewBox (0 0 1000 600)
     const totalDistanceY = 650; // From y=-10 to y=640
     const totalDistanceX = 1100; // From x=-10 to x=1090
@@ -94,7 +94,7 @@ export default function BuildingRevealBackground() {
       style={{ pointerEvents: 'none' }}
     >
       {/* Building Group - Right side (1/4 of screen) */}
-      <g id="building-group" strokeLinecap="round">
+      <g id="building-group" strokeLinecap="round" opacity="0.32">
         {/* Horizontal building edges */}
         <g className="building-horizontals">
           <line
@@ -103,7 +103,7 @@ export default function BuildingRevealBackground() {
             x2="950"
             y2="150"
             className="b-edge h-edge-1"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -115,7 +115,7 @@ export default function BuildingRevealBackground() {
             x2="950"
             y2="300"
             className="b-edge h-edge-2"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -127,7 +127,7 @@ export default function BuildingRevealBackground() {
             x2="980"
             y2="500"
             className="b-edge h-edge-3"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -143,7 +143,7 @@ export default function BuildingRevealBackground() {
             x2="780"
             y2="500"
             className="b-edge v-edge-1"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -155,7 +155,7 @@ export default function BuildingRevealBackground() {
             x2="950"
             y2="350"
             className="b-edge v-edge-2"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -167,7 +167,7 @@ export default function BuildingRevealBackground() {
             x2="980"
             y2="500"
             className="b-edge v-edge-3"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -179,7 +179,7 @@ export default function BuildingRevealBackground() {
             x2="850"
             y2="500"
             className="b-edge v-edge-4"
-            stroke="#a0a0a0"
+            stroke="var(--text-secondary)"
             strokeWidth="3"
             fill="none"
             strokeDasharray="1000"
@@ -190,7 +190,7 @@ export default function BuildingRevealBackground() {
       </g>
 
       {/* Scanning Lines */}
-      <g id="scanners" strokeWidth="1" opacity="0.4">
+      <g id="scanners" strokeWidth="1" opacity="0.25">
         {/* Horizontal scanner (moves vertically) */}
         <line
           id="scanner-h"
@@ -198,7 +198,7 @@ export default function BuildingRevealBackground() {
           y1="-10"
           x2="1100"
           y2="-10"
-          stroke="#c0c0c0"
+          stroke="var(--text-secondary)"
         />
         {/* Vertical scanner (moves horizontally) */}
         <line
@@ -207,10 +207,9 @@ export default function BuildingRevealBackground() {
           y1="-100"
           x2="-10"
           y2="700"
-          stroke="#c0c0c0"
+          stroke="var(--text-secondary)"
         />
       </g>
     </svg>
   );
 }
-
