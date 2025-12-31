@@ -323,7 +323,7 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--text-on-dark)] sm:text-5xl md:text-6xl lg:text-7xl">
+                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--text-on-dark-title)] sm:text-5xl md:text-6xl lg:text-7xl">
                   <span>Η πολυκατοικία σου γίνεται</span>
                   <br />
                   <span>κοινότητα.</span>
@@ -525,7 +525,7 @@ export default function LandingPage() {
               <span className="mb-4 inline-block rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[var(--text-on-dark)]">
                 Λειτουργίες
               </span>
-              <h2 className="text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-on-dark-title)] sm:text-3xl lg:text-4xl">
                 Εργαλεία για μια δυνατή κοινότητα
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
@@ -570,7 +570,7 @@ export default function LandingPage() {
             ].map((feature, index) => (
               <AnimatedSection key={feature.title} delay={index * 100}>
                 <div className="group h-full rounded-2xl border border-white/10 bg-[var(--bg-dark-surface)] p-6 transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
-                  <h3 className="mb-3 text-lg font-semibold text-[var(--text-on-dark)]">{feature.title}</h3>
+                  <h3 className="mb-3 text-lg font-semibold text-[var(--text-on-dark-title)]">{feature.title}</h3>
                   <p className="text-sm leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-base">{feature.description}</p>
                 </div>
               </AnimatedSection>
@@ -910,7 +910,7 @@ export default function LandingPage() {
               <div className="absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-accent-primary/20 blur-3xl" />
 
               <div className="relative">
-                <h2 className="text-center text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
+                <h2 className="text-center text-2xl font-bold text-[var(--text-on-dark-title)] sm:text-3xl lg:text-4xl">
                   Έτοιμοι να γίνετε κοινότητα;
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
