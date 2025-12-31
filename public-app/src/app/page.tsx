@@ -315,7 +315,7 @@ export default function LandingPage() {
             <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-accent-secondary/30 bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-accent-secondary">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-[var(--text-on-dark)]">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-accent-secondary" />
                     Με επίκεντρο τον ένοικο • Info Point
                   </span>
@@ -348,7 +348,7 @@ export default function LandingPage() {
                     "Επικοινωνία χωρίς παρεξηγήσεις",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-secondary/20 text-xs text-accent-secondary">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-primary/20 text-xs text-accent-primary">
                         ✓
                       </span>
                       <span>{item}</span>
@@ -522,10 +522,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
+              <span className="mb-4 inline-block rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[var(--text-on-dark)]">
                 Λειτουργίες
               </span>
-              <h2 className="text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-on-dark)] drop-shadow-sm sm:text-3xl lg:text-4xl">
                 Εργαλεία για μια δυνατή κοινότητα
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
@@ -570,7 +570,7 @@ export default function LandingPage() {
             ].map((feature, index) => (
               <AnimatedSection key={feature.title} delay={index * 100}>
                 <div className="group h-full rounded-2xl border border-white/10 bg-[var(--bg-dark-surface)] p-6 transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
-                  <h3 className="mb-3 text-lg font-semibold text-accent-secondary">{feature.title}</h3>
+                  <h3 className="mb-3 text-lg font-semibold text-[var(--text-on-dark)]">{feature.title}</h3>
                   <p className="text-sm leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-base">{feature.description}</p>
                 </div>
               </AnimatedSection>
@@ -910,7 +910,7 @@ export default function LandingPage() {
               <div className="absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-accent-primary/20 blur-3xl" />
 
               <div className="relative">
-                <h2 className="text-center text-2xl font-bold sm:text-3xl lg:text-4xl">
+                <h2 className="text-center text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
                   Έτοιμοι να γίνετε κοινότητα;
                 </h2>
                 <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
