@@ -370,7 +370,7 @@ export default function LandingPage() {
               <AnimatedSection delay={150}>
                 <h1
                   ref={heroTitleRef}
-                  className="text-balance text-left text-4xl font-bold leading-tight tracking-tight text-on-dark-title sm:text-5xl md:text-6xl lg:text-7xl"
+                  className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-on-dark-title sm:text-5xl md:text-6xl lg:text-7xl"
                   style={
                     forceHeroTitleColor
                       ? { color: "#00E5FF", outline: "2px dashed #00E5FF", outlineOffset: "6px" }
@@ -414,7 +414,7 @@ export default function LandingPage() {
                     "Επικοινωνία χωρίς παρεξηγήσεις",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-primary/20 text-xs text-accent-primary">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lime-300/20 text-xs text-lime-300">
                         ✓
                       </span>
                       <span>{item}</span>
@@ -445,11 +445,11 @@ export default function LandingPage() {
 
               {/* Stats counter */}
               <AnimatedSection delay={500}>
-                <div className="flex flex-wrap items-center justify-start gap-8 border-t border-white/10 pt-6">
+                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-white/10 pt-6">
                   {stats.map((stat) => (
-                    <div key={stat.label} className="text-left">
-                      <p className="text-2xl font-bold text-accent-primary sm:text-3xl">{stat.value}</p>
-                      <p className="mt-1 text-sm text-on-dark-muted">{stat.label}</p>
+                    <div key={stat.label} className="text-center">
+                      <p className="text-3xl font-bold text-lime-300 sm:text-4xl">{stat.value}</p>
+                      <p className="mt-2 text-base text-on-dark-secondary">{stat.label}</p>
                     </div>
                   ))}
                 </div>
