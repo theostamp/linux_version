@@ -312,7 +312,7 @@ export default function LandingPage() {
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
+            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10" style={{ backgroundColor: 'rgba(11, 27, 43, 0.92)' }}>
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-[var(--text-on-dark)]">
@@ -323,10 +323,10 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--text-on-dark)] sm:text-5xl md:text-6xl lg:text-7xl">
-                  <span>Η πολυκατοικία σου γίνεται</span>
+                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl lg:text-7xl">
+                  <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">Η πολυκατοικία σου γίνεται</span>
                   <br />
-                  <span>κοινότητα.</span>
+                  <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">κοινότητα.</span>
                 </h1>
               </AnimatedSection>
 
