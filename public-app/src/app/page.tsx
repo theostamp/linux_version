@@ -195,6 +195,51 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [debugHeroTitle, setDebugHeroTitle] = useState(false);
+  const [debugHeroInfo, setDebugHeroInfo] = useState<null | {
+    color: string;
+    opacity: string;
+    mixBlendMode: string;
+    filter: string;
+    parentColor: string;
+    parentOpacity: string;
+    headingColorVar: string;
+    textOnDarkTitleVar: string;
+    className: string;
+  }>(null);
+  const [forceHeroTitleColor, setForceHeroTitleColor] = useState(false);
+  const heroTitleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setDebugHeroTitle(params.get("debugTitle") === "1");
+    setForceHeroTitleColor(params.get("forceTitleColor") === "1");
+  }, []);
+
+  useEffect(() => {
+    if (!debugHeroTitle || !heroTitleRef.current || typeof window === "undefined") return;
+    const titleEl = heroTitleRef.current;
+    const computed = window.getComputedStyle(titleEl);
+    const rootStyles = window.getComputedStyle(document.documentElement);
+    const parent = titleEl.parentElement;
+    const parentComputed = parent ? window.getComputedStyle(parent) : null;
+
+    const info = {
+      color: computed.color,
+      opacity: computed.opacity,
+      mixBlendMode: computed.mixBlendMode,
+      filter: computed.filter,
+      parentColor: parentComputed?.color ?? "n/a",
+      parentOpacity: parentComputed?.opacity ?? "n/a",
+      headingColorVar: rootStyles.getPropertyValue("--heading-color").trim(),
+      textOnDarkTitleVar: rootStyles.getPropertyValue("--text-on-dark-title").trim(),
+      className: titleEl.className,
+    };
+
+    console.info("[Hero title debug]", info);
+    setDebugHeroInfo(info);
+  }, [debugHeroTitle]);
 
   return (
     <main className="min-h-screen bg-bg-app-main text-text-primary">
@@ -323,11 +368,32 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-left text-4xl font-bold leading-tight tracking-tight text-on-dark-title sm:text-5xl md:text-6xl lg:text-7xl">
+                <h1
+                  ref={heroTitleRef}
+                  className="text-balance text-left text-4xl font-bold leading-tight tracking-tight text-on-dark-title sm:text-5xl md:text-6xl lg:text-7xl"
+                  style={
+                    forceHeroTitleColor
+                      ? { color: "#00E5FF", outline: "2px dashed #00E5FF", outlineOffset: "6px" }
+                      : undefined
+                  }
+                >
                   <span>Η πολυκατοικία σου γίνεται</span>
                   <br />
                   <span>κοινότητα.</span>
                 </h1>
+                {debugHeroTitle && debugHeroInfo && (
+                  <div className="mt-4 inline-flex flex-col gap-1 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-xs text-on-dark">
+                    <span>computed color: {debugHeroInfo.color}</span>
+                    <span>opacity: {debugHeroInfo.opacity}</span>
+                    <span>mix-blend: {debugHeroInfo.mixBlendMode}</span>
+                    <span>filter: {debugHeroInfo.filter}</span>
+                    <span>parent color: {debugHeroInfo.parentColor}</span>
+                    <span>parent opacity: {debugHeroInfo.parentOpacity}</span>
+                    <span>--text-on-dark-title: {debugHeroInfo.textOnDarkTitleVar}</span>
+                    <span>--heading-color: {debugHeroInfo.headingColorVar}</span>
+                    <span className="truncate">class: {debugHeroInfo.className}</span>
+                  </div>
+                )}
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
