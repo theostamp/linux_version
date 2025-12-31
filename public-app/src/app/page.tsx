@@ -484,6 +484,7 @@ export default function LandingPage() {
                 description:
                   "Αναλαμβάνουμε την τοποθέτηση του συστήματος ενημέρωσης και όλο τον απαραίτητο εξοπλισμό στην είσοδο της πολυκατοικίας. Ένα Info Point που ενημερώνει όλους τους ενοίκους – ακόμα κι αυτούς που δεν χρησιμοποιούν smartphones ή email.",
                 placeholder: "Οθόνη ενημέρωσης σε είσοδο πολυκατοικίας",
+                imageSrc: "/ic1.jpg",
               },
               {
                 step: "2",
@@ -491,6 +492,7 @@ export default function LandingPage() {
                 description:
                   "Ο διαχειριστής χρησιμοποιεί ένα απλό περιβάλλον για ανακοινώσεις, κοινόχρηστα και ψηφοφορίες. Η πολυκατοικία ενημερώνεται αυτόματα.",
                 placeholder: "Screenshot από dashboard διαχειριστή",
+                imageSrc: "/ic2.jpg",
               },
               {
                 step: "3",
@@ -498,6 +500,7 @@ export default function LandingPage() {
                 description:
                   "Στην οθόνη ή στο κινητό τους – κάθε ένοικος μένει ενήμερος και μπορεί να συμμετέχει στις αποφάσεις. Μια πολυκατοικία με διαφάνεια.",
                 placeholder: "Ένοικοι ενημερωμένοι παντού",
+                imageSrc: "/ic3.jpg",
               },
             ].map((item, index) => (
               <AnimatedSection key={item.step} delay={index * 150}>
@@ -507,8 +510,14 @@ export default function LandingPage() {
                   </div>
                   <div className="mb-4 pt-2 text-lg font-semibold text-accent-primary">{item.title}</div>
                   <p className="mb-4 text-sm leading-relaxed text-text-secondary sm:text-base">{item.description}</p>
-                  <div className="rounded-xl border-2 border-dashed border-accent-primary/30 bg-bg-app-main p-4 text-center text-xs text-text-secondary">
-                    {item.placeholder}
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-accent-primary/20 bg-bg-app-main">
+                    <Image
+                      src={item.imageSrc}
+                      alt={item.placeholder}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 320px"
+                      className="object-cover"
+                    />
                   </div>
                 </div>
               </AnimatedSection>
@@ -977,7 +986,7 @@ export default function LandingPage() {
 
               <div className="relative">
                 <h2 className="text-left text-2xl font-bold text-on-dark-title sm:text-3xl lg:text-4xl">
-                  Έτοιμοι να γίνετε κοινότητα;
+                   Ξεκινήστε τώρα
                 </h2>
                 <p className="mt-4 max-w-xl text-left text-base leading-relaxed text-on-dark-secondary sm:text-lg">
                   Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών.
