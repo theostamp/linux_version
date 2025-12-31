@@ -258,24 +258,24 @@ function OfficeLoginForm() {
       <main className="py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md mx-auto">
           {/* App Description Header */}
-          <div className="text-center mb-8">
+          <div className="text-left mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
               <Building className="h-6 w-6 text-accent-primary" />
               <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
                 Γραφείο Διαχείρισης
               </span>
             </div>
-            <h2 className="text-xl font-bold text-text-primary mb-3">
+            <h2 className="text-xl font-bold text-accent-primary mb-3">
               Σύνδεση Διαχειριστή
             </h2>
-            <p className="text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-md">
               Για διαχειριστές, υπαλλήλους γραφείου και εσωτερικούς διαχειριστές πολυκατοικιών.
             </p>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-8 shadow-card-soft">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-text-primary mb-2">
+            <div className="text-left mb-8">
+              <h1 className="text-2xl font-bold text-accent-primary mb-2">
                 Σύνδεση
               </h1>
               <p className="text-text-secondary">
@@ -424,7 +424,7 @@ function OfficeLoginForm() {
               </button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-left">
               <p className="text-sm text-text-secondary">
                 Είστε ένοικος;{' '}
                 <Link href="/login/resident" className="text-accent-secondary hover:opacity-80 font-semibold transition-colors">

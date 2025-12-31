@@ -143,27 +143,27 @@ function ResidentLoginForm() {
       <main className="py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md mx-auto">
           {/* App Description Header */}
-          <div className="text-center mb-8">
+          <div className="text-left mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
               <Home className="h-6 w-6 text-accent-secondary" />
               <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
                 Ένοικος / Ιδιοκτήτης
               </span>
             </div>
-            <h2 className="text-xl font-bold text-text-primary mb-3">
+            <h2 className="text-xl font-bold text-accent-secondary mb-3">
               Σύνδεση Ενοίκου
             </h2>
-            <p className="text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-md">
               Εισάγετε το email και το τηλέφωνο με τα οποία είστε καταχωρημένος στην πολυκατοικία σας.
             </p>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-8 shadow-card-soft">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full bg-accent-secondary/10 flex items-center justify-center mx-auto mb-4">
+            <div className="text-left mb-8">
+              <div className="w-16 h-16 rounded-full bg-accent-secondary/10 flex items-center justify-center mb-4">
                 <Home className="h-8 w-8 text-accent-secondary" />
               </div>
-              <h1 className="text-2xl font-bold text-text-primary mb-2">
+              <h1 className="text-2xl font-bold text-accent-secondary mb-2">
                 Καλώς ήρθατε
               </h1>
               <p className="text-text-secondary text-sm">
@@ -252,7 +252,7 @@ function ResidentLoginForm() {
 
             {/* Help Section */}
             <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
-              <p className="text-sm font-medium text-text-primary text-center">
+              <p className="text-sm font-medium text-accent-secondary text-left">
                 Δεν μπορείτε να συνδεθείτε;
               </p>
 
@@ -260,7 +260,7 @@ function ResidentLoginForm() {
                 <div className="flex items-start gap-2">
                   <span className="text-accent-secondary font-bold">1.</span>
                   <p>
-                    <strong className="text-text-primary">Δεν έχετε καταχωρηθεί;</strong> Σαρώστε το QR code
+                    <strong className="text-accent-secondary">Δεν έχετε καταχωρηθεί;</strong> Σαρώστε το QR code
                     στην είσοδο της πολυκατοικίας σας (αν υπάρχει) για αυτόματη εγγραφή.
                   </p>
                 </div>
@@ -268,7 +268,7 @@ function ResidentLoginForm() {
                 <div className="flex items-start gap-2">
                   <span className="text-accent-secondary font-bold">2.</span>
                   <p>
-                    <strong className="text-text-primary">Δεν υπάρχει QR code;</strong> Ζητήστε από τη διαχείριση
+                    <strong className="text-accent-secondary">Δεν υπάρχει QR code;</strong> Ζητήστε από τη διαχείριση
                     να σας στείλει πρόσκληση στο email σας για να ολοκληρώσετε την εγγραφή.
                   </p>
                 </div>
@@ -276,7 +276,7 @@ function ResidentLoginForm() {
                 <div className="flex items-start gap-2">
                   <span className="text-accent-secondary font-bold">3.</span>
                   <p>
-                    <strong className="text-text-primary">Τα στοιχεία δεν αναγνωρίζονται;</strong> Επικοινωνήστε
+                    <strong className="text-accent-secondary">Τα στοιχεία δεν αναγνωρίζονται;</strong> Επικοινωνήστε
                     με τη διαχείριση της πολυκατοικίας σας για επιβεβαίωση των καταχωρημένων στοιχείων.
                   </p>
                 </div>

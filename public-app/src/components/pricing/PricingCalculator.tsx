@@ -140,8 +140,8 @@ export function PricingCalculator({
   return (
     <div className={`w-full ${compact ? "" : "max-w-4xl mx-auto"}`}>
       {/* Header */}
-      <div className="text-center mb-8">
-        <h3 className="text-xl font-bold text-[var(--text-dark-primary)] sm:text-2xl">
+      <div className="text-left mb-8">
+        <h3 className="text-xl font-bold text-accent-primary sm:text-2xl">
           Υπολόγισε το κόστος
         </h3>
         <p className="mt-2 text-sm text-[var(--text-dark-secondary)]">
@@ -228,7 +228,7 @@ export function PricingCalculator({
               >
                 <div className="flex items-center gap-2">
                   <Building className="h-5 w-5 text-[var(--text-dark-secondary)]" />
-                  <span className="font-medium text-[var(--text-dark-primary)]">Web</span>
+                  <span className="font-medium text-accent-primary">Web</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Χωρίς οθόνη</p>
                 <p className="mt-2 text-lg font-bold text-accent-primary">
@@ -259,7 +259,7 @@ export function PricingCalculator({
                 </span>
                 <div className="flex items-center gap-2">
                   <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
-                  <span className="font-medium text-[var(--text-dark-primary)]">Premium</span>
+                  <span className="font-medium text-accent-primary">Premium</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Web + Kiosk + AI + Αρχείο</p>
                 <p className="mt-2 text-lg font-bold text-accent-primary">
@@ -286,7 +286,7 @@ export function PricingCalculator({
               >
                 <div className="flex items-center gap-2">
                   <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
-                  <span className="font-medium text-[var(--text-dark-primary)]">Premium + IoT</span>
+                  <span className="font-medium text-accent-primary">Premium + IoT</span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Smart Heating</p>
                 <p className="mt-2 text-lg font-bold text-accent-primary">
@@ -391,7 +391,7 @@ export function PricingCalculator({
       {/* Features Comparison (optional, show on full mode) */}
       {!compact && selectedPlan && !freeEligible && (
         <div className="mt-6 rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft">
-          <p className="mb-3 text-sm font-medium text-[var(--text-dark-primary)]">
+          <p className="mb-3 text-sm font-medium text-accent-primary">
             {selectedPlan === "premium"
               ? "Premium"
               : selectedPlan === "premium_iot"

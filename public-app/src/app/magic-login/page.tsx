@@ -94,9 +94,9 @@ function MagicLoginContent() {
       <div className="max-w-md w-full mx-4 relative z-10">
         <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-8 shadow-card-soft">
           {status === 'loading' && (
-            <div className="text-center py-8">
-              <Loader2 className="h-16 w-16 text-accent-secondary animate-spin mx-auto mb-6" />
-              <h1 className="text-2xl font-bold text-text-primary mb-2">
+            <div className="text-left py-8">
+              <Loader2 className="h-16 w-16 text-accent-secondary animate-spin mb-6" />
+              <h1 className="text-2xl font-bold text-accent-secondary mb-2">
                 Σύνδεση...
               </h1>
               <p className="text-text-secondary">
@@ -106,11 +106,11 @@ function MagicLoginContent() {
           )}
 
           {status === 'success' && (
-            <div className="text-center py-8">
-              <div className="w-20 h-20 rounded-full bg-accent-secondary/10 flex items-center justify-center mx-auto mb-6">
+            <div className="text-left py-8">
+              <div className="w-20 h-20 rounded-full bg-accent-secondary/10 flex items-center justify-center mb-6">
                 <CheckCircle className="h-10 w-10 text-accent-secondary" />
               </div>
-              <h1 className="text-2xl font-bold text-text-primary mb-2">
+              <h1 className="text-2xl font-bold text-accent-secondary mb-2">
                 Επιτυχής σύνδεση! 🎉
               </h1>
               <p className="text-text-secondary mb-6">
@@ -135,11 +135,11 @@ function MagicLoginContent() {
           )}
 
           {status === 'error' && (
-            <div className="text-center py-8">
-              <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6">
+            <div className="text-left py-8">
+              <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-6">
                 <XCircle className="h-10 w-10 text-red-600" />
               </div>
-              <h1 className="text-2xl font-bold text-text-primary mb-2">
+              <h1 className="text-2xl font-bold text-red-600 mb-2">
                 Σφάλμα σύνδεσης
               </h1>
               <p className="text-text-secondary mb-6">
@@ -166,7 +166,7 @@ function MagicLoginContent() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6">
+        <div className="text-left mt-6">
           <p className="text-xs text-text-secondary">
             Χρειάζεστε βοήθεια; Επικοινωνήστε με τον διαχειριστή της πολυκατοικίας σας.
           </p>

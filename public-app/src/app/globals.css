@@ -268,10 +268,6 @@ html {
   color: var(--heading-color);
 }
 
-h1:not(header h1):not(nav h1):not([class*="text-left"]):not([class*="text-right"]):not([class*="text-start"]):not([class*="text-end"]):not([class*="flex"]) {
-  text-align: center;
-}
-
 body {
   background-color: var(--bg-app-main);  /* #F5F7FA */
   color: var(--text-primary);             /* #263238 */
