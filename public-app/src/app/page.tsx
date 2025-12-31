@@ -300,22 +300,22 @@ export default function LandingPage() {
               sizes="100vw"
               priority
             />
-            {/* Gradient overlay - enhanced for better text contrast while maintaining image visibility */}
+            {/* Gradient overlay for better text readability */}
             <div
-              className="pointer-events-none absolute inset-0 z-0"
+              className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.6) 100%)",
+                  "linear-gradient(180deg, rgba(31,77,122,0.32) 0%, rgba(31,77,122,0.55) 50%, rgba(31,77,122,0.38) 100%)",
               }}
             />
           </div>
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl p-6 shadow-2xl shadow-card-soft sm:p-8 lg:p-10" style={{ backgroundColor: 'var(--bg-dark-card-solid)' }}>
+            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-[var(--text-on-dark)]">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-accent-secondary" />
                     Με επίκεντρο τον ένοικο • Info Point
                   </span>
@@ -323,22 +323,22 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.8)] sm:text-5xl md:text-6xl lg:text-7xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)' }}>
-                  <span style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.7)' }}>Η πολυκατοικία σου γίνεται</span>
+                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--text-on-dark)] sm:text-5xl md:text-6xl lg:text-7xl">
+                  <span>Η πολυκατοικία σου γίνεται</span>
                   <br />
-                  <span style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.7)' }}>κοινότητα.</span>
+                  <span>κοινότητα.</span>
                 </h1>
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                <p className="text-center text-base leading-relaxed text-white sm:text-lg md:text-xl lg:text-2xl" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.6)' }}>
+                <p className="text-center text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg md:text-xl lg:text-2xl">
                   Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
                   συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
                 </p>
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
-                <ul className="grid gap-3 text-base text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                <ul className="grid gap-3 text-base text-[var(--text-on-dark-secondary)] sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                   {[
                     "Ενημέρωση για όλους (info point στην είσοδο, email & κινητό)",
                     "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
@@ -370,7 +370,7 @@ export default function LandingPage() {
                   </a>
                   <a
                     href="#pricing"
-                    className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:border-white/40 hover:bg-white/10"
+                    className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-[var(--text-on-dark)] transition-all hover:border-white/40 hover:bg-white/10"
                   >
                     Δες τις τιμές
                   </a>
@@ -383,7 +383,7 @@ export default function LandingPage() {
                   {stats.map((stat) => (
                     <div key={stat.label} className="text-center">
                       <p className="text-2xl font-bold text-accent-primary sm:text-3xl">{stat.value}</p>
-                      <p className="mt-1 text-sm text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">{stat.label}</p>
+                      <p className="mt-1 text-sm text-[var(--text-on-dark-muted)]">{stat.label}</p>
                     </div>
                   ))}
                 </div>
@@ -522,13 +522,13 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+              <span className="mb-4 inline-block rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-[var(--text-on-dark)]">
                 Λειτουργίες
               </span>
-              <h2 className="text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
                 Εργαλεία για μια δυνατή κοινότητα
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-lg">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
                 Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να
                 ενισχύουν τη συνεργασία και την επικοινωνία μεταξύ ενοίκων.
               </p>
@@ -570,8 +570,8 @@ export default function LandingPage() {
             ].map((feature, index) => (
               <AnimatedSection key={feature.title} delay={index * 100}>
                 <div className="group h-full rounded-2xl border border-white/10 bg-[var(--bg-dark-surface)] p-6 transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
-                  <h3 className="mb-3 text-lg font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] sm:text-base">{feature.description}</p>
+                  <h3 className="mb-3 text-lg font-semibold text-[var(--text-on-dark)]">{feature.title}</h3>
+                  <p className="text-sm leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-base">{feature.description}</p>
                 </div>
               </AnimatedSection>
             ))}
@@ -910,10 +910,10 @@ export default function LandingPage() {
               <div className="absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-accent-primary/20 blur-3xl" />
 
               <div className="relative">
-                <h2 className="text-center text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:text-3xl lg:text-4xl">
+                <h2 className="text-center text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
                   Έτοιμοι να γίνετε κοινότητα;
                 </h2>
-                <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)] sm:text-lg">
+                <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
                   Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών.
                 </p>
 

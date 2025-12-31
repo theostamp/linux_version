@@ -216,7 +216,3 @@ export default function LiveVotingPanel({
 
 
 
-
-
-
-

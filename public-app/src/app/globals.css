@@ -123,11 +123,11 @@ html {
   /* Shadow with Blue Tint */
   --shadow-card-soft: 0 4px 12px rgba(30, 78, 140, 0.1); /* Δίνει την αίσθηση αιώρησης με μπλε tint */
 
-  /* Dark Surfaces - Corporate Navy */
-  --bg-dark-main: #0B1B2B;       /* Βαθύ navy για hero/CTA */
-  --bg-dark-surface: #12273A;    /* Ελαφρώς πιο ανοιχτό navy για κάρτες */
-  --bg-dark-card: rgba(11, 27, 43, 0.98); /* Στερεό overlay για hero card - υψηλό opacity για contrast */
-  --bg-dark-card-solid: #0A1825;  /* Solid dark navy για hero card - χωρίς transparency για μέγιστο contrast */
+  /* Dark Surfaces - Corporate Blue (brighter, πιο "χαρούμενο") */
+  --bg-dark-main: #1F4D7A;       /* Ζωντανό navy για hero/CTA */
+  --bg-dark-surface: #295C8E;    /* Ελαφρώς πιο φωτεινό για κάρτες */
+  --bg-dark-card: rgba(31, 77, 122, 0.84); /* Διαφανές overlay για hero card */
+  --bg-dark-card-solid: #1B426A; /* Solid blue για hero card */
 
   /* Text on Dark */
   --text-on-dark: #F8FAFC;

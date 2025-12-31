@@ -198,7 +198,3 @@ export default function PollsPage() {
 
 
 
-
-
-
-
