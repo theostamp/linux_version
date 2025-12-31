@@ -262,10 +262,12 @@ html {
    TYPOGRAPHY
    ======================================== */
 
-:where(h1, h2, h3, h4, h5, h6) {
-  font-family: inherit;
-  font-weight: 600;
-  color: var(--heading-color);
+@layer base {
+  :where(h1, h2, h3, h4, h5, h6) {
+    font-family: inherit;
+    font-weight: 600;
+    color: var(--heading-color);
+  }
 }
 
 body {
