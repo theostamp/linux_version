@@ -300,19 +300,19 @@ export default function LandingPage() {
               sizes="100vw"
               priority
             />
-            {/* Gradient overlay for better text readability */}
+            {/* Darker gradient overlay for better text readability */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(38,50,56,0.4) 0%, rgba(38,50,56,0.6) 50%, rgba(38,50,56,0.4) 100%)",
+                  "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.6) 100%)",
               }}
             />
           </div>
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10" style={{ backgroundColor: 'rgba(11, 27, 43, 0.92)' }}>
+            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10" style={{ backgroundColor: 'rgba(11, 27, 43, 0.96)' }}>
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
@@ -323,15 +323,15 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl lg:text-7xl">
-                  <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">Η πολυκατοικία σου γίνεται</span>
+                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.8)] sm:text-5xl md:text-6xl lg:text-7xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)' }}>
+                  <span style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.7)' }}>Η πολυκατοικία σου γίνεται</span>
                   <br />
-                  <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">κοινότητα.</span>
+                  <span style={{ textShadow: '0 2px 6px rgba(0,0,0,0.95), 0 4px 12px rgba(0,0,0,0.7)' }}>κοινότητα.</span>
                 </h1>
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                <p className="text-center text-base leading-relaxed text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)] sm:text-lg md:text-xl lg:text-2xl">
+                <p className="text-center text-base leading-relaxed text-white sm:text-lg md:text-xl lg:text-2xl" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.6)' }}>
                   Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
                   συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
                 </p>
