@@ -276,6 +276,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@layer utilities {
+  .text-on-dark {
+    color: var(--text-on-dark);
+  }
+  .text-on-dark-title {
+    color: var(--text-on-dark-title);
+  }
+  .text-on-dark-secondary {
+    color: var(--text-on-dark-secondary);
+  }
+  .text-on-dark-muted {
+    color: var(--text-on-dark-muted);
+  }
+  .placeholder-on-dark-muted::placeholder {
+    color: var(--text-on-dark-muted);
+  }
+}
+
 /* ========================================
    SOFT CONTAINER STYLES (No hard borders)
    ======================================== */
