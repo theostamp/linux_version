@@ -156,10 +156,10 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 function TestimonialCard({ testimonial, index }: { testimonial: typeof testimonials[0]; index: number }) {
   return (
     <AnimatedSection delay={index * 100}>
-      <div className="group h-full rounded-2xl border border-gray-200 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
+      <div className="group h-full rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-6 shadow-card-soft transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
         <div className="mb-5 flex items-center gap-4">
           {testimonial.imageSrc ? (
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-gray-200/60 bg-slate-800 sm:h-16 sm:w-16">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-gray-200/60 bg-[var(--bg-main-light)] sm:h-16 sm:w-16">
               <Image
                 src={testimonial.imageSrc}
                 alt={`Φωτογραφία μαρτυρίας: ${testimonial.name}`}
@@ -169,14 +169,14 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
               />
             </div>
           ) : (
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-base font-bold text-white sm:h-16 sm:w-16">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary text-base font-bold text-white sm:h-16 sm:w-16">
               {testimonial.avatar}
             </div>
           )}
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-50 sm:text-base">{testimonial.name}</p>
-            <p className="text-xs text-slate-500 sm:text-sm">
+            <p className="truncate text-sm font-semibold text-[var(--text-dark-primary)] sm:text-base">{testimonial.name}</p>
+            <p className="text-xs text-[var(--text-dark-secondary)] sm:text-sm">
               {testimonial.role} • {testimonial.location}
             </p>
             <div className="mt-2 flex items-center gap-1">
@@ -187,7 +187,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: typeof testimoni
           </div>
         </div>
 
-        <p className="text-sm leading-relaxed text-slate-300 sm:text-base">"{testimonial.text}"</p>
+        <p className="text-sm leading-relaxed text-[var(--text-dark-secondary)] sm:text-base">"{testimonial.text}"</p>
       </div>
     </AnimatedSection>
   );
@@ -286,8 +286,8 @@ export default function LandingPage() {
         className="relative border-b border-gray-200"
       >
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-slate-950 to-slate-950" />
-        <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-accent-primary/10 via-[var(--bg-dark-main)] to-[var(--bg-dark-main)]" />
+        <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-accent-primary/20 blur-3xl" />
 
         <div className="relative">
           {/* Hero image */}
@@ -312,18 +312,18 @@ export default function LandingPage() {
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl bg-slate-900/70 p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
+            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10">
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-emerald-300">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-accent-secondary/30 bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-accent-secondary">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-accent-secondary" />
                     Με επίκεντρο τον ένοικο • Info Point
                   </span>
                 </div>
               </AnimatedSection>
 
               <AnimatedSection delay={150}>
-                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--bg-white)] sm:text-5xl md:text-6xl lg:text-7xl">
+                <h1 className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-[var(--text-on-dark)] sm:text-5xl md:text-6xl lg:text-7xl">
                   <span>Η πολυκατοικία σου γίνεται</span>
                   <br />
                   <span>κοινότητα.</span>
@@ -331,14 +331,14 @@ export default function LandingPage() {
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                <p className="text-center text-base leading-relaxed text-[var(--bg-white)] sm:text-lg md:text-xl lg:text-2xl">
+                <p className="text-center text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg md:text-xl lg:text-2xl">
                   Η διαχείριση πολυκατοικιών και κτιρίων μπαίνει σε μια νέα εποχή: διαφάνεια στις αποφάσεις, έγκαιρη ενημέρωση για όλους,
                   συνεργασία χωρίς εντάσεις και επικοινωνία χωρίς χαρτιά. Ένα σύστημα που ενώνει την πολυκατοικία σε μια σύγχρονη κοινότητα.
                 </p>
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
-                <ul className="grid gap-3 text-base text-slate-200 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                <ul className="grid gap-3 text-base text-[var(--text-on-dark-secondary)] sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
                   {[
                     "Ενημέρωση για όλους (info point στην είσοδο, email & κινητό)",
                     "Ανακοινώσεις & ειδοποιήσεις σε πραγματικό χρόνο",
@@ -370,7 +370,7 @@ export default function LandingPage() {
                   </a>
                   <a
                     href="#pricing"
-                    className="rounded-full border border-gray-200 px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-slate-500 hover:bg-slate-800"
+                    className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-[var(--text-on-dark)] transition-all hover:border-white/40 hover:bg-white/10"
                   >
                     Δες τις τιμές
                   </a>
@@ -379,11 +379,11 @@ export default function LandingPage() {
 
               {/* Stats counter */}
               <AnimatedSection delay={500}>
-                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-gray-200 pt-6">
+                <div className="flex flex-wrap items-center justify-center gap-8 border-t border-white/10 pt-6">
                   {stats.map((stat) => (
                     <div key={stat.label} className="text-center">
                       <p className="text-2xl font-bold text-accent-primary sm:text-3xl">{stat.value}</p>
-                      <p className="mt-1 text-sm text-slate-300">{stat.label}</p>
+                      <p className="mt-1 text-sm text-[var(--text-on-dark-muted)]">{stat.label}</p>
                     </div>
                   ))}
                 </div>
@@ -394,7 +394,7 @@ export default function LandingPage() {
 	      </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="border-b border-gray-200 bg-gradient-to-b from-white to-bg-app-main">
+      <section id="how-it-works" className="border-b border-gray-200 bg-gradient-to-b from-[var(--bg-white)] to-[var(--bg-main-light)]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
@@ -452,21 +452,21 @@ export default function LandingPage() {
       </section>
 
       {/* COMMUNITY FOCUS */}
-      <section id="kiosk-focus" className="border-b border-gray-200 bg-slate-900/30">
+      <section id="kiosk-focus" className="border-b border-gray-200 bg-[var(--bg-main-light)]">
         <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
           <div className="flex-1 space-y-6">
             <AnimatedSection>
-              <span className="inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Η φιλοσοφία μας
               </span>
             </AnimatedSection>
             <AnimatedSection delay={100}>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">
                 Με επίκεντρο τον ένοικο
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
-              <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
+              <p className="text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
                 Δεν είναι άλλη μια εφαρμογή κοινοχρήστων. Είναι ένα εργαλείο που ενώνει την πολυκατοικία.
                 Ένα σημείο ενημέρωσης στην είσοδο και μια πλατφόρμα που δίνει φωνή σε κάθε ένοικο.
               </p>
@@ -491,9 +491,9 @@ export default function LandingPage() {
                 },
               ].map((item, index) => (
                 <AnimatedSection key={item.title} delay={300 + index * 100}>
-                  <div className="rounded-xl border border-gray-200 bg-slate-900/50 p-4 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900">
-                    <h3 className="mb-2 font-semibold text-emerald-400">{item.title}</h3>
-                    <p className="text-sm leading-relaxed text-slate-400 sm:text-base">{item.description}</p>
+                  <div className="rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
+                    <h3 className="mb-2 font-semibold text-accent-primary">{item.title}</h3>
+                    <p className="text-sm leading-relaxed text-[var(--text-dark-secondary)] sm:text-base">{item.description}</p>
                   </div>
                 </AnimatedSection>
               ))}
@@ -502,8 +502,8 @@ export default function LandingPage() {
 
           {/* Info Point screenshot */}
           <AnimatedSection delay={200} className="flex-1">
-            <div className="rounded-3xl border border-gray-200 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-slate-950">
+            <div className="rounded-3xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft transition-transform duration-500 hover:scale-[1.02]">
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-[var(--bg-main-light)]">
                 <Image
                   src="/screen_eisodos.jpg"
                   alt="Screenshot από την οθόνη ενημέρωσης - ανακοινώσεις, ψηφοφορίες, αποτελέσματα"
@@ -518,17 +518,17 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="border-b border-gray-200 bg-slate-950">
+      <section id="features" className="border-b border-gray-200 bg-[var(--bg-dark-main)]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="mb-4 inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Λειτουργίες
               </span>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-on-dark)] sm:text-3xl lg:text-4xl">
                 Εργαλεία για μια δυνατή κοινότητα
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
                 Ανακοινώσεις, κοινόχρηστα, ψηφοφορίες, αιτήματα – όλα σχεδιασμένα για να
                 ενισχύουν τη συνεργασία και την επικοινωνία μεταξύ ενοίκων.
               </p>
@@ -569,9 +569,9 @@ export default function LandingPage() {
               },
             ].map((feature, index) => (
               <AnimatedSection key={feature.title} delay={index * 100}>
-                <div className="group h-full rounded-2xl border border-gray-200 bg-slate-900/50 p-6 transition-all duration-300 hover:border-emerald-500/30 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/5">
-                  <h3 className="mb-3 text-lg font-semibold text-emerald-400">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400 sm:text-base">{feature.description}</p>
+                <div className="group h-full rounded-2xl border border-white/10 bg-[var(--bg-dark-surface)] p-6 transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
+                  <h3 className="mb-3 text-lg font-semibold text-accent-secondary">{feature.title}</h3>
+                  <p className="text-sm leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-base">{feature.description}</p>
                 </div>
               </AnimatedSection>
             ))}
@@ -580,17 +580,17 @@ export default function LandingPage() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section id="testimonials" className="border-b border-gray-200 bg-slate-900/30">
+      <section id="testimonials" className="border-b border-gray-200 bg-[var(--bg-main-light)]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="mb-4 inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Κριτικές
               </span>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">
                 Τι λένε οι χρήστες μας
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
                 Ένοικοι, διαχειριστές και γραφεία διαχείρισης μοιράζονται πώς άλλαξε η συνεργασία στην πολυκατοικία τους.
               </p>
             </div>
@@ -605,20 +605,20 @@ export default function LandingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="border-b border-gray-200 bg-[var(--bg-white)]">
+      <section id="pricing" className="border-b border-gray-200 bg-[var(--bg-main-light)]">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="mb-4 inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Τιμολόγηση
               </span>
               <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">
                 Απλή τιμολόγηση, χωρίς κρυφές χρεώσεις
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-dark-primary)] sm:text-lg">
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
                 Χρέωση ανά διαμέρισμα, χωρίς πολύπλοκες κλίμακες. Σύρε το slider για να δεις την τιμή σου.
                 <br />
-                <span className="text-xs text-[var(--text-dark-primary)]">
+                <span className="text-xs text-[var(--text-dark-secondary)]">
                   Οι τιμές δεν περιλαμβάνουν Φ.Π.Α. 24%.
                 </span>
               </p>
@@ -634,66 +634,66 @@ export default function LandingPage() {
 
           {/* Quick Pricing Table */}
           <AnimatedSection delay={200}>
-            <div className="rounded-2xl border border-gray-200 bg-slate-900/50 p-6 overflow-x-auto">
-              <h3 className="mb-4 text-center text-lg font-semibold text-slate-50">
+            <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-6 shadow-card-soft overflow-x-auto">
+              <h3 className="mb-4 text-center text-lg font-semibold text-[var(--text-dark-primary)]">
                 Γρήγορος οδηγός τιμολόγησης / διαμέρισμα
               </h3>
               <table className="w-full min-w-[520px] text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="py-3 text-left text-slate-400 font-medium">Πακέτο</th>
-                    <th className="py-3 text-center text-slate-400 font-medium">Τιμή/διαμέρισμα</th>
-                    <th className="py-3 text-right text-slate-400 font-medium">Κατάλληλο για</th>
+                    <th className="py-3 text-left text-[var(--text-dark-secondary)] font-medium">Πακέτο</th>
+                    <th className="py-3 text-center text-[var(--text-dark-secondary)] font-medium">Τιμή/διαμέρισμα</th>
+                    <th className="py-3 text-right text-[var(--text-dark-secondary)] font-medium">Κατάλληλο για</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-gray-200/50">
-                    <td className="py-3 text-slate-300">
+                    <td className="py-3 text-[var(--text-dark-primary)]">
                       <div className="flex items-center gap-2">
-                        <Home className="h-4 w-4 text-slate-400" />
+                        <Home className="h-4 w-4 text-[var(--text-dark-secondary)]" />
                         Free
                       </div>
                     </td>
                     <td className="py-3 text-center">
-                      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-400 font-semibold">
+                      <span className="rounded-full bg-accent-secondary/15 px-3 py-1 text-accent-secondary font-semibold">
                         Δωρεάν
                       </span>
                     </td>
-                    <td className="py-3 text-right text-slate-500">Έως 7 διαμερίσματα</td>
+                    <td className="py-3 text-right text-[var(--text-dark-secondary)]">Έως 7 διαμερίσματα</td>
                   </tr>
                   <tr className="border-b border-gray-200/50">
-                    <td className="py-3 text-slate-300">
+                    <td className="py-3 text-[var(--text-dark-primary)]">
                       <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-slate-400" />
+                        <Building className="h-4 w-4 text-[var(--text-dark-secondary)]" />
                         Web
                       </div>
                     </td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€1.0</td>
-                    <td className="py-3 text-right text-slate-500">Πλήρης πλατφόρμα χωρίς οθόνη</td>
+                    <td className="py-3 text-center text-accent-primary font-semibold">€1.0</td>
+                    <td className="py-3 text-right text-[var(--text-dark-secondary)]">Πλήρης πλατφόρμα χωρίς οθόνη</td>
                   </tr>
                   <tr className="border-b border-gray-200/50">
-                    <td className="py-3 text-slate-300">
+                    <td className="py-3 text-[var(--text-dark-primary)]">
                       <div className="flex items-center gap-2">
-                        <Monitor className="h-4 w-4 text-slate-400" />
+                        <Monitor className="h-4 w-4 text-[var(--text-dark-secondary)]" />
                         Premium
                       </div>
                     </td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€1.8</td>
-                    <td className="py-3 text-right text-slate-500">Web + Kiosk + AI + Αρχείο</td>
+                    <td className="py-3 text-center text-accent-primary font-semibold">€1.8</td>
+                    <td className="py-3 text-right text-[var(--text-dark-secondary)]">Web + Kiosk + AI + Αρχείο</td>
                   </tr>
                   <tr>
-                    <td className="py-3 text-slate-300">
+                    <td className="py-3 text-[var(--text-dark-primary)]">
                       <div className="flex items-center gap-2">
-                        <Monitor className="h-4 w-4 text-slate-400" />
+                        <Monitor className="h-4 w-4 text-[var(--text-dark-secondary)]" />
                         Premium + IoT
                       </div>
                     </td>
-                    <td className="py-3 text-center text-emerald-400 font-semibold">€2.3</td>
-                    <td className="py-3 text-right text-slate-500">Smart Heating & IoT αυτοματισμοί</td>
+                    <td className="py-3 text-center text-accent-primary font-semibold">€2.3</td>
+                    <td className="py-3 text-right text-[var(--text-dark-secondary)]">Smart Heating & IoT αυτοματισμοί</td>
                   </tr>
                 </tbody>
               </table>
-              <p className="mt-4 text-center text-xs text-slate-500">
+              <p className="mt-4 text-center text-xs text-[var(--text-dark-secondary)]">
                 * Χρέωση ανά διαμέρισμα • Ετήσια πληρωμή: 2 μήνες δωρεάν (16.67% έκπτωση)
               </p>
             </div>
@@ -703,17 +703,17 @@ export default function LandingPage() {
           <AnimatedSection delay={300}>
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {/* Free Features */}
-              <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
+              <div className="rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft">
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
-                    <Home className="h-4 w-4 text-slate-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--bg-main-light)]">
+                    <Home className="h-4 w-4 text-[var(--text-dark-secondary)]" />
                   </div>
-                  <h4 className="font-semibold text-slate-200">Free</h4>
+                  <h4 className="font-semibold text-[var(--text-dark-primary)]">Free</h4>
                 </div>
                 <ul className="space-y-2">
                   {["Έως 7 διαμερίσματα", "Βασικό φύλλο κοινοχρήστων", "1 πολυκατοικία"].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
-                      <Check className="h-3 w-3 text-emerald-400" />
+                    <li key={f} className="flex items-center gap-2 text-xs text-[var(--text-dark-secondary)] sm:text-sm">
+                      <Check className="h-3 w-3 text-accent-primary" />
                       {f}
                     </li>
                   ))}
@@ -721,12 +721,12 @@ export default function LandingPage() {
               </div>
 
               {/* Web Features */}
-              <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
+              <div className="rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft">
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                    <Building className="h-4 w-4 text-emerald-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-primary/10">
+                    <Building className="h-4 w-4 text-accent-primary" />
                   </div>
-                  <h4 className="font-semibold text-slate-200">Web</h4>
+                  <h4 className="font-semibold text-[var(--text-dark-primary)]">Web</h4>
                 </div>
                 <ul className="space-y-2">
                   {[
@@ -735,8 +735,8 @@ export default function LandingPage() {
                     "Αιτήματα συντήρησης",
                     "Web & mobile πρόσβαση"
                   ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
-                      <Check className="h-3 w-3 text-emerald-400" />
+                    <li key={f} className="flex items-center gap-2 text-xs text-[var(--text-dark-secondary)] sm:text-sm">
+                      <Check className="h-3 w-3 text-accent-primary" />
                       {f}
                     </li>
                   ))}
@@ -744,12 +744,12 @@ export default function LandingPage() {
               </div>
 
               {/* Premium Features */}
-              <div className="rounded-xl border border-emerald-500/30 bg-slate-900 p-4 shadow-lg shadow-emerald-500/10">
+              <div className="rounded-xl border border-accent-primary/30 bg-[var(--bg-white)] p-4 shadow-card-soft">
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
-                    <Monitor className="h-4 w-4 text-emerald-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-primary/15">
+                    <Monitor className="h-4 w-4 text-accent-primary" />
                   </div>
-                  <h4 className="font-semibold text-slate-200">Premium</h4>
+                  <h4 className="font-semibold text-[var(--text-dark-primary)]">Premium</h4>
                   <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
                     Δημοφιλές
                   </span>
@@ -762,8 +762,8 @@ export default function LandingPage() {
                     "Ηλεκτρονικό αρχείο",
                     "Όλα τα Web features"
                   ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
-                      <Check className="h-3 w-3 text-emerald-400" />
+                    <li key={f} className="flex items-center gap-2 text-xs text-[var(--text-dark-secondary)] sm:text-sm">
+                      <Check className="h-3 w-3 text-accent-primary" />
                       {f}
                     </li>
                   ))}
@@ -771,12 +771,12 @@ export default function LandingPage() {
               </div>
 
               {/* Premium + IoT Features */}
-              <div className="rounded-xl border border-gray-200 bg-slate-950/70 p-4">
+              <div className="rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft">
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                    <Monitor className="h-4 w-4 text-emerald-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-primary/10">
+                    <Monitor className="h-4 w-4 text-accent-primary" />
                   </div>
-                  <h4 className="font-semibold text-slate-200">Premium + IoT</h4>
+                  <h4 className="font-semibold text-[var(--text-dark-primary)]">Premium + IoT</h4>
                 </div>
                 <ul className="space-y-2">
                   {[
@@ -786,8 +786,8 @@ export default function LandingPage() {
                     "Προβλέψεις & βελτιστοποίηση",
                     "Όλα τα Premium features"
                   ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-400 sm:text-sm">
-                      <Check className="h-3 w-3 text-emerald-400" />
+                    <li key={f} className="flex items-center gap-2 text-xs text-[var(--text-dark-secondary)] sm:text-sm">
+                      <Check className="h-3 w-3 text-accent-primary" />
                       {f}
                     </li>
                   ))}
@@ -798,14 +798,14 @@ export default function LandingPage() {
 
           {/* Custom plan note */}
           <AnimatedSection delay={400}>
-            <div className="mt-8 rounded-2xl border border-gray-200 bg-slate-900/50 p-6 text-center transition-all duration-300 hover:border-emerald-500/30">
-              <h3 className="mb-2 text-lg font-semibold text-slate-50">Γραφείο διαχείρισης με 5+ πολυκατοικίες;</h3>
-              <p className="text-sm leading-relaxed text-slate-400 sm:text-base">
+            <div className="mt-8 rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-6 text-center shadow-card-soft transition-all duration-300 hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10">
+              <h3 className="mb-2 text-lg font-semibold text-[var(--text-dark-primary)]">Γραφείο διαχείρισης με 5+ πολυκατοικίες;</h3>
+              <p className="text-sm leading-relaxed text-[var(--text-dark-secondary)] sm:text-base">
                 Επικοινωνήστε μαζί μας για προσαρμοσμένη τιμολόγηση και ειδικές λειτουργίες για επαγγελματίες διαχειριστές.
               </p>
               <a
                 href="#cta"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-accent-primary transition-colors hover:opacity-80"
               >
                 <Phone className="h-4 w-4" />
                 Καλέστε μας
@@ -819,21 +819,21 @@ export default function LandingPage() {
       </section>
 
       {/* FOR MANAGERS */}
-      <section id="for-managers" className="border-b border-gray-200 bg-slate-900/30">
+      <section id="for-managers" className="border-b border-gray-200 bg-[var(--bg-main-light)]">
         <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
           <div className="flex-1 space-y-6">
             <AnimatedSection>
-              <span className="inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Για επαγγελματίες
               </span>
             </AnimatedSection>
             <AnimatedSection delay={100}>
-              <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">
                 Για γραφεία διαχείρισης: λιγότερα τηλέφωνα, περισσότερη οργάνωση
               </h2>
             </AnimatedSection>
             <AnimatedSection delay={200}>
-              <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
+              <p className="text-base leading-relaxed text-[var(--text-dark-secondary)] sm:text-lg">
                 Αν διαχειρίζεσαι δεκάδες πολυκατοικίες, ξέρεις πόσο χρόνο τρώνε τα τηλέφωνα, τα email
                 και οι απορίες των ενοίκων. Με το newconcierge.app και τα Info Points, κάθε
                 πολυκατοικία ενημερώνεται αυτόματα – κι εσύ βλέπεις τα πάντα από ένα κεντρικό panel.
@@ -841,7 +841,7 @@ export default function LandingPage() {
             </AnimatedSection>
 
             <AnimatedSection delay={300}>
-              <ul className="space-y-3 text-sm text-slate-300 sm:text-base">
+              <ul className="space-y-3 text-sm text-[var(--text-dark-secondary)] sm:text-base">
                 {[
                   "Κεντρικό dashboard για όλες τις πολυκατοικίες του γραφείου",
                   "Ενεργά αιτήματα & βλάβες σε μία οθόνη",
@@ -849,7 +849,7 @@ export default function LandingPage() {
                   "Δυνατότητα για custom αναφορές & στατιστικά ανά κτίριο",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-primary/15 text-xs text-accent-primary">
                       ✓
                     </span>
                     <span>{item}</span>
@@ -861,8 +861,8 @@ export default function LandingPage() {
 
           {/* Dashboard screenshot */}
           <AnimatedSection delay={200} className="flex-1">
-            <div className="rounded-3xl border border-gray-200 bg-slate-900/50 p-4 transition-transform duration-500 hover:scale-[1.02]">
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-slate-950">
+            <div className="rounded-3xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft transition-transform duration-500 hover:scale-[1.02]">
+              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-[var(--bg-main-light)]">
                 <Image
                   src="/phone_screenshot.jpg"
                   alt="Dashboard γραφείου διαχείρισης - πολλαπλές πολυκατοικίες"
@@ -881,7 +881,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
             <div className="mb-12 text-center">
-              <span className="mb-4 inline-block rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-emerald-400">
+              <span className="mb-4 inline-block rounded-full bg-accent-secondary/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-accent-secondary">
                 Απορίες
               </span>
               <h2 className="text-2xl font-bold text-[var(--text-dark-primary)] sm:text-3xl lg:text-4xl">Συχνές ερωτήσεις</h2>
@@ -902,18 +902,18 @@ export default function LandingPage() {
       </section>
 
       {/* CTA FINAL */}
-      <section id="cta" className="bg-slate-950">
+      <section id="cta" className="bg-[var(--bg-dark-main)]">
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <AnimatedSection>
-            <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/20 via-slate-900 to-slate-950 p-8 sm:p-10">
+            <div className="relative overflow-hidden rounded-3xl border border-accent-primary/30 bg-gradient-to-br from-accent-primary/15 via-[var(--bg-dark-surface)] to-[var(--bg-dark-main)] p-8 sm:p-10 text-[var(--text-on-dark)]">
               {/* Background glow */}
-              <div className="absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl" />
+              <div className="absolute -top-24 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-accent-primary/20 blur-3xl" />
 
               <div className="relative">
                 <h2 className="text-center text-2xl font-bold sm:text-3xl lg:text-4xl">
                   Έτοιμοι να γίνετε κοινότητα;
                 </h2>
-                <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-slate-300 sm:text-lg">
+                <p className="mx-auto mt-4 max-w-xl text-center text-base leading-relaxed text-[var(--text-on-dark-secondary)] sm:text-lg">
                   Συμπλήρωσε τα στοιχεία σου και θα σε καλέσουμε για μια σύντομη παρουσίαση 15 λεπτών.
                 </p>
 
@@ -923,14 +923,14 @@ export default function LandingPage() {
                     href="https://wa.me/306900000000"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-medium text-emerald-300 transition-all hover:bg-emerald-500/20"
+                    className="inline-flex items-center gap-2 rounded-full border border-accent-primary/30 bg-accent-primary/10 px-5 py-2.5 text-sm font-medium text-accent-primary transition-all hover:bg-accent-primary/20"
                   >
                     <MessageCircle className="h-4 w-4" />
                     WhatsApp
                   </a>
                   <a
                     href="tel:+302100000000"
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm font-medium text-[var(--text-on-dark-secondary)] transition-all hover:bg-white/10"
                   >
                     <Phone className="h-4 w-4" />
                     210 000 0000
@@ -938,14 +938,14 @@ export default function LandingPage() {
                 </div>
 
                 <div className="mx-auto mt-6 max-w-lg">
-                  <p className="mb-4 text-center text-xs text-slate-500">Ή συμπλήρωσε τη φόρμα:</p>
+                  <p className="mb-4 text-center text-xs text-[var(--text-on-dark-muted)]">Ή συμπλήρωσε τη φόρμα:</p>
 
                   {/* Simplified contact form */}
                   <form className="grid gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <input
                         type="text"
-                        className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-xl border border-white/10 bg-[var(--bg-dark-surface)] px-4 py-3 text-sm text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] transition-colors focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
                         placeholder="Όνομα *"
                         required
                       />
@@ -953,7 +953,7 @@ export default function LandingPage() {
                     <div>
                       <input
                         type="tel"
-                        className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-xl border border-white/10 bg-[var(--bg-dark-surface)] px-4 py-3 text-sm text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] transition-colors focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
                         placeholder="Τηλέφωνο *"
                         required
                       />
@@ -961,12 +961,12 @@ export default function LandingPage() {
                     <div>
                       <input
                         type="email"
-                        className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 placeholder-slate-500 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full rounded-xl border border-white/10 bg-[var(--bg-dark-surface)] px-4 py-3 text-sm text-[var(--text-on-dark)] placeholder-[var(--text-on-dark-muted)] transition-colors focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
                         placeholder="Email"
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <select className="w-full rounded-xl border border-gray-200 bg-slate-950 px-4 py-3 text-sm text-slate-50 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                      <select className="w-full rounded-xl border border-white/10 bg-[var(--bg-dark-surface)] px-4 py-3 text-sm text-[var(--text-on-dark)] transition-colors focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary">
                         <option value="">Είμαι...</option>
                         <option value="internal">Εσωτερικός διαχειριστής</option>
                         <option value="office">Γραφείο διαχείρισης</option>
@@ -978,7 +978,7 @@ export default function LandingPage() {
                     <div className="sm:col-span-2">
                       <button
                         type="submit"
-                        className="group flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/40 hover:scale-[1.02]"
+                        className="group flex w-full items-center justify-center gap-2 rounded-full bg-accent-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/30 transition-all hover:opacity-90 hover:shadow-accent-primary/40 hover:scale-[1.02]"
                       >
                         Θέλω να με καλέσετε
                         <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -988,7 +988,7 @@ export default function LandingPage() {
                     </div>
                   </form>
 
-                  <p className="mt-4 text-center text-[11px] text-slate-500">
+                  <p className="mt-4 text-center text-[11px] text-[var(--text-on-dark-muted)]">
                     Δεν στέλνουμε spam. Θα επικοινωνήσουμε μόνο για να συζητήσουμε τις ανάγκες σου.
                   </p>
                 </div>

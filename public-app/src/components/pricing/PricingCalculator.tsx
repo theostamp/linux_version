@@ -406,7 +406,7 @@ export function PricingCalculator({
                   key={feature}
                   className="flex items-center gap-2 text-xs text-[var(--text-dark-secondary)]"
                 >
-                  <Check className="h-3 w-3 text-accent-secondary" />
+                  <Check className="h-3 w-3 text-accent-primary" />
                   {feature}
                 </li>
               )

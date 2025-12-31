@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#00BC7D", // teal brand from landing page
+  themeColor: "#1E4E8C", // corporate blue from landing page
 };
 
 export default function RootLayout({

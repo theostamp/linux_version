@@ -21,8 +21,8 @@ html {
   --primary-foreground: 0 0% 100%;     /* White on primary */
   --primary-hover: 174 63% 35%;        /* Darker teal on hover */
 
-  /* Headings - Veggie green (emerald-300 equivalent) */
-  --heading-color: 142 76% 36%;              /* Emerald-300: #10B981 */
+  /* Headings - Neutral charcoal for corporate tone */
+  --heading-color: var(--text-primary);
 
   /* Secondary - Soft navy */
   --secondary: 217 25% 90%;            /* Soft gray-blue */
@@ -109,19 +109,29 @@ html {
   --bg-card: #FFFFFF;            /* Καθαρό λευκό - για κάρτες και panels */
 
   /* Accent Colors */
-  --color-accent-primary: #0091EA;   /* Έντονο Ocean Blue - για κύρια κουμπιά και active states */
-  --color-accent-secondary: #00BFA5; /* Cyan/Teal - για θετικά status π.χ., 'Ενεργό' */
+  --color-accent-primary: #1E4E8C;   /* Corporate blue - για κύρια κουμπιά και active states */
+  --color-accent-secondary: #2E7C90; /* Muted teal - για βοηθητικά highlights */
 
   /* Text Colors */
   --text-primary: #263238;       /* Σκούρο ανθρακί - όχι μαύρο */
-  --text-secondary: #546E7A;      /* Μεσαίο ψυχρό γκρι - για υπότιτλους/εικονίδια */
+  --text-secondary: #546E7A;     /* Μεσαίο ψυχρό γκρι - για υπότιτλους/εικονίδια */
 
   /* Trial Banner Colors */
   --bg-trial-banner: #E1F5FE;    /* Πολύ απαλό παγωμένο γαλάζιο */
   --text-trial-banner: #01579B;  /* Σκούρο μπλε για το κείμενο του trial */
 
   /* Shadow with Blue Tint */
-  --shadow-card-soft: 0 4px 12px rgba(0, 145, 234, 0.08); /* Δίνει την αίσθηση αιώρησης με μπλε tint */
+  --shadow-card-soft: 0 4px 12px rgba(30, 78, 140, 0.1); /* Δίνει την αίσθηση αιώρησης με μπλε tint */
+
+  /* Dark Surfaces - Corporate Navy */
+  --bg-dark-main: #0B1B2B;       /* Βαθύ navy για hero/CTA */
+  --bg-dark-surface: #12273A;    /* Ελαφρώς πιο ανοιχτό navy για κάρτες */
+  --bg-dark-card: rgba(11, 27, 43, 0.86); /* Διαφανές overlay για hero card */
+
+  /* Text on Dark */
+  --text-on-dark: #F8FAFC;
+  --text-on-dark-secondary: #D7E0EA;
+  --text-on-dark-muted: #A5B1BF;
 
   /* Aliases για Landing Page compatibility */
   --bg-main-light: var(--bg-app-main);        /* #F5F7FA */
