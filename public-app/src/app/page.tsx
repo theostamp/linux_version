@@ -300,19 +300,19 @@ export default function LandingPage() {
               sizes="100vw"
               priority
             />
-            {/* Gradient overlay - balanced for image visibility and text contrast */}
+            {/* Gradient overlay - enhanced for better text contrast while maintaining image visibility */}
             <div
-              className="pointer-events-none absolute inset-0"
+              className="pointer-events-none absolute inset-0 z-0"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.5) 100%)",
+                  "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.6) 100%)",
               }}
             />
           </div>
 
           {/* Hero content κάτω από την εικόνα */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <div className="w-full space-y-8 rounded-3xl bg-[var(--bg-dark-card)] p-6 shadow-2xl shadow-card-soft backdrop-blur-md sm:p-8 lg:p-10" style={{ backgroundColor: 'rgba(11, 27, 43, 0.98)' }}>
+            <div className="w-full space-y-8 rounded-3xl p-6 shadow-2xl shadow-card-soft sm:p-8 lg:p-10" style={{ backgroundColor: 'var(--bg-dark-card-solid)' }}>
               <AnimatedSection delay={100}>
                 <div className="flex justify-center">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
