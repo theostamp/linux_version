@@ -22,7 +22,7 @@ function ResidentLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const explicitRedirect = searchParams.get('redirect');
-  
+
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ function ResidentLoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       setError('Παρακαλώ εισάγετε το email σας');
       return;
@@ -52,7 +52,7 @@ function ResidentLoginForm() {
 
     setIsLoading(true);
     setError('');
-    
+
     try {
       let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
       if (!coreApiUrl) {
@@ -71,7 +71,7 @@ function ResidentLoginForm() {
           'X-Tenant-Host': window.location.hostname,
         },
         credentials: 'include',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: email.trim().toLowerCase(),
           phone: phone.trim()
         }),
@@ -99,13 +99,13 @@ function ResidentLoginForm() {
 
       // Redirect
       const targetRedirect = getRedirectForRole(data.user, explicitRedirect || undefined);
-      
+
       if (data.tenant_url) {
         window.location.href = `https://${data.tenant_url}${targetRedirect}`;
       } else {
         router.push(targetRedirect);
       }
-      
+
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Προέκυψε σφάλμα. Παρακαλώ δοκιμάστε ξανά.');
@@ -115,22 +115,23 @@ function ResidentLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 relative">
+    <div className="min-h-screen bg-[var(--bg-main-light)] text-text-primary relative">
       <BuildingRevealBackground />
-      
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-white via-[var(--bg-main-light)] to-[var(--bg-main-light)]" />
+
       {/* Header */}
-      <header className="border-b border-gray-300 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/login" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
+            <Link href="/login" className="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors">
               <ChevronLeft className="h-4 w-4" />
               <span className="text-sm">Πίσω στην επιλογή</span>
             </Link>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-400">Είστε διαχειριστής;</span>
-              <Link 
-                href="/login/office" 
-                className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+              <span className="text-sm text-text-secondary">Είστε διαχειριστής;</span>
+              <Link
+                href="/login/office"
+                className="text-sm font-medium text-accent-primary hover:opacity-80 transition-colors"
               >
                 Σύνδεση διαχειριστή
               </Link>
@@ -139,39 +140,39 @@ function ResidentLoginForm() {
         </div>
       </header>
 
-      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      <main className="py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md mx-auto">
           {/* App Description Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
-              <Home className="h-6 w-6 text-emerald-400" />
-              <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              <Home className="h-6 w-6 text-accent-secondary" />
+              <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
                 Ένοικος / Ιδιοκτήτης
               </span>
             </div>
-            <h2 className="text-xl font-bold text-slate-50 mb-3">
+            <h2 className="text-xl font-bold text-text-primary mb-3">
               Σύνδεση Ενοίκου
             </h2>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
               Εισάγετε το email και το τηλέφωνο με τα οποία είστε καταχωρημένος στην πολυκατοικία σας.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-8 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-8 shadow-card-soft">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                <Home className="h-8 w-8 text-emerald-400" />
+              <div className="w-16 h-16 rounded-full bg-accent-secondary/10 flex items-center justify-center mx-auto mb-4">
+                <Home className="h-8 w-8 text-accent-secondary" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-50 mb-2">
+              <h1 className="text-2xl font-bold text-text-primary mb-2">
                 Καλώς ήρθατε
               </h1>
-              <p className="text-slate-400 text-sm">
+              <p className="text-text-secondary text-sm">
                 Συνδεθείτε στην πολυκατοικία σας
               </p>
             </div>
-            
+
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
                 {error}
               </div>
             )}
@@ -179,11 +180,11 @@ function ResidentLoginForm() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                   <input
                     type="email"
                     id="email"
@@ -194,8 +195,8 @@ function ResidentLoginForm() {
                       if (error) setError('');
                     }}
                     autoComplete="email"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                      error && !email ? 'border-red-500/50' : 'border-gray-300'
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-accent-secondary focus:border-transparent transition-colors ${
+                      error && !email ? 'border-red-300' : 'border-gray-200'
                     }`}
                     placeholder="το-email-σας@example.com"
                   />
@@ -204,11 +205,11 @@ function ResidentLoginForm() {
 
               {/* Phone Field */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-text-secondary mb-2">
                   Τηλέφωνο
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                   <input
                     type="tel"
                     id="phone"
@@ -219,13 +220,13 @@ function ResidentLoginForm() {
                       if (error) setError('');
                     }}
                     autoComplete="tel"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                      error && !phone ? 'border-red-500/50' : 'border-gray-300'
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-accent-secondary focus:border-transparent transition-colors ${
+                      error && !phone ? 'border-red-300' : 'border-gray-200'
                     }`}
                     placeholder="69xxxxxxxx"
                   />
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-text-secondary">
                   Χρησιμοποιήστε τα στοιχεία που δώσατε κατά την εγγραφή σας
                 </p>
               </div>
@@ -233,7 +234,7 @@ function ResidentLoginForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-emerald-500 text-slate-950 py-3 px-6 rounded-xl font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-emerald-500/25"
+                className="w-full bg-accent-secondary text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-card-soft"
               >
                 {isLoading ? (
                   <>
@@ -250,32 +251,32 @@ function ResidentLoginForm() {
             </form>
 
             {/* Help Section */}
-            <div className="mt-6 pt-6 border-t border-gray-300 space-y-4">
-              <p className="text-sm font-medium text-slate-300 text-center">
+            <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
+              <p className="text-sm font-medium text-text-primary text-center">
                 Δεν μπορείτε να συνδεθείτε;
               </p>
-              
-              <div className="space-y-3 text-xs text-slate-400">
+
+              <div className="space-y-3 text-xs text-text-secondary">
                 <div className="flex items-start gap-2">
-                  <span className="text-emerald-400 font-bold">1.</span>
+                  <span className="text-accent-secondary font-bold">1.</span>
                   <p>
-                    <strong className="text-slate-300">Δεν έχετε καταχωρηθεί;</strong> Σαρώστε το QR code 
+                    <strong className="text-text-primary">Δεν έχετε καταχωρηθεί;</strong> Σαρώστε το QR code
                     στην είσοδο της πολυκατοικίας σας (αν υπάρχει) για αυτόματη εγγραφή.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start gap-2">
-                  <span className="text-emerald-400 font-bold">2.</span>
+                  <span className="text-accent-secondary font-bold">2.</span>
                   <p>
-                    <strong className="text-slate-300">Δεν υπάρχει QR code;</strong> Ζητήστε από τη διαχείριση 
+                    <strong className="text-text-primary">Δεν υπάρχει QR code;</strong> Ζητήστε από τη διαχείριση
                     να σας στείλει πρόσκληση στο email σας για να ολοκληρώσετε την εγγραφή.
                   </p>
                 </div>
-                
+
                 <div className="flex items-start gap-2">
-                  <span className="text-emerald-400 font-bold">3.</span>
+                  <span className="text-accent-secondary font-bold">3.</span>
                   <p>
-                    <strong className="text-slate-300">Τα στοιχεία δεν αναγνωρίζονται;</strong> Επικοινωνήστε 
+                    <strong className="text-text-primary">Τα στοιχεία δεν αναγνωρίζονται;</strong> Επικοινωνήστε
                     με τη διαχείριση της πολυκατοικίας σας για επιβεβαίωση των καταχωρημένων στοιχείων.
                   </p>
                 </div>
@@ -291,8 +292,8 @@ function ResidentLoginForm() {
 export default function ResidentLoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-pulse text-slate-400">Φόρτωση...</div>
+      <div className="min-h-screen bg-[var(--bg-main-light)] flex items-center justify-center">
+        <div className="animate-pulse text-text-secondary">Φόρτωση...</div>
       </div>
     }>
       <ResidentLoginForm />

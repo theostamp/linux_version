@@ -17,7 +17,7 @@ interface UserData extends RoleDescriptor {
 function getRedirectForRole(user: UserData | null, explicitRedirect?: string): string {
   // Αν υπάρχει explicit redirect, χρησιμοποίησέ το
   if (explicitRedirect) return explicitRedirect;
-  
+
   return getDefaultLandingPath(user);
 }
 
@@ -25,12 +25,12 @@ function OfficeLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const explicitRedirect = searchParams.get('redirect'); // null αν δεν υπάρχει
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +40,7 @@ function OfficeLoginForm() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -66,13 +66,13 @@ function OfficeLoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
       if (!coreApiUrl) {
@@ -83,7 +83,7 @@ function OfficeLoginForm() {
       if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
         coreApiUrl = `https://${coreApiUrl}`;
       }
-      
+
       // Remove trailing slash
       coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -102,7 +102,7 @@ function OfficeLoginForm() {
       });
 
       const data = await response.json();
-      
+
       // DEBUG: Log backend response
       console.log('[Login] Backend response:', {
         status: response.status,
@@ -128,18 +128,18 @@ function OfficeLoginForm() {
 
       // Καθορισμός redirect URL βάσει ρόλου χρήστη
       const targetRedirect = getRedirectForRole(data.user, explicitRedirect || undefined);
-      
+
       // Redirect to tenant domain or specified redirect
       if (data.tenant_url) {
         window.location.href = `https://${data.tenant_url}${targetRedirect}`;
       } else {
         router.push(targetRedirect);
       }
-      
+
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά τη σύνδεση. Παρακαλώ δοκιμάστε ξανά.';
-      setErrors({ 
+      setErrors({
         general: errorMessage
       });
       setIsLoading(false);
@@ -166,7 +166,7 @@ function OfficeLoginForm() {
       if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
         coreApiUrl = `https://${coreApiUrl}`;
       }
-      
+
       // Remove trailing slash
       coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -209,7 +209,7 @@ function OfficeLoginForm() {
     if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
       coreApiUrl = `https://${coreApiUrl}`;
     }
-    
+
     // Remove trailing slash
     coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -217,35 +217,36 @@ function OfficeLoginForm() {
     // This allows single redirect URI in Google Console for all subdomains
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
     const redirectUri = `${appUrl}/auth/callback`;
-    
+
     // Store the original origin in state for cross-subdomain redirect
-    const state = JSON.stringify({ 
+    const state = JSON.stringify({
       provider: 'google',
       redirect: explicitRedirect || '/dashboard',
       originUrl: window.location.origin  // Where to redirect after auth
     });
     const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
-    
+
     window.location.href = googleAuthUrl;
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 relative">
+    <div className="min-h-screen bg-[var(--bg-main-light)] text-text-primary relative">
       <BuildingRevealBackground />
-      
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-white via-[var(--bg-main-light)] to-[var(--bg-main-light)]" />
+
       {/* Header */}
-      <header className="border-b border-gray-300 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/login" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
+            <Link href="/login" className="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors">
               <ChevronLeft className="h-4 w-4" />
               <span className="text-sm">Πίσω στην επιλογή</span>
             </Link>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-400">Δεν έχετε λογαριασμό;</span>
-              <Link 
-                href="/signup" 
-                className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+              <span className="text-sm text-text-secondary">Δεν έχετε λογαριασμό;</span>
+              <Link
+                href="/signup"
+                className="text-sm font-medium text-accent-primary hover:opacity-80 transition-colors"
               >
                 Δημιουργία
               </Link>
@@ -254,36 +255,36 @@ function OfficeLoginForm() {
         </div>
       </header>
 
-      <main className="py-12 px-4 sm:px-6 lg:px-8">
+      <main className="py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md mx-auto">
           {/* App Description Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
-              <Building className="h-6 w-6 text-blue-400" />
-              <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              <Building className="h-6 w-6 text-accent-primary" />
+              <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
                 Γραφείο Διαχείρισης
               </span>
             </div>
-            <h2 className="text-xl font-bold text-slate-50 mb-3">
+            <h2 className="text-xl font-bold text-text-primary mb-3">
               Σύνδεση Διαχειριστή
             </h2>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
               Για διαχειριστές, υπαλλήλους γραφείου και εσωτερικούς διαχειριστές πολυκατοικιών.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-8 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-8 shadow-card-soft">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-slate-50 mb-2">
+              <h1 className="text-2xl font-bold text-text-primary mb-2">
                 Σύνδεση
               </h1>
-              <p className="text-slate-400">
+              <p className="text-text-secondary">
                 Καλώς ήρθατε ξανά στο New Concierge
               </p>
             </div>
-            
+
             {errors.general && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {errors.general}
@@ -302,7 +303,7 @@ function OfficeLoginForm() {
             )}
 
             {resendSuccess && (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-lg mb-6 text-sm">
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg mb-6 text-sm">
                 Το email επιβεβαίωσης στάλθηκε επιτυχώς! Ελέγξτε το inbox σας (και spam folder).
               </div>
             )}
@@ -310,7 +311,7 @@ function OfficeLoginForm() {
             {/* Google OAuth Button */}
             <button
               onClick={handleGoogleLogin}
-              className="w-full bg-slate-800 border border-gray-300 text-slate-200 py-3 px-6 rounded-xl font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-3 mb-6 shadow-sm"
+              className="w-full bg-white border border-gray-200 text-text-primary py-3 px-6 rounded-xl font-medium hover:bg-bg-app-main transition-colors flex items-center justify-center gap-3 mb-6 shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -323,20 +324,20 @@ function OfficeLoginForm() {
 
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-slate-900 text-slate-500">ή με email</span>
+                <span className="px-3 bg-[var(--bg-white)] text-text-secondary">ή με email</span>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
                   Διεύθυνση Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                   <input
                     type="email"
                     id="email"
@@ -344,23 +345,23 @@ function OfficeLoginForm() {
                     value={formData.email}
                     onChange={handleInputChange}
                     autoComplete="email"
-                    className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.email ? 'border-red-500/50' : 'border-gray-300'
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-colors ${
+                      errors.email ? 'border-red-300' : 'border-gray-200'
                     }`}
                     placeholder="manager@example.com"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-xs text-red-400">{errors.email}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.email}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-2">
                   Κωδικός
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
@@ -368,22 +369,22 @@ function OfficeLoginForm() {
                     value={formData.password}
                     onChange={handleInputChange}
                     autoComplete="current-password"
-                    className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.password ? 'border-red-500/50' : 'border-gray-300'
+                    className={`w-full pl-10 pr-12 py-3 bg-white border rounded-xl text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-colors ${
+                      errors.password ? 'border-red-300' : 'border-gray-200'
                     }`}
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
                     aria-label={showPassword ? "Απόκρυψη κωδικού" : "Εμφάνιση κωδικού"}
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-xs text-red-400">{errors.password}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.password}</p>
                 )}
               </div>
 
@@ -393,13 +394,13 @@ function OfficeLoginForm() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-blue-500 focus:ring-blue-500 rounded border-gray-300 bg-slate-800"
+                    className="h-4 w-4 text-accent-primary focus:ring-accent-primary rounded border-gray-200 bg-white"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-400">
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-text-secondary">
                     Να με θυμάσαι
                   </label>
                 </div>
-                <Link href="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                <Link href="/forgot-password" className="text-sm text-accent-primary hover:opacity-80 transition-colors">
                   Ξέχασες τον κωδικό;
                 </Link>
               </div>
@@ -407,7 +408,7 @@ function OfficeLoginForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-500 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-blue-500/25"
+                className="w-full bg-accent-primary text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-card-soft"
               >
                 {isLoading ? (
                   <>
@@ -424,9 +425,9 @@ function OfficeLoginForm() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-text-secondary">
                 Είστε ένοικος;{' '}
-                <Link href="/login/resident" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+                <Link href="/login/resident" className="text-accent-secondary hover:opacity-80 font-semibold transition-colors">
                   Συνδεθείτε εδώ
                 </Link>
               </p>
@@ -441,12 +442,11 @@ function OfficeLoginForm() {
 export default function OfficeLoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-pulse text-slate-400">Φόρτωση...</div>
+      <div className="min-h-screen bg-[var(--bg-main-light)] flex items-center justify-center">
+        <div className="animate-pulse text-text-secondary">Φόρτωση...</div>
       </div>
     }>
       <OfficeLoginForm />
     </Suspense>
   );
 }
-
