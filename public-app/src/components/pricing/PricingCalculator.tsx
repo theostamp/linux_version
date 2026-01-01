@@ -96,8 +96,6 @@ export function PricingCalculator({
   const [selectedPlan, setSelectedPlan] = useState<"web" | "premium" | "premium_iot">("premium");
   const [isYearly, setIsYearly] = useState(false);
   const sliderPercent = ((apartments - minApartments) / (maxApartments - minApartments)) * 100;
-  const sliderThumbSize = 24;
-  const sliderBubbleOffset = (sliderThumbSize * (50 - sliderPercent)) / 100;
 
   // Determine if Free tier applies
   const freeEligible = isFreeEligible(apartments);
@@ -177,7 +175,7 @@ export function PricingCalculator({
               <div
                 className="absolute flex h-7 min-w-[2.25rem] items-center justify-center rounded-full bg-accent-primary px-2 text-xs font-semibold text-white shadow-lg shadow-accent-primary/30"
                 style={{
-                  left: `calc(${sliderPercent}% + ${sliderBubbleOffset}px)`,
+                  left: `${sliderPercent}%`,
                   transform: "translateX(-50%)",
                 }}
               >
