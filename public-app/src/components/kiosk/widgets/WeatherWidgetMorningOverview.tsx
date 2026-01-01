@@ -111,11 +111,11 @@ const getSpecialDayMessages = (date: Date): string[] => {
   if (dayOfWeek === 1) {
     messages.push('Καλή εβδομάδα!');
   }
-  if (dayOfMonth === 1) {
-    messages.push('Καλό μήνα!');
-  }
+  // Check New Year first (more specific), then first of month (general)
   if (dayOfMonth === 1 && month === 0) {
     messages.push('Καλή χρονιά!');
+  } else if (dayOfMonth === 1) {
+    messages.push('Καλό μήνα!');
   }
 
   return messages;
