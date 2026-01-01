@@ -8,13 +8,13 @@ import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
-import { User, Building as BuildingIcon, Settings, Calendar, Shield, HelpCircle } from 'lucide-react';
+import { AlertTriangle, User, Building as BuildingIcon, Settings, Calendar, Shield, HelpCircle } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
 import { getEffectiveRoleForBuilding, getRoleLabelFromRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
-  const { selectedBuilding, setSelectedBuilding, buildings, buildingContext } = useBuilding();
+  const { selectedBuilding, setSelectedBuilding, buildings, buildingContext, isLoadingContext, contextError, refreshBuildingContext } = useBuilding();
   const isAdminLevel = hasOfficeAdminAccess(user);
   const roleBuilding = buildingContext ?? selectedBuilding;
   const effectiveRole = getEffectiveRoleForBuilding(user, roleBuilding);
@@ -35,14 +35,36 @@ export default function GlobalHeader() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
+  const [showRoleDebug, setShowRoleDebug] = useState(false);
 
   const handleSettingsModalOpen = useCallback(() => {
     setIsSettingsModalOpen(true);
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setShowRoleDebug(params.get('debugRole') === '1');
+  }, []);
+
+  useEffect(() => {
     setLogoError(false);
   }, [user?.office_logo]);
+
+  const permissionsMissing =
+    !!selectedBuilding && !isLoadingContext && !roleBuilding?.permissions;
+  const showPermissionWarning = permissionsMissing || (!!contextError && !!selectedBuilding);
+
+  useEffect(() => {
+    if (!showRoleDebug || !selectedBuilding) return;
+    console.info('[Role Debug] Building role check', {
+      buildingId: selectedBuilding.id,
+      contextBuildingId: buildingContext?.id,
+      effectiveRole,
+      permissions: roleBuilding?.permissions ?? null,
+      internalManagerId: selectedBuilding?.internal_manager_id ?? null,
+    });
+  }, [showRoleDebug, selectedBuilding?.id, buildingContext?.id, effectiveRole, roleBuilding?.permissions, selectedBuilding?.internal_manager_id]);
 
   return (
     <>
@@ -270,6 +292,11 @@ export default function GlobalHeader() {
                     }`}>
                       {roleLabel}
                     </p>
+                    {showRoleDebug && (
+                      <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-300">
+                        Debug role: {effectiveRole || '—'} • Κτίριο {roleBuilding?.id ?? '—'}
+                      </p>
+                    )}
                   </div>
                   <div className="sm:hidden">
                     <div className="flex items-center gap-1">
@@ -301,6 +328,24 @@ export default function GlobalHeader() {
                 </div>
               )}
           </div>
+
+          {showPermissionWarning && (
+            <div className="border-t border-amber-200/60 bg-amber-50/70 px-4 py-2 text-xs text-amber-900 flex flex-wrap items-center justify-between gap-2 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-700" />
+                <span>
+                  {contextError || 'Δεν φορτώθηκαν δικαιώματα για το επιλεγμένο κτίριο.'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => refreshBuildingContext()}
+                className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline"
+              >
+                Ανανέωση
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
