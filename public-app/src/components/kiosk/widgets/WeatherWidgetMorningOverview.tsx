@@ -70,16 +70,16 @@ const uniqueTips = (tips: string[]) => {
 type Season = 'winter' | 'spring' | 'summer' | 'autumn';
 type TimeOfDay = 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
 
-const getCurrentSeason = (): Season => {
-  const month = new Date().getMonth(); // 0-11
+const getCurrentSeason = (date: Date = new Date()): Season => {
+  const month = date.getMonth(); // 0-11
   if (month >= 2 && month <= 4) return 'spring';    // Μάρτιος-Μάιος
   if (month >= 5 && month <= 8) return 'summer';    // Ιούνιος-Σεπτέμβριος
   if (month >= 9 && month <= 10) return 'autumn';   // Οκτώβριος-Νοέμβριος
   return 'winter';                                   // Δεκέμβριος-Φεβρουάριος
 };
 
-const getTimeOfDay = (): TimeOfDay => {
-  const hour = new Date().getHours();
+const getTimeOfDay = (date: Date = new Date()): TimeOfDay => {
+  const hour = date.getHours();
   if (hour >= 5 && hour < 12) return 'morning';     // 05:00-11:59
   if (hour >= 12 && hour < 14) return 'noon';       // 12:00-13:59
   if (hour >= 14 && hour < 18) return 'afternoon';  // 14:00-17:59
@@ -100,6 +100,25 @@ const getGreeting = (timeOfDay: TimeOfDay): string => {
     case 'night':
       return 'Καληνύχτα';
   }
+};
+
+const getSpecialDayMessages = (date: Date): string[] => {
+  const messages: string[] = [];
+  const dayOfWeek = date.getDay();
+  const dayOfMonth = date.getDate();
+  const month = date.getMonth();
+
+  if (dayOfWeek === 1) {
+    messages.push('Καλή εβδομάδα!');
+  }
+  if (dayOfMonth === 1) {
+    messages.push('Καλό μήνα!');
+  }
+  if (dayOfMonth === 1 && month === 0) {
+    messages.push('Καλή χρονιά!');
+  }
+
+  return messages;
 };
 
 const buildTipPool = ({
@@ -305,10 +324,12 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
   const building = data?.building;
 
   const city = data?.building_info?.city || building?.city || 'Αθήνα';
-  const timeOfDay = getTimeOfDay();
-  const season = getCurrentSeason();
-  const hour = new Date().getHours();
+  const now = new Date();
+  const timeOfDay = getTimeOfDay(now);
+  const season = getCurrentSeason(now);
+  const hour = now.getHours();
   const greeting = getGreeting(timeOfDay);
+  const specialDayMessages = getSpecialDayMessages(now);
 
   const parsedLatitude =
     typeof building?.latitude === 'number'
@@ -518,9 +539,18 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
                 <div className="text-[54px] leading-none">{getWeatherEmoji(weather.weathercode)}</div>
               </div>
             </div>
-            
+
             {/* Συμβουλή δίπλα από τη θερμοκρασία */}
             <div className="flex-1 min-w-0 self-center">
+              {specialDayMessages.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2 text-lg font-semibold text-orange-100 leading-snug">
+                  {specialDayMessages.map((message) => (
+                    <span key={message} className="whitespace-nowrap">
+                      {message}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div key={tipAnimationKey} className="tipFadeIn text-xl text-orange-200 font-medium leading-relaxed">
                 {displayedTip}
               </div>
