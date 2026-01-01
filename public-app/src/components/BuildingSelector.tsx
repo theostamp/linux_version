@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Building, Tenant } from '@/lib/api';
 import {
+  fetchAllBuildings,
   fetchAllBuildingsPublic,
   fetchMyBuildings,
   fetchTenants,
@@ -121,6 +122,19 @@ export default function BuildingSelector({
     }
   }, []);
 
+  const hasAuthToken = () => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return Boolean(
+        localStorage.getItem('access_token') ||
+        localStorage.getItem('access') ||
+        localStorage.getItem('accessToken')
+      );
+    } catch {
+      return false;
+    }
+  };
+
   // Determine if user should only see their own buildings (via BuildingMembership)
   // Residents and internal_managers see only their buildings
   // Managers, admins, and office_staff see all buildings in the tenant
@@ -137,7 +151,7 @@ export default function BuildingSelector({
         loadTenants();
       }
     }
-  }, [isOpen, shouldUseMyBuildings, isUltraAdminUser]);
+  }, [isOpen, shouldUseMyBuildings, isUltraAdminUser, userRole]);
 
   const loadTenants = async () => {
     if (!isUltraAdminUser) return;
@@ -173,8 +187,19 @@ export default function BuildingSelector({
           buildingsData = await fetchAllBuildingsPublic();
         }
       } else {
-        console.log('[BuildingSelector] Loading all buildings (public/manager mode)');
-        buildingsData = await fetchAllBuildingsPublic();
+        const hasAuthContext = Boolean(userRole) || isUltraAdminUser || hasAuthToken();
+        if (hasAuthContext) {
+          console.log('[BuildingSelector] Loading all buildings (authenticated mode)');
+          try {
+            buildingsData = await fetchAllBuildings();
+          } catch (e) {
+            console.warn('[BuildingSelector] Failed to load authenticated buildings; falling back to public', e);
+            buildingsData = await fetchAllBuildingsPublic();
+          }
+        } else {
+          console.log('[BuildingSelector] Loading all buildings (public mode)');
+          buildingsData = await fetchAllBuildingsPublic();
+        }
       }
       console.log('[BuildingSelector] Loaded buildings:', buildingsData.length);
       setBuildings(buildingsData);

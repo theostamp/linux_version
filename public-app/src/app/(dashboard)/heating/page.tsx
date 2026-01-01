@@ -7,7 +7,10 @@ import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 export default function IotHeatingPage() {
   const { buildingContext, isLoadingContext } = useBuilding();
-  const iotEnabled = Boolean(buildingContext?.billing?.iot_enabled ?? false);
+  const iotAccess = Boolean(
+    buildingContext?.billing?.iot_access ?? buildingContext?.billing?.iot_enabled ?? false
+  );
+  const upgradeHref = buildingContext?.id ? `/upgrade?building_id=${buildingContext.id}` : '/upgrade';
 
   if (isLoadingContext && !buildingContext) {
     return (
@@ -20,7 +23,7 @@ export default function IotHeatingPage() {
     );
   }
 
-  if (!iotEnabled) {
+  if (!iotAccess) {
     return (
       <PremiumFeatureInfo
         title="Smart Heating"
@@ -47,9 +50,8 @@ export default function IotHeatingPage() {
           },
         ]}
         tags={['IoT', 'Ωράρια', 'Ζώνες', 'Ειδοποιήσεις']}
-        ctaHref="https://newconcierge.app/pricing"
-        ctaLabel="Premium + IoT"
-        ctaExternal
+        ctaHref={upgradeHref}
+        ctaLabel="Αναβάθμιση Premium + IoT"
         icon={<Flame className="h-5 w-5" />}
       />
     );

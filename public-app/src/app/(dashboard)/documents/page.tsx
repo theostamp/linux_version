@@ -405,10 +405,10 @@ function DocumentsContent() {
 
 export default function DocumentsPage() {
   const { buildingContext, isLoadingContext } = useBuilding();
-  const premiumEnabled = Boolean(
-    buildingContext?.billing?.kiosk_enabled ?? buildingContext?.premium_enabled ?? false
+  const premiumAccess = Boolean(
+    buildingContext?.billing?.premium_access ?? buildingContext?.billing?.kiosk_enabled ?? false
   );
-  const pricingHref = 'https://newconcierge.app/pricing';
+  const upgradeHref = buildingContext?.id ? `/upgrade?building_id=${buildingContext.id}` : '/upgrade';
 
   return (
     <AuthGate role={['manager', 'staff', 'superuser']}>
@@ -420,7 +420,7 @@ export default function DocumentsPage() {
               <p>Έλεγχος Premium...</p>
             </div>
           </div>
-        ) : premiumEnabled ? (
+        ) : premiumAccess ? (
           <DocumentsContent />
         ) : (
           <PremiumFeatureInfo
@@ -448,9 +448,8 @@ export default function DocumentsPage() {
               },
             ]}
             tags={['OCR', 'Auto-fill', 'Έλεγχος διπλών', 'Σύνδεση δαπανών']}
-            ctaHref={pricingHref}
-            ctaLabel="Premium συνδρομή"
-            ctaExternal
+            ctaHref={upgradeHref}
+            ctaLabel="Αναβάθμιση Premium"
             icon={<FileText className="h-5 w-5" />}
           />
         )}

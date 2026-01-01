@@ -1,9 +1,13 @@
 'use client';
 
 import { Monitor } from 'lucide-react';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 export default function KioskDisplayPromoPage() {
+  const { buildingContext } = useBuilding();
+  const upgradeHref = buildingContext?.id ? `/upgrade?building_id=${buildingContext.id}` : '/upgrade';
+
   return (
     <PremiumFeatureInfo
       title="Display kiosk info point"
@@ -30,9 +34,8 @@ export default function KioskDisplayPromoPage() {
         },
       ]}
       tags={['Fullscreen', 'Scenes', 'QR Connect', 'Branding']}
-      ctaHref="https://newconcierge.app/pricing"
-      ctaLabel="Premium συνδρομή"
-      ctaExternal
+      ctaHref={upgradeHref}
+      ctaLabel="Αναβάθμιση Premium"
       icon={<Monitor className="h-5 w-5" />}
     />
   );

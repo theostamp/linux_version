@@ -524,17 +524,20 @@ export default function CollapsibleSidebar() {
     if (!link.requiresPremium && !link.requiresIot) return false;
 
     // If we don't have a resolved building context yet, be conservative and lock.
-    const premiumEnabled =
+    const premiumAccess =
+      buildingContext?.billing?.premium_access ??
       buildingContext?.billing?.kiosk_enabled ??
-      buildingContext?.premium_enabled ??
       false;
-    const iotEnabled = buildingContext?.billing?.iot_enabled ?? false;
+    const iotAccess =
+      buildingContext?.billing?.iot_access ??
+      buildingContext?.billing?.iot_enabled ??
+      false;
 
     if (link.requiresIot) {
-      return !iotEnabled;
+      return !iotAccess;
     }
 
-    return !premiumEnabled;
+    return !premiumAccess;
   };
 
   // Filter available groups and links based on user role AND staff permissions

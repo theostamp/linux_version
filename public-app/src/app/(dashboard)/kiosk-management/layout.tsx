@@ -7,9 +7,10 @@ import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 export default function KioskManagementLayout({ children }: { children: ReactNode }) {
   const { buildingContext, isLoadingContext } = useBuilding();
-  const premiumEnabled = Boolean(
-    buildingContext?.billing?.kiosk_enabled ?? buildingContext?.premium_enabled ?? false
+  const premiumAccess = Boolean(
+    buildingContext?.billing?.premium_access ?? buildingContext?.billing?.kiosk_enabled ?? false
   );
+  const upgradeHref = buildingContext?.id ? `/upgrade?building_id=${buildingContext.id}` : '/upgrade';
 
   if (isLoadingContext && !buildingContext) {
     return (
@@ -22,7 +23,7 @@ export default function KioskManagementLayout({ children }: { children: ReactNod
     );
   }
 
-  if (!premiumEnabled) {
+  if (!premiumAccess) {
     return (
       <PremiumFeatureInfo
         title="Διαχείριση info point"
@@ -49,9 +50,8 @@ export default function KioskManagementLayout({ children }: { children: ReactNod
           },
         ]}
         tags={['Scenes', 'Widgets', 'Scheduling', 'Live Preview']}
-        ctaHref="https://newconcierge.app/pricing"
-        ctaLabel="Premium συνδρομή"
-        ctaExternal
+        ctaHref={upgradeHref}
+        ctaLabel="Αναβάθμιση Premium"
         icon={<Settings className="h-5 w-5" />}
       />
     );
