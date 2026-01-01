@@ -510,7 +510,7 @@ export default function LandingPage() {
                   </div>
                   <div className="mb-4 pt-2 text-lg font-semibold text-accent-primary">{item.title}</div>
                   <p className="mb-4 text-sm leading-relaxed text-text-secondary sm:text-base">{item.description}</p>
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-accent-primary/20 bg-bg-app-main">
+                  <div className="relative my-[5%] aspect-[4/3] overflow-hidden rounded-xl border border-accent-primary/20 bg-bg-app-main">
                     <Image
                       src={item.imageSrc}
                       alt={item.placeholder}
@@ -580,8 +580,8 @@ export default function LandingPage() {
             <div className="rounded-3xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft transition-transform duration-500 hover:scale-[1.02]">
               <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-[var(--bg-main-light)]">
                 <Image
-                  src="/screen_eisodos.jpg"
-                  alt="Screenshot από την οθόνη ενημέρωσης - ανακοινώσεις, ψηφοφορίες, αποτελέσματα"
+                  src="/conc.jpg"
+                  alt="Info Point στην είσοδο πολυκατοικίας"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 600px"
