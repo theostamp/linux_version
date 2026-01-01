@@ -90,9 +90,14 @@ export function PricingCalculator({
   showCTA = true,
   compact = false,
 }: PricingCalculatorProps) {
+  const minApartments = 1;
+  const maxApartments = 60;
   const [apartments, setApartments] = useState(initialApartments);
   const [selectedPlan, setSelectedPlan] = useState<"web" | "premium" | "premium_iot">("premium");
   const [isYearly, setIsYearly] = useState(false);
+  const sliderPercent = ((apartments - minApartments) / (maxApartments - minApartments)) * 100;
+  const sliderThumbSize = 24;
+  const sliderBubbleOffset = (sliderThumbSize * (50 - sliderPercent)) / 100;
 
   // Determine if Free tier applies
   const freeEligible = isFreeEligible(apartments);
@@ -167,30 +172,43 @@ export function PricingCalculator({
 
         {/* Slider */}
         <div className="mb-8 px-2">
-          <input
-            type="range"
-            min="1"
-            max="60"
-            value={apartments}
-            onChange={(e) => setApartments(parseInt(e.target.value))}
-            className="w-full h-2 bg-[var(--bg-sidebar)] rounded-lg appearance-none cursor-pointer
-                       [&::-webkit-slider-thumb]:appearance-none
-                       [&::-webkit-slider-thumb]:w-6
-                       [&::-webkit-slider-thumb]:h-6
-                       [&::-webkit-slider-thumb]:rounded-full
-                       [&::-webkit-slider-thumb]:bg-accent-primary
-                       [&::-webkit-slider-thumb]:shadow-lg
-                       [&::-webkit-slider-thumb]:shadow-accent-primary/50
-                       [&::-webkit-slider-thumb]:cursor-pointer
-                       [&::-webkit-slider-thumb]:transition-transform
-                       [&::-webkit-slider-thumb]:hover:scale-110
-                       [&::-moz-range-thumb]:w-6
-                       [&::-moz-range-thumb]:h-6
-                       [&::-moz-range-thumb]:rounded-full
-                       [&::-moz-range-thumb]:bg-accent-primary
-                       [&::-moz-range-thumb]:border-0
-                       [&::-moz-range-thumb]:cursor-pointer"
-          />
+          <div className="relative">
+            <div className="pointer-events-none absolute -top-9 left-0 right-0">
+              <div
+                className="absolute flex h-7 min-w-[2.25rem] items-center justify-center rounded-full bg-accent-primary px-2 text-xs font-semibold text-white shadow-lg shadow-accent-primary/30"
+                style={{
+                  left: `calc(${sliderPercent}% + ${sliderBubbleOffset}px)`,
+                  transform: "translateX(-50%)",
+                }}
+              >
+                {apartments}
+              </div>
+            </div>
+            <input
+              type="range"
+              min={minApartments}
+              max={maxApartments}
+              value={apartments}
+              onChange={(e) => setApartments(parseInt(e.target.value))}
+              className="w-full h-2 bg-[var(--bg-sidebar)] rounded-lg appearance-none cursor-pointer
+                         [&::-webkit-slider-thumb]:appearance-none
+                         [&::-webkit-slider-thumb]:w-6
+                         [&::-webkit-slider-thumb]:h-6
+                         [&::-webkit-slider-thumb]:rounded-full
+                         [&::-webkit-slider-thumb]:bg-accent-primary
+                         [&::-webkit-slider-thumb]:shadow-lg
+                         [&::-webkit-slider-thumb]:shadow-accent-primary/50
+                         [&::-webkit-slider-thumb]:cursor-pointer
+                         [&::-webkit-slider-thumb]:transition-transform
+                         [&::-webkit-slider-thumb]:hover:scale-110
+                         [&::-moz-range-thumb]:w-6
+                         [&::-moz-range-thumb]:h-6
+                         [&::-moz-range-thumb]:rounded-full
+                         [&::-moz-range-thumb]:bg-accent-primary
+                         [&::-moz-range-thumb]:border-0
+                         [&::-moz-range-thumb]:cursor-pointer"
+            />
+          </div>
           <div className="mt-2 flex justify-between text-xs text-[var(--text-dark-secondary)]">
             <span>1</span>
             <span>7</span>
