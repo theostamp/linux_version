@@ -97,6 +97,7 @@ export function PricingCalculator({
   const [isYearly, setIsYearly] = useState(false);
   const sliderRef = useRef<HTMLInputElement>(null);
   const [sliderBubbleLeft, setSliderBubbleLeft] = useState(0);
+  const [sliderWidth, setSliderWidth] = useState(0);
   const sliderThumbSize = 24;
 
   const updateSliderBubble = useCallback(() => {
@@ -105,6 +106,7 @@ export function PricingCalculator({
     const percent = (apartments - minApartments) / (maxApartments - minApartments);
     const left = percent * (rect.width - sliderThumbSize) + sliderThumbSize / 2;
     setSliderBubbleLeft(left);
+    setSliderWidth(rect.width);
   }, [apartments, minApartments, maxApartments, sliderThumbSize]);
 
   useEffect(() => {
@@ -115,8 +117,9 @@ export function PricingCalculator({
     return () => window.removeEventListener("resize", handleResize);
   }, [updateSliderBubble]);
 
-  // Determine if Free tier applies
+  // Determine if Free tier applies (Web only)
   const freeEligible = isFreeEligible(apartments);
+  const isWebFree = freeEligible && selectedPlan === "web";
 
   // Calculate prices
   const getPrice = useCallback(
@@ -143,7 +146,7 @@ export function PricingCalculator({
 
   // Handle plan selection - navigate to signup with params
   const handleSelectPlan = () => {
-    const effectivePlan = freeEligible ? "free" : selectedPlan;
+    const effectivePlan = isWebFree ? "free" : selectedPlan;
     const params = new URLSearchParams({
       plan: effectivePlan,
       apartments: apartments.toString(),
@@ -226,20 +229,39 @@ export function PricingCalculator({
                          [&::-moz-range-thumb]:cursor-pointer"
             />
           </div>
-          <div className="mt-2 flex justify-between text-xs text-[var(--text-dark-secondary)]">
-            <span>1</span>
-            <span>7</span>
-            <span>20</span>
-            <span>40</span>
-            <span>60+</span>
+          <div className="relative mt-2 h-4 text-xs text-[var(--text-dark-secondary)]">
+            {[
+              { value: 1, label: "1" },
+              { value: 7, label: "7" },
+              { value: 20, label: "20" },
+              { value: 40, label: "40" },
+              { value: 60, label: "60+" },
+            ].map((tick) => {
+              const percent = (tick.value - minApartments) / (maxApartments - minApartments);
+              const left = sliderWidth
+                ? percent * (sliderWidth - sliderThumbSize) + sliderThumbSize / 2
+                : `${percent * 100}%`;
+              return (
+                <span
+                  key={tick.label}
+                  className="absolute"
+                  style={{
+                    left: typeof left === "number" ? `${left}px` : left,
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  {tick.label}
+                </span>
+              );
+            })}
           </div>
         </div>
 
         {/* Free Tier Notice */}
-        {freeEligible && (
+        {isWebFree && (
           <div className="mb-6 rounded-xl border border-accent-secondary/30 bg-accent-secondary/10 p-4 text-center">
             <p className="text-sm font-medium text-accent-secondary">
-              🎉 Η πολυκατοικία σου χωράει στο δωρεάν πακέτο!
+              🎉 Το Web πακέτο είναι δωρεάν για έως 7 διαμερίσματα!
             </p>
             <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">
               Έως 7 διαμερίσματα - Βασικό φύλλο κοινοχρήστων
@@ -248,100 +270,98 @@ export function PricingCalculator({
         )}
 
         {/* Plan Selection */}
-        {!freeEligible && (
-          <div className="mb-6">
-            <p className="mb-3 text-sm text-[var(--text-dark-secondary)]">Επίλεξε πακέτο:</p>
-            <div className="grid gap-3 md:grid-cols-3">
-              {/* Web Option */}
-              <button
-                onClick={() => setSelectedPlan("web")}
-                className={`relative rounded-xl border p-4 text-left transition-all ${
-                  selectedPlan === "web"
-                    ? "border-accent-primary bg-accent-primary/10"
-                    : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Building className="h-5 w-5 text-[var(--text-dark-secondary)]" />
-                  <span className="font-medium text-accent-primary">Web</span>
-                </div>
-                <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Χωρίς οθόνη</p>
-                <p className="mt-2 text-lg font-bold text-accent-primary">
-                  €{webPrice}
-                  <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
-                    /μήνα
-                  </span>
-                </p>
-                {selectedPlan === "web" && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </button>
-
-              {/* Premium Option */}
-              <button
-                onClick={() => setSelectedPlan("premium")}
-                className={`relative rounded-xl border p-4 text-left transition-all ${
-                  selectedPlan === "premium"
-                    ? "border-accent-primary bg-accent-primary/10"
-                    : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
-                }`}
-              >
-                {/* Badge */}
-                <span className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                  Δημοφιλές
+        <div className="mb-6">
+          <p className="mb-3 text-sm text-[var(--text-dark-secondary)]">Επίλεξε πακέτο:</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {/* Web Option */}
+            <button
+              onClick={() => setSelectedPlan("web")}
+              className={`relative rounded-xl border p-4 text-left transition-all ${
+                selectedPlan === "web"
+                  ? "border-accent-primary bg-accent-primary/10"
+                  : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Building className="h-5 w-5 text-[var(--text-dark-secondary)]" />
+                <span className="font-medium text-accent-primary">Web</span>
+              </div>
+              <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Χωρίς οθόνη</p>
+              <p className="mt-2 text-lg font-bold text-accent-primary">
+                €{webPrice}
+                <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
+                  /μήνα
                 </span>
-                <div className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
-                  <span className="font-medium text-accent-primary">Premium</span>
+              </p>
+              {selectedPlan === "web" && (
+                <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
+                  <Check className="h-3 w-3 text-white" />
                 </div>
-                <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Web + Kiosk + AI + Αρχείο</p>
-                <p className="mt-2 text-lg font-bold text-accent-primary">
-                  €{premiumPrice}
-                  <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
-                    /μήνα
-                  </span>
-                </p>
-                {selectedPlan === "premium" && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </button>
+              )}
+            </button>
 
-              {/* Premium + IoT Option */}
-              <button
-                onClick={() => setSelectedPlan("premium_iot")}
-                className={`relative rounded-xl border p-4 text-left transition-all ${
-                  selectedPlan === "premium_iot"
-                    ? "border-accent-primary bg-accent-primary/10"
-                    : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
-                  <span className="font-medium text-accent-primary">Premium + IoT</span>
+            {/* Premium Option */}
+            <button
+              onClick={() => setSelectedPlan("premium")}
+              className={`relative rounded-xl border p-4 text-left transition-all ${
+                selectedPlan === "premium"
+                  ? "border-accent-primary bg-accent-primary/10"
+                  : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
+              }`}
+            >
+              {/* Badge */}
+              <span className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                Δημοφιλές
+              </span>
+              <div className="flex items-center gap-2">
+                <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
+                <span className="font-medium text-accent-primary">Premium</span>
+              </div>
+              <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Web + Kiosk + AI + Αρχείο</p>
+              <p className="mt-2 text-lg font-bold text-accent-primary">
+                €{premiumPrice}
+                <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
+                  /μήνα
+                </span>
+              </p>
+              {selectedPlan === "premium" && (
+                <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
+                  <Check className="h-3 w-3 text-white" />
                 </div>
-                <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Smart Heating</p>
-                <p className="mt-2 text-lg font-bold text-accent-primary">
-                  €{premiumIotPrice}
-                  <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
-                    /μήνα
-                  </span>
-                </p>
-                {selectedPlan === "premium_iot" && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </button>
-            </div>
+              )}
+            </button>
+
+            {/* Premium + IoT Option */}
+            <button
+              onClick={() => setSelectedPlan("premium_iot")}
+              className={`relative rounded-xl border p-4 text-left transition-all ${
+                selectedPlan === "premium_iot"
+                  ? "border-accent-primary bg-accent-primary/10"
+                  : "border-gray-200 bg-[var(--bg-white)] hover:border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Monitor className="h-5 w-5 text-[var(--text-dark-secondary)]" />
+                <span className="font-medium text-accent-primary">Premium + IoT</span>
+              </div>
+              <p className="mt-1 text-xs text-[var(--text-dark-secondary)]">Smart Heating</p>
+              <p className="mt-2 text-lg font-bold text-accent-primary">
+                €{premiumIotPrice}
+                <span className="text-xs font-normal text-[var(--text-dark-secondary)]">
+                  /μήνα
+                </span>
+              </p>
+              {selectedPlan === "premium_iot" && (
+                <div className="absolute -right-1 -top-1 rounded-full bg-accent-primary p-1">
+                  <Check className="h-3 w-3 text-white" />
+                </div>
+              )}
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Billing Toggle */}
-        {!freeEligible && (
+        {selectedPlan && !isWebFree && (
           <div className="mb-6 flex items-center justify-center gap-3">
             <span
               className={`text-sm ${!isYearly ? "text-[var(--text-dark-primary)]" : "text-[var(--text-dark-secondary)]"}`}
@@ -376,22 +396,22 @@ export function PricingCalculator({
         {/* Price Display */}
         <div className="rounded-xl bg-[var(--bg-white)] p-6 text-center shadow-card-soft">
           <p className="text-sm text-[var(--text-dark-secondary)]">
-            {freeEligible ? "Το πακέτο σου:" : "Συνολικό κόστος:"}
+            {isWebFree ? "Το πακέτο σου:" : "Συνολικό κόστος:"}
           </p>
           <div className="mt-2 flex items-baseline justify-center gap-1">
             <span className="text-4xl font-bold text-accent-primary">
-              €{freeEligible ? 0 : displayPrice}
+              €{displayPrice}
             </span>
             <span className="text-accent-primary">
               /{isYearly ? "έτος" : "μήνα"}
             </span>
           </div>
-          {!freeEligible && isYearly && yearlySavings && (
+          {!isWebFree && isYearly && yearlySavings && (
             <p className="mt-1 text-xs text-accent-primary">
               Εξοικονόμηση €{yearlySavings}/έτος (2 μήνες δωρεάν)
             </p>
           )}
-          {!freeEligible && (
+          {!isWebFree && (
             <p className="mt-2 text-xs text-accent-primary">
               {apartments} διαμερίσματα × {selectedPlan === "web" ? "Web" : selectedPlan === "premium" ? "Premium" : "Premium + IoT"}
             </p>
@@ -404,7 +424,7 @@ export function PricingCalculator({
             onClick={handleSelectPlan}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/25 transition-all hover:opacity-90 hover:shadow-accent-primary/30 hover:scale-[1.02]"
           >
-            {freeEligible ? "Ξεκίνα δωρεάν" : "Ξεκίνα τώρα"}
+            {isWebFree ? "Ξεκίνα δωρεάν" : "Ξεκίνα τώρα"}
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
@@ -424,7 +444,7 @@ export function PricingCalculator({
       </div>
 
       {/* Features Comparison (optional, show on full mode) */}
-      {!compact && selectedPlan && !freeEligible && (
+      {!compact && selectedPlan && !isWebFree && (
         <div className="mt-6 rounded-xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft">
           <p className="mb-3 text-sm font-medium text-accent-primary">
             {selectedPlan === "premium"
