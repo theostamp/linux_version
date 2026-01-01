@@ -8,13 +8,13 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import type { Vote, Building } from '@/lib/api';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { 
-  Plus, 
-  Vote as VoteIcon, 
-  Calendar, 
-  Clock, 
-  Trash2, 
-  Building2, 
+import {
+  Plus,
+  Vote as VoteIcon,
+  Calendar,
+  Clock,
+  Trash2,
+  Building2,
   Zap,
   Users,
   ChevronRight,
@@ -33,7 +33,7 @@ import { hasOfficeAdminAccess, hasInternalManagerAccess } from '@/lib/roleUtils'
 import { motion } from 'framer-motion';
 
 interface VoteItemContentProps {
-  readonly vote: Vote & { 
+  readonly vote: Vote & {
     building_name?: string | null;
     participation_percentage?: number;
     total_votes?: number;
@@ -71,25 +71,25 @@ const isActive = (startDate: string, endDate: string | null | undefined): boolea
   // Use ISO date string comparison (YYYY-MM-DD) to avoid timezone/time-of-day issues
   // Previously: new Date() vs new Date(endDate) caused "today 08:04 > endDate 00:00" = false
   const today = new Date().toISOString().split('T')[0]; // e.g. "2025-12-14"
-  
+
   // start_date is required and must be valid
   // Use isValidDate to properly validate instead of raw string comparison
   // (raw string comparison fails for non-ISO formats like "12-14-2025")
   if (!isValidDate(startDate)) {
     return false;
   }
-  
+
   // Normalize startDate to ISO format for reliable string comparison
   const normalizedStartDate = new Date(startDate).toISOString().split('T')[0];
-  
+
   // If no valid end date, consider it always active (after start)
   if (!isValidDate(endDate)) {
     return today >= normalizedStartDate;
   }
-  
+
   // Normalize endDate to ISO format for reliable string comparison
   const normalizedEndDate = new Date(endDate!).toISOString().split('T')[0];
-  
+
   // Compare ISO date strings directly (inclusive of end date)
   return today >= normalizedStartDate && today <= normalizedEndDate;
 };
@@ -190,7 +190,7 @@ function VoteItemContent({
             {buildingName || 'Όλα τα κτίρια'}
           </span>
         )}
-        
+
         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
           {formatDate(vote.start_date)} – {formatDate(vote.end_date)}
@@ -198,8 +198,8 @@ function VoteItemContent({
 
         <span className={cn(
           'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
-          active 
-            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+          active
+            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
             : 'bg-muted text-muted-foreground'
         )}>
           {active ? '✓ Ενεργή' : 'Ολοκληρώθηκε'}
@@ -245,7 +245,7 @@ function VotesPageContent() {
   // URL sync logic
   useEffect(() => {
     if (isUpdatingUrl.current) return;
-    
+
     const buildingParam = searchParams.get('building');
     if (buildingParam) {
       const buildingIdFromUrl = parseInt(buildingParam, 10);
@@ -262,10 +262,10 @@ function VotesPageContent() {
 
   useEffect(() => {
     if (isUpdatingFromUrl.current) return;
-    
+
     const buildingParam = searchParams.get('building');
     const expectedBuildingId = selectedBuilding?.id?.toString() || null;
-    
+
     if (selectedBuilding && selectedBuilding.id !== currentBuilding?.id) {
       if (buildingParam !== expectedBuildingId) {
         isUpdatingUrl.current = true;
@@ -279,7 +279,7 @@ function VotesPageContent() {
       isUpdatingUrl.current = true;
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete('building');
-      const newUrl = newSearchParams.toString() 
+      const newUrl = newSearchParams.toString()
         ? `/votes?${newSearchParams.toString()}`
         : '/votes';
       router.replace(newUrl, { scroll: false });
@@ -294,7 +294,7 @@ function VotesPageContent() {
   const buildingId =
     selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
   const canDelete = hasOfficeAdminAccess(user);
-  const canCreateVote = hasInternalManagerAccess(user);
+  const canCreateVote = hasInternalManagerAccess(user, selectedBuilding);
 
   const {
     data: votesData = [],
@@ -417,14 +417,14 @@ function VotesPageContent() {
 
   const handleDelete = async (vote: Vote) => {
     const isGlobal = (vote as { building_name?: string }).building_name === "Όλα τα κτίρια";
-    const confirmMessage = isGlobal 
+    const confirmMessage = isGlobal
       ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την ΚΑΘΟΛΙΚΗ ψηφοφορία "${vote.title}" από όλα τα κτίρια;`
       : `Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`;
-    
+
     if (!confirm(confirmMessage)) {
       return;
     }
-    
+
     setDeletingId(vote.id);
     try {
       const message = await deleteVote(vote.id);
@@ -550,7 +550,7 @@ function VotesPageContent() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {pastVotes.map((vote, index) => (
-                  <VoteItemContent 
+                  <VoteItemContent
                     key={vote.id}
                     vote={vote as VoteItemContentProps['vote']}
                     active={false}
@@ -566,10 +566,10 @@ function VotesPageContent() {
           )}
         </div>
       )}
-      
+
       {/* Floating Action Button for mobile */}
       {canCreateVote && (
-        <Link 
+        <Link
           href="/votes/new"
           className="md:hidden fixed bottom-6 right-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-110 z-50"
           title="Νέα Ψηφοφορία"

@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  Users, Plus, Calendar, Clock, MapPin, Video, 
-  CheckCircle, XCircle, AlertCircle, Play, 
+import {
+  Users, Plus, Calendar, Clock, MapPin, Video,
+  CheckCircle, XCircle, AlertCircle, Play,
   FileText, Send, Building2, Timer, Percent, HelpCircle,
   Activity
 } from 'lucide-react';
@@ -34,14 +34,14 @@ const statusColors: Record<AssemblyStatus, { variant: "default" | "secondary" | 
   adjourned: { variant: 'warning', icon: <AlertCircle className="w-3 h-3" /> },
 };
 
-function AssemblyCard({ 
-  assembly, 
-  index, 
+function AssemblyCard({
+  assembly,
+  index,
   canManage,
   onDelete,
   isPast = false,
-}: { 
-  assembly: AssemblyListItem; 
+}: {
+  assembly: AssemblyListItem;
   index: number;
   canManage: boolean;
   onDelete: () => void;
@@ -54,9 +54,9 @@ function AssemblyCard({
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('el-GR', { 
+    return date.toLocaleDateString('el-GR', {
       weekday: 'short',
-      day: '2-digit', 
+      day: '2-digit',
       month: 'short',
       year: 'numeric'
     });
@@ -117,7 +117,7 @@ function AssemblyCard({
           <div className="flex items-start gap-3">
             <div className={cn(
               'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
-              isLive ? 'bg-emerald-500 text-white shadow-emerald-200 shadow-lg' : 
+              isLive ? 'bg-emerald-500 text-white shadow-emerald-200 shadow-lg' :
               isPast ? 'bg-muted text-muted-foreground' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
             )}>
               <Users className="h-5 w-5" />
@@ -154,7 +154,7 @@ function AssemblyCard({
           <Calendar className="h-3 w-3" />
           {formatDate(assembly.scheduled_date)}
         </Badge>
-        
+
         <Badge variant="outline" className="gap-1 border-muted-foreground/10 bg-muted/30">
           <Clock className="h-3 w-3" />
           {formatTime(assembly.scheduled_time)}
@@ -189,7 +189,7 @@ function AssemblyCard({
             <FileText className="w-3.5 h-3.5" />
             <span>{assembly.agenda_items_count} θέματα</span>
           </div>
-          
+
           <div className="flex items-center gap-1">
             <Users className="w-3.5 h-3.5" />
             <span>{assembly.attendees_count} παρόντες</span>
@@ -199,7 +199,7 @@ function AssemblyCard({
         {/* Quorum indicator */}
         <div className={cn(
           'flex items-center gap-1.5 text-xs font-semibold',
-          assembly.quorum_achieved ? 'text-emerald-600 dark:text-emerald-400' : 
+          assembly.quorum_achieved ? 'text-emerald-600 dark:text-emerald-400' :
             assembly.quorum_status === 'close' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
         )}>
           <div className="flex flex-col items-end">
@@ -229,7 +229,7 @@ function AssembliesPageContent() {
 
   const buildingId =
     selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
-  const canManage = hasInternalManagerAccess(user);
+  const canManage = hasInternalManagerAccess(user, selectedBuilding);
 
   const {
     data: assemblies = [],
@@ -241,10 +241,10 @@ function AssembliesPageContent() {
   } = useAssemblies(buildingId);
 
   // Separate by status
-  const upcomingAssemblies = assemblies.filter(a => 
+  const upcomingAssemblies = assemblies.filter(a =>
     ['scheduled', 'convened', 'in_progress'].includes(a.status)
   );
-  const pastAssemblies = assemblies.filter(a => 
+  const pastAssemblies = assemblies.filter(a =>
     ['completed', 'adjourned', 'cancelled'].includes(a.status)
   );
   const draftAssemblies = assemblies.filter(a => a.status === 'draft');

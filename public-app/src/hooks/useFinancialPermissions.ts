@@ -1,10 +1,10 @@
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { getEffectiveRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
+import { getEffectiveRole, getEffectiveRoleForBuilding, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
-export type FinancialPermission = 
+export type FinancialPermission =
   | 'financial_read'
-  | 'financial_write' 
+  | 'financial_write'
   | 'financial_admin'
   | 'expense_manage'
   | 'payment_manage'
@@ -18,13 +18,13 @@ export function useFinancialPermissions() {
   const hasPermission = (permission: FinancialPermission): boolean => {
     if (!user || !isAuthReady) return false;
 
-    const role = getEffectiveRole(user);
+    const role = getEffectiveRoleForBuilding(user, selectedBuilding) ?? getEffectiveRole(user);
     const isOfficeAdmin = role ? ['manager', 'office_staff', 'staff', 'superuser'].includes(role) : false;
     const isSystemAdmin = role ? ['staff', 'superuser'].includes(role) : false;
     const isInternalManager = role === 'internal_manager';
-    
+
     // Check if internal manager has payment recording permission for this building
-    const internalManagerCanRecordPayments = isInternalManager && 
+    const internalManagerCanRecordPayments = isInternalManager &&
       selectedBuilding?.internal_manager_can_record_payments === true;
 
     switch (permission) {
@@ -64,18 +64,18 @@ export function useFinancialPermissions() {
   const canCreateExpense = () => hasPermission('expense_manage');
   const canEditExpense = () => hasPermission('expense_manage');
   const canDeleteExpense = () => hasPermission('financial_admin');
-  
+
   const canCreatePayment = () => hasPermission('payment_manage');
   const canEditPayment = () => hasPermission('payment_manage');
   const canDeletePayment = () => hasPermission('financial_admin');
-  
+
   const canViewTransactions = () => hasPermission('financial_read');
   const canEditTransaction = () => hasPermission('transaction_manage');
   const canDeleteTransaction = () => hasPermission('transaction_manage');
-  
+
   const canAccessReports = () => hasPermission('report_access');
   const canExportData = () => hasPermission('report_access');
-  
+
   const canCalculateCommonExpenses = () => hasPermission('financial_write');
   const canIssueCommonExpenses = () => hasPermission('financial_write');
 
@@ -83,30 +83,30 @@ export function useFinancialPermissions() {
     // Γενικά permissions
     hasPermission,
     isAuthReady,
-    
+
     // Ειδικά permissions για δαπάνες
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
-    
+
     // Ειδικά permissions για πληρωμές
     canCreatePayment,
     canEditPayment,
     canDeletePayment,
-    
+
     // Ειδικά permissions για κινήσεις
     canViewTransactions,
     canEditTransaction,
     canDeleteTransaction,
-    
+
     // Ειδικά permissions για αναφορές
     canAccessReports,
     canExportData,
-    
+
     // Ειδικά permissions για κοινοχρήστους
     canCalculateCommonExpenses,
     canIssueCommonExpenses,
-    
+
     // Χρήσιμες συναρτήσεις
     isManager: () => {
       const role = getEffectiveRole(user);
@@ -115,4 +115,4 @@ export function useFinancialPermissions() {
     isAdmin: () => hasOfficeAdminAccess(user),
     isSuperUser: () => getEffectiveRole(user) === 'superuser',
   };
-} 
+}

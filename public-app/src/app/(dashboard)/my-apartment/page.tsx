@@ -8,20 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  Home, 
-  CreditCard, 
-  Receipt, 
-  History, 
-  Euro, 
+import {
+  Home,
+  CreditCard,
+  Receipt,
+  History,
+  Euro,
   User,
   Building2,
   AlertCircle,
@@ -124,9 +124,9 @@ function StatusBadge({ status }: { status: string }) {
     'Πιστωτικό': { variant: 'secondary', icon: <CheckCircle2 className="w-3 h-3 mr-1" /> },
     'Εξοφλημένο': { variant: 'default', icon: <CheckCircle2 className="w-3 h-3 mr-1" /> },
   };
-  
+
   const { variant, icon } = variants[status] || { variant: 'outline' as const, icon: null };
-  
+
   return (
     <Badge variant={variant} className="flex items-center">
       {icon}
@@ -166,17 +166,32 @@ function translatePaymentMethod(method: string): string {
 
 // Main content component
 function MyApartmentContent() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [selectedApartmentIndex, setSelectedApartmentIndex] = useState(0);
   const [isSendingLinkEmail, setIsSendingLinkEmail] = useState(false);
+  const [isRelogging, setIsRelogging] = useState(false);
   const supportUrl = useMemo(() => '/users', []);
-  
+  const residentLoginUrl = '/login/resident?redirect=/my-apartment';
+
+  const handleRelogin = async () => {
+    setIsRelogging(true);
+    try {
+      if (user) {
+        await logout();
+      }
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.location.assign(residentLoginUrl);
+      }
+    }
+  };
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['my-apartment'],
     queryFn: fetchMyApartmentData,
     enabled: !!user,
   });
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -187,8 +202,36 @@ function MyApartmentContent() {
       </div>
     );
   }
-  
+
   if (isError) {
+    const errorStatus = (error as { status?: number; response?: { status?: number } })?.status
+      ?? (error as { response?: { status?: number } })?.response?.status;
+
+    if (errorStatus === 404) {
+      return (
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="w-5 h-5" />
+              Δεν βρέθηκε διαμέρισμα
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Φαίνεται ότι είστε συνδεδεμένοι με λάθος λογαριασμό. Αν ανοίξατε σύνδεσμο από email,
+              αποσυνδεθείτε και συνδεθείτε ξανά ως ένοικος/ιδιοκτήτης.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={handleRelogin} disabled={isRelogging} className="gap-2">
+                {isRelogging ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Σύνδεση ως ένοικος
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className="border-destructive">
         <CardHeader>
@@ -199,13 +242,13 @@ function MyApartmentContent() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            {(error as Error)?.message || 'Δεν ήταν δυνατή η φόρτωση των δεδομένων του διαμερίσματος.'}
+            Δεν ήταν δυνατή η φόρτωση των δεδομένων του διαμερίσματος. Δοκιμάστε ξανά ή συνδεθείτε εκ νέου.
           </p>
         </CardContent>
       </Card>
     );
   }
-  
+
   if (!data?.has_apartment) {
     return (
       <Card>
@@ -231,13 +274,13 @@ function MyApartmentContent() {
       </Card>
     );
   }
-  
+
   const apartment = data.apartments[selectedApartmentIndex];
-  
+
   if (!apartment) {
     return null;
   }
-  
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -323,7 +366,7 @@ function MyApartmentContent() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Multiple apartments overview */}
       {data.apartments_count > 1 && (
         <>
@@ -341,14 +384,14 @@ function MyApartmentContent() {
                 <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Συνολική Οφειλή</p>
                   <p className={`text-xl font-bold ${
-                    data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0) > 0 
-                      ? 'text-destructive' 
+                    data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0) > 0
+                      ? 'text-destructive'
                       : 'text-green-600 dark:text-green-400'
                   }`}>
                     {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.current_balance, 0))}
                   </p>
                 </div>
-                
+
                 {/* Total Paid */}
                 <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Συνολικές Πληρωμές</p>
@@ -356,7 +399,7 @@ function MyApartmentContent() {
                     {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.summary.total_paid, 0))}
                   </p>
                 </div>
-                
+
                 {/* Total Expenses */}
                 <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Συνολικές Δαπάνες</p>
@@ -364,7 +407,7 @@ function MyApartmentContent() {
                     {formatCurrency(data.apartments.reduce((sum, apt) => sum + apt.summary.total_expenses, 0))}
                   </p>
                 </div>
-                
+
                 {/* Apartments with Debt */}
                 <div className="bg-background rounded-lg p-3 shadow-sm border border-border">
                   <p className="text-xs text-muted-foreground">Με Οφειλή</p>
@@ -373,7 +416,7 @@ function MyApartmentContent() {
                   </p>
                 </div>
               </div>
-              
+
               {/* Apartments list with quick info */}
               <div className="mt-4">
                 <p className="text-sm text-muted-foreground mb-2">
@@ -425,7 +468,7 @@ function MyApartmentContent() {
           </Card>
         </>
       )}
-      
+
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -442,7 +485,7 @@ function MyApartmentContent() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Συνολικές Πληρωμές</CardTitle>
@@ -457,7 +500,7 @@ function MyApartmentContent() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Συνολικές Δαπάνες</CardTitle>
@@ -473,7 +516,7 @@ function MyApartmentContent() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Apartment Info */}
       <Card>
         <CardHeader>
@@ -515,7 +558,7 @@ function MyApartmentContent() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Quick Actions for Residents */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors cursor-pointer" asChild>
@@ -556,7 +599,7 @@ function MyApartmentContent() {
           </Link>
         </Card>
       </div>
-      
+
       {/* Tabs for History */}
       <Tabs defaultValue="payments" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
@@ -573,7 +616,7 @@ function MyApartmentContent() {
             <span className="hidden sm:inline">Κινήσεις</span>
           </TabsTrigger>
         </TabsList>
-        
+
         {/* Payments Tab */}
         <TabsContent value="payments">
           <Card>
@@ -616,7 +659,7 @@ function MyApartmentContent() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Expenses Tab */}
         <TabsContent value="expenses">
           <Card>
@@ -663,7 +706,7 @@ function MyApartmentContent() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Transactions Tab */}
         <TabsContent value="transactions">
           <Card>
@@ -713,7 +756,7 @@ function MyApartmentContent() {
           </Card>
         </TabsContent>
       </Tabs>
-      
+
       {/* Future: Online Payment Button */}
       {apartment.current_balance > 0 && (
         <Card className="border-primary/20 bg-primary/5">
@@ -745,4 +788,3 @@ export default function MyApartmentPage() {
     </AuthGate>
   );
 }
-

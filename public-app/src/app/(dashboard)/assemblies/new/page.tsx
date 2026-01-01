@@ -77,7 +77,7 @@ function AgendaItemCard({
       className="bg-white rounded-xl border border-gray-200 overflow-hidden"
     >
       {/* Header */}
-      <div 
+      <div
         className="p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50"
         onClick={() => setExpanded(!expanded)}
       >
@@ -268,7 +268,7 @@ function CreateAssemblyContent() {
     }
   ]);
 
-  const canManage = hasInternalManagerAccess(user);
+  const canManage = hasInternalManagerAccess(user, selectedBuilding);
 
   if (!canManage) {
     router.push('/assemblies');
@@ -311,14 +311,14 @@ function CreateAssemblyContent() {
 
     if (formData.pre_voting_enabled && formData.scheduled_date) {
       const assemblyDate = new Date(formData.scheduled_date);
-      
+
       if (!preVotingStartDate) {
         // Default: voting starts 7 days before assembly
         const startDate = new Date(assemblyDate);
         startDate.setDate(startDate.getDate() - 7);
         preVotingStartDate = startDate.toISOString().split('T')[0];
       }
-      
+
       if (!preVotingEndDate) {
         // Default: voting closes 1 day BEFORE assembly (backend requirement)
         const endDate = new Date(assemblyDate);

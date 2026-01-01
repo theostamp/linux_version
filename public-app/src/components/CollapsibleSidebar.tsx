@@ -8,7 +8,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
-import { getEffectiveRole, isResident } from '@/lib/roleUtils';
+import { getEffectiveRole, getEffectiveRoleForBuilding, isResident } from '@/lib/roleUtils';
 import BuildingSelectorButton from './BuildingSelectorButton';
 import { designSystem } from '@/lib/design-system';
 import {
@@ -473,7 +473,7 @@ export default function CollapsibleSidebar() {
   }, []);
 
   // Determine user role
-  const userRole = getEffectiveRole(user);
+  const userRole = getEffectiveRoleForBuilding(user, selectedBuilding) ?? getEffectiveRole(user);
   // Ultra Admin check: role='admin' OR (is_superuser AND is_staff)
   const isUltraAdminUser = Boolean(
     (user?.role?.toLowerCase() === 'admin' && user?.is_superuser && user?.is_staff) ||

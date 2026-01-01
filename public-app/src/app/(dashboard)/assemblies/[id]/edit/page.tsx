@@ -75,7 +75,7 @@ function AgendaItemCard({
       className="bg-white rounded-xl border border-gray-200 overflow-hidden"
     >
       {/* Header */}
-      <div 
+      <div
         className="p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50"
         onClick={() => setExpanded(!expanded)}
       >
@@ -212,7 +212,7 @@ function EditAssemblyContent() {
   const router = useRouter();
   const params = useParams();
   const assemblyId = params.id as string;
-  
+
   const { user } = useAuth();
   const { buildings, currentBuilding, selectedBuilding } = useBuilding();
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
@@ -285,7 +285,7 @@ function EditAssemblyContent() {
     }
   }, [selectedBuilding?.id, currentBuilding?.id, userTouchedBuilding, formData.building]);
 
-  const canManage = hasInternalManagerAccess(user);
+  const canManage = hasInternalManagerAccess(user, selectedBuilding);
 
   // Loading state
   if (isLoading) {
@@ -704,4 +704,3 @@ export default function EditAssemblyPage() {
     </AuthGate>
   );
 }
-

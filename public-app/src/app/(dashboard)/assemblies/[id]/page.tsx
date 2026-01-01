@@ -13,12 +13,12 @@ import {
 
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { 
-  useAssembly, 
+import {
+  useAssembly,
   useSendAssemblyInvitation,
   useStartAssembly,
   useDeleteAssembly,
-  useDownloadAssemblyMinutes 
+  useDownloadAssemblyMinutes
 } from '@/hooks/useAssemblies';
 import type { Assembly, AssemblyStatus } from '@/lib/api';
 
@@ -65,11 +65,11 @@ function QuorumMeter({ assembly }: { assembly: Assembly }) {
 
       <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
         {/* Required threshold line */}
-        <div 
+        <div
           className="absolute top-0 bottom-0 w-0.5 bg-gray-400 z-10"
           style={{ left: `${required}%` }}
         />
-        
+
         {/* Progress bar */}
         <motion.div
           className={cn(
@@ -119,7 +119,7 @@ function AgendaOverview({ assembly }: { assembly: Assembly }) {
 
       <div className="divide-y divide-gray-100">
         {assembly.agenda_items.map((item, index) => (
-          <div 
+          <div
             key={item.id}
             className="px-5 py-3 flex items-start gap-3 hover:bg-gray-50 transition-colors"
           >
@@ -261,7 +261,7 @@ function AssemblyDetailContent() {
   const deleteAssembly = useDeleteAssembly();
   const downloadMinutes = useDownloadAssemblyMinutes();
 
-  const canManage = hasInternalManagerAccess(user);
+  const canManage = hasInternalManagerAccess(user, selectedBuilding);
 
   // Find current user's attendee record
   const myAttendee = assembly?.attendees.find(a => a.user === user?.id) || null;
@@ -351,7 +351,7 @@ function AssemblyDetailContent() {
   const handleDownloadWorkingSheet = () => {
     // We use a direct link because this is a public/GET endpoint for authenticated users
     const url = `${process.env.NEXT_PUBLIC_CORE_API_URL}/api/assemblies/${assembly.id}/download_working_sheet/`;
-    // We should ideally use the api client to handle headers if needed, 
+    // We should ideally use the api client to handle headers if needed,
     // but for simplicity and immediate feedback, we open in new tab
     window.open(url, '_blank');
   };
@@ -370,7 +370,7 @@ function AssemblyDetailContent() {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Πίσω
           </Button>
-          
+
           <div className="flex items-center gap-3">
             <div className={cn(
               'w-12 h-12 rounded-xl flex items-center justify-center',
@@ -417,7 +417,7 @@ function AssemblyDetailContent() {
                   Αποστολή Πρόσκλησης
                 </Button>
               )}
-              
+
               {canStart && (
                 <Button
                   onClick={handleStart}
@@ -505,8 +505,8 @@ function AssemblyDetailContent() {
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Left column */}
               <div className="space-y-6">
-                <RSVPCard 
-                  assembly={assembly} 
+                <RSVPCard
+                  assembly={assembly}
                   attendee={myAttendee}
                   onPreVoteClick={() => setActiveTab('vote')}
                 />
@@ -522,8 +522,8 @@ function AssemblyDetailContent() {
           </TabsContent>
 
           <TabsContent value="vote" className="mt-6">
-            <PreVotingForm 
-              assembly={assembly} 
+            <PreVotingForm
+              assembly={assembly}
               attendee={myAttendee}
               onComplete={() => setActiveTab('overview')}
             />
@@ -536,7 +536,7 @@ function AssemblyDetailContent() {
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6">
             <QuorumMeter assembly={assembly} />
-            
+
             {/* Description */}
             {assembly.description && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -564,8 +564,8 @@ function AssemblyDetailContent() {
             Πρακτικά (Modal)
           </Button>
           {(assembly.status === 'completed') && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => downloadMinutes.mutate(assembly.id)}
               disabled={downloadMinutes.isPending}
               className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
@@ -586,8 +586,8 @@ function AssemblyDetailContent() {
               </Link>
             </Button>
           )}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleDelete}
             disabled={deleteAssembly.isPending}
             className="text-red-600 hover:text-red-700 hover:bg-red-50"

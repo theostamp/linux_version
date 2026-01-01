@@ -1,3 +1,4 @@
+import type { Building } from '@/lib/api';
 import type { User } from '@/types/user';
 
 export type NormalizedRole =
@@ -8,7 +9,7 @@ export type NormalizedRole =
   | 'staff'
   | 'superuser';
 
-export type RoleDescriptor = Pick<User, 'role' | 'profile' | 'is_superuser' | 'is_staff'>;
+export type RoleDescriptor = Pick<User, 'id' | 'email' | 'role' | 'profile' | 'is_superuser' | 'is_staff'>;
 export type RoleAwareUser = RoleDescriptor | null | undefined;
 
 const ROLE_ALIASES: Record<string, NormalizedRole> = {
@@ -51,6 +52,46 @@ export function getEffectiveRole(user: RoleAwareUser): NormalizedRole | undefine
   return undefined;
 }
 
+const matchesInternalManager = (user: RoleAwareUser, building?: Building | null): boolean => {
+  if (!user || !building) return false;
+
+  if (typeof building.internal_manager_id === 'number' && typeof user.id === 'number') {
+    return building.internal_manager_id === user.id;
+  }
+  if (building.internal_manager?.id && typeof user.id === 'number') {
+    return building.internal_manager.id === user.id;
+  }
+  if (building.internal_manager?.email && user.email) {
+    return building.internal_manager.email.toLowerCase() === user.email.toLowerCase();
+  }
+  return false;
+};
+
+export function getEffectiveRoleForBuilding(
+  user: RoleAwareUser,
+  building?: Building | null,
+): NormalizedRole | undefined {
+  const baseRole = getEffectiveRole(user);
+  if (!building) return baseRole;
+
+  if (baseRole && OFFICE_ADMIN_ROLES.includes(baseRole)) {
+    return baseRole;
+  }
+
+  if (matchesInternalManager(user, building)) {
+    return 'internal_manager';
+  }
+
+  if (baseRole === 'internal_manager') {
+    if (building.internal_manager_id || building.internal_manager) {
+      return 'resident';
+    }
+    return baseRole;
+  }
+
+  return baseRole;
+}
+
 export function userHasRole(user: RoleAwareUser, allowedRoles: NormalizedRole[]): boolean {
   const role = getEffectiveRole(user);
   if (!role) return false;
@@ -61,17 +102,17 @@ export function hasOfficeAdminAccess(user: RoleAwareUser): boolean {
   return userHasRole(user, OFFICE_ADMIN_ROLES);
 }
 
-export function hasInternalManagerAccess(user: RoleAwareUser): boolean {
-  return userHasRole(user, INTERNAL_OR_ADMIN_ROLES);
+export function hasInternalManagerAccess(user: RoleAwareUser, building?: Building | null): boolean {
+  const role = building ? getEffectiveRoleForBuilding(user, building) : getEffectiveRole(user);
+  if (!role) return false;
+  return INTERNAL_OR_ADMIN_ROLES.includes(role);
 }
 
 export function isResident(user: RoleAwareUser): boolean {
   return getEffectiveRole(user) === 'resident';
 }
 
-export function getRoleLabel(user: RoleAwareUser): string {
-  const role = getEffectiveRole(user);
-
+export function getRoleLabelFromRole(role?: NormalizedRole): string {
   switch (role) {
     case 'resident':
       return 'Ένοικος';
@@ -88,6 +129,10 @@ export function getRoleLabel(user: RoleAwareUser): string {
     default:
       return 'Χρήστης';
   }
+}
+
+export function getRoleLabel(user: RoleAwareUser): string {
+  return getRoleLabelFromRole(getEffectiveRole(user));
 }
 
 export function getDefaultLandingPath(user: RoleAwareUser): string {
@@ -107,4 +152,3 @@ export function getDefaultLandingPath(user: RoleAwareUser): string {
       return '/announcements';
   }
 }
-

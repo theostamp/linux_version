@@ -22,9 +22,9 @@ import { hasInternalManagerAccess } from '@/lib/roleUtils';
 function AnnouncementsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { user } = useAuth();
-  
+
   // Έλεγχος αν ο χρήστης μπορεί να δημιουργήσει ανακοινώσεις
-  const canCreateAnnouncement = hasInternalManagerAccess(user);
+  const canCreateAnnouncement = hasInternalManagerAccess(user, selectedBuilding);
 
   // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
   const buildingId =
@@ -52,7 +52,7 @@ function AnnouncementsPageContent() {
           {canCreateAnnouncement && (
             <Button asChild>
               <Link href="/announcements/new">
-                {selectedBuilding 
+                {selectedBuilding
                   ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
                   : "Νέα Ανακοίνωση"
                 }
@@ -76,7 +76,7 @@ function AnnouncementsPageContent() {
           {canCreateAnnouncement && (
             <Button asChild>
               <Link href="/announcements/new">
-                {selectedBuilding 
+                {selectedBuilding
                   ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
                   : "Νέα Ανακοίνωση"
                 }
@@ -98,7 +98,7 @@ function AnnouncementsPageContent() {
           {canCreateAnnouncement && (
             <Button asChild>
               <Link href="/announcements/new">
-                {selectedBuilding 
+                {selectedBuilding
                   ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
                   : "Νέα Ανακοίνωση"
                 }
@@ -144,9 +144,9 @@ function AnnouncementsPageContent() {
           </div>
         )}
       </div>
-      
+
       <BuildingFilterIndicator className="mb-2" />
-      
+
       {announcements.length === 0 ? (
         <div className="bg-card rounded-xl border border-dashed p-12 text-center text-muted-foreground">
           <Megaphone className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
@@ -181,4 +181,3 @@ export default function AnnouncementsPage() {
     </AuthGate>
   );
 }
-

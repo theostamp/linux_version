@@ -117,7 +117,7 @@ function PollsContent() {
   const { selectedBuilding } = useBuilding();
   const { user } = useAuth();
   const { data: polls = [], isLoading } = usePolls(selectedBuilding?.id);
-  const canManage = hasInternalManagerAccess(user);
+  const canManage = hasInternalManagerAccess(user, selectedBuilding);
 
   if (isLoading) {
     return (
@@ -184,7 +184,6 @@ export default function PollsPage() {
     </AuthGate>
   );
 }
-
 
 
 

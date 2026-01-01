@@ -543,7 +543,7 @@ export default function WeatherWidgetMorningOverview({ data, isLoading, error }:
             {/* Συμβουλή δίπλα από τη θερμοκρασία */}
             <div className="flex-1 min-w-0 self-center">
               {specialDayMessages.length > 0 && (
-                <div className="mb-2 flex flex-wrap gap-2 text-lg font-semibold text-orange-100 leading-snug">
+                <div className="mb-2 flex flex-wrap gap-2 text-2xl font-semibold text-orange-100 leading-snug">
                   {specialDayMessages.map((message) => (
                     <span key={message} className="whitespace-nowrap">
                       {message}

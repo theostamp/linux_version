@@ -1077,6 +1077,7 @@ export type Building = {
   heating_fixed_percentage?: number;
   // Νέα πεδία για εσωτερικό διαχειριστή (ForeignKey)
   internal_manager?: InternalManager | null;
+  internal_manager_id?: number | null;
   internal_manager_can_record_payments?: boolean;
   internal_manager_display_name?: string;
   // Legacy πεδία (backward compatibility)

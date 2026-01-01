@@ -14,8 +14,8 @@ import {
 
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { 
-  useAssembly, useAssemblyAttendees, useAgendaItems, 
+import {
+  useAssembly, useAssemblyAttendees, useAgendaItems,
   useStartAgendaItem, useEndAgendaItem, useAttendeeCheckIn,
   useEndAssembly, useAgendaItemVoteResults
 } from '@/hooks/useAssemblies';
@@ -37,7 +37,7 @@ function LiveTimer({ startTime }: { startTime: string | null }) {
 
   useEffect(() => {
     if (!startTime) return;
-    
+
     const start = new Date(startTime).getTime();
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - start) / 1000));
@@ -58,12 +58,12 @@ function LiveTimer({ startTime }: { startTime: string | null }) {
   );
 }
 
-function QuorumDisplay({ 
-  achieved, 
-  percentage, 
-  achievedMills, 
-  requiredMills 
-}: { 
+function QuorumDisplay({
+  achieved,
+  percentage,
+  achievedMills,
+  requiredMills
+}: {
   achieved: boolean;
   percentage: number;
   achievedMills: number;
@@ -229,13 +229,13 @@ function LiveAssemblyContent() {
   useAssemblyWebSocket(assemblyId);
 
   const { data: agendaItems = [] } = useAgendaItems(assemblyId);
-  
+
   const startAgendaItem = useStartAgendaItem();
   const endAgendaItem = useEndAgendaItem();
   const endAssembly = useEndAssembly();
 
-  const canManage = hasInternalManagerAccess(user);
-  
+  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+
   const currentItem = agendaItems.find(item => item.status === 'in_progress');
   const isVotingItem = currentItem?.item_type === 'voting';
   const voteResultsItemId = isVotingItem ? currentItem?.id : undefined;
@@ -286,19 +286,19 @@ function LiveAssemblyContent() {
 
   const handleCompleteItem = async (itemId: string) => {
     const item = agendaItems.find(i => i.id === itemId);
-    const defaultDecision = item?.item_type === 'voting' 
-      ? 'Εγκρίθηκε κατά πλειοψηφία' 
+    const defaultDecision = item?.item_type === 'voting'
+      ? 'Εγκρίθηκε κατά πλειοψηφία'
       : 'Ολοκληρώθηκε η συζήτηση';
-      
+
     const decision = prompt('Ποια είναι η απόφαση για αυτό το θέμα;', defaultDecision);
     if (decision === null) return; // Cancelled
-    
-    await endAgendaItem.mutateAsync({ 
-      id: itemId, 
-      options: { 
+
+    await endAgendaItem.mutateAsync({
+      id: itemId,
+      options: {
         decision_type: item?.item_type === 'voting' ? 'approved' : 'no_decision',
         decision: decision
-      } 
+      }
     });
   };
 
@@ -404,7 +404,7 @@ function LiveAssemblyContent() {
             requiredMills={assembly.required_quorum_mills || 1000}
           />
         </div>
-        
+
         {/* Mobile Quorum */}
         <div className="md:hidden bg-white rounded-xl border border-gray-200 p-4 text-center">
           <div className="flex items-center justify-center gap-2 text-gray-500 mb-1">
@@ -465,8 +465,8 @@ function LiveAssemblyContent() {
                 animate={{ opacity: 1, x: 0 }}
                 className={cn(
                   "lg:col-span-2 rounded-2xl p-6 md:p-8 text-white shadow-lg",
-                  isVotingItem 
-                    ? "bg-gradient-to-br from-indigo-600 to-purple-700" 
+                  isVotingItem
+                    ? "bg-gradient-to-br from-indigo-600 to-purple-700"
                     : "bg-gradient-to-br from-emerald-500 to-teal-600"
                 )}
               >
@@ -478,9 +478,9 @@ function LiveAssemblyContent() {
                     {currentItem.order} από {agendaItems.length}
                   </div>
                 </div>
-                
+
                 <h2 className="text-2xl md:text-3xl font-black mb-4">{currentItem.title}</h2>
-                
+
                 {currentItem.description && (
                   <p className="text-sm md:text-lg text-white/80 leading-relaxed mb-6">
                     {currentItem.description}
@@ -489,8 +489,8 @@ function LiveAssemblyContent() {
 
                 {isVotingItem && voteResults && (
                   <div className="mt-8 pt-8 border-t border-white/10">
-                    <LiveResultsDisplay 
-                      results={voteResults.summary} 
+                    <LiveResultsDisplay
+                      results={voteResults.summary}
                       votingTypeDisplay={currentItem.voting_type_display}
                     />
                   </div>
@@ -507,7 +507,7 @@ function LiveAssemblyContent() {
                     canManage={canManage}
                   />
                 )}
-                
+
                 {!isVotingItem && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center h-full flex flex-col items-center justify-center">
                     <MessageSquare className="w-12 h-12 text-gray-200 mb-4" />

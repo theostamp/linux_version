@@ -10,23 +10,24 @@ import OfficeSettingsModal from './OfficeSettingsModal';
 import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
 import { User, Building as BuildingIcon, Settings, Calendar, Shield, HelpCircle } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
-import { getRoleLabel, hasOfficeAdminAccess, isResident, hasInternalManagerAccess, getEffectiveRole } from '@/lib/roleUtils';
+import { getEffectiveRoleForBuilding, getRoleLabelFromRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding, buildings } = useBuilding();
   const isAdminLevel = hasOfficeAdminAccess(user);
-  const isResidentUser = isResident(user);
-  const isInternalManager = getEffectiveRole(user) === 'internal_manager';
-  
+  const effectiveRole = getEffectiveRoleForBuilding(user, selectedBuilding);
+  const isResidentUser = effectiveRole === 'resident';
+  const isInternalManager = effectiveRole === 'internal_manager';
+
   // Επιτρέπουμε αλλαγή κτιρίου σε:
   // 1. Διαχειριστές (office admins)
   // 2. Εσωτερικούς διαχειριστές (internal managers)
   // 3. Residents που έχουν πρόσβαση σε 2+ πολυκατοικίες
   const hasMultipleBuildings = buildings && buildings.length > 1;
   const canSelectBuilding = isAdminLevel || isInternalManager || (isResidentUser && hasMultipleBuildings);
-  
-  const roleLabel = getRoleLabel(user);
+
+  const roleLabel = getRoleLabelFromRole(effectiveRole);
   // Show office details for admins AND internal managers
   const showOfficeDetails = isAdminLevel || isInternalManager;
 
@@ -145,7 +146,7 @@ export default function GlobalHeader() {
                         {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
                       </p>
                     </div>
-                    
+
                 {/* Building Selector for residents with multiple buildings - Desktop */}
                 {canSelectBuilding && hasMultipleBuildings && (
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -157,7 +158,7 @@ export default function GlobalHeader() {
                     />
                   </div>
                 )}
-                    
+
                     {/* Mobile selector moved to its own row (see below) */}
                   </div>
                 )}
@@ -166,7 +167,7 @@ export default function GlobalHeader() {
               {/* Right Section - Actions and User Info */}
               <div className="flex items-center gap-2 flex-shrink-0">
               {/* Todo Reminders Dropdown - Bell Icon */}
-              <TodoReminderDropdown 
+              <TodoReminderDropdown
                 className="hidden sm:flex"
                 onOpenCalendar={() => {
                   const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
@@ -227,7 +228,7 @@ export default function GlobalHeader() {
               )}
 
               {/* Todo Reminders - Mobile */}
-              <TodoReminderDropdown 
+              <TodoReminderDropdown
                 className="sm:hidden"
                 onOpenCalendar={() => {
                   window.location.href = '/calendar';
@@ -237,8 +238,8 @@ export default function GlobalHeader() {
               {/* User Info Card */}
               {user && (
                 <div className={`flex items-center gap-3 px-4 py-2 rounded-xl shadow-sm transition-colors ${
-                  isInternalManager 
-                    ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30' 
+                  isInternalManager
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30'
                     : 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'
                 }`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -304,7 +305,7 @@ export default function GlobalHeader() {
     </header>
 
       {/* Office Settings Modal */}
-      <OfficeSettingsModal 
+      <OfficeSettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
       />
