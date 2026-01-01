@@ -13,12 +13,13 @@ export type FinancialPermission =
 
 export function useFinancialPermissions() {
   const { user, isAuthReady } = useAuth();
-  const { selectedBuilding } = useBuilding();
+  const { selectedBuilding, buildingContext } = useBuilding();
+  const roleBuilding = buildingContext ?? selectedBuilding;
 
   const hasPermission = (permission: FinancialPermission): boolean => {
     if (!user || !isAuthReady) return false;
 
-    const role = getEffectiveRoleForBuilding(user, selectedBuilding) ?? getEffectiveRole(user);
+    const role = getEffectiveRoleForBuilding(user, roleBuilding) ?? getEffectiveRole(user);
     const isOfficeAdmin = role ? ['manager', 'office_staff', 'staff', 'superuser'].includes(role) : false;
     const isSystemAdmin = role ? ['staff', 'superuser'].includes(role) : false;
     const isInternalManager = role === 'internal_manager';

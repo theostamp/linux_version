@@ -221,7 +221,7 @@ function AssemblyCard({
 }
 
 function AssembliesPageContent() {
-  const { currentBuilding, selectedBuilding, buildings, isLoading: buildingLoading } = useBuilding();
+  const { currentBuilding, selectedBuilding, buildingContext, buildings, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -229,7 +229,7 @@ function AssembliesPageContent() {
 
   const buildingId =
     selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
-  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   const {
     data: assemblies = [],

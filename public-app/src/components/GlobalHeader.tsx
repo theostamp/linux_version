@@ -14,9 +14,10 @@ import { getEffectiveRoleForBuilding, getRoleLabelFromRole, hasOfficeAdminAccess
 
 export default function GlobalHeader() {
   const { user } = useAuth();
-  const { selectedBuilding, setSelectedBuilding, buildings } = useBuilding();
+  const { selectedBuilding, setSelectedBuilding, buildings, buildingContext } = useBuilding();
   const isAdminLevel = hasOfficeAdminAccess(user);
-  const effectiveRole = getEffectiveRoleForBuilding(user, selectedBuilding);
+  const roleBuilding = buildingContext ?? selectedBuilding;
+  const effectiveRole = getEffectiveRoleForBuilding(user, roleBuilding);
   const isResidentUser = effectiveRole === 'resident';
   const isInternalManager = effectiveRole === 'internal_manager';
 

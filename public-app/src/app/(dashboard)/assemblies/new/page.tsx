@@ -214,7 +214,7 @@ function AgendaItemCard({
 function CreateAssemblyContent() {
   const router = useRouter();
   const { user } = useAuth();
-  const { currentBuilding, selectedBuilding, buildings } = useBuilding();
+  const { currentBuilding, selectedBuilding, buildingContext, buildings } = useBuilding();
   const createAssembly = useCreateAssembly();
 
   const [formData, setFormData] = useState({
@@ -268,7 +268,7 @@ function CreateAssemblyContent() {
     }
   ]);
 
-  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   if (!canManage) {
     router.push('/assemblies');

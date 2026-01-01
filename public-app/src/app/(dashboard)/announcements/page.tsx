@@ -20,11 +20,11 @@ import SubscriptionGate from '@/components/SubscriptionGate';
 import { hasInternalManagerAccess } from '@/lib/roleUtils';
 
 function AnnouncementsPageContent() {
-  const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
+  const { currentBuilding, selectedBuilding, buildingContext, isLoading: buildingLoading } = useBuilding();
   const { user } = useAuth();
 
   // Έλεγχος αν ο χρήστης μπορεί να δημιουργήσει ανακοινώσεις
-  const canCreateAnnouncement = hasInternalManagerAccess(user, selectedBuilding);
+  const canCreateAnnouncement = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   // Χρησιμοποιούμε το currentBuilding με fallback στο selectedBuilding για φιλτράρισμα
   const buildingId =

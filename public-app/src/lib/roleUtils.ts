@@ -67,6 +67,14 @@ const matchesInternalManager = (user: RoleAwareUser, building?: Building | null)
   return false;
 };
 
+const getRoleFromBuildingPermissions = (building?: Building | null): NormalizedRole | undefined => {
+  const perms = building?.permissions;
+  if (!perms) return undefined;
+  if (perms.is_internal_manager) return 'internal_manager';
+  if (perms.is_resident) return 'resident';
+  return undefined;
+};
+
 export function getEffectiveRoleForBuilding(
   user: RoleAwareUser,
   building?: Building | null,
@@ -76,6 +84,11 @@ export function getEffectiveRoleForBuilding(
 
   if (baseRole && OFFICE_ADMIN_ROLES.includes(baseRole)) {
     return baseRole;
+  }
+
+  const permissionRole = getRoleFromBuildingPermissions(building);
+  if (permissionRole) {
+    return permissionRole;
   }
 
   if (matchesInternalManager(user, building)) {

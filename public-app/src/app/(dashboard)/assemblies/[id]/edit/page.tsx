@@ -214,7 +214,7 @@ function EditAssemblyContent() {
   const assemblyId = params.id as string;
 
   const { user } = useAuth();
-  const { buildings, currentBuilding, selectedBuilding } = useBuilding();
+  const { buildings, currentBuilding, selectedBuilding, buildingContext } = useBuilding();
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
   const updateAssembly = useUpdateAssembly();
 
@@ -285,7 +285,7 @@ function EditAssemblyContent() {
     }
   }, [selectedBuilding?.id, currentBuilding?.id, userTouchedBuilding, formData.building]);
 
-  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   // Loading state
   if (isLoading) {

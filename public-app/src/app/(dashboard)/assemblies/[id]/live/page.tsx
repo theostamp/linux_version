@@ -217,7 +217,7 @@ function LiveAssemblyContent() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const { selectedBuilding, isLoading: buildingLoading } = useBuilding();
+  const { selectedBuilding, buildingContext, isLoading: buildingLoading } = useBuilding();
   const assemblyId = params.id as string;
 
   const [activeTab, setActiveTab] = useState<'live' | 'attendees' | 'agenda'>('live');
@@ -234,7 +234,7 @@ function LiveAssemblyContent() {
   const endAgendaItem = useEndAgendaItem();
   const endAssembly = useEndAssembly();
 
-  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   const currentItem = agendaItems.find(item => item.status === 'in_progress');
   const isVotingItem = currentItem?.item_type === 'voting';

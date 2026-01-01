@@ -16,9 +16,10 @@ import { getEffectiveRoleForBuilding, getRoleLabelFromRole } from '@/lib/roleUti
  */
 export function useInternalManagerGuard() {
   const { user, isAuthReady } = useAuth();
-  const { selectedBuilding } = useBuilding();
+  const { selectedBuilding, buildingContext } = useBuilding();
   const router = useRouter();
-  const effectiveRole = getEffectiveRoleForBuilding(user, selectedBuilding);
+  const roleBuilding = buildingContext ?? selectedBuilding;
+  const effectiveRole = getEffectiveRoleForBuilding(user, roleBuilding);
   const hasAccess = effectiveRole
     ? ['internal_manager', 'manager', 'office_staff', 'staff', 'superuser'].includes(effectiveRole)
     : false;
@@ -37,7 +38,7 @@ export function useInternalManagerGuard() {
       console.log('useInternalManagerGuard: Access denied, redirecting to unauthorized');
       router.push('/unauthorized');
     }
-  }, [user, isAuthReady, router, effectiveRole, selectedBuilding?.id, hasAccess]);
+  }, [user, isAuthReady, router, effectiveRole, selectedBuilding?.id, buildingContext?.id, hasAccess]);
 
   return {
     isAccessAllowed: isAuthReady && hasAccess,

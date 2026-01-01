@@ -473,7 +473,8 @@ export default function CollapsibleSidebar() {
   }, []);
 
   // Determine user role
-  const userRole = getEffectiveRoleForBuilding(user, selectedBuilding) ?? getEffectiveRole(user);
+  const roleBuilding = buildingContext ?? selectedBuilding;
+  const userRole = getEffectiveRoleForBuilding(user, roleBuilding) ?? getEffectiveRole(user);
   // Ultra Admin check: role='admin' OR (is_superuser AND is_staff)
   const isUltraAdminUser = Boolean(
     (user?.role?.toLowerCase() === 'admin' && user?.is_superuser && user?.is_staff) ||

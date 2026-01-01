@@ -1080,6 +1080,19 @@ export type Building = {
   internal_manager_id?: number | null;
   internal_manager_can_record_payments?: boolean;
   internal_manager_display_name?: string;
+  permissions?: {
+    can_view?: boolean;
+    can_edit?: boolean;
+    can_delete?: boolean;
+    can_manage_financials?: boolean;
+    can_view_financials?: boolean;
+    can_record_payments?: boolean;
+    can_create_assembly?: boolean;
+    can_manage_offers?: boolean;
+    is_admin_level?: boolean;
+    is_internal_manager?: boolean;
+    is_resident?: boolean;
+  };
   // Legacy πεδία (backward compatibility)
   internal_manager_name?: string;
   internal_manager_phone?: string;

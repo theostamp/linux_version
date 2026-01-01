@@ -233,7 +233,7 @@ function VoteItemContent({
 }
 
 function VotesPageContent() {
-  const { currentBuilding, selectedBuilding, setSelectedBuilding, buildings, isLoading: buildingLoading } = useBuilding();
+  const { currentBuilding, selectedBuilding, setSelectedBuilding, buildingContext, buildings, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -294,7 +294,7 @@ function VotesPageContent() {
   const buildingId =
     selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
   const canDelete = hasOfficeAdminAccess(user);
-  const canCreateVote = hasInternalManagerAccess(user, selectedBuilding);
+  const canCreateVote = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   const {
     data: votesData = [],

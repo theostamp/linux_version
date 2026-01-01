@@ -249,7 +249,7 @@ function AssemblyDetailContent() {
   const params = useParams();
   const router = useRouter();
   const { user, isAuthReady } = useAuth();
-  const { selectedBuilding, isLoading: buildingLoading } = useBuilding();
+  const { selectedBuilding, buildingContext, isLoading: buildingLoading } = useBuilding();
   const [activeTab, setActiveTab] = useState<'overview' | 'vote'>('overview');
   const [isMinutesModalOpen, setIsMinutesModalOpen] = useState(false);
 
@@ -261,7 +261,7 @@ function AssemblyDetailContent() {
   const deleteAssembly = useDeleteAssembly();
   const downloadMinutes = useDownloadAssemblyMinutes();
 
-  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   // Find current user's attendee record
   const myAttendee = assembly?.attendees.find(a => a.user === user?.id) || null;

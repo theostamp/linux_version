@@ -114,10 +114,10 @@ function PollCard({ poll }: { poll: CommunityPoll }) {
 }
 
 function PollsContent() {
-  const { selectedBuilding } = useBuilding();
+  const { selectedBuilding, buildingContext } = useBuilding();
   const { user } = useAuth();
   const { data: polls = [], isLoading } = usePolls(selectedBuilding?.id);
-  const canManage = hasInternalManagerAccess(user, selectedBuilding);
+  const canManage = hasInternalManagerAccess(user, buildingContext ?? selectedBuilding);
 
   if (isLoading) {
     return (
@@ -184,7 +184,6 @@ export default function PollsPage() {
     </AuthGate>
   );
 }
-
 
 
 
