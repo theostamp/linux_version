@@ -24,9 +24,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { 
-  extractBuildingData, 
-  generateEmailSignature 
+import {
+  extractBuildingData,
+  generateEmailSignature
 } from '../shared/buildingUtils';
 
 interface Props {
@@ -46,7 +46,7 @@ const EMERGENCY_TYPES = [
 
 export default function EmergencySender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
-  
+
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
   const [emergencyType, setEmergencyType] = useState<string>('');
   const [description, setDescription] = useState('');
@@ -57,7 +57,7 @@ export default function EmergencySender({ onSuccess, onCancel }: Props) {
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
   const buildingData = useMemo(
-    () => extractBuildingData(selectedBuilding_), 
+    () => extractBuildingData(selectedBuilding_),
     [selectedBuilding_]
   );
 
@@ -73,7 +73,7 @@ export default function EmergencySender({ onSuccess, onCancel }: Props) {
   const generateEmailBody = () => {
     const typeLabel = selectedType?.label || 'Έκτακτο Περιστατικό';
     const phone = contactPhone || buildingData.managementPhone;
-    
+
     let body = `⚠️ ΕΚΤΑΚΤΗ ΑΝΑΚΟΙΝΩΣΗ ⚠️
 
 Αγαπητοί ένοικοι,
@@ -250,8 +250,8 @@ ${instructions.trim()}`;
               Ακύρωση
             </Button>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowPreview(true)}
                 disabled={!buildingId || !emergencyType || !description.trim()}
               >
@@ -262,9 +262,9 @@ ${instructions.trim()}`;
                 variant="destructive"
                 onClick={() => sendMutation.mutate()}
                 disabled={
-                  sendMutation.isPending || 
-                  !buildingId || 
-                  !emergencyType || 
+                  sendMutation.isPending ||
+                  !buildingId ||
+                  !emergencyType ||
                   !description.trim()
                 }
               >

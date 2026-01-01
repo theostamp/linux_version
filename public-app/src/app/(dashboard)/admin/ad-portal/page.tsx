@@ -1404,5 +1404,3 @@ export default function AdPortalAdminPage() {
     </div>
   );
 }
-
-

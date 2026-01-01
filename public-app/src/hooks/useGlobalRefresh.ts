@@ -1,10 +1,10 @@
 /**
  * Hook for using the global refresh system
- * 
+ *
  * Usage:
  * ```tsx
  * const { refreshFinancial, refreshBuildings, refreshAll } = useGlobalRefresh();
- * 
+ *
  * // In your component:
  * <Button onClick={refreshFinancial}>Refresh Data</Button>
  * ```
@@ -74,4 +74,3 @@ export function useGlobalRefresh() {
     triggerCustomRefresh,
   };
 }
-

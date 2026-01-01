@@ -27,4 +27,3 @@ const { GET, DELETE, OPTIONS } = exportHandlers(
 );
 
 export { GET, DELETE, OPTIONS };
-

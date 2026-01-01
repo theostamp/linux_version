@@ -44,11 +44,11 @@ export async function GET(
     process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_DJANGO_API_URL ||
     'https://linuxversion-production.up.railway.app';
-  
+
   console.log('[PUBLIC-INFO API] ===== NEW CODE VERSION =====');
   console.log('[PUBLIC-INFO API] Using backend URL:', backendUrl);
   console.log('[PUBLIC-INFO API] Building ID:', buildingId);
-  
+
   const normalizedBase = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
   const targetUrl = `${normalizedBase}/api/public-info/${buildingId}/`;
 
@@ -116,7 +116,7 @@ export async function GET(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[API PROXY] Backend error response:', errorText);
-      
+
       // Return fallback data instead of error
       console.warn('[API PROXY] Returning fallback public info due to backend error');
       return NextResponse.json(buildFallbackResponse(buildingId));
@@ -258,18 +258,18 @@ export async function GET(
     return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     // Check if it's a connection error
     if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed') || error instanceof Error && error.name === 'AbortError') {
       console.warn('[API PROXY] Backend unavailable (connection refused or timeout):', errorMessage);
       console.warn('[API PROXY] Returning fallback public info. Start Django backend to see actual data.');
-      
+
       // Return fallback data instead of error
       return NextResponse.json(buildFallbackResponse(buildingId));
     }
-    
+
     console.error('[API PROXY] Unexpected error fetching public info:', error);
-    
+
     // Even for unexpected errors, return fallback to prevent app crash
     return NextResponse.json(buildFallbackResponse(buildingId));
   }

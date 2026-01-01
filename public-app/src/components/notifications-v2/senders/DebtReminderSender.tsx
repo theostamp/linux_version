@@ -26,9 +26,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { 
-  extractBuildingData, 
-  generateEmailSignature 
+import {
+  extractBuildingData,
+  generateEmailSignature
 } from '../shared/buildingUtils';
 
 interface ApartmentWithBalance {
@@ -57,7 +57,7 @@ interface Props {
 
 export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
-  
+
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
   const [minDebt, setMinDebt] = useState<'all' | '50' | '100' | '200'>('all');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -69,7 +69,7 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
   const buildingData = useMemo(
-    () => extractBuildingData(selectedBuilding_), 
+    () => extractBuildingData(selectedBuilding_),
     [selectedBuilding_]
   );
 
@@ -104,33 +104,33 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
       });
       console.log('[DebtReminderSender] Full object:', JSON.stringify(apt, null, 2));
     }
-    
+
     return apartments.filter(apt => {
       // Parse values as numbers (they might come as strings from API)
       // IMPORTANT: For current view (no month), only current_balance and status are reliable!
       const currentBalance = parseFloat(String(apt.current_balance ?? 0));
       const netObligation = parseFloat(String(apt.net_obligation ?? 0));
-      
+
       // For debt reminders we care about month-based obligations. If the month snapshot exists, prefer net_obligation.
       // Fallback to current_balance for safety.
       const debt = netObligation !== 0 ? netObligation : currentBalance;
-      
+
       // Check status for debt indicators
       const status = (apt.status || '').toLowerCase();
-      const hasDebtStatus = status === 'οφειλή' || 
+      const hasDebtStatus = status === 'οφειλή' ||
                            status === 'overdue' ||
                            status === 'κρίσιμο';
-      
+
       // Debug log for first few apartments
       if (apartments.indexOf(apt) < 5) {
         console.log(`[DebtReminderSender] Apt ${apt.number}:`, {
           currentBalance, netObligation, debt, status, hasDebtStatus
         });
       }
-      
+
       // Apartment has debt if current_balance > 0 or status indicates debt
       if (debt <= 0 && !hasDebtStatus) return false;
-      
+
       const minAmount = minDebt === 'all' ? 0 : parseInt(minDebt);
       return debt >= minAmount;
     });
@@ -141,7 +141,7 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
     // For current view, current_balance is the reliable field
     const currentBalance = parseFloat(String(apt.current_balance ?? 0));
     const netObligation = parseFloat(String(apt.net_obligation ?? 0));
-    
+
     // Prefer current_balance (always calculated by backend)
     return currentBalance !== 0 ? currentBalance : netObligation;
   };
@@ -293,8 +293,8 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
                       onClick={handleSelectAll}
                       className="text-sm text-amber-600 hover:text-amber-800"
                     >
-                      {selectedIds.length === apartmentsWithDebt.length 
-                        ? 'Αποεπιλογή όλων' 
+                      {selectedIds.length === apartmentsWithDebt.length
+                        ? 'Αποεπιλογή όλων'
                         : 'Επιλογή όλων'}
                     </button>
                     <span className="text-sm text-gray-500">
@@ -352,8 +352,8 @@ export default function DebtReminderSender({ onSuccess, onCancel }: Props) {
               Ακύρωση
             </Button>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowPreview(true)}
                 disabled={!buildingId}
               >

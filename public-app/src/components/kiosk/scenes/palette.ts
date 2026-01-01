@@ -39,4 +39,3 @@ export const getScenePalette = (hour: number): ScenePalette => {
     accentBorder: 'rgba(147, 197, 253, 0.45)',
   };
 };
-

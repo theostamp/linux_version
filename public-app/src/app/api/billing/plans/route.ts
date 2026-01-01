@@ -15,4 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, OPTIONS } = exportHandlers(handlers, methods, "billing-plans");
 
 export { GET, OPTIONS };
-

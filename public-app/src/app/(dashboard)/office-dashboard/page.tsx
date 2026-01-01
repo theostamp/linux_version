@@ -82,8 +82,8 @@ function OfficeDashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => refetch()}
             disabled={isLoading}
@@ -138,4 +138,3 @@ export default function OfficeDashboardPage() {
     </AuthGate>
   );
 }
-

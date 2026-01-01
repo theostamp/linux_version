@@ -4,13 +4,13 @@ import React, { useState, useEffect, useImperativeHandle, useCallback } from 're
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  DollarSign, 
-  AlertTriangle, 
-  TrendingUp, 
-  Users, 
-  Building, 
-  Plus, 
+import {
+  DollarSign,
+  AlertTriangle,
+  TrendingUp,
+  Users,
+  Building,
+  Plus,
   FileText,
   BarChart3,
   Calculator,
@@ -49,7 +49,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
-  
+
   // NEW: Use BuildingContext instead of props
   const { selectedBuilding, buildingContext } = useBuilding();
   const buildingId = selectedBuilding?.id;
@@ -64,42 +64,42 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
     try {
       setIsLoading(true);
       setError(null);
-      
+
       console.log(`🔄 FinancialDashboard: Loading summary for building ${buildingId}, month: ${selectedMonth || 'current'}`);
-      
+
       // ✅ Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
-      await queryClient.invalidateQueries({ 
-        queryKey: ['financial'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['financial']
       });
-      await queryClient.invalidateQueries({ 
-        queryKey: ['apartment-balances'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['apartment-balances']
       });
-      await queryClient.invalidateQueries({ 
-        queryKey: ['expenses'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['expenses']
       });
-      await queryClient.invalidateQueries({ 
-        queryKey: ['transactions'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['transactions']
       });
-      await queryClient.refetchQueries({ 
-        queryKey: ['financial'] 
+      await queryClient.refetchQueries({
+        queryKey: ['financial']
       });
-      await queryClient.refetchQueries({ 
-        queryKey: ['apartment-balances'] 
+      await queryClient.refetchQueries({
+        queryKey: ['apartment-balances']
       });
-      await queryClient.refetchQueries({ 
-        queryKey: ['expenses'] 
+      await queryClient.refetchQueries({
+        queryKey: ['expenses']
       });
-      await queryClient.refetchQueries({ 
-        queryKey: ['transactions'] 
+      await queryClient.refetchQueries({
+        queryKey: ['transactions']
       });
-      
+
       console.log(`🧹 FinancialDashboard: Cache invalidated and refetched for financial data`);
-      
+
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })
       });
-      
+
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       // The api.get returns data directly
       if (!response) {
@@ -108,7 +108,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
         return;
       }
       setSummary(response);
-      
+
       console.log(`✅ FinancialDashboard: Summary loaded successfully for ${selectedMonth || 'current'}`);
       console.log(`📊 FinancialDashboard: Reserve Fund Data:`, {
         current_reserve: response.current_reserve,
@@ -223,7 +223,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
           Ενημέρωση Δεδομένων
         </Button>
       </div>
-      
+
       {/* Κάρτες Στατιστικών */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -264,7 +264,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
             )}
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -281,7 +281,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -298,7 +298,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -316,7 +316,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Γράφημα Κατανομής Οφειλών */}
       {apartmentBalances.length > 0 && (
         <Card>
@@ -416,4 +416,4 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
 
 FinancialDashboard.displayName = 'FinancialDashboard';
 
-export { FinancialDashboard }; 
+export { FinancialDashboard };

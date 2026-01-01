@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  Clock, 
-  CheckCircle2, 
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Clock,
+  CheckCircle2,
   Building2,
   CreditCard,
   Pencil,
@@ -57,12 +57,12 @@ function DeleteConfirmDialog({
             <AlertTriangle className="w-8 h-8 text-rose-600" />
           </div>
         </div>
-        
+
         {/* Title */}
         <h3 className="text-lg font-semibold text-center text-slate-900 dark:text-slate-100 mb-2">
           Διαγραφή {type === 'expense' ? 'Εξόδου' : 'Εσόδου'}
         </h3>
-        
+
         {/* Message */}
         <p className="text-center text-slate-600 dark:text-slate-400 mb-2">
           Είστε σίγουροι ότι θέλετε να διαγράψετε:
@@ -79,7 +79,7 @@ function DeleteConfirmDialog({
         <p className="text-center text-sm text-rose-600 dark:text-rose-400 mb-6">
           Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!
         </p>
-        
+
         {/* Buttons */}
         <div className="flex gap-3">
           <button
@@ -118,9 +118,9 @@ function formatDate(dateString: string): string {
 
 type TabType = 'all' | 'incomes' | 'expenses' | 'pending' | 'unpaid';
 
-export function RecentTransactions({ 
-  recentExpenses, 
-  recentIncomes, 
+export function RecentTransactions({
+  recentExpenses,
+  recentIncomes,
   pendingIncomes,
   unpaidExpenses,
   isLoading,
@@ -146,7 +146,7 @@ export function RecentTransactions({
 
   const handleConfirmDelete = () => {
     if (!deleteDialog) return;
-    
+
     if (deleteDialog.type === 'expense') {
       onDeleteExpense?.(deleteDialog.id);
     } else {
@@ -277,12 +277,12 @@ export function RecentTransactions({
               >
                 {/* Icon */}
                 <div className={`p-2.5 rounded-full ${
-                  isPending 
-                    ? 'bg-primary/10' 
+                  isPending
+                    ? 'bg-primary/10'
                     : isUnpaid
                       ? 'bg-amber-500/10'
-                      : isIncome 
-                        ? 'bg-teal-500/10' 
+                      : isIncome
+                        ? 'bg-teal-500/10'
                         : 'bg-rose-500/10'
                 }`}>
                   {isPending ? (
@@ -304,19 +304,19 @@ export function RecentTransactions({
                     </span>
                     {!isPending && !isUnpaid && 'status' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
-                        transaction.status === 'received' 
+                        transaction.status === 'received'
                           ? 'bg-teal-500/10 text-teal-600'
                           : transaction.status === 'pending'
                             ? 'bg-primary/10 text-primary'
                             : 'bg-muted text-muted-foreground'
                       }`}>
-                        {transaction.status === 'received' ? 'Εισπράχθηκε' : 
+                        {transaction.status === 'received' ? 'Εισπράχθηκε' :
                          transaction.status === 'pending' ? 'Εκκρεμεί' : transaction.status}
                       </span>
                     )}
                     {isExpense && 'is_paid' in transaction && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
-                        transaction.is_paid 
+                        transaction.is_paid
                           ? 'bg-teal-500/10 text-teal-600'
                           : 'bg-amber-500/10 text-amber-600'
                       }`}>
@@ -364,12 +364,12 @@ export function RecentTransactions({
                 {/* Amount */}
                 <div className="text-right mr-2">
                   <span className={`text-sm font-semibold ${
-                    isPending 
-                      ? 'text-primary' 
+                    isPending
+                      ? 'text-primary'
                       : isUnpaid
                         ? 'text-amber-600'
-                        : isIncome 
-                          ? 'text-teal-600' 
+                        : isIncome
+                          ? 'text-teal-600'
                           : 'text-rose-600'
                   }`}>
                     {isPending || isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
@@ -397,7 +397,7 @@ export function RecentTransactions({
                       <Pencil className="w-4 h-4" />
                     </button>
                   )}
-                  
+
                   {/* Mark as received - for pending incomes */}
                   {isPending && onMarkReceived && (
                     <button
@@ -408,7 +408,7 @@ export function RecentTransactions({
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
                   )}
-                  
+
                   {/* Mark as paid - for unpaid expenses */}
                   {isUnpaid && onMarkPaid && (
                     <button
@@ -419,7 +419,7 @@ export function RecentTransactions({
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
                   )}
-                  
+
                   {/* Mark as paid - for expenses in the expenses tab that are not paid */}
                   {isExpense && 'is_paid' in transaction && !transaction.is_paid && onMarkPaid && (
                     <button

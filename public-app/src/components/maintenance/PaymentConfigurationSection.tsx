@@ -40,14 +40,14 @@ export function PaymentConfigurationSection({
   projectPrice = 0
 }: PaymentConfigurationSectionProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  
+
   const paymentEnabled = watch('payment_config.enabled');
   const paymentType = watch('payment_config.payment_type');
   const watchedTotalAmount = watch('payment_config.total_amount');
   const totalAmount = watchedTotalAmount ?? projectPrice;
   const advancePercentage = watch('payment_config.advance_percentage') ?? 30;
   const installmentCount = watch('payment_config.installment_count') ?? 3;
-  
+
   // Debug logging
   useEffect(() => {
     const paymentConfig = watch('payment_config');
@@ -79,7 +79,7 @@ export function PaymentConfigurationSection({
       const advanceAmount = (totalAmount * advancePercentage) / 100;
       const remainingAmount = totalAmount - advanceAmount;
       const installmentAmount = remainingAmount / installmentCount;
-      
+
       setValue('payment_config.advance_amount', advanceAmount, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
       setValue('payment_config.remaining_amount', remainingAmount, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
       setValue('payment_config.installment_amount', installmentAmount, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
@@ -188,7 +188,7 @@ export function PaymentConfigurationSection({
               <Calculator className="h-4 w-4" />
               Ρύθμιση Προκαταβολής & Δόσεων
             </h4>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="advance-percentage" className="text-sm font-medium">
@@ -287,7 +287,7 @@ export function PaymentConfigurationSection({
               <Clock className="h-4 w-4" />
               Περιοδικές Καταβολές
             </h4>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="periodic-amount" className="text-sm font-medium">
@@ -335,7 +335,7 @@ export function PaymentConfigurationSection({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Οι περιοδικές καταβολές θα δημιουργηθούν αυτόματα για τους επόμενους 12 μήνες. 
+                Οι περιοδικές καταβολές θα δημιουργηθούν αυτόματα για τους επόμενους 12 μήνες.
                 Μπορείτε να τις διαχειριστείτε μετά τη δημιουργία του έργου.
               </AlertDescription>
             </Alert>
@@ -348,11 +348,11 @@ export function PaymentConfigurationSection({
               <CalendarDays className="h-4 w-4" />
               Πληρωμές Βάσει Ορόσημων
             </h4>
-            
+
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Οι πληρωμές βάσει ορόσημων θα ρυθμιστούν μετά τη δημιουργία του έργου 
+                Οι πληρωμές βάσει ορόσημων θα ρυθμιστούν μετά τη δημιουργία του έργου
                 μέσω του πίνακα διαχείρισης πληρωμών.
               </AlertDescription>
             </Alert>
@@ -361,7 +361,7 @@ export function PaymentConfigurationSection({
 
         {/* Advanced Options */}
         <Separator />
-        
+
         <div className="space-y-4">
           <Button
             type="button"

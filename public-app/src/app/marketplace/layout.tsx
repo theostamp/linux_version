@@ -5,5 +5,3 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
     </div>
   );
 }
-
-

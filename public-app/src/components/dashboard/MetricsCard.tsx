@@ -130,5 +130,3 @@ export function MetricsCard({
 }
 
 export default MetricsCard;
-
-

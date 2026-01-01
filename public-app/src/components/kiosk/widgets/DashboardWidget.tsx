@@ -1,11 +1,11 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { 
-  Bell, 
-  Euro, 
-  Vote, 
-  Wrench, 
+import {
+  Bell,
+  Euro,
+  Vote,
+  Wrench,
   Home,
   Users,
   Calendar,
@@ -88,7 +88,7 @@ export default function DashboardWidget({ data, isLoading, error }: BaseWidgetPr
             </div>
             <div className="text-xs text-emerald-200">Είσπραξη</div>
             <div className="w-full bg-emerald-900/50 rounded-full h-1.5 mt-1">
-              <div 
+              <div
                 className="bg-emerald-400 h-1.5 rounded-full"
                 style={{ width: `${data.financial_info.collection_rate}%` }}
               ></div>

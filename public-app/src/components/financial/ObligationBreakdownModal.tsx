@@ -67,11 +67,11 @@ interface BreakdownData {
   };
 }
 
-export function ObligationBreakdownModal({ 
-  buildingId, 
-  totalAmount, 
+export function ObligationBreakdownModal({
+  buildingId,
+  totalAmount,
   children,
-  triggerClassName = "" 
+  triggerClassName = ""
 }: ObligationBreakdownProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -85,7 +85,7 @@ export function ObligationBreakdownModal({
   const fetchBreakdownData = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Fetch detailed breakdown from backend
       // The api.get returns data directly
@@ -125,10 +125,10 @@ export function ObligationBreakdownModal({
       payment_type: 'debt_settlement',
       description: `Εξόφληση οφειλής διαμερίσματος ${apartmentDebt.apartment_number}`
     };
-    
+
     // Store payment data in localStorage for the payment form
     localStorage.setItem('prefilled_payment', JSON.stringify(paymentData));
-    
+
     // Navigate to financial page with payments tab and pre-selected apartment
     const apartmentParam = encodeURIComponent(apartmentDebt.apartment_number);
     router.push(`/financial?tab=payments&building=${buildingId}&action=new_payment&apartment=${apartmentParam}`);
@@ -150,14 +150,14 @@ export function ObligationBreakdownModal({
         description: `Άμεση εξόφληση οφειλής διαμερίσματος ${apartmentDebt.apartment_number}`,
         urgency_level: apartmentDebt.urgency_level
       };
-      
+
       localStorage.setItem('quick_payment', JSON.stringify(paymentData));
-      
+
       // Close current modal and navigate to financial page with quick payment
       setIsOpen(false);
       const apartmentParam = encodeURIComponent(apartmentDebt.apartment_number);
       router.push(`/financial?tab=payments&building=${buildingId}&action=quick_payment&apartment=${apartmentParam}&auto_open=true`);
-      
+
     } catch (error) {
       console.error('Error initiating quick payment:', error);
     }
@@ -170,7 +170,7 @@ export function ObligationBreakdownModal({
 
   const confirmDeletePayments = async () => {
     if (!apartmentToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       // Find apartment ID from the apartment number
@@ -179,20 +179,20 @@ export function ObligationBreakdownModal({
       // Handle both paginated and non-paginated responses
       const apartments = Array.isArray(apartmentResponse) ? apartmentResponse : (apartmentResponse.results || apartmentResponse.data || []);
       const apartment = apartments.find((apt: any) => apt.number === apartmentToDelete.apartment_number);
-      
+
       if (!apartment) {
         throw new Error('Διαμέρισμα δεν βρέθηκε');
       }
 
       // Delete all payments for this apartment
-      const params = new URLSearchParams({ 
+      const params = new URLSearchParams({
         apartment_id: apartment.id.toString(),
         building_id: buildingId.toString()
       });
-      
+
       // The api.delete returns data directly
       const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
-      
+
       if (response.success) {
         // Refresh data
         await fetchBreakdownData();
@@ -219,7 +219,7 @@ export function ObligationBreakdownModal({
     if (children) {
       return children;
     }
-    
+
     return (
       <Button
         variant="ghost"
@@ -237,7 +237,7 @@ export function ObligationBreakdownModal({
       <DialogTrigger asChild>
         {renderTrigger()}
       </DialogTrigger>
-      
+
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
@@ -270,15 +270,15 @@ export function ObligationBreakdownModal({
               <h3 className="font-semibold text-blue-800 mb-2">
                 Σύνοψη για {data.building_name}
               </h3>
-              
+
               {/* Ενημερωτικό μήνυμα για εκτιμήσεις */}
               {data.debt_summary?.estimated_debts && data.debt_summary.estimated_debts > 0 && (
                 <div className="mb-3 p-2 bg-orange-50 border border-gray-300 rounded text-xs text-orange-700">
-                  <strong>Σημείωση:</strong> {data.debt_summary.estimated_debts} από τις {data.apartments_with_debt} οφειλές δείχνουν εκτιμώμενες ημερομηνίες 
+                  <strong>Σημείωση:</strong> {data.debt_summary.estimated_debts} από τις {data.apartments_with_debt} οφειλές δείχνουν εκτιμώμενες ημερομηνίες
                   καθώς δεν υπάρχει διαθέσιμο ιστορικό συναλλαγών. Οι εκτιμήσεις βασίζονται στο μέγεθος της οφειλής.
                 </div>
               )}
-              
+
               {data.debt_summary?.has_transaction_history && (
                 <div className="mb-3 p-2 bg-green-50 border border-gray-300 rounded text-xs text-green-700">
                   <strong>✓ Ενημερωμένο κτίριο:</strong> Διαθέσιμο ιστορικό συναλλαγών για ακριβείς ημερομηνίες οφειλών.
@@ -299,8 +299,8 @@ export function ObligationBreakdownModal({
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-blue-700">
-                    {data.apartments_with_debt > 0 ? 
-                      formatCurrency(data.total_apartment_debts / data.apartments_with_debt) : 
+                    {data.apartments_with_debt > 0 ?
+                      formatCurrency(data.total_apartment_debts / data.apartments_with_debt) :
                       '0,00 €'
                     }
                   </div>
@@ -315,7 +315,7 @@ export function ObligationBreakdownModal({
                 <Receipt className="h-5 w-5" />
                 Ανάλυση Συστατικών
               </h3>
-              
+
               {/* Οφειλές Διαμερισμάτων */}
               <div className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -334,7 +334,7 @@ export function ObligationBreakdownModal({
                     )}
                   </div>
                 </div>
-                
+
                 {data.apartment_debts.length > 0 ? (
                   <div className="space-y-3">
                     {data.apartment_debts.map((apt, index) => (
@@ -366,8 +366,8 @@ export function ObligationBreakdownModal({
                             {apt.debt_message && (
                               <div className="flex items-center gap-1 text-xs">
                                 <span className={`font-medium ${
-                                  apt.debt_creation_type === 'estimated' 
-                                    ? 'text-orange-600' 
+                                  apt.debt_creation_type === 'estimated'
+                                    ? 'text-orange-600'
                                     : 'text-blue-600'
                                 }`}>
                                   📅 {apt.debt_message}
@@ -380,7 +380,7 @@ export function ObligationBreakdownModal({
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="text-right flex flex-col items-end gap-2">
                             <div>
                               <div className="font-semibold text-red-700 text-lg">
@@ -390,7 +390,7 @@ export function ObligationBreakdownModal({
                                 Υπόλοιπο: {formatCurrency(apt.balance)}
                               </div>
                             </div>
-                            
+
                             {/* Payment Action Buttons */}
                             <div className="flex gap-1">
                               <Button
@@ -402,7 +402,7 @@ export function ObligationBreakdownModal({
                                 <CreditCard className="h-3 w-3 mr-1" />
                                 Πληρωμή
                               </Button>
-                              
+
                               <Button
                                 size="sm"
                                 onClick={() => handleQuickPayment(apt)}
@@ -415,7 +415,7 @@ export function ObligationBreakdownModal({
                                 <Plus className="h-3 w-3 mr-1" />
                                 Άμεσα
                               </Button>
-                              
+
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -517,7 +517,7 @@ export function ObligationBreakdownModal({
                           payment_type: 'bulk_debt_settlement',
                           description: `Μαζική εξόφληση ${data.apartment_debts.length} οφειλών`
                         };
-                        
+
                         localStorage.setItem('bulk_payment', JSON.stringify(bulkPaymentData));
                         setIsOpen(false);
                         router.push(`/financial?tab=payments&building=${buildingId}&action=bulk_payment&auto_open=true`);
@@ -527,16 +527,16 @@ export function ObligationBreakdownModal({
                       <CreditCard className="h-3 w-3 mr-1" />
                       Πληρωμή Όλων ({formatCurrency(data.total_apartment_debts)})
                     </Button>
-                    
+
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => {
                         // Filter only critical and serious debts
-                        const urgentDebts = data.apartment_debts.filter(apt => 
+                        const urgentDebts = data.apartment_debts.filter(apt =>
                           apt.urgency_level === 'Κρίσιμη' || apt.urgency_level === 'Σοβαρή'
                         );
-                        
+
                         if (urgentDebts.length > 0) {
                           const urgentPaymentData = {
                             building_id: buildingId,
@@ -545,14 +545,14 @@ export function ObligationBreakdownModal({
                             payment_type: 'urgent_debt_settlement',
                             description: `Εξόφληση επειγουσών οφειλών (${urgentDebts.length})`
                           };
-                          
+
                           localStorage.setItem('urgent_payment', JSON.stringify(urgentPaymentData));
                           setIsOpen(false);
                           router.push(`/financial?tab=payments&building=${buildingId}&action=urgent_payment&auto_open=true`);
                         }
                       }}
                       className="text-xs border-orange-300 text-orange-700 hover:bg-orange-50"
-                      disabled={!data.apartment_debts.some(apt => 
+                      disabled={!data.apartment_debts.some(apt =>
                         apt.urgency_level === 'Κρίσιμη' || apt.urgency_level === 'Σοβαρή'
                       )}
                     >
@@ -562,7 +562,7 @@ export function ObligationBreakdownModal({
                   </div>
                 </div>
               )}
-              
+
               {/* Navigation Actions */}
               <div className="flex gap-2">
                 <Button
@@ -588,14 +588,14 @@ export function ObligationBreakdownModal({
           </div>
         )}
       </DialogContent>
-      
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && apartmentToDelete && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={cancelDeletePayments}
         >
-          <div 
+          <div
             className="bg-white rounded-lg max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
@@ -619,7 +619,7 @@ export function ObligationBreakdownModal({
               <p className="text-gray-700 mb-4">
                 Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις πληρωμές για το διαμέρισμα <strong>{apartmentToDelete.apartment_number}</strong>;
               </p>
-              
+
               {/* Apartment Details */}
               <div className="bg-gray-50 rounded-lg p-3 border">
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -657,7 +657,7 @@ export function ObligationBreakdownModal({
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4 p-3 bg-yellow-50 border border-gray-300 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι πληρωμές που έχουν καταχωρηθεί για αυτό το διαμέρισμα.

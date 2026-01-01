@@ -80,5 +80,3 @@ export function HeroSection({ data, loading = false, showWelcome = true }: HeroS
 }
 
 export default HeroSection;
-
-

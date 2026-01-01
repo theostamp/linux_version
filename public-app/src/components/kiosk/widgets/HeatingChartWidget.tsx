@@ -113,13 +113,13 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} vertical={false} />
-            <XAxis 
-              dataKey="month" 
+            <XAxis
+              dataKey="month"
               tick={{ fill: '#9CA3AF', fontSize: 9 }}
               axisLine={false}
               tickLine={false}
             />
-            <YAxis 
+            <YAxis
               tick={{ fill: '#6B7280', fontSize: 8 }}
               axisLine={false}
               tickLine={false}
@@ -135,9 +135,9 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
               }}
               formatter={(value: number) => [`€${value.toFixed(2)}`, 'Δαπάνη']}
             />
-            <Bar 
-              dataKey="amount" 
-              fill="#F97316" 
+            <Bar
+              dataKey="amount"
+              fill="#F97316"
               radius={[3, 3, 0, 0]}
               stroke="#FB923C"
               strokeWidth={0.5}
@@ -148,4 +148,3 @@ export default function HeatingChartWidget({ data, isLoading, error, buildingId 
     </div>
   );
 }
-

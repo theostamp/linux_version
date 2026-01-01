@@ -57,7 +57,7 @@ export const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   WeatherTopBarWidget: WeatherWidget,
   // Alias for special widgets
   NewsTickerWidget: AnnouncementsWidget,
-  
+
   // Backend compatibility mappings
   DashboardOverview: DashboardWidget,
   BuildingStatistics: DashboardWidget,
@@ -91,11 +91,11 @@ export const WIDGET_ICONS: Record<string, LucideIcon> = {
   QRCodeWidget: QrCode,
   ManagerWidget: Phone,
   UrgentPrioritiesWidget: AlertTriangle,
-  
+
   // Alias widgets
   WeatherTopBarWidget: Cloud,
   NewsTickerWidget: Bell,
-  
+
   // Specialized widgets
   OccupancyWidget: Users,
   ParkingWidget: Car,
@@ -115,70 +115,70 @@ export const getWidgetIcon = (widget: KioskWidget | string): LucideIcon => {
   if (typeof widget === 'string') {
     return WIDGET_ICONS[widget] || Home;
   }
-  
+
   // For widget objects, try component first, then name
   const componentIcon = WIDGET_ICONS[widget.component];
   if (componentIcon) {
     return componentIcon;
   }
-  
+
   // Fallback: try to match by name patterns
   const name = widget.name.toLowerCase();
-  
+
   // Dashboard and Overview
   if (name.includes('dashboard') || name.includes('overview') || name.includes('επισκόπηση')) return Home;
-  
+
   // Announcements
   if (name.includes('announcement') || name.includes('ανακοίνωση') || name.includes('ειδοποίηση')) return Bell;
-  
+
   // Votes and Polls
   if (name.includes('vote') || name.includes('poll') || name.includes('ψηφοφορία') || name.includes('δημοσκόπηση')) return Vote;
-  
+
   // Financial and Expenses
   if (name.includes('financial') || name.includes('expense') || name.includes('οικονομικά') || name.includes('κοινόχρηστα') || name.includes('έξοδα')) return DollarSign;
-  
+
   // Maintenance
   if (name.includes('maintenance') || name.includes('συντήρηση') || name.includes('επισκευή') || name.includes('τεχνική')) return Wrench;
-  
+
   // Projects
   if (name.includes('project') || name.includes('έργο') || name.includes('πρόγραμμα')) return FolderOpen;
-  
+
   // Occupancy and Residents
   if (name.includes('occupancy') || name.includes('resident') || name.includes('κατοικία') || name.includes('κάτοικος') || name.includes('διαμερίσματα')) return Users;
-  
+
   // Parking
   if (name.includes('parking') || name.includes('πάρκινγκ') || name.includes('θέσεις')) return Car;
-  
+
   // Storage
   if (name.includes('storage') || name.includes('αποθήκη') || name.includes('αποθηκευτικός')) return Package;
-  
+
   // Contacts and Manager
   if (name.includes('contact') || name.includes('manager') || name.includes('διαχειριστής') || name.includes('επικοινωνία')) return Phone;
-  
+
   // Messages and Communication
   if (name.includes('message') || name.includes('communication') || name.includes('μήνυμα') || name.includes('επικοινωνία')) return Mail;
-  
+
   // Calendar and Events
   if (name.includes('calendar') || name.includes('event') || name.includes('ημερολόγιο') || name.includes('εκδήλωση')) return Calendar;
-  
+
   // Documents and Reports
   if (name.includes('document') || name.includes('report') || name.includes('έγγραφο') || name.includes('αναφορά')) return FileText;
-  
+
   // Statistics and Analytics
   if (name.includes('statistics') || name.includes('analytics') || name.includes('στατιστικά') || name.includes('ανάλυση')) return BarChart3;
-  
+
   // Settings and Configuration
   if (name.includes('settings') || name.includes('config') || name.includes('ρυθμίσεις') || name.includes('διαμόρφωση')) return Settings;
-  
+
   // Time and Clock
   if (name.includes('time') || name.includes('ώρα') || name.includes('χρόνος')) return Clock;
-  
+
   // Weather
   if (name.includes('weather') || name.includes('καιρός') || name.includes('άνεμος')) return Cloud;
-  
+
   // QR Code
   if (name.includes('qr') || name.includes('code') || name.includes('σύνδεση')) return QrCode;
-  
+
   // Default fallback
   return Home;
 };
@@ -228,7 +228,7 @@ export function hasWidgetData(widget: KioskWidget, data?: any): boolean {
 
     case 'ApartmentDebtsWidget':
       // Show if there are apartments with debts
-      return data?.apartments && Array.isArray(data.apartments) && 
+      return data?.apartments && Array.isArray(data.apartments) &&
              data.apartments.some((apt: any) => apt.net_obligation > 0);
 
     case 'FinancialWidget':

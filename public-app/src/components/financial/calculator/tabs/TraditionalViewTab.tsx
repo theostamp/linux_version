@@ -127,7 +127,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                 <Calculator className="h-4 w-4 text-blue-600" />
                 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
             </h3>
-            
+
             {/* ΝΕΟ: Ομαδοποιημένη Εμφάνιση με Collapsible Sections */}
             {monthlyExpenses?.expense_breakdown_grouped ? (
               <GroupedExpenseBreakdown
@@ -144,7 +144,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                     const isOwner = expense.payer_responsibility === 'owner';
                     const badgeColor = isOwner ? 'text-red-600' : 'text-emerald-600';
                     const badgeText = isOwner ? 'Δ' : 'Ε';
-                    
+
                     return (
                       <div key={`${expense.category}_${index}`} className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
                         <div className="flex items-center gap-1.5">
@@ -201,7 +201,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                 <FileText className="h-4 w-4 text-yellow-600" />
                 ΠΑΡΑΤΗΡΗΣΕΙΣ
             </h3>
-            
+
             <div className="bg-white p-3 rounded border border-yellow-200">
                 <p className="text-sm font-medium text-yellow-900 text-center">ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ</p>
                 <p className="text-xs text-yellow-700 text-center mt-1">ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</p>

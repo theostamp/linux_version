@@ -31,7 +31,7 @@ interface KioskSettings {
 function SettingsContent() {
   const { currentBuilding, selectedBuilding, isLoading: isBuildingLoading } = useBuilding();
   const building = selectedBuilding || currentBuilding;
-  
+
   const [settings, setSettings] = useState<KioskSettings>({
     slideDuration: 10000,
     autoSlide: true,
@@ -51,7 +51,7 @@ function SettingsContent() {
     try {
       setIsLoading(true);
       const response = await api.get(`/api/kiosk/display-configs/?building_id=${building.id}`);
-      
+
       if (response.data && response.data.length > 0) {
         const config = response.data[0];
         setSettings({

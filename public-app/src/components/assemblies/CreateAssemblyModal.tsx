@@ -77,7 +77,7 @@ function AgendaItemRow({
 
   return (
     <div className="bg-gray-50 rounded-lg border border-gray-300 overflow-hidden">
-      <div 
+      <div
         className="p-3 flex items-center gap-2 cursor-pointer hover:bg-gray-100"
         onClick={() => setExpanded(!expanded)}
       >
@@ -246,10 +246,10 @@ export default function CreateAssemblyModal({
   // Prefill from project data
   useEffect(() => {
     if (projectData && isOpen) {
-      const costText = projectData.estimatedCost 
+      const costText = projectData.estimatedCost
         ? `\n\nΕκτιμώμενο κόστος: ${projectData.estimatedCost}€`
         : '';
-      
+
       setFormData(prev => ({
         ...prev,
         title: `Γενική Συνέλευση - Έργο: ${projectData.title}`,
@@ -275,7 +275,7 @@ export default function CreateAssemblyModal({
         // Check if already has project voting item
         const hasProjectItem = prev.some(item => item.id === 'project-vote');
         if (hasProjectItem) {
-          return prev.map(item => 
+          return prev.map(item =>
             item.id === 'project-vote' ? projectVotingItem : item
           );
         }
@@ -323,14 +323,14 @@ export default function CreateAssemblyModal({
 
     if (formData.pre_voting_enabled && formData.scheduled_date) {
       const assemblyDate = new Date(formData.scheduled_date);
-      
+
       if (!preVotingStartDate) {
         // Default: voting starts 7 days before assembly
         const startDate = new Date(assemblyDate);
         startDate.setDate(startDate.getDate() - 7);
         preVotingStartDate = startDate.toISOString().split('T')[0];
       }
-      
+
       if (!preVotingEndDate) {
         // Default: voting closes 1 day BEFORE assembly (backend requirement)
         const endDate = new Date(assemblyDate);
@@ -614,4 +614,3 @@ export default function CreateAssemblyModal({
     </AnimatePresence>
   );
 }
-

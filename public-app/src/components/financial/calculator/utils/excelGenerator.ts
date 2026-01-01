@@ -2,11 +2,11 @@
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { 
-  CalculatorState, 
-  ExpenseBreakdown, 
-  ReserveFundInfo, 
-  ManagementFeeInfo, 
+import {
+  CalculatorState,
+  ExpenseBreakdown,
+  ReserveFundInfo,
+  ManagementFeeInfo,
   PerApartmentAmounts,
   GroupedExpenses,
   Share
@@ -48,7 +48,7 @@ export const exportToExcel = async (params: ExcelGeneratorParams) => {
     const mainData = Object.values(state.shares as { [key: string]: Share }).map((share, index) => {
       // ... (Excel data mapping logic) ...
     });
-    
+
     const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
     XLSX.utils.book_append_sheet(workbook, mainWorksheet, 'Κοινοχρήστα');
 
@@ -58,7 +58,7 @@ export const exportToExcel = async (params: ExcelGeneratorParams) => {
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, fileName);
-    
+
     toast.success('Εξαγωγή Excel ολοκληρώθηκε επιτυχώς!');
   } catch (error) {
     console.error('Excel Export Error:', error);

@@ -15,7 +15,7 @@ export function useBuildingChange(options: UseBuildingChangeOptions = {}) {
 
   const changeBuilding = useCallback(async (buildingId: number | null) => {
     setIsChangingBuilding(true);
-    
+
     try {
       // Update URL
       const url = new URL(window.location.href);
@@ -25,14 +25,14 @@ export function useBuildingChange(options: UseBuildingChangeOptions = {}) {
         url.searchParams.set('building', buildingId.toString());
       }
       window.history.pushState({}, '', url.toString());
-      
+
       // Call the provided callback
       if (options.onBuildingChange) {
         options.onBuildingChange(buildingId);
       }
-      
+
       setLastChangedBuilding(buildingId);
-      
+
       // Show success toast if enabled
       if (options.showToast !== false) {
         if (buildingId === null) {
@@ -45,16 +45,16 @@ export function useBuildingChange(options: UseBuildingChangeOptions = {}) {
           });
         }
       }
-      
+
       // Add a small delay to show the loading state
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
     } catch (error) {
       console.error('Error changing building:', error);
       if (options.onError && error instanceof Error) {
         options.onError(error);
       }
-      
+
       // Show error toast
       if (options.showToast !== false) {
         toast.error('Σφάλμα κατά την αλλαγή κτιρίου', {
@@ -72,4 +72,3 @@ export function useBuildingChange(options: UseBuildingChangeOptions = {}) {
     changeBuilding,
   };
 }
-

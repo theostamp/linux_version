@@ -10,12 +10,12 @@ function AcceptInvitationForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const buildingId = searchParams.get('building_id');
-  
+
   const [formData, setFormData] = useState({
     password: '',
     passwordConfirm: ''
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +32,7 @@ function AcceptInvitationForm() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -60,13 +60,13 @@ function AcceptInvitationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !token) {
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
       if (!coreApiUrl) {
@@ -77,7 +77,7 @@ function AcceptInvitationForm() {
       if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
         coreApiUrl = `https://${coreApiUrl}`;
       }
-      
+
       // Remove trailing slash
       coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -117,13 +117,13 @@ function AcceptInvitationForm() {
       }
 
       setSuccess(true);
-      
+
       // Redirect after 2 seconds - residents go to my-apartment, others to dashboard
       setTimeout(() => {
         // Check if user data indicates they are a resident
         const isResident = data.user?.role === 'resident';
         const targetPath = isResident ? '/my-apartment' : '/dashboard';
-        
+
         // Handle cross-subdomain redirect if tenant_url is provided
         if (data.tenant_url) {
           // Build redirect URL with tokens for cross-subdomain auth
@@ -136,11 +136,11 @@ function AcceptInvitationForm() {
           router.push(targetPath);
         }
       }, 2000);
-      
+
     } catch (error) {
       console.error('Accept invitation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Προέκυψε σφάλμα. Παρακαλώ δοκιμάστε ξανά.';
-      setErrors({ 
+      setErrors({
         general: errorMessage
       });
       setIsLoading(false);
@@ -211,7 +211,7 @@ function AcceptInvitationForm() {
                 Ορίστε τον κωδικό πρόσβασής σας για να ολοκληρώσετε την εγγραφή σας
               </p>
             </div>
-            
+
             {errors.general && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start gap-3">
                 <XCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -225,8 +225,8 @@ function AcceptInvitationForm() {
                 <p className="text-gray-600">
                   Δεν βρέθηκε έγκυρο token πρόσκλησης.
                 </p>
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="mt-4 inline-block text-primary hover:text-primary-hover font-medium"
                 >
                   Επιστροφή στη σύνδεση
@@ -358,4 +358,3 @@ export default function AcceptInvitationPage() {
     </Suspense>
   );
 }
-

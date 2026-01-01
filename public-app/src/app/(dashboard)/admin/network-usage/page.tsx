@@ -4,4 +4,3 @@ import NetworkUsageAdminPanel from "@/components/NetworkUsageAdminPanel";
 export default function Page() {
   return <NetworkUsageAdminPanel />;
 }
-

@@ -20,7 +20,7 @@ function PreviewContent() {
   const { currentBuilding, selectedBuilding } = useBuilding();
   const building = selectedBuilding || currentBuilding;
 
-  const kioskUrl = building?.id 
+  const kioskUrl = building?.id
     ? `/kiosk?building_id=${building.id}`
     : '/kiosk';
 
@@ -98,4 +98,3 @@ function PreviewContent() {
     </div>
   );
 }
-

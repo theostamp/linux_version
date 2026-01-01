@@ -38,4 +38,3 @@ export default function SelectedBuildingInfo({ selectedBuilding }: SelectedBuild
     </div>
   );
 }
-

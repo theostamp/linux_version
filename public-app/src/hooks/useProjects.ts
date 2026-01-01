@@ -18,16 +18,16 @@ export function useProjects(options: UseProjectsOptions = {}) {
     queryKey,
     queryFn: async () => {
       if (!activeBuildingId) return { results: [], count: 0 };
-      
+
       const params: Record<string, any> = {
         building: activeBuildingId,
         page_size: pageSize,
       };
-      
+
       if (status) {
         params.status = status;
       }
-      
+
       const response = await api.get('/projects/', { params });
       return response.data;
     },
@@ -69,7 +69,7 @@ export function useProjectMutations() {
     onSuccess: async () => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.refetchQueries({ queryKey: ['projects'] });
@@ -89,7 +89,7 @@ export function useProjectMutations() {
     onSuccess: async (_, variables) => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
@@ -110,7 +110,7 @@ export function useProjectMutations() {
     onSuccess: async () => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
       await queryClient.refetchQueries({ queryKey: ['projects'] });
@@ -128,5 +128,3 @@ export function useProjectMutations() {
     delete: deleteMutation,
   };
 }
-
-

@@ -61,7 +61,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
   const [loadingPreviousReadings, setLoadingPreviousReadings] = useState(false);
   const loadingReadingsRef = useRef(false);
   const { createReading, updateReading, fetchMeterTypes, fetchReadings, readings, loading } = useMeterReadings(buildingId);
-  
+
   // Debug log readings changes
   useEffect(() => {
     console.log('🔍 Readings state changed:', {
@@ -118,7 +118,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
     try {
       const monthStart = format(new Date(date), 'yyyy-MM-01');
       const monthEnd = format(new Date(new Date(date).getFullYear(), new Date(date).getMonth() + 1, 0), 'yyyy-MM-dd');
-      
+
       // Fetch all heating-related expenses
       const expenses = await getExpenses({
         building_id: buildingId,
@@ -126,7 +126,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         date_from: monthStart,
         date_to: monthEnd
       });
-      
+
       // Also check for specific heating fuel types
       const fuelExpenses = await getExpenses({
         building_id: buildingId,
@@ -144,9 +144,9 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
 
       const totalAmount = [...expenses, ...fuelExpenses, ...gasExpenses].reduce((sum, exp) => sum + exp.amount, 0);
       setHeatingExpenseAmount(totalAmount);
-      
+
       console.log('🔥 Heating expenses for month:', { expenses, gasExpenses, totalAmount });
-      
+
       return totalAmount;
     } catch (error) {
       console.error('Error fetching heating expenses:', error);
@@ -160,7 +160,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
     const loadData = async () => {
       try {
         setApartmentsLoading(true);
-        
+
         // Fetch building data
         const building = await fetchBuilding(buildingId);
         setBuildingData(building);
@@ -183,11 +183,11 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         // Fetch meter types
         const types = await fetchMeterTypes();
         console.log('📊 Meter types:', types);
-        
+
         // Transform meter types based on heating system
         const transformedTypes: Array<{value: string, label: string}> = [];
         let defaultMeterType = '';
-        
+
         if (building?.heating_system === 'hour_meters') {
           transformedTypes.push(
             { value: 'heating_hours', label: '🔥 Θέρμανση (Ώρες)' },
@@ -210,9 +210,9 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
           );
           defaultMeterType = 'water'; // Default για κτίρια χωρίς θέρμανση
         }
-        
+
         setMeterTypes(transformedTypes);
-        
+
         // Αυτόματη επιλογή του κατάλληλου τύπου μετρητή
         if (defaultMeterType) {
           console.log(`🎯 Auto-selecting meter type: ${defaultMeterType} for heating system: ${building?.heating_system}`);
@@ -268,11 +268,11 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
           meter_type: watchedMeterType,
           buildingId: buildingId
         });
-        
+
         const result = await stableFetchReadings({
           meter_type: watchedMeterType
         });
-        
+
         console.log('📊 FetchReadings result:', result);
         console.log('📊 Previous readings loaded successfully');
 
@@ -314,22 +314,22 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
       // Enhanced matching logic for apartment readings
       const apartmentReadings = readings?.filter((r: any) => {
         if (r.meter_type !== watchedMeterType) return false;
-        
+
         // Try exact ID match first (in case apartment is a number)
         if (r.apartment === apartment.id) return true;
-        
+
         // Try apartment number match (for string format like "Αλκμάνος 22 - 1")
         const apartmentStr = r.apartment?.toString() || '';
         const apartmentNumberFromString = apartmentStr.split(' - ')[1] || apartmentStr.split('-')[1]?.trim();
-        
+
         if (apartmentNumberFromString === apartment.number?.toString()) return true;
-        
+
         // Fallback: try apartment_number field if it exists
         if (r.apartment_number === apartment.number) return true;
-        
+
         return false;
       }) || [];
-      
+
       console.log(`📋 Apartment ${apartment.number} (ID: ${apartment.id}) readings for ${watchedMeterType}:`, apartmentReadings.length);
       if (apartmentReadings.length > 0) {
         console.log('📋 Found readings:', apartmentReadings.map(r => ({
@@ -341,19 +341,19 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         })));
       } else {
         console.log('❌ No readings found for apartment', apartment.number, 'with meter_type', watchedMeterType);
-        console.log('Available readings for this apartment:', readings.filter(r => 
-          r.apartment === apartment.id || 
+        console.log('Available readings for this apartment:', readings.filter(r =>
+          r.apartment === apartment.id ||
           r.apartment_number === apartment.number
         ));
       }
-      
+
       // Filter readings to only include those BEFORE the selected month
       const selectedMonthStart = new Date(`${selectedMonth}-01`);
       const previousMonthReadings = apartmentReadings.filter((r: any) => {
         const readingDate = new Date(r.reading_date);
         return readingDate < selectedMonthStart;
       });
-      
+
       // Sort by reading_date to get the most recent reading before selected month
       const sortedPreviousReadings = previousMonthReadings.sort(
         (a: any, b: any) => new Date(b.reading_date).getTime() - new Date(a.reading_date).getTime()
@@ -362,7 +362,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
       // Use the most recent reading before selected month as the "previous reading"
       const latestPreviousReading = sortedPreviousReadings[0];
       const currentValueOfLatestReading = latestPreviousReading?.value; // This becomes our "previous reading"
-      
+
       console.log(`📋 Previous month reading for apt ${apartment.number}:`, {
         selectedMonth,
         previousReadingsCount: previousMonthReadings.length,
@@ -379,14 +379,14 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
 
     // Only update if we have readings to populate and they're different
     const readingsWithValues = latestReadings.filter(r => r.previous_reading !== undefined);
-    
+
     if (readingsWithValues.length > 0) {
       // Check if any field is missing a previous_reading that we now have
       const needsUpdate = readingsWithValues.some(latestReading => {
         const field = fields.find(f => f.apartment_id === latestReading.apartment_id);
         return field && field.previous_reading !== latestReading.previous_reading;
       });
-      
+
       if (needsUpdate) {
         console.log('✅ Updating form fields with previous readings:', readingsWithValues);
         const currentReadings = fields.map((field) => ({
@@ -430,7 +430,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
   const onSubmit = async (data: MeterReadingDatasheetFormData) => {
     try {
       console.log('📋 Submitting datasheet readings:', data);
-      
+
       // Validate that new readings are not lower than previous readings
       const invalidReadings = data.readings.filter(reading => {
         if (reading.current_reading > 0 && reading.previous_reading !== undefined) {
@@ -444,21 +444,21 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         toast.error(`Οι νέες μετρήσεις δεν μπορούν να είναι μικρότερες από τις προηγούμενες. Διαμερίσματα: ${invalidApartments}`);
         return;
       }
-      
+
       // Create or update readings for each apartment with delay to avoid database conflicts
       const validReadings = data.readings.filter(reading => reading.current_reading > 0);
-      
+
       for (let i = 0; i < validReadings.length; i++) {
         const reading = validReadings[i];
-        
+
         try {
           // Check if reading already exists for this apartment, date, and meter type
-          const existingReadings = readings.filter(r => 
-            r.apartment === reading.apartment_id && 
+          const existingReadings = readings.filter(r =>
+            r.apartment === reading.apartment_id &&
             r.meter_type === data.meter_type &&
             r.reading_date === data.reading_date
           );
-          
+
           if (existingReadings.length > 0) {
             // Update existing reading
             console.log(`🔄 Updating existing reading for apartment ${reading.apartment_id}`);
@@ -482,13 +482,13 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
           console.error(`❌ Error processing reading for apartment ${reading.apartment_id}:`, error);
           // Continue with next reading instead of stopping
         }
-        
+
         // Add small delay between requests to avoid database conflicts
         if (i < validReadings.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
         }
       }
-      
+
       reset();
       onSuccess?.();
       toast.success('Όλες οι μετρήσεις δημιουργήθηκαν επιτυχώς');
@@ -540,7 +540,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                 </div>
               </div>
             )}
-            
+
             {/* Month Selection */}
             <div className="space-y-2">
               <Label>Μήνας Μετρήσων *</Label>
@@ -639,7 +639,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
               <div>
                 <p className="font-medium text-gray-800">{buildingData.name}</p>
                 <p className="text-sm text-gray-600">
-                  {buildingData.heating_system === 'hour_meters' ? '🔥 Αυτονομία με Ωρομετρητές' : 
+                  {buildingData.heating_system === 'hour_meters' ? '🔥 Αυτονομία με Ωρομετρητές' :
                    buildingData.heating_system === 'heat_meters' ? '🔥 Αυτονομία με Θερμιδομετρητές' :
                    buildingData.heating_system === 'conventional' ? '🔥 Συμβατικό Σύστημα' :
                    '❄️ Χωρίς Κεντρική Θέρμανση'}
@@ -717,7 +717,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                         <td className="p-3 font-medium text-blue-700">{field.apartment_number}</td>
                         <td className="p-3">{field.owner_name}</td>
                         <td className="p-3 text-center text-sm text-gray-600">{field.participation_mills}‰</td>
-                        
+
                         {(buildingData?.heating_system === 'hour_meters' || buildingData?.heating_system === 'heat_meters') && (
                           <>
                             <td className="p-3 text-center text-sm text-orange-600 font-medium">
@@ -728,23 +728,23 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                             </td>
                           </>
                         )}
-                        
+
                         <td className="p-3 text-center">
                           <div className={`text-sm font-mono px-2 py-1 rounded ${
                             loadingPreviousReadings
                               ? 'text-gray-500 bg-gray-100 animate-pulse'
-                              : field.previous_reading !== undefined 
-                                ? 'text-blue-700 bg-blue-50 border border-blue-200' 
+                              : field.previous_reading !== undefined
+                                ? 'text-blue-700 bg-blue-50 border border-blue-200'
                                 : 'text-gray-400 bg-gray-50'
                           }`}>
-                            {loadingPreviousReadings 
+                            {loadingPreviousReadings
                               ? 'Φόρτωση...'
-                              : field.previous_reading !== undefined 
-                                ? `${parseFloat(field.previous_reading.toString()).toFixed(2)}` 
+                              : field.previous_reading !== undefined
+                                ? `${parseFloat(field.previous_reading.toString()).toFixed(2)}`
                                 : 'Δεν υπάρχει'}
                           </div>
                         </td>
-                        
+
                         <td className="p-3">
                           <Controller
                             name={`readings.${index}.current_reading`}
@@ -753,7 +753,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                               const currentValue = parseFloat(inputField.value?.toString() || '0');
                               const previousValue = field.previous_reading !== undefined ? parseFloat(field.previous_reading.toString()) : 0;
                               const isInvalid = currentValue > 0 && field.previous_reading !== undefined && currentValue < previousValue;
-                              
+
                               return (
                                 <div className="space-y-1">
                                   <Input
@@ -796,7 +796,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                             }}
                           />
                         </td>
-                        
+
                         <td className="p-3 text-center">
                           <div className={`text-sm font-medium px-2 py-1 rounded ${
                             consumption > 0 ? 'text-green-700 bg-green-100' : 'text-gray-500'
@@ -804,20 +804,20 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                             {consumption > 0 ? consumption.toLocaleString() : '-'}
                           </div>
                         </td>
-                        
+
                         {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (() => {
                           // Calculate fixed charge based on participation mills (building properties)
                           const fixedChargePercentage = (buildingData?.heating_fixed_percentage || 30) / 100;
                           const fixedAmount = (field.participation_mills / 1000) * heatingExpenseAmount * fixedChargePercentage;
-                          
+
                           // Calculate consumption charge based on heating mills and actual consumption
                           const variableChargePercentage = 0.7; // 70% variable charge based on consumption
-                          const consumptionAmount = totalConsumption > 0 
+                          const consumptionAmount = totalConsumption > 0
                             ? (consumption / totalConsumption) * heatingExpenseAmount * variableChargePercentage
                             : 0;
-                          
+
                           const totalAmount = fixedAmount + consumptionAmount;
-                          
+
                           return (
                             <>
                               {/* Fixed Charge Column */}
@@ -828,7 +828,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                                   {fixedAmount > 0 ? `€${fixedAmount.toFixed(2)}` : '-'}
                                 </div>
                               </td>
-                              
+
                               {/* Consumption Charge Column */}
                               <td className="p-3 text-center">
                                 <div className={`text-sm font-medium px-2 py-1 rounded bg-green-50 ${
@@ -837,7 +837,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                                   {consumptionAmount > 0 ? `€${consumptionAmount.toFixed(2)}` : '-'}
                                 </div>
                               </td>
-                              
+
                               {/* Total Amount Column */}
                               <td className="p-3 text-center">
                                 <div className={`text-sm font-medium px-2 py-1 rounded ${
@@ -883,7 +883,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                 const variableChargePercentage = 1 - fixedChargePercentage;
                 const totalFixedAmount = heatingExpenseAmount * fixedChargePercentage;
                 const totalVariableAmount = heatingExpenseAmount * variableChargePercentage;
-                
+
                 return (
                   <>
                     <div className="text-center">
@@ -909,7 +909,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
             <Button type="button" variant="outline" onClick={onCancel}>
               Ακύρωση
             </Button>
-            
+
             <div className="flex gap-2">
               <Button type="submit" disabled={loading || !watchedMeterType}>
                 {loading ? (

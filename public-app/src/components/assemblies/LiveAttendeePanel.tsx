@@ -2,19 +2,19 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, CheckCircle, XCircle, MinusCircle, 
-  Loader2, Check, UserCheck, UserPlus, 
+import {
+  Users, CheckCircle, XCircle, MinusCircle,
+  Loader2, Check, UserCheck, UserPlus,
   Search, Vote, MoreVertical, ShieldCheck,
   ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  useAttendeeCheckIn, 
-  useAttendeeCheckOut, 
-  useCastVote 
+import {
+  useAttendeeCheckIn,
+  useAttendeeCheckOut,
+  useCastVote
 } from '@/hooks/useAssemblies';
 import type { AgendaItem, AssemblyAttendee, VoteChoice } from '@/lib/api';
 
@@ -26,21 +26,21 @@ interface LiveAttendeePanelProps {
   canManage: boolean;
 }
 
-export default function LiveAttendeePanel({ 
-  assemblyId, 
-  attendees, 
+export default function LiveAttendeePanel({
+  assemblyId,
+  attendees,
   currentItem,
   voteResults,
-  canManage 
+  canManage
 }: LiveAttendeePanelProps) {
   const [search, setSearch] = useState('');
   const [expandedAttendee, setExpandedAttendee] = useState<string | null>(null);
-  
+
   const checkInMutation = useAttendeeCheckIn();
   const checkOutMutation = useAttendeeCheckOut();
   const castVoteMutation = useCastVote();
 
-  const filteredAttendees = attendees.filter(a => 
+  const filteredAttendees = attendees.filter(a =>
     a.apartment_number.toLowerCase().includes(search.toLowerCase()) ||
     a.display_name.toLowerCase().includes(search.toLowerCase())
   );
@@ -62,7 +62,7 @@ export default function LiveAttendeePanel({
 
   const handleManualVote = async (attendee: AssemblyAttendee, vote: VoteChoice) => {
     if (!currentItem) return;
-    
+
     await castVoteMutation.mutateAsync({
       attendeeId: attendee.id,
       agendaItemId: currentItem.id,
@@ -86,11 +86,11 @@ export default function LiveAttendeePanel({
             {presentAttendees.length} / {attendees.length}
           </div>
         </div>
-        
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input 
-            placeholder="Αναζήτηση διαμερίσματος ή ονόματος..." 
+          <Input
+            placeholder="Αναζήτηση διαμερίσματος ή ονόματος..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
@@ -109,14 +109,14 @@ export default function LiveAttendeePanel({
             filteredAttendees.map((attendee) => {
               const hasVoted = getAttendeeVote(attendee.id);
               const isExpanded = expandedAttendee === attendee.id;
-              
+
               return (
                 <div key={attendee.id} className={cn(
                   "transition-colors",
                   attendee.is_present ? "bg-emerald-50/30" : "bg-white",
                   isExpanded && "bg-slate-50"
                 )}>
-                  <div 
+                  <div
                     className="p-4 flex items-center gap-3 cursor-pointer"
                     onClick={() => setExpandedAttendee(isExpanded ? null : attendee.id)}
                   >
@@ -126,7 +126,7 @@ export default function LiveAttendeePanel({
                     )}>
                       {attendee.apartment_number}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-900 truncate">{attendee.display_name}</span>
@@ -244,4 +244,3 @@ export default function LiveAttendeePanel({
     </div>
   );
 }
-

@@ -15,7 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "financial-dashboard-summary");
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-
-
-
-

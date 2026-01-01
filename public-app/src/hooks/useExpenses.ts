@@ -21,20 +21,20 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   // Load expenses for the current building
   const loadExpenses = useCallback(async () => {
     if (!buildingId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         building_id: buildingId.toString()
       });
-      
+
       // Add selectedMonth parameter if provided
       if (selectedMonth) {
         params.append('month', selectedMonth);
       }
-      
+
       const response = await api.get(`/financial/expenses/?${params}`);
       const data = response.data.results || response.data;
       const normalize = (e: any): Expense => ({
@@ -55,10 +55,10 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   const createExpense = useCallback(async (data: ExpenseFormData): Promise<Expense | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const formData = new FormData();
-      
+
       // Προσθήκη βασικών πεδίων
       formData.append('building', data.building.toString());
       formData.append('title', data.title);
@@ -66,23 +66,23 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       formData.append('date', data.date);
       formData.append('category', data.category);
       formData.append('distribution_type', data.distribution_type);
-      
+
       if (data.supplier) {
         formData.append('supplier', data.supplier.toString());
       }
-      
+
       if (data.notes) {
         formData.append('notes', data.notes);
       }
-      
+
       if (data.attachment) {
         formData.append('attachment', data.attachment);
       }
-      
+
       if (data.due_date) {
         formData.append('due_date', data.due_date);
       }
-      
+
       if (data.add_to_calendar !== undefined) {
         formData.append('add_to_calendar', data.add_to_calendar.toString());
       }
@@ -94,15 +94,15 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
-      
+
       // Refresh expenses list after creating new expense
       await loadExpenses();
-      
+
       // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['expenses'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
-      
+
       toast.success('Η δαπάνη δημιουργήθηκε επιτυχώς');
       return response.data;
     } catch (err: any) {
@@ -119,10 +119,10 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   const getExpenses = useCallback(async (filters: ExpenseFilters = {}): Promise<Expense[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.building_id) {
         params.append('building_id', filters.building_id.toString());
       }
@@ -172,10 +172,10 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   const updateExpense = useCallback(async (id: number, data: Partial<ExpenseFormData>): Promise<Expense | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const formData = new FormData();
-      
+
       // Προσθήκη πεδίων που υπάρχουν
       if (data.building !== undefined) {
         formData.append('building', data.building.toString());
@@ -213,7 +213,7 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
-      
+
       // Refresh expenses list after updating
       await loadExpenses();
 
@@ -238,24 +238,24 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   const deleteExpense = useCallback(async (id: number): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await api.delete(`/financial/expenses/${id}/`);
-      
+
       // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
       // Note: API-level cache is already cleared by api.delete automatically
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['expenses'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
-      
+
       // Refresh expenses list after deleting - this will fetch fresh data since cache is cleared
       await loadExpenses();
-      
+
       // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['expenses'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
-      
+
       toast.success('Η δαπάνη διαγράφηκε επιτυχώς');
       return true;
     } catch (err: any) {
@@ -300,7 +300,7 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     expenses,
     isLoading,
     error,
-    
+
     // Actions
     createExpense,
     getExpenses,
@@ -313,4 +313,4 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     clearError,
     loadExpenses,
   };
-}; 
+};

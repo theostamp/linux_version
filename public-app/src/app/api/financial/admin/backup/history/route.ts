@@ -19,4 +19,3 @@ const { GET, OPTIONS } = exportHandlers(
 );
 
 export { GET, OPTIONS };
-

@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { api } from '@/lib/api';
-import { 
-  UserPlus, 
-  Users, 
-  Shield, 
+import {
+  UserPlus,
+  Users,
+  Shield,
   Eye,
   EyeOff,
   X,
@@ -124,20 +124,20 @@ const permissionGroups = [
 
 export default function OfficeStaffPage() {
   const { user, isLoading: authLoading } = useAuth();
-  
+
   // State
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     email: '',
@@ -162,12 +162,12 @@ export default function OfficeStaffPage() {
     can_upload_documents: false,
     can_delete_documents: false,
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'list' | 'logs'>('list');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Fetch data
   useEffect(() => {
     if (user && !authLoading) {
@@ -175,7 +175,7 @@ export default function OfficeStaffPage() {
       fetchActivityLogs();
     }
   }, [user, authLoading]);
-  
+
   const fetchStaffMembers = async () => {
     try {
       setIsLoading(true);
@@ -188,7 +188,7 @@ export default function OfficeStaffPage() {
       setIsLoading(false);
     }
   };
-  
+
   const fetchActivityLogs = async () => {
     try {
       const response = await api.get('/api/office/activity-logs/');
@@ -197,7 +197,7 @@ export default function OfficeStaffPage() {
       console.error('Error fetching logs:', err);
     }
   };
-  
+
   // Create staff member
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,12 +213,12 @@ export default function OfficeStaffPage() {
       setError(error.response?.data?.error || 'Σφάλμα κατά τη δημιουργία υπαλλήλου');
     }
   };
-  
+
   // Update staff member
   const handleUpdateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStaff) return;
-    
+
     try {
       await api.patch(`/api/office/staff/${selectedStaff.id}/`, formData);
       setShowEditModal(false);
@@ -232,7 +232,7 @@ export default function OfficeStaffPage() {
       setError(error.response?.data?.error || 'Σφάλμα κατά την ενημέρωση υπαλλήλου');
     }
   };
-  
+
   // Toggle active status
   const handleToggleActive = async (staff: StaffMember) => {
     try {
@@ -243,12 +243,12 @@ export default function OfficeStaffPage() {
       console.error('Error toggling status:', err);
     }
   };
-  
+
   // Reset password
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStaff || !newPassword) return;
-    
+
     try {
       await api.post(`/api/office/staff/${selectedStaff.id}/reset_password/`, {
         password: newPassword
@@ -263,7 +263,7 @@ export default function OfficeStaffPage() {
       setError(error.response?.data?.error || 'Σφάλμα κατά την αλλαγή κωδικού');
     }
   };
-  
+
   const resetForm = () => {
     setFormData({
       email: '',
@@ -288,7 +288,7 @@ export default function OfficeStaffPage() {
       can_delete_documents: false,
     });
   };
-  
+
   const openEditModal = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setFormData({
@@ -315,14 +315,14 @@ export default function OfficeStaffPage() {
     });
     setShowEditModal(true);
   };
-  
+
   // Filter staff
-  const filteredStaff = staffMembers.filter(staff => 
+  const filteredStaff = staffMembers.filter(staff =>
     staff.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     staff.permissions?.job_title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -330,7 +330,7 @@ export default function OfficeStaffPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
           {/* Header */}
@@ -354,7 +354,7 @@ export default function OfficeStaffPage() {
               </button>
             </div>
           </div>
-          
+
           {/* Error display */}
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
@@ -365,7 +365,7 @@ export default function OfficeStaffPage() {
               </button>
             </div>
           )}
-          
+
           {/* Tabs */}
           <div className="flex gap-2 mb-6">
             <button
@@ -393,7 +393,7 @@ export default function OfficeStaffPage() {
               Ιστορικό Δραστηριοτήτων
             </button>
           </div>
-          
+
           {activeTab === 'list' ? (
             <>
               {/* Search */}
@@ -409,7 +409,7 @@ export default function OfficeStaffPage() {
                   />
                 </div>
               </div>
-              
+
               {/* Staff list */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
@@ -442,7 +442,7 @@ export default function OfficeStaffPage() {
                           )}>
                             {staff.first_name?.[0]}{staff.last_name?.[0]}
                           </div>
-                          
+
                           {/* Info */}
                           <div>
                             <div className="flex items-center gap-2">
@@ -471,7 +471,7 @@ export default function OfficeStaffPage() {
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* Actions */}
                         <div className="flex items-center gap-2">
                           <button
@@ -505,7 +505,7 @@ export default function OfficeStaffPage() {
                           </button>
                         </div>
                       </div>
-                      
+
                       {/* Permissions preview */}
                       {staff.permissions && (
                         <div className="mt-4 pt-4 border-t border-slate-100">
@@ -587,7 +587,7 @@ export default function OfficeStaffPage() {
               </div>
             </div>
           )}
-      
+
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -596,7 +596,7 @@ export default function OfficeStaffPage() {
               <h2 className="text-xl font-bold text-slate-900">Δημιουργία Νέου Υπαλλήλου</h2>
               <p className="text-sm text-slate-500 mt-1">Συμπληρώστε τα στοιχεία του υπαλλήλου</p>
             </div>
-            
+
             <form onSubmit={handleCreateStaff}>
               <div className="p-6 space-y-6">
                 {/* Basic info */}
@@ -622,7 +622,7 @@ export default function OfficeStaffPage() {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
                   <input
@@ -633,7 +633,7 @@ export default function OfficeStaffPage() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Κωδικός *</label>
                   <div className="relative">
@@ -655,7 +655,7 @@ export default function OfficeStaffPage() {
                   </div>
                   <p className="text-xs text-slate-500 mt-1">Τουλάχιστον 8 χαρακτήρες</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Θέση Εργασίας</label>
                   <input
@@ -666,14 +666,14 @@ export default function OfficeStaffPage() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 {/* Permissions */}
                 <div>
                   <h3 className="text-sm font-medium text-slate-900 mb-3 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
                     Δικαιώματα Πρόσβασης
                   </h3>
-                  
+
                   <div className="space-y-4">
                     {permissionGroups.map((group) => (
                       <div key={group.title} className="border border-slate-200 rounded-lg p-3">
@@ -698,7 +698,7 @@ export default function OfficeStaffPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
                 <button
                   type="button"
@@ -718,7 +718,7 @@ export default function OfficeStaffPage() {
           </div>
         </div>
       )}
-      
+
       {/* Edit Modal */}
       {showEditModal && selectedStaff && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -727,7 +727,7 @@ export default function OfficeStaffPage() {
               <h2 className="text-xl font-bold text-slate-900">Επεξεργασία Υπαλλήλου</h2>
               <p className="text-sm text-slate-500 mt-1">{selectedStaff.email}</p>
             </div>
-            
+
             <form onSubmit={handleUpdateStaff}>
               <div className="p-6 space-y-6">
                 {/* Basic info */}
@@ -751,7 +751,7 @@ export default function OfficeStaffPage() {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Θέση Εργασίας</label>
                   <input
@@ -761,14 +761,14 @@ export default function OfficeStaffPage() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 {/* Permissions */}
                 <div>
                   <h3 className="text-sm font-medium text-slate-900 mb-3 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
                     Δικαιώματα Πρόσβασης
                   </h3>
-                  
+
                   <div className="space-y-4">
                     {permissionGroups.map((group) => (
                       <div key={group.title} className="border border-slate-200 rounded-lg p-3">
@@ -793,7 +793,7 @@ export default function OfficeStaffPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
                 <button
                   type="button"
@@ -816,7 +816,7 @@ export default function OfficeStaffPage() {
           </div>
         </div>
       )}
-      
+
       {/* Password Reset Modal */}
       {showPasswordModal && selectedStaff && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -825,7 +825,7 @@ export default function OfficeStaffPage() {
               <h2 className="text-xl font-bold text-slate-900">Αλλαγή Κωδικού</h2>
               <p className="text-sm text-slate-500 mt-1">{selectedStaff.full_name}</p>
             </div>
-            
+
             <form onSubmit={handleResetPassword}>
               <div className="p-6">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Νέος Κωδικός</label>
@@ -848,7 +848,7 @@ export default function OfficeStaffPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Τουλάχιστον 8 χαρακτήρες</p>
               </div>
-              
+
               <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
                 <button
                   type="button"
@@ -875,4 +875,3 @@ export default function OfficeStaffPage() {
     </div>
   );
 }
-

@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { BackButton } from '@/components/ui/BackButton';
-import { 
-  Award, 
-  Building, 
-  Calendar, 
+import {
+  Award,
+  Building,
+  Calendar,
   DollarSign,
   CheckCircle,
   XCircle,
@@ -69,7 +69,7 @@ function OffersPageContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const buildingId = getActiveBuildingId();
-  
+
   const statusFilter = searchParams.get('status') || undefined;
   const [selectedStatus, setSelectedStatus] = useState<string>(statusFilter || 'all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,25 +85,25 @@ function OffersPageContent() {
   });
 
   const { approve, reject, delete: deleteOffer } = useOfferMutations();
-  
+
   // Filtered and sorted offers
   const filteredOffers = useMemo(() => {
     let filtered = [...offers];
-    
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((o: any) => 
+      filtered = filtered.filter((o: any) =>
         o.contractor_name?.toLowerCase().includes(query) ||
         o.project_title?.toLowerCase().includes(query) ||
         o.description?.toLowerCase().includes(query)
       );
     }
-    
+
     // Sorting
     filtered.sort((a: any, b: any) => {
       let aVal: any, bVal: any;
-      
+
       switch (sortBy) {
         case 'contractor':
           aVal = a.contractor_name || '';
@@ -119,16 +119,16 @@ function OffersPageContent() {
           bVal = new Date(b.submitted_at || b.created_at || 0).getTime();
           break;
       }
-      
+
       if (typeof aVal === 'string') {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       }
-      
+
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
-    
+
     return filtered;
   }, [offers, searchQuery, sortBy, sortOrder]);
 
@@ -137,7 +137,7 @@ function OffersPageContent() {
       console.log('[Offers List] Approving offer:', offerId);
       const result = await approve.mutateAsync(offerId);
       console.log('[Offers List] ✓ Offer approved successfully:', result);
-      
+
       toast({
         title: '✓ Η προσφορά εγκρίθηκε',
         description: 'Η προσφορά εγκρίθηκε επιτυχώς. Οι υπόλοιπες προσφορές απορρίφθηκαν αυτόματα και δημιουργήθηκαν οι σχετικές δαπάνες.',
@@ -169,7 +169,7 @@ function OffersPageContent() {
 
   const handleDeleteOffer = async () => {
     if (!offerToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       await deleteOffer.mutateAsync(offerToDelete.id);
@@ -244,9 +244,9 @@ function OffersPageContent() {
         </div>
         <div className="flex gap-2">
           {/* Refresh Button */}
-          <RefreshButton 
-            scope="projects" 
-            label="Ανανέωση" 
+          <RefreshButton
+            scope="projects"
+            label="Ανανέωση"
             variant="outline"
             size="sm"
           />
@@ -281,7 +281,7 @@ function OffersPageContent() {
                 />
               </div>
             </div>
-            
+
             {/* Status Filter */}
             <Select
               value={selectedStatus}
@@ -308,7 +308,7 @@ function OffersPageContent() {
                 <SelectItem value="rejected">Απορρίφθηκε</SelectItem>
               </SelectContent>
             </Select>
-            
+
             {/* Sort */}
             <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
               const [by, order] = value.split('-');
@@ -431,15 +431,15 @@ function OffersPageContent() {
                     </div>
                   )}
                 </div>
-                
+
                 {offer.description && (
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2 p-3 bg-gray-50 rounded-lg">{offer.description}</p>
                 )}
-                
+
                 {offer.payment_method && (
                   <div className="mb-4">
                     <Badge variant="outline" className="text-xs">
-                      {offer.payment_method === 'one_time' ? 'Εφάπαξ' : 
+                      {offer.payment_method === 'one_time' ? 'Εφάπαξ' :
                        offer.payment_method === 'installments' ? 'Δόσεις' :
                        offer.payment_method === 'milestones' ? 'Ορόσημα' : 'Άλλο'}
                     </Badge>
@@ -528,4 +528,3 @@ function OffersPageContent() {
     </div>
   );
 }
-

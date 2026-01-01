@@ -9,13 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Building2, 
-  Target, 
-  TrendingUp, 
-  TrendingDown, 
-  Euro, 
-  Users, 
+import {
+  Building2,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  Euro,
+  Users,
   AlertTriangle,
   Edit3,
   Check,
@@ -82,10 +82,10 @@ interface FinancialSummary {
   total_expenses_month?: number; // ← ΝΕΟ FIELD - Συνολικές δαπάνες του μήνα
 }
 
-export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, BuildingOverviewSectionProps>(({ 
+export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, BuildingOverviewSectionProps>(({
   buildingId,
   selectedMonth,
-  onReserveFundAmountChange 
+  onReserveFundAmountChange
 }, ref) => {
   const { buildings } = useBuilding();
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
@@ -115,8 +115,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
 
   // Memoize currentBuilding to prevent unnecessary re-renders
-  const currentBuilding = useMemo(() => 
-    buildings.find(b => b.id === buildingId), 
+  const currentBuilding = useMemo(() =>
+    buildings.find(b => b.id === buildingId),
     [buildings, buildingId]
   );
 
@@ -159,11 +159,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const calculateNewDates = (startMonth: string, startYear: string, durationMonths: number) => {
     const year = parseInt(startYear) || new Date().getFullYear();
     const month = parseInt(startMonth) || 1;
-    
+
     // Create dates in UTC to avoid timezone issues
     const startDate = new Date(Date.UTC(year, month - 1, 1));
     const endDate = new Date(Date.UTC(year, month - 1 + durationMonths, 0)); // Last day of end month
-    
+
     // Debug logging to track the issue
     console.log('🔍 calculateNewDates Debug:', {
       inputMonth: startMonth,
@@ -175,7 +175,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       startDateLocal: startDate.toLocaleDateString('el-GR'),
       endDateLocal: endDate.toLocaleDateString('el-GR')
     });
-    
+
     return {
       startDate: startDate.toISOString().split('T')[0],
       endDate: endDate.toISOString().split('T')[0]
@@ -185,17 +185,17 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   // Helper functions for localStorage persistence
   const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
   const reserveStorageKeys = ['goal', 'start_date', 'target_date', 'duration_months', 'monthly_target'];
-  
+
   const clearReserveFundStorage = () => {
     reserveStorageKeys.forEach(key => {
       localStorage.removeItem(getStorageKey(key));
     });
   };
-  
+
   // Clean old localStorage data and reset to new defaults if needed
   const cleanOldReserveFundData = () => {
     let hasOldData = false;
-    
+
     reserveStorageKeys.forEach(key => {
       const storageKey = getStorageKey(key);
       const value = localStorage.getItem(storageKey);
@@ -203,7 +203,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         hasOldData = true;
       }
     });
-    
+
     if (hasOldData) {
       console.log('🧹 Clearing old reserve fund data from localStorage (2024 dates detected)');
       clearReserveFundStorage();
@@ -211,7 +211,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     }
     return false;
   };
-  
+
   const saveToLocalStorage = (key: string, value: any) => {
     try {
       localStorage.setItem(getStorageKey(key), JSON.stringify(value));
@@ -219,7 +219,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       console.error('Error saving to localStorage:', error);
     }
   };
-  
+
   const loadFromLocalStorage = (key: string, defaultValue: any = null) => {
     try {
       const stored = localStorage.getItem(getStorageKey(key));
@@ -238,7 +238,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         const startDate = new Date(financialSummary.reserve_fund_start_date);
         const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
         const year = startDate.getFullYear().toString();
-        
+
         // Debug logging to help identify the issue
         console.log('🔍 Reserve Fund Form Initialization:', {
           storedStartDate: financialSummary.reserve_fund_start_date,
@@ -247,7 +247,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           calculatedYear: year,
           monthName: startDate.toLocaleDateString('el-GR', { month: 'long' })
         });
-        
+
         setNewStartMonth(month);
         setNewStartYear(year);
       } else {
@@ -334,20 +334,20 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     if (financialSummary && onReserveFundAmountChange) {
       const goal = financialSummary.reserve_fund_goal || 0;
       const duration = financialSummary.reserve_fund_duration_months || 1;
-      
+
       let correctMonthlyTarget = 0;
-      
+
       // Calculate reserve fund amount if there's a goal and duration
       if (goal > 0 && duration > 0) {
         correctMonthlyTarget = goal / duration;
       }
-      
+
       console.log('🔄 BuildingOverviewSection: Reserve fund calculation:', {
         goal,
         duration,
         correctMonthlyTarget
       });
-      
+
       onReserveFundAmountChange(correctMonthlyTarget);
     }
   }, [financialSummary?.reserve_fund_goal, financialSummary?.reserve_fund_duration_months, onReserveFundAmountChange]);
@@ -356,14 +356,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const fetchFinancialSummary = async (isRefresh = false) => {
     // Initialize buildingData outside try block so it's available in catch
     let buildingData = currentBuilding;
-    
+
     try {
       if (isRefresh) {
         setRefreshing(true);
       } else {
         setLoading(true);
       }
-      
+
       // Fetch building data if not complete
       if (!currentBuilding?.management_fee_per_apartment) {
         try {
@@ -377,21 +377,21 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           console.warn('⚠️ BuildingOverviewSection: Could not fetch building data:', buildingError);
         }
       }
-      
+
       // Call the real API instead of using mock data
       const params = new URLSearchParams({
         building_id: buildingId.toString()
       });
-      
+
       // Add month parameter if provided (handle null/undefined)
       if (selectedMonth && selectedMonth !== 'null' && selectedMonth !== '') {
         params.append('month', selectedMonth);
       }
-      
+
       const apiUrl = `/financial/dashboard/summary/?${params}`;
       // console.log('🌐 BuildingOverviewSection: Calling API:', apiUrl);
       // console.log('🌐 BuildingOverviewSection: selectedMonth parameter:', selectedMonth);
-      
+
       const response = await makeRequestWithRetry({
         method: 'get',
         url: apiUrl
@@ -402,13 +402,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       // console.log('📊 BuildingOverviewSection: API total_expenses_month:', apiData.total_expenses_month);
       // console.log('📊 BuildingOverviewSection: API average_monthly_expenses:', apiData.average_monthly_expenses);
       // console.log('📊 BuildingOverviewSection: API has_monthly_activity:', apiData.has_monthly_activity);
-      
+
       // Clean old data before loading
       const wasOldDataCleared = cleanOldReserveFundData();
       if (wasOldDataCleared) {
         console.log('✅ Old reserve fund data from 2024 has been cleared. Using new defaults.');
       }
-      
+
       // Load reserve fund data from API (primary) with localStorage fallback
       const apiGoal = apiData.reserve_fund_goal || 0;
       const apiDurationMonths = apiData.reserve_fund_duration_months || 0;
@@ -420,7 +420,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const savedTargetDate = apiData.reserve_fund_target_date || null;
       const savedDurationMonths = apiDurationMonths;
       const savedMonthlyTarget = apiMonthlyTarget;
-      
+
       console.log('BuildingOverviewSection: Reserve fund data:', {
         apiGoal,
         apiDurationMonths,
@@ -431,7 +431,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         savedDurationMonths,
         savedMonthlyTarget
       });
-      
+
       // Calculate dynamic reserve fund debt based on timeline progress
       // If there are pending obligations, reserve fund collection is paused
       const calculateReserveFundDebt = () => {
@@ -439,39 +439,39 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         if (apiData.reserve_fund_contribution === 0) {
           return 0; // No reserve fund debt when expenses take priority
         }
-        
+
         // ΔΙΟΡΘΩΣΗ: Χρήση επιλεγμένου μήνα αντί για σήμερα για month-specific view
         const referenceDate = selectedMonth ? new Date(selectedMonth + '-01') : new Date();
-        
+
         // If no start date is set, return 0 debt
         if (!savedStartDate) {
           return 0;
         }
-        
+
         const startDate = new Date(savedStartDate);
-        
+
         // Calculate months that have passed since start up to the reference date
-        const monthsPassed = Math.max(0, 
-          (referenceDate.getFullYear() - startDate.getFullYear()) * 12 + 
+        const monthsPassed = Math.max(0,
+          (referenceDate.getFullYear() - startDate.getFullYear()) * 12 +
           (referenceDate.getMonth() - startDate.getMonth())
         );
-        
+
         // Calculate expected contributions so far
         const monthlyContributionPerBuilding = savedMonthlyTarget;
         const expectedContributionsSoFar = monthsPassed * monthlyContributionPerBuilding;
-        
+
         // Current reserve amount from API
         const currentReserve = apiData.current_reserve || 0;
-        
+
         // Debt = Expected contributions - Current reserve (if negative, means we're behind)
         const deficit = expectedContributionsSoFar - currentReserve;
-        
+
         // Return the debt (positive number represents amount owed)
         return Math.max(0, deficit);
       };
-      
+
       const calculatedReserveFundDebt = calculateReserveFundDebt();
-      
+
       // Transform API data to match our interface
       const financialData: FinancialSummary = {
         total_balance: apiData.total_balance || 0,
@@ -501,7 +501,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_payments_month: apiData.total_payments_month || 0,
         total_expenses_month: apiData.total_expenses_month || 0
       };
-      
+
       console.log('🔄 BuildingOverviewSection: Transformed financial data:', financialData);
       console.log('🔄 BuildingOverviewSection: buildingData:', buildingData);
       console.log('🔄 BuildingOverviewSection: has_monthly_activity from API:', apiData.has_monthly_activity);
@@ -509,26 +509,26 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       console.log('🔄 BuildingOverviewSection: management_fee_per_apartment:', buildingData?.management_fee_per_apartment);
       console.log('🔄 BuildingOverviewSection: API average_monthly_expenses:', apiData.average_monthly_expenses);
       console.log('🔄 BuildingOverviewSection: Final average_monthly_expenses:', financialData.average_monthly_expenses);
-      
+
       console.log('BuildingOverviewSection: Setting financial data:', financialData);
-      
+
       // Add visual indicator for month-specific data
-      const monthDisplayName = selectedMonth ? 
-        new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : 
+      const monthDisplayName = selectedMonth ?
+        new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) :
         'Τρέχων Μήνας';
-      
+
       console.log('📅 BuildingOverviewSection: Month display name:', monthDisplayName);
-      
+
       const finalData = {
         ...financialData,
         // Add month indicator to the data
         last_calculation_date: `${monthDisplayName} (${selectedMonth || 'current'})`
       };
-      
+
       console.log('💾 BuildingOverviewSection: Setting final financial data:', finalData);
       console.log('💾 BuildingOverviewSection: Final current_obligations:', finalData.current_obligations);
       console.log('💾 BuildingOverviewSection: Final average_monthly_expenses:', finalData.average_monthly_expenses);
-      
+
       setFinancialSummary(finalData);
       setNewGoal(financialData.reserve_fund_goal.toString());
       // 🔧 Removed: setReserveFundPriority(apiPriority) - reserve fund priority feature removed
@@ -539,7 +539,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       // }
     } catch (error: any) {
       console.error('Error fetching financial summary:', error);
-      
+
       // Αφαιρέθηκαν τα error notifications
       // Provide specific error messages for rate limiting
       // if (error.response?.status === 429) {
@@ -547,7 +547,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       // } else {
       //   toast.error('Αποτυχία φόρτωσης οικονομικών στοιχείων');
       // }
-      
+
       // Fallback to empty data for new buildings
       const emptyData: FinancialSummary = {
         total_balance: 0,
@@ -573,7 +573,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_payments_month: 0,
         total_expenses_month: 0
       };
-      
+
       setFinancialSummary(emptyData);
       setNewGoal(emptyData.reserve_fund_goal.toString());
     } finally {
@@ -584,7 +584,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   // Memoize the dependency array to ensure consistent size
   const dependencies = useMemo(() => [
-    buildingId, 
+    buildingId,
     currentBuilding?.id, // Use only the ID to avoid object reference issues
     selectedMonth || null // Use null instead of empty string for consistency
   ], [buildingId, currentBuilding?.id, selectedMonth]);
@@ -593,7 +593,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     // console.log('🔄 BuildingOverviewSection: useEffect triggered with dependencies:', dependencies);
     // console.log('🔄 BuildingOverviewSection: selectedMonth changed to:', selectedMonth);
     // console.log('🔄 BuildingOverviewSection: Current financial summary before update:', financialSummary?.last_calculation_date);
-    
+
     // Single unified effect that handles all dependency changes
     fetchFinancialSummary(true); // Always force refresh for consistency
   }, dependencies);
@@ -614,20 +614,20 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const handleRefreshReserve = async () => {
     try {
       setRefreshingReserve(true);
-      
+
       // Call the real API to refresh financial data
       const params = new URLSearchParams({
         building_id: buildingId.toString()
       });
-      
+
       // Add month parameter if provided (handle null/undefined)
       if (selectedMonth && selectedMonth !== 'null' && selectedMonth !== '') {
         params.append('month', selectedMonth);
       }
-      
+
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       const apiData = response.data;
-      
+
       // Update the financial summary with fresh data
       setFinancialSummary(prev => prev ? {
         ...prev,
@@ -645,7 +645,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_monthly_target: prev.reserve_fund_monthly_target,
         reserve_fund_duration_months: prev.reserve_fund_duration_months
       } : null);
-      
+
       // Αφαιρέθηκε το notification
       // toast.success('Δεδομένα αποθεματικού ενημερώθηκαν');
     } catch (error) {
@@ -661,7 +661,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     try {
       const goalValue = parseFloat(newGoal);
       const installmentsValue = parseInt(newInstallments);
-      
+
       if (isNaN(goalValue) || goalValue < 0) {
         // Αφαιρέθηκε το error notification
         // toast.error('Παρακαλώ εισάγετε έγκυρο ποσό');
@@ -677,17 +677,17 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       // Save goal and installments to localStorage for persistence
       saveToLocalStorage('goal', goalValue);
       saveToLocalStorage('duration_months', installmentsValue);
-      
+
       // Calculate monthly target based on goal and installments
       const newMonthlyTarget = goalValue / installmentsValue;
       saveToLocalStorage('monthly_target', newMonthlyTarget);
-      
+
       // Calculate new target date based on installments
       const today = new Date();
       const targetDate = new Date(today.getFullYear(), today.getMonth() + installmentsValue, 1);
       const targetDateString = targetDate.toISOString().split('T')[0];
       saveToLocalStorage('target_date', targetDateString);
-      
+
       // Use the actual selected start month/year from the modal
       const actualStartMonth = newStartMonth || ((new Date().getMonth() + 1).toString().padStart(2, '0'));
       const actualStartYear = newStartYear || new Date().getFullYear().toString();
@@ -708,36 +708,36 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         actualStartYear,
         installmentsValue
       );
-      
+
       console.log('🔍 Calculated Dates:', {
         newStartDate,
         newEndDate,
         startDateMonth: new Date(newStartDate).getMonth() + 1,
         startDateMonthName: new Date(newStartDate).toLocaleDateString('el-GR', { month: 'long' })
       });
-      
+
       // Recalculate reserve fund debt with new goal and installments
       const existingStartDate = new Date(financialSummary?.reserve_fund_start_date || newStartDate);
       // ΔΙΟΡΘΩΣΗ: Χρήση επιλεγμένου μήνα αντί για σήμερα
       const referenceDate = selectedMonth ? new Date(selectedMonth + '-01') : today;
-      const monthsPassed = Math.max(0, 
-        (referenceDate.getFullYear() - existingStartDate.getFullYear()) * 12 + 
+      const monthsPassed = Math.max(0,
+        (referenceDate.getFullYear() - existingStartDate.getFullYear()) * 12 +
         (referenceDate.getMonth() - existingStartDate.getMonth())
       );
       const expectedSoFar = monthsPassed * newMonthlyTarget;
       const currentReserve = financialSummary?.current_reserve || 0;
       const newReserveFundDebt = Math.max(0, expectedSoFar - currentReserve);
-      
+
       // Save to API with complete timeline data
-      await api.patch(`/buildings/list/${buildingId}/`, { 
+      await api.patch(`/buildings/list/${buildingId}/`, {
         reserve_fund_goal: goalValue,
         reserve_fund_duration_months: installmentsValue,
         reserve_fund_start_date: newStartDate,
         reserve_fund_target_date: newEndDate
       });
-      
-      setFinancialSummary(prev => prev ? { 
-        ...prev, 
+
+      setFinancialSummary(prev => prev ? {
+        ...prev,
         reserve_fund_goal: goalValue,
         reserve_fund_duration_months: installmentsValue,
         reserve_fund_monthly_target: newMonthlyTarget,
@@ -825,9 +825,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       }
 
       const { startDate, endDate } = calculateNewDates(newStartMonth, newStartYear, durationValue);
-      
+
       // Calculate monthly target based on goal and duration
-      const monthlyTarget = financialSummary?.reserve_fund_goal ? 
+      const monthlyTarget = financialSummary?.reserve_fund_goal ?
                            financialSummary.reserve_fund_goal / durationValue : 0;
 
       // Save to localStorage for persistence
@@ -835,14 +835,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       saveToLocalStorage('target_date', endDate);
       saveToLocalStorage('duration_months', durationValue);
       saveToLocalStorage('monthly_target', monthlyTarget);
-      
+
       // Recalculate reserve fund debt with new timeline
       const today = new Date();
       const newStartDate = new Date(startDate);
       // ΔΙΟΡΘΩΣΗ: Χρήση επιλεγμένου μήνα αντί για σήμερα
       const referenceDate = selectedMonth ? new Date(selectedMonth + '-01') : today;
-      const monthsPassed = Math.max(0, 
-        (referenceDate.getFullYear() - newStartDate.getFullYear()) * 12 + 
+      const monthsPassed = Math.max(0,
+        (referenceDate.getFullYear() - newStartDate.getFullYear()) * 12 +
         (referenceDate.getMonth() - newStartDate.getMonth())
       );
       const expectedSoFar = monthsPassed * monthlyTarget;
@@ -850,12 +850,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const newReserveFundDebt = Math.max(0, expectedSoFar - currentReserve);
 
       // Save to API
-      await api.patch(`/buildings/list/${buildingId}/`, { 
+      await api.patch(`/buildings/list/${buildingId}/`, {
         reserve_fund_start_date: startDate,
         reserve_fund_target_date: endDate,
         reserve_fund_duration_months: durationValue
       });
-      
+
       setFinancialSummary(prev => prev ? {
         ...prev,
         reserve_fund_start_date: startDate,
@@ -865,7 +865,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_debt: -newReserveFundDebt,
         total_balance: (prev.current_reserve || 0) // Current reserve already reflects the true balance
       } : null);
-      
+
       setEditingTimeline(false);
       // Αφαιρέθηκε το notification
       // toast.success('Το πρόγραμμα συλλογής ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
@@ -1115,14 +1115,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     try {
       const selectedDate = new Date(selectedMonth + '-01');
       const startDate = new Date(financialSummary.reserve_fund_start_date);
-      const targetDate = financialSummary.reserve_fund_target_date ? 
+      const targetDate = financialSummary.reserve_fund_target_date ?
         new Date(financialSummary.reserve_fund_target_date) : null;
-      
+
       // Check if selected month is within the collection period
       const isAfterStart = selectedDate >= startDate;
       const isBeforeEnd = !targetDate || selectedDate <= targetDate;
       const isWithinPeriod = isAfterStart && isBeforeEnd;
-      
+
       console.log('🔄 Reserve Fund Period Check:', {
         selectedMonth,
         selectedDate: selectedDate.toLocaleDateString('el-GR'),
@@ -1135,7 +1135,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         condition1: (financialSummary.reserve_fund_monthly_target || 0) > 0,
         condition2: isWithinPeriod
       });
-      
+
       return isWithinPeriod;
     } catch (error) {
       console.error('Error checking reserve fund period:', error);
@@ -1180,43 +1180,43 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
     const startDate = new Date(financialSummary.reserve_fund_start_date);
     const targetDate = new Date(financialSummary.reserve_fund_target_date);
-    
+
     // Use selectedMonth if provided, otherwise use current date
-    const currentDate = selectedMonth ? 
+    const currentDate = selectedMonth ?
       new Date(selectedMonth + '-01') : // Convert "2025-03" to Date object
       new Date();
-    
-    console.log('🔄 ReserveFundAnalytics: Using date for calculations:', 
-      selectedMonth ? `${selectedMonth} (selected)` : 'current date', 
+
+    console.log('🔄 ReserveFundAnalytics: Using date for calculations:',
+      selectedMonth ? `${selectedMonth} (selected)` : 'current date',
       currentDate.toLocaleDateString('el-GR')
     );
 
     // Calculate time periods
-    const totalMonths = financialSummary.reserve_fund_duration_months || 
-                       ((targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
+    const totalMonths = financialSummary.reserve_fund_duration_months ||
+                       ((targetDate.getFullYear() - startDate.getFullYear()) * 12 +
                         (targetDate.getMonth() - startDate.getMonth()));
-    
-    const elapsedMonths = Math.max(0, (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+
+    const elapsedMonths = Math.max(0, (currentDate.getFullYear() - startDate.getFullYear()) * 12 +
                                     (currentDate.getMonth() - startDate.getMonth()));
-    
+
     const remainingMonths = Math.max(0, totalMonths - elapsedMonths);
 
     // Calculate progress
     const timeProgress = totalMonths > 0 ? (elapsedMonths / totalMonths) * 100 : 0;
-    const amountProgress = financialSummary.reserve_fund_goal > 0 ? 
+    const amountProgress = financialSummary.reserve_fund_goal > 0 ?
                           (financialSummary.current_reserve / financialSummary.reserve_fund_goal) * 100 : 0;
 
     // Calculate if on track
-    const expectedAmountByNow = timeProgress > 0 ? 
+    const expectedAmountByNow = timeProgress > 0 ?
                                (timeProgress / 100) * financialSummary.reserve_fund_goal : 0;
     const isOnTrack = financialSummary.current_reserve >= expectedAmountByNow;
     const variance = financialSummary.current_reserve - expectedAmountByNow;
 
     // Calculate projected completion
-    const monthlyRate = elapsedMonths > 0 ? 
-                       financialSummary.current_reserve / elapsedMonths : 
+    const monthlyRate = elapsedMonths > 0 ?
+                       financialSummary.current_reserve / elapsedMonths :
                        financialSummary.reserve_fund_monthly_target || 0;
-    
+
     const remainingAmount = Math.max(0, financialSummary.reserve_fund_goal - financialSummary.current_reserve);
     const projectedMonthsToCompletion = monthlyRate > 0 ? Math.ceil(remainingAmount / monthlyRate) : null;
 
@@ -1233,7 +1233,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       expectedAmountByNow,
       monthlyRate,
       projectedMonthsToCompletion,
-      projectedCompletionDate: projectedMonthsToCompletion ? 
+      projectedCompletionDate: projectedMonthsToCompletion ?
         new Date(currentDate.getFullYear(), currentDate.getMonth() + projectedMonthsToCompletion, 1) : null,
       // Add info about calculation context
       calculationContext: selectedMonth ? 'monthly_snapshot' : 'current_state'
@@ -1290,7 +1290,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
               </Card>
             ))}
           </div>
-          
+
           {/* Loading indicator */}
           <div className="flex items-center justify-center py-4">
             <div className="flex items-center gap-2 text-gray-500">
@@ -1335,7 +1335,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {getMonthName()}
                   </h3>
                 </div>
-                
+
                 <div className="space-y-3">
                   {/* Συνολικό υπόλοιπο */}
                   <div className="space-y-1">
@@ -1359,15 +1359,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           <Eye className="h-3 w-3" />
                         </Button>
                     </div>
-                    
-                    <Badge 
+
+                    <Badge
                       variant={isPositiveBalance ? "default" : "destructive"}
                       className="text-xs"
                     >
                       {isPositiveBalance ? 'Θετικό Υπόλοιπο' : 'Αρνητικό Υπόλοιπο'}
                     </Badge>
-                    
-                  
+
+
                   </div>
 
                   {/* Ανάλυση κάλυψης υποχρεώσεων */}
@@ -1424,7 +1424,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         </div>
                       </div>
                     </div>
-                      
+
 
 
                     {/* Συνολικό ποσό προς πληρωμή */}
@@ -1442,7 +1442,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
                     {/* Προειδοποιήσεις */}
                   </div>
-                  
+
                 </div>
               </CardContent>
             </Card>
@@ -1492,7 +1492,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     )}
                   </div>
                 </div>
-                
+
                 {/* Reserve Fund Content */}
                 <div className="mt-3">
                   <div className="flex justify-between items-center">
@@ -1589,21 +1589,21 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         onPackageApplied={async (result) => {
           try {
             setApplyingServicePackage(true);
-            
+
             // Immediately update the financial summary with new management fee
             setFinancialSummary(prev => prev ? {
               ...prev,
               management_fee_per_apartment: result.new_fee || result.fee_per_apartment,
               total_management_cost: (result.new_fee || result.fee_per_apartment) * (prev.apartments_count || 0)
             } : null);
-            
+
             // Αφαιρέθηκε το notification
             // Show success with detailed info
             // toast.success(
             //   `✅ Πακέτο εφαρμόστηκε!\n💰 Νέα αμοιβή: ${result.new_fee || result.fee_per_apartment}€/διαμέρισμα\n🏢 Συνολικό κόστος: ${((result.new_fee || result.fee_per_apartment) * (financialSummary?.apartments_count || 0)).toFixed(2)}€`,
             //   { duration: 4000 }
             // );
-            
+
             // Refresh financial data after immediate update for consistency
             await fetchFinancialSummary(true);
           } catch (error) {
@@ -1647,15 +1647,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <Info className="h-5 w-5" />
                 Εισφορά Αποθεματικού
               </h2>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowReserveFundInfoModal(false)}
               >
                 ✕
               </Button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="text-sm text-gray-700 leading-relaxed">
                 {financialSummary?.reserve_fund_contribution === 0 ? (
@@ -1681,7 +1681,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   </>
                 )}
               </div>
-              
+
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <h4 className="text-sm font-semibold text-green-800 mb-2">Πληροφορίες:</h4>
                 <ul className="text-xs text-green-700 space-y-1">
@@ -1691,9 +1691,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 </ul>
               </div>
             </div>
-            
+
             <div className="flex justify-end mt-6">
-              <Button 
+              <Button
                 onClick={() => setShowReserveFundInfoModal(false)}
                 className="bg-green-600 hover:bg-green-700"
               >
@@ -1786,7 +1786,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   </div>
                 )}
-                
+
                 {/* Timeline Configuration */}
                 <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
                   <div className="text-sm font-medium text-gray-700 mb-3">Πρόγραμμα Συλλογής</div>
@@ -1837,7 +1837,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </Select>
                     </div>
                   </div>
-                  
+
                   {/* Timeline Preview */}
                   {newStartMonth && newStartYear && newDurationMonths && (
                     <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
@@ -1864,7 +1864,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         const installments = parseInt(newInstallments);
                         // Χρήση των πραγματικών τιμών που έχει ο χρήστης
                         let startMonth, startYear;
-                        
+
                         if (newStartMonth && newStartYear) {
                           // Αν ο χρήστης έχει επιλέξει νέες τιμές, χρησιμοποιούμε αυτές
                           startMonth = newStartMonth;
@@ -1880,10 +1880,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           startMonth = (now.getMonth() + 1).toString().padStart(2, '0');
                           startYear = now.getFullYear().toString();
                         }
-                        
+
                         const months = [];
                         const startDate = new Date(Date.UTC(parseInt(startYear), parseInt(startMonth) - 1, 1));
-                        
+
                         // Debug: Εκτύπωση τιμών για έλεγχο
                         console.log('🔍 Reserve Fund Timeline Debug:', {
                           newStartMonth,
@@ -1898,16 +1898,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           startDateMonth: startDate.getUTCMonth() + 1,
                           startDateMonthName: startDate.toLocaleDateString('el-GR', { month: 'long' })
                         });
-                        
+
                         for (let i = 0; i < installments; i++) {
                           const currentDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + i, 1));
                           const monthName = currentDate.toLocaleDateString('el-GR', { month: 'long' });
                           const year = currentDate.getUTCFullYear();
-                          const isCurrentMonth = currentDate.getUTCMonth() === new Date().getMonth() && 
+                          const isCurrentMonth = currentDate.getUTCMonth() === new Date().getMonth() &&
                                                currentDate.getUTCFullYear() === new Date().getFullYear();
                           const isPastMonth = currentDate < new Date(new Date().getFullYear(), new Date().getMonth(), 1);
                           const isFutureMonth = currentDate > new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-                          
+
                           months.push({
                             month: monthName,
                             year: year,
@@ -1917,14 +1917,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             index: i + 1
                           });
                         }
-                        
+
                         return months.map((month, index) => (
                           <div
                             key={index}
                             className={`p-2 rounded text-xs font-medium text-center ${
-                              month.isCurrent 
-                                ? 'bg-orange-200 text-orange-800 border border-orange-300' 
-                                : month.isPast 
+                              month.isCurrent
+                                ? 'bg-orange-200 text-orange-800 border border-orange-300'
+                                : month.isPast
                                   ? 'bg-gray-200 text-gray-600 border border-slate-200'
                                   : 'bg-green-100 text-green-700 border border-green-300'
                             }`}
@@ -1957,7 +1957,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
                     <Check className="h-4 w-4 mr-1" />
@@ -2009,7 +2009,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <span>{Math.round(reserveProgress)}%</span>
                   </div>
                   <div className={`w-full rounded-full h-2 ${getProgressColors(reserveProgress).bg}`}>
-                    <div 
+                    <div
                       className={`h-2 rounded-full transition-all duration-300 ${getProgressColors(reserveProgress).fill}`}
                       style={{ width: `${Math.min(100, Math.max(0, reserveProgress))}%` }}
                     ></div>
@@ -2038,7 +2038,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       {(() => {
                         const installments = getReserveFundInstallmentMonths();
                         const hasStarted = installments.length > 0 && !installments[0]?.isFuture;
-                        
+
                         if (installments.length === 0) {
                           return (
                             <div className="text-xs text-gray-500 italic bg-gray-50 px-2 py-1 rounded">
@@ -2056,13 +2056,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             )}
                             <div className="space-y-1 max-h-24 overflow-y-auto">
                               {installments.map((installment, index) => (
-                                <div 
+                                <div
                                   key={index}
                                   className={`text-xs px-2 py-1 rounded ${
-                                    installment.isCurrent 
-                                      ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200' 
-                                      : installment.isFuture 
-                                        ? 'text-gray-500 italic bg-gray-50' 
+                                    installment.isCurrent
+                                      ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200'
+                                      : installment.isFuture
+                                        ? 'text-gray-500 italic bg-gray-50'
                                         : 'text-orange-600 bg-orange-50'
                                   }`}
                                   title={installment.isCurrent ? 'Τρέχουσα δόση' : installment.isFuture ? 'Μελλοντική δόση' : 'Παρελθούσα δόση'}
@@ -2079,7 +2079,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 </div>
               </div>
             )}
-            
+
             {refreshingReserve && (
               <div className="mt-3 p-2 bg-orange-50 rounded border border-orange-200">
                 <div className="text-xs text-orange-600 text-center flex items-center justify-center gap-2">

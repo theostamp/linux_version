@@ -90,7 +90,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       fee_per_apartment: 18.00,
       services_included: [
         "Διαχείριση κοινόχρηστων",
-        "Τήρηση λογαριασμών", 
+        "Τήρηση λογαριασμών",
         "Εξόφληση κοινόχρηστων",
         "Συντήρηση κοινών χώρων",
         "Επίβλεψη εργασιών",
@@ -115,7 +115,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
     try {
       setLoading(true);
       const data = await fetchServicePackages(buildingId);
-      
+
       // Βεβαιώνουμε ότι το data είναι array
       if (Array.isArray(data)) {
         setPackages(data);
@@ -125,10 +125,10 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       }
     } catch (error: any) {
       console.error('Error fetching service packages:', error);
-      
+
       // Πάντα θέτουμε κενό array σε περίπτωση σφάλματος
       setPackages([]);
-      
+
       // Πιο φιλικό error message ανάλογα με τον τύπο σφάλματος
       if (error?.response?.status === 404) {
         // Δεν εμφανίζουμε error toast για 404, απλά δείχνουμε κενή λίστα
@@ -146,17 +146,17 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
     try {
       setApplying(packageId);
       const result = await applyServicePackageToBuilding(packageId, buildingId);
-      
+
       // Enhanced success message with more details
       const newFee = result.new_fee || result.fee_per_apartment;
       const totalCost = newFee * apartmentsCount;
       const startDate = result.start_date ? new Date(result.start_date).toLocaleDateString('el-GR') : 'Σήμερα';
-      
+
       toast.success(
         `🎉 Πακέτο εφαρμόστηκε επιτυχώς!\n💰 Αμοιβή: ${newFee}€/διαμέρισμα/μήνα\n🏢 Συνολικό μηνιαίο: ${totalCost.toFixed(2)}€/μήνα\n📅 Έναρξη: ${startDate}`,
         { duration: 4000 }
       );
-      
+
       // Call callback if provided
       if (onPackageApplied) {
         onPackageApplied({
@@ -166,7 +166,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
           apartments_count: apartmentsCount
         });
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Error applying service package:', error);
@@ -184,12 +184,12 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
         // Προσθέτουμε υπολογιστικά πεδία
         total_cost_for_building: packageTemplate.fee_per_apartment * apartmentsCount
       });
-      
+
       // Προσθέτουμε το νέο πακέτο στη λίστα
       setPackages(prev => [...prev, newPackage]);
       toast.success(`Το πακέτο "${newPackage.name}" δημιουργήθηκε επιτυχώς`);
       setShowCreateModal(false);
-      
+
     } catch (error: any) {
       console.error('Error creating service package:', error);
       if (error?.response?.status === 403) {
@@ -237,7 +237,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       }
 
       // Χρησιμοποίηση επιλεγμένων υπηρεσιών αν είναι ενεργό το auto-calculate
-      const servicesArray = calculateBasedOnServices 
+      const servicesArray = calculateBasedOnServices
         ? selectedServices.map(id => realBuildingServices.find(s => s.id === id)?.name || '').filter(Boolean)
         : customPackageForm.services_included.split('\n').map(s => s.trim()).filter(s => s.length > 0);
 
@@ -247,7 +247,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       }
 
       setCreatingPackage(true);
-      
+
       // Debug logging
       console.log('Creating service package with data:', {
         name: name,
@@ -256,7 +256,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
         services_included: servicesArray,
         is_active: true
       });
-      
+
       const newPackage = await createServicePackage({
         name: name,
         description: description,
@@ -264,11 +264,11 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
         services_included: servicesArray,
         is_active: true
       });
-      
+
       setPackages(prev => [...prev, newPackage]);
       toast.success(`Το πακέτο "${newPackage.name}" δημιουργήθηκε επιτυχώς`);
       setShowCreateModal(false);
-      
+
       // Reset form
       setCustomPackageForm({
         name: '',
@@ -278,7 +278,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       });
       setSelectedServices([]);
       setCalculateBasedOnServices(false);
-      
+
     } catch (error: any) {
       console.error('Error creating custom service package:', error);
       if (error?.response?.status === 403) {
@@ -310,22 +310,22 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
 
   // Auto-update της τιμής όταν αλλάζουν οι επιλεγμένες υπηρεσίες
   const handleServiceToggle = (serviceId: string, isSelected: boolean) => {
-    const newSelectedServices = isSelected 
+    const newSelectedServices = isSelected
       ? [...selectedServices, serviceId]
       : selectedServices.filter(id => id !== serviceId);
-    
+
     setSelectedServices(newSelectedServices);
-    
+
     if (calculateBasedOnServices) {
       const newCost = newSelectedServices.reduce((total, id) => {
         const service = realBuildingServices.find(s => s.id === id);
         return total + (service ? service.cost : 0);
       }, 0);
-      
+
       setCustomPackageForm(prev => ({
         ...prev,
         fee_per_apartment: newCost.toFixed(2),
-        services_included: newSelectedServices.map(id => 
+        services_included: newSelectedServices.map(id =>
           realBuildingServices.find(s => s.id === id)?.name || ''
         ).join('\n')
       }));
@@ -362,7 +362,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
               <Package className="h-5 w-5" />
               Επιλογή Πακέτου Υπηρεσιών
             </DialogTitle>
-            
+
             {/* Κουμπί για δημιουργία νέου πακέτου - εμφανίζεται μόνο αν υπάρχουν ήδη πακέτα */}
             {packages.length > 0 && (
               <Button
@@ -422,8 +422,8 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {packages.map((pkg) => (
-                      <Card 
-                        key={pkg.id} 
+                      <Card
+                        key={pkg.id}
                         className={`cursor-pointer transition-all hover:shadow-lg ${
                           selectedPackage?.id === pkg.id ? 'ring-2 ring-blue-500' : ''
                         }`}
@@ -440,11 +440,11 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                             </Badge>
                           </div>
                         </CardHeader>
-                        
+
                         <CardContent className="space-y-4">
                           {/* Description */}
                           <p className="text-sm text-gray-600">{pkg.description}</p>
-                          
+
                           {/* Services List */}
                           <div>
                             <p className="text-sm font-medium mb-2">Υπηρεσίες που περιλαμβάνονται:</p>
@@ -457,7 +457,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                               ))}
                             </div>
                           </div>
-                          
+
                           {/* Cost Calculation */}
                           <div className="pt-3 border-t border-gray-200">
                             <div className="flex items-center justify-between text-sm">
@@ -470,7 +470,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                               {apartmentsCount} διαμερίσματα × {formatCurrency(pkg.fee_per_apartment)}/μήνα
                             </p>
                           </div>
-                          
+
                           {/* Apply Button */}
                           <Button
                             onClick={(e) => {
@@ -506,7 +506,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   <Plus className="h-5 w-5" />
                   Προτεινόμενα Πακέτα
                 </h3>
-                
+
                 {!Array.isArray(packages) || packages.length === 0 ? (
                   <Card className="p-6 mb-4">
                 <div className="text-center space-y-4">
@@ -523,8 +523,8 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {defaultPackageTemplates.map((template, index) => (
-                  <Card 
-                    key={index} 
+                  <Card
+                    key={index}
                     className="cursor-pointer transition-all hover:shadow-lg hover:border-blue-300"
                   >
                     <CardHeader className="pb-3">
@@ -538,10 +538,10 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                         </Badge>
                       </div>
                     </CardHeader>
-                    
+
                     <CardContent className="space-y-4">
                       <p className="text-sm text-gray-600">{template.description}</p>
-                      
+
                       {/* Services Preview */}
                       <div>
                         <p className="text-sm font-medium mb-2">Υπηρεσίες:</p>
@@ -559,7 +559,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Cost */}
                       <div className="pt-3 border-t border-gray-200">
                         <div className="flex items-center justify-between text-sm">
@@ -572,7 +572,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                           {apartmentsCount} διαμερίσματα × {formatCurrency(template.fee_per_apartment)}/μήνα
                         </p>
                       </div>
-                      
+
                       {/* Create Button */}
                       <Button
                         onClick={() => handleCreatePackage(template)}
@@ -595,7 +595,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                     </CardContent>
                   </Card>
                 ))}
-                
+
                 {/* Custom Package Option */}
                 <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-purple-300 border-2 border-dashed border-slate-200">
                   <CardContent className="p-6 text-center space-y-4">
@@ -633,7 +633,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
               Δημιουργήστε ένα προσαρμοσμένο πακέτο υπηρεσιών με τις δικές σας υπηρεσίες και τιμές
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4">
               <div>
@@ -646,7 +646,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   className="mt-1"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="package-description">Περιγραφή</Label>
                 <Textarea
@@ -658,7 +658,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   rows={3}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="package-fee">Αμοιβή ανά Διαμέρισμα (€/μήνα) *</Label>
                 <Input
@@ -694,12 +694,12 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   </p>
                 )}
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <Label>Υπηρεσίες</Label>
                   <div className="flex items-center gap-2">
-                    <Checkbox 
+                    <Checkbox
                       id="auto-calculate"
                       checked={calculateBasedOnServices}
                       onCheckedChange={(checked) => setCalculateBasedOnServices(checked as boolean)}
@@ -710,7 +710,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                     </Label>
                   </div>
                 </div>
-                
+
                 {calculateBasedOnServices ? (
                   // Service Selector Interface
                   <div className="border rounded-lg p-4 bg-gray-50 max-h-80 overflow-y-auto">
@@ -718,11 +718,11 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                       const categoryServices = realBuildingServices.filter(s => s.category === category);
                       const categoryColor = {
                         'Βασικές': 'text-green-800 bg-green-100',
-                        'Επεκταμένες': 'text-blue-800 bg-blue-100', 
+                        'Επεκταμένες': 'text-blue-800 bg-blue-100',
                         'Premium': 'text-purple-800 bg-purple-100',
                         'Ειδικές': 'text-orange-800 bg-orange-100'
                       }[category];
-                      
+
                       return (
                         <div key={category} className="mb-4">
                           <div className={`inline-block px-2 py-1 rounded text-xs font-medium mb-2 ${categoryColor}`}>
@@ -731,7 +731,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                           <div className="space-y-2 ml-2">
                             {categoryServices.map(service => (
                               <div key={service.id} className="flex items-start gap-3 p-2 hover:bg-white rounded">
-                                <Checkbox 
+                                <Checkbox
                                   id={service.id}
                                   checked={selectedServices.includes(service.id)}
                                   onCheckedChange={(checked) => handleServiceToggle(service.id, checked as boolean)}
@@ -754,7 +754,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                         </div>
                       );
                     })}
-                    
+
                     {selectedServices.length > 0 && (
                       <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <div className="flex items-center justify-between">
@@ -767,7 +767,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                         </div>
                       </div>
                     )}
-                    
+
                     <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
                       <div className="flex items-start gap-2">
                         <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -796,13 +796,13 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                 )}
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <Button
                 onClick={handleCreateCustomPackage}
                 disabled={
-                  creatingPackage || 
-                  !customPackageForm.name.trim() || 
+                  creatingPackage ||
+                  !customPackageForm.name.trim() ||
                   !customPackageForm.fee_per_apartment ||
                   (calculateBasedOnServices && selectedServices.length === 0)
                 }
@@ -820,7 +820,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   </>
                 )}
               </Button>
-              
+
               <Button
                 variant="outline"
                 onClick={() => {

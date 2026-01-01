@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getOfficeLogoUrl } from '@/lib/utils';
-import { 
-  X, 
-  Printer, 
-  CreditCard, 
-  Building, 
-  Phone, 
-  MapPin, 
+import {
+  X,
+  Printer,
+  CreditCard,
+  Building,
+  Phone,
+  MapPin,
   Euro,
   Calendar,
   FileText,
@@ -76,10 +76,10 @@ interface PaymentNotificationModalProps {
 // GDPR: Mask occupant name (first name + first letter of surname + ***)
 const maskOccupant = (name: string | null | undefined): string => {
   if (!name) return 'Μη καταχωρημένος';
-  
+
   const parts = name.trim().split(' ');
   if (parts.length === 1) return `${parts[0]} ***`;
-  
+
   return `${parts[0]} ${parts[1][0]}***`;
 };
 
@@ -112,13 +112,13 @@ export default function PaymentNotificationModal({
     if (apartment && apartment.expense_breakdown) {
       // Υπολογισμός συνόλου από breakdown
       const breakdownTotal = apartment.expense_breakdown.reduce(
-        (sum, expense) => sum + expense.share_amount, 
+        (sum, expense) => sum + expense.share_amount,
         0
       );
-      
+
       // Σύγκριση με το expense_share από API
       const difference = Math.abs(breakdownTotal - apartment.expense_share);
-      
+
       if (difference > 0.01) {  // Tolerance για floating point
         console.error('⚠️ ΔΙΑΦΟΡΑ ΣΤΟΙΧΕΙΩΝ:', {
           expense_share_api: apartment.expense_share,
@@ -126,7 +126,7 @@ export default function PaymentNotificationModal({
           difference: difference,
           apartment_number: apartment.apartment_number
         });
-        
+
         // Προαιρετικά: Εμφάνιση warning στο UI (μόνο για screen, όχι print)
         // Μπορεί να προστεθεί ένα διακριτικό badge στο μέλλον
       } else {
@@ -175,11 +175,11 @@ export default function PaymentNotificationModal({
     <ModalPortal>
     <>
       {/* Modal */}
-      <div 
+      <div
         className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
         onClick={onClose}
       >
-        <div 
+        <div
           className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto print:shadow-none print:max-h-none"
           onClick={(e) => e.stopPropagation()}
         >
@@ -254,20 +254,20 @@ export default function PaymentNotificationModal({
                     <p className="text-xs text-gray-600">Τηλ: {user?.office_phone}</p>
                   </div>
                 </div>
-                
+
                 {/* Κέντρο: Τίτλος & Περίοδος */}
                 <div className="text-center">
                   <h2 className="text-xl font-bold text-gray-900 uppercase tracking-wide">
                     ΕΙΔΟΠΟΙΗΤΗΡΙΟ ΚΟΙΝΟΧΡΗΣΤΩΝ
                   </h2>
                   <p className="text-sm text-gray-700 mt-1">
-                    {new Date().toLocaleDateString('el-GR', { 
-                      month: 'long', 
-                      year: 'numeric' 
+                    {new Date().toLocaleDateString('el-GR', {
+                      month: 'long',
+                      year: 'numeric'
                     })}
                   </p>
                 </div>
-                
+
                 {/* Δεξιά: Ημερομηνία Λήξης */}
                 <div className="text-right">
                   <p className="text-xs text-gray-600 font-medium">Πληρωτέο έως:</p>
@@ -325,7 +325,7 @@ export default function PaymentNotificationModal({
                 <div>
                   <span className="text-sm text-gray-600">Ποσό Πληρωτέο:</span>
                   <div className={`font-bold text-2xl ${
-                    apartment.net_obligation > 0 ? 'text-red-600' : 
+                    apartment.net_obligation > 0 ? 'text-red-600' :
                     apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
                   }`}>
                     {formatCurrency(Math.abs(apartment.net_obligation))}
@@ -367,7 +367,7 @@ export default function PaymentNotificationModal({
             {/* Financial Breakdown */}
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900">Ανάλυση Οφειλών</h3>
-              
+
               {/* Παλαιότερες Οφειλές με διαχωρισμό */}
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -376,7 +376,7 @@ export default function PaymentNotificationModal({
                     {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                   </div>
                 </div>
-                
+
                 {/* Διαχωρισμός Παλαιότερων Οφειλών */}
                 {apartment.previous_balance > 0 && (
                   <div className="ml-4 space-y-1 text-sm border-l-2 border-purple-300 pl-3">
@@ -403,7 +403,7 @@ export default function PaymentNotificationModal({
                   </div>
                 )}
               </div>
-              
+
               {/* Τρέχων Μήνας και Πληρωμές */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
@@ -440,13 +440,13 @@ export default function PaymentNotificationModal({
                       groups[month].expenses.push(expense);
                       return groups;
                     }, {} as { [key: string]: { month: string; month_display: string; expenses: any[] } });
-                    
+
                     return Object.values(groupedExpenses).map((group, groupIndex) => (
                       <div key={groupIndex} className="border border-gray-200 rounded-lg overflow-hidden">
                         <div className="bg-muted px-3 py-2 border-b border-slate-200/50">
                           <h5 className="text-sm font-semibold text-foreground">{group.month_display}</h5>
                         </div>
-                        
+
                         {/* ΠΙΝΑΚΑΣ ΜΕ 3 ΣΤΗΛΕΣ */}
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
@@ -466,13 +466,13 @@ export default function PaymentNotificationModal({
                             <tbody>
                               {group.expenses.map((expense, index) => {
                                 // Λογική κατανομής ποσών
-                                const residentCharge = expense.payer_responsibility === 'owner' 
-                                  ? 0 
+                                const residentCharge = expense.payer_responsibility === 'owner'
+                                  ? 0
                                   : expense.share_amount;
-                                const ownerCharge = expense.payer_responsibility === 'owner' 
-                                  ? expense.share_amount 
+                                const ownerCharge = expense.payer_responsibility === 'owner'
+                                  ? expense.share_amount
                                   : 0;
-                                
+
                                 return (
                                   <tr key={index} className="border-t border-gray-100">
                                     <td className="px-3 py-2 text-foreground">{expense.expense_title}</td>
@@ -493,14 +493,14 @@ export default function PaymentNotificationModal({
                                 </td>
                                 <td className="px-3 py-2 text-right text-sm font-semibold text-primary">
                                   {formatCurrency(
-                                    group.expenses.reduce((sum, exp) => 
+                                    group.expenses.reduce((sum, exp) =>
                                       sum + (exp.payer_responsibility === 'owner' ? 0 : exp.share_amount), 0
                                     )
                                   )}
                                 </td>
                                 <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">
                                   {formatCurrency(
-                                    group.expenses.reduce((sum, exp) => 
+                                    group.expenses.reduce((sum, exp) =>
                                       sum + (exp.payer_responsibility === 'owner' ? exp.share_amount : 0), 0
                                     )
                                   )}

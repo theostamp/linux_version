@@ -18,15 +18,15 @@ export default function UsersPage() {
   const [initialBuildingId, setInitialBuildingId] = useState<number | null>(null);
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  
+
   // Check if user has permission (manager, staff, or superuser)
   const hasPermission = hasOfficeAdminAccess(user);
-  
+
   // Check for query parameters on mount
   useEffect(() => {
     const inviteEmail = searchParams.get('invite');
     const buildingId = searchParams.get('building');
-    
+
     if (inviteEmail) {
       setInitialEmail(decodeURIComponent(inviteEmail));
       if (buildingId) {
@@ -35,7 +35,7 @@ export default function UsersPage() {
       setInviteModalOpen(true);
     }
   }, [searchParams]);
-  
+
     if (!hasPermission) {
     return (
       <div className="container mx-auto py-6">
@@ -96,4 +96,3 @@ export default function UsersPage() {
       </div>
   );
 }
-

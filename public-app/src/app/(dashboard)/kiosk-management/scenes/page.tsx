@@ -34,7 +34,7 @@ interface Scene {
 function ScenesContent() {
   const { currentBuilding, selectedBuilding, isLoading: isBuildingLoading } = useBuilding();
   const building = selectedBuilding || currentBuilding;
-  
+
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +53,7 @@ function ScenesContent() {
 
       const response = await api.get(`/api/kiosk/scenes/?building_id=${building.id}`);
       const data = response.data.scenes || [];
-      
+
       setScenes(data);
     } catch (err: any) {
       console.error('Failed to fetch scenes:', err);
@@ -94,7 +94,7 @@ function ScenesContent() {
       await api.patch(`/api/kiosk/scenes/${sceneId}/`, {
         isEnabled: !currentEnabled
       });
-      
+
       toast.success(`Scene ${!currentEnabled ? 'ενεργοποιήθηκε' : 'απενεργοποιήθηκε'}`);
       fetchScenes();
     } catch (err: any) {
@@ -176,7 +176,7 @@ function ScenesContent() {
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Τι είναι τα Scenes;</h3>
             <p className="text-sm text-gray-700 mb-3">
-              Τα <strong>Scenes</strong> είναι προκαθορισμένες διατάξεις widgets που εμφανίζονται στο kiosk. 
+              Τα <strong>Scenes</strong> είναι προκαθορισμένες διατάξεις widgets που εμφανίζονται στο kiosk.
               Κάθε scene μπορεί να περιλαμβάνει πολλαπλά widgets σε συγκεκριμένες θέσεις και μέγεθος.
             </p>
             <p className="text-xs text-gray-600">
@@ -276,4 +276,3 @@ function ScenesContent() {
     </div>
   );
 }
-

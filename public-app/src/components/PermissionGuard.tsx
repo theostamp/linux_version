@@ -1,16 +1,16 @@
 /**
  * PermissionGuard Component
- * 
+ *
  * Declarative permission checking for UI components.
- * 
+ *
  * Αντί να γράφεις permission checks παντού:
  *   {permissions?.can_edit && <Button>Edit</Button>}
- * 
+ *
  * Χρησιμοποιείς το PermissionGuard:
  *   <PermissionGuard action="edit">
  *     <Button>Edit</Button>
  *   </PermissionGuard>
- * 
+ *
  * Benefits:
  * - Declarative (easier to read)
  * - Consistent (same pattern everywhere)
@@ -23,7 +23,7 @@
 import React, { ReactNode } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { checkBuildingAccess, BuildingAction } from '@/lib/buildingValidation';
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -41,12 +41,12 @@ export interface PermissionGuardProps {
    * Πρέπει να match με το BuildingAction type.
    */
   action: BuildingAction;
-  
+
   /**
    * Children που θα rendered αν έχει permission.
    */
   children: ReactNode;
-  
+
   /**
    * Fallback που θα rendered αν ΔΕΝ έχει permission.
    * - null/undefined: Render nothing (default)
@@ -55,19 +55,19 @@ export interface PermissionGuardProps {
    * - 'tooltip': Render children με tooltip explaining why disabled
    */
   fallback?: ReactNode | 'disabled' | 'tooltip';
-  
+
   /**
    * Αν true, δείχνει tooltip με explanation όταν δεν έχει permission.
    * Works μόνο με fallback='tooltip' ή όταν children είναι button-like.
    */
   showReason?: boolean;
-  
+
   /**
    * Custom message για το tooltip.
    * Default: Auto-generated based on action.
    */
   customMessage?: string;
-  
+
   /**
    * Αν true, render children αλλά με disabled/grayed out state.
    */
@@ -110,27 +110,27 @@ const getPermissionMessage = (action: BuildingAction): string => {
 
 /**
  * PermissionGuard - Declarative permission checking component
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * <PermissionGuard action="edit">
  *   <Button>Edit Building</Button>
  * </PermissionGuard>
- * 
+ *
  * // With custom fallback
- * <PermissionGuard 
- *   action="delete" 
+ * <PermissionGuard
+ *   action="delete"
  *   fallback={<Button disabled>Delete (No Permission)</Button>}
  * >
  *   <Button variant="destructive">Delete Building</Button>
  * </PermissionGuard>
- * 
+ *
  * // With tooltip
  * <PermissionGuard action="edit" fallback="tooltip">
  *   <Button>Edit Building</Button>
  * </PermissionGuard>
- * 
+ *
  * // Disable instead of hide
  * <PermissionGuard action="delete" disableInsteadOfHide>
  *   <Button>Delete</Button>
@@ -146,23 +146,23 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
   disableInsteadOfHide = false,
 }) => {
   const { selectedBuilding, permissions } = useBuilding();
-  
+
   // Check permission
   const hasPermission = checkBuildingAccess(selectedBuilding, action, permissions);
-  
+
   // Case 1: Has permission - render children normally
   if (hasPermission) {
     return <>{children}</>;
   }
-  
+
   // Case 2: No permission
   const message = customMessage || getPermissionMessage(action);
-  
+
   // Option A: Custom fallback provided
   if (fallback && fallback !== 'disabled' && fallback !== 'tooltip') {
     return <>{fallback}</>;
   }
-  
+
   // Option B: Disable instead of hide
   if (disableInsteadOfHide || fallback === 'disabled') {
     return (
@@ -171,7 +171,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
       </div>
     );
   }
-  
+
   // Option C: Show with tooltip
   if (fallback === 'tooltip' || showReason) {
     return (
@@ -195,7 +195,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
       </TooltipProvider>
     );
   }
-  
+
   // Option D: Hide completely (default)
   return null;
 };
@@ -206,7 +206,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
 
 /**
  * MultiPermissionGuard - Requires ALL specified permissions
- * 
+ *
  * @example
  * ```tsx
  * <MultiPermissionGuard actions={['edit', 'manage_financials']}>
@@ -228,21 +228,21 @@ export const MultiPermissionGuard: React.FC<MultiPermissionGuardProps> = ({
   requireAll = true,
 }) => {
   const { selectedBuilding, permissions } = useBuilding();
-  
+
   const hasPermission = requireAll
     ? actions.every(action => checkBuildingAccess(selectedBuilding, action, permissions))
     : actions.some(action => checkBuildingAccess(selectedBuilding, action, permissions));
-  
+
   if (hasPermission) {
     return <>{children}</>;
   }
-  
+
   return fallback ? <>{fallback}</> : null;
 };
 
 /**
  * PermissionBadge - Shows visual indicator για permission status
- * 
+ *
  * @example
  * ```tsx
  * <PermissionBadge action="edit" />
@@ -262,9 +262,9 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({
 }) => {
   const { selectedBuilding, permissions } = useBuilding();
   const hasPermission = checkBuildingAccess(selectedBuilding, action, permissions);
-  
+
   const label = getActionLabel(action);
-  
+
   if (hasPermission) {
     return (
       <span className={`inline-flex items-center gap-1 text-xs text-green-700 ${className}`}>
@@ -273,7 +273,7 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({
       </span>
     );
   }
-  
+
   return (
     <span className={`inline-flex items-center gap-1 text-xs text-gray-500 ${className}`}>
       <Lock className="w-3 h-3" />
@@ -284,7 +284,7 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({
 
 /**
  * PermissionAlert - Shows alert box όταν user δεν έχει permission
- * 
+ *
  * @example
  * ```tsx
  * <PermissionAlert action="manage_financials">
@@ -303,13 +303,13 @@ export const PermissionAlert: React.FC<PermissionAlertProps> = ({
 }) => {
   const { selectedBuilding, permissions } = useBuilding();
   const hasPermission = checkBuildingAccess(selectedBuilding, action, permissions);
-  
+
   if (hasPermission) {
     return <>{children}</>;
   }
-  
+
   const message = getPermissionMessage(action);
-  
+
   return (
     <div className="p-4 border rounded-lg bg-yellow-50 border-yellow-200">
       <div className="flex items-start gap-3">
@@ -333,4 +333,3 @@ export const PermissionAlert: React.FC<PermissionAlertProps> = ({
 // ========================================================================
 
 export default PermissionGuard;
-

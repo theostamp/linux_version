@@ -15,4 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "office-finance-yearly-summary");
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-

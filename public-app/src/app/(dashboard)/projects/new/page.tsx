@@ -322,8 +322,8 @@ export default function NewProjectPage() {
                       </p>
                     </div>
                   </div>
-                  <Switch 
-                    checked={createGeneralAssembly} 
+                  <Switch
+                    checked={createGeneralAssembly}
                     onCheckedChange={setCreateGeneralAssembly}
                     className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-indigo-600 border-gray-400"
                   />

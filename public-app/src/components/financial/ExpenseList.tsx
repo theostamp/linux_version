@@ -27,7 +27,7 @@ interface ExpenseListProps {
   ref?: React.Ref<{ refresh: () => void }>;
 }
 
-export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseListProps>(({ 
+export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseListProps>(({
   onExpenseSelect,
   showActions = true,
   selectedMonth,
@@ -38,7 +38,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
   const buildingName = selectedBuilding?.name;
-  
+
   const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -50,18 +50,18 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   const generateMonthOptions = () => {
     const options = [];
     const now = new Date();
-    
+
     for (let i = 0; i < 24; i++) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('el-GR', { 
-        year: 'numeric', 
-        month: 'long' 
+      const label = date.toLocaleDateString('el-GR', {
+        year: 'numeric',
+        month: 'long'
       });
-      
+
       options.push({ value, label });
     }
-    
+
     return options;
   };
 
@@ -110,38 +110,38 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         'facade_maintenance', 'facade_repair',
         'painting_exterior', 'painting_interior',
         'garden_maintenance', 'parking_maintenance', 'entrance_maintenance',
-        
+
         // Ανελκυστήρας
         'elevator_maintenance', 'elevator_repair', 'elevator_inspection', 'elevator_modernization',
-        
+
         // Ηλεκτρικά
         'electrical_maintenance', 'electrical_repair', 'electrical_upgrade',
         'lighting_common', 'intercom_system',
-        
+
         // Υδραυλικά
         'plumbing_maintenance', 'plumbing_repair',
         'water_tank_cleaning', 'water_tank_maintenance', 'sewage_system',
-        
+
         // Θέρμανση
         'heating_maintenance', 'heating_repair', 'heating_inspection', 'heating_modernization',
-        
+
         // Έκτακτες
         'emergency_repair', 'storm_damage', 'flood_damage', 'fire_damage', 'earthquake_damage', 'vandalism_repair',
-        
+
         // Ειδικές επισκευές
         'locksmith', 'glass_repair', 'door_repair', 'window_repair', 'balcony_repair', 'staircase_repair',
-        
+
         // Ασφάλεια & Πρόσβαση
         'security_system', 'cctv_installation', 'access_control', 'fire_alarm', 'fire_extinguishers',
-        
+
         // Ειδικές εργασίες
         'asbestos_removal', 'lead_paint_removal', 'mold_removal', 'pest_control', 'tree_trimming', 'snow_removal',
-        
+
         // Ενεργειακή απόδοση
         'energy_upgrade', 'insulation_work', 'solar_panel_installation', 'led_lighting', 'smart_systems'
       ].includes(expense.category as string)
     );
-    
+
     if (isProjectRelated) {
       const project = expense.linked_maintenance_projects?.[0];
       const projectInfo = project ? ` με έργο "${project.title}"` : '';
@@ -227,14 +227,14 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
 
       return;
     }
-    
+
     // Για απλές δαπάνες χωρίς δόσεις
     const confirmed = window.confirm(
       `Είστε σίγουροι ότι θέλετε να διαγράψετε τη δαπάνη "${expense.title}" (${formatCurrency(expense.amount)})?\n\nΑυτή η ενέργεια δεν μπορεί να αναιρεθεί.`
     );
-    
+
     if (!confirmed) return;
-    
+
     try {
       const success = await deleteExpense(expense.id);
       if (success) {
@@ -321,9 +321,9 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     return expenses.filter((expense) => {
       const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (expense.category_display || expense.category).toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
-      
+
       const matchesPayer = payerFilter === 'all' || expense.payer_responsibility === payerFilter;
 
       return matchesSearch && matchesCategory && matchesPayer;
@@ -394,22 +394,22 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               </Badge>
               {selectedMonth && (
                 <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
-                  📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
-                    month: 'long', 
-                    year: 'numeric' 
+                  📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', {
+                    month: 'long',
+                    year: 'numeric'
                   })}
                 </Badge>
               )}
             </CardTitle>
             <p className="text-sm text-gray-500 mt-1">
-              {selectedMonth ? 
+              {selectedMonth ?
                 `Δαπάνες για τον μήνα ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}` :
                 'Διαχείριση και παρακολούθηση όλων των δαπανών του κτιρίου'
               }
             </p>
           </div>
           {onAddExpense && (
-            <Button 
+            <Button
               onClick={onAddExpense}
               className="flex items-center gap-2"
             >
@@ -418,7 +418,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
             </Button>
           )}
         </div>
-        
+
         {/* Statistics Row */}
         {expenses && expenses.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-blue-50 rounded-lg">
@@ -463,7 +463,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               🗑️ Καθαρισμός Φίλτρων
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">Αναζήτηση</label>
@@ -474,12 +474,12 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                 className="text-sm"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">📅 Μήνας</label>
               <div className="flex gap-2">
-                <Select 
-                  value={selectedMonth || ''} 
+                <Select
+                  value={selectedMonth || ''}
                   onValueChange={(value) => onMonthChange?.(value)}
                 >
                   <SelectTrigger className="text-sm">
@@ -508,7 +508,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">Κατηγορία</label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -529,7 +529,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">Ευθύνη Πληρωμής</label>
               <Select value={payerFilter} onValueChange={setPayerFilter}>
@@ -546,19 +546,19 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
             </div>
 
           </div>
-          
+
           {/* Active Filters Summary */}
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
               <span>🎯 Ενεργά φίλτρα:</span>
-              
+
               {/* Building Name - Always shown */}
               {buildingName && (
                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                   🏢 {buildingName}
                 </Badge>
               )}
-              
+
               {/* Other filters - only shown if active */}
               {searchTerm && (
                 <Badge variant="outline" className="text-xs">
@@ -567,9 +567,9 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               )}
               {selectedMonth && (
                 <Badge variant="outline" className="text-xs">
-                  📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
-                    year: 'numeric', 
-                    month: 'long' 
+                  📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', {
+                    year: 'numeric',
+                    month: 'long'
                   })}
                 </Badge>
               )}
@@ -580,8 +580,8 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               )}
               {payerFilter !== 'all' && (
                 <Badge variant="outline" className="text-xs">
-                  {payerFilter === 'resident' ? '🟢 Ένοικος' 
-                    : payerFilter === 'owner' ? '🔴 Ιδιοκτήτης' 
+                  {payerFilter === 'resident' ? '🟢 Ένοικος'
+                    : payerFilter === 'owner' ? '🔴 Ιδιοκτήτης'
                     : '🔵 Κοινή Ευθύνη'}
                 </Badge>
               )}
@@ -599,14 +599,14 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                 {expenses?.length === 0 ? 'Δεν υπάρχουν δαπάνες' : 'Δεν βρέθηκαν δαπάνες'}
               </h3>
               <p className="text-gray-500 mb-4">
-                {expenses?.length === 0 
+                {expenses?.length === 0
                   ? 'Δεν έχουν καταχωρηθεί δαπάνες ακόμα. Ξεκινήστε προσθέτοντας την πρώτη δαπάνη.'
                   : 'Δεν βρέθηκαν δαπάνες με τα επιλεγμένα κριτήρια. Δοκιμάστε να αλλάξετε τα φίλτρα.'
                 }
               </p>
               {expenses?.length === 0 && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="gap-2"
                   onClick={onAddExpense || (() => {
                     // Fallback: Trigger new expense modal via URL
@@ -661,7 +661,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Key Information Row */}
                     <div className="flex items-center gap-6 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -690,13 +690,13 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                       <div className="mt-2 pt-2 border-t border-gray-100">
                         {expense.notes && (
                           <div className="text-xs text-gray-500 mb-1">
-                            <span className="font-medium">📝 Σημειώσεις:</span> 
+                            <span className="font-medium">📝 Σημειώσεις:</span>
                             <span className="ml-1 truncate">{expense.notes}</span>
                           </div>
                         )}
                         {expense.attachment && (
                           <div className="text-xs text-gray-500">
-                            <span className="font-medium">📎 Επισύναψη:</span> 
+                            <span className="font-medium">📎 Επισύναψη:</span>
                             <span className="ml-1 text-blue-600">
                               {expense.attachment.split('/').pop() || 'attachment'}
                             </span>
@@ -726,7 +726,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                             )}
                             {receipt.installment && (
                               <span className="text-blue-500">
-                                ({receipt.installment.installment_type === 'advance' ? 'Προκαταβολή' : 
+                                ({receipt.installment.installment_type === 'advance' ? 'Προκαταβολή' :
                                   receipt.installment.installment_type === 'installment' ? `Δόση ${receipt.installment.installment_number}` :
                                   receipt.installment.installment_type})
                               </span>

@@ -94,7 +94,7 @@ interface PaginatedResponse<T> {
 export const todoKeys = {
   all: ['todos'] as const,
   lists: () => [...todoKeys.all, 'list'] as const,
-  list: (buildingId: number, filters?: TodoFilters) => 
+  list: (buildingId: number, filters?: TodoFilters) =>
     [...todoKeys.lists(), buildingId, filters] as const,
   detail: (id: number) => [...todoKeys.all, 'detail', id] as const,
   pendingCount: (buildingId: number) => [...todoKeys.all, 'pendingCount', buildingId] as const,
@@ -119,11 +119,11 @@ export function useTodos(filters?: TodoFilters) {
     queryKey: todoKeys.list(buildingId || 0, filters),
     queryFn: async () => {
       if (!buildingId) return [];
-      
+
       const params: Record<string, string> = {
         building: buildingId.toString(),
       };
-      
+
       if (filters?.status) params.status = filters.status;
       if (filters?.priority) params.priority = filters.priority;
       if (filters?.category) params.category = filters.category.toString();
@@ -136,7 +136,7 @@ export function useTodos(filters?: TodoFilters) {
         '/todos/items/',
         params
       );
-      
+
       return Array.isArray(response) ? response : response?.results || [];
     },
     enabled: !!buildingId,
@@ -249,24 +249,24 @@ export function useTodos(filters?: TodoFilters) {
     todos,
     categories,
     pendingCount,
-    
+
     // Loading states
     isLoading,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
-    
+
     // Error
     error,
-    
+
     // Actions
     createTodo: createMutation.mutateAsync,
-    updateTodo: (id: number, payload: UpdateTodoPayload) => 
+    updateTodo: (id: number, payload: UpdateTodoPayload) =>
       updateMutation.mutateAsync({ id, payload }),
     deleteTodo: deleteMutation.mutateAsync,
     completeTodo,
     refetch,
-    
+
     // Helpers
     getOverdueTodos,
     getDueSoonTodos,
@@ -297,4 +297,3 @@ export function useTodoDetail(todoId: number | undefined) {
 }
 
 export default useTodos;
-

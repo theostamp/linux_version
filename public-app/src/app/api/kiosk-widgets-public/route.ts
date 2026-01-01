@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
   // Default to Docker service name (backend:8000)
   // Use NEXT_PUBLIC_DJANGO_API_URL if explicitly set
   const backendUrl = (process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000').replace(/\/$/, '');
-  
+
   console.log('[API PROXY] Using backend URL:', backendUrl);
-  
+
   const targetUrl = `${backendUrl}/api/kiosk/public/configs/?building_id=${buildingId}`;
 
   console.log('[API PROXY] Fetching kiosk widgets from:', targetUrl);
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[API PROXY] Backend error response:', errorText);
-      
+
       // Return fallback data instead of error
       console.warn('[API PROXY] Returning fallback empty widgets due to backend error');
       return NextResponse.json(FALLBACK_RESPONSE);
@@ -88,19 +88,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     // Check if it's a connection error
     if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed') || error instanceof Error && error.name === 'AbortError') {
       console.warn('[API PROXY] Backend unavailable (connection refused or timeout):', errorMessage);
       console.warn('[API PROXY] Returning fallback empty widgets. Start Django backend to see actual data.');
       console.warn('[API PROXY] Run: cd backend && python manage.py runserver 0.0.0.0:18000');
-      
+
       // Return fallback data instead of error
       return NextResponse.json(FALLBACK_RESPONSE);
     }
-    
+
     console.error('[API PROXY] Unexpected error fetching kiosk widgets:', error);
-    
+
     // Even for unexpected errors, return fallback to prevent app crash
     return NextResponse.json(FALLBACK_RESPONSE);
   }

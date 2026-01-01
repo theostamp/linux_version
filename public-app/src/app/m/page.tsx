@@ -5,5 +5,3 @@ import { redirect } from 'next/navigation';
 export default function ShortMyApartmentRedirect() {
   redirect('/my-apartment');
 }
-
-

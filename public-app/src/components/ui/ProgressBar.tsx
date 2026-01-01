@@ -42,13 +42,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           {showPercentage && <span>{Math.round(clampedProgress)}%</span>}
         </div>
       )}
-      
+
       <div className={`w-full bg-gray-200 rounded-full ${sizeClasses[size]}`}>
-        <div 
+        <div
           className={`${variantClasses[variant]} ${sizeClasses[size]} rounded-full transition-all duration-300 ease-out`}
           style={{ width: `${clampedProgress}%` }}
         />
       </div>
     </div>
   );
-}; 
+};

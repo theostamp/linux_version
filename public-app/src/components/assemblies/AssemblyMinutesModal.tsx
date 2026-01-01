@@ -207,5 +207,3 @@ export default function AssemblyMinutesModal({ open, onOpenChange, assemblyId }:
     </Dialog>
   );
 }
-
-

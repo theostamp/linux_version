@@ -6,7 +6,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 
 /**
  * Hook για real-time ενημερώσεις συνελεύσεων μέσω WebSockets.
- * Όταν λαμβάνει ενημέρωση, ακυρώνει τα σχετικά queries του React Query 
+ * Όταν λαμβάνει ενημέρωση, ακυρώνει τα σχετικά queries του React Query
  * για να προκαλέσει επαναφόρτωση των δεδομένων.
  */
 export function useAssemblyWebSocket(assemblyId: string | undefined) {
@@ -37,14 +37,14 @@ export function useAssemblyWebSocket(assemblyId: string | undefined) {
 
     let wsUrl = '';
     const backendWsUrl = process.env.NEXT_PUBLIC_BACKEND_WS_URL;
-    
+
     if (backendWsUrl) {
       wsUrl = `${backendWsUrl}/ws/assemblies/${assemblyId}/`;
     } else if (process.env.NODE_ENV === 'development') {
       // Στο development χρησιμοποιούμε το localhost:18000 (daphne/gunicorn)
       wsUrl = `ws://localhost:18000/ws/assemblies/${assemblyId}/`;
     } else {
-      // Σε production (Vercel) αν δεν υπάρχει NEXT_PUBLIC_BACKEND_WS_URL, 
+      // Σε production (Vercel) αν δεν υπάρχει NEXT_PUBLIC_BACKEND_WS_URL,
       // δεν συνδεόμαστε και βασιζόμαστε στο REST API polling
       console.log('[useAssemblyWebSocket] WebSockets not available, falling back to polling');
       return;
@@ -56,7 +56,7 @@ export function useAssemblyWebSocket(assemblyId: string | undefined) {
     const wsUrlWithAuth = `${wsUrl}?${params.toString()}`;
 
     console.log('[useAssemblyWebSocket] Connecting to:', wsUrlWithAuth);
-    
+
     const connect = () => {
       const ws = new WebSocket(wsUrlWithAuth);
       wsRef.current = ws;
@@ -69,7 +69,7 @@ export function useAssemblyWebSocket(assemblyId: string | undefined) {
         try {
           const data = JSON.parse(event.data);
           console.log('[useAssemblyWebSocket] Message received:', data.type);
-          
+
           if (data.type === 'vote_update') {
             // Ενημέρωση αποτελεσμάτων συγκεκριμένου θέματος
             queryClient.invalidateQueries({ queryKey: ['agenda-item-votes', data.agenda_item_id] });
@@ -105,4 +105,3 @@ export function useAssemblyWebSocket(assemblyId: string | undefined) {
 
   return wsRef.current;
 }
-

@@ -38,16 +38,16 @@ export default function RequestCard({ request }: Readonly<Props>) {
   const [supportCount, setSupportCount] = useState(supporter_count || 0);
 
   // Get status info
-  const statusInfo = REQUEST_STATUSES.find(s => s.value === status) || 
+  const statusInfo = REQUEST_STATUSES.find(s => s.value === status) ||
     { label: status, icon: '📋', color: 'text-gray-600' };
 
   // Get priority info
-  const priorityInfo = PRIORITY_LEVELS.find(p => p.value === priority) || 
+  const priorityInfo = PRIORITY_LEVELS.find(p => p.value === priority) ||
     { label: 'Μέτρια', icon: '🟡', color: 'text-yellow-600' };
 
   // Get maintenance category info
-  const categoryInfo = MAINTENANCE_CATEGORIES.find(c => c.value === maintenance_category) || 
-    MAINTENANCE_CATEGORIES.find(c => c.value === type) || 
+  const categoryInfo = MAINTENANCE_CATEGORIES.find(c => c.value === maintenance_category) ||
+    MAINTENANCE_CATEGORIES.find(c => c.value === type) ||
     { label: type || 'Άλλο', icon: '📋', color: 'text-gray-500' };
 
   const handleSupport = async (e: React.MouseEvent) => {
@@ -67,10 +67,10 @@ export default function RequestCard({ request }: Readonly<Props>) {
   };
 
   // Check if overdue
-  const isOverdue = estimated_completion && 
+  const isOverdue = estimated_completion &&
     isValidDate(estimated_completion) &&
-    new Date(estimated_completion) < new Date() && 
-    status !== 'completed' && 
+    new Date(estimated_completion) < new Date() &&
+    status !== 'completed' &&
     status !== 'cancelled';
 
   return (
@@ -162,7 +162,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
             {safeFormatDate(created_at, 'd MMM yyyy, HH:mm')}
           </span>
         </div>
-        
+
         {estimated_completion && (
           <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600' : 'text-gray-600'}`}>
             <Clock className="w-4 h-4" />
@@ -190,7 +190,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
         <span className={typography.bodySmall}>
           🤝 Υποστηρικτές: <strong>{supportCount}</strong>
         </span>
-        
+
         <button
           onClick={handleSupport}
           disabled={supporting}
@@ -202,4 +202,3 @@ export default function RequestCard({ request }: Readonly<Props>) {
     </Link>
   );
 }
-

@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
-import { 
-  CommonExpensePeriod, 
-  ApartmentShare, 
+import {
+  CommonExpensePeriod,
+  ApartmentShare,
   CommonExpenseCalculationRequest,
   CommonExpenseCalculationResult,
   CommonExpenseIssueRequest,
-  MeterReading 
+  MeterReading
 } from '@/types/financial';
 import { api } from '@/lib/api';
 
@@ -16,7 +16,7 @@ export const useCommonExpenses = () => {
   const getCommonExpensePeriods = useCallback(async (buildingId?: number): Promise<CommonExpensePeriod[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const searchParams = new URLSearchParams();
       if (buildingId) searchParams.append('building_id', buildingId.toString());
@@ -43,7 +43,7 @@ export const useCommonExpenses = () => {
   }): Promise<CommonExpensePeriod> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post<CommonExpensePeriod>('/financial/common-expense-periods/', data);
@@ -61,7 +61,7 @@ export const useCommonExpenses = () => {
   const calculateCommonExpenses = useCallback(async (data: CommonExpenseCalculationRequest): Promise<CommonExpenseCalculationResult> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post<CommonExpenseCalculationResult>('/financial/common-expenses/calculate/', data);
@@ -85,7 +85,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/calculate_advanced/', data);
@@ -102,7 +102,7 @@ export const useCommonExpenses = () => {
   const issueCommonExpenses = useCallback(async (data: CommonExpenseIssueRequest): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue/', data);
@@ -130,7 +130,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Χρησιμοποιούμε το υπάρχον issue endpoint για την αποθήκευση
       // The api.post returns data directly
@@ -153,7 +153,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/create_period_automatically/', data);
@@ -173,7 +173,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/collect_expenses_automatically/', data);
@@ -193,7 +193,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/calculate_automatically/', data);
@@ -213,7 +213,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue_automatically/', data);
@@ -234,7 +234,7 @@ export const useCommonExpenses = () => {
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/auto_process_period/', data);
@@ -251,7 +251,7 @@ export const useCommonExpenses = () => {
   const getPeriodStatistics = useCallback(async (building_id: number, period_id: number): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.get returns data directly
       const response = await api.get(`/financial/common-expenses/period_statistics/?building_id=${building_id}&period_id=${period_id}`);
@@ -268,7 +268,7 @@ export const useCommonExpenses = () => {
   const getPeriodTemplates = useCallback(async (): Promise<any> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await api.get('/financial/common-expenses/period_templates/');
       return response.data;
@@ -284,7 +284,7 @@ export const useCommonExpenses = () => {
   const getApartmentShares = useCallback(async (periodId?: number, buildingId?: number): Promise<ApartmentShare[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const searchParams = new URLSearchParams();
       if (periodId) searchParams.append('period', periodId.toString());
@@ -311,7 +311,7 @@ export const useCommonExpenses = () => {
   }): Promise<MeterReading> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await api.post('/financial/meter-readings/', data);
 
@@ -328,7 +328,7 @@ export const useCommonExpenses = () => {
   const getMeterReadings = useCallback(async (buildingId?: number, apartmentId?: number, meterType?: string): Promise<MeterReading[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const searchParams = new URLSearchParams();
       if (buildingId) searchParams.append('building_id', buildingId.toString());
@@ -376,4 +376,4 @@ export const useCommonExpenses = () => {
     getPeriodStatistics,
     getPeriodTemplates,
   };
-}; 
+};

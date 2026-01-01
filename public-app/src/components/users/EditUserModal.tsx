@@ -58,7 +58,7 @@ export default function EditUserModal({ open, onOpenChange, user, onSuccess }: E
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('Δεν έχει επιλεγεί χρήστης');
       return;
@@ -76,26 +76,26 @@ export default function EditUserModal({ open, onOpenChange, user, onSuccess }: E
       };
 
       await updateUser(user.id, payload);
-      
+
       toast.success('Ο χρήστης ενημερώθηκε επιτυχώς');
-      
+
       if (onSuccess) {
         onSuccess();
       }
-      
+
       onOpenChange(false);
     } catch (err) {
-      const error = err as { 
-        response?: { data?: Record<string, string | string[]> }; 
+      const error = err as {
+        response?: { data?: Record<string, string | string[]> };
         message?: string;
       };
-      
+
       let errorMessage = 'Αποτυχία ενημέρωσης χρήστη';
-      
+
       const errorData = error?.response?.data || error;
       if (errorData) {
         if (typeof errorData === 'object') {
-          const firstKey = Object.keys(errorData).find(key => 
+          const firstKey = Object.keys(errorData).find(key =>
             key !== 'response' && key !== 'message' && errorData[key]
           );
           if (firstKey) {
@@ -108,11 +108,11 @@ export default function EditUserModal({ open, onOpenChange, user, onSuccess }: E
           }
         }
       }
-      
+
       if (errorMessage === 'Αποτυχία ενημέρωσης χρήστη' && error?.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -226,4 +226,3 @@ export default function EditUserModal({ open, onOpenChange, user, onSuccess }: E
     </Dialog>
   );
 }
-

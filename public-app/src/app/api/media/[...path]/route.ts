@@ -10,7 +10,7 @@ const resolveBackendBase = () => {
     process.env.API_URL ??
     process.env.BACKEND_URL ??
     "https://linuxversion-production.up.railway.app";
-  
+
   // Remove trailing slash
   return base.replace(/\/$/, '');
 };
@@ -27,7 +27,7 @@ export async function GET(
     const resolvedParams = await params;
     const pathSegments = resolvedParams.path || [];
     const mediaPath = pathSegments.join('/');
-    
+
     if (!mediaPath) {
       return NextResponse.json(
         { error: 'Media path is required' },
@@ -37,12 +37,12 @@ export async function GET(
 
     // Get backend base URL
     const backendBase = resolveBackendBase();
-    
+
     // Construct the full media URL
     const mediaUrl = `${backendBase}/media/${mediaPath}`;
-    
+
     console.log(`[Media Proxy] Proxying media request: ${mediaUrl}`);
-    
+
     // Fetch the media file from Django backend
     const response = await fetch(mediaUrl, {
       method: 'GET',
@@ -75,12 +75,12 @@ export async function GET(
 
     // Get the content type from the response
     const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
-    
+
     // Get the file content as a blob
     const blob = await response.blob();
-    
+
     console.log(`[Media Proxy] Successfully fetched media file: ${mediaPath}, size: ${blob.size} bytes, type: ${contentType}`);
-    
+
     // Return the file with appropriate headers
     return new NextResponse(blob, {
       status: 200,
@@ -100,4 +100,3 @@ export async function GET(
     );
   }
 }
-

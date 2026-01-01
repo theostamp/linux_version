@@ -16,7 +16,7 @@ interface AnnouncementContentProps {
 export default function AnnouncementContent({ title, description, startDate, endDate }: AnnouncementContentProps) {
   // Έλεγχος αν είναι ανακοίνωση γενικής συνέλευσης
   const isAssemblyAnnouncement = title.toLowerCase().includes('συνέλευση') || title.toLowerCase().includes('assembly');
-  
+
   if (!isAssemblyAnnouncement) {
     const renderInlineText = (text: string) => {
       const segments = text.split(/(\*\*[^*]+\*\*)/g);
@@ -143,7 +143,7 @@ export default function AnnouncementContent({ title, description, startDate, end
 
     for (const line of lines) {
       const trimmedLine = line.trim();
-      
+
       if (trimmedLine.includes('--- ΣΤΟΙΧΕΙΑ ΣΥΝΕΛΕΥΣΗΣ ---')) {
         currentSection = 'assemblyDetails';
         continue;
@@ -158,8 +158,8 @@ export default function AnnouncementContent({ title, description, startDate, end
 
       switch (currentSection) {
         case 'header':
-          if (!trimmedLine.includes('Ανακοίνωση για τη γενική') && 
-              !trimmedLine.includes('Περιγραφή έργου') && 
+          if (!trimmedLine.includes('Ανακοίνωση για τη γενική') &&
+              !trimmedLine.includes('Περιγραφή έργου') &&
               !trimmedLine.includes('Εκτιμώμενο κόστος') &&
               !trimmedLine.includes('---')) {
             sections.header += line + '\n';
@@ -229,7 +229,7 @@ export default function AnnouncementContent({ title, description, startDate, end
               {sections.assemblyDetails.split('\n').map((line, index) => {
                 const trimmedLine = line.trim();
                 if (!trimmedLine) return null;
-                
+
                 if (trimmedLine.includes('Η συνέλευση θα διεξαχθεί')) {
                   return (
                     <div key={index} className="flex items-start gap-3">
@@ -250,9 +250,9 @@ export default function AnnouncementContent({ title, description, startDate, end
                       <Video className="w-4 h-4 text-green-700 mt-0.5" />
                       <div className="text-green-900">
                         <p className="font-medium mb-1">Σύνδεσμος Zoom:</p>
-                        <a 
-                          href={trimmedLine.includes('https://') ? trimmedLine.split('Zoom:')[1]?.trim() || trimmedLine : ''} 
-                          target="_blank" 
+                        <a
+                          href={trimmedLine.includes('https://') ? trimmedLine.split('Zoom:')[1]?.trim() || trimmedLine : ''}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 underline hover:text-blue-800 break-all"
                         >
@@ -293,14 +293,14 @@ export default function AnnouncementContent({ title, description, startDate, end
               {sections.topics.map((topic, index) => (
                 <div key={index} className="bg-white rounded-lg p-4 border border-purple-200">
                   <h4 className="text-lg font-semibold text-purple-900 mb-3">{topic.title}</h4>
-                  
+
                   {topic.cost && (
                     <div className="flex items-center gap-2 mb-3">
                       <Euro className="w-4 h-4 text-purple-700" />
                       <span className="font-medium text-purple-900">Εκτιμώμενο Κόστος: {topic.cost}</span>
                     </div>
                   )}
-                  
+
                   {topic.description && (
                     <p className="text-purple-800">{topic.description}</p>
                   )}
@@ -346,4 +346,3 @@ export default function AnnouncementContent({ title, description, startDate, end
     </div>
   );
 }
-

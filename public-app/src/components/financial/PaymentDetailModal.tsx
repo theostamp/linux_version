@@ -56,11 +56,11 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   const loadCurrentApartmentBalance = async () => {
     if (!payment) return;
-    
+
     try {
       // Import api για authenticated request
       const { api } = await import('@/lib/api');
-      
+
       // API call για το τρέχον υπόλοιπο του διαμερίσματος
       // The api.get returns data directly
       const response = await api.get(`/apartments/${payment.apartment}/`);
@@ -74,14 +74,14 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   const loadTransactionHistory = async () => {
     if (!payment) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Import api για authenticated request
       const { api } = await import('@/lib/api');
-      
+
       // Build query parameters for date range
       const params = new URLSearchParams();
       if (startDate) {
@@ -90,39 +90,39 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       if (endDate) {
         params.append('end_date', endDate);
       }
-      
+
       // Check if filtering is active
       const isFilteringActive = !!(startDate || endDate);
       setIsFiltered(isFilteringActive);
-      
+
       // API call για το ιστορικό συναλλαγών
       // The api.get returns data directly
       const url = `/financial/apartments/${payment.apartment}/transactions/${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await api.get(url);
-      
+
       // Handle both array and object with results property
       const transactionsData = Array.isArray(response) ? response : (response.results || response.data || []);
-      
+
       // Filter transactions by date if date range is provided
       let filteredTransactions = transactionsData;
-      
+
       if (startDate || endDate) {
         const startDateObj = startDate ? new Date(startDate) : new Date(0); // If no start date, use earliest possible
         const endDateObj = endDate ? new Date(endDate) : new Date(8640000000000000); // If no end date, use latest possible
-        
+
         // Set time to start and end of day for proper comparison
         startDateObj.setHours(0, 0, 0, 0);
         endDateObj.setHours(23, 59, 59, 999);
-        
+
         filteredTransactions = transactionsData.filter((transaction: any) => {
           const transactionDate = new Date(transaction.date);
           return transactionDate >= startDateObj && transactionDate <= endDateObj;
         });
       }
-      
+
       // Set transactions
       setTransactions(filteredTransactions);
-      
+
       // Calculate filtered balance if transactions exist
       if (filteredTransactions.length > 0) {
         const lastTransaction = filteredTransactions[filteredTransactions.length - 1];
@@ -176,7 +176,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+
     setStartDate(firstDay.toISOString().split('T')[0]);
     setEndDate(lastDay.toISOString().split('T')[0]);
   };
@@ -188,20 +188,20 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   const confirmDeletePayment = async () => {
     if (!payment) return;
-    
+
     setIsDeletingPayment(true);
     try {
       // Import api για authenticated request
       const { api } = await import('@/lib/api');
-      
+
       // API call για διαγραφή πληρωμής
       await api.delete(`/financial/payments/${payment.id}/`);
-      
+
       // Success - notify parent and close modal
       if (onPaymentDeleted) {
         onPaymentDeleted();
       }
-      
+
       // Close modal
       setShowDeleteConfirmation(false);
       onClose();
@@ -220,35 +220,35 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   if (!isOpen || !payment) return null;
 
   // Υπολογισμός τελευταίου υπολοίπου - χρησιμοποιούμε το σωστό current_balance του διαμερίσματος
-  const lastBalance = filteredBalance !== null 
-    ? filteredBalance 
+  const lastBalance = filteredBalance !== null
+    ? filteredBalance
     : (currentApartmentBalance !== null ? currentApartmentBalance : (payment.current_balance || 0));
 
   const handlePrint = () => {
     setIsPrinting(true);
-    
+
     try {
       const printContent = generatePrintableContent();
       const printWindow = window.open('', '_blank', 'width=800,height=600');
-      
+
       if (printWindow) {
         printWindow.document.write(printContent);
         printWindow.document.close();
-        
+
         // Περιμένουμε να φορτωθεί το περιεχόμενο πριν εκτυπώσουμε
         printWindow.onload = () => {
           printWindow.focus();
-          
+
           // Μικρή καθυστέρηση για να φορτωθούν τα styles
           setTimeout(() => {
             printWindow.print();
-            
+
             // Κλείνουμε το παράθυρο μετά την εκτύπωση (ή ακύρωση)
             printWindow.onafterprint = () => {
               setIsPrinting(false);
               printWindow.close();
             };
-            
+
             // Fallback: κλείσιμο μετά από 10 δευτερόλεπτα
             setTimeout(() => {
               if (!printWindow.closed) {
@@ -271,16 +271,16 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   const generatePrintableContent = () => {
     const currentDate = new Date().toLocaleDateString('el-GR');
-    
+
     // Format date range for display
-    const dateRangeText = startDate && endDate 
+    const dateRangeText = startDate && endDate
       ? ` • Περίοδος: ${new Date(startDate).toLocaleDateString('el-GR')} - ${new Date(endDate).toLocaleDateString('el-GR')}`
-      : startDate 
+      : startDate
         ? ` • Από: ${new Date(startDate).toLocaleDateString('el-GR')}`
-        : endDate 
+        : endDate
           ? ` • Έως: ${new Date(endDate).toLocaleDateString('el-GR')}`
           : '';
-    
+
     return `
       <!DOCTYPE html>
       <html>
@@ -377,18 +377,18 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             padding-top: 20px;
           }
           @media print {
-            body { 
-              margin: 0; 
+            body {
+              margin: 0;
               -webkit-print-color-adjust: exact !important;
               color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
-            .summary { 
-              page-break-inside: avoid; 
+            .summary {
+              page-break-inside: avoid;
               margin-bottom: 20px;
             }
-            .transaction { 
-              page-break-inside: avoid; 
+            .transaction {
+              page-break-inside: avoid;
               margin-bottom: 8px;
             }
             .header {
@@ -430,9 +430,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
         <div class="transactions">
           <h2>${isFiltered ? 'Φιλτραρισμένο Ιστορικό Συναλλαγών' : 'Ιστορικό Συναλλαγών'}</h2>
-          ${transactions.length === 0 
+          ${transactions.length === 0
             ? `<div style="text-align: center; padding: 20px; color: #3e4a68;">
-                ${isFiltered 
+                ${isFiltered
                   ? `Δεν βρέθηκαν συναλλαγές για την περίοδο ${startDate ? new Date(startDate).toLocaleDateString('el-GR') : ''} ${startDate && endDate ? '-' : ''} ${endDate ? new Date(endDate).toLocaleDateString('el-GR') : ''}`
                   : 'Δεν βρέθηκαν συναλλαγές'
                 }
@@ -466,11 +466,11 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   return (
     <ModalPortal>
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] border border-gray-300 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
@@ -513,17 +513,17 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowDateRange(!showDateRange)}
             >
               <Filter className="h-4 w-4 mr-2" />
               Χρονικό Εύρος
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handlePrint}
               disabled={isPrinting}
             >
@@ -539,9 +539,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </>
               )}
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleDeletePayment}
               className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
             >
@@ -584,16 +584,16 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                   className="w-40"
                 />
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={setCurrentMonth}
               >
                 Τρέχων Μήνας
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={clearDateRange}
                 disabled={!startDate && !endDate}
               >
@@ -616,7 +616,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 <p className="text-lg font-semibold">{payment.apartment_number}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -631,7 +631,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -651,7 +651,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -665,15 +665,15 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                   </span>
                 </div>
                 <p className={`text-lg font-semibold ${
-                  lastBalance < 0 
-                    ? 'text-red-600' 
+                  lastBalance < 0
+                    ? 'text-red-600'
                     : 'text-green-600'
                 }`}>
                   {formatCurrency(lastBalance)}
                 </p>
                 <p className={`text-xs font-medium ${
-                  lastBalance < 0 
-                    ? 'text-red-600' 
+                  lastBalance < 0
+                    ? 'text-red-600'
                     : 'text-green-600'
                 }`}>
                   {lastBalance < 0 ? 'Χρεωστικό' : 'Πιστωτικό'}
@@ -700,7 +700,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </div>
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8 text-[hsl(var(--muted-foreground))]">
-                  {isFiltered 
+                  {isFiltered
                     ? `Δεν βρέθηκαν συναλλαγές για την περίοδο ${startDate ? new Date(startDate).toLocaleDateString('el-GR') : ''} ${startDate && endDate ? '-' : ''} ${endDate ? new Date(endDate).toLocaleDateString('el-GR') : ''}`
                     : 'Δεν βρέθηκαν συναλλαγές'
                   }
@@ -711,8 +711,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     <div
                       key={`${transaction.id}-${index}`}
                       className={`p-4 rounded-lg border-l-4 ${
-                        transaction.type === 'payment' 
-                          ? 'border-l-[hsl(var(--success))] bg-[#E6FFF5]' 
+                        transaction.type === 'payment'
+                          ? 'border-l-[hsl(var(--success))] bg-[#E6FFF5]'
                           : 'border-l-red-500 bg-red-50'
                       }`}
                     >
@@ -732,11 +732,11 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                             {formatDate(transaction.date)}
                           </p>
                         </div>
-                        
+
                         <div className="text-right">
                           <p className={`text-lg font-semibold ${
-                            transaction.type === 'payment' 
-                              ? 'text-green-600' 
+                            transaction.type === 'payment'
+                              ? 'text-green-600'
                               : 'text-red-600'
                           }`}>
                             {transaction.type === 'payment' ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
@@ -766,8 +766,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             borderColor: 'hsl(var(--border))',
           }}
         >
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handlePrint}
             disabled={isPrinting}
           >
@@ -792,11 +792,11 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
         <ModalPortal>
-        <div 
+        <div
           className="fixed inset-0 flex items-center justify-center z-[130] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
           onClick={cancelDeletePayment}
         >
-          <div 
+          <div
             className="bg-white rounded-lg max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
@@ -820,7 +820,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
               <p className="text-[hsl(var(--card-foreground))] mb-4">
                 Είστε σίγουροι ότι θέλετε να διαγράψετε την εισπραξή;
               </p>
-              
+
               {/* Payment Details */}
               <div
                 className="rounded-lg p-3 border"

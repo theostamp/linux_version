@@ -7,13 +7,13 @@ import { deleteBuilding } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { typography } from '@/lib/typography';
-import { 
-  Building as BuildingIcon, 
-  Home, 
-  MapPin, 
-  User, 
-  Edit, 
-  Trash, 
+import {
+  Building as BuildingIcon,
+  Home,
+  MapPin,
+  User,
+  Edit,
+  Trash,
   ArrowRight,
   Calendar,
   Phone
@@ -152,7 +152,7 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                       <div>
                         <div className="text-sm text-foreground">{building.address}</div>
                         <div className="text-sm text-muted-foreground">
-                          {building.city && building.postal_code 
+                          {building.city && building.postal_code
                             ? `${building.city}, ${building.postal_code}`
                             : building.city || building.postal_code || 'Δεν έχει οριστεί'
                           }
@@ -193,7 +193,7 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                         Διαχείριση
                         <ArrowRight className="w-3 h-3 ml-1" />
                       </Button>
-                      
+
                       {canManage && (
                         <>
                           <Link href={`/buildings/${building.id}/edit`}>
@@ -202,9 +202,9 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                               Επεξεργασία
                             </Button>
                           </Link>
-                          
-                          <Button 
-                            variant="outline" 
+
+                          <Button
+                            variant="outline"
                             size="sm"
                             className="text-xs text-destructive hover:bg-destructive/10 border-destructive/30 px-2 py-1"
                             onClick={() => handleDelete(building)}
@@ -234,4 +234,3 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
 };
 
 export default BuildingTable;
-

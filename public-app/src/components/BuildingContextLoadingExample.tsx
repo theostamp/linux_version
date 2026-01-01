@@ -1,12 +1,12 @@
 /**
  * Example Component: Loading States Usage
- * 
+ *
  * Αυτό το component δείχνει πώς να χρησιμοποιείς τα νέα loading states
  * από το BuildingContext.
- * 
+ *
  * Usage:
  *   import { BuildingContextLoadingExample } from '@/components/BuildingContextLoadingExample';
- *   
+ *
  *   <BuildingContextLoadingExample />
  */
 
@@ -17,14 +17,14 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export const BuildingContextLoadingExample = () => {
-  const { 
-    selectedBuilding, 
-    buildingContext, 
-    isLoadingContext, 
+  const {
+    selectedBuilding,
+    buildingContext,
+    isLoadingContext,
     contextError,
     permissions,
   } = useBuilding();
-  
+
   // Case 1: No building selected
   if (!selectedBuilding) {
     return (
@@ -36,7 +36,7 @@ export const BuildingContextLoadingExample = () => {
       </div>
     );
   }
-  
+
   // Case 2: Loading context
   if (isLoadingContext) {
     return (
@@ -48,7 +48,7 @@ export const BuildingContextLoadingExample = () => {
       </div>
     );
   }
-  
+
   // Case 3: Error loading context
   if (contextError) {
     return (
@@ -63,7 +63,7 @@ export const BuildingContextLoadingExample = () => {
       </div>
     );
   }
-  
+
   // Case 4: Context loaded successfully
   if (!buildingContext) {
     return (
@@ -75,7 +75,7 @@ export const BuildingContextLoadingExample = () => {
       </div>
     );
   }
-  
+
   // Case 5: Success - show building data
   return (
     <div className="p-4 border rounded-lg bg-green-50">
@@ -85,13 +85,13 @@ export const BuildingContextLoadingExample = () => {
           <div className="font-semibold text-green-900 mb-2">
             {buildingContext.name}
           </div>
-          
+
           <div className="space-y-1 text-sm text-green-800">
             <div>Διαμερίσματα: {buildingContext.apartments_count}</div>
             <div>Διεύθυνση: {buildingContext.address}, {buildingContext.city}</div>
             <div>Αποθεματικό: €{buildingContext.current_reserve}</div>
           </div>
-          
+
           {permissions && (
             <div className="mt-3 pt-3 border-t border-green-200">
               <div className="text-xs font-semibold text-green-900 mb-1">
@@ -132,7 +132,7 @@ export const BuildingContextLoadingExample = () => {
  */
 export const ExampleUsagePage = () => {
   const { isLoadingContext, contextError } = useBuilding();
-  
+
   // Pattern 1: Early return για loading
   if (isLoadingContext) {
     return (
@@ -144,7 +144,7 @@ export const ExampleUsagePage = () => {
       </div>
     );
   }
-  
+
   // Pattern 2: Early return για errors
   if (contextError) {
     return (
@@ -155,7 +155,7 @@ export const ExampleUsagePage = () => {
             <div>
               <h3 className="font-semibold text-red-900 mb-1">Σφάλμα</h3>
               <p className="text-sm text-red-800">{contextError}</p>
-              <button 
+              <button
                 className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                 onClick={() => window.location.reload()}
               >
@@ -167,7 +167,7 @@ export const ExampleUsagePage = () => {
       </div>
     );
   }
-  
+
   // Pattern 3: Normal content
   return (
     <div className="p-6">
@@ -176,4 +176,3 @@ export const ExampleUsagePage = () => {
     </div>
   );
 };
-

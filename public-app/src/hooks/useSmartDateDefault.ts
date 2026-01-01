@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 /**
- * Custom hook για έξυπνη επιλογή default ημερομηνίας 
+ * Custom hook για έξυπνη επιλογή default ημερομηνίας
  * με βάση τον επιλεγμένο μήνα
  */
 export const useSmartDateDefault = (selectedMonth?: string) => {
@@ -10,10 +10,10 @@ export const useSmartDateDefault = (selectedMonth?: string) => {
       // No month selected, use current date
       return new Date().toISOString().split('T')[0];
     }
-    
+
     const now = new Date();
     const currentMonth = now.toISOString().substring(0, 7); // YYYY-MM format
-    
+
     if (selectedMonth === currentMonth) {
       // Current month selected, use today's date
       return now.toISOString().split('T')[0];
@@ -32,10 +32,10 @@ export const useSmartDateDefault = (selectedMonth?: string) => {
 
   const getMonthContext = (selectedMonth?: string) => {
     if (!selectedMonth) return null;
-    
+
     const now = new Date();
     const currentMonth = now.toISOString().substring(0, 7);
-    
+
     if (selectedMonth < currentMonth) {
       return {
         type: 'past' as const,
@@ -69,5 +69,3 @@ export const useSmartDateDefault = (selectedMonth?: string) => {
 };
 
 export default useSmartDateDefault;
-
-

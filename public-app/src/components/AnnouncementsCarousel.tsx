@@ -28,19 +28,19 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
   useEffect(() => {
     const slider = instanceRef.current;
     if (!slider || !slider.track?.details) return;
-  
+
     intervalRef.current = setInterval(() => {
       if (!mouseOver.current) {
         slider.next();
       }
     }, 8000); // Increased interval for better UX
-  
+
     const container = sliderRef.current;
     if (container) {
       container.addEventListener('mouseenter', () => (mouseOver.current = true));
       container.addEventListener('mouseleave', () => (mouseOver.current = false));
     }
-  
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (container) {
@@ -49,7 +49,7 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
       }
     };
   }, [instanceRef]);
-  
+
   // If no announcements, don't render anything
   if (!announcements || announcements.length === 0) {
     return null;
@@ -108,7 +108,7 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
           );
         })}
       </div>
-      
+
       {/* Navigation Dots */}
       {announcements.length > 1 && (
         <div className="flex justify-center mt-4 space-x-2">
@@ -124,4 +124,3 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
     </div>
   );
 }
-

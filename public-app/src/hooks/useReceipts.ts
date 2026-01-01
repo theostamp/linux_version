@@ -84,7 +84,7 @@ export const useReceipts = () => {
 
     try {
       const formData = new FormData();
-      
+
       // Add basic fields
       formData.append('payment', receiptData.payment.toString());
       formData.append('receipt_type', receiptData.receipt_type);
@@ -92,7 +92,7 @@ export const useReceipts = () => {
       formData.append('receipt_date', receiptData.receipt_date);
       formData.append('payer_name', receiptData.payer_name);
       formData.append('payer_type', receiptData.payer_type);
-      
+
       // Add optional fields
       if (receiptData.reference_number) {
         formData.append('reference_number', receiptData.reference_number);
@@ -125,7 +125,7 @@ export const useReceipts = () => {
 
     try {
       const formData = new FormData();
-      
+
       // Add fields that are provided
       Object.entries(receiptData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -196,4 +196,3 @@ export const useReceipts = () => {
     getReceiptTypes,
   };
 };
-

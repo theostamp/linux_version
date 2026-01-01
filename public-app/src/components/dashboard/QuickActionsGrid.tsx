@@ -147,5 +147,3 @@ export function QuickActionsGrid({ data, loading = false }: QuickActionsGridProp
 }
 
 export default QuickActionsGrid;
-
-

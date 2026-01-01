@@ -92,7 +92,7 @@ export function TodoItem({
         >
           <StatusIcon className="w-5 h-5" />
         </button>
-        
+
         <div className="flex-1 min-w-0">
           <p className={cn(
             'text-sm font-medium truncate',
@@ -150,7 +150,7 @@ export function TodoItem({
               )}>
                 {todo.title}
               </h4>
-              
+
               {todo.description && (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                   {todo.description}
@@ -264,4 +264,3 @@ export function TodoItem({
 }
 
 export default TodoItem;
-

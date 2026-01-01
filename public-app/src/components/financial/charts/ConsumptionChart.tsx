@@ -139,18 +139,18 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={consumptionData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="period" 
+        <XAxis
+          dataKey="period"
           tick={{ fontSize: 12 }}
           angle={-45}
           textAnchor="end"
           height={80}
         />
-        <YAxis 
+        <YAxis
           tick={{ fontSize: 12 }}
           label={{ value: 'Κατανάλωση', angle: -90, position: 'insideLeft' }}
         />
-        <Tooltip 
+        <Tooltip
           formatter={(value: any, name: string) => [value, name]}
           labelFormatter={(label) => `Περίοδος: ${label}`}
         />
@@ -183,7 +183,7 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip 
+        <Tooltip
           formatter={(value: any, name: string) => [value, name]}
         />
       </PieChart>
@@ -194,18 +194,18 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={trendData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="period" 
+        <XAxis
+          dataKey="period"
           tick={{ fontSize: 12 }}
           angle={-45}
           textAnchor="end"
           height={80}
         />
-        <YAxis 
+        <YAxis
           tick={{ fontSize: 12 }}
           label={{ value: 'Κατανάλωση', angle: -90, position: 'insideLeft' }}
         />
-        <Tooltip 
+        <Tooltip
           formatter={(value: any, name: string) => [value, name]}
           labelFormatter={(label) => `Περίοδος: ${label}`}
         />
@@ -296,4 +296,4 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
       </div>
     </div>
   );
-}; 
+};

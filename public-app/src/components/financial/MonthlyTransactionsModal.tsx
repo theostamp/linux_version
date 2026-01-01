@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Calendar, 
-  TrendingUp, 
-  TrendingDown, 
-  Euro, 
-  Clock, 
+import {
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Euro,
+  Clock,
   Info,
   ArrowUpRight,
   ArrowDownRight,
@@ -61,17 +61,17 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
 
     try {
       console.log('🔍 Loading monthly transactions for:', { buildingId, month, monthDisplayName });
-      
+
       // Parse month to get year and month
       const [year, monthNum] = month.split('-');
-      
+
       // Load expenses for the specific month
       const expensesParams = new URLSearchParams({
         building_id: buildingId.toString(),
         month: month,  // Use the month parameter in YYYY-MM format
         limit: '100'
       });
-      
+
       console.log('💰 Loading expenses from:', `/financial/expenses/?${expensesParams}`);
       const expensesResponse = await api.get(`/financial/expenses/?${expensesParams}`);
       console.log('💰 Expenses response:', expensesResponse.data);
@@ -86,12 +86,12 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
         month: month,  // Use the month parameter in YYYY-MM format
         limit: '100'
       });
-      
+
       console.log('💳 Loading payments from:', `/financial/payments/?${paymentsParams}`);
       const paymentsResponse = await api.get(`/financial/payments/?${paymentsParams}`);
       console.log('💳 Payments response:', paymentsResponse.data);
       console.log('💳 Payments count:', paymentsResponse.data.results?.length || paymentsResponse.data?.length || 0);
-      
+
       // Payments are now filtered by building_id in the backend
       const payments = paymentsResponse.data.results || paymentsResponse.data || [];
       setPayments(payments);
@@ -102,15 +102,15 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
         console.log('💰 Expense amount parsing:', { original: exp.amount, parsed: amount, type: typeof exp.amount });
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
-      
+
       const totalPayments = payments.reduce((sum: number, pay: any) => {
         const amount = typeof pay.amount === 'string' ? parseFloat(pay.amount) : Number(pay.amount || 0);
         console.log('💳 Payment amount parsing:', { original: pay.amount, parsed: amount, type: typeof pay.amount });
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
-      
+
       const balance = totalPayments - totalExpenses;
-      
+
       console.log('📊 Summary calculation:', {
         totalExpenses,
         totalPayments,

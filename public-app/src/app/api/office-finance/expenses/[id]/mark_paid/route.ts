@@ -20,4 +20,3 @@ const handlers = createTenantProxyHandlers(
 const { POST, OPTIONS } = exportHandlers(handlers, methods, "office-finance-expense-mark-paid");
 
 export { POST, OPTIONS };
-

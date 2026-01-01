@@ -7,10 +7,10 @@ interface CommonExpenseCalculatorNewProps {
   reserveFundMonthlyAmount?: number;
 }
 
-export const CommonExpenseCalculatorNew: React.FC<CommonExpenseCalculatorNewProps> = ({ 
-  buildingId, 
+export const CommonExpenseCalculatorNew: React.FC<CommonExpenseCalculatorNewProps> = ({
+  buildingId,
   selectedMonth,
-  reserveFundMonthlyAmount 
+  reserveFundMonthlyAmount
 }) => {
   const handleComplete = (results: any) => {
     // Handle completion - could trigger refresh of other components

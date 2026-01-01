@@ -19,29 +19,29 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
   const monthOptions = React.useMemo(() => {
     const months = [];
     const currentDate = new Date();
-    
+
     // Go back 2 years
     for (let i = 24; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('el-GR', { 
-        year: 'numeric', 
-        month: 'long' 
+      const label = date.toLocaleDateString('el-GR', {
+        year: 'numeric',
+        month: 'long'
       });
       months.push({ value, label });
     }
-    
+
     // Go forward 6 months
     for (let i = 1; i <= 6; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
       const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('el-GR', { 
-        year: 'numeric', 
-        month: 'long' 
+      const label = date.toLocaleDateString('el-GR', {
+        year: 'numeric',
+        month: 'long'
       });
       months.push({ value, label });
     }
-    
+
     return months;
   }, []); // Empty dependency array - only calculate once
 
@@ -70,8 +70,8 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
                 Τρέχων Μήνας
               </div>
               {monthOptions.slice(24, 25).map((month) => (
-                <SelectItem 
-                  key={month.value} 
+                <SelectItem
+                  key={month.value}
                   value={month.value}
                   className="font-semibold text-blue-700 bg-blue-50/50 dark:bg-blue-900/20 dark:text-blue-300"
                 >
@@ -83,7 +83,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
               ))}
             </>
           )}
-          
+
           {/* Recent Months Section */}
           <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border-b">
             Πρόσφατοι Μήνες
@@ -93,7 +93,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
             if (month.value === currentMonthValue && selectedMonth === currentMonthValue) {
               return null;
             }
-            
+
             return (
               <SelectItem key={month.value} value={month.value}>
                 <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
               </SelectItem>
             );
           })}
-          
+
           {/* Historical Months Section */}
           <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border-b">
             Ιστορικά Δεδομένα
@@ -116,7 +116,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
               </div>
             </SelectItem>
           ))}
-          
+
           {/* Future Months Section */}
           <div className="px-2 py-1.5 text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-300 border-b">
             Μελλοντικοί Μήνες
@@ -133,4 +133,4 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
       </Select>
     </div>
   );
-}; 
+};

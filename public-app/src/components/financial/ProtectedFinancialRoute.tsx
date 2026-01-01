@@ -138,4 +138,4 @@ export function PermissionIcon({ permission, icon, tooltip, className = '' }: Pe
       {icon}
     </div>
   );
-} 
+}

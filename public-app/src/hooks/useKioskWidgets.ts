@@ -110,7 +110,7 @@ export function useKioskWidgets(buildingId: number | null) {
 
   // Get enabled widgets by category
   const getEnabledWidgets = useCallback((category: string) => {
-    return widgets.filter(widget => 
+    return widgets.filter(widget =>
       widget.enabled && widget.category === category
     ).sort((a, b) => a.order - b.order);
   }, [widgets]);

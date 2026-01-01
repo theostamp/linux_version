@@ -34,7 +34,7 @@ export function TransactionHistory({ limit, selectedMonth }: TransactionHistoryP
   // Use BuildingContext for building data
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -157,7 +157,7 @@ export function TransactionHistory({ limit, selectedMonth }: TransactionHistoryP
       const apartmentMatch = transaction.apartment_number?.toLowerCase().includes(searchLower);
       if (!apartmentMatch) return false;
     }
-    
+
     // Filter by general search term
     if (filters.searchTerm) {
       const searchLower = filters.searchTerm.toLowerCase();
@@ -199,9 +199,9 @@ export function TransactionHistory({ limit, selectedMonth }: TransactionHistoryP
             Ιστορικό Κινήσεων
             {selectedMonth && (
               <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
-                📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
-                  month: 'long', 
-                  year: 'numeric' 
+                📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', {
+                  month: 'long',
+                  year: 'numeric'
                 })}
               </Badge>
             )}
@@ -412,7 +412,7 @@ export function TransactionHistory({ limit, selectedMonth }: TransactionHistoryP
               <div>
                 <span className="text-gray-600">Τελευταία κίνηση:</span>
                 <div className="font-medium">
-                  {filteredTransactions.length > 0 && 
+                  {filteredTransactions.length > 0 &&
                     format(new Date(filteredTransactions[0].date), 'dd/MM/yyyy')
                   }
                 </div>
@@ -423,4 +423,4 @@ export function TransactionHistory({ limit, selectedMonth }: TransactionHistoryP
       </CardContent>
     </Card>
   );
-} 
+}

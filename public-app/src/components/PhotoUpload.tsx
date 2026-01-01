@@ -31,24 +31,24 @@ export default function PhotoUpload({
         resolve(file);
         return;
       }
-      
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const img = new Image();
-      
+
       img.onload = () => {
         let { width, height } = img;
-        
+
         if (width > maxWidth || height > maxHeight) {
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           width *= ratio;
           height *= ratio;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         canvas.toBlob((blob) => {
           if (blob) {
             const resizedFile = new File([blob], file.name, {
@@ -61,53 +61,53 @@ export default function PhotoUpload({
           }
         }, file.type, 0.8);
       };
-      
+
       img.onerror = () => {
         resolve(file);
       };
-      
+
       img.src = URL.createObjectURL(file);
     });
   };
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
-    
+
     setUploading(true);
-    
+
     try {
       const validFiles: File[] = [];
-      
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
+
         const validImageTypes = [
-          'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+          'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
           'image/webp', 'image/svg+xml', 'image/svg'
         ];
-        
-        const isValidImage = validImageTypes.includes(file.type) || 
+
+        const isValidImage = validImageTypes.includes(file.type) ||
                            file.name.toLowerCase().match(/\.(svg|jpg|jpeg|png|gif|webp)$/i);
-        
+
         if (!isValidImage) {
           alert(`Το αρχείο ${file.name} δεν είναι υποστηριζόμενος τύπος εικόνας.`);
           continue;
         }
-        
+
         if (file.size > maxSizeMB * 1024 * 1024) {
           alert(`Το αρχείο ${file.name} είναι πολύ μεγάλο. Μέγιστο μέγεθος: ${maxSizeMB}MB`);
           continue;
         }
-        
+
         if (photos.length + validFiles.length >= maxPhotos) {
           alert(`Μπορείτε να ανεβάσετε μέχρι ${maxPhotos} φωτογραφίες.`);
           break;
         }
-        
+
         const resizedFile = await resizeImage(file);
         validFiles.push(resizedFile);
       }
-      
+
       if (validFiles.length > 0) {
         onPhotosChange([...photos, ...validFiles]);
       }
@@ -160,7 +160,7 @@ export default function PhotoUpload({
           onChange={(e) => handleFileSelect(e.target.files)}
           className="hidden"
         />
-        
+
         <div className="space-y-2">
           <div className="flex justify-center">
             <Camera className="w-8 h-8 text-gray-400" />
@@ -240,4 +240,3 @@ export default function PhotoUpload({
     </div>
   );
 }
-

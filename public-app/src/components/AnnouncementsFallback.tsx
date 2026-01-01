@@ -53,4 +53,3 @@ export default function AnnouncementsFallback({ announcements }: Props) {
     </div>
   );
 }
-

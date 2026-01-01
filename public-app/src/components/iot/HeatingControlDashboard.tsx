@@ -239,4 +239,3 @@ const mockChartData = [
   { day: 'Σαβ', hours: 8.2 },
   { day: 'Κυρ', hours: 7.5 },
 ];
-

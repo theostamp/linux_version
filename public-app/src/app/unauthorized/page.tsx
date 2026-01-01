@@ -65,7 +65,7 @@ export default function UnauthorizedPage() {
               Αρχική Σελίδα
             </Link>
           </Button>
-          
+
           <Button
             variant="outline"
             className="gap-2"
@@ -100,5 +100,3 @@ export default function UnauthorizedPage() {
     </div>
   );
 }
-
-

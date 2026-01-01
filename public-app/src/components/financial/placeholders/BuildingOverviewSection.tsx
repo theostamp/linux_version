@@ -47,4 +47,3 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 });
 
 BuildingOverviewSection.displayName = 'BuildingOverviewSection';
-

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Bell, 
-  BellOff, 
+import {
+  Bell,
+  BellOff,
   BellRing,
   Settings,
   Volume2,
@@ -53,7 +53,7 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
         color: 'text-muted-foreground'
       };
     }
-    
+
     if (permission === 'denied') {
       return {
         icon: BellOff,
@@ -61,7 +61,7 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
         color: 'text-red-500'
       };
     }
-    
+
     if (isSubscribed) {
       return {
         icon: BellRing,
@@ -69,7 +69,7 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
         color: 'text-green-500'
       };
     }
-    
+
     return {
       icon: Bell,
       text: 'Ειδοποιήσεις ανενεργές',
@@ -87,7 +87,7 @@ export function NotificationSettings({ className }: NotificationSettingsProps) {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'p-2.5 rounded-xl transition-all duration-200',
-          isOpen 
+          isOpen
             ? 'bg-primary text-primary-foreground shadow-md'
             : 'hover:bg-muted text-muted-foreground hover:text-foreground'
         )}
@@ -220,8 +220,8 @@ export function NotificationToggle({ className }: { className?: string }) {
       disabled={isLoading}
       className={cn(
         'p-2.5 rounded-xl transition-all duration-200',
-        isSubscribed 
-          ? 'bg-primary/10 text-primary' 
+        isSubscribed
+          ? 'bg-primary/10 text-primary'
           : 'hover:bg-muted text-muted-foreground',
         isLoading && 'opacity-50 cursor-not-allowed',
         className
@@ -240,4 +240,3 @@ export function NotificationToggle({ className }: { className?: string }) {
 }
 
 export default NotificationSettings;
-

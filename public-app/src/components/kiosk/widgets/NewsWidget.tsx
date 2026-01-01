@@ -55,15 +55,15 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         {item.kind === 'ad' ? (
           <>
             <span className={`text-[13px] px-2 py-0.5 rounded-md font-black uppercase tracking-tighter mr-3 shadow-lg ${
-              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας' 
-                ? 'bg-blue-500 text-white animate-pulse' 
+              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας'
+                ? 'bg-blue-500 text-white animate-pulse'
                 : 'bg-yellow-400 text-black shadow-[0_0_10px_rgba(250,204,21,0.3)]'
             }`}>
               AD
             </span>
             <span className={`text-lg font-bold ${
-              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας' 
-                ? 'text-blue-100 italic' 
+              item.text === 'Εδώ μπορείτε να προβάλετε την επιχείρησή σας'
+                ? 'text-blue-100 italic'
                 : 'text-yellow-100'
             }`}>
               {item.text}
@@ -118,7 +118,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
           <Globe className="w-4 h-4" />
           <span>News</span>
         </div>
-        
+
         {/* Continuous scrolling ticker - slower speed, tighter spacing */}
         <div className="relative flex-1 overflow-hidden h-full flex items-center">
           <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-transparent to-transparent pointer-events-none z-10" />
@@ -134,11 +134,11 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-        
+
         .animate-ticker {
           animation: ticker 720s linear infinite;
         }
-        
+
         .animate-ticker:hover {
           animation-play-state: paused;
         }

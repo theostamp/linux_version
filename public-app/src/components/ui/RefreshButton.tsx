@@ -1,6 +1,6 @@
 /**
  * RefreshButton Component
- * 
+ *
  * A button that triggers global refresh of data.
  * Can be placed anywhere in the app for manual refresh capability.
  */
@@ -30,21 +30,21 @@ export function RefreshButton({
   className,
   showToast = true,
 }: RefreshButtonProps) {
-  const { 
-    refreshFinancial, 
-    refreshBuildings, 
-    refreshProjects, 
+  const {
+    refreshFinancial,
+    refreshBuildings,
+    refreshProjects,
     refreshAnnouncements,
     refreshRequests,
     refreshVotes,
     refreshCommunity,
-    refreshAll 
+    refreshAll
   } = useGlobalRefresh();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    
+
     try {
       switch (scope) {
         case 'financial':
@@ -102,4 +102,3 @@ export function RefreshButton({
     </Button>
   );
 }
-

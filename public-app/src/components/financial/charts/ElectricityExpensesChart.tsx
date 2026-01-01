@@ -29,7 +29,7 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
   // Use BuildingContext instead of props
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   const startDate = `${year}-01-01`;
   const endDate = `${year}-12-31`;
 
@@ -70,7 +70,7 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
       const distributionType = e.distribution_type || '';
       const titleLower = (e.title || '').toLowerCase();
       const descLower = (e.description || '').toLowerCase();
-      
+
       const isElectricity = e.category === 'electricity' ||
                             e.category === 'electricity_common' ||
                             e.category === 'utilities' ||
@@ -96,7 +96,7 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
                         e.category === 'heating_modernization';
 
       const result = isElectricity && !isHeating;
-      
+
       // Debug: Log expenses that match electricity criteria
       if (result && distributionType === 'by_participation_mills') {
         console.log('[ElectricityChart] Matched by_participation_mills expense:', {
@@ -431,4 +431,3 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
     </div>
   );
 };
-

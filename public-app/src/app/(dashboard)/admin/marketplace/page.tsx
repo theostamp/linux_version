@@ -63,17 +63,17 @@ const emptyProvider: CreateProviderInput = {
   rating: '0.00',
 };
 
-function ProviderCard({ 
-  provider, 
-  onEdit, 
-  onDelete 
-}: { 
-  provider: MarketplaceProvider; 
-  onEdit: () => void; 
+function ProviderCard({
+  provider,
+  onEdit,
+  onDelete
+}: {
+  provider: MarketplaceProvider;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const ratingNum = parseFloat(provider.rating || '0');
-  
+
   return (
     <motion.div
       layout
@@ -233,7 +233,7 @@ function ProviderFormDialog({
 }) {
   const isEditing = !!provider;
   const [formData, setFormData] = useState<CreateProviderInput>(
-    provider 
+    provider
       ? {
           name: provider.name,
           service_type: provider.service_type,
@@ -655,7 +655,7 @@ function MarketplaceAdminContent() {
   const [search, setSearch] = useState('');
   const [filterService, setFilterService] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<MarketplaceProvider | null>(null);
   const [deletingProvider, setDeletingProvider] = useState<MarketplaceProvider | null>(null);
@@ -911,4 +911,3 @@ export default function MarketplaceAdminPage() {
     </AuthGate>
   );
 }
-

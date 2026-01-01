@@ -58,7 +58,7 @@ export const useExpenses = (
 
       // The api.get returns data directly, not response.data
       const response = await api.get<{ results?: Expense[] } | Expense[]>(`/financial/expenses/?${queryParams.toString()}`);
-      
+
       // Handle both paginated and non-paginated responses
       const data = (response as { results?: Expense[] }).results || (response as Expense[]);
 

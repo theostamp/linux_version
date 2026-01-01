@@ -91,7 +91,7 @@ export function TodoKanbanView({ buildingId, className }: TodoKanbanViewProps) {
   const handleDrop = async (e: React.DragEvent, status: TodoStatus) => {
     e.preventDefault();
     const todoId = parseInt(e.dataTransfer.getData('todoId'));
-    
+
     if (todoId) {
       await updateTodo(todoId, { status });
     }
@@ -182,4 +182,3 @@ export function TodoKanbanView({ buildingId, className }: TodoKanbanViewProps) {
 }
 
 export default TodoKanbanView;
-

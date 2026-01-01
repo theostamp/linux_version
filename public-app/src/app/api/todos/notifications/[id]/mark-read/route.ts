@@ -23,4 +23,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "todos-notifications-mark-read");
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-

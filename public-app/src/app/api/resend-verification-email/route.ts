@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
     // Check cooldown
     const lastSent = lastSentMap.get(sessionId);
     const now = Date.now();
-    
+
     if (lastSent && (now - lastSent) < COOLDOWN_MS) {
       const remainingSeconds = Math.ceil((COOLDOWN_MS - (now - lastSent)) / 1000);
       return NextResponse.json(
-        { 
+        {
           error: 'Please wait before requesting another email',
           remainingSeconds,
           canResendAt: lastSent + COOLDOWN_MS
@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
 
     const Stripe = require('stripe');
     const stripe = new Stripe(apiKey, { apiVersion: '2025-09-30.clover' });
-    
+
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
+
     if (!session) {
       return NextResponse.json(
         { error: 'Session not found' },
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (!resendResponse.ok) {
       const errorData = await resendResponse.json().catch(() => ({}));
       return NextResponse.json(
-        { 
+        {
           error: errorData.error || 'Failed to resend verification email',
           details: errorData
         },
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error resending verification email:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to resend verification email',
         message: 'Προέκυψε σφάλμα κατά την αποστολή του email'
       },
@@ -135,5 +135,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

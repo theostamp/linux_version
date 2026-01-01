@@ -30,24 +30,24 @@ interface OnlineUsersListProps {
  */
 export function OnlineUsersList({ buildingId, onStartChat, className }: OnlineUsersListProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { 
-    users, 
-    onlineUsers, 
-    offlineUsers, 
-    onlineCount, 
+  const {
+    users,
+    onlineUsers,
+    offlineUsers,
+    onlineCount,
     totalCount,
-    isLoading, 
-    error, 
-    refetch 
+    isLoading,
+    error,
+    refetch
   } = useBuildingUsers(buildingId);
 
   // Filter users by search query
-  const filteredOnlineUsers = onlineUsers.filter(u => 
+  const filteredOnlineUsers = onlineUsers.filter(u =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
-  const filteredOfflineUsers = offlineUsers.filter(u => 
+
+  const filteredOfflineUsers = offlineUsers.filter(u =>
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -87,7 +87,7 @@ export function OnlineUsersList({ buildingId, onStartChat, className }: OnlineUs
             <RefreshCw className={cn('w-4 h-4 text-slate-500 dark:text-muted-foreground', isLoading && 'animate-spin')} />
           </button>
         </div>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -144,9 +144,9 @@ export function OnlineUsersList({ buildingId, onStartChat, className }: OnlineUs
                 </div>
                 <div className="space-y-1">
                   {filteredOnlineUsers.map(user => (
-                    <UserItem 
-                      key={user.id} 
-                      user={user} 
+                    <UserItem
+                      key={user.id}
+                      user={user}
                       onStartChat={onStartChat}
                     />
                   ))}
@@ -162,9 +162,9 @@ export function OnlineUsersList({ buildingId, onStartChat, className }: OnlineUs
                 </div>
                 <div className="space-y-1">
                   {filteredOfflineUsers.map(user => (
-                    <UserItem 
-                      key={user.id} 
-                      user={user} 
+                    <UserItem
+                      key={user.id}
+                      user={user}
                       onStartChat={onStartChat}
                     />
                   ))}
@@ -192,13 +192,13 @@ export function OnlineUsersList({ buildingId, onStartChat, className }: OnlineUs
  * Single User Item Component
  */
 function UserItem({ user, onStartChat }: { user: BuildingUser; onStartChat?: (user: BuildingUser) => void }) {
-  const roleIcon = user.role === 'manager' 
+  const roleIcon = user.role === 'manager'
     ? <Crown className="w-3 h-3 text-amber-600" />
     : <Home className="w-3 h-3 text-sky-600" />;
-  
+
   const roleLabel = user.role === 'manager' ? 'Διαχειριστής' : 'Κάτοικος';
-  const roleColor = user.role === 'manager' 
-    ? 'bg-amber-50 text-amber-700' 
+  const roleColor = user.role === 'manager'
+    ? 'bg-amber-50 text-amber-700'
     : 'bg-sky-50 text-sky-700';
 
   return (
@@ -214,8 +214,8 @@ function UserItem({ user, onStartChat }: { user: BuildingUser; onStartChat?: (us
       <div className="relative flex-shrink-0">
         <div className={cn(
           'w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold',
-          user.is_online 
-            ? 'bg-slate-200 text-slate-700' 
+          user.is_online
+            ? 'bg-slate-200 text-slate-700'
             : 'bg-slate-100 text-slate-400'
         )}>
           {user.name.charAt(0).toUpperCase()}
@@ -247,9 +247,9 @@ function UserItem({ user, onStartChat }: { user: BuildingUser; onStartChat?: (us
           'text-xs truncate',
           user.is_online ? 'text-slate-500' : 'text-slate-400'
         )}>
-          {user.is_online 
-            ? (user.status_message || 'Διαθέσιμος') 
-            : user.last_activity 
+          {user.is_online
+            ? (user.status_message || 'Διαθέσιμος')
+            : user.last_activity
               ? `Τελευταία εμφάνιση ${formatDistanceToNow(new Date(user.last_activity), { addSuffix: true, locale: el })}`
               : 'Offline'
           }
@@ -276,4 +276,3 @@ function UserItem({ user, onStartChat }: { user: BuildingUser; onStartChat?: (us
 }
 
 export default OnlineUsersList;
-

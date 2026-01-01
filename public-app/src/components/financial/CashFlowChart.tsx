@@ -196,36 +196,36 @@ export function CashFlowChart({ buildingId }: CashFlowChartProps) {
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
-                    <YAxis 
+                    <YAxis
                       tickFormatter={(value) => `€${value.toLocaleString('el-GR')}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: any) => [`€${value.toLocaleString('el-GR')}`, '']}
                       labelFormatter={(label) => `Ημερομηνία: ${label}`}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="inflow" 
-                      stroke="#22c55e" 
+                    <Line
+                      type="monotone"
+                      dataKey="inflow"
+                      stroke="#22c55e"
                       strokeWidth={2}
                       fill="#22c55e"
                       fillOpacity={0.1}
                       name="Εισροές (Εισπράξεις)"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="outflow" 
-                      stroke="#ef4444" 
+                    <Line
+                      type="monotone"
+                      dataKey="outflow"
+                      stroke="#ef4444"
                       strokeWidth={2}
                       fill="#ef4444"
                       fillOpacity={0.1}
                       name="Εκροές (Δαπάνες)"
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="netFlow" 
-                      stroke="#3b82f6" 
+                    <Line
+                      type="monotone"
+                      dataKey="netFlow"
+                      stroke="#3b82f6"
                       strokeWidth={2}
                       strokeDasharray="5 5"
                       name="Καθαρή Ροή"
@@ -235,27 +235,27 @@ export function CashFlowChart({ buildingId }: CashFlowChartProps) {
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
-                    <YAxis 
+                    <YAxis
                       tickFormatter={(value) => `€${value.toLocaleString('el-GR')}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: any) => [`€${value.toLocaleString('el-GR')}`, '']}
                       labelFormatter={(label) => `Ημερομηνία: ${label}`}
                     />
                     <Legend />
-                    <Bar 
-                      dataKey="inflow" 
-                      fill="#22c55e" 
+                    <Bar
+                      dataKey="inflow"
+                      fill="#22c55e"
                       name="Εισροές (Εισπράξεις)"
                     />
-                    <Bar 
-                      dataKey="outflow" 
-                      fill="#ef4444" 
+                    <Bar
+                      dataKey="outflow"
+                      fill="#ef4444"
                       name="Εκροές (Δαπάνες)"
                     />
-                    <Bar 
-                      dataKey="netFlow" 
-                      fill="#3b82f6" 
+                    <Bar
+                      dataKey="netFlow"
+                      fill="#3b82f6"
                       name="Καθαρή Ροή"
                     />
                   </BarChart>
@@ -304,4 +304,4 @@ export function CashFlowChart({ buildingId }: CashFlowChartProps) {
       </CardContent>
     </Card>
   );
-} 
+}

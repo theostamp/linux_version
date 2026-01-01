@@ -70,7 +70,7 @@ export default function AddressAutocomplete({
 
     try {
       initAttemptedRef.current = true;
-      
+
       let AutocompleteConstructor: typeof google.maps.places.Autocomplete | undefined;
 
       // Try using importLibrary (preferred for loading=async)
@@ -97,8 +97,8 @@ export default function AddressAutocomplete({
       // Final safety check before creating Autocomplete
       // Re-verify input is still valid, in DOM, and is HTMLInputElement
       const currentInput = inputRef.current;
-      if (!currentInput || 
-          !(currentInput instanceof HTMLInputElement) || 
+      if (!currentInput ||
+          !(currentInput instanceof HTMLInputElement) ||
           !document.body.contains(currentInput)) {
         console.warn('[AddressAutocomplete] Input element validation failed before Autocomplete init');
         initAttemptedRef.current = false;
@@ -115,7 +115,7 @@ export default function AddressAutocomplete({
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        
+
         if (place.formatted_address) {
           setInputValue(place.formatted_address);
           onChange(place.formatted_address);
@@ -130,15 +130,15 @@ export default function AddressAutocomplete({
         if (place.address_components) {
           for (const component of place.address_components) {
             const types = component.types;
-            
+
             if (types.includes('locality') || types.includes('administrative_area_level_2')) {
               city = component.long_name;
             }
-            
+
             if (types.includes('postal_code')) {
               postalCode = component.long_name;
             }
-            
+
             if (types.includes('country')) {
               country = component.long_name;
             }
@@ -189,7 +189,7 @@ export default function AddressAutocomplete({
     // Use longer delay to ensure React has finished rendering
     timeoutId = setTimeout(() => {
       if (!isMounted) return;
-      
+
       // Check if Google Maps is already loaded (from global script in layout.tsx)
       if (window.google?.maps) {
         initializeAutocomplete();
@@ -219,7 +219,7 @@ export default function AddressAutocomplete({
       if (timeoutId) clearTimeout(timeoutId);
       if (checkIntervalId) clearInterval(checkIntervalId);
       if (cleanupTimeoutId) clearTimeout(cleanupTimeoutId);
-      
+
       if (autocompleteRef.current) {
         try {
           window.google?.maps?.event?.clearInstanceListeners?.(autocompleteRef.current);

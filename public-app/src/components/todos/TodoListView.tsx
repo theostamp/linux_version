@@ -235,4 +235,3 @@ export function TodoListView({ buildingId, className }: TodoListViewProps) {
 }
 
 export default TodoListView;
-

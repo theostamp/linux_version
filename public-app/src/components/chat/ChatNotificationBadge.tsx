@@ -16,7 +16,7 @@ interface ChatNotificationBadgeProps {
  * Badge που δείχνει τον αριθμό των μη διαβασμένων μηνυμάτων chat
  * Μπορεί να χρησιμοποιηθεί στο Sidebar ή σε οποιοδήποτε μέρος της εφαρμογής
  */
-export function ChatNotificationBadge({ 
+export function ChatNotificationBadge({
   className,
   showIcon = false,
   iconClassName,
@@ -47,14 +47,14 @@ export function ChatNotificationBadge({
       {showIcon && (
         <MessageCircle className={cn('w-5 h-5', iconClassName)} />
       )}
-      
+
       <AnimatePresence mode="wait">
         <motion.span
           key={unreadCount}
           initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ 
-            scale: isAnimating ? [1, 1.2, 1] : 1, 
-            opacity: 1 
+          animate={{
+            scale: isAnimating ? [1, 1.2, 1] : 1,
+            opacity: 1
           }}
           exit={{ scale: 0.5, opacity: 0 }}
           transition={{ duration: 0.2 }}
@@ -98,10 +98,10 @@ export function ChatNotificationDot({ className }: { className?: string }) {
 /**
  * Full badge με icon και count για χρήση σε headers
  */
-export function ChatNotificationButton({ 
+export function ChatNotificationButton({
   onClick,
   className,
-}: { 
+}: {
   onClick?: () => void;
   className?: string;
 }) {
@@ -118,7 +118,7 @@ export function ChatNotificationButton({
       title={unreadCount > 0 ? `${unreadCount} νέα μηνύματα` : 'Chat'}
     >
       <MessageCircle className="w-5 h-5 text-slate-600" />
-      
+
       <AnimatePresence>
         {!isLoading && unreadCount > 0 && (
           <motion.span
@@ -142,4 +142,3 @@ export function ChatNotificationButton({
 }
 
 export default ChatNotificationBadge;
-

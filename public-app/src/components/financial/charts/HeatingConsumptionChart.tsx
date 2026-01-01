@@ -170,7 +170,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
   // Use BuildingContext instead of props
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   // Debug: Log buildingId to verify it's correct
   console.log('[HeatingChart] BuildingId from context:', buildingId, typeof buildingId);
 
@@ -242,11 +242,11 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         amount: e.amount,
         description: e.description,
       })));
-      
+
       // Debug: List all unique categories
       const uniqueCategories = [...new Set(expenses.map(e => e.category))];
       console.log('[HeatingChart] All unique categories in expenses:', uniqueCategories);
-      
+
       // Debug: Check the first expenses against the heating detector
       expenses.slice(0, 5).forEach(e => {
         const analysis = getHeatingAnalysis(e);
@@ -256,12 +256,12 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
           analysis,
         });
       });
-      
+
       // Log all expenses that are interpreted as heating
       const heatingRelated = expenses
         .map(expense => ({ expense, analysis: getHeatingAnalysis(expense) }))
         .filter(({ analysis }) => analysis.matches);
-      
+
       console.log('[HeatingChart] Heating-related expenses found:', heatingRelated.length, heatingRelated.map(({ expense, analysis }) => ({
         id: expense.id,
         title: expense.title,
@@ -271,7 +271,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         analysis,
       })));
     }
-    
+
     console.log('[HeatingChart] Period:', {
       startDate,
       endDate,
@@ -320,7 +320,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
             if (!analysis.matches) {
               return false;
             }
-            
+
             const expenseDate = e.date || e.expense_date || '';
             return expenseDate && expenseDate.startsWith(compareMonth.date);
           });
@@ -349,7 +349,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
       </div>
     );
   }
-  
+
   // Summary debug log
   if (expenses && expenses.length > 0) {
     const totalHeatingExpenses = chartData.reduce((sum, d) => sum + d.expenseCount, 0);

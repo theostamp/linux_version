@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  FileSpreadsheet, 
-  Download, 
-  Calendar, 
-  Building, 
-  Users, 
+import {
+  FileText,
+  FileSpreadsheet,
+  Download,
+  Calendar,
+  Building,
+  Users,
   TrendingUp,
   Filter,
   Search
@@ -90,7 +90,7 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
       if (!response.ok) {
         throw new Error(`Failed to export report (${format}) with status ${response.status}`);
       }
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -163,7 +163,7 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
               <Filter className="h-4 w-4" />
               Φίλτρα Αναφοράς
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {getSelectedReportConfig()?.filters.includes('startDate') && (
                 <div>
@@ -248,7 +248,7 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
               <Download className="h-4 w-4" />
               Εξαγωγή Αναφοράς
             </h3>
-            
+
             <div className="flex gap-3">
               <Button
                 onClick={() => exportReport('excel')}
@@ -258,7 +258,7 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
                 <FileSpreadsheet className="h-4 w-4" />
                 Εξαγωγή σε Excel
               </Button>
-              
+
               <Button
                 onClick={() => exportReport('pdf')}
                 disabled={exporting}
@@ -294,4 +294,4 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
       </CardContent>
     </Card>
   );
-} 
+}

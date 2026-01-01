@@ -43,31 +43,31 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
   const activeVote = useMemo(() => {
     const votes = (data?.votes || []) as KioskVote[];
     console.log('[ActiveVoteWidget] 🗳️ Looking for active vote in:', votes.length, 'votes');
-    
+
     // Find the first active vote
     const now = new Date();
     const todayStart = startOfDay(now);
-    
+
     const active = votes.find(v => {
       // First check is_active flag from backend
       if (v.is_active === false) {
         console.log('[ActiveVoteWidget] Vote', v.id, 'is_active=false, skipping');
         return false;
       }
-      
+
       // Then check date range
       if (!v.start_date) {
         console.log('[ActiveVoteWidget] Vote', v.id, 'has no start_date');
         return false;
       }
-      
+
       // Parse dates and compare at day level (not time)
       const startDate = startOfDay(parseISO(v.start_date));
       // For end_date, use end of day so the vote is active until midnight
       const endDate = v.end_date ? endOfDay(parseISO(v.end_date)) : null;
-      
+
       const isInRange = startDate <= now && (!endDate || endDate >= now);
-      
+
       console.log('[ActiveVoteWidget] Vote', v.id, ':', v.title?.substring(0, 30), {
         start_date: v.start_date,
         end_date: v.end_date,
@@ -77,10 +77,10 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
         endDate: endDate?.toISOString(),
         now: now.toISOString()
       });
-      
+
       return isInRange;
     });
-    
+
     console.log('[ActiveVoteWidget] Found active vote:', active?.id, active?.title?.substring(0, 30));
     return active;
   }, [data?.votes]);
@@ -93,11 +93,11 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
   const hoursRemaining = endDate ? differenceInHours(endDate, new Date()) % 24 : null;
 
   // Calculate percentages from mills if available, otherwise from counts
-  const yesPercent = results?.percentages_by_mills?.['ΝΑΙ'] ?? 
+  const yesPercent = results?.percentages_by_mills?.['ΝΑΙ'] ??
     (results?.total && results.total > 0 ? Math.round((results['ΝΑΙ'] / results.total) * 100) : 0);
-  const noPercent = results?.percentages_by_mills?.['ΟΧΙ'] ?? 
+  const noPercent = results?.percentages_by_mills?.['ΟΧΙ'] ??
     (results?.total && results.total > 0 ? Math.round((results['ΟΧΙ'] / results.total) * 100) : 0);
-  const abstainPercent = results?.percentages_by_mills?.['ΛΕΥΚΟ'] ?? 
+  const abstainPercent = results?.percentages_by_mills?.['ΛΕΥΚΟ'] ??
     (results?.total && results.total > 0 ? Math.round((results['ΛΕΥΚΟ'] / results.total) * 100) : 0);
 
   const participationPercent = results?.participation_percentage ?? activeVote.participation_percentage ?? 0;
@@ -124,9 +124,9 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
               <div className="flex items-center gap-1.5 text-white/80 text-sm">
                 <Clock className="w-4 h-4" />
                 <span>
-                  {daysRemaining > 0 
-                    ? `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}` 
-                    : hoursRemaining && hoursRemaining > 0 
+                  {daysRemaining > 0
+                    ? `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}`
+                    : hoursRemaining && hoursRemaining > 0
                       ? `${hoursRemaining} ${hoursRemaining === 1 ? 'ώρα' : 'ώρες'}`
                       : 'Σήμερα τελειώνει'}
                 </span>
@@ -159,23 +159,23 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
                   <span className="text-white/60 text-xs">ΛΕΥΚΟ</span>
                 </div>
               </div>
-              
+
               {/* Stacked progress bar */}
               <div className="h-2 bg-white/20 rounded-full overflow-hidden flex">
-                <div 
+                <div
                   className="bg-emerald-400 transition-all duration-500"
                   style={{ width: `${yesPercent}%` }}
                 />
-                <div 
+                <div
                   className="bg-rose-400 transition-all duration-500"
                   style={{ width: `${noPercent}%` }}
                 />
-                <div 
+                <div
                   className="bg-gray-300 transition-all duration-500"
                   style={{ width: `${abstainPercent}%` }}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between text-xs text-white/70">
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
@@ -208,9 +208,9 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
           <Vote className="w-4 h-4 text-white" />
           <span className="text-xs text-white/70 uppercase tracking-wider">Ψηφοφορία</span>
         </div>
-        
+
         <h4 className="text-white font-medium text-sm mb-2 line-clamp-2">{activeVote.title}</h4>
-        
+
         {totalVotes > 0 && (
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-white/80">
@@ -226,7 +226,7 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
             </p>
           </div>
         )}
-        
+
         <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-200">
           <Smartphone className="w-3 h-3" />
           <span>Ψηφίστε από την εφαρμογή!</span>
@@ -244,7 +244,7 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
           {activeVote.is_urgent && (
             <div className="absolute inset-0 rounded-2xl animate-pulse ring-2 ring-red-400/50" />
           )}
-          
+
           {/* Header */}
           <div className="px-5 py-3 bg-gradient-to-r from-white/10 to-transparent flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -268,9 +268,9 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
               <div className="flex items-center gap-1.5 text-white/80 text-sm bg-white/10 px-3 py-1 rounded-full">
                 <Clock className="w-3.5 h-3.5" />
                 <span className="font-medium">
-                  {daysRemaining > 0 
-                    ? `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}` 
-                    : hoursRemaining && hoursRemaining > 0 
+                  {daysRemaining > 0
+                    ? `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}`
+                    : hoursRemaining && hoursRemaining > 0
                       ? `${hoursRemaining}ω`
                       : 'Σήμερα!'}
                 </span>
@@ -317,7 +317,7 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
                     <span className="font-bold text-white">{participationPercent}%</span>
                   </div>
                   <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-1000"
                       style={{ width: `${Math.min(participationPercent, 100)}%` }}
                     />
@@ -407,4 +407,3 @@ export default function ActiveVoteWidget({ data, variant = 'banner' }: ActiveVot
     </div>
   );
 }
-

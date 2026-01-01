@@ -112,11 +112,11 @@ export type ChatNotification = {
 /**
  * WebSocket Message Types
  */
-export type WebSocketMessageType = 
-  | 'chat_message' 
-  | 'user_join' 
-  | 'user_leave' 
-  | 'typing_indicator' 
+export type WebSocketMessageType =
+  | 'chat_message'
+  | 'user_join'
+  | 'user_leave'
+  | 'typing_indicator'
   | 'read_receipt'
   | 'message_reaction'
   | 'message_edited'
@@ -344,4 +344,3 @@ export type SendDirectMessagePayload = {
   file_url?: string;
   file_name?: string;
 };
-

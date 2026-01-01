@@ -18,7 +18,7 @@ export interface UserRequest {
   supporter_usernames: string[];
   is_supported?: boolean;
   supporters?: number[]; // ✅ ΠΡΟΣΤΕΘΗΚΕ αυτό για να συμφωνεί με το backend
-  
+
   // 🔧 Enhanced Maintenance Fields
   priority?: string; // 'low', 'medium', 'high', 'urgent'
   assigned_to?: number | null;

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Mail, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
+import {
+  Mail,
+  CheckCircle2,
+  XCircle,
+  Clock,
   Send,
   FileSpreadsheet,
   Wallet,
@@ -81,7 +81,7 @@ const formatDateShort = (dateStr: string) => {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays === 0) {
     return date.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
   }
@@ -100,11 +100,11 @@ export default function HistoryPanel() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
-  const { 
-    data: notifications = [], 
-    isLoading, 
+  const {
+    data: notifications = [],
+    isLoading,
     refetch,
-    isFetching 
+    isFetching
   } = useQuery<Notification[]>({
     queryKey: ['notifications-history', buildingFilter, statusFilter],
     queryFn: async () => {
@@ -138,8 +138,8 @@ export default function HistoryPanel() {
             Όλα τα μηνύματα που έχουν αποσταλεί
           </p>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => refetch()}
           disabled={isFetching}
         >
@@ -250,7 +250,7 @@ export default function HistoryPanel() {
                 const typeInfo = getMessageTypeIcon(notification.subject);
                 const StatusIcon = statusConfig[notification.status]?.icon || Clock;
                 const TypeIcon = typeInfo.icon;
-                
+
                 return (
                   <div
                     key={notification.id}
@@ -261,7 +261,7 @@ export default function HistoryPanel() {
                       <div className={cn("p-2 rounded-full bg-gray-100", typeInfo.color)}>
                         <TypeIcon className="h-5 w-5" />
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <h4 className="font-medium text-gray-900 truncate">
@@ -271,7 +271,7 @@ export default function HistoryPanel() {
                             {formatDateShort(notification.created_at)}
                           </span>
                         </div>
-                        
+
                         <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
                           <Badge className={cn("text-xs", statusConfig[notification.status]?.color)}>
                             {statusConfig[notification.status]?.label}
@@ -296,15 +296,15 @@ export default function HistoryPanel() {
       </Card>
 
       {/* Detail Modal */}
-      <Dialog 
-        open={!!selectedNotification} 
+      <Dialog
+        open={!!selectedNotification}
         onOpenChange={() => setSelectedNotification(null)}
       >
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Λεπτομέρειες Αποστολής</DialogTitle>
           </DialogHeader>
-          
+
           {selectedNotification && (
             <div className="space-y-4">
               <div className="rounded-lg bg-gray-50 p-4">
@@ -361,4 +361,3 @@ export default function HistoryPanel() {
     </div>
   );
 }
-

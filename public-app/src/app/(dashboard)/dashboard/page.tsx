@@ -17,13 +17,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import useDashboardData from '@/hooks/useDashboardData';
-import { 
-  HeroSection, 
-  FinancialOverview, 
-  QuickActionsGrid, 
-  ActivityFeed, 
+import {
+  HeroSection,
+  FinancialOverview,
+  QuickActionsGrid,
+  ActivityFeed,
   BuildingHealthCards,
-  DashboardErrorBoundary 
+  DashboardErrorBoundary
 } from '@/components/dashboard';
 import { isResident } from '@/lib/roleUtils';
 import { getStatusBadgeClasses } from '@/lib/design-system';
@@ -94,7 +94,7 @@ function DashboardContent() {
   const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements(activeBuildingId);
   const { data: votesRaw = [], isLoading: votesLoading } = useVotes(activeBuildingId);
   const { data: requestsRaw = [], isLoading: requestsLoading } = useRequests(activeBuildingId);
-  
+
   // Use the new centralized dashboard data hook
   const { data: dashboardData, isLoading: dashboardLoading, isError, error: dashboardError } = useDashboardData();
   const { data: buildingDashboardData, isLoading: buildingDashboardLoading } = useDashboardData(activeBuildingId ?? undefined);
@@ -191,7 +191,7 @@ function DashboardContent() {
       return aDate.getTime() - bDate.getTime();
     })
     .slice(0, 3);
- 
+
   return (
     <main className="px-4 py-6 md:px-8 lg:px-12 max-w-[1400px] mx-auto">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-10">
@@ -203,7 +203,7 @@ function DashboardContent() {
             {selectedBuilding ? selectedBuilding.address : 'Συγκεντρωτικά στοιχεία για όλα τα κτίρια'}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            {selectedBuilding 
+            {selectedBuilding
               ? 'Εδώ βλέπετε την συνολική εικόνα του κτιρίου που έχετε επιλέξει'
               : 'Εδώ βλέπετε την συνολική εικόνα όλων των κτιρίων που διαχειρίζεστε'}
           </p>
@@ -212,13 +212,13 @@ function DashboardContent() {
       </div>
 
       <BentoGrid className="md:grid-cols-12 md:auto-rows-[minmax(16rem,auto)] gap-6 lg:gap-8 xl:gap-10 max-w-none">
-        
+
         {/* 1. Hero Metrics (Full Width) */}
         <BentoGridItem
           className="md:col-span-12"
           header={
-            <HeroSection 
-              data={selectedBuilding ? buildingDashboardData : dashboardData} 
+            <HeroSection
+              data={selectedBuilding ? buildingDashboardData : dashboardData}
               loading={selectedBuilding ? buildingDashboardLoading : dashboardLoading}
               showWelcome={!selectedBuilding}
             />
@@ -231,9 +231,9 @@ function DashboardContent() {
           title="Οικονομική Εικόνα"
           description="Έσοδα και Έξοδα τρέχοντος έτους"
           header={
-            <FinancialOverview 
-              data={activeBuildingId ? buildingDashboardData : dashboardData} 
-              loading={activeBuildingId ? buildingDashboardLoading : dashboardLoading} 
+            <FinancialOverview
+              data={activeBuildingId ? buildingDashboardData : dashboardData}
+              loading={activeBuildingId ? buildingDashboardLoading : dashboardLoading}
             />
           }
         />
@@ -244,9 +244,9 @@ function DashboardContent() {
           title="Γρήγορες Ενέργειες"
           description="Συντομεύσεις για καθημερινές εργασίες"
           header={
-            <QuickActionsGrid 
-              data={dashboardData} 
-              loading={dashboardLoading} 
+            <QuickActionsGrid
+              data={dashboardData}
+              loading={dashboardLoading}
             />
           }
         />
@@ -399,13 +399,13 @@ function DashboardContent() {
           title="Πρόσφατη Δραστηριότητα"
           description="Τι άλλαξε το τελευταίο διάστημα"
           header={
-            <ActivityFeed 
-              data={dashboardData} 
-              loading={dashboardLoading} 
+            <ActivityFeed
+              data={dashboardData}
+              loading={dashboardLoading}
             />
           }
         />
-        
+
         {/* 7. Health Cards - Μόνο για managers/admins, ΟΧΙ για residents */}
         {user?.role !== 'resident' && (
           <BentoGridItem
@@ -413,9 +413,9 @@ function DashboardContent() {
             title="Κατάσταση Κτιρίων"
             description="Συνοπτική εικόνα των κτιρίων σας"
             header={
-              <BuildingHealthCards 
-                data={dashboardData} 
-                loading={dashboardLoading} 
+              <BuildingHealthCards
+                data={dashboardData}
+                loading={dashboardLoading}
               />
             }
           />
@@ -472,4 +472,3 @@ export default function DashboardPage() {
     </AuthGate>
   );
 }
-

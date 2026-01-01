@@ -3,8 +3,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   TrendingDown,
   ArrowUpRight,
   ArrowDownRight
@@ -136,18 +136,18 @@ export function CashFlowChart({ data, loading = false }: CashFlowChartProps) {
               </div>
               <div className="flex gap-2 h-6">
                 {/* Income Bar */}
-                <div 
+                <div
                   className="bg-green-500 rounded-l-md transition-all duration-500"
-                  style={{ 
+                  style={{
                     width: `${(entry.income / maxValue) * 50}%`,
                     minWidth: entry.income > 0 ? '4px' : '0'
                   }}
                   title={`Εισπράξεις: ${formatCurrency(entry.income)}`}
                 />
                 {/* Expenses Bar */}
-                <div 
+                <div
                   className="bg-red-500 rounded-r-md transition-all duration-500"
-                  style={{ 
+                  style={{
                     width: `${(entry.expenses / maxValue) * 50}%`,
                     minWidth: entry.expenses > 0 ? '4px' : '0'
                   }}
@@ -163,4 +163,3 @@ export function CashFlowChart({ data, loading = false }: CashFlowChartProps) {
 }
 
 export default CashFlowChart;
-

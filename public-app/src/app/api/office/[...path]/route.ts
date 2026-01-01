@@ -12,10 +12,10 @@ const handlers = createTenantProxyHandlers(
       // Next.js 15+ requires awaiting params
       const params = await resolveParams(context.params);
       const pathParams = params?.path;
-      const pathStr = Array.isArray(pathParams) 
-        ? pathParams.join('/') 
+      const pathStr = Array.isArray(pathParams)
+        ? pathParams.join('/')
         : (pathParams || '');
-        
+
       console.log(`[ROUTE HANDLER] /api/office/[...path] resolvePath called for: ${pathStr}`);
       return `office/${pathStr}`;
     },
@@ -27,4 +27,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "office");
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-

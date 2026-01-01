@@ -60,7 +60,7 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
         Component: AnnouncementsVotesCarousel,
       });
     }
-    
+
     // Show heating chart when it has data/period, or during heating season.
     if (shouldShowHeatingWidget) {
       baseWidgets.push({
@@ -69,7 +69,7 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
         Component: HeatingChartWidget,
       });
     }
-    
+
     return baseWidgets;
   }, [shouldShowHeatingWidget, hasAnnouncementsOrVotes]);
 
@@ -133,9 +133,9 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
       {/* Widget Content - Clean, no navigation controls */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full">
-          <CurrentWidget 
-            data={data} 
-            isLoading={false} 
+          <CurrentWidget
+            data={data}
+            isLoading={false}
             error={undefined}
             buildingId={buildingId}
           />
@@ -144,4 +144,3 @@ export default function AnnouncementsExpensesSlider({ data, isLoading, error, bu
     </div>
   );
 }
-

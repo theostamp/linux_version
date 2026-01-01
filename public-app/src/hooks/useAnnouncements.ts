@@ -11,14 +11,14 @@ export function useAnnouncements(buildingId?: number | null) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [hasShownAuthError, setHasShownAuthError] = useState(false);
-  
+
   // Check authentication status
   useEffect(() => {
     if (!authLoading && !isAuthenticated && !hasShownAuthError) {
       console.log('[useAnnouncements] User not authenticated, redirecting to login');
       toast.error('Παρακαλώ συνδεθείτε για να δείτε τις ανακοινώσεις');
       setHasShownAuthError(true);
-      
+
       // Μικρή καθυστέρηση για να προλάβει να εμφανιστεί το toast
       setTimeout(() => {
         router.push('/login');
@@ -33,19 +33,19 @@ export function useAnnouncements(buildingId?: number | null) {
         return await fetchAnnouncements(buildingId);
       } catch (error: unknown) {
         console.error('[useAnnouncements] Error fetching announcements:', error);
-        
+
         const err = error as { status?: number; response?: { status?: number } };
         // Handle authentication errors
         if ((err?.status === 401 || err?.response?.status === 401) && !hasShownAuthError) {
           toast.error('Η συνεδρία σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
           setHasShownAuthError(true);
-          
+
           // Μικρή καθυστέρηση για να προλάβει να εμφανιστεί το toast
           setTimeout(() => {
             router.push('/login');
           }, 1000);
         }
-        
+
         throw error;
       }
     },
@@ -62,4 +62,3 @@ export function useAnnouncements(buildingId?: number | null) {
     refetchInterval: false, // Disable automatic refetching
   });
 }
-

@@ -37,4 +37,3 @@ export default function SubscriptionGate({
   // For now, allow all authenticated users (subscription check can be added later)
   return <>{children}</>;
 }
-

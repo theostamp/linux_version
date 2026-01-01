@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  CreditCard, 
-  Euro, 
-  Clock, 
-  Shield, 
+import {
+  CreditCard,
+  Euro,
+  Clock,
+  Shield,
   Smartphone,
   Building2,
   CheckCircle2,
@@ -83,7 +83,7 @@ function OnlinePaymentsContent() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>(''); // YYYY-MM
   const [selectedStatus, setSelectedStatus] = useState<string>('pending');
   const [isStartingCheckout, setIsStartingCheckout] = useState<string | null>(null);
-  
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['my-apartment-payments'],
     queryFn: fetchMyApartmentData,
@@ -133,7 +133,7 @@ function OnlinePaymentsContent() {
               <p className="text-muted-foreground mt-1">Εύκολη και ασφαλής πληρωμή κοινοχρήστων</p>
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -376,8 +376,8 @@ function OnlinePaymentsContent() {
           <CardContent>
             <div className="space-y-3">
               {data.apartments.map((apt) => (
-                <div 
-                  key={apt.id} 
+                <div
+                  key={apt.id}
                   className="flex items-center justify-between p-4 rounded-lg bg-muted/50"
                 >
                   <div className="flex items-center gap-3">

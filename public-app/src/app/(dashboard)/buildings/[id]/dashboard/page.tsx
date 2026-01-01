@@ -27,7 +27,7 @@ export default function BuildingDashboardPage() {
     // If we have buildings loaded, check if the URL ID is valid
     if (buildings.length > 0) {
       const urlBuilding = buildings.find(b => b.id === id);
-      
+
       // If URL ID doesn't match any building, redirect to the selected building or first building
       if (!urlBuilding) {
         const targetBuilding = selectedBuilding || buildings[0];
@@ -50,7 +50,7 @@ export default function BuildingDashboardPage() {
       } catch (err: unknown) {
         const error = err as { message?: string };
         console.error('Error loading building:', err);
-        
+
         // If building not found and we have buildings loaded, redirect to first available
         if (buildings.length > 0 && !buildingsLoading) {
           const targetBuilding = selectedBuilding || buildings[0];
@@ -60,7 +60,7 @@ export default function BuildingDashboardPage() {
             return;
           }
         }
-        
+
         setError(error.message || 'Αποτυχία φόρτωσης δεδομένων κτιρίου');
       } finally {
         setLoading(false);
@@ -156,4 +156,3 @@ export default function BuildingDashboardPage() {
     </div>
   );
 }
-

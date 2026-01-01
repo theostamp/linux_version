@@ -8,4 +8,3 @@ export { CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from 
 const AppCard = Card;
 
 export { AppCard };
-

@@ -25,10 +25,10 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import RecipientSelector from '../shared/RecipientSelector';
-import { 
-  extractBuildingData, 
+import {
+  extractBuildingData,
   generateEmailSignature,
-  formatDateGreek 
+  formatDateGreek
 } from '../shared/buildingUtils';
 
 interface Props {
@@ -49,7 +49,7 @@ const MAINTENANCE_TYPES = [
 
 export default function MaintenanceSender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
-  
+
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
   const [maintenanceType, setMaintenanceType] = useState<string>('');
   const [workDate, setWorkDate] = useState('');
@@ -64,7 +64,7 @@ export default function MaintenanceSender({ onSuccess, onCancel }: Props) {
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
   const buildingData = useMemo(
-    () => extractBuildingData(selectedBuilding_), 
+    () => extractBuildingData(selectedBuilding_),
     [selectedBuilding_]
   );
 
@@ -73,7 +73,7 @@ export default function MaintenanceSender({ onSuccess, onCancel }: Props) {
   const generateEmailBody = () => {
     const formattedDate = formatDateGreek(workDate);
     const typeLabel = selectedType?.label || 'Εργασία συντήρησης';
-    
+
     let body = `Αγαπητοί ένοικοι,
 
 Σας ενημερώνουμε ότι θα πραγματοποιηθεί ${typeLabel.toLowerCase()} στην πολυκατοικία μας.
@@ -281,8 +281,8 @@ ${affectedAreas.trim()}`;
               Ακύρωση
             </Button>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowPreview(true)}
                 disabled={!buildingId || !maintenanceType || !workDate}
               >
@@ -292,10 +292,10 @@ ${affectedAreas.trim()}`;
               <Button
                 onClick={() => sendMutation.mutate()}
                 disabled={
-                  sendMutation.isPending || 
-                  !buildingId || 
-                  !maintenanceType || 
-                  !workDate || 
+                  sendMutation.isPending ||
+                  !buildingId ||
+                  !maintenanceType ||
+                  !workDate ||
                   !workTime
                 }
               >

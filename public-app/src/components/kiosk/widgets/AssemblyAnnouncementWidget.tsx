@@ -128,7 +128,7 @@ export default function AssemblyAnnouncementWidget({ data, isLoading: propLoadin
         <Users className="w-5 h-5 text-purple-300" />
         <h3 className="text-sm font-bold text-white">Σημαντικά</h3>
       </div>
-      
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-3">
@@ -138,8 +138,8 @@ export default function AssemblyAnnouncementWidget({ data, isLoading: propLoadin
               {remainingLabel && (
                 <div className="flex justify-end">
                   <span className={`text-[11px] px-2 py-1 rounded-full font-semibold ${
-                    isToday 
-                      ? 'bg-orange-500/25 border border-orange-400/50 text-orange-100' 
+                    isToday
+                      ? 'bg-orange-500/25 border border-orange-400/50 text-orange-100'
                       : 'bg-purple-500/25 border border-purple-400/40 text-purple-100'
                   }`}>
                     {remainingLabel}{assembly.location ? ` · ${assembly.location}` : ''}

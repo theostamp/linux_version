@@ -57,8 +57,8 @@ export default function AnnouncementsWidget({ widget, data, isLoading, error, se
 
       <div className="space-y-3 h-full overflow-y-auto">
         {announcements.slice(0, maxItems).map((announcement) => (
-          <div 
-            key={announcement.id} 
+          <div
+            key={announcement.id}
             className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-4 rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all"
           >
             <div className="flex items-start justify-between mb-2">
@@ -70,23 +70,23 @@ export default function AnnouncementsWidget({ widget, data, isLoading, error, se
                 {format(new Date(announcement.created_at), 'dd/MM', { locale: el })}
               </div>
             </div>
-            
+
             <div className="text-xs text-blue-100 line-clamp-3 mb-3 leading-relaxed">
               <MarkdownRenderer content={announcement.description} />
             </div>
-            
+
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center text-blue-300">
                 <Clock className="w-3 h-3 mr-1" />
                 {format(new Date(announcement.created_at), 'HH:mm', { locale: el })}
               </div>
-              
+
               {announcement.priority === 'high' && (
                 <div className="bg-red-500/20 text-red-300 px-2 py-1 rounded-full text-xs">
                   Επείγον
                 </div>
               )}
-              
+
               {announcement.priority === 'medium' && (
                 <div className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs">
                   Σημαντικό

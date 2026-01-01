@@ -102,11 +102,11 @@ export const CalculatorModal: React.FC<CalculatorModalProps> = ({ children }) =>
   const formatDisplay = (value: string) => {
     const num = parseFloat(value);
     if (isNaN(num)) return '0';
-    
+
     if (Number.isInteger(num)) {
       return num.toString();
     }
-    
+
     return num.toFixed(2);
   };
 
@@ -127,7 +127,7 @@ export const CalculatorModal: React.FC<CalculatorModalProps> = ({ children }) =>
             Αριθμομηχανή
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Display */}
           <div className="bg-gray-100 p-4 rounded-lg">
@@ -330,4 +330,3 @@ export const CalculatorModal: React.FC<CalculatorModalProps> = ({ children }) =>
     </Dialog>
   );
 };
-

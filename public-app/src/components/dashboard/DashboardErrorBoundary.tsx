@@ -44,7 +44,7 @@ export class DashboardErrorBoundary extends React.Component<Props, State> {
               Κάτι πήγε στραβά
             </h2>
             <p className="text-gray-600 mb-6">
-              Δυστυχώς, παρουσιάστηκε ένα σφάλμα κατά τη φόρτωση του dashboard. 
+              Δυστυχώς, παρουσιάστηκε ένα σφάλμα κατά τη φόρτωση του dashboard.
               Παρακαλώ ανανεώστε τη σελίδα για να δοκιμάσετε ξανά.
             </p>
             {this.state.error && (
@@ -74,5 +74,3 @@ export class DashboardErrorBoundary extends React.Component<Props, State> {
 }
 
 export default DashboardErrorBoundary;
-
-

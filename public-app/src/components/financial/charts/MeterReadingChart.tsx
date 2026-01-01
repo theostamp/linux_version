@@ -66,18 +66,18 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
     const groupedData = filteredReadings.reduce((acc, reading) => {
       const date = new Date(reading.reading_date);
       const dateKey = formatDate(date, period);
-      
+
       if (!acc[dateKey]) {
         acc[dateKey] = {};
       }
-      
+
       if (!acc[dateKey][reading.apartment_number || 'Unknown']) {
         acc[dateKey][reading.apartment_number || 'Unknown'] = {
           value: (reading as any).current_value,
           consumption: typeof reading.consumption === 'string' ? parseFloat(reading.consumption) || 0 : reading.consumption || 0,
         };
       }
-      
+
       return acc;
     }, {} as Record<string, Record<string, { value: number; consumption: number }>>);
 
@@ -127,18 +127,18 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="date" 
+        <XAxis
+          dataKey="date"
           tick={{ fontSize: 12 }}
           angle={-45}
           textAnchor="end"
           height={80}
         />
-        <YAxis 
+        <YAxis
           tick={{ fontSize: 12 }}
           label={{ value: 'Μετρήσεις', angle: -90, position: 'insideLeft' }}
         />
-        <Tooltip 
+        <Tooltip
           formatter={(value: any, name: string) => [value, name]}
           labelFormatter={(label) => `Ημερομηνία: ${label}`}
         />
@@ -162,18 +162,18 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="date" 
+        <XAxis
+          dataKey="date"
           tick={{ fontSize: 12 }}
           angle={-45}
           textAnchor="end"
           height={80}
         />
-        <YAxis 
+        <YAxis
           tick={{ fontSize: 12 }}
           label={{ value: 'Μετρήσεις', angle: -90, position: 'insideLeft' }}
         />
-        <Tooltip 
+        <Tooltip
           formatter={(value: any, name: string) => [value, name]}
           labelFormatter={(label) => `Ημερομηνία: ${label}`}
         />
@@ -193,18 +193,18 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={consumptionData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="date" 
+        <XAxis
+          dataKey="date"
           tick={{ fontSize: 12 }}
           angle={-45}
           textAnchor="end"
           height={80}
         />
-        <YAxis 
+        <YAxis
           tick={{ fontSize: 12 }}
           label={{ value: 'Κατανάλωση', angle: -90, position: 'insideLeft' }}
         />
-        <Tooltip 
+        <Tooltip
           formatter={(value: any, name: string) => [value, name]}
           labelFormatter={(label) => `Ημερομηνία: ${label}`}
         />
@@ -278,4 +278,4 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
       </div>
     </div>
   );
-}; 
+};

@@ -3,12 +3,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Building2, 
-  Home, 
-  TrendingUp, 
-  TrendingDown, 
-  Wallet, 
+import {
+  Building2,
+  Home,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
   PiggyBank,
   ArrowUpRight,
   ArrowDownRight,
@@ -157,4 +157,3 @@ export function PortfolioMetrics({ data, loading = false }: PortfolioMetricsProp
 }
 
 export default PortfolioMetrics;
-

@@ -17,4 +17,3 @@ export function useAuthToken() {
 
 // Keep useAuth for backward compatibility (but prefer useAuthToken)
 export const useAuth = useAuthToken;
-

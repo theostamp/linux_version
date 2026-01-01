@@ -6,8 +6,8 @@ import { Separator } from '@/components/ui/separator';
 import { Expense } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { FilePreview } from '@/components/ui/FilePreview';
-import { 
-  X, 
+import {
+  X,
   Building,
   Calendar,
   Euro,
@@ -146,11 +146,11 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
 
   return (
     <ModalPortal>
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -188,7 +188,7 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
                 </Badge>
               </div>
             </div>
-            
+
             {/* Amount */}
             <div className="flex items-center gap-2">
               <Euro className="h-5 w-5 text-green-600" />
@@ -239,17 +239,17 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
                   <User className="h-5 w-5 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Ευθύνη Πληρωμής</p>
-                    <Badge 
+                    <Badge
                       className={
-                        expense.payer_responsibility === 'owner' 
-                          ? 'bg-red-50 text-red-700 border-gray-300' 
+                        expense.payer_responsibility === 'owner'
+                          ? 'bg-red-50 text-red-700 border-gray-300'
                           : expense.payer_responsibility === 'resident'
                           ? 'bg-green-50 text-green-700 border-gray-300'
                           : 'bg-blue-50 text-blue-700 border-gray-300'
                       }
                     >
-                      {expense.payer_responsibility === 'owner' 
-                        ? 'Χρεώνεται σε Ιδιοκτήτες' 
+                      {expense.payer_responsibility === 'owner'
+                        ? 'Χρεώνεται σε Ιδιοκτήτες'
                         : expense.payer_responsibility === 'resident'
                         ? 'Χρεώνεται σε Ενοίκους'
                         : 'Κοινή Ευθύνη'}
@@ -314,7 +314,7 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
                   Επισύναψη
                 </h4>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <FilePreview 
+                  <FilePreview
                     file={{
                       name: expense.attachment.split('/').pop() || 'attachment',
                       size: 0,

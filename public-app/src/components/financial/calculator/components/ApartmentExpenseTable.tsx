@@ -80,10 +80,10 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             const apartmentReserveFund = hasExpenses && reserveFundInfo.monthlyAmount > 0
               ? Math.max(0, toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000))
               : 0;
-            
+
             // Fix: Show positive previous balance amounts
             const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
-            
+
             // ✅ FIX 2025-12-20: Μην χρησιμοποιείς resident_expenses (περιλαμβάνει και θέρμανση/ανελκυστήρα)
             // για τη στήλη Κ/ΧΡΗΣΤΑ γιατί θα διπλομετρηθούν όταν εμφανίζονται ξεχωριστά.
             // Κ/ΧΡΗΣΤΑ = general + equal_share + individual (χωρίς θέρμανση/ανελκυστήρα)
@@ -94,10 +94,10 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 toNumber(breakdown.individual_expenses || 0)
             );
             const ownerExpensesTotal = Math.max(0, toNumber((apartmentData as any)?.owner_expenses || 0));
-            
+
             // ΕΡΓΑ = Owner expenses χωρίς αποθεματικό
             const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
-            
+
             // ✅ ΤΕΛΙΚΟ ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Περιλαμβάνει ΟΛΑ (ενοικιαστές + ιδιοκτήτες + αποθεματικό)
             // = Οφειλές + Κ/Χρήστα + Ανελκυστήρας + Θέρμανση + Έργα Ιδιοκτητών + Αποθεματικό
             const finalTotalWithFees = commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;

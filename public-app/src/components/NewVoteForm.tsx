@@ -25,18 +25,18 @@ export default function NewVoteForm({ onSubmit, buildingId, isSubmitting: extern
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(buildingId || null);
   const [submitting, setSubmitting] = useState(false);
   const { buildings } = useBuilding();
-  
+
   // Χρησιμοποιούμε external isSubmitting αν υπάρχει, αλλιώς local state
   const isSubmittingState = externalIsSubmitting !== undefined ? externalIsSubmitting : submitting;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Προστασία από double submission
     if (isSubmittingState) {
       return;
     }
-    
+
     if (externalIsSubmitting === undefined) {
       setSubmitting(true);
     }

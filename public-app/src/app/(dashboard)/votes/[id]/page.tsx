@@ -39,16 +39,16 @@ export default function VoteDetailPage() {
 
   const handleDelete = async () => {
     if (!vote) return;
-    
+
     const isGlobal = (vote as { building_name?: string }).building_name === "Όλα τα κτίρια";
-    const confirmMessage = isGlobal 
+    const confirmMessage = isGlobal
       ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την ΚΑΘΟΛΙΚΗ ψηφοφορία "${vote.title}" από όλα τα κτίρια;`
       : `Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`;
-    
+
     if (!confirm(confirmMessage)) {
       return;
     }
-    
+
     setIsDeleting(true);
     try {
       const message = await deleteVote(vote.id);
@@ -134,7 +134,7 @@ export default function VoteDetailPage() {
     return date.toLocaleDateString('el-GR', {
       weekday: 'long',
       day: 'numeric',
-      month: 'long', 
+      month: 'long',
       year: 'numeric'
     });
   };
@@ -143,7 +143,7 @@ export default function VoteDetailPage() {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '-';
-    
+
     return date.toLocaleDateString('el-GR', {
       day: '2-digit',
       month: '2-digit',
@@ -163,7 +163,7 @@ export default function VoteDetailPage() {
         message: 'Η ψηφοφορία έχει απενεργοποιηθεί'
       };
     }
-    
+
     if (!isActive) {
       const notStarted = vote.start_date > today;
       return {
@@ -171,8 +171,8 @@ export default function VoteDetailPage() {
         status: notStarted ? 'Δεν έχει ξεκινήσει' : 'Έχει λήξει',
         color: notStarted ? 'blue' : 'gray',
         canVote: false,
-        message: notStarted ? 
-          `Ξεκινά ${formatDate(vote.start_date)}` : 
+        message: notStarted ?
+          `Ξεκινά ${formatDate(vote.start_date)}` :
           (hasValidEndDate ? `Έληξε ${formatDate(vote.end_date)}` : 'Η ψηφοφορία έκλεισε')
       };
     }
@@ -215,8 +215,8 @@ export default function VoteDetailPage() {
   const StatusIcon = statusInfo.icon;
 
   // Get total eligible voters from backend (or fallback calculation)
-  const totalEligible = (voteWithExtras as { eligible_voters_count?: number }).eligible_voters_count 
-    || (voteWithExtras.participation_percentage && voteWithExtras.total_votes 
+  const totalEligible = (voteWithExtras as { eligible_voters_count?: number }).eligible_voters_count
+    || (voteWithExtras.participation_percentage && voteWithExtras.total_votes
       ? Math.round((voteWithExtras.total_votes * 100) / voteWithExtras.participation_percentage)
       : 0);
 
@@ -271,7 +271,7 @@ export default function VoteDetailPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
             {vote.title}
           </h1>
-          
+
           <p className="text-lg text-white/90 max-w-2xl">
             {vote.description}
           </p>

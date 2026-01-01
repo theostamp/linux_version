@@ -28,4 +28,3 @@ export default function DeleteUserDialog({ open, onOpenChange, user, onConfirm }
     />
   );
 }
-

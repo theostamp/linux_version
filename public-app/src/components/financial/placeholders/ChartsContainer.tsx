@@ -33,4 +33,3 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
     </Card>
   );
 };
-

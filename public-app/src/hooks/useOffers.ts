@@ -21,19 +21,19 @@ export function useOffers(options: UseOffersOptions = {}) {
       const params: Record<string, any> = {
         page_size: pageSize,
       };
-      
+
       if (activeBuildingId) {
         params.building = activeBuildingId;
       }
-      
+
       if (projectId) {
         params.project = projectId;
       }
-      
+
       if (status) {
         params.status = status;
       }
-      
+
       const response = await api.get('/projects/offers/', { params });
       return response.data;
     },
@@ -75,7 +75,7 @@ export function useOfferMutations() {
     onSuccess: async () => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -98,7 +98,7 @@ export function useOfferMutations() {
       // ✅ Clear API-level cache for projects AND financial endpoints
       invalidateApiCache('/api/projects/');
       invalidateApiCache('/api/financial/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -121,7 +121,7 @@ export function useOfferMutations() {
     onSuccess: async () => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -143,7 +143,7 @@ export function useOfferMutations() {
     onSuccess: async (_, variables) => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['offer', variables.id] });
@@ -164,7 +164,7 @@ export function useOfferMutations() {
     onSuccess: async () => {
       // ✅ Clear API-level cache for projects endpoints
       invalidateApiCache('/api/projects/');
-      
+
       // ✅ Invalidate AND explicitly refetch for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['offers'] });
       await queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -186,5 +186,3 @@ export function useOfferMutations() {
     delete: deleteMutation,
   };
 }
-
-

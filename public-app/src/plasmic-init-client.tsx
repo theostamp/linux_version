@@ -21,5 +21,3 @@ export function PlasmicClientRootProvider(
 
   return <PlasmicRootProvider loader={PLASMIC} {...props} />;
 }
-
-

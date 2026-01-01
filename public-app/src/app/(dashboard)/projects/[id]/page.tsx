@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/ui/BackButton';
-import { 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
+import {
+  Calendar,
+  DollarSign,
+  MapPin,
   Clock,
   Video,
   Users,
@@ -244,9 +244,9 @@ export default function ProjectDetailPage() {
                       </span>
                     </div>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="w-full mt-2"
                     onClick={() => router.push(`/assemblies/${project.linked_assembly_data.id}`)}
                   >
@@ -281,9 +281,9 @@ export default function ProjectDetailPage() {
                   {project.assembly_is_online && project.assembly_zoom_link && (
                     <div className="flex items-center gap-2">
                       <Video className="w-4 h-4 text-gray-500" />
-                      <a 
-                        href={project.assembly_zoom_link} 
-                        target="_blank" 
+                      <a
+                        href={project.assembly_zoom_link}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-blue-600 hover:underline"
                       >
@@ -311,4 +311,3 @@ export default function ProjectDetailPage() {
     </AuthGate>
   );
 }
-

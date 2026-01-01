@@ -116,4 +116,4 @@ export const DistributionSelector: React.FC<DistributionSelectorProps> = ({
       )}
     </div>
   );
-}; 
+};

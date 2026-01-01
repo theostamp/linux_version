@@ -15,7 +15,7 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
       try {
         setImageLoading(true);
         console.log('[CommonExpenseBill] Fetching latest bill...');
-        
+
         // Use Next.js API route proxy (better for CORS and Docker network)
         const response = await fetch('/api/kiosk-latest-bill', {
           method: 'GET',
@@ -115,8 +115,8 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                 <p className="text-emerald-600 text-sm mb-4">
                   Για να εμφανιστεί το φύλλο κοινόχρηστων, εξάγετέ το πρώτα από το Dashboard
                 </p>
-                
-                
+
+
                 {/* Instructions */}
                 <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 mb-4">
                   <div className="text-xs text-emerald-700">
@@ -129,20 +129,20 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                     </ol>
                   </div>
                 </div>
-                
-                
+
+
                     {/* Refresh button */}
-                    <button 
+                    <button
                       onClick={async () => {
                         setImageLoading(true);
                         setImageError(false);
-                        
+
                         try {
                           const response = await fetch('/api/kiosk-latest-bill', {
                             cache: 'no-store',
                           });
                           const result = await response.json();
-                          
+
                           if (result.success && result.image_data) {
                             setBillImageUrl(result.image_data);
                             setImageError(false);

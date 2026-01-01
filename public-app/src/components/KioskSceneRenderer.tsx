@@ -31,10 +31,10 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   // Auto-rotate fallback scenes every 30 seconds with smooth transition
   useEffect(() => {
     if (scenesToShow.length <= 1) return;
-    
+
     const timer = setInterval(() => {
       setIsTransitioning(true);
-      
+
       setTimeout(() => {
         setFallbackSceneIndex((prev) => (prev + 1) % scenesToShow.length);
         setIsTransitioning(false);
@@ -53,7 +53,7 @@ function FallbackSceneRotator({ data, buildingId }: { data: any; buildingId: num
   const CurrentFallbackScene = scenesToShow[currentIndex].Component;
 
   return (
-    <div 
+    <div
       className={`transition-opacity duration-1000 ease-in-out ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
@@ -67,7 +67,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   // ✅ Get building from BuildingContext
   const { selectedBuilding } = useBuilding();
   const effectiveBuildingId = buildingIdOverride ?? selectedBuilding?.id ?? null;
-  
+
   console.log('[KioskSceneRenderer] 🏗️ Building IDs:', {
     buildingIdOverride,
     selectedBuildingId: selectedBuilding?.id,
@@ -75,10 +75,10 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     effectiveBuildingId,
     finalBuildingIdForKioskData: effectiveBuildingId ?? 1
   });
-  
+
   const { scenes, isLoading, error } = useKioskScenes(effectiveBuildingId);
   const { data: kioskData } = useKioskData(effectiveBuildingId ?? 1);
-  
+
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isCreatingScene, setIsCreatingScene] = useState(false);
@@ -88,7 +88,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     if (!scenes || scenes.length === 0) return null;
     return scenes[currentSceneIndex] || null;
   }, [scenes, currentSceneIndex]);
-  
+
   const ambientBrandingFromScene = useMemo(() => {
     if (!currentScene?.settings) return null;
     return extractAmbientBrandingFromSettings(currentScene.settings);
@@ -111,7 +111,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   useEffect(() => {
     // Don't cycle during live assembly
     if (isLiveAssembly) return;
-    
+
     if (!scenes || scenes.length === 0 || !currentScene) {
       return;
     }
@@ -122,10 +122,10 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     }
 
     const duration = (currentScene.durationSeconds || 30) * 1000;
-    
+
     const timer = setTimeout(() => {
       setIsTransitioning(true);
-      
+
       // Small delay for transition effect
       setTimeout(() => {
         setCurrentSceneIndex((prevIndex) => (prevIndex + 1) % scenes.length);
@@ -146,7 +146,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   // Handle creating default scene
   const handleCreateDefaultScene = async () => {
     if (!effectiveBuildingId || isCreatingScene || !allowSceneCreation) return;
-    
+
     setIsCreatingScene(true);
     try {
       const response = await fetch('/api/kiosk/scenes/create_default_scene/', {
@@ -158,7 +158,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
           buildingId: effectiveBuildingId,
         }),
       });
-      
+
       if (response.ok) {
         // Refresh the page to load the new scene
         window.location.reload();
@@ -178,7 +178,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   // Render a widget based on its component name
   const renderWidget = useCallback((placement: WidgetPlacement) => {
     const { widget } = placement;
-    
+
     if (!widget || !widget.component) {
       return (
         <div className="flex items-center justify-center h-full text-gray-400">
@@ -189,7 +189,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
 
     // Get the widget component from registry
     const WidgetComponent = WIDGET_COMPONENTS[widget.component];
-    
+
     if (!WidgetComponent) {
       console.warn(`[KioskSceneRenderer] Widget component not found: ${widget.component}`);
       return (
@@ -205,8 +205,8 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
     // Pass kiosk data and widget settings to the component
     return (
       <div className="h-full w-full">
-        <WidgetComponent 
-          data={kioskData} 
+        <WidgetComponent
+          data={kioskData}
           settings={widget.settings || {}}
           buildingId={effectiveBuildingId}
         />
@@ -261,7 +261,7 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   // Check if this is the Morning Overview scene - use custom layout
   if (currentScene.name === 'Πρωινή Επισκόπηση') {
     return (
-      <div 
+      <div
         className={`transition-opacity duration-1000 ease-in-out ${
           isTransitioning ? 'opacity-0' : 'opacity-100'
         }`}
@@ -320,13 +320,13 @@ export default function KioskSceneRenderer({ buildingIdOverride, allowSceneCreat
   const maxCol = Math.max(...currentScene.placements.map(p => p.gridColEnd), 12);
 
   return (
-    <div 
+    <div
       className={`relative h-screen w-screen overflow-hidden bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 transition-opacity duration-1000 ease-in-out ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
     >
       {/* Scene container with CSS Grid */}
-      <div 
+      <div
         className="h-full w-full p-4"
         style={{
           display: 'grid',

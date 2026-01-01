@@ -9,7 +9,7 @@ function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
-  
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Επαληθεύουμε το email σας...');
   const [tenantUrl, setTenantUrl] = useState<string | null>(null);
@@ -167,4 +167,3 @@ export default function VerifyEmailPage() {
     </Suspense>
   );
 }
-

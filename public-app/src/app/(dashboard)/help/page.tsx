@@ -6,12 +6,12 @@ import { helpChapters } from '@/components/help/help-data';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Link2, 
-  Search, 
-  X, 
+import {
+  ChevronDown,
+  ChevronUp,
+  Link2,
+  Search,
+  X,
   BookOpen,
   List,
   Hash
@@ -55,8 +55,8 @@ export default function HelpPage() {
         icon: chapter.icon,
       }))
     );
-    
-    return filteredSections.sort((a, b) => 
+
+    return filteredSections.sort((a, b) =>
       a.title.localeCompare(b.title, 'el')
     );
   }, [filteredChapters]);
@@ -137,7 +137,7 @@ export default function HelpPage() {
     setSectionOpen(anchorId, true);
     setActiveSection(anchorId);
     window.history.replaceState(null, '', `#${encodeURIComponent(anchorId)}`);
-    
+
     requestAnimationFrame(() => {
       const target = document.getElementById(anchorId);
       target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -152,7 +152,7 @@ export default function HelpPage() {
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-teal-500/10 via-emerald-500/5 to-cyan-500/10 dark:from-teal-500/20 dark:via-emerald-500/10 dark:to-cyan-500/20 p-4 sm:p-6 lg:p-8 shadow-lg ring-1 ring-teal-200/50 dark:ring-teal-700/30">
           <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-gradient-to-bl from-teal-400/20 to-transparent rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-24 sm:w-48 h-24 sm:h-48 bg-gradient-to-tr from-emerald-400/20 to-transparent rounded-full blur-3xl" />
-          
+
           <div className="relative flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -227,31 +227,31 @@ export default function HelpPage() {
             filteredChapters.map((chapter, chapterIndex) => {
               const chapterSectionIds = chapter.sections.map((section) => getAnchorId(chapter.id, section.id));
               const allOpen = chapterSectionIds.length > 0 && chapterSectionIds.every((id) => openSections.has(id));
-              
+
               // Color schemes for different chapters - enhanced contrast
               const colorSchemes = [
-                { 
+                {
                   bg: 'from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40',
                   ring: 'ring-blue-200/60 dark:ring-blue-600/40',
                   icon: 'from-blue-500 to-indigo-600',
                   iconShadow: 'shadow-blue-500/25',
                   accent: 'text-blue-700 dark:text-blue-300'
                 },
-                { 
+                {
                   bg: 'from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40',
                   ring: 'ring-purple-200/60 dark:ring-purple-600/40',
                   icon: 'from-purple-500 to-violet-600',
                   iconShadow: 'shadow-purple-500/25',
                   accent: 'text-purple-700 dark:text-purple-300'
                 },
-                { 
+                {
                   bg: 'from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40',
                   ring: 'ring-amber-200/60 dark:ring-amber-600/40',
                   icon: 'from-amber-500 to-orange-600',
                   iconShadow: 'shadow-amber-500/25',
                   accent: 'text-amber-700 dark:text-amber-300'
                 },
-                { 
+                {
                   bg: 'from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40',
                   ring: 'ring-teal-200/60 dark:ring-teal-600/40',
                   icon: 'from-teal-500 to-cyan-600',
@@ -340,7 +340,7 @@ export default function HelpPage() {
                 </p>
               </div>
             </div>
-            
+
             {/* Scrollable Index List */}
             <div className="max-h-[calc(100vh-280px)] overflow-y-auto pr-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
               {alphabeticalIndex.map((item, index) => (
@@ -354,8 +354,8 @@ export default function HelpPage() {
                   }`}
                 >
                   <Hash className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 transition-colors ${
-                    activeSection === item.anchorId 
-                      ? 'text-teal-500' 
+                    activeSection === item.anchorId
+                      ? 'text-teal-500'
                       : 'text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400'
                   }`} />
                   <span className="leading-tight">{item.title}</span>
@@ -410,8 +410,8 @@ function HelpSectionItem({
     <div
       id={anchorId}
       className={`rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-300 scroll-mt-20 sm:scroll-mt-24 ${
-        isActive 
-          ? 'bg-white dark:bg-slate-800 shadow-lg ring-2 ring-teal-400/50 dark:ring-teal-500/40' 
+        isActive
+          ? 'bg-white dark:bg-slate-800 shadow-lg ring-2 ring-teal-400/50 dark:ring-teal-500/40'
           : 'bg-white/80 dark:bg-slate-800/80 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-700/50 hover:shadow-lg hover:ring-slate-300/60 dark:hover:ring-slate-600/50'
       }`}
     >
@@ -420,8 +420,8 @@ function HelpSectionItem({
           type="button"
           onClick={onToggle}
           className={`flex flex-1 min-w-0 items-center justify-between gap-2 sm:gap-3 text-left font-semibold text-xs sm:text-sm py-0.5 sm:py-1 transition-colors ${
-            isActive 
-              ? 'text-teal-700 dark:text-teal-300' 
+            isActive
+              ? 'text-teal-700 dark:text-teal-300'
               : 'text-slate-800 dark:text-slate-100 hover:text-teal-600 dark:hover:text-teal-400'
           }`}
           aria-expanded={isOpen}
@@ -457,10 +457,10 @@ function HelpSectionItem({
           {links && links.length > 0 && (
             <div className="pt-2 sm:pt-3 flex flex-wrap gap-1.5 sm:gap-2">
               {links.map((link) => (
-                <Button 
-                  key={`${anchorId}-${link.href}`} 
-                  asChild 
-                  size="sm" 
+                <Button
+                  key={`${anchorId}-${link.href}`}
+                  asChild
+                  size="sm"
                   className="bg-teal-500 hover:bg-teal-600 text-white shadow-md shadow-teal-500/20 text-xs sm:text-sm px-2.5 sm:px-3 py-1 sm:py-1.5 h-auto"
                 >
                   <Link href={link.href}>{link.label}</Link>

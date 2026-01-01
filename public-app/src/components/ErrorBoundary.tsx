@@ -57,11 +57,11 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
-            
+
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Κάτι πήγε στραβά
             </h2>
-            
+
             <p className="text-sm text-gray-600 mb-6">
               Συνέβη ένα απρόσμενο σφάλμα. Παρακαλώ δοκιμάστε ξανά.
             </p>
@@ -105,4 +105,3 @@ export class ErrorBoundary extends Component<Props, State> {
     return <>{this.props.children}</>;
   }
 }
-

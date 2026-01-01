@@ -86,8 +86,8 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
       layout
       className={cn(
         'bg-white rounded-xl border-2 overflow-hidden transition-all',
-        hasVoted 
-          ? 'border-emerald-200 bg-emerald-50/30' 
+        hasVoted
+          ? 'border-emerald-200 bg-emerald-50/30'
           : 'border-gray-300 hover:border-indigo-200'
       )}
     >
@@ -106,7 +106,7 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
         )}>
           {hasVoted ? <Check className="w-5 h-5" /> : <Vote className="w-5 h-5" />}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-indigo-600">
@@ -124,14 +124,14 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
             )}
           </div>
           <h4 className="font-semibold text-gray-900 mt-1">{item.title}</h4>
-          
+
           {item.description && !expanded && (
             <p className="text-sm text-gray-500 mt-1 line-clamp-2">
               {item.description}
             </p>
           )}
         </div>
-        
+
         {!hasVoted && (
           <div className="flex-shrink-0">
             {expanded ? (
@@ -221,7 +221,7 @@ function VotingItemCard({ item, attendee, votedItems, onVote, isSubmitting }: Vo
                 disabled={!selectedVote || isSubmitting}
                 className={cn(
                   'w-full',
-                  selectedVote 
+                  selectedVote
                     ? 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'
                     : ''
                 )}
@@ -262,14 +262,14 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
     if (!attendee) return;
 
     setCurrentSubmitting(itemId);
-    
+
     try {
       await castVoteMutation.mutateAsync({
         attendeeId: attendee.id,
         agendaItemId: itemId,
         vote,
       });
-      
+
       setVotedItems(prev => new Set([...prev, itemId]));
     } catch (error) {
       // Error handled by mutation
@@ -438,7 +438,7 @@ export default function PreVotingForm({ assembly, attendee, onComplete }: PreVot
               Οι ψήφοι σας καταχωρήθηκαν επιτυχώς. Θα ενσωματωθούν στα αποτελέσματα της συνέλευσης.
             </p>
             {onComplete && (
-              <Button 
+              <Button
                 onClick={onComplete}
                 className="mt-4 bg-emerald-600 hover:bg-emerald-700"
               >

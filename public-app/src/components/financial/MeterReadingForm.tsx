@@ -66,15 +66,15 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
     const loadData = async () => {
       try {
         setApartmentsLoading(true);
-        
+
         // Load building info
         const building = await fetchBuilding(buildingId);
         setBuildingHeatingSystem(building.heating_system || 'none');
-        
+
         // Load apartments
         const apartmentsList = await fetchApartments(buildingId);
         setApartments(apartmentsList || []);
-        
+
         // Load meter types
         const allTypes = [
           { value: MeterType.WATER, label: 'Νερό' },
@@ -83,7 +83,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           { value: MeterType.HEATING_ENERGY, label: 'Θέρμανση (kWh/MWh)' },
         ];
         setMeterTypes(allTypes);
-        
+
       } catch (error) {
         console.error('Error loading data:', error);
         toast.error('Σφάλμα φόρτωσης δεδομένων');
@@ -104,7 +104,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
         // Create mode
         await createReading(data);
       }
-      
+
       reset();
       onSuccess?.();
       toast.success(reading ? 'Η μετρήση ενημερώθηκε επιτυχώς' : 'Η μετρήση δημιουργήθηκε επιτυχώς');
@@ -187,12 +187,12 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           {/* Τύπος Μετρητή */}
           <div className="space-y-2">
             <Label htmlFor="meter_type">Τύπος Μετρητή *</Label>
-            
+
             {/* Πληροφορίες για σύστημα θέρμανσης */}
             {buildingHeatingSystem && buildingHeatingSystem !== 'none' && (
               <div className={cn(
                 'p-3 rounded-lg text-sm',
-                buildingHeatingSystem === 'hour_meters' 
+                buildingHeatingSystem === 'hour_meters'
                   ? `${getSemanticBgClasses('info').bg} ${getSemanticBgClasses('info').border} ${getSemanticBgClasses('info').text}`
                   : buildingHeatingSystem === 'heat_meters'
                   ? `${getSemanticBgClasses('primary').bg} ${getSemanticBgClasses('primary').border} ${getSemanticBgClasses('primary').text}`
@@ -204,7 +204,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                   <span className="text-lg">🔥</span>
                   <div>
                     <p className="font-medium">Σύστημα Θέρμανσης Κτιρίου: {
-                      buildingHeatingSystem === 'hour_meters' 
+                      buildingHeatingSystem === 'hour_meters'
                         ? 'Αυτονομία με Ωρομετρητές'
                         : buildingHeatingSystem === 'heat_meters'
                         ? 'Αυτονομία με Θερμιδομετρητές'
@@ -213,13 +213,13 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                         : 'Άγνωστο'
                     }</p>
                     <p className="text-xs mt-1">
-                      {buildingHeatingSystem === 'hour_meters' && 
+                      {buildingHeatingSystem === 'hour_meters' &&
                         '💡 Για αυτό το κτίριο χρησιμοποιήστε "Θέρμανση (Ώρες)" για καταγραφή ωρομετρητών.'
                       }
-                      {buildingHeatingSystem === 'heat_meters' && 
+                      {buildingHeatingSystem === 'heat_meters' &&
                         '💡 Για αυτό το κτίριο χρησιμοποιήστε "Θέρμανση (kWh/MWh)" για καταγραφή θερμιδομετρητών.'
                       }
-                      {buildingHeatingSystem === 'conventional' && 
+                      {buildingHeatingSystem === 'conventional' &&
                         '💡 Αυτό το κτίριο χρησιμοποιεί συμβατικό σύστημα θέρμανσης. Δεν χρειάζονται ειδικοί μετρητές.'
                       }
                     </p>
@@ -236,7 +236,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                 </div>
               </div>
             )}
-            
+
             <Controller
               name="meter_type"
               control={control}
@@ -251,8 +251,8 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {meterTypes.map((type) => (
-                      <SelectItem 
-                        key={type.value} 
+                      <SelectItem
+                        key={type.value}
                         value={type.value}
                         className={
                           // Highlight recommended meter type based on heating system
@@ -324,7 +324,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           {/* Τιμή Μετρήσης */}
           <div className="space-y-2">
             <Label htmlFor="value">
-              Ένδειξη Μετρητή * 
+              Ένδειξη Μετρητή *
               <span className="text-sm text-gray-500 ml-2">
                 ({
                   watchedMeterType === MeterType.HEATING_HOURS ? 'σε ώρες'
@@ -335,20 +335,20 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                 })
               </span>
             </Label>
-            
+
             {/* Επεξήγηση ανάλογα με τον τύπο μετρητή */}
             {watchedMeterType === MeterType.HEATING_HOURS && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
                 <p>📊 <strong>Ωρομετρητές:</strong> Εισάγετε τις ώρες λειτουργίας της θέρμανσης (π.χ. 150.5 ώρες)</p>
               </div>
             )}
-            
+
             {watchedMeterType === MeterType.HEATING_ENERGY && (
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
                 <p>⚡ <strong>Θερμιδομετρητές:</strong> Εισάγετε την κατανάλωση ενέργειας σε kWh ή MWh (π.χ. 1250.75 kWh)</p>
               </div>
             )}
-            
+
             <Controller
               name="value"
               control={control}
@@ -450,4 +450,4 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

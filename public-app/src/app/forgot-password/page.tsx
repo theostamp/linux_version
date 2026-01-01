@@ -7,7 +7,7 @@ import { Building, Mail, ArrowRight, Loader2, CheckCircle, XCircle } from 'lucid
 
 function ForgotPasswordForm() {
   const router = useRouter();
-  
+
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -15,7 +15,7 @@ function ForgotPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       setError('Το email είναι υποχρεωτικό');
       return;
@@ -28,7 +28,7 @@ function ForgotPasswordForm() {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
       if (!coreApiUrl) {
@@ -39,7 +39,7 @@ function ForgotPasswordForm() {
       if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
         coreApiUrl = `https://${coreApiUrl}`;
       }
-      
+
       // Remove trailing slash
       coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -61,7 +61,7 @@ function ForgotPasswordForm() {
       }
 
       setIsSuccess(true);
-      
+
     } catch (err) {
       console.error('Password reset error:', err);
       setError(err instanceof Error ? err.message : 'Προέκυψε σφάλμα. Παρακαλώ δοκιμάστε ξανά.');
@@ -99,7 +99,7 @@ function ForgotPasswordForm() {
                     Εισάγετε το email σας και θα σας στείλουμε οδηγίες για την επαναφορά του κωδικού σας.
                   </p>
                 </div>
-                
+
                 {error && (
                   <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
                     {error}
@@ -169,7 +169,7 @@ function ForgotPasswordForm() {
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-800">
-                    <strong>Σημείωση:</strong> Αν δεν λάβετε το email εντός λίγων λεπτών, 
+                    <strong>Σημείωση:</strong> Αν δεν λάβετε το email εντός λίγων λεπτών,
                     ελέγξτε το spam folder σας.
                   </p>
                 </div>
@@ -210,4 +210,3 @@ export default function ForgotPasswordPage() {
     </Suspense>
   );
 }
-

@@ -1,6 +1,6 @@
 /**
  * NewConcierge Design System
- * 
+ *
  * Unified design tokens for consistent UI/UX across the application
  * UPDATED: Kaspersky-inspired soft pastel theme with teal accents
  */
@@ -23,7 +23,7 @@ export const colors = {
     800: '#00695c',
     900: '#004d40',
   },
-  
+
   // Semantic Colors - Success (Green)
   success: {
     50: '#e8f5e9',
@@ -37,7 +37,7 @@ export const colors = {
     800: '#2e7d32',
     900: '#1b5e20',
   },
-  
+
   // Semantic Colors - Warning (Orange/Amber)
   warning: {
     50: '#fff8e1',
@@ -51,7 +51,7 @@ export const colors = {
     800: '#ff8f00',
     900: '#ff6f00',
   },
-  
+
   // Semantic Colors - Danger/Error (Rose/Red)
   danger: {
     50: '#ffebee',
@@ -65,7 +65,7 @@ export const colors = {
     800: '#c62828',
     900: '#b71c1c',
   },
-  
+
   // Semantic Colors - Info (Blue/Sky)
   info: {
     50: '#e3f2fd',
@@ -79,7 +79,7 @@ export const colors = {
     800: '#1565c0',
     900: '#0d47a1',
   },
-  
+
   // Special - Purple (Lavender tones)
   purple: {
     50: '#f3e5f5',
@@ -93,7 +93,7 @@ export const colors = {
     800: '#6a1b9a',
     900: '#4a148c',
   },
-  
+
   // Special - Orange (Coral tones)
   orange: {
     50: '#fbe9e7',
@@ -121,7 +121,7 @@ export const colors = {
     800: '#0277bd',
     900: '#01579b',
   },
-  
+
   // Neutral/Gray Scale - Soft grays (NO dark grays for borders)
   gray: {
     50: '#f5f7fa',    // Background
@@ -186,7 +186,7 @@ export const typography = {
     sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
     mono: ['var(--font-fira-code)', 'monospace'],
   },
-  
+
   fontSize: {
     xs: '0.75rem',      // 12px
     sm: '0.875rem',     // 14px
@@ -199,7 +199,7 @@ export const typography = {
     '5xl': '3rem',      // 48px
     '6xl': '3.75rem',   // 60px
   },
-  
+
   fontWeight: {
     light: 300,
     normal: 400,
@@ -208,7 +208,7 @@ export const typography = {
     bold: 700,
     extrabold: 800,
   },
-  
+
   lineHeight: {
     tight: 1.25,
     normal: 1.5,
@@ -370,7 +370,7 @@ export const dashboard = {
       },
     },
   },
-  
+
   // Metric cards color schemes (Kaspersky-style categories)
   metrics: {
     buildings: {
@@ -410,7 +410,7 @@ export const dashboard = {
       border: colors.category.info.border,
     },
   },
-  
+
   // Status colors
   status: {
     active: colors.success[500],
@@ -418,7 +418,7 @@ export const dashboard = {
     overdue: colors.danger[500],
     inactive: colors.gray[400],
   },
-  
+
   // Health score colors
   health: {
     excellent: colors.success[500],
@@ -570,7 +570,7 @@ export function getCategoryCardClasses(category: CategoryType): {
       icon: 'text-green-600 dark:text-green-400',
     },
   };
-  
+
   return categoryMap[category];
 }
 
@@ -593,7 +593,7 @@ export function getStatusBadgeClasses(status: string): string {
     // Default
     default: 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-500/10 dark:text-gray-400 dark:border-gray-500/20',
   };
-  
+
   return statusMap[status] || statusMap.default;
 }
 

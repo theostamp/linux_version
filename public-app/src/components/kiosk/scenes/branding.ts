@@ -111,4 +111,3 @@ export const extractAmbientBrandingFromSettings = (settings?: unknown): AmbientB
 
   return resolveAmbientBranding(undefined, config.ambientBranding as Partial<AmbientBrandingConfig>);
 };
-

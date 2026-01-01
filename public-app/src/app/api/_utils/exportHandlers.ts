@@ -30,4 +30,3 @@ export function exportHandlers(
 
   return exports as Record<HttpMethod, ProxyHandler>;
 }
-

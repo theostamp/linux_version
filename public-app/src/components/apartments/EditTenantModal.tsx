@@ -62,7 +62,7 @@ export default function EditTenantModal({ open, onOpenChange, apartment, onSucce
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!apartment) {
       toast.error('Δεν έχει επιλεγεί διαμέρισμα');
       return;
@@ -84,29 +84,29 @@ export default function EditTenantModal({ open, onOpenChange, apartment, onSucce
       };
 
       await updateApartmentTenant(apartment.id, tenantData);
-      
+
       toast.success('Τα στοιχεία του ενοίκου ενημερώθηκαν επιτυχώς');
-      
+
       // Call success callback to refresh data
       if (onSuccess) {
         onSuccess();
       }
-      
+
       // Close modal
       onOpenChange(false);
     } catch (err) {
-      const error = err as { 
-        response?: { data?: Record<string, string | string[]> }; 
+      const error = err as {
+        response?: { data?: Record<string, string | string[]> };
         message?: string;
         detail?: string;
       };
-      
+
       let errorMessage = 'Αποτυχία ενημέρωσης στοιχείων ενοίκου';
-      
+
       const errorData = error?.response?.data || error;
       if (errorData) {
         if (typeof errorData === 'object') {
-          const firstKey = Object.keys(errorData).find(key => 
+          const firstKey = Object.keys(errorData).find(key =>
             key !== 'response' && key !== 'message' && errorData[key]
           );
           if (firstKey) {
@@ -119,11 +119,11 @@ export default function EditTenantModal({ open, onOpenChange, apartment, onSucce
           }
         }
       }
-      
+
       if (errorMessage === 'Αποτυχία ενημέρωσης στοιχείων ενοίκου' && error?.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -279,4 +279,3 @@ export default function EditTenantModal({ open, onOpenChange, apartment, onSucce
     </Dialog>
   );
 }
-

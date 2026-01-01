@@ -38,4 +38,3 @@ export const CommonExpenseCalculatorNew: React.FC<CommonExpenseCalculatorNewProp
     </Card>
   );
 };
-

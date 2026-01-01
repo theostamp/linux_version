@@ -37,14 +37,14 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'concierge', label: 'Συνεργείο Καθαρισμού', group: 'Πάγιες Δαπάνες' },
   { value: 'deh_maintenance_fee', label: 'Τέλος Συντήρησης ΔΕΗ', group: 'Πάγιες Δαπάνες' },
   { value: 'water_sewage_fee', label: 'Τέλος Αποχέτευσης', group: 'Πάγιες Δαπάνες' },
-  
+
   // Δαπάνες Ανελκυστήρα
   { value: 'elevator_maintenance', label: 'Ετήσια Συντήρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_repair', label: 'Επισκευή Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_inspection', label: 'Επιθεώρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_modernization', label: 'Αναβάθμιση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_emergency', label: 'Εγκλωβισμός Ανελκυστήρα', group: 'Ανελκυστήρας' },
-  
+
   // Δαπάνες Θέρμανσης
   { value: 'heating_fuel', label: 'Πετρέλαιο Θέρμανσης', group: 'Θέρμανση' },
   { value: 'heating_gas', label: 'Φυσικό Αέριο Θέρμανσης', group: 'Θέρμανση' },
@@ -52,7 +52,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'heating_repair', label: 'Επισκευή Θερμαντικών', group: 'Θέρμανση' },
   { value: 'heating_inspection', label: 'Επιθεώρηση Θερμαντικών', group: 'Θέρμανση' },
   { value: 'heating_modernization', label: 'Αναβάθμιση Θερμαντικών', group: 'Θέρμανση' },
-  
+
   // Δαπάνες Ηλεκτρικών
   { value: 'electrical_maintenance', label: 'Συντήρηση Ηλεκτρικών', group: 'Ηλεκτρικά' },
   { value: 'electrical_repair', label: 'Επισκευή Ηλεκτρικών', group: 'Ηλεκτρικά' },
@@ -61,14 +61,14 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'intercom_system', label: 'Σύστημα Εσωτερικής Επικοινωνίας', group: 'Ηλεκτρικά' },
   { value: 'generator_maintenance', label: 'Συντήρηση Γεννήτριας', group: 'Ηλεκτρικά' },
   { value: 'generator_repair', label: 'Επισκευή Γεννήτριας', group: 'Ηλεκτρικά' },
-  
+
   // Δαπάνες Υδραυλικών
   { value: 'plumbing_maintenance', label: 'Συντήρηση Υδραυλικών', group: 'Υδραυλικά' },
   { value: 'plumbing_repair', label: 'Επισκευή Υδραυλικών', group: 'Υδραυλικά' },
   { value: 'water_tank_cleaning', label: 'Καθαρισμός Δεξαμενής Νερού', group: 'Υδραυλικά' },
   { value: 'water_tank_maintenance', label: 'Συντήρηση Δεξαμενής Νερού', group: 'Υδραυλικά' },
   { value: 'sewage_system', label: 'Σύστημα Αποχέτευσης', group: 'Υδραυλικά' },
-  
+
   // Δαπάνες Κτιρίου
   { value: 'building_insurance', label: 'Ασφάλεια Κτιρίου', group: 'Κτίριο' },
   { value: 'building_maintenance', label: 'Συντήρηση Κτιρίου', group: 'Κτίριο' },
@@ -82,7 +82,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'garden_maintenance', label: 'Συντήρηση Κήπου', group: 'Κτίριο' },
   { value: 'parking_maintenance', label: 'Συντήρηση Χώρων Στάθμευσης', group: 'Κτίριο' },
   { value: 'entrance_maintenance', label: 'Συντήρηση Εισόδου', group: 'Κτίριο' },
-  
+
   // Έκτακτες Δαπάνες
   { value: 'emergency_repair', label: 'Έκτακτη Επισκευή', group: 'Έκτακτες' },
   { value: 'storm_damage', label: 'Ζημιές από Κακοκαιρία', group: 'Έκτακτες' },
@@ -90,7 +90,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'fire_damage', label: 'Ζημιές από Πυρκαγιά', group: 'Έκτακτες' },
   { value: 'earthquake_damage', label: 'Ζημιές από Σεισμό', group: 'Έκτακτες' },
   { value: 'vandalism_repair', label: 'Επισκευή Βανδαλισμών', group: 'Έκτακτες' },
-  
+
   // Ειδικές Επισκευές
   { value: 'locksmith', label: 'Κλειδαράς', group: 'Ειδικές Επισκευές' },
   { value: 'glass_repair', label: 'Επισκευή Γυαλιών', group: 'Ειδικές Επισκευές' },
@@ -98,14 +98,14 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'window_repair', label: 'Επισκευή Παραθύρων', group: 'Ειδικές Επισκευές' },
   { value: 'balcony_repair', label: 'Επισκευή Μπαλκονιού', group: 'Ειδικές Επισκευές' },
   { value: 'staircase_repair', label: 'Επισκευή Σκάλας', group: 'Ειδικές Επισκευές' },
-  
+
   // Ασφάλεια & Πρόσβαση
   { value: 'security_system', label: 'Σύστημα Ασφάλειας', group: 'Ασφάλεια' },
   { value: 'cctv_installation', label: 'Εγκατάσταση CCTV', group: 'Ασφάλεια' },
   { value: 'access_control', label: 'Σύστημα Ελέγχου Πρόσβασης', group: 'Ασφάλεια' },
   { value: 'fire_alarm', label: 'Σύστημα Πυρασφάλειας', group: 'Ασφάλεια' },
   { value: 'fire_extinguishers', label: 'Πυροσβεστήρες', group: 'Ασφάλεια' },
-  
+
   // Διοικητικές & Νομικές
   { value: 'legal_fees', label: 'Δικαστικά Έξοδα', group: 'Διοικητικές' },
   { value: 'notary_fees', label: 'Συμβολαιογραφικά Έξοδα', group: 'Διοικητικές' },
@@ -114,7 +114,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'engineer_fees', label: 'Μηχανικός', group: 'Διοικητικές' },
   { value: 'accounting_fees', label: 'Λογιστικά Έξοδα', group: 'Διοικητικές' },
   { value: 'management_fees', label: 'Διοικητικά Έξοδα', group: 'Διοικητικές' },
-  
+
   // Ειδικές Εργασίες
   { value: 'asbestos_removal', label: 'Αφαίρεση Ασβέστη', group: 'Ειδικές Εργασίες' },
   { value: 'lead_paint_removal', label: 'Αφαίρεση Μολύβδου', group: 'Ειδικές Εργασίες' },
@@ -122,20 +122,20 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'pest_control', label: 'Εντομοκτονία', group: 'Ειδικές Εργασίες' },
   { value: 'tree_trimming', label: 'Κλάδεμα Δέντρων', group: 'Ειδικές Εργασίες' },
   { value: 'snow_removal', label: 'Καθαρισμός Χιονιού', group: 'Ειδικές Εργασίες' },
-  
+
   // Ενεργειακή Απόδοση
   { value: 'energy_upgrade', label: 'Ενεργειακή Αναβάθμιση', group: 'Ενεργειακή Απόδοση' },
   { value: 'insulation_work', label: 'Θερμομόνωση', group: 'Ενεργειακή Απόδοση' },
   { value: 'solar_panel_installation', label: 'Εγκατάσταση Φωτοβολταϊκών', group: 'Ενεργειακή Απόδοση' },
   { value: 'led_lighting', label: 'Αντικατάσταση με LED', group: 'Ενεργειακή Απόδοση' },
   { value: 'smart_systems', label: 'Έξυπνα Συστήματα', group: 'Ενεργειακή Απόδοση' },
-  
+
   // Δαπάνες Ιδιοκτητών
   { value: 'special_contribution', label: 'Έκτακτη Εισφορά', group: 'Ιδιοκτητές' },
   { value: 'reserve_fund', label: 'Αποθεματικό Ταμείο', group: 'Ιδιοκτητές' },
   { value: 'emergency_fund', label: 'Ταμείο Έκτακτης Ανάγκης', group: 'Ιδιοκτητές' },
   { value: 'renovation_fund', label: 'Ταμείο Ανακαίνισης', group: 'Ιδιοκτητές' },
-  
+
   // Άλλες Δαπάνες
   { value: 'miscellaneous', label: 'Διάφορες Δαπάνες', group: 'Άλλες' },
   { value: 'consulting_fees', label: 'Εργασίες Συμβούλου', group: 'Άλλες' },
@@ -156,10 +156,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
   // NEW: Use BuildingContext instead of props
   const { selectedBuilding, permissions } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   const { createExpense, isLoading, error } = useExpenses();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  
+
   const { uploadFile, isUploading, progress, error: uploadError } = useFileUpload({
     maxSize: 10,
     allowedTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
@@ -168,11 +168,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
 
   // Check permissions
   const canManageFinancials = checkBuildingAccess(selectedBuilding, 'manage_financials', permissions);
-  
+
   // Hooks for auto-complete functionality
   const { getSuggestedDate, getSuggestedDistribution, isMonthlyExpense, getTitleSuggestions } = useExpenseTemplates();
   const { suppliers } = useSuppliers({ buildingId, isActive: true });
-  
+
   const {
     register,
     handleSubmit,
@@ -217,7 +217,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
           setValue('title', suggestions[0]);
         }
       }
-      
+
       // Auto-set payer_responsibility based on category defaults
       // Fetch suggested payer from API
       const fetchSuggestedPayer = async () => {
@@ -241,7 +241,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
           }
         }
       };
-      
+
       // Only auto-set if payer_responsibility is not already set
       if (!selectedPayerResponsibility) {
         fetchSuggestedPayer();
@@ -260,25 +260,25 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const category = e.target.value as ExpenseCategory;
     setValue('category', category);
-    
+
     if (category) {
       // Auto-set distribution type based on category
       const defaultDistribution = getDefaultDistributionType(category);
       setValue('distribution_type', defaultDistribution);
-      
+
       // Auto-set date for monthly expenses
       if (isMonthlyExpense(category)) {
         const suggestedDate = getSuggestedDate(category, selectedMonth);
         setValue('date', suggestedDate);
       }
-      
+
       // Auto-set title to the selected category name
       const selectedCategoryDetails = EXPENSE_CATEGORIES.find(cat => cat.value === category);
       if (selectedCategoryDetails) {
         setValue('title', selectedCategoryDetails.label);
       }
     }
-    
+
     // Καθαρίζουμε τον προμηθευτή όταν αλλάζει η κατηγορία
     setValue('supplier', undefined);
   };
@@ -312,10 +312,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
       if (selectedFiles.length > 0) {
         data.attachment = selectedFiles[0]; // Προς το παρόν υποστηρίζουμε μόνο ένα αρχείο
       }
-      
+
       // Ensure building ID is set
       data.building = buildingId;
-      
+
       await createExpense(data);
       reset();
       setSelectedFiles([]);
@@ -421,8 +421,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                   </label>
                   <input
                     type="text"
-                    {...register('title', { 
-                      required: selectedCategory === 'other' ? 'Απαιτείται περιγραφή για την κατηγορία "Άλλο"' : false 
+                    {...register('title', {
+                      required: selectedCategory === 'other' ? 'Απαιτείται περιγραφή για την κατηγορία "Άλλο"' : false
                     })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Περιγράψτε την κατηγορία δαπάνης..."
@@ -459,7 +459,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                   step="0.01"
                   min="0"
                   max="999999.99"
-                  {...register('amount', { 
+                  {...register('amount', {
                     required: 'Απαιτείται',
                     min: { value: 0, message: 'Το ποσό πρέπει να είναι θετικό' },
                     onChange: (e) => {
@@ -687,7 +687,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
                 />
               </div>
             )}
-            
+
             {/* File Preview */}
             {selectedFiles.length > 0 && (
               <div className="mt-4">
@@ -747,4 +747,4 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ selectedMonth, onSucce
       </form>
     </div>
   );
-}; 
+};

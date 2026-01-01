@@ -415,13 +415,13 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 </div>
 
                 <!-- ✅ Επιμέρους Δαπάνες από API (αντί για συγκεντρωτικές "Λειτουργικές Δαπάνες") -->
-                ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
+                ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0
                   ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => {
                       // Διακριτικό κείμενο: Ε (Ένοικος) ή Δ (Ιδιοκτήτης)
                       const isOwner = expense.payer_responsibility === 'owner';
                       const payerColor = isOwner ? '#dc2626' : '#059669';
                       const payerText = isOwner ? 'Δ' : 'Ε';
-                      
+
                       return `
                         <div class="expense-item">
                           <span class="number">${index + 1}</span>

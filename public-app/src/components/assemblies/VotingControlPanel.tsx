@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { 
-  Vote, CheckCircle, XCircle, MinusCircle, 
+import {
+  Vote, CheckCircle, XCircle, MinusCircle,
   Loader2, Search, Users, Mail, RefreshCw, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -80,14 +80,14 @@ function MobileVoteButtons({
   isLoading?: boolean;
 }) {
   const choices: VoteChoice[] = ['approve', 'reject', 'abstain'];
-  
+
   return (
     <div className="flex gap-2">
       {choices.map((choice) => {
         const config = voteConfig[choice];
         const isActive = currentVote === choice;
         const Icon = config.icon;
-        
+
         return (
           <button
             key={choice}
@@ -96,8 +96,8 @@ function MobileVoteButtons({
             className={cn(
               "flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all duration-200",
               "min-h-[64px] touch-manipulation active:scale-95",
-              isActive 
-                ? `${config.activeColor} ${config.borderColor} ring-2 ${config.ringColor} ring-offset-1` 
+              isActive
+                ? `${config.activeColor} ${config.borderColor} ring-2 ${config.ringColor} ring-offset-1`
                 : `bg-white ${config.borderColor} hover:${config.bgColor}`,
               disabled && 'opacity-40 cursor-not-allowed'
             )}
@@ -145,7 +145,7 @@ function AttendeeVoteCard({
   const hasVoted = !!vote;
   const quorumContributionPercent =
     totalBuildingMills > 0 ? (attendee.mills * 100) / totalBuildingMills : 0;
-  
+
   return (
     <div className={cn(
       "bg-white rounded-2xl border-2 p-4 transition-all",
@@ -156,7 +156,7 @@ function AttendeeVoteCard({
         <div className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 bg-gradient-to-br from-indigo-400 to-indigo-600 text-white">
           {attendee.apartment_number}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-gray-900 text-base truncate">
@@ -215,7 +215,7 @@ export default function VotingControlPanel({
   const [filter, setFilter] = useState<VoteFilter>('pending');
   const [pendingVotes, setPendingVotes] = useState<Set<string>>(new Set());
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const castVoteMutation = useCastVote();
 
   // Create a map of attendee votes for quick lookup
@@ -228,16 +228,16 @@ export default function VotingControlPanel({
   // Filter and search attendees
   const filteredAttendees = useMemo(() => {
     let result = [...attendees];
-    
+
     // Apply search
     if (search) {
       const searchLower = search.toLowerCase();
-      result = result.filter(a => 
+      result = result.filter(a =>
         a.apartment_number.toLowerCase().includes(searchLower) ||
         a.display_name.toLowerCase().includes(searchLower)
       );
     }
-    
+
     // Apply filter
     switch (filter) {
       case 'voted':
@@ -253,7 +253,7 @@ export default function VotingControlPanel({
         });
         break;
     }
-    
+
     // Sort: Present first, then by apartment number
     return result.sort((a, b) => {
       if (a.is_present !== b.is_present) return a.is_present ? -1 : 1;
@@ -266,13 +266,13 @@ export default function VotingControlPanel({
     const votedCount = votes.length;
     const preVoteCount = votes.filter(v => v.vote_source === 'pre_vote').length;
     const pendingCount = attendees.filter(a => !voteMap.has(a.id)).length;
-    
+
     return { votedCount, preVoteCount, pendingCount };
   }, [attendees, votes, voteMap]);
 
   const handleVote = async (attendeeId: string, vote: VoteChoice) => {
     setPendingVotes(prev => new Set(prev).add(attendeeId));
-    
+
     try {
       await castVoteMutation.mutateAsync({
         attendeeId,
@@ -291,7 +291,7 @@ export default function VotingControlPanel({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
+        <Button
           size="lg"
           className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg h-12 px-5"
         >
@@ -304,7 +304,7 @@ export default function VotingControlPanel({
           )}
         </Button>
       </DialogTrigger>
-      
+
       {/* Full-screen mobile dialog */}
       <DialogContent className="sm:max-w-5xl lg:max-w-6xl max-w-[100vw] h-[100dvh] sm:h-[90vh] sm:max-h-[900px] p-0 gap-0 flex flex-col rounded-none sm:rounded-2xl">
         {/* Header - Sticky */}
@@ -320,7 +320,7 @@ export default function VotingControlPanel({
                   <div className="text-xs font-normal text-gray-500 line-clamp-1">{item.title}</div>
                 </div>
               </DialogTitle>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
@@ -354,14 +354,14 @@ export default function VotingControlPanel({
           <div className="px-4 py-3 space-y-3 bg-gray-50/50">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input 
-                placeholder="Αναζήτηση διαμερίσματος..." 
+              <Input
+                placeholder="Αναζήτηση διαμερίσματος..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-12 h-12 text-base rounded-xl bg-white border-gray-200 shadow-sm"
               />
             </div>
-            
+
             <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
               {([
                 { value: 'pending', label: 'Εκκρεμείς', count: stats.pendingCount, highlight: true },
@@ -389,7 +389,7 @@ export default function VotingControlPanel({
                   </span>
                 </Button>
               ))}
-              
+
               {onRefresh && (
                 <Button
                   variant="ghost"
@@ -413,7 +413,7 @@ export default function VotingControlPanel({
                 <Users className="w-10 h-10 text-gray-300" />
               </div>
               <p className="text-gray-500 font-medium text-lg">
-                {filter === 'pending' 
+                {filter === 'pending'
                   ? 'Όλοι έχουν ψηφίσει! 🎉'
                   : 'Δεν βρέθηκαν αποτελέσματα'}
               </p>

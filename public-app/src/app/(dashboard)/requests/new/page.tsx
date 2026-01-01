@@ -21,9 +21,9 @@ export default function NewRequestPage() {
   const { currentBuilding, selectedBuilding } = useBuilding();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const buildingToUse = selectedBuilding || currentBuilding;
-  
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [maintenanceCategory, setMaintenanceCategory] = useState('');
@@ -73,7 +73,7 @@ export default function NewRequestPage() {
         apartment_number: apartmentNumber || undefined,
         photos: photos.length > 0 ? photos : undefined,
       };
-      
+
       const created = await createUserRequest(payload);
 
       // ✅ Update cached lists immediately so the new report appears without waiting for refetch
@@ -121,9 +121,9 @@ export default function NewRequestPage() {
             Συμπληρώστε τα παρακάτω στοιχεία για να ενημερώσετε τη διαχείριση
           </p>
         </div>
-        
+
         <BuildingFilterIndicator className="mb-6" />
-        
+
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-8 bg-secondary/30 py-2 px-4 rounded-full w-fit mx-auto">
           <MapPin className="w-4 h-4" />
           <span>Κτίριο: <strong>{buildingToUse.name}</strong></span>
@@ -139,7 +139,7 @@ export default function NewRequestPage() {
         )}
 
         {error && <ErrorMessage message={error} />}
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -288,4 +288,3 @@ export default function NewRequestPage() {
     </div>
   );
 }
-

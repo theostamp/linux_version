@@ -441,4 +441,3 @@ export default function EditProjectPage() {
     </AuthGate>
   );
 }
-

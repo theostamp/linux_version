@@ -33,7 +33,7 @@ function CreateWidgetContent() {
   const router = useRouter();
   const { currentBuilding, selectedBuilding } = useBuilding();
   const building = selectedBuilding || currentBuilding;
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
@@ -50,7 +50,7 @@ function CreateWidgetContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!building?.id) {
       toast.error('Παρακαλώ επιλέξτε ένα κτίριο');
       return;
@@ -265,4 +265,3 @@ function CreateWidgetContent() {
     </div>
   );
 }
-

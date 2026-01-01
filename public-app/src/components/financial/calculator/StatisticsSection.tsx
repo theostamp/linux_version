@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
+import {
   PieChart,
   Pie,
   Cell,
@@ -21,9 +21,9 @@ import {
   Area,
   AreaChart
 } from 'recharts';
-import { 
-  Building2, 
-  Users, 
+import {
+  Building2,
+  Users,
   Thermometer,
   ArrowUpDown,
   Package,
@@ -102,33 +102,33 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
 
   const getPeriodInfoWithBillingCycle = () => {
     const periodName = getPeriodInfo();
-    
+
     // Extract month and year from period name (e.g., "Σεπτέμβριος 2025")
     const monthMatch = periodName.match(/(\w+)\s+(\d{4})/);
     if (!monthMatch) return periodName;
-    
+
     const [, monthName, year] = monthMatch;
-    
+
     // Greek month names mapping for previous month calculation
     const monthNames = [
       'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
       'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
     ];
-    
+
     const currentMonthIndex = monthNames.indexOf(monthName);
     if (currentMonthIndex === -1) return periodName;
-    
+
     // Calculate previous month (usage month) - επιλεγμένος μήνας - 1
     let usageMonthIndex = currentMonthIndex - 1;
     let usageYear = parseInt(year);
-    
+
     if (usageMonthIndex < 0) {
       usageMonthIndex = 11; // December
       usageYear -= 1;
     }
-    
+
     const usageMonthName = monthNames[usageMonthIndex];
-    
+
     // Return format: "Αύγουστος 2025 (Χρήση: Ιούλιος 2025 → Χρέωση: Αύγουστος 2025)"
     return `${usageMonthName} ${usageYear} (Χρήση: ${usageMonthName} ${usageYear} → Χρέωση: ${monthName} ${year})`;
   };
@@ -141,7 +141,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
   // Calculate expense distribution for pie chart
   const expenseDistribution = useMemo(() => {
     const data = [];
-    
+
     if (expenseBreakdown.common > 0) {
       data.push({
         name: 'Κοινόχρηστα',
@@ -150,7 +150,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: Building2
       });
     }
-    
+
     if (expenseBreakdown.elevator > 0) {
       data.push({
         name: 'Ανελκυστήρας',
@@ -159,7 +159,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: ArrowUpDown
       });
     }
-    
+
     if (expenseBreakdown.heating > 0) {
       data.push({
         name: 'Θέρμανση',
@@ -168,7 +168,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: Thermometer
       });
     }
-    
+
     if (expenseBreakdown.other > 0) {
       data.push({
         name: 'Λοιπά Έξοδα',
@@ -177,7 +177,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: Users
       });
     }
-    
+
     if (expenseBreakdown.coownership > 0) {
       data.push({
         name: 'Συνιδιοκτησία',
@@ -186,7 +186,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: Package
       });
     }
-    
+
     if (managementFeeInfo.totalFee > 0) {
       data.push({
         name: 'Διαχείριση',
@@ -195,7 +195,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: Calculator
       });
     }
-    
+
     if (reserveFundInfo.monthlyAmount > 0) {
       data.push({
         name: 'Αποθεματικό',
@@ -204,7 +204,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
         icon: PiggyBank
       });
     }
-    
+
     return data;
   }, [expenseBreakdown, managementFeeInfo, reserveFundInfo]);
 
@@ -214,16 +214,16 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
       const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
       const previousBalance = toNumber(apartmentData?.previous_balance || 0);
       const breakdown = share.breakdown || {};
-      const totalDue = toNumber(breakdown.general_expenses || 0) + 
-                      toNumber(breakdown.elevator_expenses || 0) + 
-                      toNumber(breakdown.heating_expenses || 0) + 
-                      toNumber(breakdown.equal_share_expenses || 0) + 
-                      toNumber(breakdown.individual_expenses || 0) + 
+      const totalDue = toNumber(breakdown.general_expenses || 0) +
+                      toNumber(breakdown.elevator_expenses || 0) +
+                      toNumber(breakdown.heating_expenses || 0) +
+                      toNumber(breakdown.equal_share_expenses || 0) +
+                      toNumber(breakdown.individual_expenses || 0) +
                       toNumber(breakdown.reserve_fund_contribution || 0) +
                       toNumber(managementFeeInfo.feePerApartment || 0);
-      
+
       const status = previousBalance > 0 ? 'overdue' : totalDue > 0 ? 'pending' : 'paid';
-      
+
       return {
         apartment: share.identifier || share.apartment_number,
         owner: share.owner_name || 'Μη καταχωρημένος',
@@ -245,7 +245,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
       totalAmount: apartmentPaymentStatus.reduce((sum, apt) => sum + apt.totalDue, 0),
       overdueAmount: apartmentPaymentStatus.reduce((sum, apt) => sum + (apt.status === 'overdue' ? apt.previousBalance : 0), 0)
     };
-    
+
     return {
       ...stats,
       paidPercentage: stats.total > 0 ? (stats.paid / stats.total) * 100 : 0,
@@ -258,7 +258,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
   const monthlyTrends = useMemo(() => {
     const months = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
     const currentMonth = new Date().getMonth();
-    
+
     return months.map((month, index) => ({
       month,
       expenses: Math.random() * 5000 + 2000, // Mock data
@@ -281,7 +281,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
     const totalManagementFee = managementFeeInfo.totalFee;
     const totalReserveFund = reserveFundInfo.monthlyAmount;
     const totalPreviousBalance = getTotalPreviousBalance();
-    
+
     return totalExpenses + totalManagementFee + totalReserveFund + totalPreviousBalance;
   };
 
@@ -321,7 +321,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
           <h3 className="text-sm font-bold text-gray-800 mb-3 text-center">
             ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
           </h3>
-          
+
           <div className="space-y-2">
             {/* 1. Λειτουργικές Δαπάνες */}
             <div className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
@@ -695,7 +695,7 @@ export const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                     </td>
                     <td className="py-2 text-right font-medium">{formatAmount(apt.totalDue)}€</td>
                     <td className="py-2 text-center">
-                      <Badge 
+                      <Badge
                         variant={apt.status === 'paid' ? 'default' : apt.status === 'pending' ? 'secondary' : 'destructive'}
                         className="text-xs"
                       >

@@ -70,5 +70,3 @@ export default function AdBannerWidget({ data }: BaseWidgetProps) {
     </div>
   );
 }
-
-

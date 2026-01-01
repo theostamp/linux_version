@@ -18,7 +18,7 @@ export default function BuildingStats({ buildings, selectedBuilding }: BuildingS
         <BuildingIcon className="w-5 h-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900">Στατιστικά Όλων των Κτιρίων</h3>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-3">
@@ -66,4 +66,3 @@ export default function BuildingStats({ buildings, selectedBuilding }: BuildingS
     </div>
   );
 }
-

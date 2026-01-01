@@ -26,7 +26,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
   const [participants, setParticipants] = useState<ChatParticipant[]>([]);
   const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map());
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -35,7 +35,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPollingMode = useRef(false);
-  
+
   // Online users tracking
   const [onlineUsers, setOnlineUsers] = useState<Map<number, { name: string; isOnline: boolean }>>(new Map());
 
@@ -44,11 +44,11 @@ export function useChat(buildingId: number | null): UseChatReturn {
    */
   const loadMessages = useCallback(async () => {
     if (!buildingId) return;
-    
+
     try {
       // Πρώτα δημιούργησε ή βρες το chat room για το κτίριο
       let room: ChatRoom | null = null;
-      
+
       try {
         // Δοκίμασε να πάρεις ή να δημιουργήσεις το chat room
         const response = await apiPost<{ chat_room: ChatRoom; created: boolean }>(
@@ -63,31 +63,31 @@ export function useChat(buildingId: number | null): UseChatReturn {
         const roomsList = Array.isArray(rooms) ? rooms : rooms.results || [];
         room = roomsList.find(r => r.building.id === buildingId) || null;
       }
-      
+
       if (!room) {
         console.log('[useChat] Δεν βρέθηκε chat room');
         return;
       }
-      
+
       // Φόρτωσε τα μηνύματα
       const messageData = await apiGet<{ results?: ChatMessage[] } | ChatMessage[]>(
         '/chat/messages/',
         { chat_room: room.id, ordering: '-created_at', page_size: 50 }
       );
-      
-      const loadedMessages = Array.isArray(messageData) 
-        ? messageData 
+
+      const loadedMessages = Array.isArray(messageData)
+        ? messageData
         : messageData.results || [];
-      
+
       // Αντιστροφή για χρονολογική σειρά (παλιότερα πρώτα)
       setMessages(loadedMessages.reverse());
-      
+
       // Φόρτωσε τους συμμετέχοντες
       const participantsData = await apiGet<{ participants: ChatParticipant[] }>(
         `/chat/rooms/${room.id}/participants/`
       );
       setParticipants(participantsData.participants || []);
-      
+
       // Φόρτωσε τις ειδοποιήσεις
       try {
         const notifications = await apiGet<{ unread_count: number }>(
@@ -108,18 +108,18 @@ export function useChat(buildingId: number | null): UseChatReturn {
    */
   const connect = useCallback(() => {
     if (!buildingId || wsRef.current?.readyState === WebSocket.OPEN) return;
-    
+
     setIsConnecting(true);
     setError(null);
-    
+
     try {
       // Get WebSocket URL from environment or use Railway backend directly
       // Note: Vercel doesn't support WebSocket, so we connect directly to Railway backend
       let wsUrl: string;
-      
+
       if (typeof window !== 'undefined') {
         const backendWsUrl = process.env.NEXT_PUBLIC_BACKEND_WS_URL;
-        
+
         if (backendWsUrl) {
           // Use explicit WebSocket URL from environment
           wsUrl = `${backendWsUrl}/ws/chat/${buildingId}/`;
@@ -133,10 +133,10 @@ export function useChat(buildingId: number | null): UseChatReturn {
           setIsConnecting(false);
           setIsConnected(true); // Consider "connected" for UI purposes
           isPollingMode.current = true;
-          
+
           // Load messages via REST API
           loadMessages();
-          
+
           // Start polling every 5 seconds
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
@@ -144,7 +144,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
           pollingIntervalRef.current = setInterval(() => {
             loadMessages();
           }, 5000);
-          
+
           // Start heartbeat interval for REST mode (every 20 seconds)
           if (heartbeatIntervalRef.current) {
             clearInterval(heartbeatIntervalRef.current);
@@ -156,16 +156,16 @@ export function useChat(buildingId: number | null): UseChatReturn {
               console.log('[useChat] Heartbeat failed:', err);
             }
           }, 20000);
-          
+
           // Send initial heartbeat
           apiPost('/chat/online/heartbeat/', {}).catch(() => {});
-          
+
           return;
         }
       } else {
         wsUrl = `ws://localhost:18000/ws/chat/${buildingId}/`;
       }
-      
+
       const token = localStorage.getItem('access_token') || localStorage.getItem('access');
       if (!token) {
         console.log('[useChat] No JWT token found, falling back to REST API polling.');
@@ -203,20 +203,20 @@ export function useChat(buildingId: number | null): UseChatReturn {
       const wsUrlWithAuth = `${wsUrl}?${params.toString()}`;
 
       console.log('[useChat] Σύνδεση στο WebSocket:', wsUrlWithAuth);
-      
+
       const ws = new WebSocket(wsUrlWithAuth);
       wsRef.current = ws;
-      
+
       ws.onopen = () => {
         console.log('[useChat] WebSocket συνδέθηκε');
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
         reconnectAttemptsRef.current = 0;
-        
+
         // Φόρτωσε τα υπάρχοντα μηνύματα
         loadMessages();
-        
+
         // Start heartbeat interval (every 20 seconds)
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
@@ -227,12 +227,12 @@ export function useChat(buildingId: number | null): UseChatReturn {
           }
         }, 20000);
       };
-      
+
       ws.onmessage = (event) => {
         try {
           const data: WebSocketIncomingMessage = JSON.parse(event.data);
           console.log('[useChat] WebSocket μήνυμα:', data.type);
-          
+
           switch (data.type) {
             case 'chat_message':
               const newMessage: ChatMessage = {
@@ -254,7 +254,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
               };
               setMessages(prev => [...prev, newMessage]);
               setUnreadCount(prev => prev + 1);
-              
+
               // Remove typing indicator for this user
               if (data.sender_id) {
                 setTypingUsers(prev => {
@@ -264,16 +264,16 @@ export function useChat(buildingId: number | null): UseChatReturn {
                 });
               }
               break;
-              
+
             case 'user_join':
               // Ενημέρωση λίστας συμμετεχόντων
               console.log('[useChat] Χρήστης εισήλθε:', data.user_name);
               break;
-              
+
             case 'user_leave':
               console.log('[useChat] Χρήστης αποχώρησε:', data.user_name);
               break;
-              
+
             case 'typing_indicator':
               if (data.user_id && data.user_name) {
                 if (data.is_typing) {
@@ -282,11 +282,11 @@ export function useChat(buildingId: number | null): UseChatReturn {
                     newMap.set(data.user_id!, data.user_name!);
                     return newMap;
                   });
-                  
+
                   // Clear existing timeout
                   const existingTimeout = typingTimeoutRef.current.get(data.user_id);
                   if (existingTimeout) clearTimeout(existingTimeout);
-                  
+
                   // Auto-remove typing indicator after 3 seconds
                   const timeout = setTimeout(() => {
                     setTypingUsers(prev => {
@@ -305,45 +305,45 @@ export function useChat(buildingId: number | null): UseChatReturn {
                 }
               }
               break;
-              
+
             case 'read_receipt':
               // Ενημέρωση αν ο χρήστης διάβασε τα μηνύματα
               console.log('[useChat] Απόδειξη ανάγνωσης από:', data.user_name);
               break;
-              
+
             case 'message_reaction':
               // Ενημέρωση reactions σε μήνυμα
               if (data.message_id && data.reactions) {
-                setMessages(prev => prev.map(msg => 
-                  msg.id === data.message_id 
+                setMessages(prev => prev.map(msg =>
+                  msg.id === data.message_id
                     ? { ...msg, reactions: data.reactions as MessageReaction[] }
                     : msg
                 ));
               }
               break;
-              
+
             case 'message_edited':
               // Ενημέρωση περιεχομένου μηνύματος
               if (data.message_id) {
-                setMessages(prev => prev.map(msg => 
-                  msg.id === data.message_id 
+                setMessages(prev => prev.map(msg =>
+                  msg.id === data.message_id
                     ? { ...msg, content: data.content!, is_edited: true, edited_at: data.edited_at }
                     : msg
                 ));
               }
               break;
-              
+
             case 'message_deleted':
               // Σήμανση μηνύματος ως διαγραμμένο
               if (data.message_id) {
-                setMessages(prev => prev.map(msg => 
-                  msg.id === data.message_id 
+                setMessages(prev => prev.map(msg =>
+                  msg.id === data.message_id
                     ? { ...msg, is_deleted: true, deleted_at: data.deleted_at }
                     : msg
                 ));
               }
               break;
-              
+
             case 'presence_update':
               // Ενημέρωση online status χρήστη
               if (data.user_id) {
@@ -356,14 +356,14 @@ export function useChat(buildingId: number | null): UseChatReturn {
                   return newMap;
                 });
                 // Ενημέρωση και του participants list
-                setParticipants(prev => prev.map(p => 
+                setParticipants(prev => prev.map(p =>
                   p.user?.id === data.user_id
                     ? { ...p, is_online: data.is_typing !== false }
                     : p
                 ));
               }
               break;
-              
+
             case 'heartbeat_ack':
               // Heartbeat acknowledged - connection is healthy
               console.log('[useChat] Heartbeat acknowledged');
@@ -373,23 +373,23 @@ export function useChat(buildingId: number | null): UseChatReturn {
           console.error('[useChat] Σφάλμα ανάλυσης μηνύματος:', err);
         }
       };
-      
+
       ws.onerror = (event) => {
         console.error('[useChat] WebSocket σφάλμα:', event);
         setError('Σφάλμα σύνδεσης στο chat');
       };
-      
+
       ws.onclose = (event) => {
         console.log('[useChat] WebSocket αποσυνδέθηκε:', event.code, event.reason);
         setIsConnected(false);
         setIsConnecting(false);
         wsRef.current = null;
-        
+
         // Attempt reconnection with exponential backoff
         if (reconnectAttemptsRef.current < maxReconnectAttempts && event.code !== 1000) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
           console.log(`[useChat] Επανασύνδεση σε ${delay}ms (απόπειρα ${reconnectAttemptsRef.current + 1})`);
-          
+
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectAttemptsRef.current++;
             connect();
@@ -411,35 +411,35 @@ export function useChat(buildingId: number | null): UseChatReturn {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    
+
     // Clear polling interval
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    
+
     // Clear heartbeat interval
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current);
       heartbeatIntervalRef.current = null;
     }
-    
+
     // Send go offline signal (fire and forget)
     if (isPollingMode.current) {
       apiPost('/chat/online/go_offline/', {}).catch(() => {});
     }
-    
+
     isPollingMode.current = false;
-    
+
     if (wsRef.current) {
       wsRef.current.close(1000, 'User disconnected');
       wsRef.current = null;
     }
-    
+
     setIsConnected(false);
     setIsConnecting(false);
     setOnlineUsers(new Map());
-    
+
     // Clear typing timeouts
     typingTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
     typingTimeoutRef.current.clear();
@@ -450,7 +450,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
    */
   const sendMessage = useCallback((content: string, messageType: ChatMessageType = 'text', replyToId?: number) => {
     if (!content.trim()) return;
-    
+
     // In polling mode or when WebSocket is not open, use REST API
     if (isPollingMode.current || wsRef.current?.readyState !== WebSocket.OPEN) {
       // Send via REST API
@@ -461,7 +461,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
           const response = await apiPost<{ chat_room: ChatRoom }>('/chat/rooms/get_or_create_for_building/', {
             building_id: buildingId,
           });
-          
+
           if (response.chat_room) {
             await apiPost('/chat/messages/', {
               chat_room: response.chat_room.id,
@@ -519,7 +519,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
    */
   const editMessage = useCallback((messageId: number, newContent: string) => {
     if (!newContent.trim()) return;
-    
+
     if (isPollingMode.current || wsRef.current?.readyState !== WebSocket.OPEN) {
       // Use REST API
       (async () => {
@@ -591,7 +591,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
       };
       wsRef.current.send(JSON.stringify(outgoingMessage));
     }
-    
+
     // Reset local unread count
     setUnreadCount(0);
   }, []);
@@ -601,7 +601,7 @@ export function useChat(buildingId: number | null): UseChatReturn {
     if (buildingId) {
       connect();
     }
-    
+
     return () => {
       disconnect();
     };
@@ -639,12 +639,12 @@ export function useChatRooms() {
   const loadRooms = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<ChatRoom[] | { results: ChatRoom[] }>('/chat/rooms/');
       const roomsList = Array.isArray(data) ? data : data.results || [];
       setRooms(roomsList);
-      
+
       // Calculate total unread
       const total = roomsList.reduce((sum, room) => sum + (room.unread_count || 0), 0);
       setTotalUnread(total);
@@ -691,7 +691,7 @@ export function useChatUnreadCount() {
 
   useEffect(() => {
     loadUnreadCount();
-    
+
     // Poll every 30 seconds
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
@@ -726,10 +726,10 @@ export function useBuildingUsers(buildingId: number | null) {
 
   const loadUsers = useCallback(async () => {
     if (!buildingId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<BuildingUsersResponse>(
         '/chat/online/building_users/',
@@ -748,7 +748,7 @@ export function useBuildingUsers(buildingId: number | null) {
 
   useEffect(() => {
     loadUsers();
-    
+
     // Poll every 10 seconds for online status updates (more frequent for real-time feel)
     const interval = setInterval(loadUsers, 10000);
     return () => clearInterval(interval);
@@ -778,14 +778,14 @@ export function useDirectConversations() {
   const loadConversations = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<DirectConversation[] | { results: DirectConversation[] }>(
         '/chat/direct/'
       );
       const convList = Array.isArray(data) ? data : data.results || [];
       setConversations(convList);
-      
+
       // Calculate total unread
       const unread = convList.reduce((sum, c) => sum + (c.unread_count || 0), 0);
       setTotalUnread(unread);
@@ -800,7 +800,7 @@ export function useDirectConversations() {
 
   useEffect(() => {
     loadConversations();
-    
+
     // Poll every 10 seconds for new messages
     const interval = setInterval(loadConversations, 10000);
     return () => clearInterval(interval);
@@ -812,10 +812,10 @@ export function useDirectConversations() {
         '/chat/direct/start_conversation/',
         payload
       );
-      
+
       // Refresh conversations list
       loadConversations();
-      
+
       return response;
     } catch (err) {
       console.error('[useDirectConversations] Σφάλμα έναρξης συνομιλίας:', err);
@@ -844,10 +844,10 @@ export function useDirectChat(conversationId: number | null) {
 
   const loadMessages = useCallback(async () => {
     if (!conversationId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<{ messages: DirectMessage[]; total: number }>(
         `/chat/direct/${conversationId}/messages/`,
@@ -865,7 +865,7 @@ export function useDirectChat(conversationId: number | null) {
 
   useEffect(() => {
     loadMessages();
-    
+
     // Poll every 5 seconds for new messages
     const interval = setInterval(loadMessages, 5000);
     return () => clearInterval(interval);
@@ -873,19 +873,19 @@ export function useDirectChat(conversationId: number | null) {
 
   const sendMessage = useCallback(async (payload: SendDirectMessagePayload) => {
     if (!conversationId) return;
-    
+
     setIsSending(true);
     setError(null);
-    
+
     try {
       const newMessage = await apiPost<DirectMessage>(
         `/chat/direct/${conversationId}/send_message/`,
         payload
       );
-      
+
       // Add message to list immediately
       setMessages(prev => [...prev, newMessage]);
-      
+
       return newMessage;
     } catch (err) {
       console.error('[useDirectChat] Σφάλμα αποστολής:', err);
@@ -898,7 +898,7 @@ export function useDirectChat(conversationId: number | null) {
 
   const markAsRead = useCallback(async () => {
     if (!conversationId) return;
-    
+
     try {
       await apiPost(`/chat/direct/${conversationId}/mark_as_read/`, {});
     } catch (err) {
@@ -938,7 +938,7 @@ export function useDirectMessagesUnreadCount() {
 
   useEffect(() => {
     loadUnreadCount();
-    
+
     // Poll every 30 seconds
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
@@ -946,4 +946,3 @@ export function useDirectMessagesUnreadCount() {
 
   return { unreadCount, isLoading, refetch: loadUnreadCount };
 }
-

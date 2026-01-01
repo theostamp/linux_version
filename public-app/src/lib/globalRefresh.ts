@@ -1,6 +1,6 @@
 /**
  * Global Refresh System
- * 
+ *
  * Provides centralized control for refreshing all data across the app.
  * Use this to trigger refreshes after mutations, window focus, or manual user actions.
  */
@@ -30,10 +30,10 @@ export async function refreshFinancialData() {
   }
 
   console.log('[Global Refresh] Refreshing financial data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/financial\//);
-  
+
   await Promise.all([
     globalQueryClient.invalidateQueries({ queryKey: ['financial'] }),
     globalQueryClient.invalidateQueries({ queryKey: ['expenses'] }),
@@ -63,10 +63,10 @@ export async function refreshBuildingData() {
   }
 
   console.log('[Global Refresh] Refreshing building data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/(buildings|apartments)\//);
-  
+
   await globalQueryClient.invalidateQueries({ queryKey: ['buildings'] });
   await globalQueryClient.invalidateQueries({ queryKey: ['apartments'] });
   await globalQueryClient.refetchQueries({ queryKey: ['buildings'] });
@@ -85,10 +85,10 @@ export async function refreshProjectsData() {
   }
 
   console.log('[Global Refresh] Refreshing projects data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/(projects|offers)\//);
-  
+
   await globalQueryClient.invalidateQueries({ queryKey: ['projects'] });
   await globalQueryClient.invalidateQueries({ queryKey: ['offers'] });
   await globalQueryClient.refetchQueries({ queryKey: ['projects'] });
@@ -107,10 +107,10 @@ export async function refreshAnnouncementsData() {
   }
 
   console.log('[Global Refresh] Refreshing announcements data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/announcements\//);
-  
+
   await globalQueryClient.invalidateQueries({ queryKey: ['announcements'] });
   await globalQueryClient.refetchQueries({ queryKey: ['announcements'] });
 
@@ -127,10 +127,10 @@ export async function refreshRequestsData() {
   }
 
   console.log('[Global Refresh] Refreshing requests data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/user-requests\//);
-  
+
   await globalQueryClient.invalidateQueries({ queryKey: ['requests'] });
   await globalQueryClient.refetchQueries({ queryKey: ['requests'] });
 
@@ -147,10 +147,10 @@ export async function refreshVotesData() {
   }
 
   console.log('[Global Refresh] Refreshing votes data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/votes\//);
-  
+
   await globalQueryClient.invalidateQueries({ queryKey: ['votes'] });
   await globalQueryClient.refetchQueries({ queryKey: ['votes'] });
 
@@ -167,10 +167,10 @@ export async function refreshCommunityData() {
   }
 
   console.log('[Global Refresh] Refreshing community data...');
-  
+
   // ✅ Clear API cache BEFORE invalidating React Query cache
   invalidateApiCache(/\/(announcements|user-requests|votes)\//);
-  
+
   await Promise.all([
     globalQueryClient.invalidateQueries({ queryKey: ['announcements'] }),
     globalQueryClient.invalidateQueries({ queryKey: ['requests'] }),
@@ -196,13 +196,13 @@ export async function refreshAllData() {
   }
 
   console.log('[Global Refresh] Refreshing ALL data...');
-  
+
   // ✅ Clear ALL API cache BEFORE invalidating React Query cache
   invalidateApiCache(); // No pattern = clear everything
-  
+
   // Invalidate everything
   await globalQueryClient.invalidateQueries();
-  
+
   // Refetch all active queries
   await globalQueryClient.refetchQueries({ type: 'active' });
 
@@ -227,7 +227,7 @@ export function setupVisibilityRefresh() {
     } else if (wasHidden) {
       const timeAway = Date.now() - hiddenTime;
       console.log(`[Global Refresh] Tab visible again after ${Math.round(timeAway / 1000)}s`);
-      
+
       // If user was away for more than 30 seconds, refresh all data
       if (timeAway > 30000) {
         console.log('[Global Refresh] Long absence detected, refreshing all data');
@@ -236,13 +236,13 @@ export function setupVisibilityRefresh() {
         // Short absence, just refresh financial data (most likely to change)
         await refreshFinancialData();
       }
-      
+
       wasHidden = false;
     }
   };
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  
+
   return () => {
     document.removeEventListener('visibilitychange', handleVisibilityChange);
   };
@@ -261,7 +261,7 @@ export function setupNetworkRefresh() {
   };
 
   window.addEventListener('online', handleOnline);
-  
+
   return () => {
     window.removeEventListener('online', handleOnline);
   };
@@ -275,13 +275,13 @@ export function setupCustomRefreshEvent() {
   if (typeof window === 'undefined') return;
 
   const handleCustomRefresh = async (event: Event) => {
-    const customEvent = event as CustomEvent<{ 
-      scope?: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community' 
+    const customEvent = event as CustomEvent<{
+      scope?: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community'
     }>;
     const scope = customEvent.detail?.scope || 'all';
-    
+
     console.log(`[Global Refresh] Custom refresh triggered (scope: ${scope})`);
-    
+
     switch (scope) {
       case 'financial':
         await refreshFinancialData();
@@ -312,7 +312,7 @@ export function setupCustomRefreshEvent() {
   };
 
   window.addEventListener('app:refresh', handleCustomRefresh);
-  
+
   return () => {
     window.removeEventListener('app:refresh', handleCustomRefresh);
   };
@@ -324,7 +324,7 @@ export function setupCustomRefreshEvent() {
  */
 export function initializeGlobalRefresh() {
   console.log('[Global Refresh] Initializing global refresh system');
-  
+
   const cleanupFns = [
     setupVisibilityRefresh(),
     setupNetworkRefresh(),
@@ -346,7 +346,6 @@ export function triggerRefresh(
   scope: 'all' | 'financial' | 'buildings' | 'projects' | 'announcements' | 'requests' | 'votes' | 'community' = 'all'
 ) {
   if (typeof window === 'undefined') return;
-  
+
   window.dispatchEvent(new CustomEvent('app:refresh', { detail: { scope } }));
 }
-

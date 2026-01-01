@@ -60,7 +60,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
   // Δημιουργία λίστας επαφών από τα διαμερίσματα (ιδιοκτήτες + ένοικοι με email)
   const apartmentContacts = useMemo((): ApartmentContact[] => {
     const contacts: ApartmentContact[] = [];
-    
+
     apartments.forEach((apt) => {
       // Προσθήκη ιδιοκτήτη αν έχει email
       if (apt.owner_email && apt.owner_email.trim()) {
@@ -72,7 +72,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
           email: apt.owner_email.trim(),
         });
       }
-      
+
       // Προσθήκη ενοίκου αν έχει email (και είναι διαφορετικό από τον ιδιοκτήτη)
       if (apt.tenant_email && apt.tenant_email.trim() && apt.tenant_email !== apt.owner_email) {
         contacts.push({
@@ -84,7 +84,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
         });
       }
     });
-    
+
     // Ταξινόμηση κατά αριθμό διαμερίσματος
     return contacts.sort((a, b) => a.apartmentNumber.localeCompare(b.apartmentNumber, 'el', { numeric: true }));
   }, [apartments]);
@@ -119,7 +119,7 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
   // Όταν αλλάζει η επιλογή διαμερίσματος, ενημέρωσε το email, το όνομα και το apartment_id
   const handleApartmentContactChange = (value: string) => {
     setSelectedApartmentContact(value);
-    
+
     if (value === 'manual') {
       // Χειροκίνητη εισαγωγή - καθαρισμός
       setEmail('');
@@ -128,14 +128,14 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       setSelectedApartmentId(null);
       return;
     }
-    
+
     // Βρες την επαφή από το value (format: "apartmentId-type")
     const [apartmentIdStr, type] = value.split('-');
     const apartmentId = parseInt(apartmentIdStr, 10);
     const contact = apartmentContacts.find(
       c => c.apartmentId === apartmentId && c.type === type
     );
-    
+
     if (contact) {
       setEmail(contact.email);
       setSelectedApartmentId(contact.apartmentId);
@@ -181,12 +181,12 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       };
 
       await createInvitation(payload);
-      
+
       // Invalidate invitations query
       await queryClient.invalidateQueries({ queryKey: ['invitations'] });
-      
+
       toast.success('Η πρόσκληση στάλθηκε επιτυχώς');
-      
+
       // Reset form
       setEmail('');
       setFirstName('');
@@ -195,26 +195,26 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
       setSelectedApartmentId(null);
       setSelectedApartmentContact('manual');
       setAssignedRole('resident');
-      
+
       // Close modal
       onOpenChange(false);
     } catch (err) {
       // Handle various error formats from the API
-      const error = err as { 
-        response?: { data?: Record<string, string | string[]> }; 
+      const error = err as {
+        response?: { data?: Record<string, string | string[]> };
         message?: string;
         email?: string[];
         detail?: string;
       };
-      
+
       let errorMessage = 'Αποτυχία αποστολής πρόσκλησης';
-      
+
       // Check for field-level validation errors (e.g., { email: ["error message"] })
       const errorData = error?.response?.data || error;
       if (errorData) {
         if (typeof errorData === 'object') {
           // Handle field validation errors like { email: ["Χρήστης με αυτό το email υπάρχει ήδη."] }
-          const firstKey = Object.keys(errorData).find(key => 
+          const firstKey = Object.keys(errorData).find(key =>
             key !== 'response' && key !== 'message' && errorData[key]
           );
           if (firstKey) {
@@ -227,12 +227,12 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
           }
         }
       }
-      
+
       // Fallback to generic message
       if (errorMessage === 'Αποτυχία αποστολής πρόσκλησης' && error?.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -279,8 +279,8 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
                           Διαμερίσματα με email
                         </div>
                         {apartmentContacts.map((contact) => (
-                          <SelectItem 
-                            key={`${contact.apartmentId}-${contact.type}`} 
+                          <SelectItem
+                            key={`${contact.apartmentId}-${contact.type}`}
                             value={`${contact.apartmentId}-${contact.type}`}
                           >
                             <span className="flex items-center gap-2">
@@ -472,4 +472,3 @@ export default function InviteUserModal({ open, onOpenChange, defaultBuildingId,
     </Dialog>
   );
 }
-

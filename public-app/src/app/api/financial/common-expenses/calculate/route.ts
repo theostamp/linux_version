@@ -22,4 +22,3 @@ const { POST, OPTIONS } = exportHandlers(handlers, methods, "financial-common-ex
 console.log("[ROUTE HANDLER] calculate handlers exported:", { POST: !!POST, OPTIONS: !!OPTIONS });
 
 export { POST, OPTIONS };
-

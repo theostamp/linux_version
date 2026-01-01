@@ -61,7 +61,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <div className="text-sm text-gray-700">
         Εμφανίζονται {startItem}-{endItem} από {totalItems} {itemLabel}
       </div>
-      
+
       <div className="flex items-center space-x-1">
         <Button
           variant="outline"

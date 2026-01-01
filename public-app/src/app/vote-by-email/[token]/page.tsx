@@ -183,7 +183,7 @@ export default function VoteByEmailPage() {
   if (data?.all_voted || submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-900 flex items-center justify-center p-4">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl"
@@ -196,13 +196,13 @@ export default function VoteByEmailPage() {
           >
             <CheckCircle className="w-10 h-10 text-emerald-600" />
           </motion.div>
-          
+
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {submitted ? 'Ευχαριστούμε για τη ψήφο σας!' : 'Έχετε ήδη ψηφίσει'}
           </h1>
-          
+
           <p className="text-gray-600 mb-4">
-            {submitted 
+            {submitted
               ? `Καταχωρήθηκαν ${submittedCount} ψήφοι επιτυχώς.`
               : 'Έχετε ολοκληρώσει την ηλεκτρονική ψηφοφορία για αυτή τη συνέλευση.'}
           </p>
@@ -261,7 +261,7 @@ export default function VoteByEmailPage() {
             </div>
             <p className="text-white font-medium">{formatDate(data.assembly.scheduled_date)}</p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
             <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
               <Home className="w-4 h-4" />
@@ -386,8 +386,8 @@ export default function VoteByEmailPage() {
             <Shield className="w-5 h-5 text-white/60 mt-0.5" />
             <div className="text-sm text-white/60">
               <p>
-                Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα χιλιοστά του 
-                διαμερίσματός σας ({data.attendee.mills}). Σε περίπτωση φυσικής παρουσίας 
+                Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα χιλιοστά του
+                διαμερίσματός σας ({data.attendee.mills}). Σε περίπτωση φυσικής παρουσίας
                 στη συνέλευση, θα έχετε τη δυνατότητα να αλλάξετε την ψήφο σας.
               </p>
             </div>

@@ -21,4 +21,3 @@ export const BulkImportWizard: React.FC = () => {
     </Card>
   );
 };
-

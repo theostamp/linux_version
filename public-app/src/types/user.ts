@@ -43,7 +43,7 @@ export type User = {
   office_phone_emergency?: string; // Τηλέφωνο ανάγκης
   office_address?: string;
   office_logo?: string; // URL to the office logo image
-  
+
   // Bank Account Details
   office_bank_name?: string;
   office_bank_account?: string;

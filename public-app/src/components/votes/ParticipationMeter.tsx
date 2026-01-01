@@ -23,7 +23,7 @@ export default function ParticipationMeter({
 }: ParticipationMeterProps) {
   const isValid = percentage >= minRequired;
   const remaining = minRequired > 0 ? Math.max(0, minRequired - percentage) : 0;
-  
+
   // Calculate color based on percentage
   const getColor = () => {
     if (percentage >= minRequired && minRequired > 0) return 'emerald';
@@ -31,7 +31,7 @@ export default function ParticipationMeter({
     if (percentage >= minRequired * 0.5) return 'orange';
     return 'rose';
   };
-  
+
   const color = minRequired > 0 ? getColor() : 'blue';
 
   const colorClasses = {
@@ -135,7 +135,7 @@ export default function ParticipationMeter({
         >
           {percentage.toFixed(1)}%
         </motion.div>
-        
+
         {minRequired > 0 && (
           <div className="flex items-center gap-1 text-gray-500 mb-2">
             <Target className="w-4 h-4" />
@@ -150,14 +150,14 @@ export default function ParticipationMeter({
       <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
         {/* Minimum required marker */}
         {minRequired > 0 && (
-          <div 
+          <div
             className="absolute top-0 bottom-0 w-0.5 bg-gray-600 z-10"
             style={{ left: `${Math.min(minRequired, 100)}%` }}
           >
             <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-600 rounded-full" />
           </div>
         )}
-        
+
         {/* Progress fill */}
         <motion.div
           initial={{ width: 0 }}
@@ -171,9 +171,9 @@ export default function ParticipationMeter({
           {/* Animated shine effect */}
           <motion.div
             animate={{ x: ['0%', '100%'] }}
-            transition={{ 
-              duration: 2, 
-              repeat: Infinity, 
+            transition={{
+              duration: 2,
+              repeat: Infinity,
               repeatDelay: 3,
               ease: 'easeInOut'
             }}
@@ -215,4 +215,3 @@ export default function ParticipationMeter({
     </div>
   );
 }
-

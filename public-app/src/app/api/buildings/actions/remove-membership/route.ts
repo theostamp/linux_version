@@ -20,4 +20,3 @@ const handlers = createTenantProxyHandlers(
 const { POST, OPTIONS } = exportHandlers(handlers, methods, "buildings/actions/remove-membership");
 
 export { POST, OPTIONS };
-

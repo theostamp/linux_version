@@ -64,9 +64,9 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
           const logoUrl = getOfficeLogoUrl(building?.office_logo);
           return logoUrl && !logoError ? (
             <div className="w-20 h-20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden bg-white/10">
-              <img 
+              <img
                 src={logoUrl}
-                alt="Office Logo" 
+                alt="Office Logo"
                 className="w-full h-full object-contain"
                 onLoad={() => setLogoError(false)}
                 onError={() => setLogoError(true)}
@@ -78,7 +78,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
             </div>
           );
         })()}
-        
+
         {/* Management Office Details */}
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-3">
@@ -87,7 +87,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
               {building?.management_office_name || 'Γραφείο Διαχείρισης'}
             </h3>
           </div>
-          
+
           {building?.management_office_address && (
             <div className="flex items-center space-x-3">
               <MapPin className="w-3 h-3 text-blue-300" />
@@ -96,11 +96,11 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
               </span>
             </div>
           )}
-          
+
           {building?.management_office_phone && (
             <div className="flex items-center space-x-3">
               <Phone className="w-3 h-3 text-blue-300" />
-              <a 
+              <a
                 href={`tel:${building.management_office_phone}`}
                 className="text-xs text-blue-200 hover:text-blue-100 transition-colors font-semibold"
               >

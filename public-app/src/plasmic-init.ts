@@ -22,5 +22,3 @@ export const PLASMIC =
         preview: process.env.NODE_ENV !== "production",
       })
     : null;
-
-

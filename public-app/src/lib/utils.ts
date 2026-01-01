@@ -33,7 +33,7 @@ export function safeFormatDate(
   if (!isValidDate(dateString)) {
     return 'N/A';
   }
-  
+
   try {
     return format(new Date(dateString!), formatString, options);
   } catch (error) {
@@ -51,13 +51,13 @@ export function formatAmount(amount: number | string | null | undefined): string
   if (amount === null || amount === undefined) {
     return '0,00';
   }
-  
+
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
+
   if (isNaN(numAmount)) {
     return '0,00';
   }
-  
+
   return numAmount.toFixed(2).replace('.', ',');
 }
 
@@ -71,13 +71,13 @@ export function formatCurrency(amount: number | string | null | undefined, local
   if (amount === null || amount === undefined) {
     return '€0,00';
   }
-  
+
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
+
   if (isNaN(numAmount)) {
     return '€0,00';
   }
-  
+
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
@@ -100,13 +100,13 @@ export function roundToCents(amount: number | string | null | undefined): number
   if (amount === null || amount === undefined) {
     return 0;
   }
-  
+
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
+
   if (isNaN(numAmount)) {
     return 0;
   }
-  
+
   // Use Number.EPSILON to handle floating-point precision issues
   return Math.round((numAmount + Number.EPSILON) * 100) / 100;
 }
@@ -175,15 +175,15 @@ export function parseAmount(value: number | string | null | undefined): number {
  */
 export function getOfficeLogoUrl(logoPath: string | null | undefined): string | null {
   if (!logoPath) return null;
-  
+
   // If it's already a full URL (http/https), return as is
   if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
     return logoPath;
   }
-  
+
   // Normalize the path - remove leading /media/ if present and add /api/media/
   let normalizedPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
-  
+
   // If path starts with /media/, replace with /api/media/ to use our proxy
   if (normalizedPath.startsWith('/media/')) {
     normalizedPath = normalizedPath.replace('/media/', '/api/media/');
@@ -191,7 +191,7 @@ export function getOfficeLogoUrl(logoPath: string | null | undefined): string | 
     // If it doesn't start with /media/ or /api/media/, assume it's a relative path from media root
     normalizedPath = `/api/media/${normalizedPath.replace(/^\//, '')}`;
   }
-  
+
   // Construct the full URL
   if (typeof window !== 'undefined') {
     // In browser: use current origin
@@ -203,4 +203,3 @@ export function getOfficeLogoUrl(logoPath: string | null | undefined): string | 
     return baseUrl ? `${baseUrl}${normalizedPath}` : normalizedPath;
   }
 }
-

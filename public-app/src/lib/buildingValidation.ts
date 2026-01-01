@@ -1,6 +1,6 @@
 /**
  * Building Validation Helpers
- * 
+ *
  * Utility functions για validation του building context και permissions.
  * Χρησιμοποιείται σε components για να ελέγχουν αν ο user έχει τα απαραίτητα
  * permissions για μια συγκεκριμένη ενέργεια.
@@ -27,7 +27,7 @@ export type BuildingAction = 'view' | 'edit' | 'delete' | 'manage_financials';
 
 /**
  * Validates αν ο user έχει access στο building για συγκεκριμένη action.
- * 
+ *
  * @param building - To building (μπορεί να είναι null)
  * @param action - Η action που θέλει να κάνει ο user
  * @param permissions - Τα permissions του user (optional)
@@ -62,7 +62,7 @@ export const validateBuildingAccess = (
           );
         }
         break;
-        
+
       case 'delete':
         if (!permissions.can_delete) {
           throw new BuildingValidationError(
@@ -70,7 +70,7 @@ export const validateBuildingAccess = (
           );
         }
         break;
-        
+
       case 'manage_financials':
         if (!permissions.can_manage_financials) {
           throw new BuildingValidationError(
@@ -78,7 +78,7 @@ export const validateBuildingAccess = (
           );
         }
         break;
-        
+
       case 'view':
         if (!permissions.can_view) {
           throw new BuildingValidationError(
@@ -93,7 +93,7 @@ export const validateBuildingAccess = (
 /**
  * Safe version που επιστρέφει boolean αντί να κάνει throw.
  * Χρήσιμο για conditional rendering.
- * 
+ *
  * @param building - To building
  * @param action - Η action
  * @param permissions - Τα permissions
@@ -114,7 +114,7 @@ export const checkBuildingAccess = (
 
 /**
  * Validates building access και δείχνει toast αν αποτύχει.
- * 
+ *
  * @param building - To building
  * @param action - Η action
  * @param permissions - Τα permissions
@@ -139,16 +139,16 @@ export const validateBuildingAccessWithToast = (
 /**
  * React hook για building validation.
  * Provides helpers που αυτόματα χρησιμοποιούν το τρέχον building context.
- * 
+ *
  * Usage:
  * ```tsx
  * const { validateAction, checkAction } = useBuildingValidation();
- * 
+ *
  * const handleEdit = () => {
  *   if (!validateAction('edit')) return;
  *   // Proceed with edit
  * };
- * 
+ *
  * return (
  *   <>
  *     {checkAction('edit') && (
@@ -161,7 +161,7 @@ export const validateBuildingAccessWithToast = (
 export const useBuildingValidation = () => {
   // This will be used in components with useBuilding() hook
   // Placeholder implementation - components will import useBuilding separately
-  
+
   const validateAction = (
     action: BuildingAction,
     building: Building | null,
@@ -169,7 +169,7 @@ export const useBuildingValidation = () => {
   ): boolean => {
     return validateBuildingAccessWithToast(building, action, permissions);
   };
-  
+
   const checkAction = (
     action: BuildingAction,
     building: Building | null,
@@ -177,10 +177,9 @@ export const useBuildingValidation = () => {
   ): boolean => {
     return checkBuildingAccess(building, action, permissions);
   };
-  
+
   return {
     validateAction,
     checkAction,
   };
 };
-

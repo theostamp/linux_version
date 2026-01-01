@@ -11,8 +11,8 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   // Filter announcements to exclude assembly-related ones (since they're in left sidebar)
-  const filteredAnnouncements = (data?.announcements || []).filter((ann: any) => 
-    !ann.title?.toLowerCase().includes('συνέλευση') && 
+  const filteredAnnouncements = (data?.announcements || []).filter((ann: any) =>
+    !ann.title?.toLowerCase().includes('συνέλευση') &&
     !ann.title?.toLowerCase().includes('σύγκληση')
   );
 
@@ -112,7 +112,7 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
   const IconComponent = currentItem.icon;
 
   return (
-    <div 
+    <div
       className="h-full flex flex-col"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -125,19 +125,19 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
             {currentItem.type === 'announcement' ? 'Ανακοίνωση' : 'Ψηφοφορία'}
           </h3>
         </div>
-        
+
         {/* Navigation indicators */}
         {carouselItems.length > 1 && (
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setCurrentIndex((prev) => 
+              onClick={() => setCurrentIndex((prev) =>
                 prev === 0 ? carouselItems.length - 1 : prev - 1
               )}
               className="p-1 rounded-full hover:bg-white/10 transition-colors"
             >
               <ChevronLeft className="w-4 h-4 text-blue-300" />
             </button>
-            
+
             {/* Dots indicator */}
             <div className="flex space-x-1">
               {carouselItems.map((_, index) => (
@@ -145,14 +145,14 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
                   key={index}
                   onClick={() => setCurrentIndex(index)}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentIndex 
-                      ? 'bg-blue-400' 
+                    index === currentIndex
+                      ? 'bg-blue-400'
                       : 'bg-blue-600/50 hover:bg-blue-500/70'
                   }`}
                 />
               ))}
             </div>
-            
+
             <button
               onClick={() => setCurrentIndex((prev) => (prev + 1) % carouselItems.length)}
               className="p-1 rounded-full hover:bg-white/10 transition-colors"
@@ -183,9 +183,9 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
       {/* Progress bar */}
       {carouselItems.length > 1 && (
         <div className="mt-3 h-1 bg-blue-900/30 rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-blue-400 transition-all duration-75 ease-linear"
-            style={{ 
+            style={{
               width: isAutoPlaying ? '100%' : '0%',
               animation: isAutoPlaying ? 'progress 8s linear infinite' : 'none'
             }}

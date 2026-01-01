@@ -16,4 +16,3 @@ export default function FullPageSpinner({ message = 'Φόρτωση...' }: FullP
     </div>
   );
 }
-

@@ -11,14 +11,14 @@ export function useSuperUserGuard() {
 
   useEffect(() => {
     if (!isAuthReady) return;
-    
+
     const hasAccess = hasOfficeAdminAccess(user);
     console.log('useSuperUserGuard: Checking permissions', {
       user: user?.email,
       role: getRoleLabel(user),
       hasAccess,
     });
-    
+
     if (!hasAccess) {
       console.log('useSuperUserGuard: Access denied, redirecting to unauthorized');
       router.push('/unauthorized');
@@ -30,4 +30,3 @@ export function useSuperUserGuard() {
     isLoading: !isAuthReady,
   };
 }
-

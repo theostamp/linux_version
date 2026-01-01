@@ -5,9 +5,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { listInvitations, deleteInvitation, resendInvitation, cancelInvitation, deactivateUser, activateUser, UserInvitation } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { 
-  Mail, Clock, CheckCircle, XCircle, AlertCircle, Trash2, 
-  Send, Copy, RefreshCw, Info, Ban, UserX, UserCheck 
+import {
+  Mail, Clock, CheckCircle, XCircle, AlertCircle, Trash2,
+  Send, Copy, RefreshCw, Info, Ban, UserX, UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -75,7 +75,7 @@ export default function InvitationsList() {
 
   const handleDelete = async () => {
     if (!invitationToDelete) return;
-    
+
     try {
       await deleteInvitation(invitationToDelete.id);
       toast.success('Η πρόσκληση διαγράφηκε');
@@ -116,7 +116,7 @@ export default function InvitationsList() {
 
   const handleToggleUserStatus = async (invitation: UserInvitation) => {
     if (!invitation.created_user_id) return;
-    
+
     setTogglingUserId(invitation.created_user_id);
     try {
       if (invitation.created_user_active) {
@@ -173,7 +173,7 @@ export default function InvitationsList() {
             <div className="text-sm text-blue-700 dark:text-blue-300">
               <p className="font-medium mb-1 text-foreground">Τι είναι οι Προσκλήσεις;</p>
               <p className="opacity-90">
-                Οι προσκλήσεις επιτρέπουν σε νέους χρήστες να εγγραφούν στην εφαρμογή. 
+                Οι προσκλήσεις επιτρέπουν σε νέους χρήστες να εγγραφούν στην εφαρμογή.
                 Όταν στέλνετε πρόσκληση, ο χρήστης λαμβάνει email με σύνδεσμο για να δημιουργήσει λογαριασμό.
                 Μετά την αποδοχή, εμφανίζεται στους "Καταχωρημένους Χρήστες" παραπάνω.
               </p>
@@ -372,8 +372,8 @@ export default function InvitationsList() {
                                   variant="ghost"
                                   size="icon"
                                   className={`h-8 w-8 ${
-                                    invitation.created_user_active 
-                                      ? 'text-muted-foreground hover:text-orange-600 dark:hover:text-orange-400' 
+                                    invitation.created_user_active
+                                      ? 'text-muted-foreground hover:text-orange-600 dark:hover:text-orange-400'
                                       : 'text-orange-600 dark:text-orange-400 hover:text-green-600 dark:hover:text-green-400'
                                   }`}
                                   onClick={() => handleToggleUserStatus(invitation)}
@@ -389,8 +389,8 @@ export default function InvitationsList() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                {invitation.created_user_active 
-                                  ? 'Απενεργοποίηση χρήστη' 
+                                {invitation.created_user_active
+                                  ? 'Απενεργοποίηση χρήστη'
                                   : 'Ενεργοποίηση χρήστη'}
                               </TooltipContent>
                             </Tooltip>

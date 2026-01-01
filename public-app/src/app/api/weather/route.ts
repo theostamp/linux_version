@@ -7,7 +7,7 @@ export async function GET() {
     return NextResponse.json(weatherData);
   } catch (error) {
     console.error('Weather API error:', error);
-    
+
     // Return fallback data
     return NextResponse.json({
       temperature: 22,

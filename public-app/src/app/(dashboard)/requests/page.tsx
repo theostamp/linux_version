@@ -30,7 +30,7 @@ function RequestsPageContent() {
   const { isAuthReady, user } = useAuth();
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  
+
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,19 +56,19 @@ function RequestsPageContent() {
           !request.description.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
-      
+
       if (statusFilter && request.status !== statusFilter) {
         return false;
       }
-      
+
       if (priorityFilter && request.priority !== priorityFilter) {
         return false;
       }
-      
+
       if (categoryFilter && request.maintenance_category !== categoryFilter && request.type !== categoryFilter) {
         return false;
       }
-      
+
       return true;
     });
   }, [requests, searchTerm, statusFilter, priorityFilter, categoryFilter]);
@@ -111,7 +111,7 @@ function RequestsPageContent() {
     if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε το αίτημα "${request.title}";`)) {
       return;
     }
-    
+
     setDeletingId(request.id);
     try {
       await deleteUserRequest(request.id);
@@ -128,22 +128,22 @@ function RequestsPageContent() {
 
   const container = {
     hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
-      transition: { 
+    visible: {
+      opacity: 1,
+      transition: {
         staggerChildren: 0.1,
         delayChildren: 0.1
-      } 
+      }
     },
   };
-  
-  const item = { 
-    hidden: { opacity: 0, y: 20 }, 
-    visible: { 
-      opacity: 1, 
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.3 }
-    } 
+    }
   };
 
   return (
@@ -365,7 +365,7 @@ function RequestsPageContent() {
               key={request.id}
               className="md:col-span-1"
               header={
-                <RequestItemContent 
+                <RequestItemContent
                   request={request}
                   selectedBuilding={selectedBuilding}
                   canDelete={!!canDelete}
@@ -377,10 +377,10 @@ function RequestsPageContent() {
           ))}
         </BentoGrid>
       )}
-      
+
       {/* Floating Action Button */}
       {canCreateRequest && (
-        <Link 
+        <Link
           href="/requests/new"
           className="fixed bottom-6 right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-lg transition-transform hover:scale-110 z-50 md:hidden"
           title="Νέα Αναφορά"
@@ -522,4 +522,3 @@ function RequestItemContent({
     </div>
   );
 }
-

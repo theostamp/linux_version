@@ -45,7 +45,7 @@ export default function RequestDetailPage() {
   const [supporting, setSupporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
-  
+
   // When landing directly on /requests/[id], BuildingContext may not be ready yet.
   // Fallback to localStorage to avoid requesting without building context.
   const buildingId = selectedBuilding?.id || currentBuilding?.id || getActiveBuildingId();
@@ -98,7 +98,7 @@ export default function RequestDetailPage() {
   async function handleDelete() {
     if (!request) return;
     if (!confirm(`Είστε σίγουρος ότι θέλετε να διαγράψετε το αίτημα "${request.title}";`)) return;
-    
+
     setDeleting(true);
     try {
       await deleteUserRequest(request.id);
@@ -185,7 +185,7 @@ export default function RequestDetailPage() {
           {request.title}
           {request.is_urgent && <span className="ml-2 text-red-600">🚨</span>}
         </h1>
-        
+
         <div className="flex gap-2">
           {isOwner && (
             <Link href={`/requests/${request.id}/edit`}>
@@ -195,7 +195,7 @@ export default function RequestDetailPage() {
               </Button>
             </Link>
           )}
-          
+
           {canDelete && (
             <Button
               onClick={handleDelete}
@@ -229,9 +229,9 @@ export default function RequestDetailPage() {
             <strong>Ημερομηνία:</strong> {formatDate(request.created_at)}
           </div>
           <div>
-            <strong>Κατάσταση:</strong> 
+            <strong>Κατάσταση:</strong>
             <span className={`ml-1 px-2 py-1 rounded text-xs font-medium ${
-              request.status === 'completed' || request.status === 'resolved' 
+              request.status === 'completed' || request.status === 'resolved'
                 ? 'bg-green-100 text-green-800'
                 : request.status === 'in_progress'
                 ? 'bg-blue-100 text-blue-800'
@@ -317,7 +317,7 @@ export default function RequestDetailPage() {
       )}
 
       {/* Supporters list */}
-      {(request as { supporter_usernames?: string[] }).supporter_usernames && 
+      {(request as { supporter_usernames?: string[] }).supporter_usernames &&
        (request as { supporter_usernames?: string[] }).supporter_usernames!.length > 0 && (
         <div className="bg-blue-50 rounded-lg p-4">
           <p className="text-sm font-medium text-blue-900 mb-2">Υποστηρικτές:</p>
@@ -329,4 +329,3 @@ export default function RequestDetailPage() {
     </div>
   );
 }
-

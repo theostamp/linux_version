@@ -109,12 +109,12 @@ export function useMarketplaceAdmin() {
 
   // Update an existing provider
   const updateMutation = useMutation({
-    mutationFn: async ({ 
-      id, 
-      data 
-    }: { 
-      id: string; 
-      data: UpdateProviderInput 
+    mutationFn: async ({
+      id,
+      data
+    }: {
+      id: string;
+      data: UpdateProviderInput
     }): Promise<MarketplaceProvider> => {
       const response = await api.patch(`/marketplace/providers/${id}/`, data);
       return response.data;
@@ -140,18 +140,17 @@ export function useMarketplaceAdmin() {
     isError: providersQuery.isError,
     error: providersQuery.error,
     refetch: providersQuery.refetch,
-    
+
     createProvider: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
     createError: createMutation.error,
-    
+
     updateProvider: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     updateError: updateMutation.error,
-    
+
     deleteProvider: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error,
   };
 }
-

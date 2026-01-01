@@ -22,14 +22,14 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
 
   const getFileIcon = (fileName: string, fileType: string): string => {
     const extension = fileName.split('.').pop()?.toLowerCase();
-    
+
     if (fileType.startsWith('image/')) return '🖼️';
     if (fileType === 'application/pdf') return '📄';
     if (fileType.includes('word') || extension === 'doc' || extension === 'docx') return '📝';
     if (fileType.includes('excel') || extension === 'xls' || extension === 'xlsx') return '📊';
     if (fileType.includes('powerpoint') || extension === 'ppt' || extension === 'pptx') return '📈';
     if (fileType.includes('text/')) return '📄';
-    
+
     return '📎';
   };
 
@@ -43,9 +43,9 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
 
   const handlePreview = async () => {
     if (!showPreview) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       if ('url' in file && file.url) {
         // Αν είναι URL (από server)
@@ -102,7 +102,7 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
             </Badge>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {showPreview && (isImage || isPdf) && (
             <Button
@@ -115,7 +115,7 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
               {isLoading ? 'Φόρτωση...' : 'Προεπισκόπηση'}
             </Button>
           )}
-          
+
           <Button
             type="button"
             variant="outline"
@@ -124,7 +124,7 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
           >
             Λήψη
           </Button>
-          
+
           {onRemove && (
             <Button
               type="button"
@@ -141,11 +141,11 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
 
       {/* Preview Modal */}
       {previewUrl && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={() => setPreviewUrl(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-lg p-4 max-w-4xl max-h-[90vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -160,7 +160,7 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
                 ✕
               </Button>
             </div>
-            
+
             <div className="flex justify-center">
               {isImage ? (
                 <img
@@ -195,4 +195,4 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
       )}
     </div>
   );
-}; 
+};

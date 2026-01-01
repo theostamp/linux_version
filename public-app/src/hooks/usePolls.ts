@@ -83,17 +83,3 @@ export function useVoteInPoll() {
     }
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

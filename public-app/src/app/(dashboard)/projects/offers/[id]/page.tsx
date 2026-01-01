@@ -7,10 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/ui/BackButton';
-import { 
-  Award, 
-  Building, 
-  Calendar, 
+import {
+  Award,
+  Building,
+  Calendar,
   DollarSign,
   CheckCircle,
   XCircle,
@@ -80,7 +80,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
 function OfferDetailPageContent({ offerId }: { offerId: string }) {
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const { data: offer, isLoading, isError, error } = useOffer(offerId);
   const { approve, reject } = useOfferMutations();
 
@@ -89,7 +89,7 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
       console.log('[Offer Detail] Approving offer:', offerId);
       const result = await approve.mutateAsync(offerId);
       console.log('[Offer Detail] ✓ Offer approved successfully:', result);
-      
+
       toast({
         title: '✓ Η προσφορά εγκρίθηκε',
         description: 'Η προσφορά εγκρίθηκε επιτυχώς. Οι υπόλοιπες προσφορές απορρίφθηκαν αυτόματα και δημιουργήθηκαν οι σχετικές δαπάνες.',
@@ -299,9 +299,9 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <label className="text-xs text-gray-500 uppercase tracking-wide">Τρόπος Πληρωμής</label>
                   <p className="text-lg font-semibold">
-                    {offer.payment_method === 'one_time' ? 'Εφάπαξ' : 
+                    {offer.payment_method === 'one_time' ? 'Εφάπαξ' :
                      offer.payment_method === 'installments' ? 'Δόσεις' :
-                     offer.payment_method === 'milestones' ? 'Ορόσημα' : 
+                     offer.payment_method === 'milestones' ? 'Ορόσημα' :
                      offer.payment_method || 'Άλλο'}
                   </p>
                   {offer.installments && offer.installments > 1 && (
@@ -367,7 +367,7 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
                 <CardTitle className="text-base">Συνδεδεμένο Έργο</CardTitle>
               </CardHeader>
               <CardContent>
-                <Link 
+                <Link
                   href={`/projects/${offer.project}`}
                   className="text-blue-600 hover:underline font-medium"
                 >
@@ -415,5 +415,3 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
     </div>
   );
 }
-
-

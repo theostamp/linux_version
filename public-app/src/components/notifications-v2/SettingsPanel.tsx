@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Settings, 
-  Calendar, 
-  Clock, 
-  ToggleRight, 
+import {
+  Settings,
+  Calendar,
+  Clock,
+  ToggleRight,
   ToggleLeft,
   Plus,
   Trash2,
@@ -76,7 +76,7 @@ export default function SettingsPanel() {
   const { buildings, selectedBuilding } = useBuilding();
   const queryClient = useQueryClient();
   const [showAddDialog, setShowAddDialog] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     taskType: 'common_expense',
@@ -95,7 +95,7 @@ export default function SettingsPanel() {
 
   const toggleAutoSendMutation = useMutation({
     mutationFn: async ({ taskId, enabled }: { taskId: number; enabled: boolean }) => {
-      return enabled 
+      return enabled
         ? monthlyTasksApi.enableAutoSend(taskId)
         : monthlyTasksApi.disableAutoSend(taskId);
     },
@@ -146,7 +146,7 @@ export default function SettingsPanel() {
 
   const handleCreateTask = () => {
     const isWeekly = formData.recurrenceType === 'weekly' || formData.recurrenceType === 'biweekly';
-    
+
     createTaskMutation.mutate({
       task_type: formData.taskType as 'common_expense' | 'balance_reminder' | 'custom',
       building: formData.buildingId ? parseInt(formData.buildingId) : null,
@@ -157,11 +157,11 @@ export default function SettingsPanel() {
       auto_send_enabled: formData.autoSend,
     });
   };
-  
+
   const getRecurrenceLabel = (type: string) => {
     return RECURRENCE_TYPES.find(t => t.value === type)?.label || type;
   };
-  
+
   const getDayOfWeekLabel = (day: number | null) => {
     if (day === null) return null;
     return DAYS_OF_WEEK.find(d => parseInt(d.value) === day)?.label || null;
@@ -198,7 +198,7 @@ export default function SettingsPanel() {
                 Αυτόματες Μηνιαίες Αποστολές
               </p>
               <p className="text-sm text-blue-700 mt-1">
-                Όταν ενεργοποιείτε την αυτόματη αποστολή, το σύστημα θα στέλνει αυτόματα 
+                Όταν ενεργοποιείτε την αυτόματη αποστολή, το σύστημα θα στέλνει αυτόματα
                 τα κοινόχρηστα ή τις υπενθυμίσεις την καθορισμένη ημέρα κάθε μήνα.
               </p>
             </div>
@@ -212,8 +212,8 @@ export default function SettingsPanel() {
           <h3 className="font-medium text-gray-900">Προγραμματισμένες Αποστολές</h3>
           <div className="flex items-center gap-2">
             <Badge variant="outline">{tasks.length} ρυθμίσεις</Badge>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={() => setShowAddDialog(true)}
               className="gap-1"
             >
@@ -370,9 +370,9 @@ export default function SettingsPanel() {
               <Label htmlFor="building">Πολυκατοικία</Label>
               <Select
                 value={formData.buildingId || '_all_'}
-                onValueChange={(value) => setFormData(prev => ({ 
-                  ...prev, 
-                  buildingId: value === '_all_' ? '' : value 
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  buildingId: value === '_all_' ? '' : value
                 }))}
               >
                 <SelectTrigger id="building">
@@ -394,7 +394,7 @@ export default function SettingsPanel() {
               <Label htmlFor="recurrenceType">Συχνότητα Επανάληψης</Label>
               <Select
                 value={formData.recurrenceType}
-                onValueChange={(value: 'once' | 'weekly' | 'biweekly' | 'monthly') => 
+                onValueChange={(value: 'once' | 'weekly' | 'biweekly' | 'monthly') =>
                   setFormData(prev => ({ ...prev, recurrenceType: value }))
                 }
               >
@@ -594,12 +594,12 @@ function ChannelConfigPanel() {
       {/* Channel Status Overview */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {channels.map((channel) => (
-          <Card 
+          <Card
             key={channel.id}
             className={cn(
               'border-2 transition-all',
-              channel.enabled 
-                ? 'border-green-200 bg-green-50' 
+              channel.enabled
+                ? 'border-green-200 bg-green-50'
                 : 'border-gray-200 bg-gray-50'
             )}
           >
@@ -615,12 +615,12 @@ function ChannelConfigPanel() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-900">{channel.name}</span>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={cn(
                         'text-xs',
-                        channel.enabled 
-                          ? 'bg-green-100 text-green-700 border-green-200' 
+                        channel.enabled
+                          ? 'bg-green-100 text-green-700 border-green-200'
                           : 'bg-gray-100 text-gray-500 border-gray-200'
                       )}
                     >
@@ -647,7 +647,7 @@ function ChannelConfigPanel() {
         <AlertTitle className="text-blue-900">Ρύθμιση Καναλιών</AlertTitle>
         <AlertDescription className="text-blue-700 mt-2 space-y-2">
           <p>
-            Για να ενεργοποιήσετε τα επιπλέον κανάλια επικοινωνίας, χρειάζεται 
+            Για να ενεργοποιήσετε τα επιπλέον κανάλια επικοινωνίας, χρειάζεται
             να ρυθμίσετε τους αντίστοιχους παρόχους:
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
@@ -753,11 +753,11 @@ function EventNotificationsPanel() {
         <AlertTitle className="text-indigo-900">Πώς λειτουργεί</AlertTitle>
         <AlertDescription className="text-indigo-700 mt-2">
           <p>
-            Όταν δημιουργείται νέα ανακοίνωση, ψηφοφορία ή αίτημα, το σύστημα στέλνει 
+            Όταν δημιουργείται νέα ανακοίνωση, ψηφοφορία ή αίτημα, το σύστημα στέλνει
             <strong> αυτόματα </strong> ειδοποίηση στους ενοίκους μέσω των επιλεγμένων καναλιών.
           </p>
           <p className="mt-2 text-sm">
-            Το μήνυμα περιλαμβάνει: Τίτλο, σύντομη περιγραφή και πρόσκληση 
+            Το μήνυμα περιλαμβάνει: Τίτλο, σύντομη περιγραφή και πρόσκληση
             <em> "Δείτε λεπτομέρειες στην εφαρμογή σας"</em>
           </p>
         </AlertDescription>
@@ -767,10 +767,10 @@ function EventNotificationsPanel() {
       <div className="space-y-4">
         {eventTypes.map((event) => {
           const eventSettings = settings[event.id as keyof typeof settings];
-          
+
           return (
-            <Card 
-              key={event.id} 
+            <Card
+              key={event.id}
               className={cn(
                 'border-2 transition-all',
                 eventSettings.enabled ? event.bgColor : 'border-gray-200 bg-gray-50'
@@ -789,12 +789,12 @@ function EventNotificationsPanel() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{event.name}</span>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={cn(
                             'text-xs',
-                            eventSettings.enabled 
-                              ? 'bg-green-100 text-green-700 border-green-200' 
+                            eventSettings.enabled
+                              ? 'bg-green-100 text-green-700 border-green-200'
                               : 'bg-gray-100 text-gray-500 border-gray-200'
                           )}
                         >
@@ -802,7 +802,7 @@ function EventNotificationsPanel() {
                         </Badge>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">{event.description}</p>
-                      
+
                       {/* Channel Selection */}
                       {eventSettings.enabled && (
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -833,7 +833,7 @@ function EventNotificationsPanel() {
                       )}
                     </div>
                   </div>
-                  
+
                   <Switch
                     checked={eventSettings.enabled}
                     onCheckedChange={() => toggleEventEnabled(event.id)}
@@ -914,5 +914,3 @@ export function ExtendedSettingsPanel() {
     </div>
   );
 }
-
-

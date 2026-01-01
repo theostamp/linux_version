@@ -35,7 +35,7 @@ export function validateFinancialDataMonth(
 ): DateValidationResult {
   // Extract actual month from the data
   let actualMonth: string | null = null;
-  
+
   // Try to get month from summary
   if (data.summary?.data_month) {
     actualMonth = data.summary.data_month;
@@ -43,7 +43,7 @@ export function validateFinancialDataMonth(
     const date = new Date(data.summary.last_calculation_date);
     actualMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   }
-  
+
   // Try to get month from expense breakdown
   if (!actualMonth && data.apartments?.length) {
     const firstApartment = data.apartments[0];
@@ -57,14 +57,14 @@ export function validateFinancialDataMonth(
       }
     }
   }
-  
+
   const isValid = actualMonth === expectedMonth;
-  
+
   // Generate appropriate message
   let message = '';
   let severity: 'info' | 'warning' | 'error' = 'info';
   let shouldShowWarning = false;
-  
+
   if (!actualMonth) {
     message = `Δεν βρέθηκαν δεδομένα για τον επιλεγμένο μήνα (${formatMonthDisplay(expectedMonth)})`;
     severity = 'info';
@@ -78,7 +78,7 @@ export function validateFinancialDataMonth(
     severity = 'info';
     shouldShowWarning = false;
   }
-  
+
   return {
     isValid,
     actualMonth,
@@ -97,14 +97,14 @@ export function formatMonthDisplay(monthString: string): string {
     'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
     'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
   ];
-  
+
   const [year, month] = monthString.split('-');
   const monthIndex = parseInt(month, 10) - 1;
-  
+
   if (monthIndex >= 0 && monthIndex < 12) {
     return `${monthNames[monthIndex]} ${year}`;
   }
-  
+
   return monthString;
 }
 
@@ -146,7 +146,7 @@ export function getValidationMessage(validation: DateValidationResult): {
       description: validation.message
     };
   }
-  
+
   if (validation.severity === 'warning') {
     return {
       title: 'Προσοχή: Δεδομένα από Διαφορετικό Μήνα',
@@ -154,7 +154,7 @@ export function getValidationMessage(validation: DateValidationResult): {
       action: 'Εκδώστε πρώτα κοινόχρηστα για τον επιλεγμένο μήνα'
     };
   }
-  
+
   return {
     title: 'Δεν Βρέθηκαν Δεδομένα',
     description: validation.message,

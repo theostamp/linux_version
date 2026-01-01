@@ -68,4 +68,3 @@ export const ModalPortal = ({ children }: ModalPortalProps) => {
 
   return createPortal(children, modalRootRef.current);
 };
-

@@ -16,7 +16,7 @@ interface FinancialSceneCustomProps {
 export default function FinancialSceneCustom({ data, buildingId }: FinancialSceneCustomProps) {
   const [currentSidebarWidget, setCurrentSidebarWidget] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  
+
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = [
     { id: 'weather', name: 'Καιρός', Component: WeatherWidget },
@@ -27,12 +27,12 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
   // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
   useEffect(() => {
     console.log('[FinancialScene] Setting up auto-scroll animation...');
-    
+
     const interval = setInterval(() => {
       // Start smooth slide animation
       setIsSliding(true);
       console.log('[FinancialScene] Starting slide animation...');
-      
+
       // After animation completes, change widget
       setTimeout(() => {
         setCurrentSidebarWidget((prev) => {
@@ -112,4 +112,3 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
     </div>
   );
 }
-

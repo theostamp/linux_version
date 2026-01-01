@@ -71,4 +71,3 @@ export interface MigrationImportResponse {
   apartments_created: number;
   users_created: number;
 }
-

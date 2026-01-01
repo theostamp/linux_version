@@ -23,7 +23,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
-  
+
   const { suppliers, loading, error } = useSuppliersByCategory(buildingId, category);
 
   // Βρίσκω τον επιλεγμένο προμηθευτή
@@ -47,7 +47,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
     onChange(undefined);
   };
 
-  const filteredSuppliers = category 
+  const filteredSuppliers = category
     ? suppliers.filter(s => s.category === category)
     : suppliers;
 
@@ -59,7 +59,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          w-full px-3 py-2 text-left border border-slate-200 rounded-md 
+          w-full px-3 py-2 text-left border border-slate-200 rounded-md
           focus:outline-none focus:ring-2 focus:ring-blue-500
           ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white hover:bg-gray-50'}
           ${selectedSupplier ? 'text-gray-900' : 'text-gray-500'}
@@ -137,8 +137,8 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
 
       {/* Overlay για κλείσιμο */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -159,7 +159,7 @@ export const SupplierDetails: React.FC<SupplierDetailsProps> = ({ supplier, clas
         <div className="flex-1">
           <h4 className="font-medium text-gray-900">{supplier.name}</h4>
           <p className="text-sm text-gray-600">{supplier.category_display}</p>
-          
+
           <div className="mt-2 space-y-1 text-sm text-gray-600">
             {supplier.account_number && (
               <div>📋 Λογαριασμός: {supplier.account_number}</div>
@@ -180,18 +180,18 @@ export const SupplierDetails: React.FC<SupplierDetailsProps> = ({ supplier, clas
               <div>📄 Συμβόλαιο: {supplier.contract_number}</div>
             )}
           </div>
-          
+
           {supplier.notes && (
             <div className="mt-2 text-sm text-gray-600">
               <strong>Σημειώσεις:</strong> {supplier.notes}
             </div>
           )}
         </div>
-        
+
         <div className="ml-3">
           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-            supplier.is_active 
-              ? 'bg-green-100 text-green-800' 
+            supplier.is_active
+              ? 'bg-green-100 text-green-800'
               : 'bg-red-100 text-red-800'
           }`}>
             {supplier.is_active ? 'Ενεργός' : 'Ανενεργός'}
@@ -200,4 +200,4 @@ export const SupplierDetails: React.FC<SupplierDetailsProps> = ({ supplier, clas
       </div>
     </div>
   );
-}; 
+};

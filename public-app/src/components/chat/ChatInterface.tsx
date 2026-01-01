@@ -48,23 +48,23 @@ type ChatTab = 'group' | 'users' | 'direct';
 
 // Role labels and colors
 const roleConfig: Record<SenderRole, { label: string; color: string; icon: React.ReactNode }> = {
-  manager: { 
-    label: 'Διαχειριστής', 
+  manager: {
+    label: 'Διαχειριστής',
     color: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
     icon: <Crown className="w-3 h-3" />
   },
-  internal_manager: { 
-    label: 'Εσωτ. Διαχειριστής', 
+  internal_manager: {
+    label: 'Εσωτ. Διαχειριστής',
     color: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
     icon: <Settings className="w-3 h-3" />
   },
-  resident: { 
-    label: 'Κάτοικος', 
+  resident: {
+    label: 'Κάτοικος',
     color: 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20',
     icon: <Home className="w-3 h-3" />
   },
-  other: { 
-    label: 'Χρήστης', 
+  other: {
+    label: 'Χρήστης',
     color: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-muted dark:text-muted-foreground dark:border-border',
     icon: <User className="w-3 h-3" />
   },
@@ -92,21 +92,21 @@ function formatMessageTime(dateStr: string): string {
  */
 function groupMessagesByDate(messages: ChatMessage[]): Map<string, ChatMessage[]> {
   const groups = new Map<string, ChatMessage[]>();
-  
+
   messages.forEach(message => {
     const dateKey = format(new Date(message.created_at), 'yyyy-MM-dd');
     const existing = groups.get(dateKey) || [];
     groups.set(dateKey, [...existing, message]);
   });
-  
+
   return groups;
 }
 
 /**
  * Single Chat Message Component
  */
-function ChatMessageItem({ 
-  message, 
+function ChatMessageItem({
+  message,
   isOwn,
   showAvatar,
   isFirstInGroup,
@@ -116,7 +116,7 @@ function ChatMessageItem({
   onDelete,
   onReact,
   onScrollToMessage,
-}: { 
+}: {
   message: ChatMessage;
   isOwn: boolean;
   showAvatar: boolean;
@@ -131,13 +131,13 @@ function ChatMessageItem({
   const roleInfo = roleConfig[message.sender_role] || roleConfig.other;
   const [isEditing, setIsEditing] = useState(false);
   const [showQuickReactions, setShowQuickReactions] = useState(false);
-  
+
   // Handle edit save
   const handleEditSave = (newContent: string) => {
     onEdit({ ...message, content: newContent });
     setIsEditing(false);
   };
-  
+
   // Handle copy
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -165,7 +165,7 @@ function ChatMessageItem({
       </motion.div>
     );
   }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -183,15 +183,15 @@ function ChatMessageItem({
         {showAvatar && (
           <div className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',
-            isOwn 
-              ? 'bg-primary text-primary-foreground' 
+            isOwn
+              ? 'bg-primary text-primary-foreground'
               : 'bg-slate-200 text-slate-700 dark:bg-muted dark:text-muted-foreground'
           )}>
             {message.sender_name?.charAt(0).toUpperCase() || '?'}
           </div>
         )}
       </div>
-      
+
       {/* Message Content */}
       <div className={cn(
         'max-w-[70%] flex flex-col',
@@ -212,11 +212,11 @@ function ChatMessageItem({
             </span>
           </div>
         )}
-        
+
         {/* Message bubble - Συννεφάκια με διαφορετικά χρώματα */}
         <div className={cn(
           'relative px-3.5 py-2.5 shadow-sm transition-all duration-200',
-          isOwn 
+          isOwn
             ? [
                 // Δικά μου μηνύματα - Μπλε gradient
                 'bg-gradient-to-br from-blue-500 to-blue-600',
@@ -248,12 +248,12 @@ function ChatMessageItem({
               )}
             />
           )}
-          
+
           {/* File attachment */}
           {message.file_url && (
-            <a 
-              href={message.file_url} 
-              target="_blank" 
+            <a
+              href={message.file_url}
+              target="_blank"
               rel="noopener noreferrer"
               className={cn(
                 'flex items-center gap-2 mb-1 p-2 rounded-lg',
@@ -270,7 +270,7 @@ function ChatMessageItem({
               </span>
             </a>
           )}
-          
+
           {/* Text content or edit mode */}
           {isEditing ? (
             <MessageEditMode
@@ -283,7 +283,7 @@ function ChatMessageItem({
               {message.content}
             </p>
           )}
-          
+
           {/* Time and status */}
           {!isEditing && (
             <div className={cn(
@@ -307,7 +307,7 @@ function ChatMessageItem({
             </div>
           )}
         </div>
-        
+
         {/* Reactions display */}
         {message.reactions && message.reactions.length > 0 && (
           <MessageReactionsDisplay
@@ -317,7 +317,7 @@ function ChatMessageItem({
           />
         )}
       </div>
-      
+
       {/* Context menu (shows on hover) */}
       {!isEditing && (
         <MessageContextMenu
@@ -339,14 +339,14 @@ function ChatMessageItem({
  */
 function TypingIndicator({ users }: { users: Map<number, string> }) {
   if (users.size === 0) return null;
-  
+
   const names = Array.from(users.values());
-  const text = names.length === 1 
+  const text = names.length === 1
     ? `${names[0]} γράφει...`
     : names.length === 2
     ? `${names[0]} και ${names[1]} γράφουν...`
     : `${names.length} άτομα γράφουν...`;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -359,7 +359,7 @@ function TypingIndicator({ users }: { users: Map<number, string> }) {
           <motion.div
             key={i}
             className="w-1.5 h-1.5 bg-primary/60 rounded-full"
-            animate={{ 
+            animate={{
               y: [-2, 2, -2],
               opacity: [0.4, 1, 0.4]
             }}
@@ -380,12 +380,12 @@ function TypingIndicator({ users }: { users: Map<number, string> }) {
 /**
  * Chat Room List Item - Modern card design
  */
-function ChatRoomItem({ 
-  room, 
+function ChatRoomItem({
+  room,
   isActive,
-  onClick 
-}: { 
-  room: ChatRoom; 
+  onClick
+}: {
+  room: ChatRoom;
   isActive: boolean;
   onClick: () => void;
 }) {
@@ -396,15 +396,15 @@ function ChatRoomItem({
       whileTap={{ scale: 0.98 }}
       className={cn(
         'w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200',
-        isActive 
-          ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25' 
+        isActive
+          ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25'
           : 'hover:bg-muted/70 dark:hover:bg-muted/50'
       )}
     >
       <div className={cn(
         'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all',
-        isActive 
-          ? 'bg-white/20 shadow-inner' 
+        isActive
+          ? 'bg-white/20 shadow-inner'
           : 'bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10'
       )}>
         <Building2 className={cn(
@@ -412,7 +412,7 @@ function ChatRoomItem({
           isActive ? 'text-white' : 'text-primary'
         )} />
       </div>
-      
+
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center justify-between gap-2">
           <h3 className={cn(
@@ -422,13 +422,13 @@ function ChatRoomItem({
             {room.building.name}
           </h3>
           {room.unread_count > 0 && (
-            <motion.span 
+            <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               className={cn(
                 'flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold flex items-center justify-center',
-                isActive 
-                  ? 'bg-white text-primary shadow-sm' 
+                isActive
+                  ? 'bg-white text-primary shadow-sm'
                   : 'bg-primary text-white shadow-sm shadow-primary/20'
               )}
             >
@@ -451,17 +451,17 @@ function ChatRoomItem({
 /**
  * Participants Panel
  */
-function ParticipantsPanel({ 
-  participants, 
-  isOpen, 
-  onClose 
-}: { 
+function ParticipantsPanel({
+  participants,
+  isOpen,
+  onClose
+}: {
   participants: ChatParticipant[];
   isOpen: boolean;
   onClose: () => void;
 }) {
   const onlineCount = participants.filter(p => p.is_online).length;
-  
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -478,14 +478,14 @@ function ParticipantsPanel({
                 {onlineCount} online / {participants.length} σύνολο
               </p>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
-          
+
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(100% - 73px)' }}>
             {/* Online */}
             {participants.filter(p => p.is_online).length > 0 && (
@@ -511,7 +511,7 @@ function ParticipantsPanel({
                 ))}
               </div>
             )}
-            
+
             {/* Offline */}
             {participants.filter(p => !p.is_online).length > 0 && (
               <div className="p-3">
@@ -530,9 +530,9 @@ function ParticipantsPanel({
                         {participant.user_name}
                       </p>
                       <p className="text-xs text-muted-foreground/70">
-                        {formatDistanceToNow(new Date(participant.last_seen), { 
-                          addSuffix: true, 
-                          locale: el 
+                        {formatDistanceToNow(new Date(participant.last_seen), {
+                          addSuffix: true,
+                          locale: el
                         })}
                       </p>
                     </div>
@@ -555,24 +555,24 @@ export default function ChatInterface() {
   const { currentBuilding, buildings } = useBuilding();
   const { rooms, isLoading: roomsLoading, refetch: refetchRooms } = useChatRooms();
   const { unreadCount: directUnread } = useDirectMessagesUnreadCount();
-  
+
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
   const [showRoomList, setShowRoomList] = useState(true);
-  
+
   // Tab navigation for different chat modes
   const [activeTab, setActiveTab] = useState<ChatTab>('group');
   const [selectedUserForDM, setSelectedUserForDM] = useState<BuildingUser | null>(null);
-  
+
   // Reply state
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Use building from context or selected
   const activeBuildingId = selectedBuildingId || currentBuilding?.id || null;
 
@@ -581,7 +581,7 @@ export default function ChatInterface() {
     setSelectedUserForDM(user);
     setActiveTab('direct');
   };
-  
+
   const {
     isConnected,
     isConnecting,
@@ -654,15 +654,15 @@ export default function ChatInterface() {
   // Handle typing indicator
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
-    
+
     // Send typing indicator
     sendTypingIndicator(true);
-    
+
     // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     // Stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       sendTypingIndicator(false);
@@ -672,12 +672,12 @@ export default function ChatInterface() {
   // Handle send message
   const handleSend = useCallback(() => {
     if (!inputValue.trim()) return;
-    
+
     sendMessage(inputValue, 'text', replyingTo?.id);
     setInputValue('');
     setReplyingTo(null);
     sendTypingIndicator(false);
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -720,7 +720,7 @@ export default function ChatInterface() {
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold text-lg text-foreground">Συνομιλίες</h2>
-                <button 
+                <button
                   onClick={refetchRooms}
                   className="p-2 hover:bg-muted rounded-lg transition-colors"
                   title="Ανανέωση"
@@ -728,7 +728,7 @@ export default function ChatInterface() {
                   <RefreshCw className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
-              
+
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -739,7 +739,7 @@ export default function ChatInterface() {
                 />
               </div>
             </div>
-            
+
             {/* Room List */}
             <div className="flex-1 overflow-y-auto p-2">
               {roomsLoading ? (
@@ -771,8 +771,8 @@ export default function ChatInterface() {
                     onClick={() => handleSelectRoom(building.id)}
                     className={cn(
                       'w-full flex items-center gap-3 p-3 rounded-xl transition-all',
-                      building.id === activeBuildingId 
-                        ? 'bg-primary text-primary-foreground shadow-md' 
+                      building.id === activeBuildingId
+                        ? 'bg-primary text-primary-foreground shadow-md'
                         : 'hover:bg-slate-100'
                     )}
                   >
@@ -791,8 +791,8 @@ export default function ChatInterface() {
                       </h3>
                       <p className={cn(
                         'text-xs truncate',
-                        building.id === activeBuildingId 
-                          ? 'text-primary-foreground/70' 
+                        building.id === activeBuildingId
+                          ? 'text-primary-foreground/70'
                           : 'text-slate-500'
                       )}>
                         {building.address}
@@ -824,11 +824,11 @@ export default function ChatInterface() {
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-muted-foreground" />
                 </button>
-                
+
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/20 flex items-center justify-center shadow-sm">
                   <Building2 className="w-5 h-5 text-primary" />
                 </div>
-                
+
                 <div>
                   <h2 className="font-bold text-slate-800 dark:text-foreground">
                     {activeRoom?.building.name || currentBuilding?.name || 'Chat'}
@@ -855,14 +855,14 @@ export default function ChatInterface() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setShowParticipants(!showParticipants)}
                   className={cn(
                     'p-2.5 rounded-xl transition-all duration-200',
-                    showParticipants 
-                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' 
+                    showParticipants
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
                       : 'hover:bg-slate-100 dark:hover:bg-muted text-slate-600 dark:text-muted-foreground'
                   )}
                   title="Συμμετέχοντες"
@@ -892,7 +892,7 @@ export default function ChatInterface() {
                   />
                 )}
               </button>
-              
+
               <button
                 onClick={() => setActiveTab('users')}
                 className={cn(
@@ -911,7 +911,7 @@ export default function ChatInterface() {
                   />
                 )}
               </button>
-              
+
               <button
                 onClick={() => setActiveTab('direct')}
                 className={cn(
@@ -975,7 +975,7 @@ export default function ChatInterface() {
                   className="flex-1 flex flex-col overflow-hidden"
                 >
             {/* Messages Area */}
-            <div 
+            <div
               ref={messagesContainerRef}
               className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50 to-white dark:from-background dark:to-background"
             >
@@ -1001,16 +1001,16 @@ export default function ChatInterface() {
                           {formatMessageDate(dayMessages[0].created_at)}
                         </div>
                       </div>
-                      
+
                       {/* Messages */}
                       {dayMessages.map((message, index) => {
                         const isOwn = message.sender_id === user?.id;
                         const prevMessage = index > 0 ? dayMessages[index - 1] : null;
                         const nextMessage = index < dayMessages.length - 1 ? dayMessages[index + 1] : null;
-                        
+
                         const isFirstInGroup = !prevMessage || prevMessage.sender_id !== message.sender_id;
                         const isLastInGroup = !nextMessage || nextMessage.sender_id !== message.sender_id;
-                        
+
                         return (
                           <ChatMessageItem
                             key={message.id}
@@ -1029,11 +1029,11 @@ export default function ChatInterface() {
                       })}
                     </div>
                   ))}
-                  
+
                   <AnimatePresence>
                     <TypingIndicator users={typingUsers} />
                   </AnimatePresence>
-                  
+
                   <div ref={messagesEndRef} />
                 </>
               )}
@@ -1046,7 +1046,7 @@ export default function ChatInterface() {
                   {error}
                 </div>
               )}
-              
+
               {/* Reply Preview */}
               <AnimatePresence>
                 {replyingTo && (
@@ -1058,7 +1058,7 @@ export default function ChatInterface() {
                   />
                 )}
               </AnimatePresence>
-              
+
               <div className="flex items-end gap-3 p-4">
                 {/* Attachment button */}
                 <button
@@ -1067,7 +1067,7 @@ export default function ChatInterface() {
                 >
                   <Paperclip className="w-5 h-5" />
                 </button>
-                
+
                 {/* Input */}
                 <div className="flex-1 relative">
                   <textarea
@@ -1080,15 +1080,15 @@ export default function ChatInterface() {
                     className="w-full px-4 py-3 bg-slate-100 dark:bg-muted rounded-2xl text-sm resize-none focus:ring-2 focus:ring-primary/30 focus:bg-white dark:focus:bg-background transition-all border-0 pr-12"
                     style={{ maxHeight: '120px' }}
                   />
-                  
+
                   {/* Emoji Picker */}
                   <div className="absolute right-2 bottom-2">
-                    <EmojiPicker 
+                    <EmojiPicker
                       onEmojiSelect={(emoji) => setInputValue(prev => prev + emoji)}
                     />
                   </div>
                 </div>
-                
+
                 {/* Send button */}
                 <button
                   onClick={handleSend}
@@ -1123,8 +1123,8 @@ export default function ChatInterface() {
               <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-3xl" />
               <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-3xl" />
             </div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="relative z-10"
@@ -1133,7 +1133,7 @@ export default function ChatInterface() {
                 <MessageCircle className="w-14 h-14 text-primary" />
               </div>
             </motion.div>
-            
+
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -1146,7 +1146,7 @@ export default function ChatInterface() {
               <p className="text-slate-500 dark:text-muted-foreground max-w-sm mb-8">
                 Επιλέξτε ένα κτίριο από τη λίστα για να ξεκινήσετε να επικοινωνείτε με τους διαχειριστές και τους κατοίκους.
               </p>
-              
+
               <motion.button
                 onClick={() => setShowRoomList(true)}
                 whileHover={{ scale: 1.05 }}
@@ -1163,4 +1163,3 @@ export default function ChatInterface() {
     </div>
   );
 }
-

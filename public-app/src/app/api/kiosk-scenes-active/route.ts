@@ -92,14 +92,14 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[API PROXY] Backend error response:', errorText);
-      
+
       // Return fallback data instead of error to keep UI alive
       console.warn('[API PROXY] Returning fallback empty scenes due to backend error');
       return NextResponse.json(FALLBACK_RESPONSE);
     }
 
     const data = await response.json();
-    
+
     // If data is an array (from list endpoint), wrap it in expected format
     if (Array.isArray(data)) {
       return NextResponse.json({
@@ -108,18 +108,18 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString()
       });
     }
-    
+
     // If data is already in expected format (from active action)
     return NextResponse.json(data);
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed') || (error instanceof Error && error.name === 'AbortError')) {
       console.warn('[API PROXY] Backend unavailable (connection refused or timeout):', errorMessage);
       return NextResponse.json(FALLBACK_RESPONSE);
     }
-    
+
     console.error('[API PROXY] Unexpected error fetching kiosk scenes:', error);
     return NextResponse.json(FALLBACK_RESPONSE);
   }

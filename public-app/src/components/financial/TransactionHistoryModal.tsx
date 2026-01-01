@@ -81,14 +81,14 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
   const loadTransactionHistory = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         apartment_id: apartmentId.toString(),
         months_back: '6'
       });
-      
+
       const response = await api.get(`/financial/dashboard/apartment_transaction_history/?${params}`);
       setData(response.data);
     } catch (err: any) {
@@ -115,7 +115,7 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
     }
   };
 
-  const filteredMonths = selectedMonth === 'all' 
+  const filteredMonths = selectedMonth === 'all'
     ? data?.months || []
     : data?.months.filter(m => m.month === selectedMonth) || [];
 
@@ -125,11 +125,11 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
 
   return (
     <ModalPortal>
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-lg p-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -356,7 +356,7 @@ export const TransactionHistoryModal: React.FC<TransactionHistoryModalProps> = (
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredMonths.flatMap(month => 
+                          {filteredMonths.flatMap(month =>
                             [...month.charges, ...month.payments]
                               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                           ).map((transaction) => (

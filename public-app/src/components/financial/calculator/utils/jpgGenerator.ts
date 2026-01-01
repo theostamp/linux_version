@@ -243,13 +243,13 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
               </div>
 
               <!-- ✅ Επιμέρους Δαπάνες από API - ΜΟΝΟ επιμέρους, όχι fallback -->
-              ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
+              ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0
                 ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => {
                     // Διακριτικό κείμενο: Ε (Ένοικος) ή Δ (Ιδιοκτήτης)
                     const isOwner = expense.payer_responsibility === 'owner';
                     const payerColor = isOwner ? '#dc2626' : '#059669';
                     const payerText = isOwner ? 'Δ' : 'Ε';
-                    
+
                     return `
                       <div style="
                         display: flex;
@@ -417,7 +417,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const previousBalance = Math.abs(apt.previous_balance || 0);
                   const commonMills = apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                  
+
                   // ✅ FIX 2025-12-20: Κ/ΧΡΗΣΤΑ χωρίς διπλομέτρηση θέρμανσης/ανελκυστήρα
                   // Χρησιμοποιούμε το breakdown από τον calculator (perApartmentAmounts) αντί για resident_expenses
                   // γιατί το resident_expenses περιλαμβάνει και θέρμανση/ανελκυστήρα και θα διπλομετρηθεί.
@@ -562,7 +562,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         const imgData = canvas.toDataURL('image/jpeg', 1.0); // Maximum JPEG quality
         console.log('JPG Export - Data URL length:', imgData.length);
         console.log('JPG Export - Data URL start:', imgData.substring(0, 50));
-        
+
         // Download the JPG file
         const link = document.createElement('a');
         link.href = imgData;
@@ -574,12 +574,12 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         // Send to kiosk API for display
         try {
           console.log('JPG Export - Sending to kiosk API...');
-          
+
           // Get the correct API base URL
-          const apiBaseUrl = typeof window !== 'undefined' 
+          const apiBaseUrl = typeof window !== 'undefined'
             ? `http://${window.location.hostname}:18000/api`
             : 'http://localhost:18000/api';
-          
+
           const kioskResponse = await fetch(`${apiBaseUrl}/kiosk/upload-bill/`, {
             method: 'POST',
             headers: {

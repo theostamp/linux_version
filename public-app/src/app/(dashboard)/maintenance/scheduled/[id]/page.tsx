@@ -19,4 +19,3 @@ export default function EditScheduledMaintenancePage({ params }: ScheduledMainte
 
   return <ScheduledMaintenanceForm heading="Επεξεργασία Προγραμματισμένης Εργασίας" maintenanceId={maintenanceId} />;
 }
-

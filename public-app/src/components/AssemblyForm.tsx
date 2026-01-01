@@ -36,7 +36,7 @@ export default function AssemblyForm({ buildingId }: Props) {
   ]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(buildingId || null);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const { buildings } = useBuilding();
@@ -58,7 +58,7 @@ export default function AssemblyForm({ buildingId }: Props) {
   };
 
   const updateTopic = (id: string, field: keyof AssemblyTopic, value: string) => {
-    setTopics(topics.map(topic => 
+    setTopics(topics.map(topic =>
       topic.id === id ? { ...topic, [field]: value } : topic
     ));
   };
@@ -66,16 +66,16 @@ export default function AssemblyForm({ buildingId }: Props) {
   const generateAssemblyDescription = () => {
     const dateTime = assemblyDate && assemblyTime ? `${assemblyDate} στις ${assemblyTime}` : 'Θα ανακοινωθεί';
     const location = isOnline ? 'Zoom Meeting' : (assemblyLocation || 'Θα ανακοινωθεί');
-    
+
     let description = `**Ημερομηνία και Ώρα Συνέλευσης:** ${dateTime}\n`;
     description += `**Τοποθεσία:** ${location}\n`;
-    
+
     if (isOnline && meetingLink) {
       description += `**Σύνδεσμος:** ${meetingLink}\n`;
     }
-    
+
     description += `\n**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**\n\n`;
-    
+
     topics.forEach((topic) => {
       if (topic.title.trim()) {
         description += `### Θέμα: ${topic.title}\n`;
@@ -88,9 +88,9 @@ export default function AssemblyForm({ buildingId }: Props) {
         description += '\n';
       }
     });
-    
+
     description += `**Σημαντικό:** Η συμμετοχή σας είναι απαραίτητη για την λήψη αποφάσεων.\n`;
-    
+
     return description;
   };
 
@@ -98,7 +98,7 @@ export default function AssemblyForm({ buildingId }: Props) {
     if (assemblyTitle.trim()) {
       return assemblyTitle;
     }
-    
+
     const topicCount = topics.filter(t => t.title.trim()).length;
     return `Γενική Συνέλευση - ${topicCount} ${topicCount === 1 ? 'Θέμα' : 'Θέματα'}`;
   };
@@ -153,7 +153,7 @@ export default function AssemblyForm({ buildingId }: Props) {
           <Calendar className="w-5 h-5 mr-2" />
           Στοιχεία Συνέλευσης
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="assemblyTitle" className="text-blue-800">
@@ -167,7 +167,7 @@ export default function AssemblyForm({ buildingId }: Props) {
               className="mt-1"
             />
           </div>
-          
+
           <div>
             <Label htmlFor="assemblyDate" className="text-blue-800">
               Ημερομηνία Συνέλευσης *
@@ -181,7 +181,7 @@ export default function AssemblyForm({ buildingId }: Props) {
               required
             />
           </div>
-          
+
           <div>
             <Label htmlFor="assemblyTime" className="text-blue-800">
               Ώρα Συνέλευσης *
@@ -195,7 +195,7 @@ export default function AssemblyForm({ buildingId }: Props) {
               required
             />
           </div>
-          
+
           <div>
             <Label className="text-blue-800 mb-2 block">
               Τύπος Συνέλευσης
@@ -225,7 +225,7 @@ export default function AssemblyForm({ buildingId }: Props) {
               </label>
             </div>
           </div>
-          
+
           {!isOnline && (
             <div className="md:col-span-2">
               <Label htmlFor="assemblyLocation" className="text-blue-800">
@@ -240,7 +240,7 @@ export default function AssemblyForm({ buildingId }: Props) {
               />
             </div>
           )}
-          
+
           {isOnline && (
             <div className="md:col-span-2">
               <Label htmlFor="meetingLink" className="text-blue-800">
@@ -277,7 +277,7 @@ export default function AssemblyForm({ buildingId }: Props) {
             Προσθήκη Θέματος
           </Button>
         </div>
-        
+
         <div className="space-y-4">
           {topics.map((topic, index) => (
             <div key={topic.id} className="bg-white p-4 rounded-lg border border-green-200">
@@ -295,7 +295,7 @@ export default function AssemblyForm({ buildingId }: Props) {
                   </Button>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label className="text-green-800">
@@ -309,7 +309,7 @@ export default function AssemblyForm({ buildingId }: Props) {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label className="text-green-800">
                     Προθεσμία Ολοκλήρωσης
@@ -321,7 +321,7 @@ export default function AssemblyForm({ buildingId }: Props) {
                     className="mt-1"
                   />
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <Label className="text-green-800">
                     Περιγραφή
@@ -384,4 +384,3 @@ export default function AssemblyForm({ buildingId }: Props) {
     </form>
   );
 }
-

@@ -75,7 +75,7 @@ export const useMonthlyExpenses = (buildingId?: number, month?: string) => {
 
     try {
       console.log(`🔄 Fetching monthly expenses for building ${buildingId}, month: ${month}`);
-      
+
       const params = new URLSearchParams();
       params.append('building_id', buildingId.toString());
       if (month) {
@@ -83,7 +83,7 @@ export const useMonthlyExpenses = (buildingId?: number, month?: string) => {
       }
 
       const response = await api.get(`/financial/dashboard/summary/?${params.toString()}`);
-      
+
       console.log('🔍 DEBUG Monthly expenses API response:', {
         url: `/financial/dashboard/summary/?${params.toString()}`,
         status: response.status,
@@ -99,7 +99,7 @@ export const useMonthlyExpenses = (buildingId?: number, month?: string) => {
           total_expenses_month: response.data.total_expenses_month
         } : 'No data'
       });
-      
+
       setExpenses(response.data);
     } catch (err: any) {
       console.error('Error fetching monthly expenses:', err);

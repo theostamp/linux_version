@@ -35,7 +35,7 @@ const buildTargetUrl = (request: NextRequest) => {
   const originalPath = request.nextUrl.pathname.replace('/backend-proxy', '');
   const path = originalPath.startsWith('/') ? originalPath.slice(1) : originalPath;
   const search = request.nextUrl.search;
-  
+
   // The path already comes from /api/* rewrite, so it doesn't have /api/ prefix
   // Django backend expects /api prefix, so add it
   // But check if base already includes /api to avoid double prefix
@@ -43,32 +43,32 @@ const buildTargetUrl = (request: NextRequest) => {
   if (!path.startsWith("api/")) {
     apiPath = `api/${path}`;
   }
-  
+
   // Ensure trailing slash for Django REST framework compatibility
   const normalizedPath = apiPath.endsWith("/") ? apiPath : `${apiPath}/`;
-  
+
   // Check if base already ends with /api to avoid double /api/api/
   let finalBase = base;
   if (finalBase.endsWith('/api')) {
     // Base already has /api, so remove it to avoid double prefix
     finalBase = finalBase.slice(0, -4); // Remove /api
   }
-  
+
   const url = `${finalBase}/${normalizedPath}${search}`;
-  
+
   console.log(`[backend-proxy] Method: ${request.method}, Original: ${request.nextUrl.pathname}, Path: ${path}, API Path: ${apiPath}, Base: ${finalBase}, Final: ${url}`);
-  
+
   return url;
 };
 
 const createForwardHeaders = (request: NextRequest) => {
   const forwardHeaders = new Headers(request.headers);
-  
+
   // ✅ If the client explicitly provides a tenant host, prefer it.
   // This enables multi-tenant routing even when the app is served from a single public domain.
   const explicitTenantHost =
     request.headers.get("x-tenant-host") || request.headers.get("X-Tenant-Host");
-  
+
   // Get the public hostname - prioritize Origin header over Host header
   // Vercel sends x-forwarded-host as the internal Railway URL, not the public domain
   // The Origin header is the most reliable source for the public domain in CORS requests
@@ -76,11 +76,11 @@ const createForwardHeaders = (request: NextRequest) => {
   const referer = request.headers.get("referer");
   const requestHost = request.headers.get("host") ?? "";
   const origin = request.headers.get("origin");
-  
+
   // Priority: Origin > Referer > Host header > x-forwarded-host
   // Origin header is the most reliable source for the public domain
   let publicHostname = explicitTenantHost || requestHost;
-  
+
   // First, try Origin header (most reliable for CORS requests)
   if (!explicitTenantHost && origin) {
     try {
@@ -91,7 +91,7 @@ const createForwardHeaders = (request: NextRequest) => {
       // Invalid origin URL, continue with other options
     }
   }
-  
+
   // If Host header looks like internal Vercel/Railway URL, try referer
   if (!explicitTenantHost && (publicHostname.includes("railway.app") || publicHostname.includes("vercel.app")) && referer) {
     try {
@@ -102,18 +102,18 @@ const createForwardHeaders = (request: NextRequest) => {
       // Invalid referer URL, keep using current hostname
     }
   }
-  
+
   // Only use x-forwarded-host if it's a public domain (not Railway/Vercel internal)
-  if (!explicitTenantHost && forwardedHost && 
-      !forwardedHost.includes("railway.app") && 
+  if (!explicitTenantHost && forwardedHost &&
+      !forwardedHost.includes("railway.app") &&
       !forwardedHost.includes("vercel.app")) {
     publicHostname = forwardedHost;
     console.log(`[backend-proxy] Using X-Forwarded-Host header: ${publicHostname}`);
   }
-  
+
   const finalHost = publicHostname;
   const subdomain = finalHost.split('.')[0];
-  
+
   // Set Host header for tenant routing in Django
   // Django middleware uses X-Forwarded-Host to resolve tenant
   // Railway Edge proxy overwrites X-Forwarded-Host, so we use X-Tenant-Host as well
@@ -124,7 +124,7 @@ const createForwardHeaders = (request: NextRequest) => {
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
   );
-  
+
   // Log for debugging tenant routing
   console.log(`[backend-proxy] Forward headers:`, {
     Host: finalHost,
@@ -134,10 +134,10 @@ const createForwardHeaders = (request: NextRequest) => {
     forwardedHost,
     referer,
     origin,
-    decision: origin 
-      ? "using-origin" 
+    decision: origin
+      ? "using-origin"
       : (requestHost.includes("railway.app") || requestHost.includes("vercel.app"))
-        ? "using-referer-or-host" 
+        ? "using-referer-or-host"
         : "using-host",
   });
 
@@ -158,7 +158,7 @@ async function proxyRequest(request: NextRequest) {
     // Add timeout and better error handling
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+
     try {
       upstreamResponse = await fetch(targetUrl, {
         method: request.method,
@@ -177,14 +177,14 @@ async function proxyRequest(request: NextRequest) {
       }
       throw fetchError;
     }
-    
+
     console.log(`[backend-proxy] Response status: ${upstreamResponse.status} for ${targetUrl}`, {
       method: request.method,
       originalPath: request.nextUrl.pathname,
       targetUrl,
       headers: Object.fromEntries(upstreamResponse.headers.entries()),
     });
-    
+
     // Log response details for debugging
     if (!upstreamResponse.ok) {
       // Clone the response to read body without consuming the original
@@ -197,10 +197,10 @@ async function proxyRequest(request: NextRequest) {
         fullBodyLength: responseText.length,
         requestHeaders: Object.fromEntries(headers.entries()),
       });
-      
+
       // Return error response with more details
       return NextResponse.json(
-        { 
+        {
           error: `Backend request failed: ${upstreamResponse.status} ${upstreamResponse.statusText}`,
           details: responseText.substring(0, 500),
           url: targetUrl
@@ -211,7 +211,7 @@ async function proxyRequest(request: NextRequest) {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     console.error(`[backend-proxy] Failed to reach ${targetUrl}`, {
       error: errorMessage,
       stack: errorStack,
@@ -224,9 +224,9 @@ async function proxyRequest(request: NextRequest) {
         API_URL: process.env.API_URL,
       }
     });
-    
+
     return NextResponse.json(
-      { 
+      {
         error: "Unable to reach backend service",
         details: errorMessage,
         url: targetUrl,

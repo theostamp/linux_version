@@ -60,13 +60,13 @@ export async function fetchWeatherData(): Promise<WeatherData> {
     const response = await fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=37.9755&longitude=23.7348&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Europe%2FAthens'
     );
-    
+
     if (!response.ok) {
       throw new Error(`Weather API error: ${response.status}`);
     }
-    
+
     const data: WeatherApiResponse = await response.json();
-    
+
     return {
       temperature: Math.round(data.current_weather.temperature),
       weathercode: data.current_weather.weathercode,
@@ -81,7 +81,7 @@ export async function fetchWeatherData(): Promise<WeatherData> {
     };
   } catch (error) {
     console.error('Failed to fetch weather data:', error);
-    
+
     // Return mock data on error
     return {
       temperature: 22,
@@ -105,7 +105,7 @@ export async function fetchWeatherWithFallback(): Promise<WeatherData> {
   } catch (error) {
     console.log('Local weather API not available, using Open-Meteo');
   }
-  
+
   // Fallback to Open-Meteo
   return fetchWeatherData();
 }

@@ -33,4 +33,3 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     </Card>
   );
 };
-

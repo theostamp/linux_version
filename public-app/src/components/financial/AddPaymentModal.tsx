@@ -53,12 +53,12 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     total_due?: number;
     [key: string]: unknown;
   }
-  
+
   interface CalculateAdvancedResponse {
     shares?: Record<string, ApartmentShare>;
     [key: string]: unknown;
   }
-  
+
   // Advanced calculation cache per modal open (maps apartmentId -> monthly total for selected month)
   const [monthlyShares, setMonthlyShares] = useState<Record<number, number> | null>(null);
   const [monthlySharesData, setMonthlySharesData] = useState<CalculateAdvancedResponse | null>(null); // Full calculation data
@@ -67,10 +67,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   const [amountTouched, setAmountTouched] = useState(false);
 
   // Use the new hook for consistent apartment data
-  const { 
-    apartments, 
-    isLoading, 
-    error: apartmentError, 
+  const {
+    apartments,
+    isLoading,
+    error: apartmentError,
     loadApartments,
     forceRefresh
   } = useApartmentsWithFinancialData(isOpen ? buildingId : undefined, selectedMonth);
@@ -170,7 +170,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.apartment_id || Number(formData.amount || 0) <= 0) {
       setError('Παρακαλώ συμπληρώστε όλα τα απαιτούμενα πεδία');
       return;
@@ -182,7 +182,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     try {
       // Calculate total amount (common expenses only, reserve fund is included in amount)
       const totalAmount = Math.round(Number(formData.amount || 0) * 100) / 100;
-      
+
       const submitData: PaymentFormData = {
         ...formData,
         amount: totalAmount,
@@ -191,7 +191,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
       // Use the usePayments hook's createPayment method
       const { usePayments } = await import('@/hooks/usePayments');
-      
+
       // Create FormData for file upload if needed
       interface PaymentRequestData {
         apartment: number;
@@ -206,7 +206,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         notes?: string;
       }
       let requestData: FormData | PaymentRequestData;
-      
+
       if (receiptFile) {
         const formDataPayload = new FormData();
         formDataPayload.append('apartment', formData.apartment_id.toString());
@@ -217,14 +217,14 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         formDataPayload.append('payment_type', formData.payment_type);
         formDataPayload.append('payer_type', formData.payer_type);
         formDataPayload.append('payer_name', formData.payer_name || '');
-        
+
         if (formData.reference_number) {
           formDataPayload.append('reference_number', formData.reference_number);
         }
         if (formData.notes) {
           formDataPayload.append('notes', formData.notes);
         }
-        
+
         formDataPayload.append('receipt', receiptFile);
         requestData = formDataPayload;
       } else {
@@ -292,14 +292,14 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         setError('Το αρχείο είναι πολύ μεγάλο. Μέγιστο μέγεθος: 5MB');
         return;
       }
-      
+
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
       if (!allowedTypes.includes(file.type)) {
         setError('Μη υποστηριζόμενος τύπος αρχείου. Επιτρέπονται: JPEG, PNG, GIF, PDF');
         return;
       }
-      
+
       setReceiptFile(file);
       setError(null);
     }
@@ -334,10 +334,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   // Auto-fill reserve fund amount based on participation mills when apartment is selected
   useEffect(() => {
     if (!selectedApartment || !selectedApartment.participation_mills) return;
-    
+
     // Get building data for reserve fund calculation
     const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
-    
+
     // Calculate monthly reserve fund target based on goal and duration
     let monthlyReserveTarget = 0;
     if (building?.reserve_fund_goal && building?.reserve_fund_duration_months) {
@@ -346,11 +346,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       // Fallback to reserve_contribution_per_apartment if available
       monthlyReserveTarget = building?.reserve_contribution_per_apartment ?? 5;
     }
-    
+
     // Calculate reserve fund amount based on participation mills
     const participationMills = selectedApartment.participation_mills;
     const reserveFundAmount = (participationMills / 1000) * monthlyReserveTarget;
-    
+
     // Debug logging
     console.log('🔍 Reserve Fund Calculation Debug:', {
       apartmentId: selectedApartment.id,
@@ -366,7 +366,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       calculatedAmount: reserveFundAmount,
       finalAmount: Number(reserveFundAmount.toFixed(2))
     });
-    
+
     // Reserve fund is now included in the amount field, no need to auto-fill separate field
   }, [selectedApartment?.id, selectedApartment?.participation_mills, buildings, selectedBuilding, currentBuilding, buildingId]);
 
@@ -374,11 +374,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
   return (
     <ModalPortal>
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={handleClose}
     >
-      <div 
+      <div
         className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -455,7 +455,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 {/* Apartment Info */}
                 {selectedApartment && (
                   <div className="mt-2 p-3 bg-muted rounded-md">
@@ -483,7 +483,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                         }`}>
                           {formatCurrency(typeof selectedApartment.current_balance === 'string' ? parseFloat(selectedApartment.current_balance) : Number(selectedApartment.current_balance || 0))}
                           <span className="text-xs ml-1">
-                            {Number(selectedApartment.current_balance || 0) < 0 ? '(χρεωστικό)' : 
+                            {Number(selectedApartment.current_balance || 0) < 0 ? '(χρεωστικό)' :
                              Number(selectedApartment.current_balance || 0) > 0 ? '(πιστωτικό)' : '(εξοφλημένο)'}
                           </span>
                         </p>
@@ -491,7 +491,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                       <div>
                         <span className="text-gray-600">Μηνιαία Οφειλή:</span>
                         <p className="font-medium text-orange-600">
-                          {selectedApartment.monthly_due !== undefined ? 
+                          {selectedApartment.monthly_due !== undefined ?
                             formatCurrency(typeof selectedApartment.monthly_due === 'string' ? parseFloat(selectedApartment.monthly_due) : Number(selectedApartment.monthly_due || 0)) : 'Μη διαθέσιμο'
                           }
                         </p>
@@ -564,16 +564,16 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 {(() => {
                   const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
                   const reserveAmount = building?.reserve_contribution_per_apartment || 0;
-                  
+
                   // Check if reserve fund is actually included in the current amount
                   // Use the actual calculation data from the backend
                   const currentAmount = formData.amount || 0;
-                  
+
                   // Get the actual reserve fund contribution for this apartment from the calculation
                   const apartmentShare = selectedApartment?.id ? monthlySharesData?.shares?.[selectedApartment.id] : null;
                   const actualReserveContribution = apartmentShare?.breakdown?.reserve_fund_contribution || 0;
                   const hasReserveFund = actualReserveContribution > 0;
-                  
+
                   return reserveAmount > 0 && hasReserveFund ? (
                     <p className="text-xs text-blue-600 mt-1">
                       💡 Το ποσό περιλαμβάνει και αποθεματικό {formatCurrency(actualReserveContribution)}
@@ -601,16 +601,16 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   {(() => {
                     const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
                     const reserveAmount = building?.reserve_contribution_per_apartment || 0;
-                    
+
                     // Check if reserve fund is actually included in the current amount
                     // Use the actual calculation data from the backend
                     const currentAmount = formData.amount || 0;
-                    
+
                     // Get the actual reserve fund contribution for this apartment from the calculation
                     const apartmentShare = selectedApartment?.id ? monthlySharesData?.shares?.[selectedApartment.id] : null;
                     const actualReserveContribution = apartmentShare?.breakdown?.reserve_fund_contribution || 0;
                     const hasReserveFund = actualReserveContribution > 0;
-                    
+
                     return reserveAmount > 0 && hasReserveFund ? ` (συμπεριλαμβανομένου αποθεματικού ${formatCurrency(actualReserveContribution)})` : '';
                   })()}
                 </div>
@@ -755,8 +755,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Ακύρωση
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={isSubmitting || !formData.apartment_id || Number(formData.amount || 0) <= 0}
             className="bg-success hover:bg-success/90"
           >

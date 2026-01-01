@@ -15,7 +15,7 @@ interface ActivityFeedProps {
 
 export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
   const router = useRouter();
-  
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -36,11 +36,11 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
       </div>
     );
   }
-  
+
   const recentActivity = data?.recent_activity || [];
   const urgentItems = recentActivity.filter(item => item.is_urgent);
   const regularItems = recentActivity.filter(item => !item.is_urgent);
-  
+
   const handleActivityClick = (activity: typeof recentActivity[0]) => {
     if (activity.type === 'announcement') {
       router.push('/announcements');
@@ -48,7 +48,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
       router.push('/votes');
     }
   };
-  
+
   const getActivityIcon = (type: string, isUrgent: boolean) => {
     if (type === 'announcement') {
       return <Bell className={`w-4 h-4 ${isUrgent ? 'text-destructive' : 'text-blue-500'}`} />;
@@ -57,7 +57,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
     }
     return <Clock className="w-4 h-4 text-muted-foreground" />;
   };
-  
+
   const formatActivityType = (type: string) => {
     const typeLabels: Record<string, string> = {
       announcement: 'Ανακοίνωση',
@@ -65,7 +65,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
     };
     return typeLabels[type] || type;
   };
-  
+
   const renderActivityList = (items: typeof recentActivity, title: string, emptyMessage: string) => (
     <Card className="h-full">
       <CardHeader className="pb-3">
@@ -114,13 +114,13 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
       </CardContent>
     </Card>
   );
-  
+
   return (
     <div className="mb-8">
       <h2 className="text-xl font-semibold text-foreground mb-4">
         📰 Πρόσφατη Δραστηριότητα
       </h2>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Urgent Items */}
         {renderActivityList(
@@ -128,7 +128,7 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
           '⚠️ Επείγοντα',
           'Δεν υπάρχουν επείγοντα θέματα'
         )}
-        
+
         {/* Recent Items */}
         {renderActivityList(
           regularItems.slice(0, 5),
@@ -141,5 +141,3 @@ export function ActivityFeed({ data, loading = false }: ActivityFeedProps) {
 }
 
 export default ActivityFeed;
-
-

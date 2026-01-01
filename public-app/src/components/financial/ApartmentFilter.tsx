@@ -56,8 +56,8 @@ export const ApartmentFilter: React.FC<ApartmentFilterProps> = ({
       {/* Apartment Selector */}
       <div className="flex items-center gap-2">
         <Home className="h-4 w-4 text-muted-foreground" />
-        <Select 
-          value={selectedApartmentId} 
+        <Select
+          value={selectedApartmentId}
           onValueChange={onApartmentChange}
           disabled={loading}
         >
@@ -87,4 +87,4 @@ export const ApartmentFilter: React.FC<ApartmentFilterProps> = ({
       </div>
     </div>
   );
-}; 
+};

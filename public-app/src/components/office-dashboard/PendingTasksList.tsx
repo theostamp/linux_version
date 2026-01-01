@@ -6,8 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { 
-  Wrench, 
+import {
+  Wrench,
   Building2,
   Clock,
   ExternalLink,
@@ -50,8 +50,8 @@ const getPriorityConfig = (priority: string) => {
   }
 };
 
-export function PendingTasksList({ 
-  data, 
+export function PendingTasksList({
+  data,
   loading = false,
   initialVisibleCount = 3
 }: PendingTasksListProps) {
@@ -127,9 +127,9 @@ export function PendingTasksList({
           {visibleTasks.map((task) => {
             const statusConfig = getStatusConfig(task.status);
             const priorityConfig = getPriorityConfig(task.priority);
-            
+
             return (
-              <div 
+              <div
                 key={task.id}
                 className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
               >

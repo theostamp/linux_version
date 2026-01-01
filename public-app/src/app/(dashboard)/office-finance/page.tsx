@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Wallet, 
-  Download, 
+import {
+  Wallet,
+  Download,
   RefreshCw,
   AlertCircle,
   Settings,
@@ -18,14 +18,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardErrorBoundary } from '@/components/dashboard/DashboardErrorBoundary';
-import { 
+import {
   FinanceSummaryCards,
   IncomeByBuildingChart,
   ExpensesByCategoryChart,
   YearlyChart,
   RecentTransactions
 } from '@/components/office-finance';
-import { 
+import {
   useOfficeFinanceDashboard,
   useYearlySummary,
   useMarkIncomeReceived,
@@ -54,7 +54,7 @@ function groupCategories<T extends { group_type: string }>(
   labels: Record<string, string>
 ): Record<string, T[]> {
   if (!categories) return {};
-  
+
   const grouped: Record<string, T[]> = {};
   categories.forEach(cat => {
     const group = cat.group_type || 'other';
@@ -63,7 +63,7 @@ function groupCategories<T extends { group_type: string }>(
     }
     grouped[group].push(cat);
   });
-  
+
   // Sort by group order
   const orderedGroups: Record<string, T[]> = {};
   Object.keys(labels).forEach(key => {
@@ -71,32 +71,32 @@ function groupCategories<T extends { group_type: string }>(
       orderedGroups[key] = grouped[key];
     }
   });
-  
+
   return orderedGroups;
 }
 
 // Enhanced Modal Component with glassmorphism design
-function Modal({ 
-  isOpen, 
-  onClose, 
-  title, 
+function Modal({
+  isOpen,
+  onClose,
+  title,
   children,
   variant = 'default'
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  title: string; 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
   children: React.ReactNode;
   variant?: 'default' | 'success' | 'danger';
 }) {
   if (!isOpen) return null;
-  
+
   const headerStyles = {
     default: 'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-800/80',
     success: 'border-emerald-200/50 dark:border-emerald-700/50 bg-emerald-50/80 dark:bg-emerald-900/30',
     danger: 'border-rose-200/50 dark:border-rose-700/50 bg-rose-50/80 dark:bg-rose-900/30'
   };
-  
+
   const titleColors = {
     default: 'text-slate-800 dark:text-slate-100',
     success: 'text-emerald-700 dark:text-emerald-300',
@@ -108,20 +108,20 @@ function Modal({
     success: 'text-emerald-500 dark:text-emerald-400',
     danger: 'text-rose-500 dark:text-rose-400'
   };
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop with blur */}
-      <div 
-        className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-opacity" 
-        onClick={onClose} 
+      <div
+        className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md transition-opacity"
+        onClick={onClose}
       />
-      
+
       {/* Modal container */}
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/20 dark:shadow-black/40 animate-in fade-in zoom-in-95 duration-200">
         {/* Glass effect background */}
         <div className="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl" />
-        
+
         {/* Content */}
         <div className="relative">
           {/* Header */}
@@ -139,14 +139,14 @@ function Modal({
               )}
               <h2 className={`text-xl font-semibold ${titleColors[variant]}`}>{title}</h2>
             </div>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
             </button>
           </div>
-          
+
           {/* Body */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] bg-white/50 dark:bg-slate-900/50">
             {children}
@@ -174,12 +174,12 @@ function GroupedCategorySelect({
   className?: string;
 }) {
   const grouped = groupCategories(categories, groupLabels);
-  
+
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground 
+      className={`w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground
         focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors ${className}`}
     >
       <option value="">{placeholder}</option>
@@ -204,7 +204,7 @@ function OfficeFinanceContent() {
   const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   const [editingIncomeId, setEditingIncomeId] = useState<number | null>(null);
-  
+
   // Form states for create
   const [incomeForm, setIncomeForm] = useState({
     title: '',
@@ -214,7 +214,7 @@ function OfficeFinanceContent() {
     building: '',
     description: '',
   });
-  
+
   const [expenseForm, setExpenseForm] = useState({
     title: '',
     amount: '',
@@ -234,7 +234,7 @@ function OfficeFinanceContent() {
     description: '',
     status: 'pending',
   });
-  
+
   const [editExpenseForm, setEditExpenseForm] = useState({
     title: '',
     amount: '',
@@ -243,20 +243,20 @@ function OfficeFinanceContent() {
     description: '',
     is_paid: false,
   });
-  
-  const { 
-    data: dashboardData, 
-    isLoading: isDashboardLoading, 
+
+  const {
+    data: dashboardData,
+    isLoading: isDashboardLoading,
     isError,
     error,
-    refetch 
+    refetch
   } = useOfficeFinanceDashboard();
-  
-  const { 
-    data: yearlySummary, 
-    isLoading: isYearlyLoading 
+
+  const {
+    data: yearlySummary,
+    isLoading: isYearlyLoading
   } = useYearlySummary(selectedYear);
-  
+
   const markReceivedMutation = useMarkIncomeReceived();
   const markPaidMutation = useMarkExpensePaid();
   const initCategoriesMutation = useInitializeCategories();
@@ -266,7 +266,7 @@ function OfficeFinanceContent() {
   const updateIncomeMutation = useUpdateIncome();
   const deleteExpenseMutation = useDeleteExpense();
   const deleteIncomeMutation = useDeleteIncome();
-  
+
   // Categories & Buildings for dropdowns
   const { data: expenseCategories } = useExpenseCategories();
   const { data: incomeCategories } = useIncomeCategories();
@@ -294,9 +294,9 @@ function OfficeFinanceContent() {
 
   const handleEditExpense = (id: number) => {
     // Find expense from recent expenses or unpaid expenses
-    const expense = dashboardData?.recent_expenses?.find(e => e.id === id) 
+    const expense = dashboardData?.recent_expenses?.find(e => e.id === id)
       || dashboardData?.unpaid_expenses?.find(e => e.id === id);
-    
+
     if (expense) {
       setEditingExpenseId(id);
       setEditExpenseForm({
@@ -317,7 +317,7 @@ function OfficeFinanceContent() {
     // Find income from recent incomes or pending incomes
     const income = dashboardData?.recent_incomes?.find(i => i.id === id)
       || dashboardData?.pending_incomes?.find(i => i.id === id);
-    
+
     if (income) {
       setEditingIncomeId(id);
       setEditIncomeForm({
@@ -475,7 +475,7 @@ function OfficeFinanceContent() {
       toast.error('Δεν υπάρχουν δεδομένα για εξαγωγή');
       return;
     }
-    
+
     const data = [
       ['Οικονομικά Γραφείου - Αναφορά'],
       [''],
@@ -484,7 +484,7 @@ function OfficeFinanceContent() {
       ['Έξοδα', dashboardData.current_month?.expenses?.total || 0],
       ['Καθαρό Αποτέλεσμα', dashboardData.current_month?.net_result || 0],
     ];
-    
+
     const csvContent = data.map(row => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -528,7 +528,7 @@ function OfficeFinanceContent() {
             <p className="text-muted-foreground">Διαχείριση εσόδων και εξόδων του γραφείου διαχείρισης</p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={handleInitCategories}
@@ -539,7 +539,7 @@ function OfficeFinanceContent() {
             <Settings className="w-4 h-4" />
             <span className="hidden sm:inline">Κατηγορίες</span>
           </button>
-          
+
           <button
             onClick={() => refetch()}
             disabled={isDashboardLoading}
@@ -548,24 +548,24 @@ function OfficeFinanceContent() {
             <RefreshCw className={`w-4 h-4 ${isDashboardLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Ανανέωση</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={handleExport}
             className="px-3 py-2 text-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Εξαγωγή</span>
           </button>
-          
+
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={() => setShowIncomeModal(true)}
               className="px-4 py-2 bg-success hover:bg-success/90 text-success-foreground rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-success/20"
             >
               <TrendingUp className="w-4 h-4" />
               <span>Νέο Έσοδο</span>
             </button>
-            <button 
+            <button
               onClick={() => setShowExpenseModal(true)}
               className="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-destructive/20"
             >
@@ -672,7 +672,7 @@ function OfficeFinanceContent() {
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
@@ -702,7 +702,7 @@ function OfficeFinanceContent() {
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
@@ -735,7 +735,7 @@ function OfficeFinanceContent() {
               </select>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
             <textarea
@@ -746,7 +746,7 @@ function OfficeFinanceContent() {
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
@@ -783,7 +783,7 @@ function OfficeFinanceContent() {
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
@@ -813,7 +813,7 @@ function OfficeFinanceContent() {
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
               <Tag className="w-4 h-4 inline mr-1.5 text-rose-600" />
@@ -828,7 +828,7 @@ function OfficeFinanceContent() {
               className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-gray-200 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-rose-500/30 focus:!border-rose-500 !shadow-sm"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
             <textarea
@@ -839,7 +839,7 @@ function OfficeFinanceContent() {
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
-          
+
           <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
             <input
               type="checkbox"
@@ -852,7 +852,7 @@ function OfficeFinanceContent() {
               Έχει πληρωθεί
             </label>
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
@@ -873,13 +873,13 @@ function OfficeFinanceContent() {
       </Modal>
 
       {/* Edit Income Modal */}
-      <Modal 
-        isOpen={showEditIncomeModal} 
+      <Modal
+        isOpen={showEditIncomeModal}
         onClose={() => {
           setShowEditIncomeModal(false);
           setEditingIncomeId(null);
-        }} 
-        title="Επεξεργασία Εσόδου" 
+        }}
+        title="Επεξεργασία Εσόδου"
         variant="success"
       >
         <form onSubmit={handleUpdateIncome} className="space-y-5">
@@ -897,7 +897,7 @@ function OfficeFinanceContent() {
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
@@ -927,7 +927,7 @@ function OfficeFinanceContent() {
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
@@ -974,7 +974,7 @@ function OfficeFinanceContent() {
               Έχει εισπραχθεί
             </label>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
             <textarea
@@ -985,7 +985,7 @@ function OfficeFinanceContent() {
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
@@ -1009,13 +1009,13 @@ function OfficeFinanceContent() {
       </Modal>
 
       {/* Edit Expense Modal */}
-      <Modal 
-        isOpen={showEditExpenseModal} 
+      <Modal
+        isOpen={showEditExpenseModal}
         onClose={() => {
           setShowEditExpenseModal(false);
           setEditingExpenseId(null);
-        }} 
-        title="Επεξεργασία Εξόδου" 
+        }}
+        title="Επεξεργασία Εξόδου"
         variant="danger"
       >
         <form onSubmit={handleUpdateExpense} className="space-y-5">
@@ -1033,7 +1033,7 @@ function OfficeFinanceContent() {
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
@@ -1063,7 +1063,7 @@ function OfficeFinanceContent() {
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
               <Tag className="w-4 h-4 inline mr-1.5 text-rose-600" />
@@ -1078,7 +1078,7 @@ function OfficeFinanceContent() {
               className="!bg-white dark:!bg-slate-800 !border-2 !border-slate-200 dark:!border-gray-200 !rounded-xl !text-slate-900 dark:!text-slate-100 focus:!ring-2 focus:!ring-rose-500/30 focus:!border-rose-500 !shadow-sm"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Περιγραφή</label>
             <textarea
@@ -1089,7 +1089,7 @@ function OfficeFinanceContent() {
               placeholder="Προαιρετική περιγραφή..."
             />
           </div>
-          
+
           <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
             <input
               type="checkbox"
@@ -1102,7 +1102,7 @@ function OfficeFinanceContent() {
               Έχει πληρωθεί
             </label>
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-5 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
@@ -1135,4 +1135,3 @@ export default function OfficeFinancePage() {
     </DashboardErrorBoundary>
   );
 }
-

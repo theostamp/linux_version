@@ -9,10 +9,10 @@ interface QRCodeGeneratorProps {
   className?: string;
 }
 
-export default function QRCodeGenerator({ 
-  url, 
-  size = 120, 
-  className = '' 
+export default function QRCodeGenerator({
+  url,
+  size = 120,
+  className = ''
 }: QRCodeGeneratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

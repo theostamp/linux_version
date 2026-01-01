@@ -24,11 +24,11 @@ function OAuthCallback() {
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
-  
+
   // Check for cross-subdomain token transfer (via URL hash)
   const hashTokens = searchParams.get('tokens');
   const hashRedirect = searchParams.get('redirect_path');
-  
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Επεξεργασία...');
 
@@ -44,7 +44,7 @@ function OAuthCallback() {
             const refresh = hashParams.get('refresh');
             const redirectPath = hashParams.get('redirect') || '/dashboard';
             const buildingId = hashParams.get('building');
-            
+
             if (access) {
               // Store building context if provided (from QR scan)
               if (buildingId) {
@@ -52,15 +52,15 @@ function OAuthCallback() {
                 localStorage.setItem('activeBuildingId', buildingId);
                 console.log(`[AuthCallback] Set building context from redirect: ${buildingId}`);
               }
-              
+
               // Store refresh token first
               if (refresh) {
                 localStorage.setItem('refresh_token', refresh);
               }
-              
+
               // Use loginWithToken to properly set auth state
               await loginWithToken(access);
-              
+
               // Clear hash and redirect
               window.location.hash = '';
               setStatus('success');
@@ -78,7 +78,7 @@ function OAuthCallback() {
         return;
       }
     }
-    
+
     if (error) {
       setStatus('error');
       setMessage('Η σύνδεση με Google απέτυχε');
@@ -97,12 +97,12 @@ function OAuthCallback() {
         if (!coreApiUrl) {
           throw new Error('Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.');
         }
-        
+
         // Ensure URL has protocol
         if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
           coreApiUrl = `https://${coreApiUrl}`;
         }
-        
+
         // Remove trailing slash
         coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -135,7 +135,7 @@ function OAuthCallback() {
         });
 
         const data = await response.json();
-        
+
         // DEBUG: Log backend response
         console.log('[OAuth Callback] Backend response:', {
           status: response.status,
@@ -155,7 +155,7 @@ function OAuthCallback() {
         if (data.refresh) {
           localStorage.setItem('refresh_token', data.refresh);
         }
-        
+
         // Use loginWithToken to properly set auth state (if not cross-domain redirect)
         if (data.access && !data.tenant_url) {
           try {
@@ -212,12 +212,12 @@ function OAuthCallback() {
         // IMPORTANT: If backend says '/plans' (user has no tenant), ALWAYS follow that
         // Otherwise use the stateData redirect or backend default
         let redirectPath = data.redirect_path || stateData.redirect || '/dashboard';
-        
+
         // If user has no tenant, backend says go to /plans - this takes priority
         if (data.redirect_path === '/plans') {
           redirectPath = '/plans';
         }
-        
+
         if (data.tenant_url) {
           // Cross-subdomain redirect: pass tokens via URL hash (more secure than query params)
           // Hash fragment is not sent to server, reducing exposure
@@ -250,7 +250,7 @@ function OAuthCallback() {
               <p className="text-gray-600">{message}</p>
             </>
           )}
-          
+
           {status === 'success' && (
             <>
               <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
@@ -259,7 +259,7 @@ function OAuthCallback() {
               <p className="text-sm text-gray-500 mt-4">Ανακατεύθυνση...</p>
             </>
           )}
-          
+
           {status === 'error' && (
             <>
               <XCircle className="h-16 w-16 text-red-600 mb-4" />
@@ -298,4 +298,3 @@ export default function OAuthCallbackPage() {
     </Suspense>
   );
 }
-

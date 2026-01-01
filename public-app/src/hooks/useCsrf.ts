@@ -10,7 +10,7 @@ export default function useCsrf(): boolean {
   useEffect(() => {
     // Prevent multiple attempts
     if (hasTriedRef.current) return;
-    
+
     async function fetchToken() {
       hasTriedRef.current = true;
       try {
@@ -27,4 +27,3 @@ export default function useCsrf(): boolean {
 
   return ready;
 }
-

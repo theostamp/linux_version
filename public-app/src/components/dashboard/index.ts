@@ -1,6 +1,6 @@
 /**
  * Dashboard Components - Refactored
- * 
+ *
  * Centralized exports for all dashboard components
  */
 
@@ -11,4 +11,3 @@ export { QuickActionsGrid } from './QuickActionsGrid';
 export { ActivityFeed } from './ActivityFeed';
 export { BuildingHealthCards } from './BuildingHealthCards';
 export { DashboardErrorBoundary } from './DashboardErrorBoundary';
-

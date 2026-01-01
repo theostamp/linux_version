@@ -1,10 +1,10 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { 
-  Wrench, 
-  AlertTriangle, 
-  Clock, 
+import {
+  Wrench,
+  AlertTriangle,
+  Clock,
   CheckCircle,
   Calendar,
   Users,

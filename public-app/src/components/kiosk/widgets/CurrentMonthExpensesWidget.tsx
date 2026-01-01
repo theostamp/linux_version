@@ -61,7 +61,7 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
             Δαπάνες {periodLabel}
           </span>
         </div>
-        
+
         {totalAmount > 0 ? (
           <div className="text-4xl font-bold text-white">
             €{totalAmount.toFixed(2)}
@@ -71,7 +71,7 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
             <p className="text-lg">Δεν υπάρχουν δαπάνες</p>
           </div>
         )}
-        
+
         {expenses.length > 0 && (
           <p className="text-xs text-green-300/60 mt-2">
             {expenses.length} {expenses.length === 1 ? 'δαπάνη' : 'δαπάνες'}
@@ -81,4 +81,3 @@ export default function CurrentMonthExpensesWidget({ data, isLoading, error, bui
     </div>
   );
 }
-

@@ -16,5 +16,3 @@ export const ensureArray = <T = unknown>(value: unknown, fallback: T[] = []): T[
 
   return fallback;
 };
-
-

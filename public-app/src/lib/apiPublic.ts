@@ -6,7 +6,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const { hostname, origin, protocol, port } = window.location;
     console.log(`[API PUBLIC] Current hostname: ${hostname}, origin: ${origin}`);
-    
+
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
       const apiUrl = `http://${hostname}:18000/api`;

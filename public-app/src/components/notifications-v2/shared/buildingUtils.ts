@@ -38,15 +38,15 @@ export function extractBuildingData(building: Building | undefined | null): Buil
   const fullAddress = addressParts.join(', ');
 
   // Στοιχεία διαχείρισης - Γραφείο διαχείρισης ή εσωτερικός διαχειριστής
-  const managementName = 
-    building.management_office_name || 
+  const managementName =
+    building.management_office_name ||
     building.internal_manager_name ||
     building.internal_manager_display_name ||
     'Η Διαχείριση';
 
-  const managementPhone = 
-    building.management_office_phone || 
-    building.internal_manager_phone || 
+  const managementPhone =
+    building.management_office_phone ||
+    building.internal_manager_phone ||
     '';
 
   return {
@@ -64,19 +64,19 @@ export function extractBuildingData(building: Building | undefined | null): Buil
  */
 export function generateEmailSignature(buildingData: BuildingEmailData): string {
   let signature = `Με εκτίμηση,\n${buildingData.managementName}`;
-  
+
   if (buildingData.name !== 'Πολυκατοικία') {
     signature += `\n${buildingData.name}`;
   }
-  
+
   if (buildingData.fullAddress) {
     signature += `\n${buildingData.fullAddress}`;
   }
-  
+
   if (buildingData.managementPhone) {
     signature += `\nΤηλ: ${buildingData.managementPhone}`;
   }
-  
+
   return signature;
 }
 
@@ -118,5 +118,3 @@ export const MONTHS_GENITIVE = [
   'Μαΐου', 'Ιουνίου', 'Ιουλίου', 'Αυγούστου',
   'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου'
 ];
-
-

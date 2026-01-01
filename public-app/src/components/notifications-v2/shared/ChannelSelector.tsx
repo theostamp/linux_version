@@ -83,7 +83,7 @@ export default function ChannelSelector({
 }: ChannelSelectorProps) {
   const handleToggle = (channelId: NotificationChannel, isAvailable: boolean) => {
     if (!isAvailable) return;
-    
+
     if (selectedChannels.includes(channelId)) {
       // Don't allow deselecting if it's the last one
       if (selectedChannels.length === 1) return;
@@ -93,8 +93,8 @@ export default function ChannelSelector({
     }
   };
 
-  const displayChannels = showUnavailable 
-    ? CHANNELS 
+  const displayChannels = showUnavailable
+    ? CHANNELS
     : CHANNELS.filter(c => c.available);
 
   return (
@@ -102,12 +102,12 @@ export default function ChannelSelector({
       <Label className="text-sm font-medium text-gray-700">
         Κανάλια Αποστολής
       </Label>
-      
+
       <div className="grid gap-3 sm:grid-cols-2">
         {displayChannels.map((channel) => {
           const isSelected = selectedChannels.includes(channel.id);
           const isDisabled = !channel.available;
-          
+
           return (
             <TooltipProvider key={channel.id}>
               <Tooltip>
@@ -128,7 +128,7 @@ export default function ChannelSelector({
                       onCheckedChange={() => handleToggle(channel.id, channel.available)}
                       className="pointer-events-none"
                     />
-                    
+
                     <div className={cn(
                       'flex items-center justify-center rounded-full p-2',
                       isSelected ? 'bg-white shadow-sm' : 'bg-gray-100',
@@ -136,7 +136,7 @@ export default function ChannelSelector({
                     )}>
                       {channel.icon}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">
@@ -152,7 +152,7 @@ export default function ChannelSelector({
                         {channel.description}
                       </p>
                     </div>
-                    
+
                     {isDisabled && channel.configurationNote && (
                       <Info className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     )}
@@ -168,10 +168,10 @@ export default function ChannelSelector({
           );
         })}
       </div>
-      
+
       {selectedChannels.length > 0 && (
         <p className="text-xs text-gray-500">
-          Επιλεγμένα: {selectedChannels.map(c => 
+          Επιλεγμένα: {selectedChannels.map(c =>
             CHANNELS.find(ch => ch.id === c)?.label
           ).join(', ')}
         </p>
@@ -181,20 +181,20 @@ export default function ChannelSelector({
 }
 
 // Compact version for inline use
-export function ChannelBadges({ 
-  channels 
-}: { 
-  channels: NotificationChannel[] 
+export function ChannelBadges({
+  channels
+}: {
+  channels: NotificationChannel[]
 }) {
   return (
     <div className="flex flex-wrap gap-1">
       {channels.map(channelId => {
         const channel = CHANNELS.find(c => c.id === channelId);
         if (!channel) return null;
-        
+
         return (
-          <Badge 
-            key={channelId} 
+          <Badge
+            key={channelId}
             variant="outline"
             className={cn('text-xs gap-1', channel.color)}
           >
@@ -206,4 +206,3 @@ export function ChannelBadges({
     </div>
   );
 }
-

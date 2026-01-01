@@ -47,7 +47,7 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
   }, [maxSize, allowedTypes]);
 
   const uploadFile = useCallback(async (
-    file: File, 
+    file: File,
     endpoint: string,
     additionalData?: Record<string, any>
   ): Promise<FileUploadResult> => {
@@ -65,7 +65,7 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
       // Create FormData
       const formData = new FormData();
       formData.append('file', file);
-      
+
       // Add additional data
       if (additionalData) {
         Object.entries(additionalData).forEach(([key, value]) => {
@@ -149,11 +149,11 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
     }
 
     const results: FileUploadResult[] = [];
-    
+
     for (const file of files) {
       const result = await uploadFile(file, endpoint, additionalData);
       results.push(result);
-      
+
       // If one file fails, we might want to stop or continue based on requirements
       if (!result.success) {
         break;
@@ -176,17 +176,17 @@ export const useFileUpload = (options: FileUploadOptions = {}) => {
     isUploading,
     progress,
     error,
-    
+
     // Actions
     uploadFile,
     uploadMultipleFiles,
     validateFile,
     clearError,
     resetProgress,
-    
+
     // Options
     maxSize,
     allowedTypes,
     maxFiles
   };
-}; 
+};

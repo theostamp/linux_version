@@ -15,4 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { POST, OPTIONS } = exportHandlers(handlers, methods, "billing-subscriptions-cancel");
 
 export { POST, OPTIONS };
-

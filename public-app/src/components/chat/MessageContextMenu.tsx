@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Reply, 
-  Pencil, 
-  Trash2, 
-  Copy, 
+import {
+  Reply,
+  Pencil,
+  Trash2,
+  Copy,
   MoreHorizontal,
   SmilePlus,
   X
@@ -73,7 +73,7 @@ export function MessageContextMenu({
   }
 
   return (
-    <div 
+    <div
       ref={menuRef}
       className={cn(
         'absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity',
@@ -83,7 +83,7 @@ export function MessageContextMenu({
     >
       <div className="flex items-center gap-1">
         {/* Quick actions */}
-        <motion.div 
+        <motion.div
           className="flex items-center bg-popover rounded-lg shadow-lg border border-border overflow-hidden"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -99,7 +99,7 @@ export function MessageContextMenu({
           >
             <SmilePlus className="w-4 h-4 text-muted-foreground" />
           </button>
-          
+
           {/* Reply button */}
           <button
             onClick={() => {
@@ -111,7 +111,7 @@ export function MessageContextMenu({
           >
             <Reply className="w-4 h-4 text-muted-foreground" />
           </button>
-          
+
           {/* More options */}
           <button
             onClick={() => {
@@ -129,8 +129,8 @@ export function MessageContextMenu({
         <AnimatePresence>
           {showReactions && (
             <div className="absolute top-full mt-2 z-50">
-              <QuickReactions 
-                onReact={handleReact} 
+              <QuickReactions
+                onReact={handleReact}
                 selectedEmojis={selectedEmojis}
               />
             </div>
@@ -277,4 +277,3 @@ export function MessageEditMode({ content, onSave, onCancel, className }: Messag
 }
 
 export default MessageContextMenu;
-

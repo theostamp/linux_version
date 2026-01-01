@@ -37,21 +37,21 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
       console.log('⚠️ No buildingId provided, skipping loadApartments');
       return;
     }
-    
+
     // Create request identifier to prevent stale responses
     const requestId = `${buildingId}-${month || 'current'}-${Date.now()}`;
     currentRequestRef.current = requestId;
-    
+
     // Clear any existing timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     console.log(`🔄 Loading apartments for building ${buildingId}, month: ${month}`);
-    
+
     try {
       // Get building data first
       console.log('🔍 DEBUG calling building API...');
@@ -59,19 +59,19 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
       const buildingResponse = await api.get(`/buildings/list/${buildingId}/`);
       // The api.get returns data directly, not response.data
       console.log('🔍 DEBUG building API response:', buildingResponse);
-      
+
       // Check if this request is still the current one
       if (currentRequestRef.current !== requestId) {
         console.log('Request cancelled, newer request in progress');
         return;
       }
-      
+
       setBuilding(buildingResponse);
-      
+
       // Use the optimized batch API function
       console.log('🔍 DEBUG calling fetchApartmentsWithFinancialData...');
       const apartmentsWithFinancialData = await fetchApartmentsWithFinancialData(buildingId, month);
-      
+
       // DEBUG: Log what we got from fetchApartmentsWithFinancialData
       console.log('🔍 DEBUG fetchApartmentsWithFinancialData result:', {
         buildingId,
@@ -81,7 +81,7 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
         length: Array.isArray(apartmentsWithFinancialData) ? apartmentsWithFinancialData.length : 'N/A',
         sampleData: Array.isArray(apartmentsWithFinancialData) && apartmentsWithFinancialData.length > 0 ? apartmentsWithFinancialData[0] : 'No data'
       });
-      
+
       // Final check before updating state
       if (currentRequestRef.current === requestId) {
         setApartments(apartmentsWithFinancialData as ApartmentWithFinancialData[]);
@@ -91,7 +91,7 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
       }
     } catch (err: any) {
       console.error('Error loading apartments with financial data:', err);
-      
+
       // Only update error state if this is still the current request
       if (currentRequestRef.current === requestId) {
         // Provide more specific error messages for rate limiting
@@ -100,7 +100,7 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
         } else {
           setError('Σφάλμα κατά τη φόρτωση των διαμερισμάτων');
         }
-        
+
         setApartments([]);
       }
     } finally {
@@ -125,31 +125,31 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
   // Alternative approach: Get apartments with financial summary in one call
   const loadApartmentsWithSummary = useCallback(async () => {
     if (!buildingId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Get building data first
       // The api.get returns data directly
       const buildingResponse = await api.get(`/buildings/list/${buildingId}/`);
       // The api.get returns data directly
       setBuilding(buildingResponse);
-      
+
       // Use the optimized batch API function (same as loadApartments now)
       const apartmentsWithFinancialData = await fetchApartmentsWithFinancialData(buildingId, month);
-      
+
       setApartments(apartmentsWithFinancialData as ApartmentWithFinancialData[]);
     } catch (err: any) {
       console.error('Error loading apartments with financial summary:', err);
-      
+
       // Provide more specific error messages for rate limiting
       if (err.response?.status === 429) {
         setError('Πάρα πολλά αιτήματα. Παρακαλώ περιμένετε λίγο και δοκιμάστε ξανά.');
       } else {
         setError('Σφάλμα κατά τη φόρτωση των διαμερισμάτων');
       }
-      
+
       setApartments([]);
     } finally {
       setIsLoading(false);
@@ -168,14 +168,14 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
   // Force refresh function that bypasses debouncing
   const forceRefresh = useCallback(async () => {
     if (!buildingId) return;
-    
+
     // Reset debouncing timer to allow immediate refresh
     lastRequestTimeRef.current = 0;
-    
+
     // NOTE: Don't clear apartments here - keep showing old data while loading new data
     // This prevents flickering where the UI briefly shows empty state
     // The loading indicator (isLoading) can be used to show a subtle refresh indicator
-    
+
     // Trigger immediate load
     await loadApartments();
   }, [buildingId, loadApartments]);
@@ -191,4 +191,3 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
     clearError: () => setError(null),
   };
 };
-

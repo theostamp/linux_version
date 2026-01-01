@@ -28,7 +28,7 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams();
       if (options.buildingId) {
         params.append('building_id', options.buildingId.toString());
@@ -120,7 +120,7 @@ export const useSupplierCategories = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // The apiClient.get returns data directly
       const response = await apiClient.get<{ value: string; label: string }[] | { results?: { value: string; label: string }[] }>('/financial/suppliers/categories/');
       const apiData = Array.isArray(response) ? response : (response as { results?: { value: string; label: string }[] }).results;
@@ -154,7 +154,7 @@ export const useSuppliersByCategory = (buildingId: number, category?: string) =>
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams();
       params.append('building_id', buildingId.toString());
       if (category) {
@@ -184,4 +184,4 @@ export const useSuppliersByCategory = (buildingId: number, category?: string) =>
     error,
     refreshSuppliers: fetchSuppliersByCategory,
   };
-}; 
+};

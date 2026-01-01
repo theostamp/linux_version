@@ -6,10 +6,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { 
-  Building2, 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  Building2,
+  AlertTriangle,
+  CheckCircle2,
   AlertCircle,
   ExternalLink,
   TrendingDown,
@@ -60,10 +60,10 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export function BuildingsStatusTable({ 
-  data, 
+export function BuildingsStatusTable({
+  data,
   loading = false,
-  initialVisibleCount = 3 
+  initialVisibleCount = 3
 }: BuildingsStatusTableProps) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -159,10 +159,10 @@ export function BuildingsStatusTable({
               {visibleBuildings.map((building) => {
                 const statusConfig = getStatusConfig(building.status);
                 const StatusIcon = statusConfig.icon;
-                
+
                 return (
-                  <tr 
-                    key={building.id} 
+                  <tr
+                    key={building.id}
                     className="border-b border-border/50 hover:bg-muted/50 transition-colors"
                   >
                     <td className="py-3 px-4">
@@ -196,9 +196,9 @@ export function BuildingsStatusTable({
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center">
                         <div className="w-16 bg-muted rounded-full h-2">
-                          <div 
+                          <div
                             className={`h-2 rounded-full ${
-                              building.collection_rate >= 70 ? 'bg-green-500' : 
+                              building.collection_rate >= 70 ? 'bg-green-500' :
                               building.collection_rate >= 40 ? 'bg-amber-500' : 'bg-red-500'
                             }`}
                             style={{ width: `${Math.min(building.collection_rate, 100)}%` }}

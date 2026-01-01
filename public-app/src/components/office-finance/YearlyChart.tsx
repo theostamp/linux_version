@@ -99,7 +99,7 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
             <p className="text-sm text-muted-foreground">Έσοδα vs Έξοδα</p>
           </div>
         </div>
-        
+
         {/* Year Selector */}
         <div className="flex items-center gap-2">
           <button
@@ -190,7 +190,7 @@ export function YearlyChart({ data, isLoading, onYearChange }: YearlyChartProps)
                 )}
 
                 {/* Bars */}
-                <div 
+                <div
                   className={`w-full flex gap-0.5 items-end h-[calc(100%-2rem)] ${isFuture ? 'opacity-30' : ''}`}
                   style={{ minHeight: '1px' }}
                 >

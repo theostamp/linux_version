@@ -16,10 +16,10 @@ export function sortWidgetsByOrder(widgets: KioskWidget[]): KioskWidget[] {
 export function createSlidesFromWidgets(widgets: KioskWidget[]): KioskSlide[] {
   const mainSlidesWidgets = getWidgetsByCategory(widgets, 'main_slides');
   const sortedWidgets = sortWidgetsByOrder(mainSlidesWidgets);
-  
+
   const slides: KioskSlide[] = [];
   let slideIndex = 0;
-  
+
   // Create 2x2 slides (4 widgets per slide)
   for (let i = 0; i < sortedWidgets.length; i += 4) {
     const slideWidgets = sortedWidgets.slice(i, i + 4);
@@ -33,7 +33,7 @@ export function createSlidesFromWidgets(widgets: KioskWidget[]): KioskSlide[] {
     });
     slideIndex++;
   }
-  
+
   return slides;
 }
 
@@ -74,8 +74,8 @@ export function getWidgetById(widgets: KioskWidget[], id: string): KioskWidget |
 
 // Toggle widget enabled state
 export function toggleWidget(widgets: KioskWidget[], widgetId: string): KioskWidget[] {
-  return widgets.map(widget => 
-    widget.id === widgetId 
+  return widgets.map(widget =>
+    widget.id === widgetId
       ? { ...widget, enabled: !widget.enabled }
       : widget
   );
@@ -83,8 +83,8 @@ export function toggleWidget(widgets: KioskWidget[], widgetId: string): KioskWid
 
 // Update widget settings
 export function updateWidgetSettings(widgets: KioskWidget[], widgetId: string, settings: Record<string, any>): KioskWidget[] {
-  return widgets.map(widget => 
-    widget.id === widgetId 
+  return widgets.map(widget =>
+    widget.id === widgetId
       ? { ...widget, settings: { ...widget.settings, ...settings } }
       : widget
   );
@@ -92,8 +92,8 @@ export function updateWidgetSettings(widgets: KioskWidget[], widgetId: string, s
 
 // Update widget order
 export function updateWidgetOrder(widgets: KioskWidget[], widgetId: string, newOrder: number): KioskWidget[] {
-  return widgets.map(widget => 
-    widget.id === widgetId 
+  return widgets.map(widget =>
+    widget.id === widgetId
       ? { ...widget, order: newOrder }
       : widget
   );

@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { apiGet, apiPost } from '@/lib/api';
-import { 
-  AlertTriangle, 
-  Database, 
-  Trash2, 
-  RefreshCw, 
+import {
+  AlertTriangle,
+  Database,
+  Trash2,
+  RefreshCw,
   Shield,
   CheckCircle2,
   XCircle,
@@ -77,7 +77,7 @@ interface CleanupResult {
 export default function DatabaseCleanupPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [isScanning, setIsScanning] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult | null>(null);
@@ -103,7 +103,7 @@ export default function DatabaseCleanupPage() {
   const scanDatabase = async () => {
     setIsScanning(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<{
         status: string;
@@ -111,7 +111,7 @@ export default function DatabaseCleanupPage() {
         available_operations?: CleanupOperation[];
         error?: string;
       }>('/financial/admin/database-cleanup/');
-      
+
       if (data.status === 'preview') {
         setScanResults(data.scan_results || null);
         setOperations(data.available_operations || []);
@@ -129,19 +129,19 @@ export default function DatabaseCleanupPage() {
   // Execute cleanup
   const executeCleanup = async () => {
     if (!selectedOperation || confirmText !== 'CONFIRM_DELETE') return;
-    
+
     setIsExecuting(true);
     setError(null);
-    
+
     try {
       const data = await apiPost<CleanupResult>('/financial/admin/database-cleanup/', {
         operation: selectedOperation,
         confirm: 'CONFIRM_DELETE',
         search_term: searchTerm || undefined
       });
-      
+
       setResult(data);
-      
+
       if (data.status === 'success') {
         // Reset form
         setSelectedOperation(null);
@@ -180,14 +180,14 @@ export default function DatabaseCleanupPage() {
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <button 
+        <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Πίσω
         </button>
-        
+
         <div className="flex items-center gap-3">
           <div className="p-3 bg-red-100 rounded-xl">
             <Database className="w-8 h-8 text-red-600" />
@@ -291,7 +291,7 @@ export default function DatabaseCleanupPage() {
                 Σύνολο: €{(scanResults.orphan_transactions?.total_amount || 0).toFixed(2)}
               </div>
             </div>
-            
+
             <div className="bg-white border rounded-xl p-4">
               <div className="text-sm text-gray-500 mb-1">🔮 Μελλοντικές Δαπάνες</div>
               <div className="text-2xl font-bold text-purple-600">
@@ -301,7 +301,7 @@ export default function DatabaseCleanupPage() {
                 Σύνολο: €{(scanResults.future_expenses?.total_amount || 0).toFixed(2)}
               </div>
             </div>
-            
+
             <div className="bg-white border rounded-xl p-4">
               <div className="text-sm text-gray-500 mb-1">Αποκλίσεις Υπολοίπων</div>
               <div className="text-2xl font-bold text-yellow-600">
@@ -311,7 +311,7 @@ export default function DatabaseCleanupPage() {
                 Διαμερίσματα με διαφορές
               </div>
             </div>
-            
+
             <div className="bg-white border rounded-xl p-4">
               <div className="text-sm text-gray-500 mb-1">Κατάσταση</div>
               <div className="text-2xl font-bold text-green-600">
@@ -419,8 +419,8 @@ export default function DatabaseCleanupPage() {
                 <div
                   key={op.id}
                   className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedOperation === op.id 
-                      ? 'border-blue-500 bg-blue-50' 
+                    selectedOperation === op.id
+                      ? 'border-blue-500 bg-blue-50'
                       : 'hover:border-gray-300'
                   }`}
                   onClick={() => {
@@ -442,8 +442,8 @@ export default function DatabaseCleanupPage() {
                       <p className="text-xs text-gray-400 mt-1">Επηρεάζει: {op.affects}</p>
                     </div>
                     <div className={`w-4 h-4 rounded-full border-2 ${
-                      selectedOperation === op.id 
-                        ? 'border-blue-500 bg-blue-500' 
+                      selectedOperation === op.id
+                        ? 'border-blue-500 bg-blue-500'
                         : 'border-gray-300'
                     }`} />
                   </div>
@@ -458,7 +458,7 @@ export default function DatabaseCleanupPage() {
               <h3 className="font-bold text-yellow-800 mb-4">
                 ⚠️ Επιβεβαίωση Εκκαθάρισης
               </h3>
-              
+
               {/* Optional Search Term */}
               {selectedOperation === 'orphan_transactions' && (
                 <div className="mb-4">
@@ -474,7 +474,7 @@ export default function DatabaseCleanupPage() {
                   />
                 </div>
               )}
-              
+
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <input
@@ -488,7 +488,7 @@ export default function DatabaseCleanupPage() {
                     Κατανοώ ότι αυτή η ενέργεια είναι <strong>μη αναστρέψιμη</strong>
                   </label>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <input
                     type="checkbox"
@@ -502,7 +502,7 @@ export default function DatabaseCleanupPage() {
                     Έχω κάνει <strong>backup</strong> της βάσης δεδομένων
                   </label>
                 </div>
-                
+
                 {confirmStep >= 3 && (
                   <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <label className="block text-sm font-medium text-red-800 mb-2">
@@ -517,7 +517,7 @@ export default function DatabaseCleanupPage() {
                     />
                   </div>
                 )}
-                
+
                 {confirmText === 'CONFIRM_DELETE' && (
                   <button
                     onClick={executeCleanup}
@@ -544,8 +544,8 @@ export default function DatabaseCleanupPage() {
           {/* Result Display */}
           {result && (
             <div className={`border-2 rounded-xl p-6 ${
-              result.status === 'success' 
-                ? 'bg-green-50 border-green-200' 
+              result.status === 'success'
+                ? 'bg-green-50 border-green-200'
                 : 'bg-yellow-50 border-yellow-200'
             }`}>
               <div className="flex items-start gap-3">
@@ -560,19 +560,19 @@ export default function DatabaseCleanupPage() {
                   }`}>
                     {result.message}
                   </h3>
-                  
+
                   {result.deleted_count !== undefined && (
                     <p className="text-sm mt-2">
                       Διαγράφηκαν: <strong>{result.deleted_count}</strong> εγγραφές
                     </p>
                   )}
-                  
+
                   {result.total_amount_removed !== undefined && (
                     <p className="text-sm">
                       Συνολικό ποσό: <strong>€{result.total_amount_removed.toFixed(2)}</strong>
                     </p>
                   )}
-                  
+
                   {result.balance_updates && result.balance_updates.length > 0 && (
                     <div className="mt-4">
                       <p className="text-sm font-medium mb-2">Ενημερώσεις υπολοίπων:</p>

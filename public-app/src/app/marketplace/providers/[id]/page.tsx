@@ -223,5 +223,3 @@ function MarketplaceProviderContent({ id }: { id: string }) {
     </div>
   );
 }
-
-

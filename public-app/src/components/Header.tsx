@@ -114,4 +114,3 @@ export default function Header({ user }: HeaderProps) {
     </header>
   );
 }
-

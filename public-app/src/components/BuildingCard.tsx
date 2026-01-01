@@ -75,7 +75,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
           </h3>
         </div>
       </div>
-      
+
       {/* Apartments Badge */}
       {building.total_apartments && (
         <div className="bg-blue-500/5 px-3 py-2 border-b border-border">
@@ -108,7 +108,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
             Διαχείριση
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
-          
+
           <div className="flex space-x-2">
             {canManage && (
               <>
@@ -117,10 +117,10 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
                     <Edit className="w-4 h-4" />
                   </Button>
                 </Link>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon" 
+
+                <Button
+                  variant="outline"
+                  size="icon"
                   className="h-9 w-9 text-destructive hover:bg-destructive/10"
                   onClick={handleDelete}
                   disabled={isDeleting}
@@ -141,4 +141,3 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
 };
 
 export default BuildingCard;
-

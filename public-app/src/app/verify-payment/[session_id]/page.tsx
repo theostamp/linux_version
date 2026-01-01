@@ -15,19 +15,19 @@ interface PaymentStatus {
 export default function VerifyPaymentPage() {
   const params = useParams();
   const sessionId = params.session_id as string;
-  
+
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>({
     status: 'loading',
     message: 'Επαληθεύουμε την πληρωμή σας...'
   });
-  
+
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isResending, setIsResending] = useState(false);
 
   // Cooldown timer
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    
+
     const timer = setInterval(() => {
       setResendCooldown((prev) => {
         if (prev <= 1) {
@@ -37,7 +37,7 @@ export default function VerifyPaymentPage() {
         return prev - 1;
       });
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
@@ -172,9 +172,9 @@ export default function VerifyPaymentPage() {
 
   const handleResendEmail = async () => {
     if (resendCooldown > 0 || isResending) return;
-    
+
     setIsResending(true);
-    
+
     try {
       const response = await fetch('/api/resend-verification-email', {
         method: 'POST',
@@ -183,9 +183,9 @@ export default function VerifyPaymentPage() {
         },
         body: JSON.stringify({ sessionId }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         if (response.status === 429 && data.remainingSeconds) {
           setResendCooldown(data.remainingSeconds);
@@ -210,7 +210,7 @@ export default function VerifyPaymentPage() {
     return (
       <div className="text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-          {paymentStatus.status === 'success' ? 'Καλώς ήρθατε στο New Concierge!' : 
+          {paymentStatus.status === 'success' ? 'Καλώς ήρθατε στο New Concierge!' :
            paymentStatus.status === 'error' ? 'Η Επαλήθευση Πληρωμής Απέτυχε' :
            paymentStatus.status === 'awaiting_email' ? 'Ελέγξτε το Email σας' :
            paymentStatus.status === 'pending' ? 'Ελέγξτε το Email σας' :
@@ -219,7 +219,7 @@ export default function VerifyPaymentPage() {
         <p className="text-lg text-gray-600 mb-8">
           {paymentStatus.message}
         </p>
-        
+
         {paymentStatus.status === 'success' && paymentStatus.tenantUrl && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-center mb-4">
@@ -281,8 +281,8 @@ export default function VerifyPaymentPage() {
                 className="bg-white text-blue-600 border-2 border-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Mail className="h-5 w-5 mr-2" />
-                {isResending ? 'Αποστολή...' : 
-                 resendCooldown > 0 ? `Περιμένετε ${resendCooldown}s` : 
+                {isResending ? 'Αποστολή...' :
+                 resendCooldown > 0 ? `Περιμένετε ${resendCooldown}s` :
                  'Επαναποστολή Email'}
               </button>
             </div>

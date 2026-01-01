@@ -78,7 +78,7 @@ export interface KioskLayout {
 export type WidgetCategory = 'main_slides' | 'sidebar_widgets' | 'top_bar_widgets' | 'special_widgets';
 
 // Widget IDs for type safety
-export type WidgetId = 
+export type WidgetId =
   | 'dashboard_overview'
   | 'building_statistics'
   | 'emergency_contacts'

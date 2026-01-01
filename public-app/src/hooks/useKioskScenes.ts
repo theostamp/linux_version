@@ -85,7 +85,7 @@ export function useKioskScenes(buildingId: number | null) {
       console.error('[useKioskScenes] Error fetching scenes:', err);
       const message = err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση σκηνών';
       setError(message);
-      
+
       // Fallback to empty array on error
       setScenes([]);
     } finally {

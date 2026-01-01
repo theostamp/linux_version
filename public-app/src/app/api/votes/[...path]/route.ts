@@ -40,4 +40,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "votes");
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-

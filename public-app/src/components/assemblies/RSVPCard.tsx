@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, Video, MapPin, Vote, CheckCircle, 
+import {
+  Users, Video, MapPin, Vote, CheckCircle,
   Clock, Calendar, ArrowRight, Loader2, User,
   Building2, AlertCircle
 } from 'lucide-react';
@@ -147,7 +147,7 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
           )}>
             <Clock className="w-5 h-5" />
             <span className="font-medium">
-              {daysUntilAssembly === 1 
+              {daysUntilAssembly === 1
                 ? 'Η συνέλευση είναι αύριο!'
                 : `${daysUntilAssembly} ημέρες μέχρι τη συνέλευση`}
             </span>
@@ -248,7 +248,7 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
                 >
                   {showNotes ? 'Απόκρυψη σημείωσης' : '+ Προσθήκη σημείωσης (προαιρετικό)'}
                 </button>
-                
+
                 {showNotes && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -305,11 +305,11 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-emerald-600" />
               </div>
-              
+
               <h4 className="text-lg font-semibold text-gray-900 mb-1">
                 Η απάντησή σας καταχωρήθηκε!
               </h4>
-              
+
               <p className="text-gray-500 text-sm mb-4">
                 {selectedOption === 'attending' && 'Θα σας περιμένουμε στη συνέλευση.'}
                 {selectedOption === 'not_attending' && 'Ευχαριστούμε! Μπορείτε να ψηφίσετε ηλεκτρονικά.'}
@@ -324,7 +324,7 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
                 >
                   Αλλαγή απάντησης
                 </Button>
-                
+
                 {selectedOption === 'not_attending' && assembly.pre_voting_enabled && isPreVotingPeriod && (
                   <Button
                     size="sm"
@@ -354,4 +354,3 @@ export default function RSVPCard({ assembly, attendee, onPreVoteClick }: RSVPCar
     </div>
   );
 }
-

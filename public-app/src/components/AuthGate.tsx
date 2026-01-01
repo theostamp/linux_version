@@ -25,9 +25,9 @@ function isUltraAdmin(user: any): boolean {
   );
 }
 
-export default function AuthGate({ 
-  children, 
-  fallback, 
+export default function AuthGate({
+  children,
+  fallback,
   role = 'any',
   requiresUltraAdmin = false,
 }: Readonly<AuthGateProps>) {
@@ -96,4 +96,3 @@ export default function AuthGate({
 
   return <>{children}</>;
 }
-

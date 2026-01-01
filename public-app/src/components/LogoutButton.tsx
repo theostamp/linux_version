@@ -21,4 +21,3 @@ export default function LogoutButton({ className }: { readonly className?: strin
     </Button>
   );
 }
-

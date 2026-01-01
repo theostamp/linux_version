@@ -14,7 +14,7 @@ interface BuildingHealthCardsProps {
 
 export function BuildingHealthCards({ data, loading = false }: BuildingHealthCardsProps) {
   const router = useRouter();
-  
+
   if (loading) {
     return (
       <div className="mb-8">
@@ -31,13 +31,13 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
       </div>
     );
   }
-  
+
   const buildings = data?.buildings || [];
-  
+
   if (buildings.length === 0) {
     return null;
   }
-  
+
   const getHealthText = (score: number): string => {
     if (score >= 80) return 'Άριστη';
     if (score >= 60) return 'Καλή';
@@ -45,7 +45,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
     if (score >= 20) return 'Προβληματική';
     return 'Κρίσιμη';
   };
-  
+
   const getHealthDots = (score: number) => {
     const filledDots = Math.ceil(score / 20); // 0-100 -> 0-5 dots
     return Array.from({ length: 5 }, (_, i) => (
@@ -60,13 +60,13 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
       />
     ));
   };
-  
+
   return (
     <div className="mb-8">
       <h2 className="text-xl font-semibold text-foreground mb-4">
         🏢 Κατάσταση Κτιρίων
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {buildings.map((building) => (
           <Card
@@ -98,7 +98,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
                   <Building className="w-5 h-5" />
                 </div>
               </div>
-              
+
               {/* Health Score */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
@@ -114,7 +114,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
                   {getHealthDots(building.health_score)}
                 </div>
               </div>
-              
+
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
@@ -135,7 +135,7 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
                   </div>
                 </div>
               </div>
-              
+
               {/* Pending Obligations Warning */}
               {building.pending_obligations > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-300">
@@ -157,5 +157,3 @@ export function BuildingHealthCards({ data, loading = false }: BuildingHealthCar
 }
 
 export default BuildingHealthCards;
-
-

@@ -29,7 +29,7 @@ export default function BuildingRequestsPage() {
     // If we have buildings loaded, check if the URL ID is valid
     if (buildings.length > 0) {
       const urlBuilding = buildings.find(b => b.id === buildingId);
-      
+
       // If URL ID doesn't match any building, redirect to the selected building or first building
       if (!urlBuilding) {
         const targetBuilding = selectedBuilding || buildings[0];
@@ -119,4 +119,3 @@ export default function BuildingRequestsPage() {
     </div>
   );
 }
-

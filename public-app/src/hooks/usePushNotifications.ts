@@ -34,8 +34,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         return;
       }
 
-      const supported = 
-        'serviceWorker' in navigator && 
+      const supported =
+        'serviceWorker' in navigator &&
         'PushManager' in window &&
         'Notification' in window;
 
@@ -43,7 +43,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
       if (supported) {
         setPermission(Notification.permission as PushPermissionState);
-        
+
         // Check if already subscribed
         try {
           const registration = await navigator.serviceWorker.ready;
@@ -113,7 +113,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         // Use a placeholder key for development
         console.warn('[usePushNotifications] Could not get VAPID key, using default');
         vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-        
+
         if (!vapidPublicKey) {
           setError('VAPID key δεν έχει ρυθμιστεί');
           setIsLoading(false);
@@ -127,10 +127,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         const base64 = (base64String + padding)
           .replace(/-/g, '+')
           .replace(/_/g, '/');
-        
+
         const rawData = window.atob(base64);
         const outputArray = new Uint8Array(rawData.length);
-        
+
         for (let i = 0; i < rawData.length; ++i) {
           outputArray[i] = rawData.charCodeAt(i);
         }

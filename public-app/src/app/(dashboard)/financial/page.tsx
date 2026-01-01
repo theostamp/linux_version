@@ -22,20 +22,20 @@ function FinancialContent() {
     if (!buildingLoading && buildings.length > 0 && selectedBuilding?.id) {
       const currentUrlBuilding = searchParams.get('building');
       const currentUrlBuildingNum = currentUrlBuilding ? parseInt(currentUrlBuilding, 10) : null;
-      const urlBuildingIsValid = currentUrlBuildingNum && !isNaN(currentUrlBuildingNum) && 
+      const urlBuildingIsValid = currentUrlBuildingNum && !isNaN(currentUrlBuildingNum) &&
                                   buildings.some(b => b.id === currentUrlBuildingNum);
-      
+
       // Skip if URL already has the correct buildingId (prevent unnecessary updates)
       if (urlBuildingIsValid && currentUrlBuildingNum === selectedBuilding.id) {
         lastUpdatedBuildingId.current = selectedBuilding.id;
         return;
       }
-      
+
       // Skip if we already updated for this buildingId (prevent infinite loop)
       if (lastUpdatedBuildingId.current === selectedBuilding.id) {
         return;
       }
-      
+
       // Only update URL if:
       // 1. URL doesn't have a building parameter, OR
       // 2. URL has an invalid building parameter, OR
@@ -43,14 +43,14 @@ function FinancialContent() {
       if (!urlBuildingIsValid || (currentUrlBuildingNum !== null && currentUrlBuildingNum !== selectedBuilding.id)) {
         const params = new URLSearchParams(window.location.search);
         params.set('building', selectedBuilding.id.toString());
-        
+
         // Preserve other URL parameters (like 'tab')
         const newUrl = `/financial?${params.toString()}`;
         console.log(`[FinancialPage] Updating URL to match selectedBuilding: ${newUrl}`);
-        
+
         // Mark that we've updated for this buildingId BEFORE calling router.replace
         lastUpdatedBuildingId.current = selectedBuilding.id;
-        
+
         // Use router.replace to ensure useSearchParams is updated and components re-render with new data
         router.replace(newUrl);
       } else {
@@ -75,14 +75,14 @@ function FinancialContent() {
   // Read buildingId from URL parameter first, then fallback to selectedBuilding or currentBuilding
   const urlBuildingId = searchParams.get('building');
   const urlBuildingIdNum = urlBuildingId ? parseInt(urlBuildingId, 10) : null;
-  
+
   // Validate URL buildingId exists in available buildings
   const validUrlBuildingId = urlBuildingIdNum && !isNaN(urlBuildingIdNum) && buildings.some(b => b.id === urlBuildingIdNum)
     ? urlBuildingIdNum
     : null;
-  
+
   const buildingId = validUrlBuildingId || selectedBuilding?.id || currentBuilding?.id;
-  
+
   console.log('[FinancialPage] BuildingId resolution:', {
     urlBuildingId,
     urlBuildingIdNum,

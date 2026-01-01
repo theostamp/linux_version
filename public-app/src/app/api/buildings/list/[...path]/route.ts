@@ -31,5 +31,3 @@ const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, meth
 console.log("[ROUTE HANDLER] buildings/list handlers exported:", { GET: !!GET, POST: !!POST });
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-
-

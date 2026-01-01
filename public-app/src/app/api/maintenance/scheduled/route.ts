@@ -15,4 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, OPTIONS } = exportHandlers(handlers, methods, "maintenance-scheduled");
 
 export { GET, POST, OPTIONS };
-

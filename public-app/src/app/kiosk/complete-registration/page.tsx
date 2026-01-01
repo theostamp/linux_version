@@ -24,7 +24,7 @@ function CompleteRegistrationContent() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [invitationDetails, setInvitationDetails] = useState<InvitationDetails | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -129,7 +129,7 @@ function CompleteRegistrationContent() {
       if (response.ok) {
         setSubmitStatus('success');
         setSubmitMessage('Η εγγραφή σας ολοκληρώθηκε επιτυχώς!');
-        
+
         // Store tokens if provided (backend returns them under 'tokens' key)
         if (data.tokens?.access) {
           localStorage.setItem('access_token', data.tokens.access);
@@ -137,7 +137,7 @@ function CompleteRegistrationContent() {
         if (data.tokens?.refresh) {
           localStorage.setItem('refresh_token', data.tokens.refresh);
         }
-        
+
         // Store building context from invitation or API response
         const buildingId = data.building_id || invitationDetails?.building_id;
         if (buildingId) {
@@ -145,7 +145,7 @@ function CompleteRegistrationContent() {
           localStorage.setItem('activeBuildingId', buildingId.toString());
           console.log(`[KioskRegistration] Set active building: ${buildingId}`);
         }
-        
+
         // Store tenant URL for cross-subdomain redirect
         if (data.tenant_url) {
           setTenantUrl(data.tenant_url);
@@ -206,7 +206,7 @@ function CompleteRegistrationContent() {
       }
       return path;
     };
-    
+
     const handleNavigation = (path: string) => {
       const url = buildUrl(path);
       if (tenantUrl) {
@@ -215,7 +215,7 @@ function CompleteRegistrationContent() {
         router.push(path);
       }
     };
-    
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-4">
         <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-8 max-w-md text-center">
@@ -224,18 +224,18 @@ function CompleteRegistrationContent() {
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">Καλώς ήρθατε!</h2>
           <p className="text-green-200 mb-6">{submitMessage}</p>
-          
+
           {/* Navigation buttons */}
           <div className="space-y-3">
-            <button 
+            <button
               onClick={() => handleNavigation('/my-apartment')}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
             >
               <Home className="w-5 h-5" />
               <span>Δείτε το Διαμέρισμά σας</span>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => handleNavigation('/dashboard')}
               className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3"
             >
@@ -243,7 +243,7 @@ function CompleteRegistrationContent() {
               <span>Πίνακας Ελέγχου</span>
             </button>
           </div>
-          
+
           <p className="text-slate-500 text-xs mt-6">
             Μπορείτε να αποκτήσετε πρόσβαση σε όλες τις υπηρεσίες του κτιρίου σας.
           </p>
@@ -438,4 +438,3 @@ export default function KioskCompleteRegistrationPage() {
     </Suspense>
   );
 }
-

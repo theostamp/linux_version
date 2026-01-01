@@ -33,7 +33,7 @@ export const ExpenseTitleDropdown: React.FC<ExpenseTitleDropdownProps> = ({
     if (category) {
       const titleSuggestions = getTitleSuggestions(category, supplier);
       setSuggestions(titleSuggestions);
-      
+
       // If current value is not in suggestions, show custom input
       if (value && !titleSuggestions.includes(value)) {
         setCustomTitle(value);
@@ -51,7 +51,7 @@ export const ExpenseTitleDropdown: React.FC<ExpenseTitleDropdownProps> = ({
   // Handle dropdown selection
   const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
-    
+
     if (selectedValue === 'custom') {
       setShowCustomInput(true);
       onChange(customTitle || '');
@@ -107,7 +107,7 @@ export const ExpenseTitleDropdown: React.FC<ExpenseTitleDropdownProps> = ({
         <option value="">
           {category ? placeholder : 'Επιλέξτε πρώτα κατηγορία'}
         </option>
-        
+
         {suggestions.length > 0 && (
           <optgroup label="Προτεινόμενοι τίτλοι">
             {suggestions.map((suggestion, index) => (
@@ -117,7 +117,7 @@ export const ExpenseTitleDropdown: React.FC<ExpenseTitleDropdownProps> = ({
             ))}
           </optgroup>
         )}
-        
+
         {category && (
           <option value="custom">
             ✏️ Προσαρμοσμένος τίτλος...

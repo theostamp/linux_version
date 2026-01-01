@@ -1,12 +1,12 @@
 /**
  * Smart Error Messages System
- * 
+ *
  * Provides actionable, context-aware error messages for better UX.
  * Instead of generic "Error occurred", gives users specific guidance.
- * 
+ *
  * Usage:
  *   import { showBuildingError, BuildingErrorType } from '@/lib/errorMessages';
- *   
+ *
  *   showBuildingError('NO_BUILDINGS');
  *   showBuildingError('PERMISSION_DENIED', 'Edit access required');
  */
@@ -50,7 +50,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'info',
     severity: 'info',
   },
-  
+
   BUILDING_NOT_FOUND: {
     title: 'Το κτίριο δεν βρέθηκε',
     message: 'Το κτίριο που αναζητάτε δεν υπάρχει ή έχει διαγραφεί.',
@@ -58,7 +58,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'alert-circle',
     severity: 'error',
   },
-  
+
   PERMISSION_DENIED: {
     title: 'Δεν έχετε δικαίωμα',
     message: 'Δεν μπορείτε να εκτελέσετε αυτή την ενέργεια.',
@@ -66,7 +66,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'lock',
     severity: 'warning',
   },
-  
+
   NETWORK_ERROR: {
     title: 'Πρόβλημα σύνδεσης',
     message: 'Δεν ήταν δυνατή η σύνδεση με τον διακομιστή.',
@@ -74,7 +74,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'wifi-off',
     severity: 'error',
   },
-  
+
   SERVER_ERROR: {
     title: 'Σφάλμα διακομιστή',
     message: 'Κάτι πήγε στραβά στον διακομιστή.',
@@ -82,7 +82,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'x-circle',
     severity: 'error',
   },
-  
+
   VALIDATION_ERROR: {
     title: 'Μη έγκυρα δεδομένα',
     message: 'Τα δεδομένα που υποβάλατε δεν είναι έγκυρα.',
@@ -90,7 +90,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'alert-circle',
     severity: 'warning',
   },
-  
+
   TIMEOUT_ERROR: {
     title: 'Λήξη χρονικού ορίου',
     message: 'Το αίτημα διήρκεσε πολύ και ματαιώθηκε.',
@@ -98,7 +98,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'alert-circle',
     severity: 'warning',
   },
-  
+
   RATE_LIMIT_EXCEEDED: {
     title: 'Πάρα πολλά αιτήματα',
     message: 'Έχετε υπερβεί το όριο αιτημάτων.',
@@ -106,7 +106,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'alert-circle',
     severity: 'warning',
   },
-  
+
   UNAUTHORIZED: {
     title: 'Μη εξουσιοδοτημένη πρόσβαση',
     message: 'Πρέπει να συνδεθείτε για να συνεχίσετε.',
@@ -114,7 +114,7 @@ export const BuildingErrorMessages: Record<BuildingErrorType, ErrorMessage> = {
     icon: 'lock',
     severity: 'warning',
   },
-  
+
   SESSION_EXPIRED: {
     title: 'Η συνεδρία έληξε',
     message: 'Η συνεδρία σας έχει λήξει για λόγους ασφαλείας.',
@@ -169,7 +169,7 @@ export const getErrorTypeFromCode = (code: string): BuildingErrorType | null => 
     'RATE_LIMIT_EXCEEDED': 'RATE_LIMIT_EXCEEDED',
     'VALIDATION_ERROR': 'VALIDATION_ERROR',
   };
-  
+
   return codeMap[code] || null;
 };
 
@@ -181,32 +181,32 @@ export const parseError = (error: any): { type: BuildingErrorType; additionalInf
   if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
     return { type: 'NETWORK_ERROR' };
   }
-  
+
   // Case 2: Timeout error
   if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
     return { type: 'TIMEOUT_ERROR' };
   }
-  
+
   // Case 3: API error with code
   if (error.response?.data?.code) {
     const type = getErrorTypeFromCode(error.response.data.code);
     if (type) {
-      return { 
-        type, 
-        additionalInfo: error.response.data.message || error.response.data.detail 
+      return {
+        type,
+        additionalInfo: error.response.data.message || error.response.data.detail
       };
     }
   }
-  
+
   // Case 4: HTTP status error
   if (error.response?.status) {
     const type = getErrorTypeFromStatus(error.response.status);
-    return { 
-      type, 
-      additionalInfo: error.response.data?.detail || error.response.data?.message 
+    return {
+      type,
+      additionalInfo: error.response.data?.detail || error.response.data?.message
     };
   }
-  
+
   // Case 5: Generic error
   return { type: 'SERVER_ERROR', additionalInfo: error.message };
 };
@@ -217,19 +217,19 @@ export const parseError = (error: any): { type: BuildingErrorType; additionalInf
 
 /**
  * Shows a smart, actionable error message as a toast.
- * 
+ *
  * @param errorType - The type of error (from BuildingErrorType)
  * @param additionalInfo - Optional additional information to display
  * @param duration - Toast duration in milliseconds (default: 5000)
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * showBuildingError('NO_BUILDINGS');
- * 
+ *
  * // With additional info
  * showBuildingError('PERMISSION_DENIED', 'Edit access required');
- * 
+ *
  * // Custom duration
  * showBuildingError('SERVER_ERROR', undefined, 10000);
  * ```
@@ -240,13 +240,13 @@ export const showBuildingError = (
   duration: number = 5000
 ): void => {
   const error = BuildingErrorMessages[errorType];
-  
+
   if (!error) {
     console.error(`Unknown error type: ${errorType}`);
     toast.error('Παρουσιάστηκε ένα σφάλμα');
     return;
   }
-  
+
   // Create toast message με structured content
   const description = [
     error.message,
@@ -264,10 +264,10 @@ export const showBuildingError = (
 /**
  * Shows an error from a caught exception.
  * Automatically parses the error and shows appropriate message.
- * 
+ *
  * @param error - The caught error object
  * @param fallbackType - Fallback error type if parsing fails
- * 
+ *
  * @example
  * ```tsx
  * try {
@@ -288,10 +288,10 @@ export const showErrorFromException = (
 /**
  * Returns a user-friendly error message without showing a toast.
  * Useful for inline error display.
- * 
+ *
  * @param errorType - The type of error
  * @returns The error message object
- * 
+ *
  * @example
  * ```tsx
  * const error = getErrorMessage('NO_BUILDINGS');
@@ -314,11 +314,11 @@ export const getErrorMessage = (errorType: BuildingErrorType): ErrorMessage => {
 
 /**
  * React component for displaying errors inline.
- * 
+ *
  * @example
  * ```tsx
- * <ErrorDisplay 
- *   errorType="NO_BUILDINGS" 
+ * <ErrorDisplay
+ *   errorType="NO_BUILDINGS"
  *   additionalInfo="Contact admin@example.com"
  * />
  * ```
@@ -335,11 +335,11 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   showAction = true,
 }) => {
   const error = BuildingErrorMessages[errorType];
-  
+
   if (!error) {
     return null;
   }
-  
+
   const IconComponent = {
     'info': Info,
     'lock': Lock,
@@ -347,25 +347,25 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
     'alert-circle': AlertCircle,
     'x-circle': XCircle,
   }[error.icon];
-  
+
   const bgColor = {
     'info': 'bg-blue-50 border-blue-200',
     'warning': 'bg-yellow-50 border-yellow-200',
     'error': 'bg-red-50 border-red-200',
   }[error.severity];
-  
+
   const textColor = {
     'info': 'text-blue-900',
     'warning': 'text-yellow-900',
     'error': 'text-red-900',
   }[error.severity];
-  
+
   const iconColor = {
     'info': 'text-blue-600',
     'warning': 'text-yellow-600',
     'error': 'text-red-600',
   }[error.severity];
-  
+
   return (
     <div className={`p-4 border rounded-lg ${bgColor}`}>
       <div className="flex items-start gap-3">
@@ -392,4 +392,3 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
     </div>
   );
 };
-

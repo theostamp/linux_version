@@ -22,11 +22,10 @@ export default function NewAssemblyPage() {
           Δημιουργήστε μια ανακοίνωση για γενική συνέλευση με όλα τα σχετικά θέματα
         </p>
       </div>
-      
+
       <BuildingFilterIndicator className="mb-6" />
-      
+
       <AssemblyForm buildingId={currentBuilding?.id} />
     </div>
   );
 }
-

@@ -16,5 +16,3 @@ export const getRelativeTimeEl = (date: Date): string => {
   const d = Math.floor(diffMs / day);
   return `Πριν ${d} ${d === 1 ? 'ημέρα' : 'ημέρες'}`;
 };
-
-

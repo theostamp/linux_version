@@ -129,5 +129,3 @@ export function useBuildingEvents(buildingIdParam?: number) {
     }
   };
 }
-
-

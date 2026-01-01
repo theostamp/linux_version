@@ -10,16 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Sparkles, 
-  Target, 
-  TrendingUp, 
-  CheckCircle2, 
-  MousePointerClick, 
-  Megaphone, 
-  Building2, 
-  MapPin, 
-  Zap, 
+import {
+  Sparkles,
+  Target,
+  TrendingUp,
+  CheckCircle2,
+  MousePointerClick,
+  Megaphone,
+  Building2,
+  MapPin,
+  Zap,
   ShieldCheck,
   ChevronRight,
   Info,
@@ -109,14 +109,14 @@ function parseCoord(v: unknown): number | null {
   return null;
 }
 
-function KioskPreview({ 
-  placement, 
-  text, 
-  businessName 
-}: { 
-  placement: PlacementCode; 
-  text: string; 
-  businessName: string 
+function KioskPreview({
+  placement,
+  text,
+  businessName
+}: {
+  placement: PlacementCode;
+  text: string;
+  businessName: string
 }) {
   return (
     <div className="relative mx-auto w-full max-w-[300px] aspect-[9/16] bg-slate-900 rounded-[2rem] border-[6px] border-slate-800 shadow-2xl overflow-hidden flex flex-col">
@@ -145,7 +145,7 @@ function KioskPreview({
             <div className="h-4 w-12 bg-slate-600 rounded" />
           </div>
         </div>
-        
+
         <div className="h-24 bg-slate-800/50 rounded-lg border border-slate-700/50 p-2">
           <div className="h-2 w-12 bg-slate-600 rounded mb-2" />
           <div className="space-y-1.5">
@@ -219,14 +219,14 @@ function KioskPreview({
   );
 }
 
-function LargeKioskShowcase({ 
-  placement, 
-  text, 
+function LargeKioskShowcase({
+  placement,
+  text,
   businessName,
   radiusM
-}: { 
-  placement: PlacementCode; 
-  text: string; 
+}: {
+  placement: PlacementCode;
+  text: string;
   businessName: string;
   radiusM: number;
 }) {
@@ -237,13 +237,13 @@ function LargeKioskShowcase({
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 blur-[150px] rounded-full" />
 
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-4">
-        
+
         {/* Left Side Info Points (25%) */}
         <div className="hidden lg:flex flex-col gap-12 w-[25%] relative">
           {/* Connecting Lines & Dots */}
           <div className="absolute top-[20%] -right-12 w-24 h-[1px] bg-gradient-to-r from-primary/40 to-transparent" />
           <div className="absolute top-[20%] -right-12 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
-          
+
           <div className="absolute bottom-[20%] -right-8 w-16 h-[1px] bg-gradient-to-r from-green-400/40 to-transparent" />
           <div className="absolute bottom-[20%] -right-8 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
 
@@ -267,7 +267,7 @@ function LargeKioskShowcase({
           <div className="relative group transition-transform duration-1000">
             <div className="absolute -inset-10 bg-primary/20 rounded-[4rem] blur-[100px] opacity-40 group-hover:opacity-60 transition-opacity" />
             <KioskPreview placement={placement} text={text} businessName={businessName} />
-            
+
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-6 py-2 bg-primary rounded-full text-[11px] font-black text-white uppercase tracking-widest shadow-2xl">
               InfoPoint Physical Screen (43")
             </div>
@@ -279,7 +279,7 @@ function LargeKioskShowcase({
           {/* Connecting Lines & Dots */}
           <div className="absolute top-[20%] -left-12 w-24 h-[1px] bg-gradient-to-l from-orange-400/40 to-transparent" />
           <div className="absolute top-[20%] -left-12 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
-          
+
           <div className="absolute bottom-[20%] -left-8 w-16 h-[1px] bg-gradient-to-l from-blue-400/40 to-transparent" />
           <div className="absolute bottom-[20%] -left-8 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
 
@@ -703,17 +703,17 @@ export default function AdvertiseLandingPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="flex items-center gap-6 text-white text-[11px] font-black uppercase tracking-[0.2em]">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-900/40" /> 
+                <AlertTriangle className="w-4 h-4 text-amber-900/40" />
                 Περιορισμένη διαθεσιμότητα: 1 επιχείρηση ανά κατηγορία
               </div>
               <span className="text-amber-700/50 font-light">•</span>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-900/40" /> 
+                <Sparkles className="w-4 h-4 text-amber-900/40" />
                 Κλειδώστε το κτίριο πριν από τον ανταγωνισμό σας
               </div>
               <span className="text-amber-700/50 font-light">•</span>
               <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-amber-900/40" /> 
+                <Target className="w-4 h-4 text-amber-900/40" />
                 Τοπική αποκλειστικότητα στη γειτονιά σας
               </div>
               <span className="text-amber-700/50 font-light">•</span>
@@ -725,7 +725,7 @@ export default function AdvertiseLandingPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-          
+
           {/* Centered Top Headings */}
           <div className="text-center max-w-4xl mx-auto space-y-6">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-black tracking-[0.2em] uppercase animate-pulse">
@@ -741,10 +741,10 @@ export default function AdvertiseLandingPage() {
           </div>
 
           {/* New Full Width Showcase Image/Mockup */}
-          <LargeKioskShowcase 
-            placement={selectedPlacement} 
-            text={tickerText} 
-            businessName={businessName || 'Η Επιχείρησή σας'} 
+          <LargeKioskShowcase
+            placement={selectedPlacement}
+            text={tickerText}
+            businessName={businessName || 'Η Επιχείρησή σας'}
             radiusM={radiusM}
           />
 
@@ -792,7 +792,7 @@ export default function AdvertiseLandingPage() {
             <div className="mt-16 lg:mt-0 lg:col-span-6 flex justify-center lg:justify-end relative">
               <div className="relative scale-110">
                 <div className="absolute -inset-20 bg-primary/10 rounded-full blur-[120px] opacity-60" />
-                
+
                 {/* Reverting to the more informative Phone Mockup with floating labels */}
                 <div className="relative w-72 aspect-[9/19] bg-slate-950 rounded-[3rem] border-[10px] border-slate-800 shadow-[0_50px_100px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col p-1">
                    <div className="h-7 w-full flex justify-center items-center">
@@ -808,7 +808,7 @@ export default function AdvertiseLandingPage() {
                             </div>
                          </div>
                       </div>
-                      
+
                       <div className="p-6 space-y-6">
                          {/* The Ad Block on Mobile */}
                          <div className="p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-primary/30 relative overflow-hidden group">
@@ -925,7 +925,7 @@ export default function AdvertiseLandingPage() {
       {/* Main Interactive Flow */}
       <section id="steps" className="py-24 bg-white border-t scroll-mt-20">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-20">
-          
+
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -981,7 +981,7 @@ export default function AdvertiseLandingPage() {
                   <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">1</div>
                   <h3 className="text-2xl font-bold">Βρείτε την επιχείρησή σας</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <Card className="border-slate-100 shadow-sm overflow-hidden">
                     <CardHeader className="bg-slate-50/50">
@@ -994,10 +994,10 @@ export default function AdvertiseLandingPage() {
                         <Label htmlFor="biz-search" className="text-slate-700 font-semibold">Όνομα Επιχείρησης</Label>
                         <div className="relative">
                           <Store className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                          <Input 
+                          <Input
                             id="biz-search"
-                            ref={businessInputRef} 
-                            placeholder="Πληκτρολογήστε (π.χ. My Cafe, Φούρνος Παπαδόπουλος)" 
+                            ref={businessInputRef}
+                            placeholder="Πληκτρολογήστε (π.χ. My Cafe, Φούρνος Παπαδόπουλος)"
                             className="pl-10 h-12 border-slate-200 focus:ring-primary/20"
                           />
                         </div>
@@ -1019,7 +1019,7 @@ export default function AdvertiseLandingPage() {
                             <AlertTriangle className="w-4 h-4" /> Ανάλυση Γειτονιάς
                           </div>
                           <p className="text-sm text-orange-900/80 leading-relaxed">
-                            Βρέθηκαν <span className="font-bold">{competitorCount} παρόμοιες επιχειρήσεις</span> σε ακτίνα {radiusM}μ. 
+                            Βρέθηκαν <span className="font-bold">{competitorCount} παρόμοιες επιχειρήσεις</span> σε ακτίνα {radiusM}μ.
                           </p>
                           <div className="bg-white/60 p-3 rounded-lg border border-orange-200">
                             <div className="text-[10px] font-black text-orange-600 uppercase mb-1 tracking-tighter">Κίνδυνος Απώλειας</div>
@@ -1067,7 +1067,7 @@ export default function AdvertiseLandingPage() {
                   {packages.map((p) => {
                     const isSelected = selectedPlacement === p.code;
                     const Icon = p.code === 'ticker' ? Zap : p.code === 'banner' ? Megaphone : Layout;
-                    
+
                     return (
                       <button
                         key={p.code}
@@ -1075,8 +1075,8 @@ export default function AdvertiseLandingPage() {
                         onClick={() => setSelectedPlacement(p.code)}
                         disabled={!p.is_available}
                         className={`relative text-left flex flex-col p-6 rounded-2xl border-2 transition-all duration-300 group ${
-                          isSelected 
-                            ? 'border-primary bg-primary/5 ring-4 ring-primary/10 shadow-lg' 
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-4 ring-primary/10 shadow-lg'
                             : 'border-slate-100 bg-white hover:border-slate-300 hover:shadow-md'
                         } ${!p.is_available ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                       >
@@ -1085,22 +1085,22 @@ export default function AdvertiseLandingPage() {
                             <Check className="w-5 h-5" />
                           </div>
                         )}
-                        
+
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-colors ${
                           isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'
                         }`}>
                           <Icon className="w-6 h-6" />
                         </div>
-                        
+
                         <h4 className="font-bold text-lg mb-2 text-slate-900">{p.display_name}</h4>
                         <p className="text-xs text-slate-500 mb-6 leading-relaxed min-h-[40px]">{p.description}</p>
-                        
+
                         <div className="mt-auto space-y-4">
                           <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-black text-slate-900">{formatEur(p.monthly_price_eur)}</span>
                             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">/ μήνα</span>
                           </div>
-                          
+
                           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Διαθεσιμότητα</span>
                             <div className="flex flex-col items-end">
@@ -1133,19 +1133,19 @@ export default function AdvertiseLandingPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <Label className="text-slate-700 font-semibold">Email Επικοινωνίας</Label>
-                            <Input 
-                              value={email} 
-                              onChange={(e) => setEmail(e.target.value)} 
-                              placeholder="you@business.gr" 
+                            <Input
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="you@business.gr"
                               className="h-11 border-slate-200"
                             />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-slate-700 font-semibold">Όνομα Επιχείρησης</Label>
-                            <Input 
-                              value={businessName} 
-                              onChange={(e) => setBusinessName(e.target.value)} 
-                              placeholder="Επωνυμία" 
+                            <Input
+                              value={businessName}
+                              onChange={(e) => setBusinessName(e.target.value)}
+                              placeholder="Επωνυμία"
                               className="h-11 border-slate-200"
                             />
                           </div>
@@ -1154,10 +1154,10 @@ export default function AdvertiseLandingPage() {
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-semibold">Κείμενο Προβολής (Ticker)</Label>
                           <div className="relative">
-                            <Textarea 
-                              value={tickerText} 
-                              onChange={(e) => setTickerText(e.target.value)} 
-                              placeholder="Π.χ. -20% για τους κατοίκους της πολυκατοικίας!" 
+                            <Textarea
+                              value={tickerText}
+                              onChange={(e) => setTickerText(e.target.value)}
+                              placeholder="Π.χ. -20% για τους κατοίκους της πολυκατοικίας!"
                               className="min-h-[100px] border-slate-200 resize-none"
                               maxLength={150}
                             />
@@ -1172,10 +1172,10 @@ export default function AdvertiseLandingPage() {
                           <Label className="text-slate-700 font-semibold">Link Ιστοσελίδας / Facebook (Προαιρετικό)</Label>
                           <div className="relative">
                             <Globe className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                            <Input 
-                              value={ctaUrl} 
-                              onChange={(e) => setCtaUrl(e.target.value)} 
-                              placeholder="https://facebook.com/mybusiness" 
+                            <Input
+                              value={ctaUrl}
+                              onChange={(e) => setCtaUrl(e.target.value)}
+                              placeholder="https://facebook.com/mybusiness"
                               className="pl-10 h-11 border-slate-200"
                             />
                           </div>
@@ -1199,10 +1199,10 @@ export default function AdvertiseLandingPage() {
                     </Card>
 
                     <div className="flex flex-col gap-4">
-                      <Button 
-                        size="lg" 
+                      <Button
+                        size="lg"
                         className="h-16 text-lg font-black uppercase tracking-wider shadow-xl shadow-primary/20 hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-primary hover:bg-primary/90"
-                        onClick={startTrial} 
+                        onClick={startTrial}
                         disabled={isStarting}
                       >
                         {isStarting ? (
@@ -1232,13 +1232,13 @@ export default function AdvertiseLandingPage() {
                           <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" /> LIVE
                         </div>
                       </div>
-                      
-                      <KioskPreview 
-                        placement={selectedPlacement} 
-                        text={tickerText} 
-                        businessName={businessName || 'Η Επιχείρησή σας'} 
+
+                      <KioskPreview
+                        placement={selectedPlacement}
+                        text={tickerText}
+                        businessName={businessName || 'Η Επιχείρησή σας'}
                       />
-                      
+
                       <div className="mt-8 p-6 bg-primary/5 border border-primary/10 rounded-2xl space-y-4">
                         <h5 className="font-bold text-slate-900">Τι περιλαμβάνει το trial;</h5>
                         <ul className="space-y-3">
@@ -1281,16 +1281,16 @@ export default function AdvertiseLandingPage() {
                             : '—'}
                         </div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <Button className="w-full h-12 font-bold" asChild>
                           <Link href={`/advertise/manage/${startResult.manage_token}`}>
                             ΕΙΣΟΔΟΣ ΣΤΟ PORTAL <Play className="ml-2 w-4 h-4 fill-current" />
                           </Link>
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full h-12 font-bold border-slate-200" 
+                        <Button
+                          variant="outline"
+                          className="w-full h-12 font-bold border-slate-200"
                           onClick={handleCopyManageLink}
                         >
                           {copyState === 'copied' ? (
@@ -1300,7 +1300,7 @@ export default function AdvertiseLandingPage() {
                           )}
                         </Button>
                       </div>
-                      
+
                       <p className="text-[11px] text-center text-slate-400 leading-relaxed uppercase tracking-wider font-bold">
                         Κρατήστε το link διαχείρισης για να βλέπετε στατιστικά και να αλλάζετε το κείμενο της διαφήμισης.
                       </p>
@@ -1365,5 +1365,3 @@ export default function AdvertiseLandingPage() {
     </div>
   );
 }
-
-

@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { 
-  Bell, 
-  AlertTriangle, 
-  AlertCircle, 
+import {
+  Bell,
+  AlertTriangle,
+  AlertCircle,
   Info,
   ChevronRight
 } from 'lucide-react';
@@ -117,9 +117,9 @@ export function AlertsPanel({ data, loading = false }: AlertsPanelProps) {
           {sortedAlerts.map((alert, index) => {
             const config = getAlertConfig(alert.type);
             const AlertIcon = config.icon;
-            
+
             return (
-              <div 
+              <div
                 key={index}
                 className={`flex items-center justify-between p-4 rounded-xl border ${config.bgColor} ${config.borderColor}`}
               >
@@ -149,4 +149,3 @@ export function AlertsPanel({ data, loading = false }: AlertsPanelProps) {
 }
 
 export default AlertsPanel;
-

@@ -25,7 +25,7 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
 
   // Φιλτράρουμε ανακοινώσεις συνέλευσης
   const assemblyAnnouncements = data?.announcements?.filter((a: any) =>
-    a.title?.includes('Συνέλευση') || 
+    a.title?.includes('Συνέλευση') ||
     a.title?.includes('Σύγκληση') ||
     a.description?.includes('ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ')
   ) || [];
@@ -61,21 +61,21 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
   const extractTopics = (description: string): string[] => {
     const topicsSection = description.match(/\*\*ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:\*\*([\s\S]*?)\*\*Σημαντικό:\*\*/);
     if (!topicsSection) return [];
-    
+
     const topicsContent = topicsSection[1];
-    
+
     // Extract topics using regex for ### Θέμα: pattern
     const topicMatches = topicsContent.match(/###\s*Θέμα:\s*([^\n]+)/g);
-    
+
     if (topicMatches && topicMatches.length > 0) {
-      const topics = topicMatches.map(match => 
+      const topics = topicMatches.map(match =>
         match.replace(/###\s*Θέμα:\s*/, '').trim()
       ).filter(topic => topic.length > 0);
-      
+
       // Remove duplicates and return
       return [...new Set(topics)];
     }
-    
+
     return [];
   };
 

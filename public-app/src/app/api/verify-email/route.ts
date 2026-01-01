@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
     if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
       coreApiUrl = `https://${coreApiUrl}`;
     }
-    
+
     // Remove trailing slash
     coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
     // Build the full URL
     const verifyUrl = `${coreApiUrl}/api/users/verify-email/?token=${encodeURIComponent(token)}`;
-    
+
     console.log('[verify-email] Calling backend:', verifyUrl);
 
     const response = await fetch(verifyUrl, {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[verify-email] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     // Check if it's a network error
     if (errorMessage.includes('fetch') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
       return NextResponse.json(
@@ -82,11 +82,10 @@ export async function GET(request: NextRequest) {
         { status: 502 }
       );
     }
-    
+
     return NextResponse.json(
       { error: `Failed to verify email: ${errorMessage}` },
       { status: 500 }
     );
   }
 }
-

@@ -137,7 +137,7 @@ function NewOfferPageContent() {
   const handleFieldChange = (field: keyof OfferFormState, value: string) => {
     // Update form state
     setFormState((prev) => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (fieldErrors[field]) {
       setFieldErrors((prev) => {
@@ -146,7 +146,7 @@ function NewOfferPageContent() {
         return newErrors;
       });
     }
-    
+
     // Handle payment_method changes
     if (field === 'payment_method') {
       if (value !== 'installments' && fieldErrors.installments) {
@@ -159,7 +159,7 @@ function NewOfferPageContent() {
       }
       // Note: Auto-validation of installments when switching to installments is handled by useEffect
     }
-    
+
     // Auto-clear installments error when typing valid number
     if (field === 'installments' && value.trim() !== '') {
       const num = parseInt(value, 10);
@@ -196,15 +196,15 @@ function NewOfferPageContent() {
       if (!formState.project || !formState.project.trim()) {
         throw new Error('Πρέπει να επιλέξετε έργο');
       }
-      
+
       if (!formState.contractor_name || !formState.contractor_name.trim()) {
         throw new Error('Το όνομά του συνεργείου είναι υποχρεωτικό');
       }
-      
+
       if (!formState.amount || Number.isNaN(parseFloat(formState.amount)) || parseFloat(formState.amount) <= 0) {
         throw new Error('Το ποσό είναι υποχρεωτικό και πρέπει να είναι μεγαλύτερο από 0');
       }
-      
+
       const payload: Record<string, any> = {
         project: formState.project.trim(), // UUID string
         contractor_name: formState.contractor_name.trim(),
@@ -253,7 +253,7 @@ function NewOfferPageContent() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || createOffer.isPending) return;
-    
+
     try {
       await handleSubmit();
       toast({
@@ -266,7 +266,7 @@ function NewOfferPageContent() {
       console.error('[New Offer] Error:', error);
       console.error('[New Offer] Error response:', error?.response);
       console.error('[New Offer] Error body:', error?.response?.body);
-      
+
       const message =
         error?.response?.body ||
         error?.message ||
@@ -281,7 +281,7 @@ function NewOfferPageContent() {
 
   const validateField = (field: keyof OfferFormState, value: string) => {
     const errors: Record<string, string> = {};
-    
+
     switch (field) {
       case 'project':
         if (!value || !value.trim()) {
@@ -336,7 +336,7 @@ function NewOfferPageContent() {
         }
         break;
     }
-    
+
     setFieldErrors((prev) => ({ ...prev, ...errors }));
     return Object.keys(errors).length === 0;
   };
@@ -355,8 +355,8 @@ function NewOfferPageContent() {
       !fieldErrors.contractor_name &&
       !fieldErrors.amount &&
       // If payment_method is installments, installments must be valid (if provided)
-      (formState.payment_method !== 'installments' || 
-       !formState.installments || 
+      (formState.payment_method !== 'installments' ||
+       !formState.installments ||
        (!Number.isNaN(parseInt(formState.installments, 10)) && parseInt(formState.installments, 10) > 0)),
   );
 
@@ -436,8 +436,8 @@ function NewOfferPageContent() {
                     </p>
                   ) : (
                     <>
-                      <Select 
-                        value={formState.project} 
+                      <Select
+                        value={formState.project}
                         onValueChange={(value) => handleFieldChange('project', value)}
                         onOpenChange={(open) => {
                           if (!open && formState.project) {

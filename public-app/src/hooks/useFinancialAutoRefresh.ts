@@ -98,7 +98,7 @@ export const useFinancialAutoRefresh = (
 
       lastRefreshRef.current = Date.now();
       console.log(`✅ ${componentName}: Automatic refresh completed successfully`);
-      
+
       // Αφαιρέθηκε το success notification
       // showRefreshNotification('success', componentName);
 
@@ -134,7 +134,7 @@ export const useFinancialAutoRefresh = (
 
     intervalRef.current = setInterval(() => {
       const timeSinceLastRefresh = Date.now() - lastRefreshRef.current;
-      
+
       // Only refresh if enough time has passed since last refresh
       if (timeSinceLastRefresh >= refreshInterval) {
         executeRefresh();
@@ -201,14 +201,14 @@ const showRefreshNotification = (type: 'success' | 'error', componentName: strin
       <span>${componentName}: ${message}</span>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Animate in
   requestAnimationFrame(() => {
     notification.classList.remove('translate-x-full');
   });
-  
+
   // Remove after 2 seconds
   setTimeout(() => {
     notification.classList.add('translate-x-full');

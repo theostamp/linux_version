@@ -8,12 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  FileText, 
-  Send, 
-  Download, 
-  Printer, 
-  ChevronDown, 
+import {
+  FileText,
+  Send,
+  Download,
+  Printer,
+  ChevronDown,
   ChevronUp,
   CheckCircle,
   AlertCircle,
@@ -63,7 +63,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [calculationSuccess, setCalculationSuccess] = useState(false);
-  
+
   // Get user office details
   const { user } = useAuth();
 
@@ -81,7 +81,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
   // Load occupants (owner/tenant) info to show consistent names
   const { apartments: aptWithFinancial, building: buildingData, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
-  
+
   // Auto-refresh when selectedMonth changes
   useMonthRefresh(selectedMonth, forceRefresh, 'ResultsStep');
   const occupantsByApartmentId = useMemo(() => {
@@ -184,11 +184,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const handleIssue = async () => {
     try {
       updateState({ isIssuing: true });
-      
+
       // Transform shares to match backend expectations
       const transformedShares: Record<string, { total_amount: number; breakdown: Record<string, any> }> = {};
       const expenseIds: number[] = [];
-      
+
       Object.entries(state.shares).forEach(([apartmentId, share]) => {
         // Type assertion to ensure share has the expected structure
         const typedShare = share as {
@@ -202,7 +202,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             distribution_type_display: string;
           }>;
         };
-        
+
         transformedShares[apartmentId] = {
           total_amount: typedShare.total_amount,
           breakdown: typedShare.breakdown
@@ -242,7 +242,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 }, {} as Record<string, any>) : {}
         };
       });
-      
+
       const params = {
         building_id: buildingId,
         period_data: {
@@ -255,13 +255,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       };
 
       await issueCommonExpenses(params);
-      
+
       toast.success('Τα κοινοχρήστα εκδόθηκαν επιτυχώς!');
-      
+
       if (onComplete) {
         onComplete(params);
       }
-      
+
     } catch (error: any) {
       toast.error('Σφάλμα κατά την έκδοση: ' + (error.message || 'Άγνωστο σφάλμα'));
     } finally {
@@ -295,10 +295,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       // Use the same PDF generation logic as CommonExpenseModal
       const { jsPDF } = await import('jspdf');
       const html2canvas = (await import('html2canvas')).default;
-      
+
       // Force recalculation of all derived values to ensure fresh data
       const currentState = state; // Get current state
-      
+
       // Debug logging to check if values are updating
       console.log('PDF Export Debug (ResultsStep):', {
         stateShares: Object.keys(currentState.shares).length,
@@ -306,7 +306,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         period: getPeriodInfo(),
         timestamp: new Date().toISOString()
       });
-      
+
       // Prepare data for rendering with fresh calculations
       const currentDate = new Date().toLocaleDateString('el-GR', {
         day: '2-digit',
@@ -315,7 +315,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       });
       const period = getPeriodInfo();
       const apartmentCount = Object.keys(currentState.shares).length;
-      
+
       // Enhanced HTML content with better styling and structure (same as modal)
       const htmlContent = `
         <!DOCTYPE html>
@@ -325,70 +325,70 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Φύλλο Κοινοχρήστων - ${period}</title>
           <style>
-            @page { 
-              size: A4 landscape; 
-              margin: 0.5in; 
+            @page {
+              size: A4 landscape;
+              margin: 0.5in;
             }
-            
+
             * {
               box-sizing: border-box;
               margin: 0;
               padding: 0;
             }
-            
-            body { 
-              font-family: 'Segoe UI', Arial, sans-serif; 
-              font-size: 11pt; 
+
+            body {
+              font-family: 'Segoe UI', Arial, sans-serif;
+              font-size: 11pt;
               line-height: 1.4;
-              color: #0B1225; 
+              color: #0B1225;
               background: white;
             }
-            
+
             /* Header Section */
-            .header { 
-              text-align: center; 
-              margin-bottom: 25px; 
+            .header {
+              text-align: center;
+              margin-bottom: 25px;
               padding-bottom: 20px;
-              border-bottom: 3px solid #00BC7D; 
+              border-bottom: 3px solid #00BC7D;
               background: linear-gradient(135deg, #f5f6f9 0%, #d6dce8 100%);
               padding: 20px;
               border-radius: 8px;
             }
-            
-            .brand { 
-              font-size: 22pt; 
-              font-weight: 700; 
-              color: #00BC7D; 
+
+            .brand {
+              font-size: 22pt;
+              font-weight: 700;
+              color: #00BC7D;
               margin-bottom: 8px;
               text-transform: uppercase;
               letter-spacing: 1px;
             }
-            
-            .subtitle { 
-              font-size: 12pt; 
-              color: #3e4a68; 
+
+            .subtitle {
+              font-size: 12pt;
+              color: #3e4a68;
               font-style: italic;
               margin-bottom: 15px;
             }
-            
-            .main-title { 
-              font-size: 24pt; 
-              font-weight: 700; 
-              color: #1D293D; 
+
+            .main-title {
+              font-size: 24pt;
+              font-weight: 700;
+              color: #1D293D;
               margin: 15px 0;
               text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             }
-            
-            .period { 
-              font-size: 16pt; 
-              font-weight: 600; 
-              color: #0B1225; 
+
+            .period {
+              font-size: 16pt;
+              font-weight: 600;
+              color: #0B1225;
               background: #e6fff5;
               padding: 8px 16px;
               border-radius: 20px;
               display: inline-block;
             }
-            
+
             .timestamp {
               margin-top: 12px;
               font-size: 11pt;
@@ -400,71 +400,71 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               display: inline-block;
               border: 1px solid #d6dce8;
             }
-            
+
             /* Information Table */
             .info-section {
               margin: 25px 0;
             }
-            
-            .info-table { 
-              width: 100%; 
-              border-collapse: collapse; 
+
+            .info-table {
+              width: 100%;
+              border-collapse: collapse;
               margin: 15px 0;
               box-shadow: 0 2px 8px rgba(0,0,0,0.1);
               border-radius: 8px;
               overflow: hidden;
             }
-            
-            .info-table th, .info-table td { 
-              border: 1px solid #d6dce8; 
-              padding: 12px 16px; 
-              text-align: left; 
+
+            .info-table th, .info-table td {
+              border: 1px solid #d6dce8;
+              padding: 12px 16px;
+              text-align: left;
             }
-            
-            .info-table th { 
+
+            .info-table th {
               background: linear-gradient(135deg, #00BC7D 0%, #009A6B 100%);
-              color: white; 
-              font-weight: 600; 
+              color: white;
+              font-weight: 600;
               width: 30%;
               font-size: 10pt;
             }
-            
+
             .info-table td {
               background: #ffffff;
               font-weight: 500;
             }
-            
+
             /* Section Titles */
-            .section-title { 
-              font-size: 16pt; 
-              font-weight: 700; 
-              color: #1D293D; 
-              margin: 30px 0 20px 0; 
+            .section-title {
+              font-size: 16pt;
+              font-weight: 700;
+              color: #1D293D;
+              margin: 30px 0 20px 0;
               padding: 12px 0 8px 0;
-              border-bottom: 2px solid #00BC7D; 
+              border-bottom: 2px solid #00BC7D;
               background: linear-gradient(90deg, #f5f6f9 0%, transparent 100%);
               padding-left: 15px;
             }
-            
+
             /* Analysis Table */
-            .analysis-table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin: 20px auto; 
+            .analysis-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px auto;
               font-size: 7pt;
               background: white;
               box-shadow: 0 2px 8px rgba(0,0,0,0.1);
               table-layout: fixed; /* Fixed layout for better column control */
             }
-            
-            .analysis-table th, .analysis-table td { 
-              border: 1px solid #d6dce8; 
-              padding: 6px 4px; 
+
+            .analysis-table th, .analysis-table td {
+              border: 1px solid #d6dce8;
+              padding: 6px 4px;
               text-align: center;
               vertical-align: middle;
               word-wrap: break-word;
             }
-            
+
             /* Column width specifications */
             .analysis-table th:nth-child(1), .analysis-table td:nth-child(1) { width: 5%; } /* ΑΡΙΘΜΟΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ */
             .analysis-table th:nth-child(2), .analysis-table td:nth-child(2) { width: 25%; text-align: left; } /* ΟΝΟΜΑΤΕΠΩΝΥΜΟ */
@@ -473,53 +473,53 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .analysis-table th:nth-child(5), .analysis-table td:nth-child(5) { width: 12%; } /* ΑΠΟΘΕΜΑΤΙΚΟ */
             .analysis-table th:nth-child(6), .analysis-table td:nth-child(6) { width: 12%; } /* ΠΛΗΡΩΤΕΟ ΠΟΣΟ */
             .analysis-table th:nth-child(7), .analysis-table td:nth-child(7) { width: 19%; } /* ΠΑΛΑΙΟΤΕΡΕΣ ΟΦΕΙΛΕΣ */
-            
-            .analysis-table th { 
+
+            .analysis-table th {
               background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
-              color: white; 
+              color: white;
               font-weight: 600;
               font-size: 7pt;
             }
-            
+
             .analysis-table tr:nth-child(even) {
               background: #f5f6f9;
             }
-            
+
             .analysis-table tr:hover {
               background: #e6fff5;
             }
-            
-            .totals-row { 
+
+            .totals-row {
               background: linear-gradient(135deg, #f5f6f9 0%, #d6dce8 100%) !important;
               font-weight: 700;
               border-top: 2px solid #00BC7D;
             }
-            
+
             .totals-row td {
               font-weight: 600;
               color: #1D293D;
             }
-            
+
             /* Footer */
-            .footer { 
-              margin-top: 30px; 
-              padding-top: 20px; 
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
               border-top: 2px solid #d6dce8;
               background: #f5f6f9;
               border-radius: 8px;
               padding: 20px;
             }
-            
+
             .footer .info-table th {
               background: linear-gradient(135deg, #1D293D 0%, #3e4a68 100%);
             }
-            
+
             /* Utility Classes */
             .text-left { text-align: left !important; }
             .text-right { text-align: right !important; }
             .font-bold { font-weight: 700; }
             .text-primary { color: #00BC7D; }
-            
+
             /* Print Optimizations */
             @media print {
               body { font-size: 10pt; }
@@ -537,17 +537,17 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             <div class="main-title">Φύλλο Κοινοχρήστων</div>
             <div class="period">${period}</div>
             <div class="timestamp">
-              ⏰ Εκδόθηκε: ${new Date().toLocaleString('el-GR', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric', 
-                hour: '2-digit', 
+              ⏰ Εκδόθηκε: ${new Date().toLocaleString('el-GR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit'
               })}
               </div>
           </div>
-          
+
           <!-- Building Information -->
           <div class="info-section">
             <table class="info-table">
@@ -557,10 +557,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${new Date().toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td></tr>
               </table>
           </div>
-        
+
           <!-- Apartments Analysis -->
           <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ <span style="font-size: 9pt; font-style: italic; color: #666;"> </span></div>
-          
+
           <table class="analysis-table">
             <thead>
               <tr>
@@ -589,7 +589,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                   <td class="font-bold" style="color: ${previousBalance < 0 ? '#dc2626' : '#059669'};">${formatAmount(Math.abs(previousBalance))}€</td>
                 </tr>`;
               }).join('')}
-              
+
               <tr class="totals-row">
                 <td class="font-bold">ΣΥΝΟΛΑ</td>
                 <td class="font-bold">-</td>
@@ -601,7 +601,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 </tr>
             </tbody>
           </table>
-          
+
           <!-- Footer Information -->
           <div class="footer">
             <!-- Παρατηρήσεις στην αρχή του footer -->
@@ -609,7 +609,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <div style="font-weight: bold; color: #92400e; margin-bottom: 4px;">📝 ΠΑΡΑΤΗΡΗΣΕΙΣ:</div>
               <div style="color: #92400e; font-style: italic;">ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</div>
             </div>
-            
+
             <table class="info-table">
               <tr><th>📅 ΗΜΕΡΟΜΗΝΙΑ ΕΚΔΟΣΗΣ</th><td>${currentDate}</td></tr>
               <tr><th>🏠 ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ</th><td>${apartmentCount}</td></tr>
@@ -619,7 +619,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         </body>
         </html>
       `;
-      
+
       // Create temporary element for rendering
       const element = document.createElement('div');
       element.innerHTML = htmlContent;
@@ -629,7 +629,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       element.style.width = '277mm'; // A4 landscape width minus margins (297-20)
       element.style.backgroundColor = 'white';
       document.body.appendChild(element);
-      
+
       // Configure html2canvas options for better Greek text rendering
       const canvasOptions = {
         scale: 2,
@@ -641,11 +641,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         width: 1123, // A4 landscape width in pixels at 96 DPI
         height: element.scrollHeight
       };
-      
+
       // Convert HTML to canvas
       const canvas = await html2canvas(element, canvasOptions);
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      
+
       // Create PDF in landscape format
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -653,28 +653,28 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         format: 'a4',
         compress: true
       });
-      
+
       // Calculate dimensions for landscape A4
       const imgWidth = 297; // A4 landscape width in mm
       const pageHeight = 210; // A4 landscape height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
-      
+
       // Add image to PDF with proper margins (handle multiple pages if needed)
       const leftMargin = 10; // 10mm left margin
       const rightMargin = 10; // 10mm right margin
       const contentWidth = imgWidth - leftMargin - rightMargin; // Adjust content width
       pdf.addImage(imgData, 'JPEG', leftMargin, position, contentWidth, imgHeight);
       heightLeft -= pageHeight;
-      
+
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'JPEG', leftMargin, position, contentWidth, imgHeight);
         heightLeft -= pageHeight;
       }
-      
+
       // Save PDF with timestamp
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
@@ -682,14 +682,14 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       const safePeriod = period.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
       const fileName = `common_expenses_sheet_${safePeriod}_${dateStr}_${timeStr}.pdf`;
       pdf.save(fileName);
-      
+
       // Cleanup
       document.body.removeChild(element);
-      
+
       toast.success('✅ Το PDF εξήχθη επιτυχώς!', {
         description: `Αρχείο: ${fileName}`
       });
-      
+
     } catch (error) {
       console.error('PDF Export Error:', error);
       toast.error('❌ Σφάλμα κατά την εξαγωγή PDF', {
@@ -710,10 +710,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       const XLSX = await import('xlsx');
       const fileSaver = await import('file-saver') as any;
       const { saveAs } = fileSaver;
-      
+
       // Προετοιμασία δεδομένων
       const workbook = XLSX.utils.book_new();
-    
+
     // Κύριο φύλλο με τα δεδομένα (Τμήμα Κατανομής)
     const mainData = Object.values(state.shares).map((share: any, index: number) => {
       return {
@@ -727,9 +727,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         'ΚΑΤΑΣΤΑΣΗ': share.total_due < 0 ? 'Οφειλόμενο' : 'Ενεργό'
       };
     });
-    
+
     const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
-    
+
     // Ανάλυση Δαπανών
     const expenseBreakdownData: any[] = [];
     if (state.advancedShares) {
@@ -751,7 +751,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           'ΠΕΡΙΓΡΑΦΗ': 'Μεταβλητό κόστος θέρμανσης'
         });
       }
-      
+
       if (state.advancedShares.elevator_costs) {
         expenseBreakdownData.push({
           'ΚΑΤΗΓΟΡΙΑ': 'Ανελκυστήρας',
@@ -759,7 +759,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           'ΠΕΡΙΓΡΑΦΗ': 'Κόστος ανελκυστήρα'
         });
       }
-      
+
       if (state.advancedShares.reserve_contribution) {
         expenseBreakdownData.push({
           'ΚΑΤΗΓΟΡΙΑ': 'Αποθεματικό Ταμείο',
@@ -767,7 +767,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           'ΠΕΡΙΓΡΑΦΗ': 'Συνεισφορά αποθεματικού ταμείου'
         });
       }
-      
+
       // Προσθήκη λεπτομερών ανάλυσης αν υπάρχουν
       if (Array.isArray(state.advancedShares.expense_breakdown)) {
         state.advancedShares.expense_breakdown.forEach((category: any) => {
@@ -780,9 +780,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         });
       }
     }
-    
+
     const expenseBreakdownWorksheet = XLSX.utils.json_to_sheet(expenseBreakdownData);
-    
+
     // Ειδικά Χιλιοστά Ανελκυστήρα
     let elevatorData: any[] = [];
     if (state.advancedShares && state.advancedShares.elevator_shares) {
@@ -792,9 +792,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         'ΜΕΡΙΔΙΟ ΑΝΕΛΚΥΣΤΗΡΑ (€)': share.elevator_share
       }));
     }
-    
+
     const elevatorWorksheet = XLSX.utils.json_to_sheet(elevatorData);
-    
+
     // Προσθήκη στατιστικών
     const statsData = [
       { 'ΣΤΑΤΙΣΤΙΚΑ': 'Συνολικές Δαπάνες', 'ΤΙΜΗ': `${formatAmount(stats.totalAmount)}€` },
@@ -804,9 +804,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       { 'ΣΤΑΤΙΣΤΙΚΑ': 'Περίοδος', 'ΤΙΜΗ': getPeriodInfo() },
       { 'ΣΤΑΤΙΣΤΙΚΑ': 'Ημερομηνία Έκδοσης', 'ΤΙΜΗ': new Date().toLocaleDateString('el-GR') },
     ];
-    
+
     const statsWorksheet = XLSX.utils.json_to_sheet(statsData);
-    
+
     // Προσθήκη φύλλων στο βιβλίο
     XLSX.utils.book_append_sheet(workbook, mainWorksheet, 'Τμήμα Κατανομής');
     XLSX.utils.book_append_sheet(workbook, expenseBreakdownWorksheet, 'Ανάλυση Δαπανών');
@@ -814,13 +814,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       XLSX.utils.book_append_sheet(workbook, elevatorWorksheet, 'Χιλιοστά Ανελκυστήρα');
     }
     XLSX.utils.book_append_sheet(workbook, statsWorksheet, 'Στατιστικά');
-    
+
       // Αποθήκευση αρχείου
       const fileName = `φυλλο_κοινοχρηστων_${getPeriodInfo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(blob, fileName);
-      
+
       toast.success('Εξαγωγή Excel ολοκληρώθηκε επιτυχώς!');
     } catch (error) {
       console.error('Excel Export Error:', error);
@@ -841,21 +841,21 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         console.log('🔄 Reserve fund goal is zero or not set, returning false');
         return false;
       }
-      
+
       const reserveFundStartDate = buildingData?.reserve_fund_start_date;
       const reserveFundEndDate = buildingData?.reserve_fund_target_date;
-      
+
       // If no dates are set, return false
       if (!reserveFundStartDate || !reserveFundEndDate) {
         console.log('🔄 Reserve fund dates not set, returning false');
         return false;
       }
-      
+
       const periodStart = new Date(startDate);
       const periodEnd = new Date(endDate);
       const rfStart = new Date(reserveFundStartDate);
       const rfEnd = new Date(reserveFundEndDate);
-      
+
       console.log('🔄 Reserve fund timeline check:', {
         periodStart: periodStart.toISOString().split('T')[0],
         periodEnd: periodEnd.toISOString().split('T')[0],
@@ -863,10 +863,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         rfEnd: rfEnd.toISOString().split('T')[0],
         reserveFundGoal
       });
-      
+
       // Check if the period overlaps with reserve fund timeline
       const isWithinTimeline = periodStart <= rfEnd && periodEnd >= rfStart;
-      
+
       console.log('🔄 Reserve fund within timeline:', isWithinTimeline);
       return isWithinTimeline;
     } catch (error) {
@@ -881,7 +881,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       quickOptions: state.quickOptions,
       customPeriodName: state.customPeriod.periodName
     });
-    
+
     // FIXED: Always use the customPeriod.periodName which is set correctly based on selectedMonth
     const result = state.customPeriod.periodName;
     console.log('🔄 ResultsStep: Using customPeriod.periodName (FIXED):', result);
@@ -957,7 +957,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       // After grace day or other months: count full due
       return Math.min(0, totalDue);
     };
-    
+
     // Κατηγοριοποίηση διαμερισμάτων βάσει οφειλών
     const currentApartments = shares.filter((share: any) => getEffectiveTotalDue(share) >= 0).length;
     const behindApartments = shares.filter((share: any) => {
@@ -968,7 +968,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       const effectiveDue = getEffectiveTotalDue(share);
               return effectiveDue < 0 && Math.abs(effectiveDue) > (share.total_amount || 0) * 2; // Πάνω από 2 μήνες οφειλή
     }).length;
-    
+
     // Υπολογισμός συνολικής κάλυψης
     const totalMonthlyObligations = shares.reduce((sum: number, share: any) => sum + (share.total_amount || 0), 0);
     const totalPendingAmount = shares.reduce((sum: number, share: any) => {
@@ -993,7 +993,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     const overallCoveragePercentage = overallMonthlyObligationsWithReserve > 0
       ? Math.min(100, Math.max(0, ((overallMonthlyObligationsWithReserve - totalPendingAmount) / overallMonthlyObligationsWithReserve) * 100))
       : 0;
-    
+
     return {
       currentApartments,
       behindApartments,
@@ -1014,11 +1014,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         setIsLoading(true);
         setLoadError(null);
         setCalculationProgress(0);
-        
+
         const startDate = state.customPeriod.startDate;
         const endDate = state.customPeriod.endDate;
         if (!startDate || !endDate) return;
-        
+
         // Simulate realistic progress
         const progressSteps = [
           { progress: 10, message: 'Φόρτωση δεδομένων κτιρίου...' },
@@ -1027,21 +1027,21 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           { progress: 90, message: 'Τελικοί υπολογισμοί...' },
           { progress: 100, message: 'Ολοκληρώθηκε!' }
         ];
-        
+
         for (let i = 0; i < progressSteps.length - 1; i++) {
           await new Promise(resolve => setTimeout(resolve, 300));
           setCalculationProgress(progressSteps[i].progress);
         }
-        
+
         const isAdvanced = state.advancedOptions.includeReserveFund ||
           state.advancedOptions.heatingFixedPercentage !== 30 ||
           state.advancedOptions.elevatorMills;
 
         if (isAdvanced) {
           // Check if selected period is within reserve fund collection timeline
-          const shouldIncludeReserveFund = state.advancedOptions.includeReserveFund && 
+          const shouldIncludeReserveFund = state.advancedOptions.includeReserveFund &&
             checkIfPeriodInReserveFundTimeline(startDate, endDate);
-          
+
           console.log('🔄 ResultsStep: Reserve fund check:', {
             includeReserveFund: state.advancedOptions.includeReserveFund,
             shouldIncludeReserveFund,
@@ -1049,7 +1049,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             endDate,
             reserveFundAmount: state.advancedOptions.reserveFundMonthlyAmount
           });
-          
+
           const result = await calculateAdvancedShares({
             building_id: buildingId,
             period_start_date: startDate,
@@ -1069,7 +1069,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           });
           updateState({ shares: result.shares || {}, totalExpenses: result.total_expenses || 0, advancedShares: null });
         }
-        
+
         setCalculationProgress(100);
         // Show success message
         setCalculationSuccess(true);
@@ -1082,7 +1082,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         setIsLoading(false);
           setCalculationProgress(0);
         }, 500);
-        
+
         // Hide success message after 4 seconds (total)
         setTimeout(() => setCalculationSuccess(false), 4000);
       }
@@ -1108,7 +1108,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <span>{calculationProgress}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${calculationProgress}%` }}
               ></div>
@@ -1202,7 +1202,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   // Enhanced error handling
   const ErrorStateComponent = ({ error }: { error: string }) => {
     const [isRetrying, setIsRetrying] = useState(false);
-    
+
     const handleRetry = async () => {
       setIsRetrying(true);
       try {
@@ -1273,7 +1273,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-red-700">{errorDetails.description}</p>
-            
+
             <div className="bg-red-100 border border-red-200 rounded-lg p-4">
               <h4 className="font-semibold text-red-800 mb-2">Προτεινόμενες Λύσεις:</h4>
               <ul className="list-disc list-inside space-y-1 text-red-700 text-sm">
@@ -1282,12 +1282,12 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 ))}
               </ul>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
+              <Button
                 onClick={handleRetry}
                 disabled={isRetrying}
-                variant="outline" 
+                variant="outline"
                 className="border-red-300 text-red-700 hover:bg-red-100 flex items-center gap-2"
               >
                 {isRetrying ? (
@@ -1302,14 +1302,14 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                   </>
                 )}
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={() => {
                   // Go back to previous step or refresh data
                   setLoadError(null);
                   setIsLoading(false);
                 }}
-                variant="ghost" 
+                variant="ghost"
                 className="text-gray-600 hover:text-gray-800"
               >
                 <X className="h-4 w-4 mr-2" />
@@ -1362,14 +1362,14 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     <div className="space-y-6">
       {/* Success Message - shown after successful calculation */}
       {calculationSuccess && <SuccessMessage />}
-      
+
 
 
       {/* Enhanced Floating Action Button using Popover */}
       <div className="flex justify-end mb-4">
         <Popover open={isActionsPopoverOpen} onOpenChange={setIsActionsPopoverOpen}>
           <PopoverTrigger asChild>
-            <Button 
+            <Button
               className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-lg hover:shadow-indigo-500/25 border-0 rounded-full px-6 py-6 h-auto transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="flex items-center gap-3">
@@ -1391,8 +1391,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground border-b border-slate-200/50 mb-1">
                 Διαθέσιμες Ενέργειες
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={() => {
                   setIsActionsPopoverOpen(false);
                   // Small delay to ensure popover is fully closed before opening modal
@@ -1410,7 +1410,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 </div>
               </Button>
 
-              <Button 
+              <Button
                 onClick={() => {
                   setIsActionsPopoverOpen(false);
                   handleExport('pdf');
@@ -1427,7 +1427,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 </div>
               </Button>
 
-              <Button 
+              <Button
                 onClick={() => {
                   setIsActionsPopoverOpen(false);
                   handleExport('excel');
@@ -1446,7 +1446,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
               <div className="my-1 border-t border-slate-200/50" />
 
-              <Button 
+              <Button
                 onClick={() => {
                   setIsActionsPopoverOpen(false);
                   handleIssue();

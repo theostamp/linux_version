@@ -28,4 +28,3 @@ const { GET, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "
 console.log("[ROUTE HANDLER] building-detail handlers exported:", { GET: !!GET, PUT: !!PUT });
 
 export { GET, PUT, PATCH, DELETE, OPTIONS };
-

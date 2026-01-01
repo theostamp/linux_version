@@ -18,13 +18,13 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'garbage_collection', label: 'Συλλογή Απορριμμάτων', group: 'Πάγιες Δαπάνες' },
   { value: 'security', label: 'Ασφάλεια Κτιρίου', group: 'Πάγιες Δαπάνες' },
   { value: 'concierge', label: 'Συνεργείο Καθαρισμού', group: 'Πάγιες Δαπάνες' },
-  
+
   // Δαπάνες Ανελκυστήρα
   { value: 'elevator_maintenance', label: 'Ετήσια Συντήρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_repair', label: 'Επισκευή Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_inspection', label: 'Επιθεώρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_modernization', label: 'Αναβάθμιση Ανελκυστήρα', group: 'Ανελκυστήρας' },
-  
+
   // Δαπάνες Θέρμανσης
   { value: 'heating_fuel', label: 'Πετρέλαιο Θέρμανσης', group: 'Θέρμανση' },
   { value: 'heating_gas', label: 'Φυσικό Αέριο Θέρμανσης', group: 'Θέρμανση' },
@@ -32,7 +32,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'heating_repair', label: 'Επισκευή Θερμαντικών', group: 'Θέρμανση' },
   { value: 'heating_inspection', label: 'Επιθεώρηση Θερμαντικών', group: 'Θέρμανση' },
   { value: 'heating_modernization', label: 'Αναβάθμιση Θερμαντικών', group: 'Θέρμανση' },
-  
+
   // Δαπάνες Συντήρησης
   { value: 'maintenance_general', label: 'Γενική Συντήρηση Κτιρίου', group: 'Συντήρηση' },
   { value: 'maintenance_plumbing', label: 'Συντήρηση Υδραυλικών', group: 'Συντήρηση' },
@@ -42,61 +42,61 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'maintenance_facade', label: 'Συντήρηση Πρόσοψης', group: 'Συντήρηση' },
   { value: 'maintenance_garden', label: 'Συντήρηση Κήπου', group: 'Συντήρηση' },
   { value: 'maintenance_parking', label: 'Συντήρηση Χώρων Στάθμευσης', group: 'Συντήρηση' },
-  
+
   // Δαπάνες Ασφάλειας
   { value: 'insurance_building', label: 'Ασφάλεια Κτιρίου', group: 'Ασφάλεια' },
   { value: 'insurance_liability', label: 'Ασφάλεια Ευθύνης', group: 'Ασφάλεια' },
   { value: 'insurance_equipment', label: 'Ασφάλεια Εξοπλισμού', group: 'Ασφάλεια' },
-  
+
   // Δαπάνες Διοίκησης
   { value: 'management_fees', label: 'Διοικητικά Έξοδα', group: 'Διοίκηση' },
   { value: 'accounting_fees', label: 'Λογιστικά Έξοδα', group: 'Διοίκηση' },
   { value: 'legal_fees', label: 'Νομικά Έξοδα', group: 'Διοίκηση' },
   { value: 'meeting_expenses', label: 'Έξοδα Συνεδριάσεων', group: 'Διοίκηση' },
-  
+
   // Δαπάνες Τηλεπικοινωνιών
   { value: 'internet_common', label: 'Διαδίκτυο Κοινοχρήστων', group: 'Τηλεπικοινωνίες' },
   { value: 'phone_common', label: 'Τηλέφωνο Κοινοχρήστων', group: 'Τηλεπικοινωνίες' },
   { value: 'tv_antenna', label: 'Τηλεοπτική Κεραία', group: 'Τηλεπικοινωνίες' },
-  
+
   // Δαπάνες Εξοπλισμού
   { value: 'equipment_purchase', label: 'Αγορά Εξοπλισμού', group: 'Εξοπλισμός' },
   { value: 'equipment_repair', label: 'Επισκευή Εξοπλισμού', group: 'Εξοπλισμός' },
   { value: 'equipment_maintenance', label: 'Συντήρηση Εξοπλισμού', group: 'Εξοπλισμός' },
-  
+
   // Δαπάνες Καθαρισμού
   { value: 'cleaning_supplies', label: 'Καθαριστικά Υλικά', group: 'Καθαρισμός' },
   { value: 'cleaning_equipment', label: 'Εξοπλισμός Καθαρισμού', group: 'Καθαρισμός' },
   { value: 'cleaning_services', label: 'Υπηρεσίες Καθαρισμού', group: 'Καθαρισμός' },
-  
+
   // Δαπάνες Ασφάλειας & Πυρασφάλειας
   { value: 'fire_safety', label: 'Πυρασφάλεια', group: 'Ασφάλεια & Πυρασφάλεια' },
   { value: 'security_systems', label: 'Συστήματα Ασφάλειας', group: 'Ασφάλεια & Πυρασφάλεια' },
   { value: 'cctv', label: 'Καμερές Ασφαλείας', group: 'Ασφάλεια & Πυρασφάλεια' },
   { value: 'access_control', label: 'Σύστημα Ελέγχου Πρόσβασης', group: 'Ασφάλεια & Πυρασφάλεια' },
-  
+
   // Δαπάνες Ενέργειας
   { value: 'energy_audit', label: 'Ενεργειακός Έλεγχος', group: 'Ενέργεια' },
   { value: 'energy_upgrades', label: 'Βελτιώσεις Ενεργειακής Απόδοσης', group: 'Ενέργεια' },
   { value: 'solar_panels', label: 'Φωτοβολταϊκά Πάνελ', group: 'Ενέργεια' },
   { value: 'led_lighting', label: 'LED Φωτισμός', group: 'Ενέργεια' },
-  
+
   // Δαπάνες Περιβάλλοντος
   { value: 'waste_management', label: 'Διαχείριση Αποβλήτων', group: 'Περιβάλλον' },
   { value: 'recycling', label: 'Ανακύκλωση', group: 'Περιβάλλον' },
   { value: 'green_spaces', label: 'Πράσινοι Χώροι', group: 'Περιβάλλον' },
-  
+
   // Δαπάνες Τεχνολογίας
   { value: 'smart_home', label: 'Έξυπνο Σπίτι', group: 'Τεχνολογία' },
   { value: 'automation', label: 'Αυτοματισμοί', group: 'Τεχνολογία' },
   { value: 'smart_systems', label: 'Έξυπνα Συστήματα', group: 'Τεχνολογία' },
-  
+
   // Δαπάνες Ιδιοκτητών
   { value: 'special_contribution', label: 'Έκτακτη Εισφορά', group: 'Ιδιοκτητές' },
   { value: 'reserve_fund', label: 'Αποθεματικό Ταμείο', group: 'Ιδιοκτητές' },
   { value: 'emergency_fund', label: 'Ταμείο Έκτακτης Ανάγκης', group: 'Ιδιοκτητές' },
   { value: 'renovation_fund', label: 'Ταμείο Ανακαίνισης', group: 'Ιδιοκτητές' },
-  
+
   // Άλλες Δαπάνες
   { value: 'miscellaneous', label: 'Διάφορες Δαπάνες', group: 'Άλλες Δαπάνες' },
   { value: 'consulting_fees', label: 'Εργασίες Συμβούλου', group: 'Άλλες Δαπάνες' },
@@ -179,13 +179,13 @@ export const CategorySearchDropdown: React.FC<CategorySearchDropdownProps> = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < allCategories.length - 1 ? prev + 1 : 0
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev > 0 ? prev - 1 : allCategories.length - 1
         );
         break;
@@ -260,7 +260,7 @@ export const CategorySearchDropdown: React.FC<CategorySearchDropdownProps> = ({
           error ? 'border-red-500' : ''
         } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
       />
-      
+
       {/* Search indicator */}
       {isOpen && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

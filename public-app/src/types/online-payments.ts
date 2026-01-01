@@ -32,5 +32,3 @@ export type CheckoutResponse = {
   checkout_url: string;
   provider_session_id: string;
 };
-
-

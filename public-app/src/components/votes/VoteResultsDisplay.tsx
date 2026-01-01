@@ -79,7 +79,7 @@ export default function VoteResultsDisplay({
   showChart = true,
 }: VoteResultsDisplayProps) {
   const choices = ['ΝΑΙ', 'ΟΧΙ', 'ΛΕΥΚΟ'] as const;
-  
+
   // Prepare chart data
   const chartData = choices.map((choice) => ({
     name: CHOICE_LABELS[choice].label,
@@ -146,8 +146,8 @@ export default function VoteResultsDisplay({
         {minParticipation > 0 && (
           <div className={cn(
             'px-3 py-1 rounded-full text-sm font-medium',
-            isValid 
-              ? 'bg-emerald-100 text-emerald-700' 
+            isValid
+              ? 'bg-emerald-100 text-emerald-700'
               : 'bg-amber-100 text-amber-700'
           )}>
             {isValid ? '✓ Έγκυρα αποτελέσματα' : `⚠ Απαιτείται ${minParticipation}% συμμετοχή`}
@@ -178,8 +178,8 @@ export default function VoteResultsDisplay({
                   animationDuration={800}
                 >
                   {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
+                    <Cell
+                      key={`cell-${index}`}
                       fill={entry.color}
                       stroke="white"
                       strokeWidth={2}
@@ -189,7 +189,7 @@ export default function VoteResultsDisplay({
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
-            
+
             {/* Center label */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
@@ -259,14 +259,14 @@ export default function VoteResultsDisplay({
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Progress bar */}
                 <div className="h-3 bg-[#d6dce8] rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percent}%` }}
-                    transition={{ 
-                      duration: 0.8, 
+                    transition={{
+                      duration: 0.8,
                       delay: index * 0.15 + 0.2,
                       ease: 'easeOut'
                     }}
@@ -336,7 +336,7 @@ export default function VoteResultsDisplay({
                 </div>
               </div>
             )}
-            
+
             {/* Physical presence votes */}
             {((results.by_source as BySource).physical ?? 0) > 0 && (
               <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
@@ -351,7 +351,7 @@ export default function VoteResultsDisplay({
                 </div>
               </div>
             )}
-            
+
             {/* Proxy votes */}
             {((results.by_source as BySource).proxy ?? 0) > 0 && (
               <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-100">
@@ -368,8 +368,8 @@ export default function VoteResultsDisplay({
             )}
 
             {/* Show "No breakdown data" if all are 0 */}
-            {((results.by_source as BySource).electronic ?? 0) === 0 && 
-             ((results.by_source as BySource).physical ?? 0) === 0 && 
+            {((results.by_source as BySource).electronic ?? 0) === 0 &&
+             ((results.by_source as BySource).physical ?? 0) === 0 &&
              ((results.by_source as BySource).proxy ?? 0) === 0 && (
               <div className="col-span-full text-center text-gray-500 text-sm py-2">
                 Δεν υπάρχουν διαθέσιμα στοιχεία ανάλυσης
@@ -413,4 +413,3 @@ export default function VoteResultsDisplay({
     </div>
   );
 }
-

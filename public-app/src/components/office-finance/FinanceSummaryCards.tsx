@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Wallet, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
   ArrowUpRight,
   ArrowDownRight,
   Clock
@@ -56,11 +56,11 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
   // Use total expenses/income, not just paid/received
   const totalExpenses = currentMonth.expenses.total;
   const totalIncome = currentMonth.income.total;
-  
-  const incomeChange = previousMonth 
+
+  const incomeChange = previousMonth
     ? calculateChange(totalIncome, previousMonth.income)
     : null;
-  
+
   const expenseChange = previousMonth
     ? calculateChange(totalExpenses, previousMonth.expenses)
     : null;
@@ -92,7 +92,7 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
               <span className="text-amber-600 font-medium">Εκκρεμούν: {formatCurrency(currentMonth.income.pending)}</span>
             </div>
             <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-500"
                 style={{ width: totalIncome > 0 ? `${(currentMonth.income.received / totalIncome) * 100}%` : '0%' }}
               />
@@ -141,7 +141,7 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
               <span className="text-amber-600 font-medium">Απλήρωτα: {formatCurrency(currentMonth.expenses.unpaid)}</span>
             </div>
             <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-full transition-all duration-500"
                 style={{ width: totalExpenses > 0 ? `${(currentMonth.expenses.paid / totalExpenses) * 100}%` : '0%' }}
               />
@@ -167,8 +167,8 @@ export function FinanceSummaryCards({ currentMonth, previousMonth }: FinanceSumm
 
       {/* Net Result Card */}
       <div className={`relative overflow-hidden rounded-xl border ${
-        currentMonth.net_result >= 0 
-          ? 'border-primary/30 bg-gradient-to-br from-indigo-50 to-white' 
+        currentMonth.net_result >= 0
+          ? 'border-primary/30 bg-gradient-to-br from-indigo-50 to-white'
           : 'border-rose-200 bg-gradient-to-br from-rose-50 to-white'
       } p-6 shadow-sm`}>
         <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full ${

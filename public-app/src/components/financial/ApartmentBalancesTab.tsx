@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Building2, 
-  Users, 
-  TrendingDown, 
+import {
+  Building2,
+  Users,
+  TrendingDown,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
@@ -29,11 +29,11 @@ import PaymentNotificationModal from './PaymentNotificationModal';
 import { PaymentHistoryModal, PaymentHistoryItem } from './PaymentHistoryModal';
 import { TransactionHistoryModal } from './TransactionHistoryModal';
 import { ModalPortal } from '@/components/ui/ModalPortal';
-import { 
-  validateFinancialDataMonth, 
-  getValidationMessage, 
+import {
+  validateFinancialDataMonth,
+  getValidationMessage,
   formatMonthDisplay,
-  type DateValidationResult 
+  type DateValidationResult
 } from '@/lib/dateValidation';
 import { ApartmentBalance } from '@/types/financial';
 
@@ -183,7 +183,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       }
 
       console.log('✅ Apartment balances loaded:', responseData);
-      console.log('✅ Management fee per apartment:', 
+      console.log('✅ Management fee per apartment:',
         Number(
           (financialSummary as { management_fee_per_apartment?: number })?.management_fee_per_apartment ??
             (responseData as { management_fee_per_apartment?: number })?.management_fee_per_apartment ??
@@ -212,30 +212,30 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     const currentExpenseWithManagement = apartment.expense_share;
     const totalObligationWithManagement = apartment.previous_balance + currentExpenseWithManagement;
     const netObligationCalculated = totalObligationWithManagement - apartment.total_payments;
-    
+
     // Calculate payment amounts to zero out debt
     const totalDebt = Math.max(0, netObligationCalculated);
-    
+
     // If there's a previous balance debt, allocate it to previous obligations
     const previousDebt = Math.max(0, apartment.previous_balance);
-    
+
     // Current month expense share (cannot be negative)
     const currentMonthShare = Math.max(0, apartment.expense_share);
-    
+
     // Reserve fund share (cannot be negative)
     const reserveFundShare = Math.max(0, apartment.reserve_fund_share || 0);
-    
+
     // Calculate how to split the payment based on debt composition:
     // Priority: Previous balance first, then reserve fund, then current month expenses
     let commonExpenseAmount = 0;
     let previousObligationsAmount = 0;
     let reserveFundAmount = 0;
-    
+
     if (previousDebt > 0) {
       // If there are previous obligations, pay them first
       previousObligationsAmount = roundToCents(Math.min(previousDebt, totalDebt));
       const remainingDebt = totalDebt - previousObligationsAmount;
-      
+
       // Then pay reserve fund if available
       if (reserveFundShare > 0 && remainingDebt > 0) {
         reserveFundAmount = roundToCents(Math.min(reserveFundShare, remainingDebt));
@@ -255,7 +255,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       }
       previousObligationsAmount = 0;
     }
-    
+
     setPaymentModalData({
       apartment_id: apartment.apartment_id,
       common_expense_amount: commonExpenseAmount,
@@ -310,17 +310,17 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 
   const confirmDeletePayments = async () => {
     if (!apartmentToDelete) return;
-    
+
     setIsDeleting(true);
     try {
-      const params = new URLSearchParams({ 
+      const params = new URLSearchParams({
         apartment_id: apartmentToDelete.apartment_id.toString(),
         building_id: buildingId.toString()
       });
-      
+
       // The api.delete returns data directly
       const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`) as { success?: boolean; message?: string };
-      
+
       if (response.success) {
         await loadApartmentBalances(true);
         setShowDeleteConfirmation(false);
@@ -386,7 +386,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       const currentExpenseWithManagement = apt.expense_share;
       const totalObligationWithManagement = apt.previous_balance + currentExpenseWithManagement;
       const netObligationCalculated = totalObligationWithManagement - apt.total_payments;
-      
+
       return apt.status.toLowerCase() === 'overdue' ||
         apt.status.toLowerCase() === 'οφειλή' ||
         apt.status.toLowerCase() === 'κρίσιμο' ||
@@ -411,8 +411,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         <div className="text-center">
           <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
           <p className="text-red-600">{error}</p>
-          <Button 
-            onClick={() => loadApartmentBalances()} 
+          <Button
+            onClick={() => loadApartmentBalances()}
             className="mt-2"
             variant="outline"
           >
@@ -428,8 +428,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       {/* Date Validation Warning */}
       {dateValidation?.shouldShowWarning && (
         <Alert className={`border-l-4 ${
-          dateValidation.severity === 'warning' 
-            ? 'border-l-yellow-500 bg-yellow-50' 
+          dateValidation.severity === 'warning'
+            ? 'border-l-yellow-500 bg-yellow-50'
             : 'border-l-blue-500 bg-blue-50'
         }`}>
           <Info className={`h-4 w-4 ${
@@ -517,12 +517,12 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   // Το expense_share από το backend ήδη περιλαμβάνει τις δαπάνες διαχείρισης
                   // Δεν χρειάζεται να προσθέσουμε ξανά το management_fee_per_apartment
                   const currentExpenseWithManagement = apartment.expense_share;
-                  
+
                   // 🔧 FIX 2025-11-20: Το reserve_fund_share ΗΔΗ ΠΕΡΙΛΑΜΒΑΝΕΤΑΙ στο expense_share (backend services.py:1225)
                   // ΔΕΝ πρέπει να το προσθέτουμε ξεχωριστά γιατί προκαλεί διπλή χρέωση!
                   // Σωστή συνολική οφειλή = previous_balance + current_expenses (που ήδη έχουν το reserve fund)
                   const totalObligationWithManagement = apartment.previous_balance + currentExpenseWithManagement;
-                  
+
                   // Αφαιρούμε τις πληρωμές για να βρούμε την καθαρή οφειλή
                   const netObligationCalculated = totalObligationWithManagement - apartment.total_payments;
 
@@ -696,25 +696,25 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       {/* Payment Form Modal */}
       {showPaymentModal && (
         <ModalPortal>
-          <div 
+          <div
             className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
             onClick={handlePaymentCancel}
           >
-            <div 
+            <div
               className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Εισπράξη Πληρωμής</h2>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handlePaymentCancel}
                 >
                   ✕
                 </Button>
               </div>
-              <PaymentForm 
+              <PaymentForm
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
                 apartments={apartmentBalances.map(apt => ({
@@ -741,11 +741,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && apartmentToDelete && (
         <ModalPortal>
-          <div 
+          <div
             className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
             onClick={cancelDeletePayments}
           >
-            <div 
+            <div
               className="bg-white rounded-lg max-w-md w-full p-6"
               onClick={(e) => e.stopPropagation()}
             >
@@ -767,7 +767,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               <p className="text-gray-700 mb-4">
                 Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις πληρωμές για το διαμέρισμα <strong>{apartmentToDelete.apartment_number}</strong>;
               </p>
-              
+
               <div className="bg-gray-50 rounded-lg p-3 border">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
@@ -785,7 +785,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   <div>
                     <span className="text-gray-600">Καθαρή Οφειλή:</span>
                     <p className={`font-medium ${
-                      apartmentToDelete.net_obligation > 0 ? 'text-red-600' : 
+                      apartmentToDelete.net_obligation > 0 ? 'text-red-600' :
                       apartmentToDelete.net_obligation < 0 ? 'text-green-600' : 'text-gray-600'
                     }`}>
                       {formatCurrency(apartmentToDelete.net_obligation)}
@@ -799,7 +799,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι πληρωμές που έχουν καταχωρηθεί για αυτό το διαμέρισμα.

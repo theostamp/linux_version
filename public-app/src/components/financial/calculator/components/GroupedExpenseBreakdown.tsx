@@ -262,4 +262,3 @@ export const GroupedExpenseBreakdown: React.FC<GroupedExpenseBreakdownProps> = (
     </div>
   );
 };
-

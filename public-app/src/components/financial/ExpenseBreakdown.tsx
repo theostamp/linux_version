@@ -25,18 +25,18 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
 
     const filteredExpenses = expenses.filter(expense => {
       if (period === 'all') return true;
-      
+
       const expenseDate = new Date(expense.date);
       const now = new Date();
-      
+
       switch (period) {
         case 'month':
-          return expenseDate.getMonth() === now.getMonth() && 
+          return expenseDate.getMonth() === now.getMonth() &&
                  expenseDate.getFullYear() === now.getFullYear();
         case 'quarter':
           const quarter = Math.floor(now.getMonth() / 3);
           const expenseQuarter = Math.floor(expenseDate.getMonth() / 3);
-          return expenseQuarter === quarter && 
+          return expenseQuarter === quarter &&
                  expenseDate.getFullYear() === now.getFullYear();
         case 'year':
           return expenseDate.getFullYear() === now.getFullYear();
@@ -59,7 +59,7 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
     filteredExpenses.forEach(expense => {
       const category = expense.category as ExpenseCategory;
       const title = expense.title || 'Χωρίς τίτλο';
-      
+
       if (categoryTotals[category] !== undefined) {
         categoryTotals[category]! += expense.amount;
       } else {
@@ -242,7 +242,7 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
                     const percentage = breakdown.total ? (amount / breakdown.total) * 100 : 0;
                     return (
                       <div key={category} className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="w-4 h-4 rounded-full"
                           style={{
                             backgroundColor: getCategoryColor(category as ExpenseCategory).includes('blue') ? '#3B82F6' :
@@ -274,7 +274,7 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
                     const percentage = breakdown.total ? (amount / breakdown.total) * 100 : 0;
                     const maxAmount = Math.max(...sortedCategories.map(([_, amt]) => amt));
                     const barWidth = maxAmount ? (amount / maxAmount) * 100 : 0;
-                    
+
                     return (
                       <div key={category} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
@@ -330,8 +330,8 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{formatCurrency(expense.amount)}</div>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={getCategoryColor(expense.category as ExpenseCategory)}
                       >
                         {getCategoryLabel(expense.category as ExpenseCategory)}
@@ -345,4 +345,4 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

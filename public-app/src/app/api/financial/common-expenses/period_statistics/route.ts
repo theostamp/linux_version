@@ -15,4 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, OPTIONS } = exportHandlers(handlers, methods, "financial-common-expenses-period-statistics");
 
 export { GET, OPTIONS };
-

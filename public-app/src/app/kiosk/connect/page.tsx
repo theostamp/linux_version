@@ -3,14 +3,14 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Building2, 
-  Mail, 
-  ArrowRight, 
-  Check, 
-  AlertCircle, 
-  Loader2, 
-  Phone, 
+import {
+  Building2,
+  Mail,
+  ArrowRight,
+  Check,
+  AlertCircle,
+  Loader2,
+  Phone,
   Home,
   Info,
   UserCheck,
@@ -24,12 +24,12 @@ export const dynamic = 'force-dynamic';
 // Check if user is authenticated (has valid token)
 function checkAuth(): { isAuthenticated: boolean; userEmail?: string } {
   if (typeof window === 'undefined') return { isAuthenticated: false };
-  
+
   const token = localStorage.getItem('access_token') || localStorage.getItem('access');
   const userStr = localStorage.getItem('user');
-  
+
   if (!token) return { isAuthenticated: false };
-  
+
   try {
     if (userStr) {
       const user = JSON.parse(userStr);
@@ -38,7 +38,7 @@ function checkAuth(): { isAuthenticated: boolean; userEmail?: string } {
   } catch {
     // Invalid user data
   }
-  
+
   return { isAuthenticated: !!token };
 }
 
@@ -51,16 +51,16 @@ function KioskConnectContent() {
   // User input states
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  
+
   // UI states
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'existing_user_redirect'>('idle');
   const [message, setMessage] = useState('');
   const [buildingInfo, setBuildingInfo] = useState<{ name: string; address: string } | null>(null);
-  
+
   // View mode: 'initial' for choice screen, 'register' for registration form
   const [viewMode, setViewMode] = useState<'initial' | 'register' | 'info'>('initial');
-  
+
   // Auth state
   const [authState, setAuthState] = useState<{ isAuthenticated: boolean; userEmail?: string }>({ isAuthenticated: false });
   const [authChecked, setAuthChecked] = useState(false);
@@ -117,7 +117,7 @@ function KioskConnectContent() {
       localStorage.setItem('activeBuildingId', buildingId);
       console.log(`[KioskConnect] Set active building from QR: ${buildingId}`);
     }
-    
+
     // Get user role to determine destination
     try {
       const userStr = localStorage.getItem('user');
@@ -132,7 +132,7 @@ function KioskConnectContent() {
     } catch {
       // If parsing fails, default to my-apartment
     }
-    
+
     router.push('/my-apartment');
   };
 
@@ -170,7 +170,7 @@ function KioskConnectContent() {
       });
 
       const data = await response.json();
-      
+
       // Debug logging
       console.log('[KioskConnect] API Response:', {
         status: response.status,
@@ -180,7 +180,7 @@ function KioskConnectContent() {
         message: data.message,
         error: data.error
       });
-      
+
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/910d1ab3-939d-4b8f-b8f2-09d337bdabce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'kiosk/connect/page.tsx:handleSubmit:RESPONSE',message:'Kiosk connect API response received',data:{responseStatus:response.status,dataStatus:data.status,hasAccessToken:!!data.access_token,hasTenantUrl:!!data.tenant_url,hasUser:!!data.user,apartment:data.apartment,apartments:data.apartments},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4-H5'})}).catch(()=>{});
       // #endregion
@@ -192,25 +192,25 @@ function KioskConnectContent() {
           localStorage.setItem('activeBuildingId', buildingId);
           console.log(`[KioskConnect] Set active building from registration: ${buildingId}`);
         }
-        
+
         // Check if this is an existing user with instant login token
         if (data.status === 'existing_user' && data.access_token) {
           // Instant login - store token and redirect immediately
           localStorage.setItem('access_token', data.access_token);
           localStorage.setItem('access', data.access_token);
-          
+
           // Store user data if provided
           if (data.user) {
             localStorage.setItem('user', JSON.stringify(data.user));
           }
-          
+
           setStatus('existing_user_redirect');
           setMessage(data.message || 'Μεταφέρεστε στο διαμέρισμά σας...');
-          
+
           // Clear form
           setEmail('');
           setPhone('');
-          
+
           // Redirect to my-apartment after brief delay
           // NOTE: Temporarily disabled cross-domain redirect for debugging
           setTimeout(() => {
@@ -259,7 +259,7 @@ function KioskConnectContent() {
           <p className="text-red-200 mb-6">
             Παρακαλώ σαρώστε το QR code από την οθόνη του κτιρίου σας.
           </p>
-          <Link 
+          <Link
             href="/"
             className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
           >
@@ -288,7 +288,7 @@ function KioskConnectContent() {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     console.log('[KioskConnect] Cleared existing tokens for new registration');
-    
+
     // Clear auth state and show registration form
     setAuthState({ isAuthenticated: false });
     setViewMode('register');
@@ -474,13 +474,13 @@ function KioskConnectContent() {
           {/* Info Card */}
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl mb-6">
             <h2 className="text-lg font-bold text-white mb-4">Τι είναι το New Concierge;</h2>
-            
+
             <div className="space-y-4 text-slate-200">
               <p className="text-sm leading-relaxed">
-                Μια σύγχρονη πλατφόρμα διαχείρισης πολυκατοικιών που φέρνει 
+                Μια σύγχρονη πλατφόρμα διαχείρισης πολυκατοικιών που φέρνει
                 <span className="text-emerald-400 font-medium"> διαφάνεια, οργάνωση και συνεργασία</span> στις κοινότητες.
               </p>
-              
+
               <div className="border-t border-white/10 pt-4">
                 <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
                   <span className="text-lg">✨</span> Τι προσφέρει:
@@ -581,7 +581,7 @@ function KioskConnectContent() {
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Επιτυχία!</h3>
               <p className="text-slate-200 leading-relaxed mb-4">{message}</p>
-              
+
               {/* Info about next steps */}
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
                 <div className="flex items-center justify-center gap-2 text-blue-300 mb-2">
@@ -592,7 +592,7 @@ function KioskConnectContent() {
                   Ελέγξτε το email σας και ακολουθήστε τον σύνδεσμο για να ολοκληρώσετε την εγγραφή.
                 </p>
               </div>
-              
+
               <button
                 onClick={() => setViewMode('initial')}
                 className="mt-6 text-slate-400 hover:text-white text-sm transition-colors"
@@ -610,7 +610,7 @@ function KioskConnectContent() {
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Καλώς ήρθατε! 🎉</h3>
               <p className="text-slate-200 leading-relaxed mb-4">{message}</p>
-              
+
               {/* Loading indicator for redirect */}
               <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mt-4">
                 <div className="flex items-center justify-center gap-3 text-emerald-300">
@@ -747,4 +747,3 @@ export default function KioskConnectPage() {
     </Suspense>
   );
 }
-

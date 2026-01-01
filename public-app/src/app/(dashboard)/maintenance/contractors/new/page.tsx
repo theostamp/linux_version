@@ -74,18 +74,18 @@ export default function NewContractorPage() {
         setSaving(false);
         return;
       }
-      
+
       // Validate required fields for backend
       if (!form.contact_person || !form.phone) {
-        toast({ 
-          title: 'Σφάλμα', 
-          description: 'Συμπληρώστε Υπεύθυνο και Τηλέφωνο (υποχρεωτικά πεδία).', 
-          variant: 'destructive' 
+        toast({
+          title: 'Σφάλμα',
+          description: 'Συμπληρώστε Υπεύθυνο και Τηλέφωνο (υποχρεωτικά πεδία).',
+          variant: 'destructive'
         });
         setSaving(false);
         return;
       }
-      
+
       const payload: Partial<Contractor> & { specializations?: string[]; emergency_phone?: string } = {
         ...form,
         service_type: finalServiceType,
@@ -106,14 +106,14 @@ export default function NewContractorPage() {
       router.push('/maintenance/contractors');
     } catch (error: any) {
       console.error('Error creating contractor:', error);
-      const errorMessage = error?.response?.data?.detail || 
-                          error?.response?.data?.message || 
-                          error?.message || 
+      const errorMessage = error?.response?.data?.detail ||
+                          error?.response?.data?.message ||
+                          error?.message ||
                           'Αποτυχία δημιουργίας συνεργείου.';
-      toast({ 
-        title: 'Σφάλμα', 
-        description: errorMessage, 
-        variant: 'destructive' 
+      toast({
+        title: 'Σφάλμα',
+        description: errorMessage,
+        variant: 'destructive'
       });
     } finally {
       setSaving(false);
@@ -161,10 +161,10 @@ export default function NewContractorPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="person">Υπεύθυνος *</Label>
-              <Input 
-                id="person" 
-                value={form.contact_person || ''} 
-                onChange={(e) => setForm({ ...form, contact_person: e.target.value })} 
+              <Input
+                id="person"
+                value={form.contact_person || ''}
+                onChange={(e) => setForm({ ...form, contact_person: e.target.value })}
                 required
                 placeholder="Όνομα υπευθύνου"
               />
@@ -172,11 +172,11 @@ export default function NewContractorPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="phone">Τηλέφωνο *</Label>
-                <Input 
-                  id="phone" 
+                <Input
+                  id="phone"
                   type="tel"
-                  value={form.phone || ''} 
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })} 
+                  value={form.phone || ''}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   required
                   placeholder="π.χ. 2101234567"
                 />
@@ -218,5 +218,3 @@ export default function NewContractorPage() {
     </div>
   );
 }
-
-

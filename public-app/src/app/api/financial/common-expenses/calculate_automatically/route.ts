@@ -15,4 +15,3 @@ const handlers = createTenantProxyHandlers(
 const { POST, OPTIONS } = exportHandlers(handlers, methods, "financial-common-expenses-calculate-automatically");
 
 export { POST, OPTIONS };
-

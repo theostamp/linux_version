@@ -7,7 +7,7 @@ import { MessageCircle, Loader2 } from 'lucide-react';
 // Dynamic import with no SSR for chat interface
 const ChatInterface = dynamic(
   () => import('@/components/chat/ChatInterface'),
-  { 
+  {
     ssr: false,
     loading: () => <ChatLoadingState />
   }
@@ -56,4 +56,3 @@ export default function ChatPage() {
     </div>
   );
 }
-

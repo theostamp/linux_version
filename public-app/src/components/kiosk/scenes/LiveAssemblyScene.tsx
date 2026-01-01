@@ -78,9 +78,9 @@ interface LiveAssemblySceneProps {
   assembly?: AssemblyData | null;
 }
 
-export default function LiveAssemblyScene({ 
-  data, 
-  assembly: externalAssembly 
+export default function LiveAssemblyScene({
+  data,
+  assembly: externalAssembly
 }: LiveAssemblySceneProps) {
   const [assembly, setAssembly] = useState<AssemblyData | null>(externalAssembly || null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -163,8 +163,8 @@ export default function LiveAssemblyScene({
 
   // Voting results calculation
   const votingResults = currentItem?.voting_results;
-  const totalVotedMills = votingResults 
-    ? votingResults.approve.mills + votingResults.reject.mills + votingResults.abstain.mills 
+  const totalVotedMills = votingResults
+    ? votingResults.approve.mills + votingResults.reject.mills + votingResults.abstain.mills
     : 0;
 
   // Smooth auto-scroll for the per-apartment vote roster when it overflows (kiosk has no user scroll).
@@ -218,7 +218,7 @@ export default function LiveAssemblyScene({
       <div className="pointer-events-none absolute inset-0 opacity-60" style={{ backgroundImage: palette.overlay }} />
 
       <div className="relative z-10 h-full flex flex-col gap-2 p-4">
-        
+
         {/* Top Header */}
         <header
           className="flex justify-between items-start backdrop-blur-2xl rounded-2xl shadow-2xl border p-4"
@@ -227,7 +227,7 @@ export default function LiveAssemblyScene({
           {/* Left: Title & Building */}
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-2">
-              <motion.div 
+              <motion.div
                 animate={{ opacity: [0.75, 1, 0.75] }}
                 transition={{ duration: 2.4, repeat: Infinity }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 border border-rose-400/30 text-rose-200 text-[11px] font-bold uppercase tracking-[0.18em] rounded-full"
@@ -262,7 +262,7 @@ export default function LiveAssemblyScene({
         {/* Stats Bar - Large and Clear */}
         <div className="grid grid-cols-3 gap-2 lg:gap-3">
           {/* Elapsed Time */}
-          <StatCard 
+          <StatCard
             icon={<Timer className="w-6 h-6" />}
             label="Διάρκεια"
             value={formatElapsed(elapsedSeconds)}
@@ -271,9 +271,9 @@ export default function LiveAssemblyScene({
             surfaceColor={palette.cardSurface}
             accentBorder={palette.accentBorder}
           />
-          
+
           {/* Quorum */}
-          <StatCard 
+          <StatCard
             icon={<Users className="w-6 h-6" />}
             label="Απαρτία*"
             value={`${assembly.quorum_percentage.toFixed(1)}%`}
@@ -283,9 +283,9 @@ export default function LiveAssemblyScene({
             surfaceColor={palette.cardSurface}
             accentBorder={palette.accentBorder}
           />
-	          
+
 	          {/* Progress */}
-	          <StatCard 
+	          <StatCard
 	            icon={<FileText className="w-6 h-6" />}
 	            label="Πρόοδος"
 	            value={`${completedItems}/${totalItems}`}
@@ -303,7 +303,7 @@ export default function LiveAssemblyScene({
 
         {/* Main Content Area */}
         <div className="flex-1 min-h-0 flex gap-2">
-          
+
           {/* Left: Current Agenda Item (70%) */}
           <div className="flex-[2] flex flex-col min-w-0">
             <AnimatePresence mode="wait">
@@ -332,7 +332,7 @@ export default function LiveAssemblyScene({
 	                          {currentItem.item_type === 'informational' && <Info className="w-6 h-6 text-blue-300" />}
 	                          {currentItem.item_type === 'discussion' && <MessageSquare className="w-6 h-6 text-amber-300" />}
 	                          <span>
-	                            {currentItem.item_type === 'voting' ? 'Ψηφοφορία' : 
+	                            {currentItem.item_type === 'voting' ? 'Ψηφοφορία' :
 	                             currentItem.item_type === 'informational' ? 'Ενημέρωση' : 'Συζήτηση'}
 	                          </span>
 	                        </div>
@@ -369,7 +369,7 @@ export default function LiveAssemblyScene({
 	                      </div>
 
 	                      <div className="grid grid-cols-3 gap-3">
-	                        <VoteResultCard 
+	                        <VoteResultCard
 	                          label="ΥΠΕΡ"
 	                          icon={<ThumbsUp className="w-7 h-7" />}
 	                          mills={votingResults.approve.mills}
@@ -379,7 +379,7 @@ export default function LiveAssemblyScene({
 	                          surfaceColor={palette.cardSurface}
 	                          accentBorder={palette.accentBorder}
 	                        />
-	                        <VoteResultCard 
+	                        <VoteResultCard
 	                          label="ΚΑΤΑ"
 	                          icon={<ThumbsDown className="w-7 h-7" />}
 	                          mills={votingResults.reject.mills}
@@ -389,7 +389,7 @@ export default function LiveAssemblyScene({
 	                          surfaceColor={palette.cardSurface}
 	                          accentBorder={palette.accentBorder}
 	                        />
-	                        <VoteResultCard 
+	                        <VoteResultCard
 	                          label="ΛΕΥΚΟ"
 	                          icon={<Minus className="w-7 h-7" />}
 	                          mills={votingResults.abstain.mills}
@@ -415,13 +415,13 @@ export default function LiveAssemblyScene({
 	                  )}
 	                </motion.div>
 	              ) : (
-	                <motion.div 
+	                <motion.div
 	                  initial={{ opacity: 0 }}
 	                  animate={{ opacity: 1 }}
 	                  className="flex-1 backdrop-blur-2xl border rounded-2xl p-10 flex flex-col items-center justify-center text-center"
 	                  style={cardStyle}
 	                >
-	                  <motion.div 
+	                  <motion.div
 	                    animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
 	                    transition={{ duration: 2, repeat: Infinity }}
 	                    className="w-32 h-32 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center mb-8"
@@ -503,16 +503,16 @@ function VoteBadge({ vote }: { vote: 'approve' | 'reject' | 'abstain' | null }) 
 }
 
 // Stat Card Component
-function StatCard({ 
-  icon, 
-  label, 
-  value, 
+function StatCard({
+  icon,
+  label,
+  value,
   subtext,
   color,
   large,
   surfaceColor,
   accentBorder,
-}: { 
+}: {
   icon: React.ReactNode;
   label: string;
   value: string;
@@ -601,10 +601,10 @@ function VoteResultCard({
         <span className="text-white font-bold">{mills}</span> χιλ. •{' '}
         <span className="text-white font-bold">{count}</span> ψήφοι
       </div>
-      
+
       {/* Progress bar */}
       <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
-        <motion.div 
+        <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(100, percentage)}%` }}
           transition={{ duration: 1, ease: 'easeOut' }}
@@ -618,20 +618,20 @@ function VoteResultCard({
 // Agenda Item Row
 function AgendaItemRow({ item, isCurrent }: { item: any; isCurrent: boolean }) {
   return (
-    <div 
+    <div
       className={cn(
         "p-3 rounded-2xl flex items-center gap-3 transition-all",
-        isCurrent 
-          ? "bg-emerald-500/20 border-2 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.15)]" 
-          : item.status === 'completed' 
-            ? "opacity-40 bg-white/5" 
+        isCurrent
+          ? "bg-emerald-500/20 border-2 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.15)]"
+          : item.status === 'completed'
+            ? "opacity-40 bg-white/5"
             : "bg-white/5 border border-white/5"
       )}
     >
       <div className={cn(
         "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base shrink-0",
-        isCurrent 
-          ? "bg-emerald-500 text-white" 
+        isCurrent
+          ? "bg-emerald-500 text-white"
           : item.status === 'completed'
             ? "bg-emerald-500/30 text-emerald-400"
             : "bg-white/10 text-white/50"

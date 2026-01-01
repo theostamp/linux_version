@@ -33,4 +33,3 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({
     </Card>
   );
 };
-

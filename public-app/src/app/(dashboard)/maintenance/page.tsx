@@ -2,12 +2,12 @@
 
 /**
  * Maintenance Dashboard - Services & Expenses
- * 
+ *
  * This page separates services/maintenance expenses from operational expenses:
- * 
+ *
  * - "Όλες οι Δαπάνες" tab (default): Shows all operational expenses (utilities, monthly bills)
  *   (electricity_common, water_common, heating_fuel, heating_gas, garbage_collection)
- * 
+ *
  * - "Επισκόπηση & Έργα" tab: Shows contractors, maintenance projects, and service-related expenses
  *   (excludes operational expenses like utilities, monthly bills)
  */
@@ -21,10 +21,10 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  FileText, 
-  Calendar, 
-  Users, 
+import {
+  FileText,
+  Calendar,
+  Users,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -59,7 +59,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
   const [deletingExpenseId, setDeletingExpenseId] = useState<number | null>(null);
   const { toast } = useToast();
   const { deleteExpense } = useExpenses(buildingId || 0);
-  
+
   // Query for operational expenses (utilities and regular monthly bills ONLY)
   const operationalExpensesQ = useQuery({
     queryKey: ['operational-expenses', { building: buildingId }],
@@ -69,7 +69,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
           building_id: buildingId,
           category__in: [
             'electricity_common',
-            'water_common', 
+            'water_common',
             'heating_fuel',
             'heating_gas',
             'garbage_collection'
@@ -98,7 +98,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
     try {
       setDeletingExpenseId(expenseId);
       const success = await deleteExpense(expenseId);
-      
+
       if (success) {
         toast({
           title: 'Διαγραφή Επιτυχής',
@@ -130,8 +130,8 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
       <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold tracking-tight text-foreground">Νέος Μηνιαίος Λογαριασμός</h2>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowExpenseForm(false)}
             >
               Ακύρωση
@@ -148,7 +148,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
         </div>
       );
     }
-  
+
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -164,7 +164,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
             Νέος Λογαριασμός
           </Button>
         </div>
-  
+
         {/* Stats for Operational Expenses */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -179,7 +179,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
               <p className="text-xs text-muted-foreground">Φέτος</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Αριθμός Δαπανών</CardTitle>
@@ -192,7 +192,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
               <p className="text-xs text-muted-foreground">Καταχωρήσεις</p>
             </CardContent>
           </Card>
-  
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Μέσος Όρος/Μήνα</CardTitle>
@@ -207,7 +207,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
               <p className="text-xs text-muted-foreground">Ανά καταχώρηση</p>
             </CardContent>
           </Card>
-  
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Τελευταία Ενημέρωση</CardTitle>
@@ -223,7 +223,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
             </CardContent>
           </Card>
         </div>
-  
+
         {/* Recent Operational Expenses */}
         <Card>
           <CardHeader>
@@ -307,8 +307,8 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-auto p-4 flex-col"
               onClick={() => setShowExpenseForm(true)}
             >
@@ -367,23 +367,23 @@ function MaintenanceDashboardContent() {
   const serviceExpensesYearQ = useQuery({
     queryKey: ['service-expenses-year', { building: buildingId, year }],
     queryFn: async () => {
-      const response = await api.get(`/financial/expenses/`, { 
-        params: { 
-          building_id: buildingId, 
-          date__gte: yearStart, 
-          date__lte: yearEnd, 
+      const response = await api.get(`/financial/expenses/`, {
+        params: {
+          building_id: buildingId,
+          date__gte: yearStart,
+          date__lte: yearEnd,
           limit: 1000,
           // Exclude operational expenses (utilities, monthly bills)
           category__not_in: [
             'electricity_common',
-            'water_common', 
+            'water_common',
             'heating_fuel',
             'heating_gas',
             'garbage_collection'
           ].join(',')
-        } 
+        }
       });
-      
+
       // Filter out future management fees on the client side
       type ServiceExpense = {
         id: number;
@@ -395,14 +395,14 @@ function MaintenanceDashboardContent() {
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth() + 1; // 1-based month
       const currentYear = currentDate.getFullYear();
-      
+
       const filteredExpenses = expenses.filter((expense: ServiceExpense) => {
         // If it's a management fee, check if it's for a future month
         if (expense.category === 'management_fees') {
           const expenseDate = new Date(expense.date);
           const expenseMonth = expenseDate.getMonth() + 1; // 1-based month
           const expenseYear = expenseDate.getFullYear();
-          
+
           // Exclude management fees for current and future months (only include past months)
           if (expenseYear > currentYear || (expenseYear === currentYear && expenseMonth >= currentMonth)) {
             return false;
@@ -410,7 +410,7 @@ function MaintenanceDashboardContent() {
         }
         return true;
       });
-      
+
       return {
         ...response.data,
         results: filteredExpenses
@@ -484,7 +484,7 @@ function MaintenanceDashboardContent() {
     id: number;
     amount: number | string;
   };
-  
+
   const loading = contractorsQ.isLoading || receiptsQ.isLoading || receiptsCompletedQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading || serviceExpensesYearQ.isLoading || expensesYearQ.isLoading || completedYearQ.isLoading || receiptsYearQ.isLoading;
   const contractorRows = extractResults<ContractorRow>(contractorsQ.data ?? []);
   const scheduledRows = extractResults<ScheduledMaintenanceRow>(scheduledQ.data ?? []);
@@ -645,13 +645,13 @@ function MaintenanceDashboardContent() {
   }
   // Count approved projects from offers
   const approvedProjectsCount = extractCount(approvedProjectsQ.data ?? []);
-  
+
   // Count scheduled maintenance that are NOT linked to approved projects to avoid double counting
   const scheduledMaintenanceCount = scheduledRows.length;
   type ScheduledWithProject = ScheduledMaintenanceRow & { linked_project?: number };
   const linkedToProjectsCount = scheduledRows.filter((maintenance: ScheduledWithProject) => maintenance.linked_project).length;
   const unlinkedScheduledCount = scheduledMaintenanceCount - linkedToProjectsCount;
-  
+
   // Total maintenance work = unlinked scheduled maintenance + approved projects
   const totalMaintenanceWork = unlinkedScheduledCount + approvedProjectsCount;
 
@@ -675,11 +675,11 @@ function MaintenanceDashboardContent() {
     total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab
   } : baseStats;
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    description, 
-    icon, 
+  const StatCard = ({
+    title,
+    value,
+    description,
+    icon,
     color = "default",
     href,
     className
@@ -771,7 +771,7 @@ function MaintenanceDashboardContent() {
           <TabsTrigger value="operational-expenses">Όλες οι Δαπάνες</TabsTrigger>
           <TabsTrigger value="overview">Επισκόπηση & Έργα</TabsTrigger>
         </TabsList>
-        
+
         {/* Tab Descriptions */}
         <div className="text-sm text-muted-foreground mt-2">
           {activeTab === 'operational-expenses' && (
@@ -781,7 +781,7 @@ function MaintenanceDashboardContent() {
             <span>📊 Επισκόπηση συνεργείων, έργων συντήρησης και δαπανών συντήρησης (χωρίς λειτουργικές δαπάνες)</span>
           )}
         </div>
-        
+
         <TabsContent value="operational-expenses" className="space-y-6 mt-6">
           <OperationalExpensesTab buildingId={buildingId} />
         </TabsContent>
@@ -915,4 +915,4 @@ export default function MaintenanceDashboard() {
       </SubscriptionGate>
     </AuthGate>
   );
-} 
+}

@@ -129,4 +129,3 @@ export default function VoteResultsBannerWidget({ data, isLoading, error }: Prop
     </div>
   );
 }
-

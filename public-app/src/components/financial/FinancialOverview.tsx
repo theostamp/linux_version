@@ -4,12 +4,12 @@ import React, { useState, useEffect, useImperativeHandle } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  Building, 
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Building,
   AlertTriangle,
   Calendar,
   BarChart3,
@@ -59,7 +59,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
   ({ selectedMonth }, ref) => {
   const [stats, setStats] = useState<FinancialStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // NEW: Use BuildingContext instead of props
   const { selectedBuilding, buildingContext } = useBuilding();
   const buildingId = selectedBuilding?.id;
@@ -85,17 +85,17 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         period: selectedPeriod
       });
-      
+
       // Add selectedMonth parameter if provided
       if (selectedMonth) {
         params.append('month', selectedMonth);
       }
-      
+
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       // The api.get returns data directly
       if (!response) {
@@ -222,7 +222,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -239,7 +239,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -256,7 +256,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -353,7 +353,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
                 <p className="text-sm text-muted-foreground">Τρόποι Πληρωμής</p>
               </div>
             </div>
-            
+
             {/* Κατανομή Τρόπων Πληρωμής */}
             {paymentMethods.length > 0 && (
               <div className="mt-6">
@@ -384,4 +384,4 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
 
 FinancialOverview.displayName = 'FinancialOverview';
 
-export { FinancialOverview }; 
+export { FinancialOverview };

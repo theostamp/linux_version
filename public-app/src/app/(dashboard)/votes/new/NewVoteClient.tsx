@@ -53,8 +53,8 @@ export default function NewVoteClient() {
       toast.success('Η ψηφοφορία δημιουργήθηκε με επιτυχία');
       router.push(`/votes`);
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'response' in err 
-        ? JSON.stringify((err as { response?: { data?: unknown } }).response?.data) 
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? JSON.stringify((err as { response?: { data?: unknown } }).response?.data)
         : err instanceof Error ? err.message : 'Unknown error';
       setError(`Σφάλμα κατά τη δημιουργία ψηφοφορίας: ${msg}`);
       console.error('CreateVote failed:', err);
@@ -137,4 +137,3 @@ export default function NewVoteClient() {
     </div>
   );
 }
-

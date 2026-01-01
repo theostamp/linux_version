@@ -14,14 +14,14 @@ export function useVotes(
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [hasShownAuthError, setHasShownAuthError] = useState(false);
-  
+
   // Check authentication status
   useEffect(() => {
     if (!authLoading && !isAuthenticated && !hasShownAuthError) {
       console.log('[useVotes] User not authenticated, redirecting to login');
       toast.error('Παρακαλώ συνδεθείτε για να δείτε τις ψηφοφορίες');
       setHasShownAuthError(true);
-      
+
       // Μικρή καθυστέρηση για να προλάβει να εμφανιστεί το toast
       setTimeout(() => {
         router.push('/login');
@@ -36,19 +36,19 @@ export function useVotes(
         return await fetchVotes(buildingId);
       } catch (error: unknown) {
         console.error('[useVotes] Error fetching votes:', error);
-        
+
         const err = error as { status?: number; response?: { status?: number } };
         // Handle authentication errors
         if ((err?.status === 401 || err?.response?.status === 401) && !hasShownAuthError) {
           toast.error('Η συνεδρία σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
           setHasShownAuthError(true);
-          
+
           // Μικρή καθυστέρηση για να προλάβει να εμφανιστεί το toast
           setTimeout(() => {
             router.push('/login');
           }, 1000);
         }
-        
+
         throw error;
       }
     },
@@ -67,4 +67,3 @@ export function useVotes(
     ...options,
   });
 }
-

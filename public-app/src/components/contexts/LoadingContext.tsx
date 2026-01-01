@@ -50,4 +50,3 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
     </LoadingContext.Provider>
   );
 }
-

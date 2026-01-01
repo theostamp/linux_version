@@ -22,4 +22,3 @@ export function useAuthGuard(requiredRole: Role = 'any') {
 
   return { isAllowed, isAuthReady };
 }
-

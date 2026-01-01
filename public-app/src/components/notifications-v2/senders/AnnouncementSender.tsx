@@ -28,9 +28,9 @@ import {
 import { toast } from 'sonner';
 import RecipientSelector from '../shared/RecipientSelector';
 import ChannelSelector from '../shared/ChannelSelector';
-import { 
-  extractBuildingData, 
-  generateEmailSignature 
+import {
+  extractBuildingData,
+  generateEmailSignature
 } from '../shared/buildingUtils';
 
 interface Props {
@@ -40,7 +40,7 @@ interface Props {
 
 export default function AnnouncementSender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
-  
+
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -52,7 +52,7 @@ export default function AnnouncementSender({ onSuccess, onCancel }: Props) {
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
   const buildingData = useMemo(
-    () => extractBuildingData(selectedBuilding_), 
+    () => extractBuildingData(selectedBuilding_),
     [selectedBuilding_]
   );
 
@@ -192,8 +192,8 @@ ${message.trim()}`;
               Ακύρωση
             </Button>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowPreview(true)}
                 disabled={!buildingId || !message.trim()}
               >

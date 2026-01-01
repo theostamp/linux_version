@@ -82,5 +82,3 @@ export function useMarketplaceProvider(id: string | null, buildingId?: number | 
     enabled: Boolean(id),
   });
 }
-
-

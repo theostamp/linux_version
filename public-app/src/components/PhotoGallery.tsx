@@ -34,7 +34,7 @@ export default function PhotoGallery({ photos, title = "Φωτογραφίες �
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (selectedPhoto === null) return;
-    
+
     switch (e.key) {
       case 'Escape':
         closeLightbox();
@@ -58,8 +58,8 @@ export default function PhotoGallery({ photos, title = "Φωτογραφίες �
         <h3 className="text-lg font-semibold text-gray-900 mb-3">📸 {title}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {photos.map((photo, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="relative group"
             >
               <img
@@ -72,7 +72,7 @@ export default function PhotoGallery({ photos, title = "Φωτογραφίες �
                   target.style.display = 'none';
                 }}
               />
-              <div 
+              <div
                 className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center pointer-events-none"
               >
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity text-white">
@@ -89,7 +89,7 @@ export default function PhotoGallery({ photos, title = "Φωτογραφίες �
 
       {/* Lightbox Modal */}
       {selectedPhoto !== null && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
           onClick={closeLightbox}
           onKeyDown={handleKeyDown}
@@ -154,4 +154,3 @@ export default function PhotoGallery({ photos, title = "Φωτογραφίες �
     </>
   );
 }
-

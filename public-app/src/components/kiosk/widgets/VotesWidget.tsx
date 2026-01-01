@@ -44,7 +44,7 @@ export default function VotesWidget({ widget, data, isLoading, error, settings }
 
   // Use ISO date string comparison to include votes that end TODAY as active
   const today = new Date().toISOString().split('T')[0]; // e.g. "2025-12-14"
-  
+
   const activeVotes = data.votes.filter((vote: any) => {
     if (!vote.end_date || vote.end_date < '1971-01-01') return true; // No end date = always active
     return vote.end_date >= today; // Include today's end date as active
@@ -73,8 +73,8 @@ export default function VotesWidget({ widget, data, isLoading, error, settings }
               Ενεργές Ψηφοφορίες
             </h3>
             {activeVotes.slice(0, maxItems).map((vote: any) => (
-              <div 
-                key={vote.id} 
+              <div
+                key={vote.id}
                 className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-4 rounded-xl border border-green-500/30 mb-3"
               >
                 <div className="flex items-start justify-between mb-2">
@@ -85,31 +85,31 @@ export default function VotesWidget({ widget, data, isLoading, error, settings }
                     Ενεργή
                   </div>
                 </div>
-                
+
                 <p className="text-xs text-green-100 line-clamp-2 mb-3">
                   {vote.description}
                 </p>
-                
+
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center text-green-300">
                     <Calendar className="w-3 h-3 mr-1" />
                     Λήγει: {format(new Date(vote.end_date), 'dd/MM', { locale: el })}
                   </div>
-                  
+
                   <div className="flex items-center text-green-300">
                     <Users className="w-3 h-3 mr-1" />
                     {vote.total_votes || 0} ψήφοι
                   </div>
                 </div>
-                
+
                 {/* Progress bar */}
                 {vote.total_votes > 0 && (
                   <div className="mt-2">
                     <div className="w-full bg-green-900/30 rounded-full h-1.5">
-                      <div 
+                      <div
                         className="bg-green-400 h-1.5 rounded-full transition-all"
-                        style={{ 
-                          width: `${Math.min((vote.total_votes / 100) * 100, 100)}%` 
+                        style={{
+                          width: `${Math.min((vote.total_votes / 100) * 100, 100)}%`
                         }}
                       ></div>
                     </div>
@@ -128,8 +128,8 @@ export default function VotesWidget({ widget, data, isLoading, error, settings }
               Ολοκληρωμένες Ψηφοφορίες
             </h3>
             {completedVotes.slice(0, 1).map((vote: any) => (
-              <div 
-                key={vote.id} 
+              <div
+                key={vote.id}
                 className="bg-gradient-to-br from-gray-800/40 to-slate-800/40 backdrop-blur-sm p-3 rounded-xl border border-gray-600/30"
               >
                 <div className="flex items-center justify-between mb-1">
@@ -140,13 +140,13 @@ export default function VotesWidget({ widget, data, isLoading, error, settings }
                     Ολοκληρώθηκε
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-xs text-gray-400">
                   <div className="flex items-center">
                     <Calendar className="w-3 h-3 mr-1" />
                     {format(new Date(vote.end_date), 'dd/MM', { locale: el })}
                   </div>
-                  
+
                   <div className="flex items-center">
                     <Users className="w-3 h-3 mr-1" />
                     {vote.total_votes || 0} ψήφοι

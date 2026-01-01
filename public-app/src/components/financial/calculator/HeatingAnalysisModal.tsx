@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  X, 
+import {
+  X,
   Thermometer,
   Calculator,
   PieChart,
@@ -210,7 +210,7 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
                     <p className="text-sm font-medium text-blue-700">Τύπος Συστήματος</p>
                     <p className="text-lg font-semibold text-blue-900">
                       {buildingHeatingSystem === 'conventional' && '🏢 Συμβατικό'}
-                      {buildingHeatingSystem === 'hour_meters' && '⏱️ Ωρομετρητές'}  
+                      {buildingHeatingSystem === 'hour_meters' && '⏱️ Ωρομετρητές'}
                       {buildingHeatingSystem === 'heat_meters' && '⚡ Θερμιδομετρητές'}
                     </p>
                   </div>
@@ -361,7 +361,7 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
                     </div>
                   ))}
                 </div>
-                
+
                 {hasMeterReadings && (
                   <div className="mt-4 p-3 bg-green-50 rounded-lg">
                     <p className="text-sm text-green-700">
@@ -451,7 +451,7 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
                     <div>
                       <p className="font-medium">Έλεγχος Αθροισμάτων</p>
                       <p className="text-sm text-gray-600">
-                        Συνολικό κόστος: {totalHeatingCost.toFixed(2)}€ | 
+                        Συνολικό κόστος: {totalHeatingCost.toFixed(2)}€ |
                         Κατανομημένο: {heatingBreakdown.totalDistributed.toFixed(2)}€
                       </p>
                     </div>
@@ -476,7 +476,7 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
             <Button variant="outline" onClick={onClose}>
               Ακύρωση
             </Button>
-            <Button 
+            <Button
               onClick={handleApplyCalculations}
               disabled={!heatingBreakdown || (heatingType === 'autonomous' && !hasMeterReadings)}
             >

@@ -28,7 +28,7 @@ export default function AdInterstitialOverlay({ data }: BaseWidgetProps) {
       // 1. Start Warning
       setStatus('warning');
       setCountdown(WARNING_DURATION);
-      
+
       const warningInterval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
@@ -105,11 +105,11 @@ export default function AdInterstitialOverlay({ data }: BaseWidgetProps) {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950 animate-in fade-in zoom-in-95 duration-700">
           {/* Background Ambient Effect */}
           <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.2),transparent_70%)]" />
-          
+
           {/* Ad Content Card */}
           <div className="relative w-[92%] max-w-6xl aspect-[16/9] md:aspect-auto rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] bg-slate-900/80 backdrop-blur-3xl">
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 to-slate-950/50" />
-            
+
             <div className="relative h-full p-10 md:p-16 flex flex-col md:flex-row gap-12 items-center">
               {/* Image Section */}
               {c?.image_url && (
@@ -123,11 +123,11 @@ export default function AdInterstitialOverlay({ data }: BaseWidgetProps) {
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black uppercase tracking-widest">
                   <Play className="w-3 h-3 fill-current" /> Χορηγούμενη Προβολή
                 </div>
-                
+
                 <h2 className="text-4xl md:text-6xl font-black text-white leading-[1.1] tracking-tight">
                   {c?.headline || c?.ticker_text || 'Τοπική προσφορά'}
                 </h2>
-                
+
                 {c?.body && (
                   <p className="text-xl md:text-2xl text-slate-300 font-medium leading-relaxed opacity-90">
                     {c.body}
@@ -159,5 +159,3 @@ export default function AdInterstitialOverlay({ data }: BaseWidgetProps) {
     </>
   );
 }
-
-

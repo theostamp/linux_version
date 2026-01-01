@@ -29,7 +29,7 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
         <Euro className="w-6 h-6 text-emerald-300" />
         <h2 className="text-lg font-bold text-white">Οικονομικά Στοιχεία</h2>
       </div>
-      
+
       <div className="h-full overflow-y-auto">
         <div className="space-y-4">
           {/* Financial Overview Cards */}
@@ -47,7 +47,7 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-3 rounded-xl border border-blue-500/30">
               <div className="flex items-center space-x-2 mb-2">
@@ -56,7 +56,7 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
               </div>
               <div className="text-lg font-bold text-white">€0</div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-3 rounded-xl border border-green-500/30">
               <div className="flex items-center space-x-2 mb-2">
                 <TrendingUp className="w-4 h-4 text-green-300" />
@@ -65,7 +65,7 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
               <div className="text-lg font-bold text-white">€0</div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-yellow-900/40 to-amber-900/40 backdrop-blur-sm p-4 rounded-xl border border-yellow-500/30">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-yellow-100">Εκκρεμότητες</h3>
@@ -85,7 +85,7 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
               </div>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-br from-purple-900/40 to-violet-900/40 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30">
             <div className="flex items-center space-x-2 mb-3">
               <BarChart3 className="w-4 h-4 text-purple-300" />
@@ -106,7 +106,7 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
               <div className="text-xs text-purple-300">Τρέχουσα περίοδος: 0%</div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-gradient-to-br from-gray-800/40 to-slate-800/40 backdrop-blur-sm p-2 rounded-lg border border-gray-600/30 text-center">
               <PieChart className="w-4 h-4 mx-auto mb-1 text-gray-300" />

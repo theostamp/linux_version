@@ -19,5 +19,3 @@ const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(
 );
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-
-

@@ -394,11 +394,11 @@ export const useKioskData = (buildingId: number | null = 1) => {
       const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
       console.log(`[useKioskData] 🏢 Fetching data for building ID: ${buildingId}`);
-      
+
       // Use unified public-info endpoint that returns all kiosk data
       const apiUrl = `/api/public-info/${buildingId}/?month=${currentMonth}`;
       console.log(`[useKioskData] 📡 API URL: ${apiUrl}`);
-      
+
       const publicData = await apiGet<PublicInfoResponse>(apiUrl);
 
       console.log('[useKioskData] 📦 API response:', {
@@ -407,9 +407,9 @@ export const useKioskData = (buildingId: number | null = 1) => {
         announcementsCount: publicData.announcements?.length || 0,
         hasUpcomingAssembly: !!publicData.upcoming_assembly,
         votesCount: publicData.votes?.length || 0,
-        announcements: publicData.announcements?.map(a => ({ 
-          id: a.id, 
-          title: a.title?.substring(0, 30) 
+        announcements: publicData.announcements?.map(a => ({
+          id: a.id,
+          title: a.title?.substring(0, 30)
         }))
       });
 
@@ -501,7 +501,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         total_building_mills: (vote as any).total_building_mills,
         results: vote.results ?? null,
       }));
-      
+
       console.log('[useKioskData] 🗳️ Transformed votes:', votesResult.map(v => ({
         id: v.id,
         title: v.title?.substring(0, 30),

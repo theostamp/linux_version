@@ -116,5 +116,3 @@ export interface CommonExpenseModalProps {
   managementOfficeAddress?: string;
   managementOfficeLogo?: string;
 }
-
-

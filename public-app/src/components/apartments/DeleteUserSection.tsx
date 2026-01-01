@@ -85,12 +85,12 @@ export default function DeleteUserSection({
                 Επικίνδυνη Ζώνη - Διαγραφή {userTypeLabelCaps}
               </h4>
               <p className="text-sm text-red-700 mb-3">
-                Η διαγραφή του χρήστη <strong>{userEmail}</strong> θα τον αφαιρέσει 
-                <strong> από όλα τα κτίρια</strong> στα οποία είναι καταχωρημένος. 
+                Η διαγραφή του χρήστη <strong>{userEmail}</strong> θα τον αφαιρέσει
+                <strong> από όλα τα κτίρια</strong> στα οποία είναι καταχωρημένος.
                 Το διαμέρισμα {apartmentNumber} θα παραμείνει αλλά θα σημανθεί ως <strong>κενό</strong>.
               </p>
               <p className="text-xs text-red-600 mb-3">
-                ⚠️ Αυτή η ενέργεια είναι <strong>μη αναστρέψιμη</strong>. 
+                ⚠️ Αυτή η ενέργεια είναι <strong>μη αναστρέψιμη</strong>.
                 Ο χρήστης θα χάσει πρόσβαση σε όλα τα κτίρια και δεδομένα.
               </p>
               <Button
@@ -148,7 +148,7 @@ export default function DeleteUserSection({
 
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <p className="text-sm text-amber-800">
-                    <strong>Σημείωση:</strong> Αν θέλετε απλά να αφαιρέσετε τον {userTypeLabel} από αυτό το διαμέρισμα 
+                    <strong>Σημείωση:</strong> Αν θέλετε απλά να αφαιρέσετε τον {userTypeLabel} από αυτό το διαμέρισμα
                     χωρίς να τον διαγράψετε, χρησιμοποιήστε την επεξεργασία για να αδειάσετε τα πεδία.
                   </p>
                 </div>
@@ -173,7 +173,7 @@ export default function DeleteUserSection({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => setConfirmEmail('')}
               disabled={isDeleting}
             >
@@ -202,4 +202,3 @@ export default function DeleteUserSection({
     </>
   );
 }
-

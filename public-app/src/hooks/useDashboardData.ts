@@ -1,6 +1,6 @@
 /**
  * useDashboardData Hook
- * 
+ *
  * Centralized data fetching for the main dashboard
  * Aggregates data from multiple sources for a unified overview
  */
@@ -94,5 +94,3 @@ export function useDashboardData(buildingId?: number) {
 }
 
 export default useDashboardData;
-
-

@@ -1,10 +1,10 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { 
-  Thermometer, 
-  Droplets, 
-  Wind, 
+import {
+  Thermometer,
+  Droplets,
+  Wind,
   Eye
 } from 'lucide-react';
 import { fetchWeatherWithFallback } from '@/lib/weather-api';
@@ -41,15 +41,15 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
     if (date.toDateString() === tomorrow.toDateString()) return 'Αύριο';
     if (date.toDateString() === dayAfter.toDateString()) return 'Μεθαύριο';
     if (date.toDateString() === dayAfter2.toDateString()) return 'Σε 3 μέρες';
-    
+
     return date.toLocaleDateString('el-GR', { weekday: 'long' });
   };
-  
+
   // Fetch real weather data based on building location
-  const { 
-    data: weatherData, 
-    isLoading: isWeatherLoading, 
-    error: weatherError 
+  const {
+    data: weatherData,
+    isLoading: isWeatherLoading,
+    error: weatherError
   } = useQuery({
     queryKey: ['weather', building?.latitude, building?.longitude],
     queryFn: async () => {
@@ -58,17 +58,17 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
         const latitude = building?.latitude || 37.9755;
         const longitude = building?.longitude || 23.7348;
         const city = building?.city || 'Αθήνα';
-        
+
         const response = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&timezone=Europe%2FAthens&forecast_days=4`
         );
-        
+
         if (!response.ok) {
           throw new Error(`Weather API error: ${response.status}`);
         }
-        
+
         const apiData = await response.json();
-        
+
         return {
           temperature: Math.round(apiData.current_weather.temperature),
           weathercode: apiData.current_weather.weathercode,
@@ -195,7 +195,7 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
             {weather.humidity || 65}%
           </div>
         </div>
-        
+
         <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
           <Eye className="w-5 h-5 mx-auto mb-1 text-blue-300" />
           <div className="text-xs text-blue-200">Ορατότητα</div>
@@ -203,7 +203,7 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
             {weather.visibility || 10} km
           </div>
         </div>
-        
+
         <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
           <Wind className="w-5 h-5 mx-auto mb-1 text-blue-300" />
           <div className="text-xs text-blue-200">Ανεμος</div>
@@ -211,7 +211,7 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
             {weather.wind_speed || 12} km/h
           </div>
         </div>
-        
+
         <div className="bg-blue-900/30 p-2.5 rounded-lg text-center border border-blue-500/20">
           <Thermometer className="w-5 h-5 mx-auto mb-1 text-blue-300" />
           <div className="text-xs text-blue-200">Αίσθηση</div>

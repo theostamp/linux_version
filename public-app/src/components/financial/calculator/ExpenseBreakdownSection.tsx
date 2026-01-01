@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   PieChart,
   Pie,
   Cell,
@@ -18,9 +18,9 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-import { 
-  Building2, 
-  Users, 
+import {
+  Building2,
+  Users,
   Thermometer,
   ArrowUpDown,
   Package,
@@ -87,10 +87,10 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
   // Calculate totals by category from all apartment shares
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = {};
-    
+
     Object.values(state.shares).forEach((share: any) => {
       const breakdown = share.breakdown || {};
-      
+
       Object.keys(CATEGORY_LABELS).forEach(category => {
         if (!totals[category]) totals[category] = 0;
         totals[category] += toNumber(breakdown[category]);
@@ -104,7 +104,7 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
   const payerTotals = useMemo(() => {
     let ownerTotal = 0;
     let residentTotal = 0;
-    
+
     Object.values(state.shares).forEach((share: any) => {
       const breakdown = share.breakdown || {};
       ownerTotal += toNumber(breakdown.owner_expenses || 0);
@@ -193,7 +193,7 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <Tabs value={activeView} onValueChange={(value) => setActiveView(value as any)} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -302,12 +302,12 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
                       .map(([category, amount]) => {
                         const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
                         const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100) : 0;
-                        
+
                         return (
                           <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
                             <div className="flex items-center gap-3">
-                              <IconComponent 
-                                className="h-5 w-5" 
+                              <IconComponent
+                                className="h-5 w-5"
                                 style={{ color: EXPENSE_COLORS[category as keyof typeof EXPENSE_COLORS] }}
                               />
                               <div>
@@ -343,7 +343,7 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
                   const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
                   const color = EXPENSE_COLORS[category as keyof typeof EXPENSE_COLORS];
                   const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100) : 0;
-                  
+
                   return (
                     <Card key={category} className="border-l-4" style={{ borderLeftColor: color }}>
                       <CardContent className="p-4">
@@ -353,28 +353,28 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
                             {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS]}
                           </h3>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="text-xl font-bold" style={{ color }}>
                             {formatCurrency(amount)}
                           </div>
-                          
+
                           <div className="flex items-center justify-between text-xs text-gray-600">
                             <span>{percentage.toFixed(1)}% του συνόλου</span>
                             <span>{formatCurrency(amount / apartmentsCount || 0)}/διαμ.</span>
                           </div>
-                          
+
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="h-2 rounded-full" 
-                              style={{ 
-                                width: `${Math.min(100, percentage)}%`, 
-                                backgroundColor: color 
+                            <div
+                              className="h-2 rounded-full"
+                              style={{
+                                width: `${Math.min(100, percentage)}%`,
+                                backgroundColor: color
                               }}
                             ></div>
                           </div>
                         </div>
-                        
+
                         {onViewDetails && (
                           <Button
                             variant="ghost"
@@ -418,7 +418,7 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-            
+
             {/* Apartment Details Table */}
             <Card>
               <CardHeader>

@@ -6,9 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { 
-  AlertTriangle, 
-  User, 
+import {
+  AlertTriangle,
+  User,
   Building2,
   Clock,
   ExternalLink,
@@ -39,8 +39,8 @@ const getDaysOverdueLabel = (days: number) => {
   return { label: `${days} ημέρες`, className: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400' };
 };
 
-export function TopDebtorsCard({ 
-  data, 
+export function TopDebtorsCard({
+  data,
   loading = false,
   initialVisibleCount = 3
 }: TopDebtorsCardProps) {
@@ -114,9 +114,9 @@ export function TopDebtorsCard({
         <div className="space-y-3">
           {visibleDebtors.map((debtor, index) => {
             const overdueInfo = getDaysOverdueLabel(debtor.days_overdue);
-            
+
             return (
-              <div 
+              <div
                 key={debtor.apartment_id}
                 className="flex items-center justify-between p-4 rounded-xl border border-border hover:border-border/80 hover:bg-muted/50 transition-all"
               >
@@ -130,7 +130,7 @@ export function TopDebtorsCard({
                   }`}>
                     {index + 1}
                   </div>
-                  
+
                   {/* Info */}
                   <div>
                     <div className="flex items-center gap-2">

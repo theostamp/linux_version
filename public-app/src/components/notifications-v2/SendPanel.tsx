@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  FileSpreadsheet, 
-  Wallet, 
-  Megaphone, 
-  Users, 
-  Wrench, 
+import {
+  FileSpreadsheet,
+  Wallet,
+  Megaphone,
+  Users,
+  Wrench,
   AlertTriangle,
   ArrowLeft
 } from 'lucide-react';
@@ -21,12 +21,12 @@ import MeetingSender from './senders/MeetingSender';
 import MaintenanceSender from './senders/MaintenanceSender';
 import EmergencySender from './senders/EmergencySender';
 
-type MessageType = 
-  | 'common_expense' 
-  | 'debt_reminder' 
-  | 'announcement' 
-  | 'meeting' 
-  | 'maintenance' 
+type MessageType =
+  | 'common_expense'
+  | 'debt_reminder'
+  | 'announcement'
+  | 'meeting'
+  | 'maintenance'
   | 'emergency';
 
 interface MessageTypeCard {
@@ -105,8 +105,8 @@ export default function SendPanel() {
   if (selectedType) {
     return (
       <div className="space-y-4">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={handleBack}
           className="text-gray-600 hover:text-gray-900"
         >
@@ -175,5 +175,3 @@ export default function SendPanel() {
     </div>
   );
 }
-
-

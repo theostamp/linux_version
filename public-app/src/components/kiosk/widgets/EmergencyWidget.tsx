@@ -1,10 +1,10 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { 
-  Phone, 
-  Shield, 
-  AlertTriangle, 
+import {
+  Phone,
+  Shield,
+  AlertTriangle,
   Heart,
   Zap,
   Flame,
@@ -68,13 +68,13 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
         <AlertTriangle className="w-6 h-6 text-red-300" />
         <h2 className="text-lg font-bold text-white">Τηλέφωνα Έκτακτης Ανάγκης</h2>
       </div>
-      
+
       <div className="space-y-3 h-full">
         {emergencyContacts.map((contact) => {
           const IconComponent = contact.icon;
-          
+
           return (
-            <div 
+            <div
               key={contact.id}
               className={`bg-gradient-to-br ${contact.bgColor} backdrop-blur-sm p-4 rounded-xl border ${contact.borderColor} hover:scale-105 transition-all cursor-pointer`}
               onClick={() => window.open(`tel:${contact.number}`, '_self')}
@@ -102,7 +102,7 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
           <h4 className="text-sm font-semibold text-red-100">Σημαντική Παρατήρηση</h4>
         </div>
         <p className="text-xs text-red-200 leading-relaxed">
-          Χρησιμοποιήστε αυτά τα τηλέφωνα μόνο σε περίπτωση πραγματικής έκτακτης ανάγκης. 
+          Χρησιμοποιήστε αυτά τα τηλέφωνα μόνο σε περίπτωση πραγματικής έκτακτης ανάγκης.
           Για μη επείγουσες υποθέσεις, επικοινωνήστε με τη διοίκηση του κτιρίου.
         </p>
       </div>

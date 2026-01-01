@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -21,10 +21,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  FileText, 
-  Users, 
-  Calendar, 
+import {
+  FileText,
+  Users,
+  Calendar,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
@@ -66,11 +66,11 @@ function ProjectsDashboardContent() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const { currentBuilding, selectedBuilding } = useBuilding();
-  
+
   // Use same logic as announcements and votes pages for consistency
   const buildingId =
     selectedBuilding === null ? null : (selectedBuilding?.id ?? currentBuilding?.id ?? null);
-  
+
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all');
@@ -78,24 +78,24 @@ function ProjectsDashboardContent() {
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'amount' | 'status'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  
+
   // Delete state
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const { projects, isLoading: projectsLoading } = useProjects({ buildingId, pageSize: 1000 });
   const { projects: activeProjects, isLoading: activeProjectsLoading } = useProjects({ buildingId, status: 'in_progress', pageSize: 1000 });
   const { projects: completedProjects, isLoading: completedProjectsLoading } = useProjects({ buildingId, status: 'completed', pageSize: 1000 });
   const { offers: pendingOffers, isLoading: pendingOffersLoading } = useOffers({ buildingId, status: 'submitted', pageSize: 1000 });
   const { offers: approvedOffers, isLoading: approvedOffersLoading } = useOffers({ buildingId, status: 'accepted', pageSize: 1000 });
-  
+
   // Mutations
   const { delete: deleteProject } = useProjectMutations();
-  
+
   // Delete handler
   const handleDeleteProject = async () => {
     if (!projectToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       await deleteProject.mutateAsync(projectToDelete.id);
@@ -108,35 +108,35 @@ function ProjectsDashboardContent() {
       setIsDeleting(false);
     }
   };
-  
+
   // Filtered and sorted projects
   const filteredProjects = useMemo(() => {
     let filtered = [...projects];
-    
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((p: any) => 
+      filtered = filtered.filter((p: any) =>
         p.title?.toLowerCase().includes(query) ||
         p.description?.toLowerCase().includes(query) ||
         p.selected_contractor?.toLowerCase().includes(query)
       );
     }
-    
+
     // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter((p: any) => p.status === statusFilter);
     }
-    
+
     // Priority filter
     if (priorityFilter !== 'all') {
       filtered = filtered.filter((p: any) => p.priority === priorityFilter);
     }
-    
+
     // Sorting
     filtered.sort((a: any, b: any) => {
       let aVal: any, bVal: any;
-      
+
       switch (sortBy) {
         case 'title':
           aVal = a.title || '';
@@ -156,16 +156,16 @@ function ProjectsDashboardContent() {
           bVal = new Date(b.created_at || b.updated_at || 0).getTime();
           break;
       }
-      
+
       if (typeof aVal === 'string') {
-        return sortOrder === 'asc' 
+        return sortOrder === 'asc'
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       }
-      
+
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
-    
+
     return filtered;
   }, [projects, searchQuery, statusFilter, priorityFilter, sortBy, sortOrder]);
 
@@ -211,7 +211,7 @@ function ProjectsDashboardContent() {
     reviewed_at?: string;
     created_at?: string;
   };
-  
+
   const projectsRows = projects as ProjectRow[];
   const completedRows = completedProjects as ProjectRow[];
   const pendingOffersRows = pendingOffers as OfferRow[];
@@ -283,11 +283,11 @@ function ProjectsDashboardContent() {
     });
   }
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    description, 
-    icon, 
+  const StatCard = ({
+    title,
+    value,
+    description,
+    icon,
     color = "default",
     href,
     className
@@ -369,13 +369,13 @@ function ProjectsDashboardContent() {
         </div>
         <div className="flex gap-2">
           {/* Refresh Button */}
-          <RefreshButton 
-            scope="projects" 
-            label="Ανανέωση" 
+          <RefreshButton
+            scope="projects"
+            label="Ανανέωση"
             variant="outline"
             size="sm"
           />
-          
+
           {(isAdmin || isManager) && (
             <>
               <Button asChild>
@@ -397,7 +397,7 @@ function ProjectsDashboardContent() {
 
       {/* Main Content - Bento Grid */}
       <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
-        
+
         {/* Row 1: Key Metrics */}
         <StatCard
           title="Συνολικά Έργα"
@@ -499,9 +499,9 @@ function ProjectsDashboardContent() {
                   <span>Ποσοστό Χρήσης</span>
                   <span>{Math.round((stats.total_spent / Math.max(1, stats.total_budget)) * 100)}%</span>
                 </div>
-                <Progress 
-                  value={(stats.total_spent / Math.max(1, stats.total_budget)) * 100} 
-                  className="h-2" 
+                <Progress
+                  value={(stats.total_spent / Math.max(1, stats.total_budget)) * 100}
+                  className="h-2"
                 />
               </div>
               <div className="pt-2">
@@ -519,8 +519,8 @@ function ProjectsDashboardContent() {
           title="Γρήγορες Ενέργειες"
           header={
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-auto p-4 flex-col hover:bg-muted hover:text-foreground border-border"
                 onClick={() => {
                   const element = document.getElementById('projects-list');
@@ -620,7 +620,7 @@ function ProjectsDashboardContent() {
             )}
           </div>
         </div>
-        
+
         {/* Filter & List Logic */}
         <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
           {/* Filters */}
@@ -638,7 +638,7 @@ function ProjectsDashboardContent() {
                   />
                 </div>
               </div>
-              
+
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[180px]">
@@ -656,7 +656,7 @@ function ProjectsDashboardContent() {
                   <SelectItem value="cancelled">Ακυρωμένο</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {/* Priority Filter */}
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                 <SelectTrigger className="w-[180px]">
@@ -670,7 +670,7 @@ function ProjectsDashboardContent() {
                   <SelectItem value="urgent">Επείγον</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {/* Sort */}
               <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
                 const [by, order] = value.split('-');
@@ -693,7 +693,7 @@ function ProjectsDashboardContent() {
               </Select>
             </div>
           </div>
-          
+
           {/* Loading State */}
           {projectsLoading ? (
             <div className="space-y-4">
@@ -749,14 +749,14 @@ function ProjectsDashboardContent() {
               {filteredProjects.map((project: any) => {
                 const projectOffers = pendingOffers.filter((o: any) => o.project === project.id || o.project_id === project.id);
                 const approvedProjectOffers = approvedOffers.filter((o: any) => o.project === project.id || o.project_id === project.id);
-                
+
                 const priorityColors: Record<string, string> = {
                   low: 'bg-muted text-muted-foreground',
                   medium: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
                   high: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
                   urgent: 'bg-red-500/10 text-destructive',
                 };
-                
+
                 const statusColors: Record<string, string> = {
                   completed: 'bg-green-500/10 text-green-600 dark:text-green-400 dark:text-green-400',
                   in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
@@ -766,7 +766,7 @@ function ProjectsDashboardContent() {
                   evaluation: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
                   cancelled: 'bg-destructive/10 text-destructive',
                 };
-                
+
                 const statusLabels: Record<string, string> = {
                   completed: 'Ολοκληρωμένο',
                   in_progress: 'Σε Εξέλιξη',
@@ -776,7 +776,7 @@ function ProjectsDashboardContent() {
                   evaluation: 'Αξιολόγηση',
                   cancelled: 'Ακυρωμένο',
                 };
-                
+
                 if (viewMode === 'grid') {
                   return (
                     <Card
@@ -842,24 +842,24 @@ function ProjectsDashboardContent() {
                           )}
                           {(isAdmin || isManager) && (
                             <div className="pt-2 border-t mt-2 flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="w-full"
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  router.push(`/projects/${project.id}`); 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/projects/${project.id}`);
                                 }}
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 Προβολή
                               </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setProjectToDelete(project);
                                 }}
                               >
@@ -872,7 +872,7 @@ function ProjectsDashboardContent() {
                     </Card>
                   );
                 }
-                
+
                 return (
                   <Card
                     key={project.id}
@@ -940,25 +940,25 @@ function ProjectsDashboardContent() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="flex-shrink-0"
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              router.push(`/projects/${project.id}`); 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/projects/${project.id}`);
                             }}
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             Προβολή
                           </Button>
                           {(isAdmin || isManager) && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setProjectToDelete(project);
                               }}
                             >
@@ -1029,4 +1029,4 @@ export default function ProjectsDashboard() {
       </SubscriptionGate>
     </AuthGate>
   );
-} 
+}

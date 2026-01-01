@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         // Use CORE_API_URL (server-side) or fallback to NEXT_PUBLIC_CORE_API_URL
         let coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
         const internalApiKey = process.env.INTERNAL_API_SECRET_KEY;
-        
+
         if (coreApiUrl && internalApiKey && tenantSubdomain) {
           // Extract base URL if CORE_API_URL contains a path
           // e.g., "https://backend.com/api/internal/tenants/create/" -> "https://backend.com"
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
             // If URL parsing fails, use as-is
             console.warn('Could not parse CORE_API_URL, using as-is:', coreApiUrl);
           }
-          
+
           // Check tenant status from backend
           const tenantStatusResponse = await fetch(
             `${coreApiUrl}/api/internal/tenants/${tenantSubdomain}/status/`,
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
           if (tenantStatusResponse.ok) {
             const tenantStatus = await tenantStatusResponse.json();
-            
+
             if (tenantStatus.email_verified && tenantStatus.tenant_ready) {
               verificationStatus = 'ready';
               message = 'Το workspace σας είναι έτοιμο!';
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
             const sessionCreated = session.created ? session.created * 1000 : Date.now();
             const timeSinceCreation = Date.now() - sessionCreated;
             const twoMinutes = 2 * 60 * 1000;
-            
+
             if (timeSinceCreation > twoMinutes) {
               // Enough time has passed - likely webhook processing failed
               verificationStatus = 'error';
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
           const sessionCreated = session.created ? session.created * 1000 : Date.now();
           const timeSinceCreation = Date.now() - sessionCreated;
           const twoMinutes = 2 * 60 * 1000;
-          
+
           if (timeSinceCreation > twoMinutes) {
             verificationStatus = 'error';
             message = 'Προέκυψε σφάλμα κατά την επεξεργασία της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.';
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         const sessionCreated = session.created ? session.created * 1000 : Date.now();
         const timeSinceCreation = Date.now() - sessionCreated;
         const twoMinutes = 2 * 60 * 1000;
-        
+
         if (timeSinceCreation > twoMinutes) {
           verificationStatus = 'error';
           message = 'Προέκυψε σφάλμα κατά την επαλήθευση της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.';
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error verifying payment status:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to verify payment status',
         status: 'error',
         message: 'Προέκυψε σφάλμα κατά την επαλήθευση της πληρωμής.'
@@ -176,4 +176,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

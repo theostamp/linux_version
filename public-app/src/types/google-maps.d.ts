@@ -19,7 +19,7 @@ declare global {
 
         LatLng: new (lat: number, lng: number) => google.maps.LatLng;
         LatLngBounds: new () => google.maps.LatLngBounds;
-        
+
         MapTypeId: {
           ROADMAP: google.maps.MapTypeId;
           SATELLITE: google.maps.MapTypeId;
@@ -90,7 +90,7 @@ declare global {
               };
             };
           };
-          
+
           // New API (recommended) - χωρίς fields παράμετρο
           PlaceAutocompleteElement?: new (options?: {
             componentRestrictions?: { country: string };
@@ -191,4 +191,4 @@ declare global {
   }
 }
 
-export {}; 
+export {};

@@ -17,10 +17,10 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const requestForToken = async () => {
   try {
     const messaging = getMessaging(app);
-    const currentToken = await getToken(messaging, { 
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY 
+    const currentToken = await getToken(messaging, {
+      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
     });
-    
+
     if (currentToken) {
       return currentToken;
     } else {
@@ -46,4 +46,3 @@ export const onMessageListener = () =>
   });
 
 export { app };
-

@@ -218,15 +218,15 @@ export const notificationsApi = {
     formData.append('month', data.month);
     formData.append('include_sheet', String(data.include_sheet ?? true));
     formData.append('include_notification', String(data.include_notification ?? true));
-    
+
     if (data.custom_message) {
       formData.append('custom_message', data.custom_message);
     }
-    
+
     if (data.attachment) {
       formData.append('attachment', data.attachment);
     }
-    
+
     if (data.apartment_ids && data.apartment_ids.length > 0) {
       formData.append('apartment_ids', data.apartment_ids.join(','));
     }

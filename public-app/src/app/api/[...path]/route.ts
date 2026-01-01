@@ -42,5 +42,3 @@ export const PUT = handlers.PUT!;
 export const PATCH = handlers.PATCH!;
 export const DELETE = handlers.DELETE!;
 export const OPTIONS = handlers.OPTIONS!;
-
-

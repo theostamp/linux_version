@@ -20,4 +20,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "todos-items-pending-count");
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
-

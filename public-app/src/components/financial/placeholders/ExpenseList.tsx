@@ -56,4 +56,3 @@ export const ExpenseList = forwardRef<ExpenseListRef, ExpenseListProps>(({
 });
 
 ExpenseList.displayName = 'ExpenseList';
-

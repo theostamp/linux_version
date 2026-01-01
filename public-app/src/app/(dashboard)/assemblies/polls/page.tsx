@@ -184,15 +184,3 @@ export default function PollsPage() {
     </AuthGate>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

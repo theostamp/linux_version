@@ -6,4 +6,3 @@ export default function ErrorMessage({ message }: { readonly message: string }) 
     </div>
   );
 }
-

@@ -26,7 +26,7 @@ export default function TimeWidget({ data, isLoading, error }: BaseWidgetProps) 
   }
 
   const now = new Date();
-  
+
   return (
     <div className="h-full flex flex-col items-center justify-center text-center">
       {/* Main Time Display */}

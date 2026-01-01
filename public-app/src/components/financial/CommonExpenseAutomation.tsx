@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
-  Calculator, 
-  FileText, 
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Calculator,
+  FileText,
   Zap,
   Calendar,
   Euro
@@ -55,7 +55,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
   // Use BuildingContext for building data
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   const { toast } = useToast();
   const {
     createPeriodAutomatically,
@@ -120,9 +120,9 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
   };
 
   const updateStepStatus = (stepId: string, status: AutomationStep['status'], data?: any) => {
-    setAutomationSteps(prev => prev.map(step => 
-      step.id === stepId 
-        ? { ...step, status, data } 
+    setAutomationSteps(prev => prev.map(step =>
+      step.id === stepId
+        ? { ...step, status, data }
         : step
     ));
   };
@@ -135,7 +135,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
   const handleCreatePeriod = async () => {
     try {
       updateStepStatus('create-period', 'in-progress');
-      
+
       const result = await createPeriodAutomatically({
         building_id: buildingId,
         period_type: periodType,
@@ -181,7 +181,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
     try {
       updateStepStatus('collect-expenses', 'in-progress');
-      
+
       const result = await collectExpensesAutomatically({
         building_id: buildingId,
         period_id: currentPeriod.id
@@ -223,7 +223,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
     try {
       updateStepStatus('calculate-shares', 'in-progress');
-      
+
       const result = await calculateAutomatically({
         building_id: buildingId,
         period_id: currentPeriod.id
@@ -265,7 +265,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
     try {
       updateStepStatus('issue-accounts', 'in-progress');
-      
+
       const result = await issueAutomatically({
         building_id: buildingId,
         period_id: currentPeriod.id
@@ -299,10 +299,10 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
     try {
       // Reset steps
       resetSteps();
-      
+
       // Set all steps to in-progress
       setAutomationSteps(prev => prev.map(step => ({ ...step, status: 'in-progress' })));
-      
+
       const result = await autoProcessPeriod({
         building_id: buildingId,
         period_type: periodType,
@@ -316,10 +316,10 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
           start_date: result.start_date,
           end_date: result.end_date
         });
-        
+
         // Set all steps to completed
         setAutomationSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
-        
+
         toast({
           title: "Επιτυχία!",
           description: result.message,
@@ -327,7 +327,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
       } else {
         // Set all steps to error
         setAutomationSteps(prev => prev.map(step => ({ ...step, status: 'error' })));
-        
+
         toast({
           title: "Σφάλμα",
           description: result.message || "Σφάλμα κατά την αυτοματοποιημένη επεξεργασία",
@@ -337,7 +337,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
     } catch (error: any) {
       // Set all steps to error
       setAutomationSteps(prev => prev.map(step => ({ ...step, status: 'error' })));
-      
+
       toast({
         title: "Σφάλμα",
         description: error.message || "Σφάλμα κατά την αυτοματοποιημένη επεξεργασία",
@@ -398,7 +398,7 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="start-date">Ημερομηνία Έναρξης (Προαιρετικό)</Label>
               <Input
@@ -409,10 +409,10 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
                 placeholder="Αφήστε κενό για τρέχοντα μήνα"
               />
             </div>
-            
+
             <div className="flex items-end">
-              <Button 
-                onClick={handleAutoProcess} 
+              <Button
+                onClick={handleAutoProcess}
                 disabled={isLoading}
                 className="w-full"
               >
@@ -504,8 +504,8 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button 
-              onClick={handleCreatePeriod} 
+            <Button
+              onClick={handleCreatePeriod}
               disabled={isLoading || automationSteps[0].status === 'completed'}
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2"
@@ -513,9 +513,9 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
               <Calendar className="h-6 w-6" />
               <span>Δημιουργία Περιόδου</span>
             </Button>
-            
-            <Button 
-              onClick={handleCollectExpenses} 
+
+            <Button
+              onClick={handleCollectExpenses}
               disabled={isLoading || !currentPeriod || automationSteps[1].status === 'completed'}
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2"
@@ -523,9 +523,9 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
               <FileText className="h-6 w-6" />
               <span>Συλλογή Δαπανών</span>
             </Button>
-            
-            <Button 
-              onClick={handleCalculateShares} 
+
+            <Button
+              onClick={handleCalculateShares}
               disabled={isLoading || !currentPeriod || automationSteps[2].status === 'completed'}
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2"
@@ -533,9 +533,9 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
               <Calculator className="h-6 w-6" />
               <span>Υπολογισμός Μεριδίων</span>
             </Button>
-            
-            <Button 
-              onClick={handleIssueAccounts} 
+
+            <Button
+              onClick={handleIssueAccounts}
               disabled={isLoading || !currentPeriod || automationSteps[3].status === 'completed'}
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2"
@@ -555,4 +555,4 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
       )}
     </div>
   );
-}; 
+};

@@ -36,7 +36,7 @@ export const useBuildingCache = (buildingId: number | null) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log(`🏢 useBuildingCache: Fetching fresh data for building ${buildingId}`);
       const buildingData = await apiGet<Building>(`/buildings/${buildingId}/`);
 
@@ -94,4 +94,3 @@ export const getCachedBuilding = (buildingId: number): Building | null => {
   }
   return null;
 };
-

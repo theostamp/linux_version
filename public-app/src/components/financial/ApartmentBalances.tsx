@@ -47,7 +47,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
 
     const filtered = apartmentBalances.filter((balance) => {
       // Search filter
-      const matchesSearch = 
+      const matchesSearch =
         balance.apartment_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         balance.owner_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -244,7 +244,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
                         </Badge>
                       )}
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div>
                         <span className="font-medium">Τρέχον Υπόλοιπο:</span>
@@ -327,4 +327,4 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

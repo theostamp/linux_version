@@ -25,10 +25,10 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import RecipientSelector from '../shared/RecipientSelector';
-import { 
-  extractBuildingData, 
+import {
+  extractBuildingData,
   generateEmailSignature,
-  formatDateGreek 
+  formatDateGreek
 } from '../shared/buildingUtils';
 
 interface Props {
@@ -38,7 +38,7 @@ interface Props {
 
 export default function MeetingSender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
-  
+
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingTime, setMeetingTime] = useState('');
@@ -52,13 +52,13 @@ export default function MeetingSender({ onSuccess, onCancel }: Props) {
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
   const buildingData = useMemo(
-    () => extractBuildingData(selectedBuilding_), 
+    () => extractBuildingData(selectedBuilding_),
     [selectedBuilding_]
   );
 
   const generateEmailBody = () => {
     const formattedDate = formatDateGreek(meetingDate);
-    
+
     let body = `Αγαπητοί ένοικοι,
 
 Σας καλούμε σε Γενική Συνέλευση της πολυκατοικίας μας.
@@ -244,8 +244,8 @@ ${agenda.trim()}`;
               Ακύρωση
             </Button>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowPreview(true)}
                 disabled={!buildingId || !meetingDate}
               >

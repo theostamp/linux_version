@@ -1,6 +1,6 @@
 /**
  * useOfficeDashboard Hook
- * 
+ *
  * Fetches aggregated data for the Office Dashboard (Command Center)
  * Provides a unified view across ALL buildings for management offices.
  */
@@ -118,4 +118,3 @@ export function useOfficeDashboard() {
 }
 
 export default useOfficeDashboard;
-

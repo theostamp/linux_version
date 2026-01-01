@@ -11,28 +11,28 @@ interface CalculatorWizardProps {
 
 
 
-export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({ 
-  buildingId, 
+export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
+  buildingId,
   selectedMonth,
   reserveFundMonthlyAmount,
-  onComplete 
+  onComplete
 }) => {
   // Auto-calculate current month dates
   const getCurrentMonthDates = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1; // Convert to 1-based month
-    
+
     const startDate = new Date(Date.UTC(year, month - 1, 1));
     const endDate = new Date(Date.UTC(year, month, 0));
-    
+
     const monthNames = [
       'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
       'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
     ];
     const periodName = `${monthNames[month - 1]} ${year}`;
-    
-    
+
+
     return {
       startDate: startDate.toISOString().split('T')[0],
       endDate: endDate.toISOString().split('T')[0],
@@ -56,7 +56,7 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       heatingFixedPercentage: 30,
       elevatorMills: false,
     },
-    
+
     // Step 2 defaults
     shares: {},
     totalExpenses: 0,
@@ -70,29 +70,29 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
 
   // Update period when selectedMonth changes
   useEffect(() => {
-    
+
     if (selectedMonth) {
       // Parse selectedMonth (format: "2025-03") and create period dates
       const [year, month] = selectedMonth.split('-').map(Number);
-      
+
       // Create dates using UTC to avoid timezone issues
       const startDate = new Date(Date.UTC(year, month - 1, 1)); // month - 1 because Date months are 0-indexed
       const endDate = new Date(Date.UTC(year, month, 0)); // Last day of the month
-      
+
       // Create period name directly from the parsed values to avoid timezone issues
       const monthNames = [
         'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
         'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
       ];
       const periodName = `${monthNames[month - 1]} ${year}`;
-      
-      
+
+
       const newPeriod = {
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
         periodName
       };
-      
+
       setState(prev => {
         return {
           ...prev,

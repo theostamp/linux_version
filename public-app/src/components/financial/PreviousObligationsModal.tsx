@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Clock, 
-  Euro, 
-  TrendingDown, 
+import {
+  Clock,
+  Euro,
+  TrendingDown,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -85,25 +85,25 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
 
     try {
       console.log('🔍 Loading previous obligations for building:', buildingId);
-      
+
       // Load financial summary first
       const summaryParams = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })
       });
-      
+
       const summaryResponse = await api.get(`/financial/dashboard/summary/?${summaryParams}`);
       setSummary(summaryResponse.data);
-      
+
       // Load apartment obligations breakdown
       const obligationsParams = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })
       });
-      
+
       const obligationsResponse = await api.get(`/financial/dashboard/apartment_obligations/?${obligationsParams}`);
       setApartmentObligations(obligationsResponse.data.apartments || []);
-      
+
     } catch (err) {
       console.error('❌ Error loading previous obligations:', err);
       setError('Σφάλμα κατά τη φόρτωση των οφειλών προηγούμενων μηνών');
@@ -274,7 +274,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                       <span className="text-xs text-gray-500">(αρνητικά υπόλοιπα)</span>
                     </div>
                   </div>
-                  
+
                   {/* Εκκρεμείς πληρωμές προηγούμενων μηνών */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                       <span className="text-xs text-gray-500">(μη εξοφλημένες)</span>
                     </div>
                   </div>
-                  
+
                   {/* Δαπάνες που δεν έχουν καλυφθεί */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                       <span className="text-xs text-gray-500">(εκκρεμείς δαπάνες)</span>
                     </div>
                   </div>
-                  
+
                   {/* Μελλοντικές δαπάνες από δόσεις έργων */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -316,7 +316,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                       <span className="text-xs text-gray-500">(δόσεις έργων)</span>
                     </div>
                   </div>
-                  
+
                   {/* Συνολικές παλαιότερες οφειλές */}
                   <div className="pt-2 border-t border-gray-300">
                     <div className="flex items-center justify-between">
@@ -329,7 +329,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                       Συσσωρευμένες οφειλές διαμερισμάτων + Εκκρεμείς πληρωμές + Δαπάνες που δεν έχουν καλυφθεί
                     </div>
                   </div>
-                  
+
                   {/* Συνολικό ποσό με μελλοντικές δαπάνες */}
                   <div className="pt-2 border-t-2 border-indigo-200 bg-indigo-50 p-3 rounded">
                     <div className="flex items-center justify-between">
@@ -372,7 +372,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                           </div>
                           <div className="text-right">
                             <div className={`text-xl font-bold ${
-                              apartment.net_obligation > 0 ? 'text-red-600' : 
+                              apartment.net_obligation > 0 ? 'text-red-600' :
                               apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-600'
                             }`}>
                               {formatCurrency(apartment.net_obligation)}
@@ -416,7 +416,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                                    groups[month].expenses.push(expense);
                                    return groups;
                                  }, {} as { [key: string]: { month: string; month_display: string; expenses: any[] } });
-                                 
+
                                  return Object.values(groupedExpenses).map((group, groupIndex) => (
                                    <div key={groupIndex} className="border border-gray-300 rounded overflow-hidden">
                                      <div className="bg-gray-50 px-2 py-1 border-b border-gray-300">

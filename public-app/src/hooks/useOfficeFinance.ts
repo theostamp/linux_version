@@ -273,7 +273,7 @@ export function useOfficeExpenses(params?: UseExpensesParams) {
   return useQuery<OfficeExpense[]>({
     queryKey: ['office-finance', 'expenses', params],
     queryFn: async () => {
-      const url = queryParams.toString() 
+      const url = queryParams.toString()
         ? `/office-finance/expenses/?${queryParams.toString()}`
         : '/office-finance/expenses/';
       const response = await api.get(url);
@@ -303,7 +303,7 @@ export function useOfficeIncomes(params?: UseIncomesParams) {
   return useQuery<OfficeIncome[]>({
     queryKey: ['office-finance', 'incomes', params],
     queryFn: async () => {
-      const url = queryParams.toString() 
+      const url = queryParams.toString()
         ? `/office-finance/incomes/?${queryParams.toString()}`
         : '/office-finance/incomes/';
       const response = await api.get(url);
@@ -316,7 +316,7 @@ export function useOfficeIncomes(params?: UseIncomesParams) {
 // Create Expense Mutation
 export function useCreateExpense() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: Partial<OfficeExpense>) => {
       return await api.post('/office-finance/expenses/', data);
@@ -330,7 +330,7 @@ export function useCreateExpense() {
 // Update Expense Mutation
 export function useUpdateExpense() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<OfficeExpense> }) => {
       return await api.patch(`/office-finance/expenses/${id}/`, data);
@@ -344,7 +344,7 @@ export function useUpdateExpense() {
 // Delete Expense Mutation
 export function useDeleteExpense() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       return await api.delete(`/office-finance/expenses/${id}/`);
@@ -358,7 +358,7 @@ export function useDeleteExpense() {
 // Create Income Mutation
 export function useCreateIncome() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: Partial<OfficeIncome>) => {
       return await api.post('/office-finance/incomes/', data);
@@ -372,7 +372,7 @@ export function useCreateIncome() {
 // Update Income Mutation
 export function useUpdateIncome() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<OfficeIncome> }) => {
       return await api.patch(`/office-finance/incomes/${id}/`, data);
@@ -386,7 +386,7 @@ export function useUpdateIncome() {
 // Delete Income Mutation
 export function useDeleteIncome() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       return await api.delete(`/office-finance/incomes/${id}/`);
@@ -400,15 +400,15 @@ export function useDeleteIncome() {
 // Mark Income as Received Mutation
 export function useMarkIncomeReceived() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      received_date, 
-      payment_method 
-    }: { 
-      id: number; 
-      received_date?: string; 
+    mutationFn: async ({
+      id,
+      received_date,
+      payment_method
+    }: {
+      id: number;
+      received_date?: string;
       payment_method?: string;
     }) => {
       return await api.post(`/office-finance/incomes/${id}/mark_received/`, {
@@ -425,15 +425,15 @@ export function useMarkIncomeReceived() {
 // Mark Expense as Paid Mutation
 export function useMarkExpensePaid() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      paid_date, 
-      payment_method 
-    }: { 
-      id: number; 
-      paid_date?: string; 
+    mutationFn: async ({
+      id,
+      paid_date,
+      payment_method
+    }: {
+      id: number;
+      paid_date?: string;
       payment_method?: string;
     }) => {
       return await api.post(`/office-finance/expenses/${id}/mark_paid/`, {
@@ -450,7 +450,7 @@ export function useMarkExpensePaid() {
 // Initialize Default Categories
 export function useInitializeCategories() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async () => {
       return await api.post('/office-finance/init-categories/');
@@ -466,7 +466,7 @@ export function useYearlySummary(year?: number) {
   return useQuery<YearlySummary>({
     queryKey: ['office-finance', 'yearly-summary', year],
     queryFn: async () => {
-      const url = year 
+      const url = year
         ? `/office-finance/yearly-summary/?year=${year}`
         : '/office-finance/yearly-summary/';
       return await api.get(url);
@@ -476,4 +476,3 @@ export function useYearlySummary(year?: number) {
 }
 
 export default useOfficeFinanceDashboard;
-

@@ -17,7 +17,7 @@ export const useFinancialDashboard = () => {
   const getFinancialSummary = useCallback(async (buildingId: number): Promise<FinancialSummary | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<FinancialSummary>(`/financial/dashboard/summary/`, { building_id: buildingId });
       return data;
@@ -37,7 +37,7 @@ export const useFinancialDashboard = () => {
   const getApartmentBalances = useCallback(async (buildingId: number): Promise<ApartmentBalance[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<{ apartments?: ApartmentBalance[] } | ApartmentBalance[]>(`/financial/dashboard/apartment_balances/`, { building_id: buildingId });
       // Handle both object with apartments property and direct array
@@ -59,7 +59,7 @@ export const useFinancialDashboard = () => {
   const getRecentTransactions = useCallback(async (buildingId: number, limit: number = 10): Promise<Transaction[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<Transaction[]>(`/financial/dashboard/recent-transactions/`, { building_id: buildingId, limit });
       return data;
@@ -79,7 +79,7 @@ export const useFinancialDashboard = () => {
   const getPaymentStatistics = useCallback(async (buildingId: number, period: string = 'month'): Promise<unknown> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<unknown>(`/financial/dashboard/payment-statistics/`, { building_id: buildingId, period });
       return data;
@@ -99,7 +99,7 @@ export const useFinancialDashboard = () => {
   const getRevenueChart = useCallback(async (buildingId: number, period: string = 'year'): Promise<unknown> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<unknown>(`/financial/dashboard/revenue-chart/`, { building_id: buildingId, period });
       return data;
@@ -119,7 +119,7 @@ export const useFinancialDashboard = () => {
   const getExpenseChart = useCallback(async (buildingId: number, period: string = 'year'): Promise<unknown> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<unknown>(`/financial/dashboard/expense-chart/`, { building_id: buildingId, period });
       return data;
@@ -139,7 +139,7 @@ export const useFinancialDashboard = () => {
   const getDebtReport = useCallback(async (buildingId: number): Promise<unknown> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await apiGet<unknown>(`/financial/dashboard/debt-report/`, { building_id: buildingId });
       return data;
@@ -164,7 +164,7 @@ export const useFinancialDashboard = () => {
     // State
     isLoading,
     error,
-    
+
     // Actions
     getFinancialSummary,
     getApartmentBalances,
@@ -176,4 +176,3 @@ export const useFinancialDashboard = () => {
     clearError,
   };
 };
-

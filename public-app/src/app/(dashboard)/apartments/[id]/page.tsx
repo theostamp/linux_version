@@ -3,12 +3,12 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { 
-  ArrowLeft, 
-  Building2, 
-  User, 
-  Phone, 
-  Mail, 
+import {
+  ArrowLeft,
+  Building2,
+  User,
+  Phone,
+  Mail,
   Euro,
   Home,
   Loader2,
@@ -129,8 +129,8 @@ export default function ApartmentDetailPage() {
             <div className="flex justify-between py-2 border-b border-secondary">
               <span className="text-muted-foreground">Κατάσταση</span>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                apartment.is_rented 
-                  ? 'bg-amber-100 text-amber-700' 
+                apartment.is_rented
+                  ? 'bg-amber-100 text-amber-700'
                   : 'bg-teal-100 text-teal-700'
               }`}>
                 {apartment.is_rented ? 'Ενοικιαζόμενο' : 'Ιδιοκατοίκηση'}
@@ -230,4 +230,3 @@ export default function ApartmentDetailPage() {
     </div>
   );
 }
-

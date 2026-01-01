@@ -133,10 +133,10 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
     const teens = ['δέκα', 'έντεκα', 'δώδεκα', 'δεκατρία', 'δεκατέσσερα', 'δεκαπέντε', 'δεκαέξι', 'δεκαεπτά', 'δεκαοκτώ', 'δεκαεννέα'];
     const tens = ['', '', 'είκοσι', 'τριάντα', 'σαράντα', 'πενήντα', 'εξήντα', 'εβδομήντα', 'ογδόντα', 'ενενήντα'];
     const hundreds = ['', 'εκατό', 'διακόσια', 'τριακόσια', 'τετρακόσια', 'πεντακόσια', 'εξακόσια', 'επτακόσια', 'οκτακόσια', 'εννιακόσια'];
-    
+
     if (num === 0) return 'μηδέν';
     if (num < 0) return 'μείον ' + numberToWords(-num);
-    
+
     // Simplified conversion for common amounts
     if (num < 10) return units[num];
     if (num < 20) return teens[num - 10];
@@ -150,7 +150,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
       const remainder = num % 100;
       return hundreds[hundred] + (remainder ? ' ' + numberToWords(remainder) : '');
     }
-    
+
     // For larger numbers, just return the decimal representation
     return num.toString();
   };
@@ -159,7 +159,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
     if (printRef.current) {
       const printContent = printRef.current.innerHTML;
       const printWindow = window.open('', '_blank', 'width=800,height=600');
-      
+
       if (printWindow) {
         printWindow.document.write(`
           <!DOCTYPE html>
@@ -180,8 +180,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                 print-color-adjust: exact !important;
               }
               @media print {
-                body { 
-                  margin: 0; 
+                body {
+                  margin: 0;
                 }
                 .no-print {
                   display: none !important;
@@ -197,7 +197,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
           </html>
         `);
         printWindow.document.close();
-        
+
         setTimeout(() => {
           printWindow.focus();
           printWindow.print();
@@ -219,15 +219,15 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
     // Hide dialog and print the current page content
     const originalContent = document.body.innerHTML;
     const printContent = printRef.current?.innerHTML || '';
-    
+
     document.body.innerHTML = `
       <div style="font-family: Arial, sans-serif; margin: 20px; color: #333; line-height: 1.6;">
         ${printContent}
       </div>
     `;
-    
+
     window.print();
-    
+
     // Restore original content
     document.body.innerHTML = originalContent;
     // Reload to restore event listeners
@@ -250,7 +250,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             Προεπισκόπηση της απόδειξης εισπράξεως για το διαμέρισμα {apartmentInfo.number}. Μπορείτε να εκτυπώσετε την απόδειξη ή να την κλείσετε.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Print Action Buttons */}
           <div className="flex gap-2 justify-end border-b pb-4 no-print">
@@ -275,9 +275,9 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                     {(() => {
                       const logoUrl = getOfficeLogoUrl(user?.office_logo);
                       return logoUrl && !logoError ? (
-                        <img 
+                        <img
                           src={logoUrl}
-                          alt="Office Logo" 
+                          alt="Office Logo"
                           className="w-16 h-16 object-contain rounded-lg"
                           onLoad={() => setLogoError(false)}
                           onError={() => setLogoError(true)}
@@ -347,7 +347,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                   )}
                 </div>
               </div>
-              
+
               <div className="border border-slate-200 p-4 rounded-lg bg-gray-50">
                 <h3 className="font-semibold text-gray-800 text-base border-b border-slate-200 pb-2 mb-3">
                   Στοιχεία Πληρωμής
@@ -447,11 +447,11 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
                       <span className="text-xs">Φόρτωση...</span>
                     </div>
                   ) : qrCodeDataUrl ? (
-                    <img 
-                      src={qrCodeDataUrl} 
-                      alt="QR Code για επαλήθευση" 
-                      width="100" 
-                      height="100" 
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="QR Code για επαλήθευση"
+                      width="100"
+                      height="100"
                       className="border border-slate-200 rounded"
                     />
                   ) : null}

@@ -11,7 +11,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'by_participation_mills' as const,
     isMonthly: true
   },
-  
+
   // ΕΥΔΑΠ templates
   'water_common': {
     prefix: 'ΕΥΔΑΠ Κοινοχρήστων',
@@ -20,7 +20,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'by_participation_mills' as const,
     isMonthly: true
   },
-  
+
   // Καθαρισμός templates
   'cleaning': {
     prefix: 'Καθαρισμός Κοινοχρήστων',
@@ -29,7 +29,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'equal_share' as const,
     isMonthly: true
   },
-  
+
   // Ανελκυστήρας templates
   'elevator_maintenance': {
     prefix: 'Συντήρηση Ανελκυστήρα',
@@ -45,7 +45,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'by_participation_mills' as const,
     isMonthly: false
   },
-  
+
   // Θέρμανση templates
   'heating_fuel': {
     prefix: 'Πετρέλαιο Θέρμανσης',
@@ -61,7 +61,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'by_meters' as const,
     isMonthly: true
   },
-  
+
   // Ασφάλεια templates
   'security': {
     prefix: 'Ασφάλεια Κτιρίου',
@@ -70,7 +70,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'by_participation_mills' as const,
     isMonthly: true
   },
-  
+
   // Συλλογή απορριμμάτων
   'garbage_collection': {
     prefix: 'Συλλογή Απορριμμάτων',
@@ -79,7 +79,7 @@ const EXPENSE_TEMPLATES = {
     distribution: 'equal_share' as const,
     isMonthly: true
   },
-  
+
   // Συνεργείο Καθαρισμού
   'concierge': {
     prefix: 'Συνεργείο Καθαρισμού',
@@ -114,7 +114,7 @@ const getLastDayOfMonth = (date: Date) => {
 // Calculate suggested date based on expense type
 const calculateSuggestedDate = (category: ExpenseCategory, isMonthly: boolean, selectedMonth?: string) => {
   const now = new Date();
-  
+
   if (isMonthly && selectedMonth) {
     // For monthly expenses with selected month, use the selected month
     try {
@@ -145,38 +145,38 @@ const generateTitleSuggestions = (
 ): string[] => {
   const template = EXPENSE_TEMPLATES[category as keyof typeof EXPENSE_TEMPLATES];
   if (!template) return [];
-  
+
   const { month, year } = getCurrentMonthYear();
   const suggestions: string[] = [];
-  
+
   // Base suggestion with current month/year
   const baseSuggestion = `${template.prefix} - ${month} ${year}`;
   suggestions.push(baseSuggestion);
-  
+
   // Previous month suggestion
   const prevMonth = new Date();
   prevMonth.setMonth(prevMonth.getMonth() - 1);
   const prevMonthName = MONTHS_GREEK[prevMonth.getMonth()];
   const prevMonthYear = prevMonth.getFullYear().toString();
   suggestions.push(`${template.prefix} - ${prevMonthName} ${prevMonthYear}`);
-  
+
   // Next month suggestion
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
   const nextMonthName = MONTHS_GREEK[nextMonth.getMonth()];
   const nextMonthYear = nextMonth.getFullYear().toString();
   suggestions.push(`${template.prefix} - ${nextMonthName} ${nextMonthYear}`);
-  
+
   // Custom prefix suggestion if provided
   if (customPrefix) {
     suggestions.push(`${customPrefix} - ${month} ${year}`);
   }
-  
+
   // Supplier-specific suggestion if supplier is provided
   if (supplier) {
     suggestions.push(`${supplier.name} - ${month} ${year}`);
   }
-  
+
   return suggestions;
 };
 
@@ -189,13 +189,13 @@ interface UseExpenseTemplatesReturn {
 }
 
 export const useExpenseTemplates = (): UseExpenseTemplatesReturn => {
-  const getTitleSuggestions = useMemo(() => 
-    (category: ExpenseCategory, supplier?: Supplier, customPrefix?: string) => 
+  const getTitleSuggestions = useMemo(() =>
+    (category: ExpenseCategory, supplier?: Supplier, customPrefix?: string) =>
       generateTitleSuggestions(category, supplier, customPrefix),
     []
   );
 
-  const getSuggestedDate = useMemo(() => 
+  const getSuggestedDate = useMemo(() =>
     (category: ExpenseCategory, selectedMonth?: string) => {
       const template = EXPENSE_TEMPLATES[category as keyof typeof EXPENSE_TEMPLATES];
       return calculateSuggestedDate(category, template?.isMonthly || false, selectedMonth);
@@ -203,7 +203,7 @@ export const useExpenseTemplates = (): UseExpenseTemplatesReturn => {
     []
   );
 
-  const getSuggestedDistribution = useMemo(() => 
+  const getSuggestedDistribution = useMemo(() =>
     (category: ExpenseCategory) => {
       const template = EXPENSE_TEMPLATES[category as keyof typeof EXPENSE_TEMPLATES];
       return template?.distribution || 'by_participation_mills';
@@ -211,13 +211,13 @@ export const useExpenseTemplates = (): UseExpenseTemplatesReturn => {
     []
   );
 
-  const getTemplate = useMemo(() => 
-    (category: ExpenseCategory) => 
+  const getTemplate = useMemo(() =>
+    (category: ExpenseCategory) =>
       EXPENSE_TEMPLATES[category as keyof typeof EXPENSE_TEMPLATES] || null,
     []
   );
 
-  const isMonthlyExpense = useMemo(() => 
+  const isMonthlyExpense = useMemo(() =>
     (category: ExpenseCategory) => {
       const template = EXPENSE_TEMPLATES[category as keyof typeof EXPENSE_TEMPLATES];
       return template?.isMonthly || false;
@@ -232,4 +232,4 @@ export const useExpenseTemplates = (): UseExpenseTemplatesReturn => {
     getTemplate,
     isMonthlyExpense,
   };
-}; 
+};

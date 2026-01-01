@@ -40,7 +40,7 @@ export const BulkImportWizard: React.FC = () => {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  
+
   const { loading } = useMeterReadings();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -66,11 +66,11 @@ export const BulkImportWizard: React.FC = () => {
       const text = await file.text();
       const rows = parseCSV(text);
       const parsedData = rows.map(row => parseRow(row));
-      
+
       // Validation
       const errors = validateData(parsedData);
       setValidationErrors(errors);
-      
+
       setPreviewData(parsedData.slice(0, 10)); // Show first 10 rows
       setImportResult(null);
     } catch (error) {
@@ -100,7 +100,7 @@ export const BulkImportWizard: React.FC = () => {
 
   const validateData = (data: ImportRow[]): string[] => {
     const errors: string[] = [];
-    
+
     data.forEach((row, index) => {
       if (!row.apartment_name) {
         errors.push(`Γραμμή ${index + 1}: Λείπει το όνομα του διαμερίσματος`);
@@ -159,7 +159,7 @@ export const BulkImportWizard: React.FC = () => {
     const template = `apartment_name,apartment_number,reading_date,current_value,previous_value,notes
 Διαμέρισμα 1,1,2024-01-15,1000.5,950.2,Μηνιαία ανάγνωση
 Διαμέρισμα 2,2,2024-01-15,1200.0,1150.0,Μηνιαία ανάγνωση`;
-    
+
     const blob = new Blob([template], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -394,4 +394,4 @@ export const BulkImportWizard: React.FC = () => {
       </Card>
     </div>
   );
-}; 
+};

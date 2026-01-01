@@ -20,4 +20,3 @@ const handlers = createTenantProxyHandlers(
 const { GET, OPTIONS } = exportHandlers(handlers, methods, "buildings/current-context");
 
 export { GET, OPTIONS };
-

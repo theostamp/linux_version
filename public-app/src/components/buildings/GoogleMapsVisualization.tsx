@@ -38,7 +38,7 @@ interface GoogleMapsVisualizationProps {
 export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisualizationProps) {
   // Using useState for the ref ensures re-render when the element is mounted
   const [mapContainer, setMapContainer] = useState<HTMLDivElement | null>(null);
-  
+
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
@@ -69,12 +69,12 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
 
   const waitForGoogleMaps = async (timeoutMs = 15000): Promise<MapsApi> => {
     const start = Date.now();
-    
+
     // Helper for timeout to prevent hanging indefinitely
     const withTimeout = <T,>(promise: Promise<T>, taskName: string, ms: number = 5000): Promise<T> => {
          return Promise.race([
              promise,
-             new Promise<T>((_, reject) => 
+             new Promise<T>((_, reject) =>
                  setTimeout(() => reject(new Error(`Timeout waiting for ${taskName}`)), ms)
              )
          ]);
@@ -86,38 +86,38 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
     if (window.google?.maps?.importLibrary) {
       try {
         setDebugStatus('Importing maps and core libraries...');
-        
+
         // Load maps and core libraries in parallel
         // Note: 'core' library contains basic geometry like LatLng, LatLngBounds
         const [mapsLib, coreLib] = await Promise.all([
              withTimeout(window.google.maps.importLibrary('maps'), 'maps library') as Promise<google.maps.MapsLibrary>,
              withTimeout(window.google.maps.importLibrary('core'), 'core library').catch(() => null) as Promise<any>
         ]);
-        
+
         setDebugStatus('Libraries loaded. Extracting components...');
 
         // Robustly resolve components from libraries or global namespace
         const Map = mapsLib.Map;
         const InfoWindow = mapsLib.InfoWindow;
         const MapTypeId = mapsLib.MapTypeId;
-        
+
         // Geometry might be in core or maps or global
         const LatLng = (coreLib?.LatLng) || (mapsLib as any).LatLng || window.google?.maps?.LatLng;
         const LatLngBounds = (coreLib?.LatLngBounds) || (mapsLib as any).LatLngBounds || window.google?.maps?.LatLngBounds;
         const Size = (coreLib?.Size) || (mapsLib as any).Size || window.google?.maps?.Size;
         const Animation = (mapsLib as any).Animation || window.google?.maps?.Animation;
         const Point = (coreLib?.Point) || (mapsLib as any).Point || window.google?.maps?.Point;
-        
+
         // Marker: Legacy Marker is often in global namespace, but check mapsLib just in case
         // Note: importLibrary('marker') gives AdvancedMarkerElement, not legacy Marker
         const Marker = (mapsLib as any).Marker || window.google?.maps?.Marker;
-        
+
         const event = window.google?.maps?.event;
 
         if (!Map) throw new Error('Map class missing');
         if (!LatLngBounds) throw new Error('LatLngBounds class missing');
         if (!LatLng) throw new Error('LatLng class missing');
-        
+
         if (!Marker) {
              console.warn('Legacy Marker class missing. Map markers may not appear.');
         }
@@ -142,7 +142,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         // Fall through to legacy check
       }
     }
-    
+
     // Check for legacy global objects
     // Poll until available
     return new Promise((resolve, reject) => {
@@ -176,7 +176,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
   // Effect 1: Load API
   useEffect(() => {
     let mounted = true;
-    
+
     const loadApi = async () => {
       try {
         setIsLoading(true);
@@ -184,7 +184,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
         if (mounted) {
           setMapsApi(api);
           // Important: Set isLoading to false so the div renders and ref callback fires
-          setIsLoading(false); 
+          setIsLoading(false);
           setDebugStatus('Maps API loaded. Initializing map...');
         }
       } catch (err) {
@@ -211,10 +211,10 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
 
     try {
         setDebugStatus('Creating map instance...');
-        
+
         // Default center (Athens, Greece)
         const defaultCenter = { lat: 37.9838, lng: 23.7275 };
-        
+
         // Custom Map Styles (Clean Light Theme)
         const mapStyles: google.maps.MapTypeStyle[] = [
           {
@@ -370,7 +370,7 @@ export default function GoogleMapsVisualization({ buildings }: GoogleMapsVisuali
             marker.addListener('click', () => {
               // Stop animation on all markers
               markersRef.current.forEach(m => m.setAnimation(null));
-              
+
               // Bounce this marker
               if (mapsApi.Animation) {
                 marker.setAnimation(mapsApi.Animation.BOUNCE);

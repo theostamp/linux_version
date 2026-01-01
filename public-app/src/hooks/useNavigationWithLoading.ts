@@ -8,18 +8,18 @@ export function useNavigationWithLoading() {
   const { startLoading, stopLoading } = useLoading();
 
   const navigateWithLoading = async (
-    href: string, 
+    href: string,
     message: string = 'Μετάβαση σε νέα σελίδα...',
     options?: { scroll?: boolean }
   ) => {
     try {
       startLoading(message);
-      
+
       // Add a small delay to ensure the loading state is visible
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       router.push(href, options);
-      
+
       // Stop loading after a reasonable delay to allow the new page to load
       setTimeout(() => {
         stopLoading();
@@ -31,18 +31,18 @@ export function useNavigationWithLoading() {
   };
 
   const replaceWithLoading = async (
-    href: string, 
+    href: string,
     message: string = 'Μετάβαση σε νέα σελίδα...',
     options?: { scroll?: boolean }
   ) => {
     try {
       startLoading(message);
-      
+
       // Add a small delay to ensure the loading state is visible
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       router.replace(href, options);
-      
+
       // Stop loading after a reasonable delay to allow the new page to load
       setTimeout(() => {
         stopLoading();
@@ -59,4 +59,3 @@ export function useNavigationWithLoading() {
     router, // Expose the original router for cases where loading is not needed
   };
 }
-

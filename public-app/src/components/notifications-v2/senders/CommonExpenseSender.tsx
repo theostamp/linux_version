@@ -30,11 +30,11 @@ import {
 } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import RecipientSelector from '../shared/RecipientSelector';
-import { 
-  extractBuildingData, 
+import {
+  extractBuildingData,
   generateEmailSignature,
   MONTHS,
-  MONTHS_GENITIVE 
+  MONTHS_GENITIVE
 } from '../shared/buildingUtils';
 
 interface Props {
@@ -50,7 +50,7 @@ function getCurrentMonthYear() {
 export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
   const { buildings, selectedBuilding } = useBuilding();
   const current = getCurrentMonthYear();
-  
+
   const [buildingId, setBuildingId] = useState<number | null>(selectedBuilding?.id ?? null);
   const [month, setMonth] = useState(current.month);
   const [year, setYear] = useState(current.year);
@@ -59,7 +59,7 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
   const [sendToAll, setSendToAll] = useState(true);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-  
+
   // ✅ ΝΕΑ: Επιλογές για personalized notifications
   const [includeNotification, setIncludeNotification] = useState(true);
   const [attachmentMode, setAttachmentMode] = useState<'auto' | 'manual' | 'none'>('manual');
@@ -67,13 +67,13 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
   // Εξαγωγή δεδομένων κτιρίου
   const selectedBuilding_ = buildings.find(b => b.id === buildingId);
   const buildingData = useMemo(
-    () => extractBuildingData(selectedBuilding_), 
+    () => extractBuildingData(selectedBuilding_),
     [selectedBuilding_]
   );
 
   const generateEmailBody = () => {
     const monthName = MONTHS[month];
-    
+
     let body = `Αγαπητοί ένοικοι,
 
 Σας αποστέλλουμε τον αναλυτικό λογαριασμό κοινοχρήστων δαπανών για τον μήνα ${monthName} ${year}.
@@ -115,10 +115,10 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
           apartment_ids: sendToAll ? undefined : selectedIds,
         });
       }
-      
+
       // Fallback στο παλιό endpoint για απλή αποστολή
       if (!attachment) throw new Error('Επισυνάψτε το φύλλο κοινοχρήστων');
-      
+
       const subject = `Κοινόχρηστα ${MONTHS_GENITIVE[month]} ${year} - ${buildingData.name}`;
 
       return notificationsApi.sendCommonExpenses({
@@ -259,7 +259,7 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
                 className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-blue-600 border-gray-400"
               />
             </div>
-            
+
             {includeNotification && (
               <Alert className="bg-green-50 border-green-200">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -285,8 +285,8 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
                 type="button"
                 onClick={() => setAttachmentMode('manual')}
                 className={`p-3 rounded-lg border-2 transition-all text-center ${
-                  attachmentMode === 'manual' 
-                    ? 'border-blue-500 bg-blue-50' 
+                  attachmentMode === 'manual'
+                    ? 'border-blue-500 bg-blue-50'
                     : 'border-slate-200 hover:border-blue-300'
                 }`}
               >
@@ -294,13 +294,13 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
                 <span className="text-sm font-medium">Χειροκίνητα</span>
                 <p className="text-xs text-gray-500">Επιλογή αρχείου</p>
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => setAttachmentMode('auto')}
                 className={`p-3 rounded-lg border-2 transition-all text-center ${
-                  attachmentMode === 'auto' 
-                    ? 'border-green-500 bg-green-50' 
+                  attachmentMode === 'auto'
+                    ? 'border-green-500 bg-green-50'
                     : 'border-slate-200 hover:border-green-300'
                 }`}
               >
@@ -308,13 +308,13 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
                 <span className="text-sm font-medium">Αυτόματα</span>
                 <p className="text-xs text-gray-500">Από το σύστημα</p>
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => setAttachmentMode('none')}
                 className={`p-3 rounded-lg border-2 transition-all text-center ${
-                  attachmentMode === 'none' 
-                    ? 'border-gray-500 bg-gray-50' 
+                  attachmentMode === 'none'
+                    ? 'border-gray-500 bg-gray-50'
                     : 'border-slate-200 hover:border-gray-300'
                 }`}
               >
@@ -323,17 +323,17 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
                 <p className="text-xs text-gray-500">Μόνο email</p>
               </button>
             </div>
-            
+
             {attachmentMode === 'auto' && (
               <Alert className="bg-amber-50 border-amber-200">
                 <Info className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-800 text-sm">
-                  Θα επισυναφθεί αυτόματα το φύλλο κοινοχρήστων που έχει καταχωρηθεί 
+                  Θα επισυναφθεί αυτόματα το φύλλο κοινοχρήστων που έχει καταχωρηθεί
                   στο σύστημα για τον επιλεγμένο μήνα (αν υπάρχει).
                 </AlertDescription>
               </Alert>
             )}
-            
+
             {attachmentMode === 'manual' && (
               <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                 {attachment ? (
@@ -401,8 +401,8 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
               Ακύρωση
             </Button>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowPreview(true)}
                 disabled={!buildingId}
               >
@@ -412,8 +412,8 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
               <Button
                 onClick={() => sendMutation.mutate()}
                 disabled={
-                  sendMutation.isPending || 
-                  !buildingId || 
+                  sendMutation.isPending ||
+                  !buildingId ||
                   (attachmentMode === 'manual' && !attachment)
                 }
               >

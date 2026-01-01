@@ -1,14 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Mail, 
-  MessageSquare, 
-  Phone, 
-  Bell, 
-  TrendingUp, 
-  Users, 
-  CheckCircle2, 
+import {
+  Mail,
+  MessageSquare,
+  Phone,
+  Bell,
+  TrendingUp,
+  Users,
+  CheckCircle2,
   XCircle,
   Clock,
   BarChart3
@@ -163,10 +163,10 @@ export default function NotificationAnalytics() {
               Object.entries(stats.by_type).map(([type, count]) => {
                 const Icon = CHANNEL_ICONS[type as keyof typeof CHANNEL_ICONS] || Mail;
                 const colorClass = CHANNEL_COLORS[type as keyof typeof CHANNEL_COLORS] || CHANNEL_COLORS.email;
-                const percentage = stats.total_notifications > 0 
-                  ? Math.round((Number(count) / stats.total_notifications) * 100) 
+                const percentage = stats.total_notifications > 0
+                  ? Math.round((Number(count) / stats.total_notifications) * 100)
                   : 0;
-                
+
                 return (
                   <div key={type} className="flex items-center gap-3">
                     <div className={cn('p-2 rounded-lg', colorClass)}>
@@ -180,7 +180,7 @@ export default function NotificationAnalytics() {
                         <span className="text-sm text-gray-500">{String(count)}</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className={cn('h-full rounded-full', colorClass.replace('bg-', 'bg-').replace('-100', '-500'))}
                           style={{ width: `${percentage}%` }}
                         />
@@ -214,9 +214,9 @@ export default function NotificationAnalytics() {
                   sent: { color: 'bg-green-100 text-green-700', label: 'Στάλθηκε' },
                   failed: { color: 'bg-red-100 text-red-700', label: 'Αποτυχία' },
                 };
-                
+
                 const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-700', label: status };
-                
+
                 return (
                   <div key={status} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                     <Badge className={config.color}>{config.label}</Badge>
@@ -253,5 +253,3 @@ export default function NotificationAnalytics() {
     </div>
   );
 }
-
-

@@ -22,10 +22,10 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   // Use BuildingContext instead of props
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   // Debug: Log buildingId to verify it's correct
   console.log('[ChartsContainer] BuildingId from context:', buildingId, typeof buildingId);
-  
+
   const [activeChart, setActiveChart] = useState<ChartType>('heating');
   const [chartSubType, setChartSubType] = useState<string>('bar');
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
@@ -362,4 +362,4 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
       </div>
     </div>
   );
-}; 
+};

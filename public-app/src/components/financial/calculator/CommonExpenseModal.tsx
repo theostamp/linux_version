@@ -75,7 +75,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
 
   // Logo error handling
   const [logoError, setLogoError] = React.useState(false);
-  
+
   // State for expense sheet month selection
   const [expenseSheetMonth, setExpenseSheetMonth] = React.useState(() => {
     // Default to current month
@@ -90,7 +90,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
   const generateMonthOptions = () => {
     const options = [];
     const currentDate = new Date();
-    
+
     for (let i = 0; i < 12; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const year = date.getFullYear();
@@ -98,7 +98,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
       const monthName = date.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
       options.push({ value: `${year}-${month}`, label: monthName });
     }
-    
+
     return options;
   };
 
@@ -189,9 +189,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                   const logoUrl = getOfficeLogoUrl(managementOfficeLogo);
                   return logoUrl && !logoError ? (
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border-2 border-blue-200">
-                      <img 
+                      <img
                         src={logoUrl}
-                        alt="Office Logo" 
+                        alt="Office Logo"
                         className="w-full h-full object-contain"
                         onLoad={() => setLogoError(false)}
                         onError={() => setLogoError(true)}
@@ -213,7 +213,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                       </div>
                     </div>
                 </div>
-                
+
                 {/* Κέντρο: Τίτλος */}
                 <div className="text-center">
                     <div className="flex items-center gap-2 justify-center">
@@ -227,7 +227,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                       {resolvedBuildingName}
                     </p>
                 </div>
-                
+
                 {/* Δεξιά: Μήνας + Εξαγωγή + Close */}
                 <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
@@ -246,10 +246,10 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                             </Select>
                     </div>
                     {/* ✅ ΝΕΟ: Κουμπί Εξαγωγής JPG */}
-                    <Button 
-                        onClick={() => handleExport('jpg')} 
-                        variant="default" 
-                        size="sm" 
+                    <Button
+                        onClick={() => handleExport('jpg')}
+                        variant="default"
+                        size="sm"
                         className="bg-teal-600 hover:bg-teal-700 text-white"
                     >
                         <FileText className="h-4 w-4 mr-1" />
@@ -260,7 +260,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     </Button>
                 </div>
             </div>
-            
+
             {/* Δεύτερη γραμμή: Ημερομηνία Λήξης */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-2 pt-2 border-t border-blue-200 text-xs text-blue-800">
                 <span className="text-xs font-medium text-blue-700">Πληρωτέο έως:</span>
@@ -316,20 +316,20 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                 )}
                     </div>
                 </div>
-            
+
             {/* Κέντρο: Τίτλος & Περίοδος */}
             <div className="text-center">
               <h2 className="text-xl font-bold text-gray-900 uppercase tracking-wide">
                 ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ
               </h2>
               <p className="text-sm text-gray-700 mt-1">
-                {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', { 
-                  month: 'long', 
-                  year: 'numeric' 
+                {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', {
+                  month: 'long',
+                  year: 'numeric'
                 }) : getPeriodInfo(state)}
               </p>
             </div>
-            
+
             {/* Δεξιά: Ημερομηνία Λήξης */}
             <div className="text-right">
               <p className="text-xs text-gray-600 font-medium">Πληρωτέο έως:</p>

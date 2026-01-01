@@ -34,7 +34,7 @@ export default function NewVotePage() {
     if (isSubmitting) {
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       await createVote(data);
@@ -71,4 +71,3 @@ export default function NewVotePage() {
     </div>
   );
 }
-

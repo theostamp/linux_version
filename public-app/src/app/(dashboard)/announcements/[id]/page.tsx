@@ -20,10 +20,10 @@ export default function AnnouncementDetailPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, isAuthReady } = useAuth();
 
-  const { 
-    data: announcement, 
-    isLoading, 
-    error 
+  const {
+    data: announcement,
+    isLoading,
+    error
   } = useQuery<Announcement, Error>({
     queryKey: ['announcement', id],
     queryFn: () => fetchAnnouncement(Number(id)),
@@ -46,7 +46,7 @@ export default function AnnouncementDetailPage() {
       }
     }
   }, [isAuthReady, isAuthenticated, router, error]);
-  
+
   if (authLoading || (!isAuthReady && !error)) {
     return (
       <div>
@@ -60,7 +60,7 @@ export default function AnnouncementDetailPage() {
       </div>
     );
   }
-  
+
   if (isLoading) {
     return (
       <div>
@@ -74,7 +74,7 @@ export default function AnnouncementDetailPage() {
       </div>
     );
   }
-  
+
   if (error || !announcement) {
     return (
       <div>
@@ -91,7 +91,7 @@ export default function AnnouncementDetailPage() {
       </div>
     );
   }
-  
+
   return (
     <div>
       <div className="mb-4">
@@ -102,23 +102,23 @@ export default function AnnouncementDetailPage() {
           </Link>
         </Button>
       </div>
-      
+
       <div className="bg-white shadow-md rounded-lg p-6">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">{announcement.title}</h1>
-        
+
         <AnnouncementContent
           title={announcement.title}
           description={announcement.description}
           startDate={announcement.start_date || undefined}
           endDate={announcement.end_date || undefined}
         />
-        
+
         {announcement.file && (
           <div className="mt-6">
             <h3 className="text-lg font-medium mb-2">Συνημμένο αρχείο</h3>
-            <a 
-              href={announcement.file} 
-              target="_blank" 
+            <a
+              href={announcement.file}
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
             >
@@ -130,4 +130,3 @@ export default function AnnouncementDetailPage() {
     </div>
   );
 }
-

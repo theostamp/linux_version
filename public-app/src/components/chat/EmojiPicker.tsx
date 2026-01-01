@@ -46,8 +46,8 @@ export function EmojiPicker({ onEmojiSelect, className }: EmojiPickerProps) {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'p-2 rounded-lg transition-colors',
-          isOpen 
-            ? 'bg-primary/10 text-primary' 
+          isOpen
+            ? 'bg-primary/10 text-primary'
             : 'hover:bg-muted text-muted-foreground hover:text-foreground'
         )}
         title="Emoji"
@@ -128,10 +128,10 @@ interface MessageReactionsDisplayProps {
 /**
  * Display reactions on a message
  */
-export function MessageReactionsDisplay({ 
-  reactions, 
+export function MessageReactionsDisplay({
+  reactions,
   onReactionClick,
-  className 
+  className
 }: MessageReactionsDisplayProps) {
   if (!reactions || reactions.length === 0) return null;
 
@@ -158,4 +158,3 @@ export function MessageReactionsDisplay({
 }
 
 export default EmojiPicker;
-

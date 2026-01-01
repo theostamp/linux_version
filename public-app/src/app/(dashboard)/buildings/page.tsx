@@ -36,13 +36,13 @@ const BuildingsPageContent = () => {
   // Calculate statistics
   const statistics = useMemo(() => {
     if (!Array.isArray(buildings)) return { total: 0, totalApartments: 0, cities: 0 };
-    
+
     const totalApartments = buildings.reduce((sum, building) => {
       const apartmentsCount = (building as { total_apartments?: number; apartments_count?: number }).total_apartments || (building as { total_apartments?: number; apartments_count?: number }).apartments_count || 0;
       return sum + apartmentsCount;
     }, 0);
     const uniqueCities = new Set(buildings.map(b => b.city).filter(Boolean)).size;
-    
+
     return {
       total: buildings.length,
       totalApartments,
@@ -59,7 +59,7 @@ const BuildingsPageContent = () => {
   // Filter and sort buildings
   const filteredAndSortedBuildings = useMemo(() => {
     if (!Array.isArray(buildings)) return [];
-    
+
     let filtered = buildings;
 
     // Apply search filter
@@ -182,7 +182,7 @@ const BuildingsPageContent = () => {
                 Λίστα
               </Button>
             </div>
-            
+
             <Button onClick={handleRefresh} variant="outline" size="sm">
               Ανανέωση
             </Button>
@@ -196,13 +196,13 @@ const BuildingsPageContent = () => {
             )}
           </div>
         </div>
-        
+
         {/* Filter Indicator */}
         <BuildingFilterIndicator />
-        
+
         {/* Bento Grid Layout */}
         <BentoGrid className="max-w-[1920px] auto-rows-auto gap-4">
-          
+
           {/* Stats Row */}
           <StatCard
             title="Συνολικά Κτίρια"
@@ -326,9 +326,9 @@ const BuildingsPageContent = () => {
                     {viewMode === 'cards' && (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {paginatedBuildings.map(building => (
-                          <BuildingCard 
-                            key={building.id} 
-                            building={building} 
+                          <BuildingCard
+                            key={building.id}
+                            building={building}
                             onRefresh={handleRefresh}
                           />
                         ))}
@@ -337,7 +337,7 @@ const BuildingsPageContent = () => {
 
                     {/* Table View */}
                     {viewMode === 'table' && (
-                      <BuildingTable 
+                      <BuildingTable
                         buildings={paginatedBuildings}
                         onRefresh={handleRefresh}
                       />
@@ -382,4 +382,3 @@ const BuildingsPage = () => {
 };
 
 export default BuildingsPage;
-

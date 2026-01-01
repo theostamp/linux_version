@@ -62,5 +62,3 @@ export function withAuth<TProps = any>(Component: (props: TProps) => any, allowe
     return React.createElement(Component as any, props as any);
   };
 }
-
-

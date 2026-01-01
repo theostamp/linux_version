@@ -21,32 +21,32 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   // Load payments for the current building
   const loadPayments = useCallback(async () => {
     if (!buildingId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         building_id: buildingId.toString()
       });
-      
+
       // Add selectedMonth parameter if provided
       if (selectedMonth) {
         params.append('month', selectedMonth);
       }
-      
+
       // The api.get returns data directly, not response.data
       const response = await api.get<{ results?: Payment[] } | Payment[]>(`/financial/payments/?${params}`);
-      
+
       // Handle both paginated and non-paginated responses
       const data = (response as { results?: Payment[] }).results || (response as Payment[]);
-      
+
       // Normalize payment amounts to ensure they are numbers
       const normalize = (p: any): Payment => ({
         ...p,
         amount: parseAmount(p?.amount),
       });
-      
+
       setPayments(Array.isArray(data) ? data.map(normalize) : []);
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των εισπράξεων';
@@ -61,11 +61,11 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const createPayment = useCallback(async (data: PaymentFormData): Promise<Payment | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let requestData: any;
       const headers: any = {};
-      
+
       // If there's a file upload, use FormData
       if (data.receipt) {
         const formData = new FormData();
@@ -80,16 +80,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         if (data.payer_name) {
           formData.append('payer_name', data.payer_name);
         }
-        
+
         if (data.reference_number) {
           formData.append('reference_number', data.reference_number);
         }
         if (data.notes) {
           formData.append('notes', data.notes);
         }
-        
+
         formData.append('receipt', data.receipt);
-        
+
         requestData = formData;
         headers['Content-Type'] = 'multipart/form-data';
       } else {
@@ -115,7 +115,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
 
       // Refresh payments list after creating new payment
       await loadPayments();
-      
+
       // ✅ Invalidate AND explicitly refetch React Query caches for immediate UI update
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
@@ -123,7 +123,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['payments'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
-      
+
       toast.success('Η πληρωμή δημιουργήθηκε επιτυχώς');
       return response;
     } catch (err: any) {
@@ -140,11 +140,11 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const processPayment = useCallback(async (data: PaymentFormData): Promise<{success: boolean, transaction_id?: number}> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let requestData: any;
       const headers: any = {};
-      
+
       // If there's a file upload, use FormData
       if (data.receipt) {
         const formData = new FormData();
@@ -159,16 +159,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         if (data.payer_name) {
           formData.append('payer_name', data.payer_name);
         }
-        
+
         if (data.reference_number) {
           formData.append('reference_number', data.reference_number);
         }
         if (data.notes) {
           formData.append('notes', data.notes);
         }
-        
+
         formData.append('receipt', data.receipt);
-        
+
         requestData = formData;
         headers['Content-Type'] = 'multipart/form-data';
       } else {
@@ -224,10 +224,10 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const getPayments = useCallback(async (filters: PaymentFilters = {}): Promise<Payment[]> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.building_id) {
         params.append('building_id', filters.building_id.toString());
       }
@@ -246,16 +246,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
 
       // The api.get returns data directly
       const response = await api.get<{ results?: Payment[] } | Payment[]>(`/financial/payments/?${params}`);
-      
+
       // Handle both paginated and non-paginated responses
       const data = (response as { results?: Payment[] }).results || (response as Payment[]);
-      
+
       // Normalize payment amounts to ensure they are numbers
       const normalize = (p: any): Payment => ({
         ...p,
         amount: parseAmount(p?.amount),
       });
-      
+
       return Array.isArray(data) ? data.map(normalize) : [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των πληρωμών';
@@ -270,11 +270,11 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const getPayment = useCallback(async (id: number): Promise<Payment | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // The api.get returns data directly
       const response = await api.get<Payment>(`/financial/payments/${id}/`);
-      
+
       // Normalize payment amount to ensure it is a number
       return {
         ...response,
@@ -293,15 +293,15 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const updatePayment = useCallback(async (id: number, data: Partial<PaymentFormData>): Promise<Payment | null> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let requestData: any;
       const headers: any = {};
-      
+
       // If there's a file upload, use FormData
       if (data.receipt) {
         const formData = new FormData();
-        
+
         // Προσθήκη πεδίων που υπάρχουν
         if (data.apartment_id !== undefined) {
           formData.append('apartment', data.apartment_id.toString());
@@ -325,7 +325,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
           formData.append('notes', data.notes);
         }
         formData.append('receipt', data.receipt);
-        
+
         requestData = formData;
         headers['Content-Type'] = 'multipart/form-data';
       } else {
@@ -385,26 +385,26 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const deletePayment = useCallback(async (id: number): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await api.delete(`/financial/payments/${id}/`);
-      
+
       // ✅ Invalidate React Query caches BEFORE refetching to ensure fresh data
       // Note: API-level cache is already cleared by api.delete automatically
       await queryClient.invalidateQueries({ queryKey: ['financial'] });
       await queryClient.invalidateQueries({ queryKey: ['payments'] });
       await queryClient.invalidateQueries({ queryKey: ['apartment-balances'] });
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      
+
       // Refresh payments list after deleting
       await loadPayments();
-      
+
       // ✅ Explicit refetch for components using React Query hooks
       await queryClient.refetchQueries({ queryKey: ['financial'] });
       await queryClient.refetchQueries({ queryKey: ['payments'] });
       await queryClient.refetchQueries({ queryKey: ['apartment-balances'] });
       await queryClient.refetchQueries({ queryKey: ['transactions'] });
-      
+
       toast.success('Η πληρωμή διαγράφηκε επιτυχώς');
       return true;
     } catch (err: any) {
@@ -480,7 +480,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     payments,
     isLoading,
     error,
-    
+
     // Actions
     createPayment,
     processPayment,
@@ -494,4 +494,3 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     loadPayments,
   };
 };
-

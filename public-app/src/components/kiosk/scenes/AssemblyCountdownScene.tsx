@@ -146,8 +146,8 @@ function AgendaItemRow({ item, index }: { item: AssemblyData['agenda_items'][0];
       transition={{ delay: index * 0.1 }}
       className={cn(
         'flex items-center gap-3 p-3 rounded-2xl transition-all',
-        isVoting 
-          ? 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-400/30' 
+        isVoting
+          ? 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-400/30'
           : 'bg-white/5 border border-white/10'
       )}
     >
@@ -157,7 +157,7 @@ function AgendaItemRow({ item, index }: { item: AssemblyData['agenda_items'][0];
       )}>
         {item.order}
       </div>
-      
+
       <div className="flex-1">
         <h4 className="text-white font-semibold text-sm leading-snug">{item.title}</h4>
         <div className="flex items-center gap-3 mt-1 text-[11px] text-white/55">
@@ -210,7 +210,7 @@ function PreVotingProgress({ stats }: { stats: AssemblyData['stats'] }) {
           transition={{ duration: 1, ease: 'easeOut' }}
         />
       </div>
-      
+
       <div className="flex justify-between mt-2 text-sm">
         <span className="text-emerald-200/60">
           {stats.pre_voted_count} από {stats.total_apartments_invited} διαμερίσματα
@@ -240,10 +240,10 @@ function RSVPSummary({ stats }: { stats: AssemblyData['stats'] }) {
   );
 }
 
-export default function AssemblyCountdownScene({ 
-  data, 
+export default function AssemblyCountdownScene({
+  data,
   buildingId,
-  assembly: externalAssembly 
+  assembly: externalAssembly
 }: AssemblyCountdownSceneProps) {
   const [countdown, setCountdown] = useState<CountdownTime | null>(null);
   const [assembly, setAssembly] = useState<AssemblyData | null>(externalAssembly || null);

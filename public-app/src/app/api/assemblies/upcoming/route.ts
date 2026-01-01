@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 
+const BACKEND_URL =
   process.env.API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_CORE_API_URL || 
+  process.env.NEXT_PUBLIC_CORE_API_URL ||
   'https://linuxversion-production.up.railway.app';
 
 export async function GET(request: NextRequest) {
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[assemblies/upcoming] Backend error:', errorText);
-      
+
       // Return empty assembly instead of error to not break the UI
       return NextResponse.json({ assembly: null });
     }
@@ -91,4 +91,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ assembly: null });
   }
 }
-

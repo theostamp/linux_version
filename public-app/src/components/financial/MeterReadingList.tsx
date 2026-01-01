@@ -11,9 +11,9 @@ interface MeterReadingListProps {
 // Simple wrapper component - updated to force cache refresh
 export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, selectedMonth }) => {
   return (
-    <MeterReadingReport 
-      buildingId={buildingId} 
-      selectedMonth={selectedMonth} 
+    <MeterReadingReport
+      buildingId={buildingId}
+      selectedMonth={selectedMonth}
     />
   );
 };

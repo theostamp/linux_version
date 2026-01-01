@@ -32,7 +32,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [formState, setFormState] = useState<FormState>({
     office_name: '',
     office_phone: '',
@@ -109,7 +109,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
     try {
       // Create FormData for multipart/form-data (needed for file upload)
       const formData = new FormData();
-      
+
       // Add text fields
       formData.append('office_name', formState.office_name);
       formData.append('office_phone', formState.office_phone);
@@ -141,11 +141,11 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
       // The endpoint returns { message, office_details } but we refresh the full user data anyway
       console.log('[OfficeSettings] Sending PATCH request to /users/office-details/');
       console.log('[OfficeSettings] FormData has logo:', !!logoFile);
-      
+
       // Retry logic for network errors
       let lastError: unknown = null;
       const maxRetries = 2;
-      
+
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           if (attempt > 0) {
@@ -153,7 +153,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
             // Wait before retry (exponential backoff)
             await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
           }
-          
+
           const response = await api.patch<{ message: string; office_details: any }>('/users/office-details/', formData);
           console.log('[OfficeSettings] PATCH request successful:', response);
 
@@ -169,35 +169,35 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
         } catch (patchError) {
           lastError = patchError;
           console.error(`[OfficeSettings] PATCH request failed (attempt ${attempt + 1}/${maxRetries + 1}):`, patchError);
-          
+
           // Check if it's a network error that we should retry
           const isNetworkError = patchError instanceof Error && (
-            patchError.message.includes('Failed to fetch') || 
+            patchError.message.includes('Failed to fetch') ||
             patchError.message.includes('ERR_NAME_NOT_RESOLVED') ||
             patchError.message.includes('NetworkError') ||
             patchError.message.includes('network')
           );
-          
+
           // Only retry network errors, not validation errors
           if (!isNetworkError || attempt === maxRetries) {
             throw patchError; // Re-throw to be caught by outer catch
           }
-          
+
           // Continue to next retry attempt
         }
       }
-      
+
       // If we get here, all retries failed
       throw lastError;
     } catch (error) {
       console.error('Error updating office settings:', error);
-      
+
       let errorMessage = 'Παρακαλώ δοκιμάστε ξανά.';
       if (error instanceof Error) {
         errorMessage = error.message;
-        
+
         // Provide more specific error messages
-        if (error.message.includes('Failed to fetch') || 
+        if (error.message.includes('Failed to fetch') ||
             error.message.includes('ERR_NAME_NOT_RESOLVED') ||
             error.message.includes('NetworkError')) {
           errorMessage = 'Σφάλμα σύνδεσης με τον server. Παρακαλώ ελέγξτε τη σύνδεσή σας.';
@@ -209,7 +209,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
           errorMessage = 'Το αρχείο logo είναι πολύ μεγάλο. Μέγιστο μέγεθος: 2MB.';
         }
       }
-      
+
       toast.error('Σφάλμα κατά την αποθήκευση', {
         description: errorMessage,
       });
@@ -250,12 +250,12 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
             Επεξεργαστείτε τα στοιχεία του γραφείου διαχείρισης
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           {/* Logo Upload */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">Logo Γραφείου</Label>
-            
+
             {displayLogoUrl && (
               <div className="flex justify-center pb-2">
                 <div className="relative w-24 h-24 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-gray-50 border border-gray-200">
@@ -290,7 +290,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
                 disabled={isSubmitting}
               />
             </div>
-            
+
             {/* Σημείωση για βέλτιστες διαστάσεις logo */}
             <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />

@@ -78,4 +78,3 @@ export function StatCard({
 
   return <div className={cardClasses}>{content}</div>;
 }
-

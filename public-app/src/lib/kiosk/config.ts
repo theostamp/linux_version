@@ -86,7 +86,7 @@ export const DEFAULT_WIDGETS: KioskWidget[] = [
     order: 7,
     settings: {}
   },
-  
+
   // Sidebar Widgets
   {
     id: 'current_time' as WidgetId,
@@ -142,7 +142,7 @@ export const DEFAULT_WIDGETS: KioskWidget[] = [
     order: 5,
     settings: {}
   },
-  
+
   // Top Bar Widgets
   {
     id: 'weather_widget_topbar' as WidgetId,
@@ -162,7 +162,7 @@ export const DEFAULT_WIDGETS: KioskWidget[] = [
     order: 1,
     settings: {}
   },
-  
+
   // Special Widgets
   {
     id: 'news_ticker' as WidgetId,

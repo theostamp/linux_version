@@ -6,7 +6,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 
 export const useBuildings = () => {
     const { user } = useAuth();
-    
+
     return useQuery({
         queryKey: ['buildings'],
         queryFn: fetchAllBuildings,
@@ -15,4 +15,3 @@ export const useBuildings = () => {
         enabled: !!user, // Only fetch if user is authenticated
     });
 };
-

@@ -8,6 +8,3 @@ declare module 'axios' {
     xToastError?: string;
   }
 }
-
-
-

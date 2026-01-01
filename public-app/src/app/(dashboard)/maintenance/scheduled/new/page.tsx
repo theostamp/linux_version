@@ -4,5 +4,3 @@ import ScheduledMaintenanceForm from '@/components/maintenance/ScheduledMaintena
 export default function NewScheduledMaintenancePage() {
   return <ScheduledMaintenanceForm heading="Προγραμματισμός Έργου" />;
 }
-
-

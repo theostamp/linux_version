@@ -37,7 +37,7 @@ interface Widget {
 function WidgetsContent() {
   const { currentBuilding, selectedBuilding, isLoading: isBuildingLoading } = useBuilding();
   const building = selectedBuilding || currentBuilding;
-  
+
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ function WidgetsContent() {
 
       const response = await api.get(`/api/kiosk/configs/?building_id=${building.id}`);
       const data = response.data.widgets || [];
-      
+
       // Sort by order and name
       data.sort((a: Widget, b: Widget) => {
         if (a.order !== b.order) return a.order - b.order;
@@ -78,7 +78,7 @@ function WidgetsContent() {
       await api.patch(`/api/kiosk/configs/${widgetId}/`, {
         enabled: !currentEnabled
       });
-      
+
       toast.success(`Widget ${!currentEnabled ? 'ενεργοποιήθηκε' : 'απενεργοποιήθηκε'}`);
       fetchWidgets();
     } catch (err: any) {
@@ -289,4 +289,3 @@ function WidgetsContent() {
     </div>
   );
 }
-

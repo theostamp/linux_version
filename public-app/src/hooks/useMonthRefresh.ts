@@ -24,7 +24,7 @@ export const useMonthRefresh = (
     // Only refresh if month actually changed
     if (previousMonthRef.current !== selectedMonth) {
       console.log(`🔄 ${componentName}: Month changed from ${previousMonthRef.current || 'current'} to ${selectedMonth || 'current'}`);
-      
+
       // Clear any existing timeout
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
@@ -34,7 +34,7 @@ export const useMonthRefresh = (
       refreshTimeoutRef.current = setTimeout(() => {
         // Show visual notification
         showMonthChangeNotification(selectedMonth, componentName);
-        
+
         // Execute refresh function
         try {
           const result = refreshFunction();
@@ -74,9 +74,9 @@ const showMonthChangeNotification = (selectedMonth: string | undefined, componen
   const formatMonthName = (month: string | undefined) => {
     if (!month) return 'Τρέχων μήνας';
     try {
-      return new Date(month + '-01').toLocaleDateString('el-GR', { 
-        month: 'long', 
-        year: 'numeric' 
+      return new Date(month + '-01').toLocaleDateString('el-GR', {
+        month: 'long',
+        year: 'numeric'
       });
     } catch {
       return month;
@@ -91,14 +91,14 @@ const showMonthChangeNotification = (selectedMonth: string | undefined, componen
       <span>${componentName}: ${formatMonthName(selectedMonth)}</span>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Animate in
   requestAnimationFrame(() => {
     notification.classList.remove('translate-x-full');
   });
-  
+
   // Remove after 2 seconds
   setTimeout(() => {
     notification.classList.add('translate-x-full');
@@ -111,4 +111,3 @@ const showMonthChangeNotification = (selectedMonth: string | undefined, componen
 };
 
 export default useMonthRefresh;
-

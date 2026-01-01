@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Calendar, 
-  TrendingUp, 
-  TrendingDown, 
-  Euro, 
-  Clock, 
+import {
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Euro,
+  Clock,
   Info,
   ArrowUpRight,
   ArrowDownRight,
@@ -72,7 +72,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [monthlyBreakdown, setMonthlyBreakdown] = useState<MonthlyBreakdown[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  
+
   interface FinancialSummary {
     total_balance?: number;
     current_obligations?: number;
@@ -104,13 +104,13 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
 
     try {
       console.log('🔍 Loading amount details for:', { buildingId, amountType, selectedMonth, amount });
-      
+
       // Load financial summary
       const summaryParams = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })
       });
-      
+
       console.log('📊 Loading summary from:', `/financial/dashboard/summary/?${summaryParams}`);
       const summaryResponse = await api.get(`/financial/dashboard/summary/?${summaryParams}`);
       console.log('📊 Summary response:', summaryResponse.data);
@@ -165,7 +165,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
       } catch (error) {
         console.error('❌ Expenses/payments endpoints failed:', error);
       }
-      
+
       setAllTransactions(transactions);
 
       // Generate monthly breakdown
@@ -189,7 +189,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
     transactions.forEach(transaction => {
       const date = new Date(transaction.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (!monthlyData[monthKey]) {
         monthlyData[monthKey] = {
           month: monthKey,
@@ -272,9 +272,9 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   const formatMonth = (monthKey: string) => {
     const [year, month] = monthKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('el-GR', { 
-      month: 'long', 
-      year: 'numeric' 
+    return date.toLocaleDateString('el-GR', {
+      month: 'long',
+      year: 'numeric'
     });
   };
 
@@ -330,10 +330,10 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   const explanation = getAmountExplanation();
   const totalPayments = summary?.total_payments_month || 0;
   const totalExpenses = summary?.total_expenses_month || 0;
-  
+
   // Use the amount as provided by the API - it's already correctly calculated
   let displayAmount = amount;
-  
+
   const maxAmount = Math.max(totalPayments, totalExpenses, Math.abs(displayAmount));
 
   return (
@@ -474,7 +474,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="text-xs text-gray-500">(τρέχον μήνας)</span>
                         </div>
                       </div>
-                      
+
                       {/* Δαπάνες διαχείρισης */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -488,7 +488,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="text-xs text-gray-500">(διαχειριστικά τέλη)</span>
                         </div>
                       </div>
-                      
+
                       {/* Εισφορά αποθεματικού */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -502,7 +502,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="text-xs text-gray-500">(μηνιαία εισφορά)</span>
                         </div>
                       </div>
-                      
+
                       {/* Συνολικές τρέχουσες υποχρεώσεις */}
                       <div className="pt-2 border-t border-gray-300">
                         <div className="flex items-center justify-between">
@@ -540,7 +540,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="text-xs text-gray-500">(αρνητικά υπόλοιπα)</span>
                         </div>
                       </div>
-                      
+
                       {/* Εκκρεμείς πληρωμές προηγούμενων μηνών */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -554,7 +554,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="text-xs text-gray-500">(μη εξοφλημένες)</span>
                         </div>
                       </div>
-                      
+
                       {/* Δαπάνες που δεν έχουν καλυφθεί */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -568,7 +568,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="text-xs text-gray-500">(εκκρεμείς δαπάνες)</span>
                         </div>
                       </div>
-                      
+
                       {/* Συνολικές παλαιότερες οφειλές */}
                       <div className="pt-2 border-t border-gray-300">
                         <div className="flex items-center justify-between">
@@ -599,8 +599,8 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                     <div className="text-2xl font-bold text-green-600">
                       {formatCurrency(totalPayments)}
                     </div>
-                    <Progress 
-                      value={(totalPayments / maxAmount) * 100} 
+                    <Progress
+                      value={(totalPayments / maxAmount) * 100}
                       className="mt-2 h-2 bg-green-200"
                     />
                   </CardContent>
@@ -615,8 +615,8 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                     <div className="text-2xl font-bold text-red-600">
                       {formatCurrency(totalExpenses)}
                     </div>
-                    <Progress 
-                      value={(totalExpenses / maxAmount) * 100} 
+                    <Progress
+                      value={(totalExpenses / maxAmount) * 100}
                       className="mt-2 h-2 bg-red-200"
                     />
                   </CardContent>
@@ -633,8 +633,8 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                     }`}>
                       {formatCurrency(totalPayments - totalExpenses)}
                     </div>
-                    <Progress 
-                      value={Math.abs((totalPayments - totalExpenses) / maxAmount) * 100} 
+                    <Progress
+                      value={Math.abs((totalPayments - totalExpenses) / maxAmount) * 100}
                       className={`mt-2 h-2 ${
                         (totalPayments - totalExpenses) >= 0 ? 'bg-green-200' : 'bg-red-200'
                       }`}
@@ -694,16 +694,16 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                                 </Badge>
                               </div>
                               <div className="flex gap-1 h-4">
-                                <div 
+                                <div
                                   className="bg-green-500 rounded-l"
-                                  style={{ 
+                                  style={{
                                     width: `${(month.payments / maxAmount) * 100}%`,
                                     minWidth: month.payments > 0 ? '4px' : '0'
                                   }}
                                 />
-                                <div 
+                                <div
                                   className="bg-red-500 rounded-r"
-                                  style={{ 
+                                  style={{
                                     width: `${(month.expenses / maxAmount) * 100}%`,
                                     minWidth: month.expenses > 0 ? '4px' : '0'
                                   }}
@@ -777,7 +777,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                         <div>
                           <h4 className="font-medium text-yellow-800">Πληροφορίες για το Ποσό</h4>
                           <p className="text-sm text-yellow-700 mt-1">
-                            Το ποσό {formatCurrency(amount)} προέρχεται από τον τρέχοντα υπολογισμό του συστήματος. 
+                            Το ποσό {formatCurrency(amount)} προέρχεται από τον τρέχοντα υπολογισμό του συστήματος.
                             Δεν υπάρχουν συναλλαγές στη βάση δεδομένων για να δείξουμε λεπτομερείς πληροφορίες.
                           </p>
                         </div>
@@ -817,7 +817,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                               {formatCurrency(month.balance)}
                             </Badge>
                           </div>
-                          
+
                             <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                               <div className="text-center p-2 bg-green-50 rounded">
                                 <div className="text-green-600 font-medium">+{formatCurrency(month.payments)}</div>

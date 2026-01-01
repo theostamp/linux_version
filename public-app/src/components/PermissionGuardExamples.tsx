@@ -1,6 +1,6 @@
 /**
  * PermissionGuard Usage Examples
- * 
+ *
  * Comprehensive examples showing how to use PermissionGuard
  * and its variants in different scenarios.
  */
@@ -8,8 +8,8 @@
 'use client';
 
 import React from 'react';
-import { 
-  PermissionGuard, 
+import {
+  PermissionGuard,
   MultiPermissionGuard,
   PermissionBadge,
   PermissionAlert,
@@ -25,7 +25,7 @@ export const BasicExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Basic Permission Guard</h2>
-      
+
       {/* Hide if no permission */}
       <PermissionGuard action="edit">
         <Button>
@@ -33,7 +33,7 @@ export const BasicExample = () => {
           Edit Building
         </Button>
       </PermissionGuard>
-      
+
       {/* Always visible (for comparison) */}
       <Button variant="outline">
         <Eye className="w-4 h-4 mr-2" />
@@ -51,9 +51,9 @@ export const FallbackExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Custom Fallback</h2>
-      
+
       {/* Custom fallback component */}
-      <PermissionGuard 
+      <PermissionGuard
         action="delete"
         fallback={
           <Button disabled variant="outline">
@@ -79,7 +79,7 @@ export const TooltipExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">With Tooltip Explanation</h2>
-      
+
       {/* Shows tooltip on hover when no permission */}
       <PermissionGuard action="edit" fallback="tooltip">
         <Button>
@@ -87,7 +87,7 @@ export const TooltipExample = () => {
           Edit Building
         </Button>
       </PermissionGuard>
-      
+
       <p className="text-sm text-gray-600">
         Hover over the button to see why it's disabled (if no permission)
       </p>
@@ -103,7 +103,7 @@ export const DisableExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Disable Instead of Hide</h2>
-      
+
       {/* Disabled state instead of hiding */}
       <PermissionGuard action="delete" disableInsteadOfHide>
         <Button variant="destructive">
@@ -111,7 +111,7 @@ export const DisableExample = () => {
           Delete Building
         </Button>
       </PermissionGuard>
-      
+
       <p className="text-sm text-gray-600">
         Button remains visible but grayed out when no permission
       </p>
@@ -127,9 +127,9 @@ export const MultiPermissionAllExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Multiple Permissions (ALL required)</h2>
-      
+
       {/* Requires BOTH edit AND manage_financials */}
-      <MultiPermissionGuard 
+      <MultiPermissionGuard
         actions={['edit', 'manage_financials']}
         requireAll={true}
       >
@@ -138,7 +138,7 @@ export const MultiPermissionAllExample = () => {
           Edit Financial Settings
         </Button>
       </MultiPermissionGuard>
-      
+
       <p className="text-sm text-gray-600">
         Requires both Edit AND Manage Financials permissions
       </p>
@@ -154,9 +154,9 @@ export const MultiPermissionAnyExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Multiple Permissions (ANY)</h2>
-      
+
       {/* Requires EITHER edit OR manage_financials */}
-      <MultiPermissionGuard 
+      <MultiPermissionGuard
         actions={['edit', 'manage_financials']}
         requireAll={false}
       >
@@ -165,7 +165,7 @@ export const MultiPermissionAnyExample = () => {
           View/Edit Settings
         </Button>
       </MultiPermissionGuard>
-      
+
       <p className="text-sm text-gray-600">
         Requires either Edit OR Manage Financials permission
       </p>
@@ -181,23 +181,23 @@ export const BadgeExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Permission Badges</h2>
-      
+
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium w-32">View:</span>
           <PermissionBadge action="view" />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium w-32">Edit:</span>
           <PermissionBadge action="edit" />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium w-32">Delete:</span>
           <PermissionBadge action="delete" />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium w-32">Manage Financials:</span>
           <PermissionBadge action="manage_financials" />
@@ -215,7 +215,7 @@ export const AlertExample = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Permission Alert</h2>
-      
+
       {/* Shows alert box if no permission, content if has permission */}
       <PermissionAlert action="manage_financials">
         <div className="p-4 border rounded-lg bg-green-50 border-green-200">
@@ -240,14 +240,14 @@ export const RealWorldExample = () => {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Building Management</h1>
-        
+
         <div className="flex gap-2">
           {/* View button - always visible */}
           <Button variant="outline">
             <Eye className="w-4 h-4 mr-2" />
             View Details
           </Button>
-          
+
           {/* Edit button - only if has permission */}
           <PermissionGuard action="edit" fallback="tooltip">
             <Button>
@@ -255,7 +255,7 @@ export const RealWorldExample = () => {
               Edit
             </Button>
           </PermissionGuard>
-          
+
           {/* Delete button - only if has permission */}
           <PermissionGuard action="delete" fallback="tooltip">
             <Button variant="destructive">
@@ -265,7 +265,7 @@ export const RealWorldExample = () => {
           </PermissionGuard>
         </div>
       </div>
-      
+
       {/* Permission-gated content */}
       <PermissionAlert action="manage_financials">
         <div className="p-4 border rounded-lg">
@@ -275,7 +275,7 @@ export const RealWorldExample = () => {
           </p>
         </div>
       </PermissionAlert>
-      
+
       {/* Permission badges */}
       <div className="p-4 bg-gray-50 rounded-lg">
         <h3 className="text-sm font-semibold mb-3">Your Permissions:</h3>
@@ -298,7 +298,7 @@ export const PermissionGuardExamplesPage = () => {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold mb-8">PermissionGuard Examples</h1>
-      
+
       <div className="space-y-8 divide-y">
         <BasicExample />
         <FallbackExample />
@@ -310,7 +310,7 @@ export const PermissionGuardExamplesPage = () => {
         <AlertExample />
         <RealWorldExample />
       </div>
-      
+
       <div className="mt-12 p-6 bg-blue-50 rounded-lg">
         <h2 className="text-lg font-semibold text-blue-900 mb-2">
           💡 Pro Tips
@@ -328,4 +328,3 @@ export const PermissionGuardExamplesPage = () => {
 };
 
 export default PermissionGuardExamplesPage;
-

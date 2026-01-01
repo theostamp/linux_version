@@ -213,4 +213,3 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
     </motion.div>
   );
 }
-

@@ -32,7 +32,7 @@ interface PaginatedResponse<T> {
 export const todoNotificationKeys = {
   all: ['todoNotifications'] as const,
   lists: () => [...todoNotificationKeys.all, 'list'] as const,
-  list: (filters?: { is_read?: boolean }) => 
+  list: (filters?: { is_read?: boolean }) =>
     [...todoNotificationKeys.lists(), filters] as const,
   unreadCount: () => [...todoNotificationKeys.all, 'unreadCount'] as const,
 };
@@ -55,11 +55,11 @@ export function useTodoNotifications(options?: { is_read?: boolean }) {
     queryKey: todoNotificationKeys.list({ is_read: options?.is_read }),
     queryFn: async () => {
       const params: Record<string, string> = {};
-      
+
       if (options?.is_read !== undefined) {
         params.is_read = options.is_read ? 'true' : 'false';
       }
-      
+
       if (buildingId) {
         params.building = buildingId.toString();
       }
@@ -68,7 +68,7 @@ export function useTodoNotifications(options?: { is_read?: boolean }) {
         '/todos/notifications/',
         params
       );
-      
+
       return Array.isArray(response) ? response : response?.results || [];
     },
     staleTime: 30000, // 30 seconds
@@ -87,7 +87,7 @@ export function useTodoNotifications(options?: { is_read?: boolean }) {
       const params: Record<string, string> = {
         is_read: 'false',
       };
-      
+
       if (buildingId) {
         params.building = buildingId.toString();
       }
@@ -96,7 +96,7 @@ export function useTodoNotifications(options?: { is_read?: boolean }) {
         '/todos/notifications/',
         params
       );
-      
+
       return Array.isArray(response) ? response : response?.results || [];
     },
     staleTime: 30000,
@@ -129,8 +129,8 @@ export function useTodoNotifications(options?: { is_read?: boolean }) {
 
   // Get due soon reminders
   const dueSoonReminders = getNotificationsByType('due_soon');
-  
-  // Get overdue reminders  
+
+  // Get overdue reminders
   const overdueReminders = getNotificationsByType('overdue');
 
   // Get urgent notifications (overdue + due soon, unread)
@@ -146,19 +146,19 @@ export function useTodoNotifications(options?: { is_read?: boolean }) {
     dueSoonReminders,
     overdueReminders,
     urgentNotifications,
-    
+
     // Loading states
     isLoading,
     isMarkingRead: markAsReadMutation.isPending,
-    
+
     // Error
     error,
-    
+
     // Actions
     markAsRead: markAsReadMutation.mutateAsync,
     markAllAsRead,
     refetch,
-    
+
     // Helpers
     getNotificationsByType,
   };
@@ -177,7 +177,7 @@ export function useReminderBadge() {
       const params: Record<string, string> = {
         is_read: 'false',
       };
-      
+
       if (buildingId) {
         params.building = buildingId.toString();
       }
@@ -187,9 +187,9 @@ export function useReminderBadge() {
         '/todos/notifications/',
         params
       );
-      
-      const notifications = Array.isArray(notificationsResponse) 
-        ? notificationsResponse 
+
+      const notifications = Array.isArray(notificationsResponse)
+        ? notificationsResponse
         : notificationsResponse?.results || [];
 
       // Separate by type
@@ -223,4 +223,3 @@ export function useReminderBadge() {
 }
 
 export default useTodoNotifications;
-

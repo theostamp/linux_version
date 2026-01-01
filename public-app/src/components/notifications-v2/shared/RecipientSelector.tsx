@@ -51,7 +51,7 @@ export default function RecipientSelector({
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium">Παραλήπτες</Label>
-      
+
       <div className="flex gap-3">
         <button
           type="button"
@@ -139,5 +139,3 @@ export default function RecipientSelector({
     </div>
   );
 }
-
-

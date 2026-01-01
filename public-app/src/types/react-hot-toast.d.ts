@@ -26,6 +26,6 @@ declare module 'react-hot-toast/dist/react-hot-toast.esm' {
     promise: Promise<any>,
     options?: ToastOptions
   ): Promise<any>;
-  export function clearWaitingQueue(): void;    
-export function onPositionChange(callback: (position: string) => void): void;               
+  export function clearWaitingQueue(): void;
+export function onPositionChange(callback: (position: string) => void): void;
 }

@@ -50,16 +50,16 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
 
   const loadPaymentHistory = async () => {
     if (!apartment) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Get the building ID from localStorage or context
       const buildingId = localStorage.getItem('selectedBuildingId') || '1';
-      
+
       console.log('🔍 Loading payment history for apartment:', apartment.apartment_id);
-      
+
       // Call API to get payments for this apartment
       // Use the same pattern as other financial endpoints
       const params = new URLSearchParams({
@@ -67,27 +67,27 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
         building_id: buildingId,
         limit: '100'
       });
-      
+
       console.log('📡 API call:', `/financial/payments/?apartment=${apartment.apartment_id}&ordering=-date&limit=100`);
       const response = await api.get(`/financial/payments/?apartment=${apartment.apartment_id}&ordering=-date&limit=100`);
-      
+
       // Transform the response data to match our interface
       const payments: PaymentHistoryItem[] = (response.data.results || response.data || []).map((payment: any) => ({
         id: payment.id,
         amount: payment.amount,
         date: payment.date,
         method: payment.method || 'cash',
-        method_display: payment.method === 'bank_transfer' ? 'Τραπεζική Κατάθεση' : 
+        method_display: payment.method === 'bank_transfer' ? 'Τραπεζική Κατάθεση' :
                         payment.method === 'card' ? 'Κάρτα' : 'Μετρητά',
         payment_type: payment.payment_type || 'common_expense',
         payment_type_display: payment.payment_type === 'common_expense' ? 'Κοινόχρηστα' :
-                             payment.payment_type === 'reserve_fund' ? 'Αποθεματικό' : 
+                             payment.payment_type === 'reserve_fund' ? 'Αποθεματικό' :
                              payment.payment_type === 'previous_obligations' ? 'Παλαιότερες Οφειλές' : 'Άλλο',
         reference_number: payment.reference_number,
         notes: payment.notes,
         payer_name: payment.payer_name
       }));
-      
+
       console.log('✅ Payments loaded:', payments.length, 'items');
       setPaymentBreakdown(payments);
     } catch (err: any) {
@@ -108,11 +108,11 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
 
   return (
     <ModalPortal>
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/60 backdrop-blur-sm transition-colors"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -169,7 +169,7 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
                 <span className="text-sm font-medium text-gray-600">Τελευταία Πληρωμή</span>
               </div>
               <p className="text-lg font-semibold text-purple-600 mt-1">
-                {paymentBreakdown.length > 0 
+                {paymentBreakdown.length > 0
                   ? formatDate(paymentBreakdown[0].date)
                   : 'Δεν υπάρχουν πληρωμές'
                 }

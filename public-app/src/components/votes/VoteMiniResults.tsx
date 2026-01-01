@@ -35,7 +35,7 @@ export default function VoteMiniResults({
   }
 
   const choices = ['ΝΑΙ', 'ΟΧΙ', 'ΛΕΥΚΟ'] as const;
-  
+
   // Calculate percentages
   const percentages = choices.map(choice => ({
     choice,
@@ -45,7 +45,7 @@ export default function VoteMiniResults({
   }));
 
   // Find winner
-  const winner = percentages.reduce((prev, current) => 
+  const winner = percentages.reduce((prev, current) =>
     (current.count > prev.count) ? current : prev
   );
 
@@ -72,11 +72,11 @@ export default function VoteMiniResults({
         <div className="flex items-center gap-3">
           {percentages.map((item) => (
             item.count > 0 && (
-              <span 
+              <span
                 key={item.choice}
                 className="flex items-center gap-1"
               >
-                <span 
+                <span
                   className="w-2 h-2 rounded-full"
                   style={{ backgroundColor: item.fill }}
                 />
@@ -90,7 +90,7 @@ export default function VoteMiniResults({
             )
           ))}
         </div>
-        
+
         <div className="flex items-center gap-2 text-gray-500">
           <span>{total} ψήφ{total === 1 ? 'ος' : 'οι'}</span>
           {participationPercentage > 0 && (
@@ -104,4 +104,3 @@ export default function VoteMiniResults({
     </div>
   );
 }
-

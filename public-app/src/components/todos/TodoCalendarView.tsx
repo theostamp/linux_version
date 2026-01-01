@@ -33,22 +33,22 @@ export function TodoCalendarView({ buildingId, className }: TodoCalendarViewProp
   const calendarDays = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
-    
+
     // Get all days of the month
     const days = eachDayOfInterval({ start, end });
-    
+
     // Get the day of week for the first day (0 = Sunday, 1 = Monday, etc.)
     const firstDayOfWeek = start.getDay();
     // Adjust for Monday start (0 = Monday in our display)
     const paddingDays = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-    
+
     return { days, paddingDays };
   }, [currentMonth]);
 
   // Group todos by date
   const todosByDate = useMemo(() => {
     const map = new Map<string, TodoItemType[]>();
-    
+
     todos.forEach((todo) => {
       if (todo.due_date) {
         const dateKey = format(new Date(todo.due_date), 'yyyy-MM-dd');
@@ -57,7 +57,7 @@ export function TodoCalendarView({ buildingId, className }: TodoCalendarViewProp
         map.set(dateKey, existing);
       }
     });
-    
+
     return map;
   }, [todos]);
 
@@ -240,4 +240,3 @@ export function TodoCalendarView({ buildingId, className }: TodoCalendarViewProp
 }
 
 export default TodoCalendarView;
-

@@ -27,7 +27,7 @@ export default function LoginForm({ redirectTo }: { readonly redirectTo?: string
     try {
       const user = await login(email, password);
       toast.success('Επιτυχής σύνδεση!');
-      
+
       // Αν υπάρχει explicit redirectTo, χρησιμοποίησέ το
       // Αλλιώς, κατεύθυνε βάσει ρόλου
       const targetUrl = redirectTo || getDefaultLandingPath(user);

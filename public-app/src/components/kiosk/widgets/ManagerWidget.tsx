@@ -1,10 +1,10 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { 
-  Users, 
-  Phone, 
-  Mail, 
+import {
+  Users,
+  Phone,
+  Mail,
   MapPin,
   Building,
   Clock,
@@ -206,12 +206,12 @@ export default function ManagerWidget({ data, isLoading, error }: BaseWidgetProp
               <Phone className="w-4 h-4 text-kiosk-error-light" />
               <h3 className="text-sm font-semibold text-kiosk-error-light">Έκτακτη Ανάγκη</h3>
             </div>
-            
+
             <div className="text-center">
               <div className="text-lg font-bold text-white mb-2">
                 24/7 Υποστήριξη
               </div>
-              <div 
+              <div
                 className="text-2xl font-bold text-kiosk-error-light cursor-pointer hover:text-kiosk-error transition-colors"
                 onClick={() => handlePhoneCall(managerData.management_office.phone_emergency)}
               >

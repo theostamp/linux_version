@@ -181,9 +181,9 @@ function extractLocation(description: string): string | null {
 function hasVoting(announcement: KioskAnnouncement): boolean {
   const titleLower = announcement.title?.toLowerCase() || '';
   const descLower = announcement.description?.toLowerCase() || '';
-  return titleLower.includes('ψηφοφορ') || 
+  return titleLower.includes('ψηφοφορ') ||
          titleLower.includes('ψήφ') ||
-         descLower.includes('ψηφοφορ') || 
+         descLower.includes('ψηφοφορ') ||
          descLower.includes('ψήφ') ||
          descLower.includes('θέματα ημερήσιας διάταξης');
 }
@@ -275,18 +275,18 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
   // Check if assembly is today
   const assembly = useMemo(() => {
     if (!rawAssembly) return null;
-    
+
     const assemblyDate = new Date(rawAssembly.scheduled_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     assemblyDate.setHours(0, 0, 0, 0);
-    
+
     // Only show if assembly is today
     if (assemblyDate.getTime() === today.getTime()) {
       console.log('[CompactAssemblyBanner] Showing assembly for TODAY:', rawAssembly.title);
       return rawAssembly;
     }
-    
+
     console.log('[CompactAssemblyBanner] Assembly not today, hiding. Date:', rawAssembly.scheduled_date);
     return null;
   }, [rawAssembly]);
@@ -314,20 +314,20 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
     const [hours, minutes] = assembly.scheduled_time.split(':').map(Number);
     assemblyDateTime.setHours(hours, minutes, 0, 0);
   }
-  
+
   const location = assembly.location;
   const hasVotingItems = assembly.agenda_items?.some(item => item.item_type === 'voting') || false;
   const isPreVotingActive = assembly.is_pre_voting_active || false;
-  
+
   // Calculate time remaining
   const diffMs = assemblyDateTime.getTime() - currentTime.getTime();
   const isPast = diffMs < 0;
   const isHappeningNow = isPast && diffMs > -3 * 60 * 60 * 1000; // Within last 3 hours
   const isInProgress = assembly.status === 'in_progress';
-  
+
   // If assembly was more than 3 hours ago and not in progress, don't show
   if (isPast && !isHappeningNow && !isInProgress) return null;
-  
+
   // Calculate countdown components
   const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
   const hours = Math.floor(totalSeconds / 3600);
@@ -339,7 +339,7 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
       <div className="relative bg-gradient-to-br from-orange-600/95 via-amber-600/95 to-red-600/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
         {/* Animated pulse ring for urgency */}
         <div className="absolute inset-0 rounded-2xl animate-pulse ring-2 ring-orange-400/50" />
-        
+
         {/* Header - ΥΠΕΝΘΥΜΙΣΗ */}
         <div className="relative px-4 py-2.5 flex items-center gap-2 bg-gradient-to-r from-orange-500/40 to-amber-500/40 border-b border-white/10">
           <div className="flex items-center gap-2">
@@ -352,7 +352,7 @@ const CompactAssemblyBanner = ({ buildingId, kioskData }: { buildingId?: number 
             ΣΗΜΕΡΑ
           </span>
         </div>
-        
+
         {/* Content */}
         <div className="relative px-4 py-4 space-y-4">
           {/* Title */}
@@ -491,7 +491,7 @@ const CompactQRCode = ({
 export default function AmbientShowcaseScene({ data, buildingId, brandingConfig }: AmbientShowcaseSceneProps) {
   const [now, setNow] = useState(new Date());
   const [paletteHour, setPaletteHour] = useState(() => new Date().getHours());
-  
+
   // Fetch weather data
   const { weather: weatherData } = useKioskWeather(300000); // Refresh every 5 minutes
 
@@ -601,9 +601,9 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
             poster={backgroundImage}
           />
         ) : backgroundImage ? (
-          <img 
-            src={backgroundImage} 
-            alt="" 
+          <img
+            src={backgroundImage}
+            alt=""
             className="h-full w-full object-cover"
           />
         ) : (
@@ -639,7 +639,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
         className="absolute inset-y-0 left-0 w-[17%] min-w-[240px] max-w-[300px] flex flex-col backdrop-blur-2xl border-r shadow-2xl"
         style={{ backgroundColor: palette.sidebarSurface, borderColor: palette.accentBorder }}
       >
-        
+
         {/* Header with greeting */}
         <div className="px-5 pt-6 pb-4">
           <p className="text-indigo-200 text-lg font-medium tracking-wide">{greeting}</p>
@@ -719,7 +719,7 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
             <Smartphone className="h-3.5 w-3.5" />
             <span>Εφαρμογή</span>
           </div>
-          
+
           {/* QR Code centered */}
           <div className="flex flex-col items-center gap-3">
             <CompactQRCode buildingId={effectiveBuildingId} accentColor={palette.accentBorder} />

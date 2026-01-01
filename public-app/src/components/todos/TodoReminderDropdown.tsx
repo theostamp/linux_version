@@ -61,7 +61,7 @@ const notificationTypeConfig = {
 
 export function TodoReminderDropdown({ onOpenCalendar, className }: TodoReminderDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const {
     total,
     overdueCount,
@@ -104,7 +104,7 @@ export function TodoReminderDropdown({ onOpenCalendar, className }: TodoReminder
           title="Υπενθυμίσεις"
         >
           <Bell className="w-5 h-5" />
-          
+
           {/* Badge */}
           {total > 0 && (
             <span
@@ -265,4 +265,3 @@ function NotificationItem({
 }
 
 export default TodoReminderDropdown;
-

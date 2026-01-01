@@ -47,16 +47,16 @@ const paymentFormSchema = z.object({
 }).refine(
   (data) => {
     // Convert values to numbers, treating empty strings and undefined as 0
-    const commonAmount = typeof data.common_expense_amount === 'string' && data.common_expense_amount === '' 
-      ? 0 
+    const commonAmount = typeof data.common_expense_amount === 'string' && data.common_expense_amount === ''
+      ? 0
       : Number(data.common_expense_amount) || 0;
-    const previousAmount = typeof data.previous_obligations_amount === 'string' && data.previous_obligations_amount === '' 
-      ? 0 
+    const previousAmount = typeof data.previous_obligations_amount === 'string' && data.previous_obligations_amount === ''
+      ? 0
       : Number(data.previous_obligations_amount) || 0;
-    const reserveAmount = typeof data.reserve_fund_amount === 'string' && data.reserve_fund_amount === '' 
-      ? 0 
+    const reserveAmount = typeof data.reserve_fund_amount === 'string' && data.reserve_fund_amount === ''
+      ? 0
       : Number(data.reserve_fund_amount) || 0;
-    
+
     // At least one field must have a value > 0
     return commonAmount > 0 || previousAmount > 0 || reserveAmount > 0;
   },
@@ -69,9 +69,9 @@ const paymentFormSchema = z.object({
 type LocalPaymentFormData = z.infer<typeof paymentFormSchema>;
 
 interface PaymentFormProps {
-  apartments: Array<{ 
-    id: number; 
-    number: string; 
+  apartments: Array<{
+    id: number;
+    number: string;
     owner_name: string;
     tenant_name: string;
     occupant_name: string;
@@ -92,15 +92,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   // NEW: Use BuildingContext instead of props
   const { selectedBuilding, buildingContext } = useBuilding();
   const buildingId = selectedBuilding?.id;
-  
+
   const { toast } = useToast();
   const { createPayment, isLoading } = usePayments();
-  
+
   // Use building data from context
   const buildingData = buildingContext ? {
     reserve_contribution_per_apartment: buildingContext.reserve_contribution_per_apartment
   } : null;
-  
+
   const {
     register,
     handleSubmit,
@@ -128,12 +128,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const selectedApartmentId = watch('apartment_id');
   const selectedPayerType = watch('payer_type');
   const selectedApartment = (apartments ?? []).find(apt => apt.id === selectedApartmentId);
-  
+
   const [createdPayment, setCreatedPayment] = useState<Payment | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSubmitTimeRef = useRef<number>(0);
-  
+
   // Store the last created payment for printing purposes
   const [lastCreatedPayment, setLastCreatedPayment] = useState<Payment | null>(null);
   const [lastSelectedApartment, setLastSelectedApartment] = useState<typeof apartments[0] | null>(null);
@@ -141,16 +141,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     payer_name: string;
     payer_type: PayerType;
   } | null>(null);
-  
+
   // Reset print modal when created payment is cleared
   React.useEffect(() => {
     if (!createdPayment) {
       setShowPrintModal(false);
     }
   }, [createdPayment]);
-  
+
   // NOTE: Building data now comes from buildingContext, no need to fetch separately
-  
+
   // Auto-fill payer name based on selected apartment and payer type
   React.useEffect(() => {
     if (selectedApartment && selectedPayerType) {
@@ -186,24 +186,24 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const onSubmit = useCallback(async (data: LocalPaymentFormData) => {
     const now = Date.now();
-    
+
     // Prevent multiple submissions with debouncing (2 seconds)
     if (isSubmitting || (now - lastSubmitTimeRef.current < 2000)) {
       console.warn('Payment submission too frequent or already in progress, ignoring duplicate request');
       return;
     }
-    
+
     lastSubmitTimeRef.current = now;
     console.log('Starting payment submission...');
     setIsSubmitting(true);
-    
+
     try {
       // Optimize: Pre-calculate values to reduce computation in the async function
       const commonExpenseAmount = roundToCents(data.common_expense_amount || 0);
       const previousObligationsAmount = roundToCents(data.previous_obligations_amount || 0);
       const reserveFundAmount = roundToCents(data.reserve_fund_amount || 0);
       const totalAmount = roundToCents(commonExpenseAmount + previousObligationsAmount + reserveFundAmount);
-      
+
       const paymentData: PaymentFormData = {
         apartment_id: data.apartment_id,
         amount: totalAmount,
@@ -298,7 +298,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const handlePrintReceipt = async () => {
     const paymentToPrint = createdPayment || lastCreatedPayment;
     const apartmentToPrint = selectedApartment || lastSelectedApartment;
-    
+
     if (!paymentToPrint || !apartmentToPrint) {
       console.error('Missing payment or apartment data for printing', {
         createdPayment: !!createdPayment,
@@ -317,17 +317,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       });
       return;
     }
-    
+
     try {
       const currentDate = new Date().toLocaleDateString('el-GR');
       const currentTime = new Date().toLocaleTimeString('el-GR');
-      
+
       // Δημιουργία μοναδικού αριθμού απόδειξης
       const receiptNumber = `RCP-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}-${paymentToPrint.id}`;
-      
+
       // URL για QR code επαλήθευσης
       const verificationUrl = `${window.location.origin}/verify-payment/${paymentToPrint.id}`;
-      
+
       // Δημιουργία QR Code ως Data URL
       const generateQRCode = async (text: string): Promise<string> => {
         try {
@@ -354,10 +354,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           `)}`;
         }
       };
-      
+
       // Δημιουργία QR code
       const qrCodeDataUrl = await generateQRCode(verificationUrl);
-      
+
       const receiptContent = `
         <!DOCTYPE html>
         <html>
@@ -525,8 +525,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               margin-top: 40px;
             }
             @media print {
-              body { 
-                margin: 0; 
+              body {
+                margin: 0;
                 -webkit-print-color-adjust: exact !important;
                 color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -584,7 +584,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               </div>
               ` : ''}
             </div>
-            
+
             <div class="info-section">
               <h3>Στοιχεία Πληρωμής</h3>
               <div class="info-row">
@@ -662,24 +662,24 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </body>
         </html>
       `;
-      
+
       // Δημιουργία του παραθύρου εκτύπωσης με καλύτερη διαχείριση popup blocker
       let printWindow: Window | null = null;
-      
+
       try {
         // Πρώτη προσπάθεια: απλό παράθυρο
         printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes,toolbar=no,menubar=no');
-        
+
         if (!printWindow) {
           // Δεύτερη προσπάθεια: με διαφορετικά options
           printWindow = window.open('', '_blank', 'width=800,height=600');
         }
-        
+
         if (!printWindow) {
           // Τρίτη προσπάθεια: χωρίς options
           printWindow = window.open('', '_blank');
         }
-        
+
         if (!printWindow) {
           toast({
             title: 'Σφάλμα Εκτύπωσης',
@@ -688,29 +688,29 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           });
           return;
         }
-        
+
         // Εγγραφή του περιεχομένου
         printWindow.document.write(receiptContent);
         printWindow.document.close();
-        
+
         // Περιμένουμε να φορτωθεί το περιεχόμενο
         const waitForLoad = () => {
           if (printWindow && printWindow.document.readyState === 'complete') {
             printWindow.focus();
-            
+
             // Μικρή καθυστέρηση για να φορτωθούν τα styles και εικόνες
             setTimeout(() => {
               try {
                 if (printWindow && !printWindow.closed) {
                   printWindow.print();
-                  
+
                   // Κλείσιμο μετά την εκτύπωση
                   printWindow.onafterprint = () => {
                     if (printWindow && !printWindow.closed) {
                       printWindow.close();
                     }
                   };
-                  
+
                   // Fallback: κλείσιμο μετά από 10 δευτερόλεπτα
                   setTimeout(() => {
                     if (printWindow && !printWindow.closed) {
@@ -735,10 +735,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             setTimeout(waitForLoad, 100);
           }
         };
-        
+
         // Ξεκινάμε τον έλεγχο φόρτωσης
         waitForLoad();
-        
+
         // Fallback για περιπτώσεις που το readyState δεν αλλάζει
         setTimeout(() => {
           if (printWindow && !printWindow.closed && printWindow.document.readyState !== 'complete') {
@@ -762,7 +762,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             }, 500);
           }
         }, 2000);
-        
+
       } catch (error) {
         console.error('Error creating print window:', error);
         if (printWindow && !printWindow.closed) {
@@ -774,7 +774,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           variant: 'destructive',
         });
       }
-      
+
     } catch (error) {
       console.error('Error in handlePrintReceipt:', error);
       toast({
@@ -791,10 +791,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     const teens = ['δέκα', 'έντεκα', 'δώδεκα', 'δεκατρία', 'δεκατέσσερα', 'δεκαπέντε', 'δεκαέξι', 'δεκαεπτά', 'δεκαοκτώ', 'δεκαεννέα'];
     const tens = ['', '', 'είκοσι', 'τριάντα', 'σαράντα', 'πενήντα', 'εξήντα', 'εβδομήντα', 'ογδόντα', 'ενενήντα'];
     const hundreds = ['', 'εκατό', 'διακόσια', 'τριακόσια', 'τετρακόσια', 'πεντακόσια', 'εξακόσια', 'επτακόσια', 'οκτακόσια', 'εννιακόσια'];
-    
+
     if (num === 0) return 'μηδέν';
     if (num < 0) return 'μείον ' + numberToWords(-num);
-    
+
     // Simplified conversion for common amounts
     if (num < 10) return units[num];
     if (num < 20) return teens[num - 10];
@@ -808,7 +808,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const remainder = num % 100;
       return hundreds[hundred] + (remainder ? ' ' + numberToWords(remainder) : '');
     }
-    
+
     // For larger numbers, just return the decimal representation
     return num.toString();
   };
@@ -839,14 +839,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={() => {
                   const paymentToPrint = createdPayment || lastCreatedPayment;
                   const apartmentToPrint = selectedApartment || lastSelectedApartment;
-                  
+
                   if (!paymentToPrint || !apartmentToPrint) {
                     toast({
                       title: 'Σφάλμα',
@@ -862,14 +862,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               >
                 🖨️ ΕΚΤΥΠΩΣΗ ΑΠΟΔΕΙΞΗΣ
               </Button>
-              
-              <Button 
-                type="button" 
+
+              <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   const paymentToPrint = createdPayment || lastCreatedPayment;
                   const apartmentToPrint = selectedApartment || lastSelectedApartment;
-                  
+
                   if (!paymentToPrint || !apartmentToPrint) {
                     toast({
                       title: 'Σφάλμα',
@@ -884,9 +884,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               >
                 🖨️ Άμεση Εκτύπωση
               </Button>
-              
-              <Button 
-                type="button" 
+
+              <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   setCreatedPayment(null);
@@ -897,9 +897,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               >
                 ➕ Νέα Είσπραξη
               </Button>
-              
-              <Button 
-                type="button" 
+
+              <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   // Call onSuccess to close modal and refresh data
@@ -916,7 +916,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 ✕ Κλείσιμο Modal
               </Button>
             </div>
-            
+
             <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200 mt-3">
               <p className="font-medium mb-1">💡 Επιλογές:</p>
               <ul className="space-y-1">
@@ -928,7 +928,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Apartment Selection */}
           <div className="space-y-2">
@@ -978,8 +978,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       <span>{selectedApartment.tenant_name}</span>
                     </div>
                   )}
-                  {selectedApartment.occupant_name && 
-                   selectedApartment.occupant_name !== selectedApartment.owner_name && 
+                  {selectedApartment.occupant_name &&
+                   selectedApartment.occupant_name !== selectedApartment.owner_name &&
                    selectedApartment.occupant_name !== selectedApartment.tenant_name && (
                     <div className="flex items-center gap-2">
                       <span className="font-medium">🚪 Ένοικος:</span>
@@ -1007,7 +1007,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 step="0.01"
                 min="0"
                 max="999999.99"
-                {...register('common_expense_amount', { 
+                {...register('common_expense_amount', {
                   valueAsNumber: true,
                   onChange: (e) => {
                     // Allow user to type freely
@@ -1045,7 +1045,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 step="0.01"
                 min="0"
                 max="999999.99"
-                {...register('previous_obligations_amount', { 
+                {...register('previous_obligations_amount', {
                   valueAsNumber: true,
                   onChange: (e) => {
                     // Allow user to type freely
@@ -1079,7 +1079,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 step="0.01"
                 min="0"
                 max="999999.99"
-                {...register('reserve_fund_amount', { 
+                {...register('reserve_fund_amount', {
                   valueAsNumber: true,
                   onChange: (e) => {
                     // Allow user to type freely

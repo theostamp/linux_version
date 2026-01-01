@@ -16,7 +16,7 @@ export const useModalState = ({ modalKey, requiredTab, buildingId }: UseModalSta
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     const modalParam = searchParams.get('modal');
-    
+
     // Only show modal if we're on the correct tab and modal parameter matches
     if (modalParam === modalKey && (!requiredTab || tabParam === requiredTab)) {
       setIsOpen(true);

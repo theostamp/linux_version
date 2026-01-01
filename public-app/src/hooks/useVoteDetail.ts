@@ -17,4 +17,3 @@ export function useVoteDetail(voteId?: number, buildingId?: number | null) {
     enabled: !!voteId,
   });
 }
-

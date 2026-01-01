@@ -189,7 +189,7 @@ export default function ScheduledMaintenanceForm({
           if (schedule) {
             console.log('Found existing payment schedule:', schedule);
             setExistingScheduleId(schedule.id);
-            
+
             // Update the initialData to include payment config
             setInitialData(prev => ({
               ...prev,
@@ -214,7 +214,7 @@ export default function ScheduledMaintenanceForm({
                 notes: schedule.notes || '',
               }
             } as any));
-            
+
             // Also set the values immediately for immediate render
             setValue('payment_config.enabled', true as any);
             setValue('payment_config.payment_type', (schedule.payment_type || 'lump_sum') as any);
@@ -304,9 +304,9 @@ export default function ScheduledMaintenanceForm({
     const advanceAmount = (totalAmount * advancePercentage) / 100;
     const remainingAmount = totalAmount - advanceAmount;
     const installmentAmount = remainingAmount / installmentCount;
-    
+
     const createdExpenses = [];
-    
+
     try {
       // Create advance payment expense (current month)
       const currentDate = new Date().toISOString().slice(0, 10);
@@ -320,14 +320,14 @@ export default function ScheduledMaintenanceForm({
         notes: `Προκαταβολή ${advancePercentage}% για συντήρηση. Συνολικό κόστος: ${totalAmount}€. Προγραμματισμένο έργο #${scheduledMaintenanceId}`,
       } as any);
       createdExpenses.push(advanceExpense);
-      
+
       // Create installment expenses for future months
       const baseDate = new Date(startDate);
       for (let i = 1; i <= installmentCount; i++) {
         const installmentDate = new Date(baseDate);
         installmentDate.setMonth(baseDate.getMonth() + i);
         const installmentDateStr = installmentDate.toISOString().slice(0, 10);
-        
+
         const installmentExpense = await createExpense({
           building: buildingId,
           title: `${title} - Δόση ${i}/${installmentCount}`,
@@ -342,7 +342,7 @@ export default function ScheduledMaintenanceForm({
     } catch (error: any) {
       // If any expense creation fails, try to clean up the already created ones
       console.error('Error during installment expense creation:', error);
-      
+
       // Attempt cleanup of partially created expenses
       for (const createdExpense of createdExpenses) {
         try {
@@ -354,22 +354,22 @@ export default function ScheduledMaintenanceForm({
           console.error('Error during cleanup:', cleanupError);
         }
       }
-      
+
       throw error; // Re-throw the original error
     }
   };
 
   // Background processing for payment configuration (non-blocking)
   const processPaymentConfigurationBackground = async (
-    savedId: number, 
-    paymentConfig: any, 
-    values: FormValues, 
-    buildingId: number, 
+    savedId: number,
+    paymentConfig: any,
+    values: FormValues,
+    buildingId: number,
     watchedPrice: any
   ) => {
     console.time('Background payment configuration processing');
     const pc = paymentConfig || {};
-    
+
     try {
       // Create installment expenses if payment type is advance_installments
       if (pc.payment_type === 'advance_installments' && pc.total_amount && pc.installment_count) {
@@ -379,10 +379,10 @@ export default function ScheduledMaintenanceForm({
           const expenseTitle = (expense.title || '').toLowerCase();
           const maintenanceTitle = values.title.toLowerCase();
           const notes = (expense.notes || '').toLowerCase();
-          
+
           // Match expenses related to this maintenance project
           return (
-            (expenseTitle.includes(maintenanceTitle) && 
+            (expenseTitle.includes(maintenanceTitle) &&
              (expenseTitle.includes('προκαταβολή') || expenseTitle.includes('δόση') || expenseTitle.includes('installment'))) ||
             (notes.includes(`προγραμματισμένο έργο #${savedId}`)) ||
             (notes.includes(`maintenance id: ${savedId}`)) ||
@@ -392,7 +392,7 @@ export default function ScheduledMaintenanceForm({
 
         if (relatedExpenses.length > 0) {
           console.log(`Found ${relatedExpenses.length} existing installment expenses for maintenance ${savedId}, cleaning up...`);
-          
+
           // Delete existing related expenses in parallel (with timeout)
           const deletePromises = relatedExpenses.map(async expense => {
             try {
@@ -405,7 +405,7 @@ export default function ScheduledMaintenanceForm({
               console.warn('Failed to delete expense:', expense.id, deleteError);
             }
           });
-          
+
           // Wait for all deletions with overall timeout
           try {
             await Promise.race([
@@ -428,7 +428,7 @@ export default function ScheduledMaintenanceForm({
           category: 'building_maintenance',
           scheduledMaintenanceId: savedId,
         });
-        
+
         // Show background success toast
         toast({ title: 'Επιτυχία', description: `Δημιουργήθηκαν ${pc.installment_count + 1} τμηματικές δαπάνες για το έργο.` });
       }
@@ -445,7 +445,7 @@ export default function ScheduledMaintenanceForm({
         start_date: pc.start_date || new Date().toISOString().slice(0, 10),
         notes: pc.notes || '',
       };
-      
+
       // Validate required fields based on payment type
       if (schedulePayload.payment_type === 'advance_installments') {
         if (!schedulePayload.total_amount || schedulePayload.total_amount <= 0) {
@@ -457,26 +457,26 @@ export default function ScheduledMaintenanceForm({
           return; // Skip payment schedule creation if invalid data
         }
       }
-      
+
       // Clean up undefined/null values that might cause backend validation issues
       Object.keys(schedulePayload).forEach(key => {
         if (schedulePayload[key] === undefined || schedulePayload[key] === null) {
           delete schedulePayload[key];
         }
       });
-      
+
       // Always check for existing schedules to prevent duplicates
       let foundExistingSchedules = [];
       try {
-        const existingSchedulesResp = await api.get('/maintenance/payment-schedules/', { 
-          params: { scheduled_maintenance: savedId } 
+        const existingSchedulesResp = await api.get('/maintenance/payment-schedules/', {
+          params: { scheduled_maintenance: savedId }
         });
-        foundExistingSchedules = Array.isArray(existingSchedulesResp.data) ? 
+        foundExistingSchedules = Array.isArray(existingSchedulesResp.data) ?
           existingSchedulesResp.data : (existingSchedulesResp.data?.results || []);
       } catch (fetchError) {
         console.warn('Failed to fetch existing payment schedules:', fetchError);
       }
-      
+
       if (existingScheduleId && foundExistingSchedules.find((s: any) => s.id === existingScheduleId)) {
         // Update the known existing payment schedule
         console.log('🔄 Updating existing payment schedule:', existingScheduleId);
@@ -491,7 +491,7 @@ export default function ScheduledMaintenanceForm({
           // Create new payment schedule
           console.log('🔍 Creating payment schedule with payload:', schedulePayload);
           console.log('🔍 API endpoint:', `/maintenance/scheduled/${savedId}/create_payment_schedule/`);
-          
+
           // Verify the maintenance exists before creating payment schedule
           try {
             const maintenanceCheck = await api.get(`/maintenance/scheduled/${savedId}/`);
@@ -500,11 +500,11 @@ export default function ScheduledMaintenanceForm({
             console.error('❌ Maintenance not found:', savedId, checkError);
             return; // Skip payment schedule creation if maintenance doesn't exist
           }
-          
+
           await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
         }
       }
-      
+
       console.timeEnd('Background payment configuration processing');
     } catch (error: any) {
       console.error('Background payment configuration error:', error);
@@ -518,12 +518,12 @@ export default function ScheduledMaintenanceForm({
     console.log('🔥 Submit handler called with values:', values);
     const buildingId: number = getActiveBuildingId();
     const isEditing = Boolean(initialData?.id);
-    
+
     try {
       // Simplified change detection for debugging
       console.log('🔍 Checking for changes...');
       console.log('isEditing:', isEditing, 'initialData:', initialData);
-      
+
       if (isEditing && initialData) {
         // Comprehensive change detection
         const hasBasicChanges = (
@@ -539,13 +539,13 @@ export default function ScheduledMaintenanceForm({
         // Payment config change detection
         const initialPaymentConfig = (initialData as any)?.payment_config || {};
         const currentPaymentConfig = values.payment_config || {};
-        
+
         console.log('💰 Payment Config Comparison:');
         console.log('Initial payment_type:', initialPaymentConfig.payment_type);
         console.log('Current payment_type:', currentPaymentConfig.payment_type);
         console.log('Initial payment config:', initialPaymentConfig);
         console.log('Current payment config:', currentPaymentConfig);
-        
+
         const hasPaymentConfigChanges = (
           currentPaymentConfig.enabled !== initialPaymentConfig.enabled ||
           currentPaymentConfig.payment_type !== initialPaymentConfig.payment_type ||
@@ -563,22 +563,22 @@ export default function ScheduledMaintenanceForm({
         );
 
         const hasAnyChanges = hasBasicChanges || hasPaymentConfigChanges;
-        
+
         if (!hasAnyChanges) {
           console.log('❌ No changes detected');
           console.log('Basic changes:', hasBasicChanges, 'Payment config changes:', hasPaymentConfigChanges);
-          toast({ 
-            title: 'Καμία Αλλαγή', 
+          toast({
+            title: 'Καμία Αλλαγή',
             description: 'Δεν εντοπίστηκαν αλλαγές για αποθήκευση.',
-            variant: 'default' as any 
+            variant: 'default' as any
           });
           return;
         }
-        
+
         console.log('✅ Changes detected, proceeding...');
         console.log('Basic changes:', hasBasicChanges, 'Payment config changes:', hasPaymentConfigChanges);
       }
-    
+
       const payload: any = {
       title: values.title,
       priority: values.priority,
@@ -644,7 +644,7 @@ export default function ScheduledMaintenanceForm({
 
       console.time('Main save operation');
       let savedId: number | undefined = initialData?.id ?? undefined;
-      
+
       if (initialData?.id) {
         console.log('Updating existing maintenance:', initialData.id);
         await api.patch(`/maintenance/scheduled/${initialData.id}/`, payload, { xToastSuppress: true } as any);
@@ -654,10 +654,10 @@ export default function ScheduledMaintenanceForm({
         const resp = await api.post('/maintenance/scheduled/', payload, { xToastSuppress: true } as any);
         savedId = resp?.data?.id ?? undefined;
       }
-      
+
       console.timeEnd('Main save operation');
       console.log('Saved maintenance with ID:', savedId);
-      
+
       // Show immediate success feedback
       if (savedId) {
         toast({ title: 'Επιτυχία', description: `Το έργο καταχωρήθηκε επιτυχώς (ID: ${savedId}).` });
@@ -666,9 +666,9 @@ export default function ScheduledMaintenanceForm({
         toast({ title: 'Επιτυχία', description: 'Το έργο καταχωρήθηκε επιτυχώς.' });
         router.push('/maintenance/scheduled');
       }
-      
+
       console.log('💾 Save completed, processing payment configuration...');
-      
+
       // Process payment configuration in background (non-blocking)
       if (paymentConfig?.payment_type === 'advance_installments' && typeof savedId === 'number') {
         const savedIdForProcessing = savedId;
@@ -697,11 +697,11 @@ export default function ScheduledMaintenanceForm({
           (values) => onSubmit(values),
           (errors) => {
             console.error('❌ Form validation failed:', errors);
-            
+
             // Create user-friendly error messages with Greek field names
             const fieldNameMap: Record<string, string> = {
               'title': 'Τίτλος',
-              'description': 'Περιγραφή', 
+              'description': 'Περιγραφή',
               'price': 'Συνολικό Κόστος',
               'scheduled_date': 'Ημερομηνία Προγραμματισμού',
               'category': 'Κατηγορία',
@@ -711,13 +711,13 @@ export default function ScheduledMaintenanceForm({
               'payment_config.installment_count': 'Αριθμός Δόσεων',
               'payment_config.total_amount': 'Συνολικό Ποσό Πληρωμής'
             };
-            
+
             const errorMessages = Object.entries(errors).map(([field, error]) => {
               const greekFieldName = fieldNameMap[field] || field;
               const errorMessage = (error as any)?.message || 'Το πεδίο αυτό είναι απαραίτητο';
               return `• ${greekFieldName}: ${errorMessage}`;
             }).join('\n');
-            
+
             toast({
               title: 'Σφάλμα Φόρμας',
               description: errorMessages,
@@ -885,13 +885,13 @@ export default function ScheduledMaintenanceForm({
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Συνολικό Κόστος (€)</label>
-              <Input 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                placeholder="0.00" 
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
                 className={errors.price ? 'border-red-500' : ''}
-                {...register('price')} 
+                {...register('price')}
               />
               {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price.message}</p>}
             </div>
@@ -900,11 +900,11 @@ export default function ScheduledMaintenanceForm({
           <PaymentConfigurationSection control={control} watch={watch as any} setValue={setValue as any} projectPrice={watchedPrice as any} />
           <div>
             <label className="block text-sm font-medium mb-1">Περιγραφή</label>
-            <Textarea 
-              rows={4} 
-              placeholder="Σύντομη περιγραφή εργασιών, πρόσβαση, υλικά, κλπ." 
+            <Textarea
+              rows={4}
+              placeholder="Σύντομη περιγραφή εργασιών, πρόσβαση, υλικά, κλπ."
               className={errors.description ? 'border-red-500' : ''}
-              {...register('description')} 
+              {...register('description')}
             />
             {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>}
           </div>
@@ -1230,4 +1230,3 @@ function formatForDateInput(iso: string): string {
     return '';
   }
 }
-

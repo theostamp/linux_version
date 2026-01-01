@@ -17,17 +17,17 @@ interface ReplyPreviewProps {
  * Reply Preview Component
  * Shows either above the input (when replying) or inside a message (when showing quoted message)
  */
-export function ReplyPreview({ 
-  message, 
-  onCancel, 
+export function ReplyPreview({
+  message,
+  onCancel,
   onClick,
   variant = 'input',
-  className 
+  className
 }: ReplyPreviewProps) {
   const isDeleted = 'is_deleted' in message && message.is_deleted;
   const senderName = 'sender_name' in message ? message.sender_name : 'Άγνωστος';
-  const content = isDeleted 
-    ? 'Αυτό το μήνυμα διαγράφηκε' 
+  const content = isDeleted
+    ? 'Αυτό το μήνυμα διαγράφηκε'
     : message.content;
 
   if (variant === 'message') {
@@ -71,7 +71,7 @@ export function ReplyPreview({
       <div className="flex-shrink-0 p-2 rounded-lg bg-primary/10">
         <Reply className="w-4 h-4 text-primary" />
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-primary mb-0.5">
           Απάντηση σε {senderName}
@@ -83,7 +83,7 @@ export function ReplyPreview({
           {content}
         </p>
       </div>
-      
+
       {onCancel && (
         <button
           onClick={onCancel}
@@ -97,4 +97,3 @@ export function ReplyPreview({
 }
 
 export default ReplyPreview;
-

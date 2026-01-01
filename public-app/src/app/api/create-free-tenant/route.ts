@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
       coreApiUrl = `https://${coreApiUrl}`;
     }
-    
+
     // Remove trailing slash
     coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
@@ -90,11 +90,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[create-free-tenant] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     return NextResponse.json(
       { error: `Αποτυχία δημιουργίας workspace: ${errorMessage}` },
       { status: 500 }
     );
   }
 }
-

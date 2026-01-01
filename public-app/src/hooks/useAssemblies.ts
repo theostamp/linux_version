@@ -52,7 +52,7 @@ export function useAssemblies(
   options?: UseQueryOptions<AssemblyListItem[], Error>
 ) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  
+
   const enabled = isAuthenticated && !authLoading;
 
   return useQuery<AssemblyListItem[], Error>({
@@ -132,7 +132,7 @@ export function useUpdateAssembly() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateAssemblyPayload }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateAssemblyPayload }) =>
       updateAssembly(id, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['assemblies'] });
@@ -196,7 +196,7 @@ export function useAdjournAssembly() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, continuationDate }: { id: string; continuationDate?: string }) => 
+    mutationFn: ({ id, continuationDate }: { id: string; continuationDate?: string }) =>
       adjournAssembly(id, continuationDate),
     onSuccess: (data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['assembly', id] });
@@ -229,9 +229,9 @@ export function useGenerateMinutes() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, options }: { 
-      id: string; 
-      options?: { template_id?: string; secretary_name?: string; chairman_name?: string } 
+    mutationFn: ({ id, options }: {
+      id: string;
+      options?: { template_id?: string; secretary_name?: string; chairman_name?: string }
     }) => generateAssemblyMinutes(id, options),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['assembly', id] });
@@ -312,7 +312,7 @@ export function useCreateAgendaItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ assemblyId, payload }: { assemblyId: string; payload: CreateAgendaItemPayload }) => 
+    mutationFn: ({ assemblyId, payload }: { assemblyId: string; payload: CreateAgendaItemPayload }) =>
       createAgendaItem(assemblyId, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['agenda-items', data.assembly] });
@@ -329,7 +329,7 @@ export function useUpdateAgendaItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateAgendaItemPayload> }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateAgendaItemPayload> }) =>
       updateAgendaItem(id, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['agenda-items', data.assembly] });
@@ -379,7 +379,7 @@ export function useEndAgendaItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, options }: { id: string; options?: { decision?: string; decision_type?: string } }) => 
+    mutationFn: ({ id, options }: { id: string; options?: { decision?: string; decision_type?: string } }) =>
       endAgendaItem(id, options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agenda-items'] });
@@ -432,7 +432,7 @@ export function useAttendeeCheckIn() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, attendanceType }: { id: string; attendanceType?: AttendanceType }) => 
+    mutationFn: ({ id, attendanceType }: { id: string; attendanceType?: AttendanceType }) =>
       attendeeCheckIn(id, attendanceType),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['assembly-attendees'] });
@@ -467,7 +467,7 @@ export function useAttendeeRSVP() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status, notes }: { id: string; status: RSVPStatus; notes?: string }) => 
+    mutationFn: ({ id, status, notes }: { id: string; status: RSVPStatus; notes?: string }) =>
       attendeeRSVP(id, status, notes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assembly-attendees'] });
@@ -484,11 +484,11 @@ export function useCastVote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ attendeeId, agendaItemId, vote, notes }: { 
-      attendeeId: string; 
-      agendaItemId: string; 
-      vote: VoteChoice; 
-      notes?: string 
+    mutationFn: ({ attendeeId, agendaItemId, vote, notes }: {
+      attendeeId: string;
+      agendaItemId: string;
+      vote: VoteChoice;
+      notes?: string
     }) => attendeeCastVote(attendeeId, agendaItemId, vote, notes),
     onSuccess: (data, { agendaItemId }) => {
       queryClient.invalidateQueries({ queryKey: ['agenda-items'] });

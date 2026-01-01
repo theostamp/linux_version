@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building2, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Building2,
+  TrendingUp,
+  TrendingDown,
   AlertTriangle,
   RefreshCw,
   Users,
@@ -70,10 +70,10 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
       if (selectedMonth) {
         params.append('month', selectedMonth);
       }
-      
+
       const url = `/financial/dashboard/apartment_balances/?${params.toString()}`;
       const response = await api.get(url);
-      
+
       setData(response.data);
     } catch (err: any) {
       console.error('Error loading apartment data:', err);
@@ -130,8 +130,8 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
         <div className="text-center">
           <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
           <p className="text-red-600">{error}</p>
-          <Button 
-            onClick={loadData} 
+          <Button
+            onClick={loadData}
             className="mt-2"
             variant="outline"
           >
@@ -195,7 +195,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
             <Users className="h-4 w-4 text-gray-600" />
             <span className="text-sm font-medium">Κατανομή Κατάστασης</span>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
                 {apartmentCount - summary.debt_count}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingDown className="h-3 w-3 text-orange-500" />
@@ -216,7 +216,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
                 {summary.debt_count}
               </span>
             </div>
-            
+
             {summary.critical_count > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
                 </span>
               </div>
             )}
-            
+
             {summary.credit_count > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -248,7 +248,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
             <Calculator className="h-4 w-4 text-gray-600" />
             <span className="text-sm font-medium">Μέσοι Όροι</span>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs">Μέση οφειλή ανά διαμ.</span>
@@ -256,14 +256,14 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
                 {formatCurrency(summary.total_net_obligations / Math.max(1, apartmentCount))}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <span className="text-xs">Μέση πληρωμή ανά διαμ.</span>
               <span className="text-sm font-medium">
                 {formatCurrency(summary.total_payments / Math.max(1, apartmentCount))}
               </span>
             </div>
-            
+
             {summary.debt_count > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-xs">Μέση οφειλή οφειλετών</span>
@@ -283,7 +283,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
             <CreditCard className="h-4 w-4 text-red-600" />
             <span className="text-sm font-medium">Διαμερίσματα με Υψηλότερες Οφειλές</span>
           </div>
-          
+
           <div className="space-y-2">
             {apartments
               .filter(apt => apt.net_obligation > 0)
@@ -309,7 +309,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
                 </div>
               ))}
           </div>
-          
+
           {apartments.filter(apt => apt.net_obligation > 0).length > 5 && (
             <div className="text-xs text-gray-500 text-center mt-2 pt-2 border-t">
               ... και {apartments.filter(apt => apt.net_obligation > 0).length - 5} ακόμη διαμερίσματα με οφειλές
@@ -320,7 +320,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
 
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>
-          Συνολικά {apartmentCount} διαμερίσματα • 
+          Συνολικά {apartmentCount} διαμερίσματα •
           {summary.debt_count > 0 ? ` ${summary.debt_count} με οφειλές` : ' Όλα ενήμερα'}
         </span>
         <Button

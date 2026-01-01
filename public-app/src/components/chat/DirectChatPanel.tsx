@@ -20,8 +20,8 @@ import {
   Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-  useDirectConversations, 
+import {
+  useDirectConversations,
   useDirectChat,
 } from '@/hooks/useChat';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -37,19 +37,19 @@ interface DirectChatPanelProps {
 /**
  * Panel για διαχείριση ιδιωτικών συνομιλιών
  */
-export function DirectChatPanel({ 
-  buildingId, 
-  selectedUser, 
+export function DirectChatPanel({
+  buildingId,
+  selectedUser,
   onBack,
-  className 
+  className
 }: DirectChatPanelProps) {
   const { user: currentUser } = useAuth();
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [view, setView] = useState<'list' | 'chat'>('list');
-  
-  const { 
-    conversations, 
-    totalUnread, 
+
+  const {
+    conversations,
+    totalUnread,
     isLoading: loadingConversations,
     startConversation,
     refetch: refetchConversations
@@ -64,13 +64,13 @@ export function DirectChatPanel({
 
   const handleStartConversation = async (user: BuildingUser) => {
     if (!buildingId) return;
-    
+
     try {
       const result = await startConversation({
         recipient_id: user.id,
         building_id: buildingId,
       });
-      
+
       setActiveConversationId(result.conversation.id);
       setView('chat');
     } catch (err) {
@@ -216,11 +216,11 @@ function ConversationsList({
 /**
  * Single Conversation Item
  */
-function ConversationItem({ 
-  conversation, 
-  onSelect 
-}: { 
-  conversation: DirectConversation; 
+function ConversationItem({
+  conversation,
+  onSelect
+}: {
+  conversation: DirectConversation;
   onSelect: () => void;
 }) {
   const other = conversation.other_participant;
@@ -258,7 +258,7 @@ function ConversationItem({
             </span>
           )}
         </div>
-        
+
         {lastMessage && (
           <div className="flex items-center justify-between gap-2 mt-0.5">
             <p className={cn(
@@ -274,7 +274,7 @@ function ConversationItem({
             )}
           </div>
         )}
-        
+
         <p className="text-xs text-slate-400 mt-0.5">
           {conversation.building_name}
         </p>
@@ -297,10 +297,10 @@ function DirectChatView({
 }) {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const { 
-    messages, 
-    isLoading, 
+
+  const {
+    messages,
+    isLoading,
     isSending,
     error,
     sendMessage,
@@ -322,10 +322,10 @@ function DirectChatView({
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
-    
+
     const content = inputValue.trim();
     setInputValue('');
-    
+
     try {
       await sendMessage({ content });
     } catch (err) {
@@ -342,8 +342,8 @@ function DirectChatView({
   };
 
   // Get recipient info from first message
-  const recipientInfo = messages[0] 
-    ? (messages[0].sender_id === currentUserId 
+  const recipientInfo = messages[0]
+    ? (messages[0].sender_id === currentUserId
         ? { name: messages[0].recipient_name, id: messages[0].recipient_id }
         : { name: messages[0].sender_name, id: messages[0].sender_id })
     : null;
@@ -358,7 +358,7 @@ function DirectChatView({
         >
           <ArrowLeft className="w-5 h-5 text-slate-600" />
         </button>
-        
+
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-800 truncate">
             {recipientInfo?.name || 'Συνομιλία'}
@@ -415,7 +415,7 @@ function DirectChatView({
                 isOwn={message.sender_id === currentUserId}
                 showTime={
                   index === 0 ||
-                  new Date(message.created_at).getTime() - 
+                  new Date(message.created_at).getTime() -
                   new Date(messages[index - 1].created_at).getTime() > 300000
                 }
               />
@@ -444,7 +444,7 @@ function DirectChatView({
               style={{ maxHeight: '120px' }}
             />
           </div>
-          
+
           <button
             onClick={handleSend}
             disabled={!inputValue.trim() || isSending}
@@ -477,7 +477,7 @@ function DirectMessageBubble({
   showTime: boolean;
 }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -489,11 +489,11 @@ function DirectMessageBubble({
           {message.sender_name}
         </span>
       )}
-      
+
       <div className={cn(
         'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-sm',
         'transition-all duration-200',
-        isOwn 
+        isOwn
           ? [
               // Δικά μου μηνύματα - Μπλε gradient
               'bg-gradient-to-br from-blue-500 to-blue-600',
@@ -502,7 +502,7 @@ function DirectMessageBubble({
               'shadow-blue-500/20',
             ]
           : [
-              // Μηνύματα άλλου - Teal/Cyan 
+              // Μηνύματα άλλου - Teal/Cyan
               'bg-gradient-to-br from-teal-50 to-cyan-50',
               'text-slate-800',
               'rounded-bl-md',
@@ -517,7 +517,7 @@ function DirectMessageBubble({
           {message.content}
         </p>
       </div>
-      
+
       {/* Time & Read status */}
       <div className={cn(
         'flex items-center gap-1.5 mt-1 px-2',
@@ -530,7 +530,7 @@ function DirectMessageBubble({
         )}
         {isOwn && (
           <span className="flex items-center">
-            {message.is_read 
+            {message.is_read
               ? <CheckCheck className="w-3.5 h-3.5 text-blue-400" />
               : <Check className="w-3.5 h-3.5 text-slate-300" />
             }
@@ -556,4 +556,3 @@ function formatMessageTime(dateStr: string): string {
 }
 
 export default DirectChatPanel;
-
