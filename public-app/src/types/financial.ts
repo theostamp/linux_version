@@ -65,6 +65,13 @@ export interface Expense {
     amount: number;
   }>;
 
+  // Project integration (optional)
+  project?: number | string | null;
+  project_title?: string;
+  project_status?: string;
+  project_url?: string;
+  audit_trail?: Record<string, any> | null;
+
   // Installment information
   has_installments?: boolean;
   linked_maintenance_projects?: Array<{

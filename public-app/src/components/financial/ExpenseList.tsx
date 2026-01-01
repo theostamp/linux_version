@@ -86,93 +86,26 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     // Δείτε: OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // Έλεγχος αν η δαπάνη είναι από προσφορά/έργο
-    const isFromApprovedOffer =
-      expense.notes?.toLowerCase().includes('προγραμματισμένο έργο #') ||
-      expense.notes?.toLowerCase().includes('maintenance id:') ||
-      expense.notes?.toLowerCase().includes('project id:') ||
-      expense.title?.includes(' - Προκαταβολή') ||
-      expense.title?.includes(' - Δόση ') ||
-      expense.title?.includes(' - Installment ');
-
-    const isProjectRelated = (
-      // Δαπάνες που προέρχονται από εγκεκριμένες προσφορές
-      isFromApprovedOffer ||
-      // Δαπάνες με δόσεις/διακανονισμούς
-      (expense.has_installments && expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0) ||
-      // Δαπάνες που συνδέονται με προγραμματισμένα έργα (ανεξάρτητα από δόσεις)
-      (expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0) ||
-      // Δαπάνες που έχουν maintenance-related κατηγορίες
-      [
-        // Κτίριο
-        'building_maintenance',
-        'roof_maintenance', 'roof_repair',
-        'facade_maintenance', 'facade_repair',
-        'painting_exterior', 'painting_interior',
-        'garden_maintenance', 'parking_maintenance', 'entrance_maintenance',
-
-        // Ανελκυστήρας
-        'elevator_maintenance', 'elevator_repair', 'elevator_inspection', 'elevator_modernization',
-
-        // Ηλεκτρικά
-        'electrical_maintenance', 'electrical_repair', 'electrical_upgrade',
-        'lighting_common', 'intercom_system',
-
-        // Υδραυλικά
-        'plumbing_maintenance', 'plumbing_repair',
-        'water_tank_cleaning', 'water_tank_maintenance', 'sewage_system',
-
-        // Θέρμανση
-        'heating_maintenance', 'heating_repair', 'heating_inspection', 'heating_modernization',
-
-        // Έκτακτες
-        'emergency_repair', 'storm_damage', 'flood_damage', 'fire_damage', 'earthquake_damage', 'vandalism_repair',
-
-        // Ειδικές επισκευές
-        'locksmith', 'glass_repair', 'door_repair', 'window_repair', 'balcony_repair', 'staircase_repair',
-
-        // Ασφάλεια & Πρόσβαση
-        'security_system', 'cctv_installation', 'access_control', 'fire_alarm', 'fire_extinguishers',
-
-        // Ειδικές εργασίες
-        'asbestos_removal', 'lead_paint_removal', 'mold_removal', 'pest_control', 'tree_trimming', 'snow_removal',
-
-        // Ενεργειακή απόδοση
-        'energy_upgrade', 'insulation_work', 'solar_panel_installation', 'led_lighting', 'smart_systems'
-      ].includes(expense.category as string)
-    );
+    const projectIdMatch = expense.notes?.match(/project id:\s*([a-f0-9-]+)/i);
+    const maintenanceIdMatch = expense.notes?.match(/maintenance id:\s*([a-f0-9-]+)/i);
+    const linkedMaintenanceProject = expense.linked_maintenance_projects?.[0];
+    const linkedMaintenanceId =
+      linkedMaintenanceProject?.id ??
+      expense.linked_scheduled_maintenance ??
+      expense.maintenance_payment_receipts?.[0]?.scheduled_maintenance?.id ??
+      (maintenanceIdMatch && maintenanceIdMatch[1]);
+    const linkedProjectId = expense.project ?? (projectIdMatch && projectIdMatch[1]);
+    const isProjectRelated = Boolean(linkedProjectId || linkedMaintenanceId);
 
     if (isProjectRelated) {
-      const project = expense.linked_maintenance_projects?.[0];
-      const projectInfo = project ? ` με έργο "${project.title}"` : '';
+      const projectTitle = expense.project_title || linkedMaintenanceProject?.title;
+      const projectInfo = projectTitle ? `συνδέεται με το έργο <strong>"${projectTitle}"</strong> και` : '';
 
-      // Debug logging
-      console.log('🔍 Project-related expense detected:', {
-        expenseTitle: expense.title,
-        expenseCategory: expense.category,
-        hasInstallments: expense.has_installments,
-        linkedProjects: expense.linked_maintenance_projects,
-        project: project
-      });
-
-      // Καθορισμός τύπου προέλευσης
-      let sourceType = 'προγραμματισμένο έργο';
-      let navigationTarget = '/maintenance/scheduled';
-      let navigationLabel = 'Προγραμματισμένα Έργα';
-
-      if (isFromApprovedOffer) {
-        sourceType = 'εγκεκριμένη προσφορά';
-
-        // Προσπάθεια εύρεσης του project ID από τα notes
-        const projectIdMatch = expense.notes?.match(/project id:\s*([a-f0-9-]+)/i);
-        if (projectIdMatch && projectIdMatch[1]) {
-          navigationTarget = `/projects/${projectIdMatch[1]}`;
-          navigationLabel = 'Έργα & Προσφορές';
-        } else {
-          navigationTarget = '/projects';
-          navigationLabel = 'Έργα & Προσφορές';
-        }
-      }
+      const navigationTarget = linkedProjectId
+        ? `/projects/${linkedProjectId}`
+        : `/maintenance/scheduled/${linkedMaintenanceId}/edit`;
+      const navigationLabel = linkedProjectId ? 'Έργα & Προσφορές' : 'Προγραμματισμένα Έργα';
+      const sourceType = linkedProjectId ? 'έργο' : 'προγραμματισμένο έργο';
 
       // Δημιουργία custom dialog για ενημέρωση
       const messageDiv = document.createElement('div');
@@ -180,14 +113,14 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         <div style="padding: 20px; text-align: center;">
           <h3 style="color: #dc2626; margin-bottom: 10px;">🔒 Προστατευμένη Δαπάνη</h3>
           <p style="margin-bottom: 15px;">
-            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project?.title || 'Άγνωστο'}"</strong> και` : `προέρχεται από ${sourceType} και`}
+            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo || `προέρχεται από ${sourceType} και`}
             <strong style="color: #dc2626;">ΔΕΝ μπορεί να διαγραφεί απευθείας</strong>.
           </p>
           <p style="margin-bottom: 20px; color: #666;">
             Για να διαγράψετε αυτή τη δαπάνη, πρέπει να:
             <br>• Μεταβείτε στη σελίδα <strong>"${navigationLabel}"</strong>
             <br>• Βρείτε το σχετικό έργο/προσφορά
-            <br>• Διαγράψετε ολόκληρο το έργο ή αλλάξετε τις ρυθμίσεις πληρωμής
+            <br>• Διαγράψετε/ενημερώσετε από εκεί ώστε να ενημερωθούν όλα τα συνδεδεμένα στοιχεία
           </p>
           <p style="margin-bottom: 0; font-weight: bold;">
             Θα μεταφερθείτε αυτόματα στη σωστή σελίδα σε 5 δευτερόλεπτα...
@@ -203,14 +136,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
           action: {
             label: 'Μετάβαση',
             onClick: () => {
-              // Redirect στη σελίδα προγραμματισμένων έργων
-              if (project?.id) {
-                // Αν έχουμε το ID του έργου, πάμε απευθείας στη σελίδα επεξεργασίας
-                window.location.href = `/maintenance/scheduled/${project.id}/edit`;
-              } else {
-                // Αλλιώς πάμε στη γενική σελίδα προγραμματισμένων έργων
-                window.location.href = '/maintenance/scheduled';
-              }
+              window.location.href = navigationTarget;
             }
           }
         }
@@ -218,11 +144,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
 
       // Αυτόματη μετάβαση μετά από 5 δευτερόλεπτα αν ο χρήστης δεν πατήσει το κουμπί
       setTimeout(() => {
-        if (project?.id) {
-          window.location.href = `/maintenance/scheduled/${project.id}/edit`;
-        } else {
-          window.location.href = '/maintenance/scheduled';
-        }
+        window.location.href = navigationTarget;
       }, 5000);
 
       return;
