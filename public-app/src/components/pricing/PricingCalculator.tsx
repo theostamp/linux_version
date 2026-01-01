@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Building, Home, Monitor, Phone, ChevronRight, Check } from "lucide-react";
 import { getMonthlyPrice, getYearlyPrice, isFreeEligible, PlanId } from "@/lib/pricing";
 
@@ -95,7 +95,25 @@ export function PricingCalculator({
   const [apartments, setApartments] = useState(initialApartments);
   const [selectedPlan, setSelectedPlan] = useState<"web" | "premium" | "premium_iot">("premium");
   const [isYearly, setIsYearly] = useState(false);
-  const sliderPercent = ((apartments - minApartments) / (maxApartments - minApartments)) * 100;
+  const sliderRef = useRef<HTMLInputElement>(null);
+  const [sliderBubbleLeft, setSliderBubbleLeft] = useState(0);
+  const sliderThumbSize = 24;
+
+  const updateSliderBubble = useCallback(() => {
+    if (!sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const percent = (apartments - minApartments) / (maxApartments - minApartments);
+    const left = percent * (rect.width - sliderThumbSize) + sliderThumbSize / 2;
+    setSliderBubbleLeft(left);
+  }, [apartments, minApartments, maxApartments, sliderThumbSize]);
+
+  useEffect(() => {
+    updateSliderBubble();
+    if (typeof window === "undefined") return;
+    const handleResize = () => updateSliderBubble();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [updateSliderBubble]);
 
   // Determine if Free tier applies
   const freeEligible = isFreeEligible(apartments);
@@ -175,7 +193,7 @@ export function PricingCalculator({
               <div
                 className="absolute flex h-7 min-w-[2.25rem] items-center justify-center rounded-full bg-accent-primary px-2 text-xs font-semibold text-white shadow-lg shadow-accent-primary/30"
                 style={{
-                  left: `${sliderPercent}%`,
+                  left: sliderBubbleLeft ? `${sliderBubbleLeft}px` : "0px",
                   transform: "translateX(-50%)",
                 }}
               >
@@ -183,6 +201,7 @@ export function PricingCalculator({
               </div>
             </div>
             <input
+              ref={sliderRef}
               type="range"
               min={minApartments}
               max={maxApartments}
