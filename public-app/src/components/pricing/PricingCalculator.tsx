@@ -90,7 +90,7 @@ export function PricingCalculator({
   showCTA = true,
   compact = false,
 }: PricingCalculatorProps) {
-  const minApartments = 1;
+  const minApartments = 4;
   const maxApartments = 60;
   const [apartments, setApartments] = useState(initialApartments);
   const [selectedPlan, setSelectedPlan] = useState<"web" | "premium" | "premium_iot">("premium");
@@ -231,7 +231,7 @@ export function PricingCalculator({
           </div>
           <div className="relative mt-2 h-4 text-xs text-[var(--text-dark-secondary)]">
             {[
-              { value: 1, label: "1" },
+              { value: 4, label: "4" },
               { value: 7, label: "7" },
               { value: 20, label: "20" },
               { value: 40, label: "40" },
