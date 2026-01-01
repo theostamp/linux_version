@@ -228,19 +228,39 @@ def building_info(request, building_id: int):
 
             heating_start_date, heating_end_date = get_heating_period(heating_year)
             
-            # Heating keywords for filtering
-            heating_keywords = ['θέρμανσ', 'θερμανσ', 'heating', 'πετρέλαιο', 'πετρελαιο', 'αέριο', 'αεριο', 'gas', 'mazout']
-            
-            # Build Q filter for heating keywords
-            heating_q = Q()
-            for keyword in heating_keywords:
-                heating_q |= Q(title__icontains=keyword) | Q(notes__icontains=keyword) | Q(category__icontains=keyword)
+            # Heating consumption filter: prefer fuel/energy expenses and avoid maintenance/repairs.
+            heating_consumption_categories = ['heating_fuel', 'heating_gas']
+            heating_excluded_categories = [
+                'heating_maintenance', 'heating_repair', 'heating_inspection',
+                'heating_modernization', 'boiler_replacement',
+                'heating_system_overhaul', 'burner_replacement',
+            ]
+            heating_fuel_keywords = [
+                'πετρέλαιο', 'πετρελαιο', 'φυσικό αέριο', 'φυσικο αεριο',
+                'αέριο', 'αεριο', 'gas', 'mazout', 'μαζούτ',
+                'heating oil', 'fuel oil', 'καύσιμ', 'καυσιμ',
+            ]
+            heating_excluded_keywords = [
+                'επισκευ', 'συντηρ', 'αντικατάστασ', 'αντικαταστασ',
+                'αναβάθμ', 'αναβαθμ', 'ρύθμισ', 'ρυθμισ',
+                'έλεγχ', 'ελεγχ', 'service', 'maintenance', 'repair', 'inspection',
+            ]
+
+            heating_text_q = Q()
+            for keyword in heating_fuel_keywords:
+                heating_text_q |= Q(title__icontains=keyword) | Q(notes__icontains=keyword)
+
+            heating_exclude_q = Q()
+            for keyword in heating_excluded_keywords:
+                heating_exclude_q |= Q(title__icontains=keyword) | Q(notes__icontains=keyword)
+
+            heating_q = Q(category__in=heating_consumption_categories) | (heating_text_q & ~heating_exclude_q)
             
             heating_qs = Expense.objects.filter(
                 building_id=building_id,
                 date__gte=heating_start_date,
                 date__lte=heating_end_date
-            ).filter(heating_q)
+            ).filter(heating_q).exclude(category__in=heating_excluded_categories)
 
             heating_fallback = False
 
