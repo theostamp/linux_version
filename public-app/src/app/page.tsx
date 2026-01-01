@@ -508,17 +508,19 @@ export default function LandingPage() {
                   <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-full bg-accent-primary text-sm font-bold text-white shadow-lg shadow-accent-primary/25 transition-transform group-hover:scale-110">
                     {item.step}
                   </div>
-                  <div className="mb-4 pt-2 text-lg font-semibold text-accent-primary">{item.title}</div>
-                  <p className="mb-4 text-sm leading-relaxed text-text-secondary sm:text-base">{item.description}</p>
-                  <div className="relative my-[5%] aspect-[4/3] overflow-hidden rounded-xl border border-accent-primary/20 bg-bg-app-main">
-                    <Image
-                      src={item.imageSrc}
-                      alt={item.placeholder}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 320px"
-                      className="object-cover"
-                    />
+                  <div className="mb-4 pt-2">
+                    <div className="mb-3 flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-lg border border-accent-primary/20 bg-bg-app-main">
+                      <Image
+                        src={item.imageSrc}
+                        alt={item.placeholder}
+                        width={50}
+                        height={50}
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="text-lg font-semibold text-accent-primary">{item.title}</div>
                   </div>
+                  <p className="text-sm leading-relaxed text-text-secondary sm:text-base">{item.description}</p>
                 </div>
               </AnimatedSection>
             ))}
