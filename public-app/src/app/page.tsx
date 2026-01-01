@@ -578,7 +578,7 @@ export default function LandingPage() {
           {/* Info Point screenshot */}
           <AnimatedSection delay={200} className="flex-1">
             <div className="rounded-3xl border border-gray-200 bg-[var(--bg-white)] p-4 shadow-card-soft transition-transform duration-500 hover:scale-[1.02]">
-              <div className="relative aspect-video overflow-hidden rounded-2xl border border-gray-200 bg-[var(--bg-main-light)]">
+              <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-200 bg-[var(--bg-main-light)]">
                 <Image
                   src="/conc.jpg"
                   alt="Info Point στην είσοδο πολυκατοικίας"
