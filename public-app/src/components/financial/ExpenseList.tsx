@@ -12,11 +12,20 @@ import { Expense, ExpenseCategory, DistributionType } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { FilePreview } from '@/components/ui/FilePreview';
 import { toast } from 'sonner';
-import { api, fetchScheduledMaintenances, updateScheduledMaintenance, deleteServiceReceipt } from '@/lib/api';
+import {
+  api,
+  fetchArchiveDocuments,
+  deleteArchiveDocument,
+  fetchScheduledMaintenances,
+  updateScheduledMaintenance,
+  deleteServiceReceipt,
+} from '@/lib/api';
 import { ExpenseViewModal } from './ExpenseViewModal';
 import { Plus } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { showErrorFromException } from '@/lib/errorMessages';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getEffectiveRoleForBuilding } from '@/lib/roleUtils';
 
 interface ExpenseListProps {
   onExpenseSelect?: (expense: Expense) => void;
@@ -38,6 +47,9 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   const { selectedBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id;
   const buildingName = selectedBuilding?.name;
+  const { user } = useCurrentUser();
+  const effectiveRole = getEffectiveRoleForBuilding(user, selectedBuilding);
+  const canDeleteArchiveDocs = effectiveRole === 'manager' || effectiveRole === 'superuser';
 
   const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,9 +169,40 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
 
     if (!confirmed) return;
 
+    let archiveDocs: Array<{ id: number }> = [];
+    let shouldDeleteArchiveDocs = false;
+    try {
+      const archiveResponse = await fetchArchiveDocuments({
+        building: expense.building,
+        linked_expense: expense.id,
+      });
+      archiveDocs = Array.isArray(archiveResponse) ? archiveResponse : (archiveResponse as any)?.results ?? [];
+      if (archiveDocs.length > 0) {
+        if (canDeleteArchiveDocs) {
+          shouldDeleteArchiveDocs = window.confirm(
+            `Βρέθηκαν ${archiveDocs.length} αρχειοθετημένα παραστατικά συνδεδεμένα με αυτή τη δαπάνη.\nΘέλετε να διαγραφούν κι αυτά από το Αρχείο;`
+          );
+        } else {
+          toast.info(
+            `Βρέθηκαν ${archiveDocs.length} αρχειοθετημένα παραστατικά.\nΗ διαγραφή τους επιτρέπεται μόνο από διαχειριστή.`
+          );
+        }
+      }
+    } catch (archiveFetchError) {
+      console.debug('Archive lookup failed (non-blocking):', archiveFetchError);
+    }
+
     try {
       const success = await deleteExpense(expense.id);
       if (success) {
+        if (shouldDeleteArchiveDocs && archiveDocs.length > 0) {
+          for (const doc of archiveDocs) {
+            try {
+              await deleteArchiveDocument(doc.id);
+            } catch {}
+          }
+          toast.success('Τα συνδεδεμένα αρχειοθετημένα παραστατικά διαγράφηκαν.');
+        }
         // Hook already shows success toast, but show additional info if needed
         // Optional follow-ups: check for linked service receipts and scheduled works
         try {

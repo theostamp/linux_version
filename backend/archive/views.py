@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.http import FileResponse, Http404
+from core.permissions import IsManagerOrSuperuser
 from .models import ArchiveDocument
 from .serializers import ArchiveDocumentSerializer
 import logging
@@ -44,6 +45,13 @@ class ArchiveDocumentViewSet(viewsets.ModelViewSet):
     ]
     ordering_fields = ["created_at", "document_date", "amount"]
     ordering = ["-created_at"]
+
+    def get_permissions(self):
+        if self.action == "destroy":
+            permission_classes = [IsManagerOrSuperuser]
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
         """

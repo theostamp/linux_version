@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, FolderArchive, Upload, Search, ExternalLink, Trash2, Loader2 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   createArchiveDocument,
   deleteArchiveDocument,
@@ -25,6 +26,7 @@ import SubscriptionGate from '@/components/SubscriptionGate';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
+import { getEffectiveRoleForBuilding } from '@/lib/roleUtils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,6 +96,7 @@ function formatDate(value?: string | null) {
 
 function ArchiveContent() {
   const { selectedBuilding } = useBuilding();
+  const { user } = useCurrentUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [uploadForm, setUploadForm] = useState<UploadFormState>(initialUploadState);
@@ -105,6 +108,9 @@ function ArchiveContent() {
   const [docToDelete, setDocToDelete] = useState<ArchiveDocument | null>(null);
   const [deletingDocId, setDeletingDocId] = useState<number | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const effectiveRole = getEffectiveRoleForBuilding(user, selectedBuilding);
+  const canDeleteArchive = effectiveRole === 'manager' || effectiveRole === 'superuser';
+  const deleteRestrictionMessage = 'Η διαγραφή από το Αρχείο επιτρέπεται μόνο στον διαχειριστή.';
 
   const categoriesQ = useQuery({
     queryKey: ['archive-categories'],
@@ -164,15 +170,21 @@ function ArchiveContent() {
   };
 
   const toggleDocSelection = (docId: number) => {
+    if (!canDeleteArchive) return;
     setSelectedDocIds((prev) => (prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]));
   };
 
   const handleToggleSelectAllVisible = (shouldSelect?: boolean) => {
+    if (!canDeleteArchive) return;
     const next = typeof shouldSelect === 'boolean' ? shouldSelect : !allSelected;
     setSelectedDocIds(next ? documents.map((d) => d.id) : []);
   };
 
   const requestSingleDelete = (doc: ArchiveDocument) => {
+    if (!canDeleteArchive) {
+      toast.info(deleteRestrictionMessage);
+      return;
+    }
     setDocToDelete(doc);
     setDeleteDialogOpen(true);
   };
@@ -494,7 +506,7 @@ function ArchiveContent() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleSelectAllVisible()}
-                      disabled={documents.length === 0 || isAnyDeleting}
+                      disabled={documents.length === 0 || isAnyDeleting || !canDeleteArchive}
                     >
                       {allSelected ? 'Αποεπιλογή όλων' : 'Επιλογή όλων'}
                     </Button>
@@ -502,19 +514,28 @@ function ArchiveContent() {
                       variant="outline"
                       size="sm"
                       onClick={() => setSelectedDocIds([])}
-                      disabled={selectedDocIds.length === 0 || isAnyDeleting}
+                      disabled={selectedDocIds.length === 0 || isAnyDeleting || !canDeleteArchive}
                     >
                       Καθαρισμός
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => setBulkDeleteDialogOpen(true)}
-                      disabled={selectedDocIds.length === 0 || isAnyDeleting}
+                      onClick={() => {
+                        if (!canDeleteArchive) {
+                          toast.info(deleteRestrictionMessage);
+                          return;
+                        }
+                        setBulkDeleteDialogOpen(true);
+                      }}
+                      disabled={selectedDocIds.length === 0 || isAnyDeleting || !canDeleteArchive}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Διαγραφή ({selectedDocIds.length})
                     </Button>
+                    {!canDeleteArchive ? (
+                      <div className="text-xs text-muted-foreground">{deleteRestrictionMessage}</div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -535,7 +556,7 @@ function ArchiveContent() {
                         <Checkbox
                           checked={allSelected}
                           onCheckedChange={(v) => handleToggleSelectAllVisible(Boolean(v))}
-                          disabled={documents.length === 0 || isAnyDeleting}
+                          disabled={documents.length === 0 || isAnyDeleting || !canDeleteArchive}
                           aria-label="Επιλογή όλων"
                         />
                       </TableHead>
@@ -555,7 +576,7 @@ function ArchiveContent() {
                           <Checkbox
                             checked={selectedDocIds.includes(doc.id)}
                             onCheckedChange={() => toggleDocSelection(doc.id)}
-                            disabled={isAnyDeleting}
+                            disabled={isAnyDeleting || !canDeleteArchive}
                             aria-label={`Επιλογή αρχείου ${doc.id}`}
                           />
                         </TableCell>
@@ -586,7 +607,8 @@ function ArchiveContent() {
                               variant="ghost"
                               size="sm"
                               onClick={() => requestSingleDelete(doc)}
-                              disabled={isAnyDeleting}
+                              disabled={isAnyDeleting || !canDeleteArchive}
+                              title={!canDeleteArchive ? deleteRestrictionMessage : undefined}
                             >
                               <Trash2 className="w-4 h-4 mr-1" />
                               Διαγραφή
