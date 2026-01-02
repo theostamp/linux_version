@@ -6,7 +6,7 @@ Handles all email notifications for the Digital Concierge platform
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
 import logging
 
 from .email_templates import EmailTemplates
@@ -666,6 +666,14 @@ class MonthlyTaskService:
     """Service for managing monthly notification tasks"""
 
     @staticmethod
+    def _get_common_expense_target_month(period_month: date) -> date:
+        """Resolve the target month for common expense sends (previous month)."""
+        month_start = period_month.replace(day=1)
+        if month_start.month == 1:
+            return date(month_start.year - 1, 12, 1)
+        return date(month_start.year, month_start.month - 1, 1)
+
+    @staticmethod
     def execute_task(task, user):
         """
         Execute a monthly notification task by creating and sending the notification.
@@ -697,14 +705,53 @@ class MonthlyTaskService:
                 raise ValueError("Common expense task requires a building")
 
             from .common_expense_service import CommonExpenseNotificationService
+            from financial.models import CommonExpensePeriod, ApartmentShare
+            from financial.services import CommonExpenseAutomationService
 
-            month_display = task.period_month.strftime('%B %Y')
+            target_month = MonthlyTaskService._get_common_expense_target_month(task.period_month)
+            month_display = target_month.strftime('%B %Y')
             custom_message = rendered.get('body', '').strip()
             subject_prefix = rendered.get('subject', '').strip() or None
 
+            target_start = target_month
+            if target_start.month == 12:
+                target_end = date(target_start.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                target_end = date(target_start.year, target_start.month + 1, 1) - timedelta(days=1)
+
+            try:
+                period = CommonExpensePeriod.objects.filter(
+                    building_id=task.building.id,
+                    start_date__lte=target_end,
+                    end_date__gte=target_start,
+                ).order_by('start_date').first()
+
+                automation_service = CommonExpenseAutomationService(task.building.id)
+                if not period:
+                    period = automation_service.create_period_automatically(
+                        period_type='monthly',
+                        start_date=target_start.strftime('%Y-%m-%d'),
+                    )
+
+                if period and not ApartmentShare.objects.filter(period=period).exists():
+                    issue_result = automation_service.issue_period_automatically(period)
+                    if not issue_result.get('success'):
+                        logger.warning(
+                            "Common expense auto-issue failed for building=%s period=%s: %s",
+                            task.building.id,
+                            getattr(period, 'period_name', ''),
+                            issue_result.get('message'),
+                        )
+            except Exception as e:
+                logger.warning(
+                    "Common expense auto-issue encountered an error for building=%s: %s",
+                    task.building.id,
+                    e,
+                )
+
             results = CommonExpenseNotificationService.send_common_expense_notifications(
                 building_id=task.building.id,
-                month=task.period_month,
+                month=target_month,
                 include_sheet=True,
                 include_notification=True,
                 custom_message=custom_message or None,
@@ -789,11 +836,15 @@ class MonthlyTaskService:
         from financial.models import MonthlyBalance
         from django.utils import timezone
 
+        period_month = task.period_month
+        if task.task_type == 'common_expense':
+            period_month = MonthlyTaskService._get_common_expense_target_month(task.period_month)
+
         context = {
             'building_name': task.building.name if task.building else '',
-            'month': task.period_month.strftime('%B'),
-            'year': task.period_month.year,
-            'period': task.period_month.strftime('%m/%Y'),
+            'month': period_month.strftime('%B'),
+            'year': period_month.year,
+            'period': period_month.strftime('%m/%Y'),
         }
 
         # Add financial data if available
@@ -801,8 +852,8 @@ class MonthlyTaskService:
             try:
                 monthly_balance = MonthlyBalance.objects.filter(
                     building=task.building,
-                    year=task.period_month.year,
-                    month=task.period_month.month
+                    year=period_month.year,
+                    month=period_month.month
                 ).first()
 
                 if monthly_balance:
