@@ -61,42 +61,58 @@ def check_and_execute_monthly_tasks():
 
     now = timezone.now()
     executed_count = 0
+    tenants_processed = 0
 
-    with schema_context('demo'):
-        # Get system user for automatic execution
-        system_user = CustomUser.objects.filter(is_staff=True).first()
+    TenantModel = get_tenant_model()
 
-        if not system_user:
-            return f"No system user found - cannot execute tasks"
+    for tenant in TenantModel.objects.exclude(schema_name='public'):
+        with schema_context(tenant.schema_name):
+            tenants_processed += 1
 
-        # Find tasks that are due and have auto-send enabled
-        tasks = MonthlyNotificationTask.objects.filter(
-            status='pending_confirmation',
-            auto_send_enabled=True,
-            period_month__lte=now.date()
-        )
+            # Get system user for automatic execution
+            system_user = (
+                CustomUser.objects.filter(is_superuser=True).first()
+                or CustomUser.objects.filter(is_staff=True).first()
+                or CustomUser.objects.first()
+            )
 
-        for task in tasks:
-            # Check if task is due (day and time match)
-            if task.is_due:
-                try:
-                    # Execute the task
-                    notification = MonthlyTaskService.execute_task(task, system_user)
+            if not system_user:
+                logger.warning("No system user found - cannot execute tasks for schema %s", tenant.schema_name)
+                continue
 
-                    # Update task status
-                    task.status = 'auto_sent'
-                    task.sent_at = timezone.now()
-                    task.notification = notification
-                    task.save()
+            # Find tasks that are due and have auto-send enabled
+            tasks = MonthlyNotificationTask.objects.filter(
+                status='pending_confirmation',
+                auto_send_enabled=True,
+                period_month__lte=now.date()
+            )
 
-                    executed_count += 1
+            for task in tasks:
+                # Check if task is due (day and time match)
+                if task.is_due:
+                    try:
+                        # Execute the task
+                        notification = MonthlyTaskService.execute_task(task, system_user)
 
-                except Exception as e:
-                    # Log error but continue with other tasks
-                    print(f"Error executing task {task.id}: {str(e)}")
-                    continue
+                        # Update task status
+                        task.status = 'auto_sent'
+                        task.sent_at = timezone.now()
+                        task.notification = notification
+                        task.save()
 
-    return f"Executed {executed_count} monthly tasks"
+                        executed_count += 1
+
+                    except Exception as e:
+                        # Log error but continue with other tasks
+                        logger.exception(
+                            "Error executing task %s in schema %s: %s",
+                            task.id,
+                            tenant.schema_name,
+                            str(e),
+                        )
+                        continue
+
+    return f"Executed {executed_count} monthly tasks across {tenants_processed} tenants"
 
 
 @shared_task
@@ -243,14 +259,14 @@ def send_automated_debt_reminders(
 ):
     """
     Αυτόματη αποστολή υπενθυμίσεων οφειλών (Celery task).
-    
+
     Μπορεί να κληθεί από Celery Beat για προγραμματισμένη αποστολή.
-    
+
     Args:
         building_id: ID κτιρίου (None = όλα τα κτίρια)
         min_debt_amount: Ελάχιστο ποσό οφειλής
         schema_name: Tenant schema
-        
+
     Returns:
         str: Περίληψη αποτελεσμάτων
     """
@@ -259,7 +275,7 @@ def send_automated_debt_reminders(
     from notifications.models import NotificationTemplate
     from notifications.debt_reminder_service import DebtReminderService
     from django.contrib.auth import get_user_model
-    
+
     with schema_context(schema_name):
         User = get_user_model()
         system_user = (
@@ -267,21 +283,21 @@ def send_automated_debt_reminders(
             or User.objects.filter(is_staff=True).first()
             or User.objects.first()
         )
-        
+
         if not system_user:
             logger.error("❌ No system user found for debt reminders")
             return "Error: No system user available"
-        
+
         # Get buildings
         if building_id:
             buildings = Building.objects.filter(id=building_id)
         else:
             buildings = Building.objects.all()
-        
+
         total_sent = 0
         total_failed = 0
         buildings_processed = 0
-        
+
         for building in buildings:
             # Find or create debt reminder template
             template = NotificationTemplate.objects.filter(
@@ -290,11 +306,11 @@ def send_automated_debt_reminders(
                 is_active=True,
                 name__icontains='οφειλ'
             ).first()
-            
+
             if not template:
                 logger.warning(f"⚠️ No debt reminder template for {building.name}, creating default...")
                 template = DebtReminderService.create_default_debt_reminder_template(building)
-            
+
             # Send reminders
             results = DebtReminderService.send_personalized_reminders(
                 building=building,
@@ -306,17 +322,17 @@ def send_automated_debt_reminders(
                 test_mode=False,
                 test_email=None
             )
-            
+
             total_sent += results['emails_sent']
             total_failed += results['emails_failed']
             buildings_processed += 1
-            
+
             logger.info(
                 f"✅ Building {building.name}: {results['emails_sent']} sent, "
                 f"{results['emails_failed']} failed, "
                 f"Debt: {results['total_debt_notified']:.2f}€"
             )
-        
+
         summary = (
             f"Debt reminders completed: {buildings_processed} buildings, "
             f"{total_sent} sent, {total_failed} failed"
@@ -490,6 +506,178 @@ def send_daily_debt_reminders_if_not_sent_this_week(
     summary = (
         f"Daily debt reminders: tenants={tenants_processed}, buildings={buildings_processed}, "
         f"skipped={buildings_skipped}, notifications_created={notifications_created}"
+    )
+    logger.info(summary)
+    return summary
+
+
+@shared_task
+def retry_failed_notification_recipients(
+    max_retries: int = 2,
+    min_age_minutes: int = 10,
+    max_age_days: int = 7,
+):
+    """
+    Retry failed email recipients for recent notifications.
+
+    - Only retries recipients with status='failed' and retry_count < max_retries
+    - Skips recipients without email or with permanent "No email address" failures
+    - Runs across all tenant schemas (excluding public)
+    """
+    from datetime import timedelta as dt_timedelta
+    from notifications.models import NotificationRecipient, Notification
+    from notifications.services import email_service
+
+    TenantModel = get_tenant_model()
+    now = timezone.now()
+    min_age = now - dt_timedelta(minutes=min_age_minutes)
+    max_age = now - dt_timedelta(days=max_age_days)
+
+    total_retried = 0
+    total_sent = 0
+    total_failed = 0
+    tenants_processed = 0
+
+    for tenant in TenantModel.objects.exclude(schema_name='public'):
+        with schema_context(tenant.schema_name):
+            tenants_processed += 1
+
+            recipients = NotificationRecipient.objects.select_related('notification').filter(
+                status='failed',
+                retry_count__lt=max_retries,
+                created_at__lte=min_age,
+                created_at__gte=max_age,
+                notification__notification_type__in=['email', 'both', 'all'],
+            ).exclude(
+                email=''
+            ).exclude(
+                email__isnull=True
+            ).exclude(
+                error_message__icontains='No email address'
+            )
+
+            touched_notification_ids = set()
+
+            for recipient in recipients:
+                notification = recipient.notification
+                ok = email_service.send_bulk_notification(
+                    [recipient],
+                    notification.subject,
+                    notification.body
+                )
+                if ok:
+                    recipient.mark_as_sent()
+                    total_sent += 1
+                else:
+                    recipient.mark_as_failed("Retry send failed")
+                    total_failed += 1
+                total_retried += 1
+                touched_notification_ids.add(notification.id)
+
+            if touched_notification_ids:
+                notifications = Notification.objects.filter(id__in=touched_notification_ids)
+                for notification in notifications:
+                    notification.update_statistics()
+                    if notification.failed_sends == 0 and notification.total_recipients > 0:
+                        notification.mark_as_sent()
+                    elif notification.failed_sends > 0:
+                        notification.status = 'failed'
+                        notification.save(update_fields=['status'])
+
+    summary = (
+        f"Retry failed recipients: tenants={tenants_processed}, "
+        f"retried={total_retried}, sent={total_sent}, failed={total_failed}"
+    )
+    logger.info(summary)
+    return summary
+
+
+@shared_task
+def send_daily_overdue_debt_reminders(
+    min_debt_amount: float = 0.01,
+    min_days_overdue: int = 5,
+    cooldown_days: int = 7,
+):
+    """
+    Daily check for matured unpaid balances and send reminders.
+
+    - Only sends to apartments with days_overdue >= min_days_overdue
+    - Skips apartments that received a reminder within cooldown_days
+    - Runs across all tenant schemas (excluding public)
+    """
+    from decimal import Decimal
+    from django.contrib.auth import get_user_model
+    from buildings.models import Building
+    from notifications.models import NotificationTemplate
+    from notifications.debt_reminder_service import DebtReminderService
+
+    TenantModel = get_tenant_model()
+    tenants_processed = 0
+    buildings_processed = 0
+    total_sent = 0
+    total_failed = 0
+    total_skipped = 0
+
+    for tenant in TenantModel.objects.exclude(schema_name="public"):
+        try:
+            with schema_context(tenant.schema_name):
+                tenants_processed += 1
+
+                User = get_user_model()
+                system_user = (
+                    User.objects.filter(is_superuser=True).first()
+                    or User.objects.filter(is_staff=True).first()
+                    or User.objects.first()
+                )
+                if not system_user:
+                    logger.warning(
+                        "No system user in schema %s - skipping overdue debt reminders",
+                        tenant.schema_name,
+                    )
+                    continue
+
+                for building in Building.objects.all():
+                    buildings_processed += 1
+
+                    template = NotificationTemplate.objects.filter(
+                        building=building,
+                        category='reminder',
+                        is_active=True,
+                        name__icontains='οφειλ'
+                    ).first()
+
+                    if not template:
+                        template = DebtReminderService.create_default_debt_reminder_template(building)
+
+                    results = DebtReminderService.send_personalized_reminders(
+                        building=building,
+                        template=template,
+                        created_by=system_user,
+                        min_debt_amount=Decimal(str(min_debt_amount)),
+                        target_month=None,
+                        send_to_all=False,
+                        test_mode=False,
+                        test_email=None,
+                        min_days_overdue=min_days_overdue,
+                        cooldown_days=cooldown_days,
+                    )
+
+                    total_sent += int(results.get('emails_sent', 0) or 0)
+                    total_failed += int(results.get('emails_failed', 0) or 0)
+                    total_skipped += int(results.get('skipped_count', 0) or 0)
+
+        except Exception as e:
+            logger.exception(
+                "Overdue debt reminders failed for tenant %s: %s",
+                tenant.schema_name,
+                e,
+            )
+            continue
+
+    summary = (
+        f"Daily overdue debt reminders: tenants={tenants_processed}, "
+        f"buildings={buildings_processed}, sent={total_sent}, "
+        f"failed={total_failed}, skipped={total_skipped}"
     )
     logger.info(summary)
     return summary

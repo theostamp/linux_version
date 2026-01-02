@@ -45,6 +45,18 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute=0, hour=9),  # 09:00 daily
         'args': (),
     },
+    # Retry failed notification recipients (email) every 30 minutes
+    'retry-failed-notification-recipients': {
+        'task': 'notifications.tasks.retry_failed_notification_recipients',
+        'schedule': crontab(minute='*/30'),
+        'args': (),
+    },
+    # Daily overdue debt reminders (matured balances)
+    'send-daily-overdue-debt-reminders': {
+        'task': 'notifications.tasks.send_daily_overdue_debt_reminders',
+        'schedule': crontab(minute=15, hour=9),  # 09:15 daily
+        'args': (),
+    },
     # Ad Portal trial reminders (7/3/1 days) + trial end notices
     'ad-portal-trial-reminders-daily': {
         'task': 'ad_portal.tasks.check_ad_portal_trials_daily',
@@ -62,4 +74,3 @@ app.conf.beat_schedule = {
 @app.task(bind=True)
 def debug_task(self):  # pragma: no cover
     print(f"Request: {self.request!r}")
-

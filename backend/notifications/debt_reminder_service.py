@@ -13,7 +13,7 @@ with outstanding balances, filling in all financial details automatically.
 
 import logging
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Any
 from calendar import monthrange
 
@@ -25,6 +25,7 @@ from django.template import Template, Context
 from apartments.models import Apartment
 from buildings.models import Building
 from financial.models import Expense, Transaction, Payment, MonthlyBalance
+from financial.transaction_types import TransactionType
 from financial.balance_service import BalanceCalculationService
 from .models import NotificationTemplate, Notification, NotificationRecipient
 from .services import NotificationService
@@ -78,19 +79,19 @@ class DebtReminderService:
             'occupant_name': apartment.occupant_name or apartment.owner_name or 'Αγαπητέ Κύριε/Κυρία',
             'owner_email': apartment.owner_email,
             'occupant_email': apartment.occupant_email,
-            
+
             # Στοιχεία κτιρίου
             'building_name': apartment.building.name or apartment.building.street,
             'building_address': apartment.building.street,
             'building_city': apartment.building.city or 'Αθήνα',
-            
+
             # Ημερομηνίες
             'current_month': DebtReminderService.GREEK_MONTHS[target_month.month],
             'current_month_genitive': DebtReminderService.GREEK_MONTHS_GENITIVE[target_month.month],
             'current_year': target_month.year,
             'month_year': f"{target_month.month:02d}/{target_month.year}",
             'today_date': timezone.now().strftime('%d/%m/%Y'),
-            
+
             # Χιλιοστά
             'participation_mills': apartment.participation_mills or 0,
             'heating_mills': apartment.heating_mills or 0,
@@ -131,7 +132,7 @@ class DebtReminderService:
         month_end = target_month.replace(
             day=monthrange(target_month.year, target_month.month)[1]
         )
-        
+
         current_month_expenses = Expense.objects.filter(
             apartment=apartment,
             date__gte=target_month,
@@ -164,7 +165,7 @@ class DebtReminderService:
         # Λίστα ανεξόφλητων δαπανών
         unpaid_expenses_list = []
         total_unpaid = Decimal('0.00')
-        
+
         for expense in unpaid_expenses[:10]:  # Πρώτες 10 για να μη γίνει το email τεράστιο
             unpaid_expenses_list.append({
                 'date': expense.date.strftime('%d/%m/%Y'),
@@ -205,12 +206,12 @@ class DebtReminderService:
             'is_credit': current_balance < 0,
             'previous_balance': f"{abs(previous_balance):.2f}€",
             'previous_balance_raw': abs(previous_balance),
-            
+
             # Τρέχοντα μήνα
             'current_month_expenses': f"{current_month_expenses:.2f}€",
             'current_month_payments': f"{current_month_payments:.2f}€",
             'current_month_net': f"{(current_month_expenses - current_month_payments):.2f}€",
-            
+
             # Ανεξόφλητες δαπάνες
             'total_unpaid': f"{total_unpaid:.2f}€",
             'total_unpaid_raw': total_unpaid,
@@ -218,14 +219,14 @@ class DebtReminderService:
             'unpaid_expenses_list': unpaid_expenses_list,
             'has_unpaid': unpaid_expenses.exists(),
             'days_overdue': days_overdue,
-            
+
             # Στοιχεία κτιρίου
             'building_total_expenses': f"{total_building_expenses:.2f}€",
             'building_total_collected': f"{total_building_collected:.2f}€",
             'building_collection_rate': f"{building_collection_rate:.1f}%",
-            
+
             # Payment info
-            'payment_deadline': (target_month.replace(day=10) if target_month.day < 10 
+            'payment_deadline': (target_month.replace(day=10) if target_month.day < 10
                                 else (target_month + timezone.timedelta(days=32)).replace(day=10)).strftime('%d/%m/%Y'),
         }
 
@@ -238,7 +239,9 @@ class DebtReminderService:
         target_month: Optional[date] = None,
         send_to_all: bool = False,
         test_mode: bool = False,
-        test_email: Optional[str] = None
+        test_email: Optional[str] = None,
+        min_days_overdue: Optional[int] = None,
+        cooldown_days: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Αποστολή εξατομικευμένων υπενθυμίσεων οφειλών σε διαμερίσματα
@@ -252,6 +255,8 @@ class DebtReminderService:
             send_to_all: Αν True, στέλνει σε όλα τα διαμερίσματα (για ενημερωτικά emails)
             test_mode: Αν True, δεν στέλνει πραγματικά emails
             test_email: Email για test αποστολή
+            min_days_overdue: Ελάχιστες ημέρες καθυστέρησης για αποστολή (None = χωρίς φίλτρο)
+            cooldown_days: Παράλειψη διαμερισμάτων που έλαβαν πρόσφατα reminder (None = χωρίς φίλτρο)
 
         Returns:
             Dict με αποτελέσματα αποστολής
@@ -265,7 +270,7 @@ class DebtReminderService:
 
         # Βρες διαμερίσματα με οφειλές (ή όλα αν send_to_all=True)
         apartments = Apartment.objects.filter(building=building)
-        
+
         if not send_to_all:
             apartments = apartments.filter(current_balance__gt=min_debt_amount)
 
@@ -275,6 +280,8 @@ class DebtReminderService:
             'total_apartments': apartments.count(),
             'emails_sent': 0,
             'emails_failed': 0,
+            'skipped_count': 0,
+            'skipped_apartments': [],
             'total_debt_notified': Decimal('0.00'),
             'failed_apartments': [],
             'sent_apartments': []
@@ -298,6 +305,33 @@ class DebtReminderService:
                 context = DebtReminderService.get_apartment_financial_context(
                     apartment, target_month
                 )
+
+                if min_days_overdue is not None:
+                    days_overdue = int(context.get('days_overdue') or 0)
+                    has_unpaid = bool(context.get('has_unpaid'))
+                    if not has_unpaid or days_overdue < min_days_overdue:
+                        results['skipped_count'] += 1
+                        results['skipped_apartments'].append({
+                            'apartment': apartment.number,
+                            'reason': 'Not overdue enough'
+                        })
+                        continue
+
+                if cooldown_days is not None and cooldown_days > 0:
+                    since = timezone.now() - timedelta(days=cooldown_days)
+                    recently_sent = NotificationRecipient.objects.filter(
+                        apartment=apartment,
+                        status__in=['sent', 'delivered'],
+                        notification__subject__icontains="Υπενθύμιση Οφειλών",
+                        created_at__gte=since,
+                    ).exists()
+                    if recently_sent:
+                        results['skipped_count'] += 1
+                        results['skipped_apartments'].append({
+                            'apartment': apartment.number,
+                            'reason': 'Recently notified'
+                        })
+                        continue
 
                 # Render template με context
                 rendered = template.render(context)
@@ -338,7 +372,7 @@ class DebtReminderService:
                             },
                             building_manager_id=getattr(building, "manager_id", None),
                         )
-                        
+
                         recipient.mark_as_sent()
                         results['emails_sent'] += 1
                         results['total_debt_notified'] += context['current_balance_raw']
@@ -347,7 +381,7 @@ class DebtReminderService:
                             'email': recipient_email,
                             'debt': f"{context['current_balance_raw']:.2f}€"
                         })
-                        
+
                         logger.info(
                             f"✅ Sent to {apartment.number} ({recipient_email}) - "
                             f"Debt: {context['current_balance_raw']:.2f}€"
@@ -377,7 +411,7 @@ class DebtReminderService:
                 continue
 
         # Update notification statistics
-        notification.total_recipients = results['total_apartments']
+        notification.total_recipients = results['emails_sent'] + results['emails_failed']
         notification.successful_sends = results['emails_sent']
         notification.failed_sends = results['emails_failed']
         notification.completed_at = timezone.now()
@@ -436,4 +470,3 @@ class DebtReminderService:
 
         logger.info(f"✅ Created default debt reminder template for {building.name}")
         return template
-
