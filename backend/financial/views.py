@@ -1,10 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters import rest_framework as filters
 from django_filters import DateFilter
 from datetime import datetime
+import json
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view, permission_classes
@@ -2564,7 +2565,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], parser_classes=[MultiPartParser, FormParser, JSONParser])
     def issue(self, request):
         """Έκδοση κοινοχρήστων"""
         try:
@@ -2572,65 +2573,104 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             building_id = data.get('building_id') or data.get('building')
             period_data = data.get('period_data', {})
             shares = data.get('shares', {})
+            sheet_file = request.FILES.get('sheet_attachment')
 
             if not building_id:
                 raise ValueError('building_id is required')
 
-            # Δημιουργία περιόδου κοινοχρήστων
-            period = CommonExpensePeriod.objects.create(
-                building_id=building_id,
-                period_name=period_data.get('name', f'Κοινοχρήστα {datetime.now().strftime("%m/%Y")}'),
-                start_date=period_data.get('start_date'),
-                end_date=period_data.get('end_date')
-            )
+            if isinstance(period_data, str):
+                try:
+                    period_data = json.loads(period_data)
+                except json.JSONDecodeError:
+                    period_data = {}
+
+            if isinstance(shares, str):
+                try:
+                    shares = json.loads(shares)
+                except json.JSONDecodeError:
+                    shares = {}
+
+            # Find or create common expense period
+            start_date = period_data.get('start_date')
+            end_date = period_data.get('end_date')
+            period = None
+            if start_date and end_date:
+                period = CommonExpensePeriod.objects.filter(
+                    building_id=building_id,
+                    start_date__lte=end_date,
+                    end_date__gte=start_date
+                ).order_by('start_date').first()
+
+            if not period:
+                period = CommonExpensePeriod.objects.create(
+                    building_id=building_id,
+                    period_name=period_data.get('name', f'Κοινοχρήστα {datetime.now().strftime("%m/%Y")}'),
+                    start_date=start_date,
+                    end_date=end_date
+                )
+            elif period_data.get('name') and period.period_name != period_data.get('name'):
+                period.period_name = period_data.get('name')
+                period.save(update_fields=['period_name'])
+
+            if sheet_file:
+                period.sheet_attachment.save(sheet_file.name, sheet_file)
 
             # Δημιουργία μεριδίων για κάθε διαμέρισμα
             apartment_shares = []
-            for apartment_id, share_data in shares.items():
-                apartment = Apartment.objects.get(id=apartment_id)
-                previous_balance = apartment.current_balance or Decimal('0.00')
-                total_amount = Decimal(str(share_data.get('total_amount', 0)))
-                # Χρέωση αυξάνει οφειλή => πιο αρνητικό υπόλοιπο
-                total_due = previous_balance - total_amount
+            existing_shares = ApartmentShare.objects.filter(period=period)
+            if not existing_shares.exists():
+                for apartment_id, share_data in shares.items():
+                    apartment = Apartment.objects.get(id=int(apartment_id))
+                    previous_balance = apartment.current_balance or Decimal('0.00')
+                    total_amount = Decimal(str(share_data.get('total_amount', 0)))
+                    # Χρέωση αυξάνει οφειλή => πιο αρνητικό υπόλοιπο
+                    total_due = previous_balance - total_amount
 
-                share = ApartmentShare.objects.create(
-                    period=period,
-                    apartment=apartment,
-                    total_amount=total_amount,
-                    previous_balance=previous_balance,
-                    total_due=total_due,
-                    breakdown=share_data.get('breakdown', {})
-                )
-                apartment_shares.append(share)
+                    share = ApartmentShare.objects.create(
+                        period=period,
+                        apartment=apartment,
+                        total_amount=total_amount,
+                        previous_balance=previous_balance,
+                        total_due=total_due,
+                        breakdown=share_data.get('breakdown', {})
+                    )
+                    apartment_shares.append(share)
 
-                # Δημιουργία κίνησης ταμείου
-                Transaction.objects.create(
-                    building_id=building_id,
-                    date=datetime.now(),
-                    type='common_expense_charge',
-                    description=f'Χρέωση κοινοχρήστων - {period.period_name}',
-                    apartment=apartment,
-                    apartment_number=apartment.number,
-                    amount=-total_amount,
-                    balance_before=previous_balance,
-                    balance_after=total_due,
-                    reference_id=str(period.id),
-                    reference_type='common_expense_period'
-                )
+                    # Δημιουργία κίνησης ταμείου
+                    Transaction.objects.create(
+                        building_id=building_id,
+                        date=datetime.now(),
+                        type='common_expense_charge',
+                        description=f'Χρέωση κοινοχρήστων - {period.period_name}',
+                        apartment=apartment,
+                        apartment_number=apartment.number,
+                        amount=-total_amount,
+                        balance_before=previous_balance,
+                        balance_after=total_due,
+                        reference_id=str(period.id),
+                        reference_type='common_expense_period'
+                    )
 
-                # Ενημέρωση υπολοίπου διαμερίσματος using BalanceCalculationService
-                from financial.balance_service import BalanceCalculationService
-                BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
+                    # Ενημέρωση υπολοίπου διαμερίσματος using BalanceCalculationService
+                    from financial.balance_service import BalanceCalculationService
+                    BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
 
             # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδοθείσες
             # Δεν χρειάζεται πλέον μαρκάρισμα ως εκδοθείσες
+            if existing_shares.exists():
+                totals = existing_shares.aggregate(total=models.Sum('total_amount'))
+                total_amount = totals['total'] or Decimal('0.00')
+                apartments_count = existing_shares.count()
+            else:
+                total_amount = sum(share.total_amount for share in apartment_shares)
+                apartments_count = len(apartment_shares)
 
             return Response({
                 'success': True,
                 'message': f'Τα κοινοχρήστα εκδόθηκαν επιτυχώς για την περίοδο {period.period_name}',
                 'period_id': period.id,
-                'apartments_count': len(apartment_shares),
-                'total_amount': sum(share.total_amount for share in apartment_shares)
+                'apartments_count': apartments_count,
+                'total_amount': total_amount
             })
 
         except Exception as e:

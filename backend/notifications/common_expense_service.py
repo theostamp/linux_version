@@ -36,7 +36,7 @@ class CommonExpenseNotificationService:
 
         Returns the storage path if found, None otherwise.
         """
-        from financial.models import Expense
+        from financial.models import CommonExpensePeriod, Expense
 
         # Find expenses for this building and month that have attachments
         # NOTE: Expense uses `date` (not `month`).
@@ -45,6 +45,15 @@ class CommonExpenseNotificationService:
             month_end = date(month.year + 1, 1, 1)
         else:
             month_end = date(month.year, month.month + 1, 1)
+
+        period = CommonExpensePeriod.objects.filter(
+            building_id=building_id,
+            start_date__lt=month_end,
+            end_date__gte=month_start,
+        ).order_by('-start_date').first()
+
+        if period and period.sheet_attachment:
+            return period.sheet_attachment.name or str(period.sheet_attachment)
 
         # Get any expense with attachment for this month/building
         expense_with_sheet = (

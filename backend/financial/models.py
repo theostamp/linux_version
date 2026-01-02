@@ -6,7 +6,7 @@ from apartments.models import Apartment
 
 class Supplier(models.Model):
     """Μοντέλο για τους προμηθευτές/συναλλασόμενους"""
-    
+
     SUPPLIER_CATEGORIES = [
         ('electricity', 'ΔΕΗ (Ηλεκτρικό Ρεύμα)'),
         ('water', 'ΕΥΔΑΠ (Νερό)'),
@@ -24,14 +24,14 @@ class Supplier(models.Model):
         ('accounting', 'Λογιστικές Υπηρεσίες'),
         ('other', 'Άλλοι'),
     ]
-    
+
     STATUS_CHOICES = [
         ('active', 'Ενεργός'),
         ('inactive', 'Ανενεργός'),
         ('suspended', 'Ανασταλμένος'),
         ('terminated', 'Τερματισμένος'),
     ]
-    
+
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='suppliers')
     name = models.CharField(max_length=255, verbose_name="Όνομα Προμηθευτή")
     category = models.CharField(max_length=50, choices=SUPPLIER_CATEGORIES, verbose_name="Κατηγορία")
@@ -78,26 +78,26 @@ class Supplier(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Ενεργός")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Προμηθευτής"
         verbose_name_plural = "Προμηθευτές"
         ordering = ['name']
         unique_together = ['building', 'name', 'category']
-    
+
     def __str__(self):
         return f"{self.name} - {self.get_category_display()}"
 
 
 class Expense(models.Model):
     """Μοντέλο για τις δαπάνες κτιρίου"""
-    
+
     def __init__(self, *args, **kwargs):
         # Καταγράφουμε αν δόθηκε ρητά η ευθύνη πληρωμής (ώστε να μην την αντικαταστήσουμε)
         payer_provided = kwargs.get('payer_responsibility', None)
         self._payer_responsibility_supplied = payer_provided is not None and payer_provided != ''
         super().__init__(*args, **kwargs)
-    
+
     # Expense Type choices for easy identification and reversal
     EXPENSE_TYPE_CHOICES = [
         ('regular', 'Κανονική Δαπάνη'),
@@ -105,7 +105,7 @@ class Expense(models.Model):
         ('reserve_fund', 'Εισφορά Αποθεματικού'),
         ('auto_generated', 'Αυτόματη Δαπάνη'),
     ]
-    
+
     EXPENSE_CATEGORIES = [
         # Πάγιες Δαπάνες Κοινοχρήστων
         ('cleaning', 'Καθαρισμός Κοινοχρήστων Χώρων'),
@@ -116,7 +116,7 @@ class Expense(models.Model):
         ('concierge', 'Συνεργείο Καθαρισμού'),
         ('deh_maintenance_fee', 'Τέλος Συντήρησης ΔΕΗ'),
         ('water_sewage_fee', 'Τέλος Αποχέτευσης'),
-        
+
         # Δαπάνες Ανελκυστήρα
         ('elevator_maintenance', 'Ετήσια Συντήρηση Ανελκυστήρα'),
         ('elevator_repair', 'Επισκευή Ανελκυστήρα'),
@@ -125,7 +125,7 @@ class Expense(models.Model):
         ('elevator_emergency', 'Εγκλωβισμός Ανελκυστήρα'),
         ('elevator_replacement', 'Αντικατάσταση Ανελκυστήρα'),
         ('elevator_shaft_repair', 'Επισκευή Φρεατίου Ανελκυστήρα'),
-        
+
         # Δαπάνες Θέρμανσης
         ('heating_fuel', 'Πετρέλαιο Θέρμανσης'),
         ('heating_gas', 'Φυσικό Αέριο Θέρμανσης'),
@@ -136,7 +136,7 @@ class Expense(models.Model):
         ('boiler_replacement', 'Αντικατάσταση Λέβητα'),
         ('heating_system_overhaul', 'Πλήρης Ανακατασκευή Θέρμανσης'),
         ('burner_replacement', 'Αντικατάσταση Καυστήρα'),
-        
+
         # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
         ('electrical_maintenance', 'Συντήρηση Ηλεκτρικών'),
         ('electrical_repair', 'Επισκευή Ηλεκτρικών'),
@@ -148,7 +148,7 @@ class Expense(models.Model):
         ('electrical_rewiring', 'Πλήρης Ανακατασκευή Ηλεκτρικών'),
         ('power_upgrade', 'Αύξηση Ισχύος'),
         ('electrical_panel_upgrade', 'Αναβάθμιση Ηλεκτρικού Πίνακα'),
-        
+
         # Δαπάνες Υδραυλικών Εγκαταστάσεων
         ('plumbing_maintenance', 'Συντήρηση Υδραυλικών'),
         ('plumbing_repair', 'Επισκευή Υδραυλικών'),
@@ -159,7 +159,7 @@ class Expense(models.Model):
         ('water_tank_replacement', 'Αντικατάσταση Δεξαμενής Νερού'),
         ('plumbing_system_overhaul', 'Πλήρης Ανακατασκευή Υδραυλικών'),
         ('sewage_repair', 'Επισκευή Αποχέτευσης'),
-        
+
         # Δαπάνες Κτιρίου & Εξωτερικών Χώρων
         ('building_insurance', 'Ασφάλεια Κτιρίου'),
         ('building_maintenance', 'Συντήρηση Κτιρίου'),
@@ -173,7 +173,7 @@ class Expense(models.Model):
         ('garden_maintenance', 'Συντήρηση Κήπου'),
         ('parking_maintenance', 'Συντήρηση Χώρων Στάθμευσης'),
         ('entrance_maintenance', 'Συντήρηση Εισόδου'),
-        
+
         # Έκτακτες Δαπάνες & Επισκευές
         ('emergency_repair', 'Έκτακτη Επισκευή'),
         ('storm_damage', 'Ζημιές από Κακοκαιρία'),
@@ -181,7 +181,7 @@ class Expense(models.Model):
         ('fire_damage', 'Ζημιές από Πυρκαγιά'),
         ('earthquake_damage', 'Ζημιές από Σεισμό'),
         ('vandalism_repair', 'Επισκευή Βανδαλισμών'),
-        
+
         # Ειδικές Επισκευές
         ('locksmith', 'Κλειδαράς'),
         ('glass_repair', 'Επισκευή Γυαλιών'),
@@ -189,14 +189,14 @@ class Expense(models.Model):
         ('window_repair', 'Επισκευή Παραθύρων'),
         ('balcony_repair', 'Επισκευή Μπαλκονιού'),
         ('staircase_repair', 'Επισκευή Σκάλας'),
-        
+
         # Δαπάνες Ασφάλειας & Πρόσβασης
         ('security_system', 'Σύστημα Ασφάλειας'),
         ('cctv_installation', 'Εγκατάσταση CCTV'),
         ('access_control', 'Σύστημα Ελέγχου Πρόσβασης'),
         ('fire_alarm', 'Σύστημα Πυρασφάλειας'),
         ('fire_extinguishers', 'Πυροσβεστήρες'),
-        
+
         # Δαπάνες Διοικητικές & Νομικές
         ('legal_fees', 'Δικαστικά Έξοδα'),
         ('notary_fees', 'Συμβολαιογραφικά Έξοδα'),
@@ -205,7 +205,7 @@ class Expense(models.Model):
         ('engineer_fees', 'Μηχανικός'),
         ('accounting_fees', 'Λογιστικά Έξοδα'),
         ('management_fees', 'Διοικητικά Έξοδα'),
-        
+
         # Δαπάνες Ειδικών Εργασιών
         ('asbestos_removal', 'Αφαίρεση Ασβέστη'),
         ('lead_paint_removal', 'Αφαίρεση Μολύβδου'),
@@ -213,24 +213,24 @@ class Expense(models.Model):
         ('pest_control', 'Εντομοκτονία'),
         ('tree_trimming', 'Κλάδεμα Δέντρων'),
         ('snow_removal', 'Καθαρισμός Χιονιού'),
-        
+
         # Δαπάνες Ενεργειακής Απόδοσης
         ('energy_upgrade', 'Ενεργειακή Αναβάθμιση'),
         ('insulation_work', 'Θερμομόνωση'),
         ('solar_panel_installation', 'Εγκατάσταση Φωτοβολταϊκών'),
         ('led_lighting', 'Αντικατάσταση με LED'),
         ('smart_systems', 'Έξυπνα Συστήματα'),
-        
+
         # Δαπάνες Ιδιοκτητών
         ('special_contribution', 'Έκτακτη Εισφορά'),
         ('reserve_fund', 'Αποθεματικό Ταμείο'),
         ('emergency_fund', 'Ταμείο Έκτακτης Ανάγκης'),
         ('renovation_fund', 'Ταμείο Ανακαίνισης'),
-        
+
         # Έργα & Projects
         ('project', 'Έργα Πολυκατοικίας'),
         ('maintenance_project', 'Έργα Συντήρησης & Βελτίωσης'),
-        
+
         # Έργα Υποδομής
         ('infrastructure_project', 'Έργο Υποδομής (Γενικό)'),
         ('structural_upgrade', 'Δομική Αναβάθμιση'),
@@ -238,7 +238,7 @@ class Expense(models.Model):
         ('waterproofing', 'Υδρομόνωση'),
         ('drainage_system', 'Σύστημα Αποστράγγισης'),
         ('retaining_wall', 'Αντιστήριξη Τοιχίων'),
-        
+
         # Άλλες Δαπάνες
         ('miscellaneous', 'Διάφορες Δαπάνες'),
         ('consulting_fees', 'Εργασίες Συμβούλου'),
@@ -247,7 +247,7 @@ class Expense(models.Model):
         ('utilities_other', 'Άλλες Κοινόχρηστες Υπηρεσίες'),
         ('other', 'Άλλο'),
     ]
-    
+
     # 📋 Mapping κατηγοριών δαπανών με προεπιλεγμένη ευθύνη πληρωμής
     # Βασισμένο στην ελληνική νομοθεσία:
     # - Ένοικος: Τακτική συντήρηση, κατανάλωση, μικροεπισκευές, λειτουργικά έξοδα
@@ -262,7 +262,7 @@ class Expense(models.Model):
         'concierge': 'resident',
         'deh_maintenance_fee': 'resident',      # Τέλος συντήρησης ΔΕΗ
         'water_sewage_fee': 'resident',         # Τέλος αποχέτευσης
-        
+
         # Δαπάνες Ανελκυστήρα
         'elevator_maintenance': 'resident',      # Ετήσια συντήρηση (υποχρεωτική)
         'elevator_repair': 'shared',             # Εξαρτάται: μικρή → ένοικος, μεγάλη → ιδιοκτήτης
@@ -271,7 +271,7 @@ class Expense(models.Model):
         'elevator_emergency': 'resident',        # Εγκλωβισμός ανελκυστήρα (έκτακτη επέμβαση)
         'elevator_replacement': 'owner',         # Αντικατάσταση ανελκυστήρα
         'elevator_shaft_repair': 'owner',        # Επισκευή φρεατίου
-        
+
         # Δαπάνες Θέρμανσης
         'heating_fuel': 'resident',              # Κατανάλωση πετρελαίου
         'heating_gas': 'resident',               # Κατανάλωση αερίου
@@ -282,7 +282,7 @@ class Expense(models.Model):
         'boiler_replacement': 'owner',           # Αντικατάσταση λέβητα
         'heating_system_overhaul': 'owner',      # Πλήρης ανακατασκευή
         'burner_replacement': 'owner',           # Αντικατάσταση καυστήρα
-        
+
         # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
         'electrical_maintenance': 'resident',    # Τακτική συντήρηση
         'electrical_repair': 'owner',            # Επισκευές εγκαταστάσεων
@@ -294,7 +294,7 @@ class Expense(models.Model):
         'electrical_rewiring': 'owner',          # Πλήρης ανακατασκευή ηλεκτρικών
         'power_upgrade': 'owner',                # Αύξηση ισχύος
         'electrical_panel_upgrade': 'owner',     # Αναβάθμιση πίνακα
-        
+
         # Δαπάνες Υδραυλικών Εγκαταστάσεων
         'plumbing_maintenance': 'resident',      # Τακτική συντήρηση
         'plumbing_repair': 'owner',              # Επισκευές
@@ -305,7 +305,7 @@ class Expense(models.Model):
         'water_tank_replacement': 'owner',       # Αντικατάσταση δεξαμενής
         'plumbing_system_overhaul': 'owner',     # Πλήρης ανακατασκευή υδραυλικών
         'sewage_repair': 'owner',                # Επισκευή αποχέτευσης
-        
+
         # Δαπάνες Κτιρίου & Εξωτερικών Χώρων - ΙΔΙΟΚΤΗΤΗΣ (δομή κτιρίου)
         'building_insurance': 'owner',           # Ασφάλιση κτιρίου
         'building_maintenance': 'owner',         # Συντήρηση κτιρίου
@@ -319,7 +319,7 @@ class Expense(models.Model):
         'garden_maintenance': 'resident',        # Συντήρηση κήπου
         'parking_maintenance': 'resident',       # Χώροι στάθμευσης
         'entrance_maintenance': 'resident',      # Είσοδος
-        
+
         # Έκτακτες Δαπάνες & Επισκευές - ΙΔΙΟΚΤΗΤΗΣ (μεγάλες ζημιές)
         'emergency_repair': 'owner',
         'storm_damage': 'owner',
@@ -327,7 +327,7 @@ class Expense(models.Model):
         'fire_damage': 'owner',
         'earthquake_damage': 'owner',
         'vandalism_repair': 'owner',
-        
+
         # Ειδικές Επισκευές - Εξαρτώμενες
         'locksmith': 'shared',                   # Κοινόχρηστα → resident, θύρες → owner
         'glass_repair': 'owner',                 # Επισκευή γυαλιών
@@ -335,14 +335,14 @@ class Expense(models.Model):
         'window_repair': 'owner',                # Επισκευή παραθύρων
         'balcony_repair': 'owner',               # Επισκευή μπαλκονιού
         'staircase_repair': 'owner',             # Επισκευή σκάλας
-        
+
         # Δαπάνες Ασφάλειας & Πρόσβασης - ΙΔΙΟΚΤΗΤΗΣ (εγκαταστάσεις)
         'security_system': 'owner',              # Εγκατάσταση συστήματος
         'cctv_installation': 'owner',            # Εγκατάσταση CCTV
         'access_control': 'owner',               # Σύστημα ελέγχου πρόσβασης
         'fire_alarm': 'owner',                   # Πυρασφάλεια
         'fire_extinguishers': 'resident',        # Πυροσβεστήρες (ανανέωση)
-        
+
         # Δαπάνες Διοικητικές & Νομικές
         'legal_fees': 'owner',                   # Δικαστικά (ιδιοκτήτης)
         'notary_fees': 'owner',                  # Συμβολαιογραφικά (ιδιοκτήτης)
@@ -351,7 +351,7 @@ class Expense(models.Model):
         'engineer_fees': 'owner',                # Μηχανικός (ιδιοκτήτης)
         'accounting_fees': 'owner',              # Λογιστικά (ιδιοκτήτης)
         'management_fees': 'resident',           # Διαχείριση πολυκατοικίας (ένοικος - τακτικά κοινόχρηστα)
-        
+
         # Δαπάνες Ειδικών Εργασιών
         'asbestos_removal': 'owner',             # Ειδικές εργασίες
         'lead_paint_removal': 'owner',
@@ -359,24 +359,24 @@ class Expense(models.Model):
         'pest_control': 'resident',              # Εντομοκτονία (τακτική)
         'tree_trimming': 'resident',             # Κλάδεμα
         'snow_removal': 'resident',              # Χιόνι
-        
+
         # Δαπάνες Ενεργειακής Απόδοσης - ΙΔΙΟΚΤΗΤΗΣ (αναβαθμίσεις)
         'energy_upgrade': 'owner',
         'insulation_work': 'owner',
         'solar_panel_installation': 'owner',
         'led_lighting': 'owner',
         'smart_systems': 'owner',
-        
+
         # Δαπάνες Ιδιοκτητών - ΙΔΙΟΚΤΗΤΗΣ (αποθεματικό)
         'special_contribution': 'owner',
         'reserve_fund': 'owner',
         'emergency_fund': 'owner',
         'renovation_fund': 'owner',
-        
+
         # Έργα & Projects - ΙΔΙΟΚΤΗΤΗΣ (μεγάλα έργα)
         'project': 'owner',                      # Έργα πολυκατοικίας (από Projects module)
         'maintenance_project': 'owner',          # Έργα συντήρησης & βελτίωσης (από Maintenance module)
-        
+
         # Έργα Υποδομής - ΙΔΙΟΚΤΗΤΗΣ (υποδομή κτιρίου)
         'infrastructure_project': 'owner',       # Έργο υποδομής (γενικό)
         'structural_upgrade': 'owner',           # Δομική αναβάθμιση
@@ -384,7 +384,7 @@ class Expense(models.Model):
         'waterproofing': 'owner',                # Υδρομόνωση
         'drainage_system': 'owner',              # Σύστημα αποστράγγισης
         'retaining_wall': 'owner',               # Αντιστήριξη τοιχίων
-        
+
         # Άλλες Δαπάνες - Εξαρτώμενες
         'miscellaneous': 'shared',
         'consulting_fees': 'owner',
@@ -393,7 +393,7 @@ class Expense(models.Model):
         'utilities_other': 'resident',
         'other': 'shared',
     }
-    
+
     # 🗂️ Ιεραρχική Δομή Κατηγοριών για Ομαδοποίηση στο UI
     # Πρώτο επίπεδο: Ευθύνη Πληρωμής (resident/owner/shared)
     # Δεύτερο επίπεδο: Λειτουργική κατηγορία (π.χ. Ανελκυστήρας, Θέρμανση)
@@ -409,7 +409,7 @@ class Expense(models.Model):
                     'label': 'Πάγιες Δαπάνες Κοινοχρήστων',
                     'icon': '📋',
                     'categories': [
-                        'cleaning', 'electricity_common', 'water_common', 
+                        'cleaning', 'electricity_common', 'water_common',
                         'garbage_collection', 'security', 'concierge',
                         'deh_maintenance_fee', 'water_sewage_fee'
                     ]
@@ -432,7 +432,7 @@ class Expense(models.Model):
                     'label': 'Ηλεκτρικά',
                     'icon': '⚡',
                     'categories': [
-                        'electrical_maintenance', 'lighting_common', 
+                        'electrical_maintenance', 'lighting_common',
                         'intercom_system', 'generator_maintenance'
                     ]
                 },
@@ -509,7 +509,7 @@ class Expense(models.Model):
                     'label': 'Θέρμανση - Μεγάλες Επισκευές',
                     'icon': '🔥',
                     'categories': [
-                        'heating_modernization', 'boiler_replacement', 
+                        'heating_modernization', 'boiler_replacement',
                         'heating_system_overhaul', 'burner_replacement'
                     ]
                 },
@@ -607,7 +607,7 @@ class Expense(models.Model):
             }
         }
     }
-    
+
     DISTRIBUTION_TYPES = [
         ('by_participation_mills', 'Ανά Χιλιοστά'),
         ('equal_share', 'Ισόποσα'),
@@ -645,7 +645,7 @@ class Expense(models.Model):
         verbose_name="Ευθύνη Πληρωμής",
         help_text="Καθορίζει ποιος πληρώνει: Ιδιοκτήτης (έργα, αποθεματικό) ή Ένοικος (τακτικά κοινόχρηστα)"
     )
-    
+
     # Πεδίο για ποσοστό κατανομής σε περιπτώσεις κοινής ευθύνης
     # Αν payer_responsibility='shared', το split_ratio καθορίζει το ποσοστό που πληρώνει ο ιδιοκτήτης
     # π.χ. split_ratio=0.6 σημαίνει 60% ιδιοκτήτης, 40% ένοικος
@@ -680,15 +680,15 @@ class Expense(models.Model):
     )
     attachment = models.FileField(
         upload_to='expenses/',
-        null=True, 
-        blank=True, 
+        null=True,
+        blank=True,
         verbose_name="Επισύναψη",
         help_text="Παραστατικό ή άλλο σχετικό αρχείο"
     )
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     due_date = models.DateField(
-        null=True, 
-        blank=True, 
+        null=True,
+        blank=True,
         verbose_name="Πληρωτέο ως",
         help_text="Ημερομηνία πληρωμής της δαπάνης"
     )
@@ -699,43 +699,43 @@ class Expense(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Δαπάνη"
         verbose_name_plural = "Δαπάνες"
         ordering = ['-date', '-created_at']
-    
+
     def has_installments(self):
         """Ελέγχει αν η δαπάνη έχει δόσεις/διακανονισμούς μέσω συνδεδεμένων έργων συντήρησης"""
         return self.scheduled_maintenance_tasks.exists()
-    
+
     def get_linked_maintenance_projects(self):
         """Επιστρέφει τα συνδεδεμένα έργα συντήρησης (με ή χωρίς δόσεις)"""
         # Πρώτα επιστρέφουμε έργα με payment schedule
         projects_with_schedule = self.scheduled_maintenance_tasks.filter(
             payment_schedule__isnull=False
         ).select_related('payment_schedule')
-        
+
         # Αν δεν υπάρχουν, επιστρέφουμε όλα τα συνδεδεμένα έργα
         if projects_with_schedule.exists():
             return projects_with_schedule
         else:
             return self.scheduled_maintenance_tasks.all().select_related('payment_schedule')
-    
+
     def __str__(self):
         return f"{self.title} - {self.amount}€ ({self.get_category_display()})"
-    
+
     @classmethod
     def get_default_payer_for_category(cls, category_key):
         """
         Επιστρέφει την προεπιλεγμένη ευθύνη πληρωμής για μια κατηγορία δαπάνης.
-        
+
         Args:
             category_key (str): Το key της κατηγορίας (π.χ. 'cleaning', 'elevator_maintenance')
-        
+
         Returns:
             str: 'owner', 'resident' ή 'shared' (default: 'resident')
-        
+
         Example:
             >>> Expense.get_default_payer_for_category('cleaning')
             'resident'
@@ -743,18 +743,18 @@ class Expense(models.Model):
             'owner'
         """
         return cls.EXPENSE_CATEGORY_DEFAULTS.get(category_key, 'resident')
-    
+
     @classmethod
     def get_category_group(cls, category_key):
         """
         Επιστρέφει το group και payer_type στο οποίο ανήκει μια κατηγορία.
-        
+
         Args:
             category_key (str): Το key της κατηγορίας
-        
+
         Returns:
             dict: {'payer_type': str, 'group_key': str, 'group_info': dict} ή None αν δεν βρεθεί
-        
+
         Example:
             >>> Expense.get_category_group('cleaning')
             {'payer_type': 'resident', 'group_key': 'regular_common', 'group_info': {...}}
@@ -771,18 +771,18 @@ class Expense(models.Model):
                         'payer_badge': payer_data['badge']
                     }
         return None
-    
+
     @classmethod
     def group_categories_by_hierarchy(cls, expenses_data):
         """
         Ομαδοποιεί δαπάνες σύμφωνα με την ιεραρχία CATEGORY_HIERARCHY.
-        
+
         Args:
             expenses_data (list): Λίστα με dictionaries που περιέχουν category και amount
-        
+
         Returns:
             dict: Ιεραρχική δομή με ομαδοποιημένες δαπάνες
-        
+
         Example:
             >>> expenses = [
             ...     {'category': 'cleaning', 'amount': 100, 'category_display': 'Καθαρισμός'},
@@ -801,7 +801,7 @@ class Expense(models.Model):
             }
         """
         from decimal import Decimal
-        
+
         # Αρχικοποίηση δομής
         result = {}
         for payer_type, payer_data in cls.CATEGORY_HIERARCHY.items():
@@ -820,38 +820,38 @@ class Expense(models.Model):
                     'total': Decimal('0.00'),
                     'expenses': []
                 }
-        
+
         # Κατανομή δαπανών στα groups
         for expense in expenses_data:
             category = expense.get('category')
             amount = Decimal(str(expense.get('amount', 0)))
-            
+
             # Βρες το group της κατηγορίας
             category_info = cls.get_category_group(category)
             if category_info:
                 payer_type = category_info['payer_type']
                 group_key = category_info['group_key']
-                
+
                 # Πρόσθεσε τη δαπάνη στο αντίστοιχο group
                 result[payer_type]['groups'][group_key]['expenses'].append(expense)
                 result[payer_type]['groups'][group_key]['total'] += amount
                 result[payer_type]['total'] += amount
-        
+
         # Καθαρισμός: Αφαίρεση κενών groups
         for payer_type in result:
             result[payer_type]['groups'] = {
                 key: value for key, value in result[payer_type]['groups'].items()
                 if value['expenses']  # Κράτα μόνο groups με δαπάνες
             }
-        
+
         # Μετατροπή Decimal σε float για JSON serialization
         for payer_type in result:
             result[payer_type]['total'] = float(result[payer_type]['total'])
             for group_key in result[payer_type]['groups']:
                 result[payer_type]['groups'][group_key]['total'] = float(result[payer_type]['groups'][group_key]['total'])
-        
+
         return result
-    
+
     def save(self, *args, **kwargs):
         """
         Εξασφαλίζει ότι κάθε νέα δαπάνη λαμβάνει την προεπιλεγμένη ευθύνη πληρωμής
@@ -866,31 +866,31 @@ class Expense(models.Model):
         super().save(*args, **kwargs)
         # Μετά την αποθήκευση θεωρούμε ότι η ευθύνη έχει οριστεί
         self._payer_responsibility_supplied = True
-    
+
     def _create_apartment_transactions(self):
         """Δημιουργεί συναλλαγές για όλα τα διαμερίσματα"""
         from apartments.models import Apartment
         from decimal import Decimal
         from datetime import datetime
         from django.utils import timezone
-        
+
         # Get all apartments in the building
         apartments = Apartment.objects.filter(building=self.building)
-        
+
         # Calculate share for each apartment based on distribution type
         for apartment in apartments:
             share_amount = self._calculate_apartment_share(apartment)
-            
+
             if share_amount > 0:
                 # Calculate balances
                 current_balance = apartment.current_balance or Decimal('0.00')
                 new_balance = current_balance + share_amount  # Προσθήκη χρέους
-                
+
                 # Convert expense.date (DateField) to DateTimeField for Transaction
                 expense_datetime = datetime.combine(self.date, datetime.min.time())
                 if timezone.is_naive(expense_datetime):
                     expense_datetime = timezone.make_aware(expense_datetime)
-                
+
                 # Create transaction for this apartment
                 Transaction.objects.create(
                     apartment=apartment,
@@ -908,16 +908,16 @@ class Expense(models.Model):
                 # Update apartment balance using BalanceCalculationService
                 from .balance_service import BalanceCalculationService
                 BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
-    
+
     def _calculate_apartment_share(self, apartment):
         """Υπολογίζει το μερίδιο διαμερίσματος για τη δαπάνη"""
         from decimal import Decimal
-        
+
         if self.distribution_type == 'equal_share':
             # Ισόποσα κατανομή
             total_apartments = Apartment.objects.filter(building=self.building).count()
             return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
-        
+
         elif self.distribution_type == 'by_participation_mills':
             # Κατανομή βάσει χιλιοστών
             total_mills = sum(apt.participation_mills or 0 for apt in Apartment.objects.filter(building=self.building))
@@ -925,7 +925,7 @@ class Expense(models.Model):
                 apartment_mills = apartment.participation_mills or 0
                 return (self.amount * apartment_mills) / total_mills
             return Decimal('0.00')
-        
+
         elif self.distribution_type == 'by_meters':
             # Κατανομή βάσει τετραγωνικών μέτρων
             total_meters = sum(apt.square_meters or 0 for apt in Apartment.objects.filter(building=self.building))
@@ -933,14 +933,14 @@ class Expense(models.Model):
                 apartment_meters = apartment.square_meters or 0
                 return (self.amount * apartment_meters) / total_meters
             return Decimal('0.00')
-        
+
         else:
             return Decimal('0.00')
 
 
 class Transaction(models.Model):
     """Μοντέλο για τις κινήσεις του ταμείου"""
-    
+
     TRANSACTION_TYPES = [
         ('common_expense_payment', 'Είσπραξη Κοινοχρήστων'),
         ('expense_payment', 'Είσπραξη Δαπάνης'),
@@ -953,14 +953,14 @@ class Transaction(models.Model):
         ('interest_charge', 'Χρέωση Τόκων'),
         ('penalty_charge', 'Χρέωση Προστίμου'),
     ]
-    
+
     TRANSACTION_STATUS = [
         ('pending', 'Εκκρεμεί'),
         ('completed', 'Ολοκληρώθηκε'),
         ('cancelled', 'Ακυρώθηκε'),
         ('failed', 'Απέτυχε'),
     ]
-    
+
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='transactions')
     date = models.DateTimeField(verbose_name="Ημερομηνία")
     type = models.CharField(max_length=50, choices=TRANSACTION_TYPES, verbose_name="Τύπος")
@@ -978,22 +978,22 @@ class Transaction(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True, verbose_name="Δημιουργήθηκε από")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Κίνηση Ταμείου"
         verbose_name_plural = "Κινήσεις Ταμείου"
         ordering = ['-date', '-created_at']
-    
+
     def __str__(self):
         return f"{self.get_type_display()} - {self.amount}€ ({self.date.strftime('%d/%m/%Y')})"
-    
+
     def save(self, *args, **kwargs):
         # Ensure date is timezone-aware (only for datetime objects)
         from django.utils import timezone
         from datetime import datetime
         if self.date and isinstance(self.date, datetime) and timezone.is_naive(self.date):
             self.date = timezone.make_aware(self.date)
-        
+
         # Ensure created_at is timezone-aware if manually set
         if hasattr(self, '_state') and self._state.adding:
             # New instance - Django will set created_at automatically
@@ -1007,14 +1007,14 @@ class Transaction(models.Model):
 
 class Payment(models.Model):
     """Μοντέλο για τις εισπράξεις των ιδιοκτητών"""
-    
+
     PAYMENT_METHODS = [
         ('cash', 'Μετρητά'),
         ('bank_transfer', 'Τραπεζική Μεταφορά'),
         ('check', 'Επιταγή'),
         ('card', 'Κάρτα'),
     ]
-    
+
     PAYMENT_TYPES = [
         ('common_expense', 'Κοινόχρηστα'),
         ('reserve_fund', 'Ταμείο Εφεδρείας'),
@@ -1022,13 +1022,13 @@ class Payment(models.Model):
         ('advance', 'Προκαταβολή'),
         ('other', 'Άλλο'),
     ]
-    
+
     PAYER_TYPES = [
         ('owner', 'Ιδιοκτήτης'),
         ('tenant', 'Ενοικιαστής'),
         ('other', 'Άλλος'),
     ]
-    
+
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό")
     reserve_fund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Ποσό Αποθεματικού")
@@ -1042,33 +1042,33 @@ class Payment(models.Model):
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     receipt = models.FileField(upload_to='payment_receipts/', null=True, blank=True, verbose_name="Απόδειξη")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         verbose_name = "Είσπραξη"
         verbose_name_plural = "Εισπράξεις"
         ordering = ['-date', '-created_at']
-    
+
     def __str__(self):
         return f"Είσπραξη {self.apartment.number} - {self.amount}€ ({self.get_method_display()})"
-    
+
     def save(self, *args, **kwargs):
         # Save first to get the ID
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        
+
         # If this is a new payment, create transaction
         if is_new:
             self._create_payment_transaction()
-    
+
     def _create_payment_transaction(self):
         """Δημιουργεί συναλλαγή για την πληρωμή"""
         from decimal import Decimal
-        
+
         # Calculate balances
         current_balance = self.apartment.current_balance or Decimal('0.00')
         amount_decimal = Decimal(str(self.amount))
         new_balance = current_balance + amount_decimal
-        
+
         # Create transaction for this payment
         Transaction.objects.create(
             apartment=self.apartment,
@@ -1090,23 +1090,23 @@ class Payment(models.Model):
 
 class ExpenseApartment(models.Model):
     """Μοντέλο για τη σύνδεση δαπανών με συγκεκριμένα διαμερίσματα"""
-    
+
     expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name='affected_apartments')
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='expenses')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         verbose_name = "Δαπάνη-Διαμέρισμα"
         verbose_name_plural = "Δαπάνες-Διαμερίσματα"
         unique_together = ['expense', 'apartment']
-    
+
     def __str__(self):
         return f"{self.expense.title} - {self.apartment.number}"
 
 
 class MeterReading(models.Model):
     """Μοντέλο για τις μετρήσεις (θέρμανση, νερό, κλπ.)"""
-    
+
     METER_TYPE_WATER = 'water'
     METER_TYPE_ELECTRICITY = 'electricity'
     METER_TYPE_HEATING_HOURS = 'heating_hours'
@@ -1118,7 +1118,7 @@ class MeterReading(models.Model):
         (METER_TYPE_HEATING_HOURS, 'Θέρμανση (Ώρες)'),
         (METER_TYPE_HEATING_ENERGY, 'Θέρμανση (kWh/MWh)'),
     ]
-    
+
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='meter_readings')
     reading_date = models.DateField(verbose_name="Ημερομηνία Μετρήσης")
     value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ένδειξη")
@@ -1130,16 +1130,16 @@ class MeterReading(models.Model):
     )
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         verbose_name = "Μετρήση"
         verbose_name_plural = "Μετρήσεις"
         ordering = ['-reading_date', '-created_at']
         unique_together = ['apartment', 'reading_date', 'meter_type']
-    
+
     def __str__(self):
         return f"{self.apartment.number} - {self.get_meter_type_display()} - {self.value} ({self.reading_date})"
-    
+
     def get_previous_reading(self):
         """Λήψη της προηγούμενης μετρήσης για το ίδιο διαμέρισμα και τύπο μετρητή"""
         try:
@@ -1150,14 +1150,14 @@ class MeterReading(models.Model):
             ).order_by('-reading_date').first()
         except Exception:
             return None
-    
+
     def calculate_consumption(self):
         """Υπολογισμός κατανάλωσης σε σχέση με την προηγούμενη μέτρηση"""
         previous_reading = self.get_previous_reading()
         if previous_reading and self.value > previous_reading.value:
             return float(self.value) - float(previous_reading.value)
         return 0.0
-    
+
     def get_consumption_period(self):
         """Επιστρέφει την περίοδο κατανάλωσης (από προηγούμενη μέτρηση μέχρι τρέχουσα)"""
         previous_reading = self.get_previous_reading()
@@ -1165,11 +1165,24 @@ class MeterReading(models.Model):
             return previous_reading.reading_date, self.reading_date
         return self.reading_date, self.reading_date
 
+def common_expense_sheet_upload_to(instance, filename):
+    period_key = instance.start_date.strftime('%Y-%m') if instance.start_date else 'unknown'
+    return f"common_expense_sheets/{instance.building_id}/{period_key}/{filename}"
+
+
 class CommonExpensePeriod(models.Model):
+
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='common_expense_periods')
     period_name = models.CharField(max_length=255, verbose_name="Όνομα Περιόδου")
     start_date = models.DateField(verbose_name="Ημερομηνία Έναρξης")
     end_date = models.DateField(verbose_name="Ημερομηνία Λήξης")
+    sheet_attachment = models.FileField(
+        upload_to=common_expense_sheet_upload_to,
+        null=True,
+        blank=True,
+        verbose_name="Φύλλο Κοινοχρήστων",
+        help_text="Αρχείο φύλλου κοινοχρήστων (JPG/PDF)"
+    )
     is_active = models.BooleanField(default=True, verbose_name="Ενεργή")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1203,7 +1216,7 @@ class ApartmentShare(models.Model):
 
 class FinancialReceipt(models.Model):
     """Μοντέλο για αποδείξεις εισπράξεων"""
-    
+
     RECEIPT_TYPES = [
         ('cash', 'Μετρητά'),
         ('bank_transfer', 'Τραπεζική Μεταφορά'),
@@ -1212,7 +1225,7 @@ class FinancialReceipt(models.Model):
         ('online', 'Online Πληρωμή'),
         ('other', 'Άλλο'),
     ]
-    
+
     payment = models.ForeignKey(
         Payment,
         on_delete=models.CASCADE,
@@ -1266,15 +1279,15 @@ class FinancialReceipt(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Απόδειξη Εισπράξεως"
         verbose_name_plural = "Αποδείξεις Εισπράξεων"
         ordering = ['-receipt_date', '-created_at']
-    
+
     def __str__(self):
         return f"{self.payment.apartment} - {self.receipt_date} - €{self.amount}"
-    
+
     def save(self, *args, **kwargs):
         # Auto-generate receipt number if not provided
         if not self.receipt_number:
@@ -1286,191 +1299,191 @@ class FinancialReceipt(models.Model):
 
 class MonthlyBalance(models.Model):
     """Αποθηκεύει το κλείσιμο κάθε μήνα για κάθε κτίριο"""
-    
+
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='monthly_balances')
     year = models.PositiveIntegerField(verbose_name="Έτος")
     month = models.PositiveIntegerField(verbose_name="Μήνας")
-    
+
     # Δαπάνες μήνα
     total_expenses = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Συνολικές Δαπάνες")
-    
-    # Εισπράξεις μήνα  
+
+    # Εισπράξεις μήνα
     total_payments = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Συνολικές Εισπράξεις")
-    
+
     # Παλιές οφειλές που έρχονται από προηγούμενους μήνες
     previous_obligations = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Παλιές Οφειλές")
-    
+
     # Υπόλοιπο προς μεταφορά στον επόμενο μήνα (αρνητικό = οφειλή)
     carry_forward = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Προς Μεταφορά")
-    
+
     # Αποθεματικό & διαχείριση
     reserve_fund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Αποθεματικό")
     management_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Έξοδα Διαχείρισης")
-    
+
     # Προγραμματισμένα έργα (δόσεις)
     scheduled_maintenance_amount = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=0, 
+        max_digits=10,
+        decimal_places=2,
+        default=0,
         verbose_name="Προγραμματισμένα Έργα",
         help_text="Δόσεις προγραμματισμένων έργων για το μήνα"
     )
-    
+
     # Ετήσια μεταφορά υπολοίπων
     annual_carry_forward = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=0, 
+        max_digits=10,
+        decimal_places=2,
+        default=0,
         verbose_name="Ετήσια Μεταφορά",
         help_text="Υπόλοιπο που μεταφέρεται στο νέο έτος (μόνο για Δεκέμβριο)"
     )
-    
+
     balance_year = models.PositiveIntegerField(
         null=True,
         blank=True,
         verbose_name="Έτος Υπολοίπου",
         help_text="Έτος που ανήκει το υπόλοιπο (για ετήσια μεταφορά)"
     )
-    
+
     # Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα
     # Κύριο Υπόλοιπο: Κανονικές Δαπάνες + Παλαιότερες Οφειλές
     main_balance_carry_forward = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=0, 
+        max_digits=10,
+        decimal_places=2,
+        default=0,
         verbose_name="Κύριο Υπόλοιπο Μεταφορά",
         help_text="Μεταφορά κύριου υπολοίπου (κανονικές δαπάνες + παλαιότερες οφειλές)"
     )
-    
+
     # Αποθεματικό Υπόλοιπο: Μόνο για αποταμίευση
     reserve_balance_carry_forward = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=0, 
+        max_digits=10,
+        decimal_places=2,
+        default=0,
         verbose_name="Αποθεματικό Υπόλοιπο Μεταφορά",
         help_text="Μεταφορά αποθεματικού υπολοίπου (μόνο για αποταμίευση)"
     )
-    
+
     # Διαχείριση Υπόλοιπο: Έξοδα διαχείρισης
     management_balance_carry_forward = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=0, 
+        max_digits=10,
+        decimal_places=2,
+        default=0,
         verbose_name="Διαχείριση Υπόλοιπο Μεταφορά",
         help_text="Μεταφορά υπολοίπου διαχείρισης (έξοδα διαχείρισης)"
     )
-    
+
     # Κατάσταση
     is_closed = models.BooleanField(default=False, verbose_name="Κλειστός Μήνας")
     closed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Κλεισίματος")
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         verbose_name = "Μηνιαίο Υπόλοιπο"
         verbose_name_plural = "Μηνιαία Υπόλοιπα"
         unique_together = ['building', 'year', 'month']
         ordering = ['-year', '-month']
-    
+
     def __str__(self):
         return f"{self.building.name} - {self.month:02d}/{self.year}"
-    
+
     @property
     def month_display(self):
         return f"{self.month:02d}/{self.year}"
-    
-    @property 
+
+    @property
     def total_obligations(self):
         """Συνολικές υποχρεώσεις = δαπάνες + παλιές οφειλές + αποθεματικό + διαχείριση + προγραμματισμένα έργα"""
         return (
-            self.total_expenses + 
-            self.previous_obligations + 
-            self.reserve_fund_amount + 
-            self.management_fees + 
+            self.total_expenses +
+            self.previous_obligations +
+            self.reserve_fund_amount +
+            self.management_fees +
             self.scheduled_maintenance_amount
         )
-    
+
     # Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα
     @property
     def main_obligations(self):
         """Κύριες υποχρεώσεις = κανονικές δαπάνες + παλαιότερες οφειλές"""
         return self.total_expenses + self.previous_obligations
-    
+
     @property
     def reserve_obligations(self):
         """Αποθεματικές υποχρεώσεις = μόνο αποθεματικό"""
         return self.reserve_fund_amount
-    
+
     @property
     def management_obligations(self):
         """Διαχειριστικές υποχρεώσεις = μόνο έξοδα διαχείρισης"""
         return self.management_fees
-    
+
     @property
     def main_net_result(self):
         """Κύριο καθαρό αποτέλεσμα = εισπράξεις - κύριες υποχρεώσεις"""
         return self.total_payments - self.main_obligations
-    
+
     @property
     def reserve_net_result(self):
         """Αποθεματικό καθαρό αποτέλεσμα = εισπράξεις - αποθεματικές υποχρεώσεις"""
         return self.total_payments - self.reserve_obligations
-    
+
     @property
     def management_net_result(self):
         """Διαχειριστικό καθαρό αποτέλεσμα = εισπράξεις - διαχειριστικές υποχρεώσεις"""
         return self.total_payments - self.management_obligations
-    
+
     @property
     def net_result(self):
         """Καθαρό αποτέλεσμα = εισπράξεις - υποχρεώσεις (συμβατότητα)"""
         return self.total_payments - self.total_obligations
-    
+
     def close_month(self):
         """Κλείνει τον μήνα και υπολογίζει τα carry_forward (Υβριδικό Σύστημα)"""
         from django.utils import timezone
         from decimal import Decimal
-        
+
         # Υπολογισμός carry_forward για συμβατότητα (αρνητικό = οφειλή)
         self.carry_forward = -self.net_result if self.net_result < 0 else Decimal('0.00')
-        
+
         # Υβριδικό Σύστημα - Υπολογισμός ξεχωριστών carry_forward
         # Κύριο Υπόλοιπο: Κανονικές Δαπάνες + Παλαιότερες Οφειλές
         self.main_balance_carry_forward = -self.main_net_result if self.main_net_result < 0 else Decimal('0.00')
-        
+
         # Αποθεματικό Υπόλοιπο: Μόνο για αποταμίευση (θετικό = πλεόνασμα)
         self.reserve_balance_carry_forward = self.reserve_net_result if self.reserve_net_result > 0 else Decimal('0.00')
-        
+
         # Διαχείριση Υπόλοιπο: Έξοδα διαχείρισης (αρνητικό = οφειλή)
         self.management_balance_carry_forward = -self.management_net_result if self.management_net_result < 0 else Decimal('0.00')
-        
+
         # Συνεχής μεταφορά ποσών - χωρίς ετήσια απομόνωση
         # Κρατάμε μόνο την ημερομηνία έναρξης υπολογισμών (1-6-2025)
         print(f"📅 {self.month:02d}/{self.year}: Συνεχής μεταφορά = €{self.carry_forward}")
         print(f"   🏠 Κύριο Υπόλοιπο: €{self.main_balance_carry_forward}")
         print(f"   🏦 Αποθεματικό: €{self.reserve_balance_carry_forward}")
         print(f"   🏢 Διαχείριση: €{self.management_balance_carry_forward}")
-        
+
         self.is_closed = True
         self.closed_at = timezone.now()
         self.save()
-        
+
         # Δημιουργεί τον επόμενο μήνα
         self.create_next_month()
-    
+
     def create_next_month(self):
         """Δημιουργεί τον επόμενο μήνα με παλιές οφειλές (Υβριδικό Σύστημα)"""
         from decimal import Decimal
-        
+
         next_month = self.month + 1
         next_year = self.year
-        
+
         # Συνεχής μεταφορά ποσών ανεξάρτητα του έτους
         # Μόνο η ημερομηνία έναρξης υπολογισμών (1-6-2025) είναι σημαντική
         if next_month > 12:
             # Δεκέμβριος → Ιανουάριος (συνεχής μεταφορά)
-            next_month = 1 
+            next_month = 1
             next_year += 1
             # Συνεχής μεταφορά όλων των υπολοίπων χωρίς μηδενισμό
             previous_obligations = self.carry_forward
@@ -1479,7 +1492,7 @@ class MonthlyBalance(models.Model):
             # Μηνιαία μεταφορά: Ν → Ν+1 (συνεχής μεταφορά)
             previous_obligations = self.carry_forward
             print(f"📅 Μηνιαία μεταφορά: {self.month:02d}/{self.year} → {next_month:02d}/{next_year} = €{previous_obligations}")
-        
+
         next_balance, created = MonthlyBalance.objects.get_or_create(
             building=self.building,
             year=next_year,
@@ -1499,7 +1512,7 @@ class MonthlyBalance(models.Model):
                 'management_balance_carry_forward': Decimal('0.00'),
             }
         )
-        
+
         # Αν το record υπάρχει ήδη, ενημερώνουμε τα πεδία μεταφοράς
         if not created:
             next_balance.previous_obligations = previous_obligations

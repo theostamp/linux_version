@@ -666,4 +666,5 @@ export interface CommonExpenseIssueRequest {
     breakdown: Record<string, any>;
   }>;
   expense_ids?: number[];
+  sheet_attachment?: File | null;
 }

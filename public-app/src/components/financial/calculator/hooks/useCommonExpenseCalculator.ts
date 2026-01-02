@@ -384,16 +384,87 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       return totalExpenses + getTotalPreviousBalance();
   }, [totalExpenses, getTotalPreviousBalance]);
 
+  const buildExportParams = useCallback(() => ({
+    state,
+    buildingName,
+    buildingAddress: props.buildingAddress,
+    buildingCity: props.buildingCity,
+    buildingPostalCode: props.buildingPostalCode,
+    managerName: props.managerName,
+    managerApartment: props.managerApartment,
+    managerPhone: props.managerPhone,
+    managerCollectionSchedule: props.managerCollectionSchedule,
+    managementOfficeName: props.managementOfficeName,
+    managementOfficePhone: props.managementOfficePhone,
+    managementOfficeAddress: props.managementOfficeAddress,
+    managementOfficeLogo: props.managementOfficeLogo,
+    selectedMonth,
+    expenseBreakdown,
+    reserveFundInfo,
+    managementFeeInfo,
+    groupedExpenses: getGroupedExpenses(),
+    perApartmentAmounts,
+    aptWithFinancial,
+    totalExpenses,
+    getFinalTotalExpenses,
+    getTotalPreviousBalance,
+    monthlyExpenses,
+    buildingId,
+  }), [
+    state,
+    buildingName,
+    props.buildingAddress,
+    props.buildingCity,
+    props.buildingPostalCode,
+    props.managerName,
+    props.managerApartment,
+    props.managerPhone,
+    props.managerCollectionSchedule,
+    props.managementOfficeName,
+    props.managementOfficePhone,
+    props.managementOfficeAddress,
+    props.managementOfficeLogo,
+    selectedMonth,
+    expenseBreakdown,
+    reserveFundInfo,
+    managementFeeInfo,
+    getGroupedExpenses,
+    perApartmentAmounts,
+    aptWithFinancial,
+    totalExpenses,
+    getFinalTotalExpenses,
+    getTotalPreviousBalance,
+    monthlyExpenses,
+    buildingId,
+  ]);
+
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
+      let sheetFile: File | null = null;
+      try {
+        const exportParams = buildExportParams();
+        const jpgResult = await exportToJPG(exportParams, {
+          skipDownload: true,
+          skipKiosk: true,
+          returnBlob: true,
+          silent: true
+        });
+        if (jpgResult?.blob && jpgResult?.fileName) {
+          sheetFile = new File([jpgResult.blob], jpgResult.fileName, { type: 'image/jpeg' });
+        }
+      } catch (error) {
+        console.error('Failed to generate common expense sheet file:', error);
+      }
+
       const saveData = {
         building_id: buildingId,
         period_data: { name: getPeriodInfo(state), start_date: state.customPeriod.startDate, end_date: state.customPeriod.endDate },
         shares: state.shares,
         total_expenses: totalExpenses,
         advanced: state.advancedShares !== null,
-        advanced_options: state.advancedOptions
+        advanced_options: state.advancedOptions,
+        sheet_attachment: sheetFile
       };
       await saveCommonExpenseSheet(saveData);
       toast.success('Το φύλλο κοινοχρήστων αποθηκεύθηκε επιτυχώς!');
@@ -403,38 +474,12 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     } finally {
       setIsSaving(false);
     }
-  }, [state, buildingId, totalExpenses, saveCommonExpenseSheet, onClose]);
+  }, [buildExportParams, state, buildingId, totalExpenses, saveCommonExpenseSheet, onClose]);
 
   const handlePrint = () => window.print();
 
   const handleExport = useCallback(async (format: 'pdf' | 'excel' | 'jpg') => {
-    const commonParams = {
-        state,
-        buildingName,
-        buildingAddress: props.buildingAddress,
-        buildingCity: props.buildingCity,
-        buildingPostalCode: props.buildingPostalCode,
-        managerName: props.managerName,
-        managerApartment: props.managerApartment,
-        managerPhone: props.managerPhone,
-        managerCollectionSchedule: props.managerCollectionSchedule,
-        managementOfficeName: props.managementOfficeName,
-        managementOfficePhone: props.managementOfficePhone,
-        managementOfficeAddress: props.managementOfficeAddress,
-        managementOfficeLogo: props.managementOfficeLogo,
-        selectedMonth,
-        expenseBreakdown,
-        reserveFundInfo,
-        managementFeeInfo,
-        groupedExpenses: getGroupedExpenses(),
-        perApartmentAmounts,
-        aptWithFinancial,
-        totalExpenses,
-        getFinalTotalExpenses,
-        getTotalPreviousBalance,
-        monthlyExpenses, // ✅ ΝΕΟ: Περνάμε τα επιμέρους δεδομένα δαπανών
-        buildingId, // ✅ ΝΕΟ: Περνάμε το buildingId
-    };
+    const commonParams = buildExportParams();
 
     if (format === 'pdf') {
       await exportToPDF(commonParams);
@@ -443,7 +488,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     } else if (format === 'jpg') {
       await exportToJPG(commonParams);
     }
-  }, [state, props, expenseBreakdown, reserveFundInfo, managementFeeInfo, perApartmentAmounts, aptWithFinancial, totalExpenses, getFinalTotalExpenses, getTotalPreviousBalance, getGroupedExpenses, monthlyExpenses, buildingId]);
+  }, [buildExportParams, reserveFundInfo, getGroupedExpenses]);
 
   const validateData = useCallback(() => {
     const allTotalsMatch = true;

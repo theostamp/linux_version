@@ -127,12 +127,32 @@ export const useCommonExpenses = () => {
     total_expenses: number;
     advanced?: boolean;
     advanced_options?: any;
+    sheet_attachment?: File | null;
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);
 
     try {
       // Χρησιμοποιούμε το υπάρχον issue endpoint για την αποθήκευση
+      const hasAttachment = !!data.sheet_attachment;
+      if (hasAttachment) {
+        const formData = new FormData();
+        formData.append('building_id', String(data.building_id));
+        formData.append('period_data', JSON.stringify(data.period_data));
+        formData.append('shares', JSON.stringify(data.shares));
+        formData.append('total_expenses', String(data.total_expenses || 0));
+        if (data.advanced !== undefined) {
+          formData.append('advanced', String(data.advanced));
+        }
+        if (data.advanced_options) {
+          formData.append('advanced_options', JSON.stringify(data.advanced_options));
+        }
+        formData.append('sheet_attachment', data.sheet_attachment as File);
+
+        const response = await api.post('/financial/common-expenses/issue/', formData);
+        return response;
+      }
+
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue/', data);
       return response;

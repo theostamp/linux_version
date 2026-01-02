@@ -43,7 +43,17 @@ interface JpgGeneratorParams {
   buildingId?: number; // ✅ ΝΕΟ: Για να φέρνουμε τα δεδομένα
 }
 
-export const exportToJPG = async (params: JpgGeneratorParams) => {
+interface JpgExportOptions {
+  skipDownload?: boolean;
+  skipKiosk?: boolean;
+  returnBlob?: boolean;
+  silent?: boolean;
+}
+
+export const exportToJPG = async (
+  params: JpgGeneratorParams,
+  options: JpgExportOptions = {}
+): Promise<{ blob: Blob; fileName: string; imgData: string } | void> => {
   const {
     state,
     buildingName,
@@ -73,12 +83,16 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
   } = params;
 
   if (typeof window === 'undefined') {
-    toast.error('Η εξαγωγή JPG δεν είναι διαθέσιμη στον server');
+    if (!options.silent) {
+      toast.error('Η εξαγωγή JPG δεν είναι διαθέσιμη στον server');
+    }
     return;
   }
 
   try {
-    toast.info('Δημιουργία JPG... Παρακαλώ περιμένετε.');
+    if (!options.silent) {
+      toast.info('Δημιουργία JPG... Παρακαλώ περιμένετε.');
+    }
 
     const period = getPeriodInfo(state);
     const paymentDueDate = getPaymentDueDate(state);
@@ -563,52 +577,79 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         console.log('JPG Export - Data URL length:', imgData.length);
         console.log('JPG Export - Data URL start:', imgData.substring(0, 50));
 
-        // Download the JPG file
-        const link = document.createElement('a');
-        link.href = imgData;
-        link.download = `Κοινοχρηστα-${buildingName.replace(/[^a-zA-Z0-9]/g, '_')}-${selectedMonthDisplay.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const fileName = `Κοινοχρηστα-${buildingName.replace(/[^a-zA-Z0-9]/g, '_')}-${selectedMonthDisplay.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((result) => {
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error('Failed to create JPG blob'));
+            }
+          }, 'image/jpeg', 1.0);
+        });
 
-        // Send to kiosk API for display
-        try {
-          console.log('JPG Export - Sending to kiosk API...');
+        if (!options.skipDownload) {
+          // Download the JPG file
+          const link = document.createElement('a');
+          link.href = imgData;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
 
-          // Get the correct API base URL
-          const apiBaseUrl = typeof window !== 'undefined'
-            ? `http://${window.location.hostname}:18000/api`
-            : 'http://localhost:18000/api';
+        if (!options.skipKiosk) {
+          // Send to kiosk API for display
+          try {
+            console.log('JPG Export - Sending to kiosk API...');
 
-          const kioskResponse = await fetch(`${apiBaseUrl}/kiosk/upload-bill/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              image_data: imgData,
-              building_name: buildingName,
-              period: selectedMonthDisplay,
-              timestamp: new Date().toISOString(),
-            }),
-          });
+            // Get the correct API base URL
+            const apiBaseUrl = typeof window !== 'undefined'
+              ? `http://${window.location.hostname}:18000/api`
+              : 'http://localhost:18000/api';
 
-          if (kioskResponse.ok) {
-            const result = await kioskResponse.json();
-            console.log('JPG Export - Kiosk upload successful:', result);
-            toast.success('JPG αρχείο δημιουργήθηκε και αποστάλθηκε στο kiosk επιτυχώς!');
-          } else {
-            console.warn('JPG Export - Kiosk upload failed:', kioskResponse.status);
-            toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς! (Αποστολή στο kiosk απέτυχε)');
+            const kioskResponse = await fetch(`${apiBaseUrl}/kiosk/upload-bill/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                image_data: imgData,
+                building_name: buildingName,
+                period: selectedMonthDisplay,
+                timestamp: new Date().toISOString(),
+              }),
+            });
+
+            if (kioskResponse.ok) {
+              const result = await kioskResponse.json();
+              console.log('JPG Export - Kiosk upload successful:', result);
+              if (!options.silent) {
+                toast.success('JPG αρχείο δημιουργήθηκε και αποστάλθηκε στο kiosk επιτυχώς!');
+              }
+            } else {
+              console.warn('JPG Export - Kiosk upload failed:', kioskResponse.status);
+              if (!options.silent) {
+                toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς! (Αποστολή στο kiosk απέτυχε)');
+              }
+            }
+          } catch (error) {
+            console.error('JPG Export - Error sending to kiosk:', error);
+            if (!options.silent) {
+              toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς! (Αποστολή στο kiosk απέτυχε)');
+            }
           }
-        } catch (error) {
-          console.error('JPG Export - Error sending to kiosk:', error);
-          toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς! (Αποστολή στο kiosk απέτυχε)');
+        }
+
+        if (options.returnBlob) {
+          return { blob, fileName, imgData };
         }
 
       } catch (error) {
         console.error('Error generating JPG:', error);
-        toast.error('Αποτυχία δημιουργίας JPG αρχείου');
+        if (!options.silent) {
+          toast.error('Αποτυχία δημιουργίας JPG αρχείου');
+        }
         throw new Error('Failed to generate JPG file');
       } finally {
         // Clean up - remove the temporary element
