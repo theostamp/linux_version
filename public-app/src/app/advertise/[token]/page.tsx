@@ -171,7 +171,7 @@ function KioskPreview({
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <div className="text-sm font-bold text-white mb-2 uppercase tracking-widest">{businessName}</div>
-            <div className="text-xs text-slate-300 line-clamp-3">{text || 'Η διαφήμισή σας σε πλήρη οθόνη...'}</div>
+            <div className="text-xs text-on-dark-secondary line-clamp-3">{text || 'Η διαφήμισή σας σε πλήρη οθόνη...'}</div>
             <div className="mt-4 px-4 py-1.5 bg-primary rounded text-[10px] font-bold text-white">ΜΑΘΕΤΕ ΠΕΡΙΣΣΟΤΕΡΑ</div>
           </div>
         )}
@@ -184,11 +184,11 @@ function KioskPreview({
             <span className="text-primary font-bold text-[10px] uppercase tracking-tighter shrink-0 flex items-center gap-1">
               <Zap className="w-3 h-3 fill-primary" /> NEWS & OFFERS:
             </span>
-            <span className="text-slate-100 text-xs font-medium">
+            <span className="text-on-dark text-xs font-medium">
               {text || 'Εδώ θα εμφανίζεται το κείμενο της διαφήμισής σας...'} — {businessName || 'Η Επιχείρησή σας'}
             </span>
-            <span className="text-slate-500 text-xs opacity-50">•</span>
-            <span className="text-slate-100 text-xs font-medium">
+            <span className="text-on-dark-muted text-xs opacity-50">•</span>
+            <span className="text-on-dark text-xs font-medium">
               {text || 'Εδώ θα εμφανίζεται το κείμενο της διαφήμισής σας...'}
             </span>
           </div>
@@ -731,11 +731,11 @@ export default function AdvertiseLandingPage() {
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-black tracking-[0.2em] uppercase animate-pulse">
               <Sparkles className="w-3.5 h-3.5" /> ΝΕΑ ΥΠΗΡΕΣΙΑ ΤΟΠΙΚΗΣ ΠΡΟΒΟΛΗΣ
             </span>
-            <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl md:text-7xl">
+            <h1 className="text-5xl font-extrabold tracking-tight text-text-primary sm:text-6xl md:text-7xl">
               Φτάστε στην <span className="text-primary underline decoration-primary/30 underline-offset-8">καρδιά</span> της γειτονιάς σας.
             </h1>
             <div className="flex flex-col items-center gap-2">
-              <p className="text-2xl font-bold text-slate-400 uppercase tracking-widest">Γρήγορα αναπτυσσόμενο δίκτυο τοπικής προβολής</p>
+              <p className="text-2xl font-bold text-text-secondary uppercase tracking-widest">Γρήγορα αναπτυσσόμενο δίκτυο τοπικής προβολής</p>
               <p className="text-xl font-black text-red-500 animate-bounce mt-2 uppercase tracking-tighter italic">Εσείς θα μείνετε απέξω;</p>
             </div>
           </div>
@@ -755,8 +755,8 @@ export default function AdvertiseLandingPage() {
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black tracking-widest uppercase mb-4">
                   <Smartphone className="w-3.5 h-3.5" /> Mobile Synchronization
                 </span>
-                <h2 className="text-4xl font-extrabold text-slate-900 leading-tight">Το μήνυμά σας, στην τσέπη κάθε ενοίκου.</h2>
-                <p className="mt-6 text-xl text-slate-600 leading-relaxed italic">
+                <h2 className="text-4xl font-extrabold text-text-primary leading-tight">Το μήνυμά σας, στην τσέπη κάθε ενοίκου.</h2>
+                <p className="mt-6 text-xl text-text-secondary leading-relaxed italic">
                   Η προβολή σας δεν περιορίζεται στην είσοδο. Κάθε φορά που ένας ένοικος ανοίγει την εφαρμογή της πολυκατοικίας για να δει τα κοινόχρηστα ή τις ανακοινώσεις, η επιχείρησή σας είναι εκεί.
                 </p>
               </div>
@@ -772,8 +772,8 @@ export default function AdvertiseLandingPage() {
                       <item.icon className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900">{item.title}</h4>
-                      <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                      <h4 className="font-bold text-text-primary">{item.title}</h4>
+                      <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -783,7 +783,7 @@ export default function AdvertiseLandingPage() {
                 <Button size="lg" className="h-16 px-10 text-xl font-black rounded-2xl shadow-xl shadow-primary/20 hover:shadow-2xl transition-all uppercase tracking-tight" onClick={() => document.getElementById('steps')?.scrollIntoView({ behavior: 'smooth' })}>
                   Ξεκινήστε Δωρεάν <ArrowRight className="ml-2 w-6 h-6" />
                 </Button>
-                <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border bg-slate-50 text-slate-500 text-sm font-bold uppercase tracking-widest">
+                <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border bg-slate-50 text-text-secondary text-sm font-bold uppercase tracking-widest">
                   <CheckCircle2 className="w-5 h-5 text-green-500" /> Χωρίς Πιστωτική Κάρτα
                 </div>
               </div>
@@ -817,9 +817,9 @@ export default function AdvertiseLandingPage() {
                                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center">
                                   <Store className="w-5 h-5 text-primary" />
                                </div>
-                               <div className="font-black text-xs text-slate-900 uppercase tracking-tight">{businessName || 'Η Επιχείρησή σας'}</div>
+                               <div className="font-black text-xs text-text-primary uppercase tracking-tight">{businessName || 'Η Επιχείρησή σας'}</div>
                             </div>
-                            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                            <p className="text-[11px] text-text-secondary leading-relaxed font-medium">
                                {tickerText || 'Η διαφήμισή σας εμφανίζεται αυτόματα στα κινητά των ενοίκων...'}
                             </p>
                             <div className="mt-4 w-full py-2 bg-primary rounded-lg text-white text-[10px] font-black text-center uppercase tracking-widest">Μάθετε Περισσότερα</div>
@@ -843,8 +843,8 @@ export default function AdvertiseLandingPage() {
                       <Smartphone className="w-4 h-4 text-indigo-600" />
                     </div>
                     <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Mobile App</div>
-                      <div className="text-xs font-bold text-slate-800">100% Sync</div>
+                      <div className="text-[10px] text-text-secondary font-bold uppercase tracking-tighter">Mobile App</div>
+                      <div className="text-xs font-bold text-text-primary">100% Sync</div>
                     </div>
                   </div>
                 </div>
@@ -855,8 +855,8 @@ export default function AdvertiseLandingPage() {
                       <TrendingUp className="w-4 h-4 text-green-600" />
                     </div>
                     <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Engagement</div>
-                      <div className="text-xs font-bold text-slate-800">Direct Clicks</div>
+                      <div className="text-[10px] text-text-secondary font-bold uppercase tracking-tighter">Engagement</div>
+                      <div className="text-xs font-bold text-text-primary">Direct Clicks</div>
                     </div>
                   </div>
                 </div>
@@ -870,8 +870,8 @@ export default function AdvertiseLandingPage() {
       <section className="py-20 bg-bg-app-main">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900">Γιατί να διαφημιστείτε στο InfoPoint;</h2>
-            <p className="mt-4 text-slate-600">Μια νέα εποχή στην τοπική διαφήμιση.</p>
+            <h2 className="text-3xl font-bold text-text-primary">Γιατί να διαφημιστείτε στο InfoPoint;</h2>
+            <p className="mt-4 text-text-secondary">Μια νέα εποχή στην τοπική διαφήμιση.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="border-none shadow-sm hover:shadow-md transition-shadow">
@@ -880,7 +880,7 @@ export default function AdvertiseLandingPage() {
                   <Zap className="w-6 h-6 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">24/7 Παρουσία</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-text-secondary leading-relaxed">
                   Η διαφήμισή σας παίζει ασταμάτητα στην μεγάλη οθόνη υψηλής ευκρίνειας στην είσοδο της πολυκατοικίας.
                 </p>
               </CardContent>
@@ -891,7 +891,7 @@ export default function AdvertiseLandingPage() {
                   <Smartphone className="w-6 h-6 text-indigo-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Και στο Κινητό</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-text-secondary leading-relaxed">
                   Το μήνυμά σας εμφανίζεται και στην web εφαρμογή των ενοίκων, ακολουθώντας τους παντού.
                 </p>
               </CardContent>
@@ -902,7 +902,7 @@ export default function AdvertiseLandingPage() {
                   <Users className="w-6 h-6 text-purple-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Καθημερινή Επαφή</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-text-secondary leading-relaxed">
                   Οι ένοικοι βλέπουν την οθόνη τουλάχιστον 2-4 φορές την ημέρα. Η επανάληψη χτίζει εμπιστοσύνη.
                 </p>
               </CardContent>
@@ -913,7 +913,7 @@ export default function AdvertiseLandingPage() {
                   <ShieldCheck className="w-6 h-6 text-amber-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">Αποκλειστικότητα</h3>
-                <p className="text-slate-600 leading-relaxed">
+                <p className="text-text-secondary leading-relaxed">
                   Μόνο μία επιχείρηση ανά κατηγορία. Μην αφήσετε τον ανταγωνισμό να πάρει τη θέση σας.
                 </p>
               </CardContent>
@@ -929,7 +929,7 @@ export default function AdvertiseLandingPage() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-              <p className="text-slate-500 font-medium">Φορτώνουμε τα δεδομένα του κτιρίου...</p>
+              <p className="text-text-secondary font-medium">Φορτώνουμε τα δεδομένα του κτιρίου...</p>
             </div>
           ) : error ? (
             <Card className="border-red-100 bg-red-50">
@@ -943,20 +943,20 @@ export default function AdvertiseLandingPage() {
             </Card>
           ) : !landing ? (
             <div className="text-center py-20">
-              <Info className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <Info className="w-12 h-12 text-text-secondary mx-auto mb-4" />
               <h2 className="text-xl font-bold">Δεν βρέθηκαν δεδομένα</h2>
-              <p className="text-slate-500 mt-2">Το link που χρησιμοποιήσατε φαίνεται να μην είναι έγκυρο.</p>
+              <p className="text-text-secondary mt-2">Το link που χρησιμοποιήσατε φαίνεται να μην είναι έγκυρο.</p>
             </div>
           ) : (
             <>
               {/* Header Info */}
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-12 border-b border-slate-100">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 text-text-secondary text-[10px] font-bold uppercase tracking-wider">
                     Επιλεγμένο Κτίριο
                   </div>
-                  <h2 className="text-3xl font-bold text-slate-900">{landing.building.name}</h2>
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <h2 className="text-3xl font-bold text-text-primary">{landing.building.name}</h2>
+                  <div className="flex items-center gap-2 text-text-secondary">
                     <MapPin className="w-4 h-4" />
                     {landing.building.address}, {landing.building.city} {landing.building.postal_code}
                   </div>
@@ -969,8 +969,8 @@ export default function AdvertiseLandingPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="text-sm font-medium text-slate-600">
-                    <span className="text-slate-900 font-bold">30+</span> ένοικοι βλέπουν την οθόνη
+                  <div className="text-sm font-medium text-text-secondary">
+                    <span className="text-text-primary font-bold">30+</span> ένοικοι βλέπουν την οθόνη
                   </div>
                 </div>
               </div>
@@ -991,9 +991,9 @@ export default function AdvertiseLandingPage() {
                     </CardHeader>
                     <CardContent className="pt-6 space-y-6">
                       <div className="space-y-3">
-                        <Label htmlFor="biz-search" className="text-slate-700 font-semibold">Όνομα Επιχείρησης</Label>
+                        <Label htmlFor="biz-search" className="text-text-primary font-semibold">Όνομα Επιχείρησης</Label>
                         <div className="relative">
-                          <Store className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                          <Store className="absolute left-3 top-3 w-5 h-5 text-text-secondary" />
                           <Input
                             id="biz-search"
                             ref={businessInputRef}
@@ -1007,7 +1007,7 @@ export default function AdvertiseLandingPage() {
                             Επιλέχθηκε: <span className="font-bold">{businessName}</span>
                           </div>
                         ) : (
-                          <p className="text-[13px] text-slate-500 leading-relaxed">
+                          <p className="text-[13px] text-text-secondary leading-relaxed">
                             Επιλέξτε την επιχείρησή σας για να αναλύσουμε τον ανταγωνισμό στη γειτονιά του κτιρίου.
                           </p>
                         )}
@@ -1087,22 +1087,22 @@ export default function AdvertiseLandingPage() {
                         )}
 
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-colors ${
-                          isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'
+                          isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-text-secondary group-hover:bg-slate-100'
                         }`}>
                           <Icon className="w-6 h-6" />
                         </div>
 
-                        <h4 className="font-bold text-lg mb-2 text-slate-900">{p.display_name}</h4>
-                        <p className="text-xs text-slate-500 mb-6 leading-relaxed min-h-[40px]">{p.description}</p>
+                        <h4 className="font-bold text-lg mb-2 text-text-primary">{p.display_name}</h4>
+                        <p className="text-xs text-text-secondary mb-6 leading-relaxed min-h-[40px]">{p.description}</p>
 
                         <div className="mt-auto space-y-4">
                           <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-slate-900">{formatEur(p.monthly_price_eur)}</span>
-                            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">/ μήνα</span>
+                            <span className="text-2xl font-black text-text-primary">{formatEur(p.monthly_price_eur)}</span>
+                            <span className="text-xs text-text-secondary font-bold uppercase tracking-wider">/ μήνα</span>
                           </div>
 
                           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Διαθεσιμότητα</span>
+                            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Διαθεσιμότητα</span>
                             <div className="flex flex-col items-end">
                               <span className={`text-xs font-bold ${p.remaining_slots > 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {p.remaining_slots}/{p.max_slots_per_building}
@@ -1132,7 +1132,7 @@ export default function AdvertiseLandingPage() {
                       <CardContent className="pt-8 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold">Email Επικοινωνίας</Label>
+                            <Label className="text-text-primary font-semibold">Email Επικοινωνίας</Label>
                             <Input
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
@@ -1141,7 +1141,7 @@ export default function AdvertiseLandingPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold">Όνομα Επιχείρησης</Label>
+                            <Label className="text-text-primary font-semibold">Όνομα Επιχείρησης</Label>
                             <Input
                               value={businessName}
                               onChange={(e) => setBusinessName(e.target.value)}
@@ -1152,7 +1152,7 @@ export default function AdvertiseLandingPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-slate-700 font-semibold">Κείμενο Προβολής (Ticker)</Label>
+                          <Label className="text-text-primary font-semibold">Κείμενο Προβολής (Ticker)</Label>
                           <div className="relative">
                             <Textarea
                               value={tickerText}
@@ -1161,17 +1161,17 @@ export default function AdvertiseLandingPage() {
                               className="min-h-[100px] border-slate-200 resize-none"
                               maxLength={150}
                             />
-                            <div className="absolute bottom-2 right-2 text-[10px] font-bold text-slate-400">
+                            <div className="absolute bottom-2 right-2 text-[10px] font-bold text-text-secondary">
                               {tickerText.length}/150
                             </div>
                           </div>
-                          <p className="text-[11px] text-slate-400 italic">Αυτό το κείμενο θα κυλάει στο κάτω μέρος της οθόνης.</p>
+                          <p className="text-[11px] text-text-secondary italic">Αυτό το κείμενο θα κυλάει στο κάτω μέρος της οθόνης.</p>
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-slate-700 font-semibold">Link Ιστοσελίδας / Facebook (Προαιρετικό)</Label>
+                          <Label className="text-text-primary font-semibold">Link Ιστοσελίδας / Facebook (Προαιρετικό)</Label>
                           <div className="relative">
-                            <Globe className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                            <Globe className="absolute left-3 top-3 w-5 h-5 text-text-secondary" />
                             <Input
                               value={ctaUrl}
                               onChange={(e) => setCtaUrl(e.target.value)}
@@ -1184,13 +1184,13 @@ export default function AdvertiseLandingPage() {
                         <div className="space-y-4 pt-4 border-t border-slate-100">
                           <div className="flex items-start gap-3">
                             <Checkbox id="terms" checked={consentTerms} onCheckedChange={(v) => setConsentTerms(Boolean(v))} className="mt-1" />
-                            <Label htmlFor="terms" className="text-sm text-slate-600 leading-relaxed cursor-pointer">
+                            <Label htmlFor="terms" className="text-sm text-text-secondary leading-relaxed cursor-pointer">
                               Αποδέχομαι τους <Link href="/terms" className="text-primary font-bold hover:underline">Όρους Χρήσης</Link> και την Πολιτική Απορρήτου.
                             </Label>
                           </div>
                           <div className="flex items-start gap-3">
                             <Checkbox id="mkt" checked={consentMarketing} onCheckedChange={(v) => setConsentMarketing(Boolean(v))} className="mt-1" />
-                            <Label htmlFor="mkt" className="text-sm text-slate-600 leading-relaxed cursor-pointer font-medium">
+                            <Label htmlFor="mkt" className="text-sm text-text-secondary leading-relaxed cursor-pointer font-medium">
                               Θέλω να λαμβάνω ενημερώσεις για νέες δυνατότητες προβολής.
                             </Label>
                           </div>
@@ -1216,7 +1216,7 @@ export default function AdvertiseLandingPage() {
                           </>
                         )}
                       </Button>
-                      <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">
                         <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> SECURE SETUP</span>
                         <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-orange-400" /> INSTANT ACTIVATION</span>
                         <span className="flex items-center gap-1.5"><MousePointerClick className="w-3.5 h-3.5" /> NO CREDIT CARD</span>
@@ -1227,7 +1227,7 @@ export default function AdvertiseLandingPage() {
                   <div className="lg:col-span-5 space-y-6">
                     <div className="sticky top-24">
                       <div className="flex items-center justify-between mb-4">
-                        <Label className="text-slate-900 font-bold uppercase tracking-widest text-xs">Live Preview</Label>
+                        <Label className="text-text-primary font-bold uppercase tracking-widest text-xs">Live Preview</Label>
                         <div className="flex items-center gap-1 text-[10px] font-bold text-red-500 uppercase">
                           <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" /> LIVE
                         </div>
@@ -1240,7 +1240,7 @@ export default function AdvertiseLandingPage() {
                       />
 
                       <div className="mt-8 p-6 bg-primary/5 border border-primary/10 rounded-2xl space-y-4">
-                        <h5 className="font-bold text-slate-900">Τι περιλαμβάνει το trial;</h5>
+                        <h5 className="font-bold text-text-primary">Τι περιλαμβάνει το trial;</h5>
                         <ul className="space-y-3">
                           {[
                             '30 ημέρες δωρεάν προβολή',
@@ -1249,7 +1249,7 @@ export default function AdvertiseLandingPage() {
                             'Πρόσβαση στο διαχειριστικό portal',
                             'Δυνατότητα αλλαγής κειμένου ανά πάσα στιγμή',
                           ].map((text, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                            <li key={i} className="flex items-start gap-2 text-sm text-text-secondary">
                               <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                               {text}
                             </li>
@@ -1270,12 +1270,12 @@ export default function AdvertiseLandingPage() {
                         <CheckCircle2 className="w-10 h-10 text-green-600" />
                       </div>
                       <CardTitle className="text-2xl font-black uppercase tracking-tight">Συγχαρητήρια!</CardTitle>
-                      <CardDescription className="text-slate-600 text-lg">Η δοκιμή σας ξεκίνησε.</CardDescription>
+                      <CardDescription className="text-text-secondary text-lg">Η δοκιμή σας ξεκίνησε.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-4">
                       <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ημερομηνία Λήξης Trial</div>
-                        <div className="text-xl font-bold text-slate-900">
+                        <div className="text-xs font-bold text-text-secondary uppercase tracking-widest">Ημερομηνία Λήξης Trial</div>
+                        <div className="text-xl font-bold text-text-primary">
                           {startResult.trial_ends_at
                             ? new Date(startResult.trial_ends_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })
                             : '—'}
@@ -1301,7 +1301,7 @@ export default function AdvertiseLandingPage() {
                         </Button>
                       </div>
 
-                      <p className="text-[11px] text-center text-slate-400 leading-relaxed uppercase tracking-wider font-bold">
+                      <p className="text-[11px] text-center text-text-secondary leading-relaxed uppercase tracking-wider font-bold">
                         Κρατήστε το link διαχείρισης για να βλέπετε στατιστικά και να αλλάζετε το κείμενο της διαφήμισης.
                       </p>
                     </CardContent>
