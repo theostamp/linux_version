@@ -39,3 +39,4 @@ export function useMarketplacePartner(id: string) {
     enabled: !!id,
   });
 }
+
