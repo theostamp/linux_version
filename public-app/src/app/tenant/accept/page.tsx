@@ -2,9 +2,23 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, type ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { apiPost } from '@/lib/api';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
+
+function PageShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-screen bg-bg-app-main text-text-primary relative overflow-hidden flex items-center justify-center p-4">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_10%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
+      <BuildingRevealBackground />
+      <div className="relative z-10 w-full max-w-md">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function TenantAcceptContent() {
   const searchParams = useSearchParams();
@@ -87,62 +101,62 @@ function TenantAcceptContent() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Επεξεργασία πρόσκλησης...</p>
+      <PageShell>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8 text-center">
+          <Loader2 className="h-10 w-10 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary">Επεξεργασία πρόσκλησης...</p>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+      <PageShell>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8">
           <div className="text-center">
-            <div className="text-red-600 text-5xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Σφάλμα</h1>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <div className="text-rose-600 text-4xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-text-primary mb-4">Σφάλμα</h1>
+            <p className="text-text-secondary mb-6">{message}</p>
             <div className="space-y-3">
               <button
                 onClick={() => router.push('/login')}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full bg-accent-primary text-white py-2.5 px-4 rounded-xl font-semibold hover:opacity-90 transition-colors shadow-lg shadow-accent-primary/20"
               >
                 Μετάβαση στη Σύνδεση
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                className="w-full bg-bg-app-main text-text-primary py-2.5 px-4 rounded-xl border border-gray-200 hover:bg-white transition-colors"
               >
                 Δοκιμή Ξανά
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Ανακατεύθυνση...</p>
+    <PageShell>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8 text-center">
+        <Loader2 className="h-10 w-10 text-accent-primary animate-spin mx-auto mb-4" />
+        <p className="text-text-secondary">Ανακατεύθυνση...</p>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
 export default function TenantAcceptPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Φόρτωση...</p>
+      <PageShell>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8 text-center">
+          <Loader2 className="h-10 w-10 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary">Φόρτωση...</p>
         </div>
-      </div>
+      </PageShell>
     }>
       <TenantAcceptContent />
     </Suspense>

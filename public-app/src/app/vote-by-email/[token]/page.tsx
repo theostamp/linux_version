@@ -59,8 +59,8 @@ const voteOptions: { value: VoteChoice; label: string; icon: React.ReactNode; co
     value: 'abstain',
     label: 'Λευκό',
     icon: <MinusCircle className="w-6 h-6" />,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100 hover:bg-gray-200 border-gray-300',
+    color: 'text-text-secondary',
+    bgColor: 'bg-bg-app-main hover:bg-white border-gray-200',
   },
 ];
 
@@ -295,13 +295,13 @@ export default function VoteByEmailPage() {
               {/* Item header */}
               <div className="p-5 border-b border-gray-100">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-700 font-bold text-sm">
+                  <div className="w-8 h-8 bg-accent-primary/10 rounded-lg flex items-center justify-center text-accent-primary font-bold text-sm">
                     {item.order}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                    <h3 className="font-semibold text-text-primary">{item.title}</h3>
                     {item.description && (
-                      <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                      <p className="text-sm text-text-secondary mt-1">{item.description}</p>
                     )}
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export default function VoteByEmailPage() {
 
               {/* Vote options */}
               <div className="p-5">
-                <p className="text-sm text-gray-600 mb-4">Επιλέξτε την ψήφο σας:</p>
+                <p className="text-sm text-text-secondary mb-4">Επιλέξτε την ψήφο σας:</p>
                 <div className="grid grid-cols-3 gap-3">
                   {voteOptions.map((option) => {
                     const isSelected = votes[item.id] === option.value;
@@ -325,12 +325,12 @@ export default function VoteByEmailPage() {
                             : 'border-gray-200 hover:border-gray-300 bg-white'
                         )}
                       >
-                        <span className={isSelected ? option.color : 'text-gray-400'}>
+                        <span className={isSelected ? option.color : 'text-text-secondary opacity-60'}>
                           {option.icon}
                         </span>
                         <span className={cn(
                           'text-sm font-medium',
-                          isSelected ? option.color : 'text-gray-600'
+                          isSelected ? option.color : 'text-text-secondary'
                         )}>
                           {option.label}
                         </span>
@@ -357,7 +357,7 @@ export default function VoteByEmailPage() {
               'w-full py-6 text-lg font-semibold rounded-xl transition-all',
               allVotesSelected
                 ? 'bg-accent-primary text-white hover:opacity-90'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-bg-app-main text-text-secondary border border-gray-200 cursor-not-allowed'
             )}
           >
             {isSubmitting ? (

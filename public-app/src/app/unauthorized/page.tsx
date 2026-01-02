@@ -5,26 +5,29 @@ import { motion } from 'framer-motion';
 import { ShieldX, Home, ArrowLeft, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/contexts/AuthContext';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 export default function UnauthorizedPage() {
   const { logout, user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bg-app-main text-text-primary relative overflow-hidden flex items-center justify-center p-4">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_10%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
+      <BuildingRevealBackground />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full text-center"
+        className="max-w-md w-full text-center relative z-10"
       >
         {/* Icon */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center shadow-lg"
+          className="w-24 h-24 mx-auto mb-8 rounded-full bg-rose-100 flex items-center justify-center shadow-card-soft"
         >
-          <ShieldX className="w-12 h-12 text-red-500" />
+          <ShieldX className="w-12 h-12 text-rose-600" />
         </motion.div>
 
         {/* Title */}
@@ -32,7 +35,7 @@ export default function UnauthorizedPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-3xl font-bold text-gray-900 mb-4"
+          className="text-3xl font-bold text-text-primary mb-4"
         >
           Δεν έχετε πρόσβαση
         </motion.h1>
@@ -42,11 +45,11 @@ export default function UnauthorizedPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-gray-600 mb-8 leading-relaxed"
+          className="text-text-secondary mb-8 leading-relaxed"
         >
           Λυπούμαστε, αλλά δεν έχετε τα απαραίτητα δικαιώματα για να δείτε αυτή τη σελίδα.
           {user && (
-            <span className="block mt-2 text-sm text-gray-500">
+            <span className="block mt-2 text-sm text-text-secondary">
               Συνδεδεμένος ως: <strong>{user.email}</strong>
             </span>
           )}
@@ -78,7 +81,7 @@ export default function UnauthorizedPage() {
           {user && (
             <Button
               variant="ghost"
-              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="gap-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
               onClick={logout}
             >
               <LogOut className="w-4 h-4" />
@@ -92,7 +95,7 @@ export default function UnauthorizedPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="mt-8 text-sm text-gray-500"
+          className="mt-8 text-sm text-text-secondary"
         >
           Αν πιστεύετε ότι πρέπει να έχετε πρόσβαση, επικοινωνήστε με τον διαχειριστή.
         </motion.p>
