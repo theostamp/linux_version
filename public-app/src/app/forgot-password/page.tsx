@@ -3,7 +3,8 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Building, Mail, ArrowRight, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Building, Mail, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 function ForgotPasswordForm() {
   const router = useRouter();
@@ -70,16 +71,23 @@ function ForgotPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-bg-app-main text-text-primary relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_10%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
+      <BuildingRevealBackground />
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <Link href="/" className="flex items-center">
-              <Building className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
+          <div className="flex flex-wrap items-center justify-between gap-4 py-4">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-primary shadow-lg shadow-accent-primary/25">
+                <Building className="h-5 w-5 text-white" />
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-xs uppercase tracking-widest text-text-secondary">Ψηφιακός Θυρωρός</span>
+                <span className="text-lg font-bold text-accent-primary">newconcierge.app</span>
+              </span>
             </Link>
-            <Link href="/login" className="text-gray-600 hover:text-gray-900">
+            <Link href="/login" className="text-sm font-medium text-accent-primary hover:opacity-80 transition-opacity">
               Σύνδεση
             </Link>
           </div>
@@ -88,31 +96,31 @@ function ForgotPasswordForm() {
 
       <main className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8">
             {!isSuccess ? (
               <>
                 <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-3xl font-bold text-text-primary mb-2">
                     Επαναφορά Κωδικού
                   </h1>
-                  <p className="text-gray-600">
+                  <p className="text-text-secondary">
                     Εισάγετε το email σας και θα σας στείλουμε οδηγίες για την επαναφορά του κωδικού σας.
                   </p>
                 </div>
 
                 {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg mb-6 text-sm">
                     {error}
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
                       Διεύθυνση Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                       <input
                         type="email"
                         id="email"
@@ -123,8 +131,8 @@ function ForgotPasswordForm() {
                           setError(null);
                         }}
                         autoComplete="email"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          error ? 'border-red-300' : 'border-slate-200'
+                        className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                          error ? 'border-rose-300' : 'border-gray-200'
                         }`}
                         placeholder="john@example.com"
                         required
@@ -135,7 +143,7 @@ function ForgotPasswordForm() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full bg-accent-primary text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-accent-primary/20"
                   >
                     {isLoading ? (
                       <>
@@ -152,23 +160,23 @@ function ForgotPasswordForm() {
                 </form>
 
                 <div className="mt-6 text-center">
-                  <Link href="/login" className="text-sm text-blue-600 hover:text-blue-500">
+                  <Link href="/login" className="text-sm text-accent-primary hover:opacity-80">
                     ← Επιστροφή στη Σύνδεση
                   </Link>
                 </div>
               </>
             ) : (
               <div className="text-center">
-                <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                <CheckCircle className="h-16 w-16 text-emerald-600 mx-auto mb-4" />
+                <h1 className="text-2xl font-bold text-text-primary mb-2">
                   Email Στάλθηκε!
                 </h1>
-                <p className="text-gray-600 mb-6">
+                <p className="text-text-secondary mb-6">
                   Έχουμε στείλει οδηγίες επαναφοράς κωδικού στο <strong>{email}</strong>.
                   Παρακαλώ ελέγξτε το inbox σας και ακολουθήστε τις οδηγίες.
                 </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-accent-primary/10 border border-accent-primary/20 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-accent-primary">
                     <strong>Σημείωση:</strong> Αν δεν λάβετε το email εντός λίγων λεπτών,
                     ελέγξτε το spam folder σας.
                   </p>
@@ -176,7 +184,7 @@ function ForgotPasswordForm() {
                 <div className="flex space-x-4 justify-center">
                   <Link
                     href="/login"
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    className="bg-accent-primary text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors shadow-lg shadow-accent-primary/20"
                   >
                     Επιστροφή στη Σύνδεση
                   </Link>
@@ -185,7 +193,7 @@ function ForgotPasswordForm() {
                       setIsSuccess(false);
                       setEmail('');
                     }}
-                    className="border border-slate-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                    className="border border-gray-200 text-text-primary px-6 py-3 rounded-lg font-semibold hover:bg-bg-app-main transition-colors"
                   >
                     Στείλετε Ξανά
                   </button>
@@ -202,8 +210,8 @@ function ForgotPasswordForm() {
 export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-600">Φόρτωση...</div>
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
+        <div className="animate-pulse text-text-secondary">Φόρτωση...</div>
       </div>
     }>
       <ForgotPasswordForm />

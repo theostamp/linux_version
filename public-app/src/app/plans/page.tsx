@@ -220,8 +220,8 @@ function PlansContent() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-emerald-400 animate-spin" />
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-accent-primary animate-spin" />
       </div>
     );
   }
@@ -233,10 +233,10 @@ function PlansContent() {
     if (hasTokens) {
       // Tokens exist but user not loaded yet - show loading
       return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-400">Φόρτωση...</p>
+            <Loader2 className="h-8 w-8 text-accent-primary animate-spin mx-auto mb-4" />
+            <p className="text-text-secondary">Φόρτωση...</p>
           </div>
         </div>
       );
@@ -244,10 +244,10 @@ function PlansContent() {
 
     // No tokens - actually not logged in
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-400 mb-4">Πρέπει να συνδεθείτε πρώτα</p>
-          <Link href="/login" className="text-emerald-400 hover:text-emerald-300">
+          <p className="text-text-secondary mb-4">Πρέπει να συνδεθείτε πρώτα</p>
+          <Link href="/login" className="text-accent-primary hover:opacity-80">
             Σύνδεση
           </Link>
         </div>
@@ -256,20 +256,21 @@ function PlansContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 relative">
+    <div className="min-h-screen bg-bg-app-main text-text-primary relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_10%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
       <BuildingRevealBackground />
 
       {/* Header */}
-      <header className="border-b border-gray-200 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
+            <Link href="/" className="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors">
               <ChevronLeft className="h-4 w-4" />
               <span className="text-sm">Αρχική</span>
             </Link>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400">Συνδεδεμένος ως:</span>
-              <span className="text-sm font-medium text-slate-200">{user.email}</span>
+              <span className="text-sm text-text-secondary">Συνδεδεμένος ως:</span>
+              <span className="text-sm font-medium text-text-primary">{user.email}</span>
             </div>
           </div>
         </div>
@@ -280,15 +281,15 @@ function PlansContent() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
-              <Building className="h-6 w-6 text-emerald-400" />
-              <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              <Building className="h-6 w-6 text-accent-primary" />
+              <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
                 New Concierge
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">
               Επιλέξτε το Πακέτο σας
             </h1>
-            <p className="text-slate-400">
+            <p className="text-text-secondary">
               Ρυθμίστε το workspace της πολυκατοικίας σας
             </p>
           </div>
@@ -296,19 +297,19 @@ function PlansContent() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error message */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             {/* Apartment Counter */}
-            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
-              <h3 className="text-sm font-medium text-slate-400 mb-4">Διαμερίσματα στην πολυκατοικία</h3>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card-soft">
+              <h3 className="text-sm font-medium text-text-secondary mb-4">Διαμερίσματα στην πολυκατοικία</h3>
               <div className="flex items-center justify-center gap-4">
                 <button
                   type="button"
                   onClick={() => handleApartmentChange(-1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-bg-app-main text-text-secondary hover:bg-white hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={apartments <= 1}
                 >
                   <Minus className="h-4 w-4" />
@@ -318,16 +319,16 @@ function PlansContent() {
                     type="number"
                     value={apartments}
                     onChange={(e) => setApartments(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                    className="w-20 bg-transparent text-center text-3xl font-bold text-emerald-400 focus:outline-none"
+                    className="w-20 bg-transparent text-center text-3xl font-bold text-accent-primary focus:outline-none"
                     min={1}
                     max={100}
                   />
-                  <p className="text-xs text-slate-500">διαμερίσματα</p>
+                  <p className="text-xs text-text-secondary">διαμερίσματα</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleApartmentChange(1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-bg-app-main text-text-secondary hover:bg-white hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={apartments >= 100}
                 >
                   <Plus className="h-4 w-4" />
@@ -336,8 +337,8 @@ function PlansContent() {
             </div>
 
             {/* Plan Selection */}
-            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
-              <h3 className="text-sm font-medium text-slate-400 mb-4">Επιλέξτε πακέτο</h3>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card-soft">
+              <h3 className="text-sm font-medium text-text-secondary mb-4">Επιλέξτε πακέτο</h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Free Plan */}
                 <button
@@ -346,16 +347,16 @@ function PlansContent() {
                   disabled={!freeEligible}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
                     effectivePlan === 'free'
-                      ? 'border-emerald-500 bg-emerald-500/10'
+                      ? 'border-accent-primary bg-accent-primary/10'
                       : !freeEligible
-                      ? 'border-gray-200 bg-slate-800/30 opacity-50 cursor-not-allowed'
-                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
+                      ? 'border-gray-200 bg-bg-app-main opacity-60 cursor-not-allowed'
+                      : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                   }`}
                 >
-                  <Home className="h-8 w-8 text-slate-300 mb-2" />
-                  <span className="font-medium text-slate-200">Free</span>
-                  <span className="text-xs text-slate-500 mb-2">1-7 διαμερίσματα</span>
-                  <span className="text-2xl font-bold text-emerald-400">€0</span>
+                  <Home className="h-8 w-8 text-text-secondary mb-2" />
+                  <span className="font-medium text-text-primary">Free</span>
+                  <span className="text-xs text-text-secondary mb-2">1-7 διαμερίσματα</span>
+                  <span className="text-2xl font-bold text-accent-primary">€0</span>
                 </button>
 
                 {/* Web Plan */}
@@ -365,16 +366,16 @@ function PlansContent() {
                   disabled={freeEligible}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
                     effectivePlan === 'web'
-                      ? 'border-emerald-500 bg-emerald-500/10'
+                      ? 'border-accent-primary bg-accent-primary/10'
                       : freeEligible
-                      ? 'border-gray-200 bg-slate-800/30 opacity-50 cursor-not-allowed'
-                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
+                      ? 'border-gray-200 bg-bg-app-main opacity-60 cursor-not-allowed'
+                      : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                   }`}
                 >
-                  <Building className="h-8 w-8 text-slate-300 mb-2" />
-                  <span className="font-medium text-slate-200">Web</span>
-                  <span className="text-xs text-slate-500 mb-2">Πλήρης πλατφόρμα</span>
-                  <span className="text-2xl font-bold text-emerald-400">
+                  <Building className="h-8 w-8 text-text-secondary mb-2" />
+                  <span className="font-medium text-text-primary">Web</span>
+                  <span className="text-xs text-text-secondary mb-2">Πλήρης πλατφόρμα</span>
+                  <span className="text-2xl font-bold text-accent-primary">
                     €{getMonthlyPrice('web', apartments).toFixed(2)}
                   </span>
                 </button>
@@ -385,17 +386,17 @@ function PlansContent() {
                   onClick={() => setSelectedPlan('premium')}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
                     selectedPlan === 'premium'
-                      ? 'border-emerald-500 bg-emerald-500/10'
-                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
+                      ? 'border-accent-primary bg-accent-primary/10'
+                      : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                   }`}
                 >
-                  <span className="absolute -top-2 right-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                  <span className="absolute -top-2 right-2 rounded-full bg-accent-secondary/15 px-2 py-0.5 text-[10px] font-bold text-accent-secondary">
                     Δημοφιλές
                   </span>
-                  <Monitor className="h-8 w-8 text-slate-300 mb-2" />
-                  <span className="font-medium text-slate-200">Premium</span>
-                  <span className="text-xs text-slate-500 mb-2">Web + Kiosk + AI + Αρχείο</span>
-                  <span className="text-2xl font-bold text-emerald-400">
+                  <Monitor className="h-8 w-8 text-text-secondary mb-2" />
+                  <span className="font-medium text-text-primary">Premium</span>
+                  <span className="text-xs text-text-secondary mb-2">Web + Kiosk + AI + Αρχείο</span>
+                  <span className="text-2xl font-bold text-accent-primary">
                     €{getMonthlyPrice('premium', apartments).toFixed(2)}
                   </span>
                 </button>
@@ -406,17 +407,17 @@ function PlansContent() {
                   onClick={() => setSelectedPlan('premium_iot')}
                   className={`relative flex flex-col items-center rounded-xl border p-4 transition-all ${
                     selectedPlan === 'premium_iot'
-                      ? 'border-emerald-500 bg-emerald-500/10'
-                      : 'border-gray-200 bg-slate-800/50 hover:border-slate-600'
+                      ? 'border-accent-primary bg-accent-primary/10'
+                      : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                   }`}
                 >
-                  <span className="absolute -top-2 right-2 rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                  <span className="absolute -top-2 right-2 rounded-full bg-accent-primary/10 px-2 py-0.5 text-[10px] font-bold text-accent-primary">
                     IoT
                   </span>
-                  <Monitor className="h-8 w-8 text-slate-300 mb-2" />
-                  <span className="font-medium text-slate-200">Premium + IoT</span>
-                  <span className="text-xs text-slate-500 mb-2">Smart Heating</span>
-                  <span className="text-2xl font-bold text-emerald-400">
+                  <Monitor className="h-8 w-8 text-text-secondary mb-2" />
+                  <span className="font-medium text-text-primary">Premium + IoT</span>
+                  <span className="text-xs text-text-secondary mb-2">Smart Heating</span>
+                  <span className="text-2xl font-bold text-accent-primary">
                     €{getMonthlyPrice('premium_iot', apartments).toFixed(2)}
                   </span>
                 </button>
@@ -425,14 +426,14 @@ function PlansContent() {
               {/* Billing Toggle (only for paid plans) */}
               {effectivePlan !== 'free' && (
                 <div className="mt-6 flex items-center justify-center gap-3">
-                  <span className={`text-sm ${!isYearly ? 'text-slate-200' : 'text-slate-500'}`}>
+                  <span className={`text-sm ${!isYearly ? 'text-text-primary' : 'text-text-secondary'}`}>
                     Μηνιαία
                   </span>
                   <button
                     type="button"
                     onClick={() => setIsYearly(!isYearly)}
                     className={`relative h-6 w-11 rounded-full transition-colors ${
-                      isYearly ? 'bg-emerald-500' : 'bg-slate-700'
+                      isYearly ? 'bg-accent-primary' : 'bg-gray-200'
                     }`}
                   >
                     <span
@@ -441,11 +442,11 @@ function PlansContent() {
                       }`}
                     />
                   </button>
-                  <span className={`text-sm ${isYearly ? 'text-slate-200' : 'text-slate-500'}`}>
+                  <span className={`text-sm ${isYearly ? 'text-text-primary' : 'text-text-secondary'}`}>
                     Ετήσια
                   </span>
                   {isYearly && (
-                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                    <span className="rounded-full bg-accent-primary/10 px-2 py-0.5 text-xs font-medium text-accent-primary">
                       -2 μήνες
                     </span>
                   )}
@@ -454,57 +455,57 @@ function PlansContent() {
             </div>
 
             {/* Subdomain Input */}
-            <div className="rounded-2xl border border-gray-200 bg-slate-900/70 p-6">
-              <h3 className="text-sm font-medium text-slate-400 mb-4">Διεύθυνση Workspace</h3>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card-soft">
+              <h3 className="text-sm font-medium text-text-secondary mb-4">Διεύθυνση Workspace</h3>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                     <input
                       type="text"
                       value={subdomain}
                       onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-gray-200 rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors"
                       placeholder="my-building"
                     />
                   </div>
                 </div>
-                <span className="text-slate-500">.newconcierge.app</span>
+                <span className="text-text-secondary">.newconcierge.app</span>
               </div>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-text-secondary">
                 Μόνο πεζά γράμματα, αριθμοί και παύλες
               </p>
             </div>
 
             {/* Price Summary */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-slate-900 p-6">
+            <div className="rounded-2xl border border-accent-primary/20 bg-gradient-to-br from-accent-primary/10 via-white to-white p-6 shadow-card-soft">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm text-slate-400">Επιλεγμένο πακέτο</p>
-                  <p className="text-lg font-semibold text-slate-200">{PLANS[effectivePlan].name}</p>
+                  <p className="text-sm text-text-secondary">Επιλεγμένο πακέτο</p>
+                  <p className="text-lg font-semibold text-text-primary">{PLANS[effectivePlan].name}</p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-emerald-400">€{displayPrice.toFixed(2)}</span>
-                    <span className="text-slate-500">/{isYearly ? 'έτος' : 'μήνα'}</span>
+                    <span className="text-3xl font-bold text-accent-primary">€{displayPrice.toFixed(2)}</span>
+                    <span className="text-text-secondary">/{isYearly ? 'έτος' : 'μήνα'}</span>
                   </div>
                   {effectivePlan !== 'free' && isYearly && (
-                    <p className="text-xs text-emerald-400">
+                    <p className="text-xs text-accent-primary">
                       Εξοικονόμηση €{monthlyPrice * 2}/έτος
                     </p>
                   )}
                   {effectivePlan !== 'free' && (
-                    <p className="text-xs text-emerald-300">14 ημέρες δοκιμή χωρίς κάρτα.</p>
+                    <p className="text-xs text-accent-secondary">14 ημέρες δοκιμή χωρίς κάρτα.</p>
                   )}
                 </div>
               </div>
 
               <div className="border-t border-gray-200 pt-4">
-                <p className="text-xs font-medium text-slate-400 mb-2">Περιλαμβάνει:</p>
+                <p className="text-xs font-medium text-text-secondary mb-2">Περιλαμβάνει:</p>
                 <ul className="space-y-1">
                   {PLANS[effectivePlan].features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-xs text-slate-400">
-                      <CheckCircle className="h-3 w-3 text-emerald-400 shrink-0" />
+                    <li key={feature} className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="h-3 w-3 text-accent-primary shrink-0" />
                       {feature}
                     </li>
                   ))}
@@ -516,7 +517,7 @@ function PlansContent() {
             <button
               type="submit"
               disabled={isLoading || !subdomain.trim()}
-              className="w-full bg-emerald-500 text-slate-950 py-4 px-6 rounded-xl font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-emerald-500/25"
+              className="w-full bg-accent-primary text-white py-4 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-accent-primary/20"
             >
               {isLoading ? (
                 <>
@@ -536,7 +537,7 @@ function PlansContent() {
               )}
             </button>
             {effectivePlan !== 'free' && (
-              <p className="mt-2 text-xs text-slate-500 text-center">
+              <p className="mt-2 text-xs text-text-secondary text-center">
                 Η κάρτα ζητείται μόνο αν συνεχίσεις μετά τη δοκιμή.
               </p>
             )}
@@ -550,8 +551,8 @@ function PlansContent() {
 export default function PlansPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-emerald-400 animate-spin" />
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-accent-primary animate-spin" />
       </div>
     }>
       <PlansContent />

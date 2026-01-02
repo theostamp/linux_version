@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/contexts/AuthContext';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 interface StateData {
   provider?: string;
@@ -240,41 +241,43 @@ function OAuthCallback() {
   }, [code, state, error, router, loginWithToken]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md w-full">
+    <div className="min-h-screen bg-bg-app-main text-text-primary flex items-center justify-center relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_15%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
+      <BuildingRevealBackground />
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-12 max-w-md w-full relative z-10">
         <div className="flex flex-col items-center">
           {status === 'loading' && (
             <>
-              <Loader2 className="h-16 w-16 text-blue-600 animate-spin mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Επεξεργασία...</h1>
-              <p className="text-gray-600">{message}</p>
+              <Loader2 className="h-16 w-16 text-accent-primary animate-spin mb-4" />
+              <h1 className="text-2xl font-bold text-text-primary mb-2">Επεξεργασία...</h1>
+              <p className="text-text-secondary">{message}</p>
             </>
           )}
 
           {status === 'success' && (
             <>
-              <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Επιτυχία!</h1>
-              <p className="text-gray-600">{message}</p>
-              <p className="text-sm text-gray-500 mt-4">Ανακατεύθυνση...</p>
+              <CheckCircle className="h-16 w-16 text-emerald-600 mb-4" />
+              <h1 className="text-2xl font-bold text-text-primary mb-2">Επιτυχία!</h1>
+              <p className="text-text-secondary">{message}</p>
+              <p className="text-sm text-text-secondary mt-4">Ανακατεύθυνση...</p>
             </>
           )}
 
           {status === 'error' && (
             <>
-              <XCircle className="h-16 w-16 text-red-600 mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Σφάλμα</h1>
-              <p className="text-gray-600 mb-6">{message}</p>
+              <XCircle className="h-16 w-16 text-rose-600 mb-4" />
+              <h1 className="text-2xl font-bold text-text-primary mb-2">Σφάλμα</h1>
+              <p className="text-text-secondary mb-6">{message}</p>
               <div className="flex space-x-4">
                 <Link
                   href="/login"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="bg-accent-primary text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors shadow-lg shadow-accent-primary/20"
                 >
                   Δοκιμάστε Ξανά
                 </Link>
                 <Link
                   href="/"
-                  className="border border-slate-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                  className="border border-gray-200 text-text-primary px-6 py-3 rounded-lg font-semibold hover:bg-bg-app-main transition-colors"
                 >
                   Αρχική
                 </Link>
@@ -290,8 +293,8 @@ function OAuthCallback() {
 export default function OAuthCallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-600">Φόρτωση...</div>
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
+        <div className="animate-pulse text-text-secondary">Φόρτωση...</div>
       </div>
     }>
       <OAuthCallback />

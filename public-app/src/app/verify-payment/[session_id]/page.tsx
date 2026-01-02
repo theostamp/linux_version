@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, XCircle, Loader2, Building, ArrowRight, Mail } from 'lucide-react';
+import BuildingRevealBackground from '@/components/BuildingRevealBackground';
 
 interface PaymentStatus {
   status: 'loading' | 'success' | 'error' | 'pending' | 'awaiting_email';
@@ -152,16 +153,16 @@ export default function VerifyPaymentPage() {
   const renderStatusIcon = () => {
     switch (paymentStatus.status) {
       case 'loading':
-        return <Loader2 className="h-16 w-16 text-blue-600 animate-spin" />;
+        return <Loader2 className="h-16 w-16 text-accent-primary animate-spin" />;
       case 'success':
-        return <CheckCircle className="h-16 w-16 text-green-600" />;
+        return <CheckCircle className="h-16 w-16 text-emerald-600" />;
       case 'error':
-        return <XCircle className="h-16 w-16 text-red-600" />;
+        return <XCircle className="h-16 w-16 text-rose-600" />;
       case 'awaiting_email':
       case 'pending':
-        return <Mail className="h-16 w-16 text-blue-600" />;
+        return <Mail className="h-16 w-16 text-accent-primary" />;
       default:
-        return <Loader2 className="h-16 w-16 text-blue-600 animate-spin" />;
+        return <Loader2 className="h-16 w-16 text-accent-primary animate-spin" />;
     }
   };
 
@@ -209,30 +210,30 @@ export default function VerifyPaymentPage() {
   const renderStatusMessage = () => {
     return (
       <div className="text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-4">
           {paymentStatus.status === 'success' ? 'Καλώς ήρθατε στο New Concierge!' :
            paymentStatus.status === 'error' ? 'Η Επαλήθευση Πληρωμής Απέτυχε' :
            paymentStatus.status === 'awaiting_email' ? 'Ελέγξτε το Email σας' :
            paymentStatus.status === 'pending' ? 'Ελέγξτε το Email σας' :
            'Επεξεργασία Πληρωμής'}
         </h1>
-        <p className="text-lg text-gray-600 mb-8">
+        <p className="text-lg text-text-secondary mb-8">
           {paymentStatus.message}
         </p>
 
         {paymentStatus.status === 'success' && paymentStatus.tenantUrl && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-center mb-4">
-              <Building className="h-8 w-8 text-green-600 mr-2" />
-              <span className="text-lg font-semibold text-green-800">
+              <Building className="h-8 w-8 text-emerald-600 mr-2" />
+              <span className="text-lg font-semibold text-emerald-800">
                 Πίνακας Ελέγχου Κτιρίου
               </span>
             </div>
-            <p className="text-green-700 mb-4">
+            <p className="text-emerald-700 mb-4">
               Το κτίριό σας είναι πλέον προσβάσιμο στο:
             </p>
-            <div className="bg-white border border-green-300 rounded-lg p-4 mb-4">
-              <code className="text-green-800 font-mono">
+            <div className="bg-white border border-emerald-300 rounded-lg p-4 mb-4">
+              <code className="text-emerald-800 font-mono">
                 https://{paymentStatus.tenantUrl}
               </code>
             </div>
@@ -240,7 +241,7 @@ export default function VerifyPaymentPage() {
               href={`https://${paymentStatus.tenantUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              className="inline-flex items-center bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20"
             >
               Πρόσβαση στον Πίνακα Ελέγχου
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -249,28 +250,28 @@ export default function VerifyPaymentPage() {
         )}
 
         {(paymentStatus.status === 'pending' || paymentStatus.status === 'awaiting_email') && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <div className="bg-accent-primary/10 border border-accent-primary/20 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-center mb-4">
-              <Mail className="h-8 w-8 text-blue-600 mr-2" />
-              <span className="text-lg font-semibold text-blue-800">
+              <Mail className="h-8 w-8 text-accent-primary mr-2" />
+              <span className="text-lg font-semibold text-accent-primary">
                 Ελέγξτε το Email σας
               </span>
             </div>
-            <p className="text-blue-700 mb-4">
+            <p className="text-text-secondary mb-4">
               Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ:
             </p>
-            <ol className="list-decimal list-inside space-y-2 text-blue-700 mb-4">
+            <ol className="list-decimal list-inside space-y-2 text-text-secondary mb-4">
               <li>Ελέγξτε το inbox σας (και spam folder)</li>
               <li>Κάντε click στο link επιβεβαίωσης</li>
               <li>Μετά την επιβεβαίωση, θα λάβετε email με τα στοιχεία login</li>
             </ol>
-            <p className="text-sm text-blue-600 mb-6">
+            <p className="text-sm text-text-secondary mb-6">
               Αν δεν λάβατε email εντός 5 λεπτών, ελέγξτε το spam folder ή επικοινωνήστε μαζί μας.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={handleCheckAgain}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center justify-center"
+                className="bg-accent-primary text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-colors inline-flex items-center justify-center shadow-lg shadow-accent-primary/20"
               >
                 <CheckCircle className="h-5 w-5 mr-2" />
                 Επιβεβαίωσα το Email - Ελέγξτε Ξανά
@@ -278,7 +279,7 @@ export default function VerifyPaymentPage() {
               <button
                 onClick={handleResendEmail}
                 disabled={resendCooldown > 0 || isResending}
-                className="bg-white text-blue-600 border-2 border-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-white text-accent-primary border-2 border-accent-primary/40 px-6 py-3 rounded-lg font-semibold hover:bg-accent-primary/10 transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Mail className="h-5 w-5 mr-2" />
                 {isResending ? 'Αποστολή...' :
@@ -290,20 +291,20 @@ export default function VerifyPaymentPage() {
         )}
 
         {paymentStatus.status === 'error' && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-            <p className="text-red-700 mb-4">
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-6 mb-8">
+            <p className="text-rose-700 mb-4">
               {paymentStatus.error || 'Προέκυψε απρόσμενο σφάλμα.'}
             </p>
             <div className="space-y-3">
               <Link
                 href="/signup"
-                className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                className="inline-block bg-rose-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20"
               >
                 Δοκιμάστε Ξανά
               </Link>
               <Link
                 href="/"
-                className="inline-block ml-4 border border-red-300 text-red-700 px-6 py-3 rounded-lg font-semibold hover:bg-red-50 transition-colors"
+                className="inline-block ml-4 border border-rose-300 text-rose-700 px-6 py-3 rounded-lg font-semibold hover:bg-rose-50 transition-colors"
               >
                 Επιστροφή στην Αρχική
               </Link>
@@ -312,12 +313,12 @@ export default function VerifyPaymentPage() {
         )}
 
         {paymentStatus.status === 'loading' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-accent-primary/10 border border-accent-primary/20 rounded-lg p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-center">
-                <div className="animate-pulse bg-blue-200 h-2 w-32 rounded"></div>
+                <div className="animate-pulse bg-accent-primary/30 h-2 w-32 rounded"></div>
               </div>
-              <p className="text-blue-700 text-sm">
+              <p className="text-text-secondary text-sm">
                 Αυτό μπορεί να πάρει λίγα λεπτά. Παρακαλώ μην κλείσετε αυτή τη σελίδα.
               </p>
             </div>
@@ -328,14 +329,24 @@ export default function VerifyPaymentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-bg-app-main text-text-primary relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_10%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
+      <BuildingRevealBackground />
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <Link href="/" className="flex items-center">
-              <Building className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
+          <div className="flex flex-wrap items-center justify-between gap-4 py-4">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-primary shadow-lg shadow-accent-primary/25">
+                <Building className="h-5 w-5 text-white" />
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-xs uppercase tracking-widest text-text-secondary">Ψηφιακός Θυρωρός</span>
+                <span className="text-lg font-bold text-accent-primary">newconcierge.app</span>
+              </span>
+            </Link>
+            <Link href="/login" className="text-sm font-medium text-accent-primary hover:opacity-80 transition-opacity">
+              Σύνδεση
             </Link>
           </div>
         </div>
@@ -343,7 +354,7 @@ export default function VerifyPaymentPage() {
 
       <main className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-12">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-12">
             <div className="flex flex-col items-center">
               {renderStatusIcon()}
               <div className="mt-8 w-full">
@@ -354,34 +365,34 @@ export default function VerifyPaymentPage() {
 
           {/* Additional Information */}
           {paymentStatus.status === 'success' && (
-            <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Τι Ακολουθεί;</h2>
+            <div className="mt-8 bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8">
+              <h2 className="text-xl font-bold text-text-primary mb-4">Τι Ακολουθεί;</h2>
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <div className="bg-green-100 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-green-600 font-semibold text-sm">1</span>
+                  <div className="bg-accent-primary/10 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
+                    <span className="text-accent-primary font-semibold text-sm">1</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Επιβεβαιώστε το Email σας</h3>
-                    <p className="text-gray-600">Ελέγξτε το inbox σας και κάντε click στο link επιβεβαίωσης.</p>
+                    <h3 className="font-semibold text-text-primary">Επιβεβαιώστε το Email σας</h3>
+                    <p className="text-text-secondary">Ελέγξτε το inbox σας και κάντε click στο link επιβεβαίωσης.</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-blue-100 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-blue-600 font-semibold text-sm">2</span>
+                  <div className="bg-accent-secondary/15 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
+                    <span className="text-accent-secondary font-semibold text-sm">2</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Πρόσβαση στον Πίνακα Ελέγχου</h3>
-                    <p className="text-gray-600">Μετά την επιβεβαίωση, θα λάβετε email με τα στοιχεία login.</p>
+                    <h3 className="font-semibold text-text-primary">Πρόσβαση στον Πίνακα Ελέγχου</h3>
+                    <p className="text-text-secondary">Μετά την επιβεβαίωση, θα λάβετε email με τα στοιχεία login.</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-purple-100 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
-                    <span className="text-purple-600 font-semibold text-sm">3</span>
+                  <div className="bg-emerald-100 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
+                    <span className="text-emerald-700 font-semibold text-sm">3</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Ξεκινήστε τη Διαχείριση</h3>
-                    <p className="text-gray-600">Προσθέστε διαμερίσματα, κατοίκους και ρυθμίστε το κτίριό σας.</p>
+                    <h3 className="font-semibold text-text-primary">Ξεκινήστε τη Διαχείριση</h3>
+                    <p className="text-text-secondary">Προσθέστε διαμερίσματα, κατοίκους και ρυθμίστε το κτίριό σας.</p>
                   </div>
                 </div>
               </div>
