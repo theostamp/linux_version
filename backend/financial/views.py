@@ -1438,6 +1438,85 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=False, methods=['post'], url_path='recalculate-months')
+    def recalculate_months(self, request):
+        """Επανυπολογισμός MonthlyBalance από επιλεγμένο μήνα έως τον τρέχοντα."""
+        data = request.data if hasattr(request, 'data') else request.POST
+        building_id = data.get('building_id') or data.get('building')
+        start_month = data.get('start_month') or data.get('month')
+        end_month = data.get('end_month')
+
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            building_id_int = int(building_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Invalid building ID'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            building = Building.objects.get(id=building_id_int)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        def parse_month(value: str | None) -> tuple[int, int] | None:
+            if not value or not isinstance(value, str):
+                return None
+            try:
+                year, month = map(int, value.split('-'))
+                if month < 1 or month > 12:
+                    return None
+                return year, month
+            except Exception:
+                return None
+
+        today = timezone.now().date()
+        start_tuple = parse_month(start_month) or (today.year, today.month)
+        end_tuple = parse_month(end_month) or (today.year, today.month)
+
+        start_year, start_mon = start_tuple
+        end_year, end_mon = end_tuple
+
+        if (start_year, start_mon) > (end_year, end_mon):
+            return Response(
+                {'error': 'start_month must be <= end_month'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        months_recalculated = (end_year - start_year) * 12 + (end_mon - start_mon) + 1
+
+        try:
+            from .monthly_balance_service import MonthlyBalanceService
+            service = MonthlyBalanceService(building)
+            service.recalculate_all_months(
+                start_year=start_year,
+                start_month=start_mon,
+                end_year=end_year,
+                end_month=end_mon
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to recalculate monthly balances: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response({
+            'status': 'ok',
+            'building_id': building_id_int,
+            'start_month': f'{start_year:04d}-{start_mon:02d}',
+            'end_month': f'{end_year:04d}-{end_mon:02d}',
+            'months_recalculated': months_recalculated
+        })
+
     @action(detail=False, methods=['get'], url_path='improved-summary')
     def improved_summary(self, request):
         """Λήψη βελτιωμένου οικονομικού συνόψη με καλύτερη ορολογία"""

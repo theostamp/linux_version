@@ -121,6 +121,21 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     try {
       console.log('🔍 Loading apartment balances for building:', buildingId);
 
+      if (isRefresh) {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const recalcStartMonth = selectedMonth || currentMonth;
+
+        try {
+          await api.post('/financial/dashboard/recalculate-months/', {
+            building_id: buildingId,
+            start_month: recalcStartMonth,
+          });
+        } catch (error) {
+          console.warn('⚠️ ApartmentBalancesTab: monthly balance recalculation failed:', error);
+        }
+      }
+
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })

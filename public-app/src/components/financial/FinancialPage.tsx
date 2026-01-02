@@ -542,13 +542,28 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 	                Βοήθεια
 	              </Link>
 	            </Button>
-	            <Button
-	              onClick={async () => {
-	                // ✅ Clear API cache FIRST, then React Query cache
-	                invalidateApiCache(/\/financial\//);
+            <Button
+              onClick={async () => {
+                const now = new Date();
+                const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                const recalcStartMonth = selectedMonth || currentMonth;
 
-	                // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
-	                await queryClient.invalidateQueries({
+                // Recalculate monthly balances from selected month to current month
+                try {
+                  await api.post('/financial/dashboard/recalculate-months/', {
+                    building_id: activeBuildingId,
+                    start_month: recalcStartMonth,
+                  });
+                } catch (error) {
+                  console.error('❌ FinancialPage: monthly balance recalculation failed:', error);
+                  toast.error('Αποτυχία επανυπολογισμού μηνιαίων υπολοίπων');
+                }
+
+                // ✅ Clear API cache FIRST, then React Query cache
+                invalidateApiCache(/\/financial\//);
+
+                // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
+                await queryClient.invalidateQueries({
 	                  queryKey: ['financial']
 	                });
 	                await queryClient.invalidateQueries({
