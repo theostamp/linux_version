@@ -29,7 +29,8 @@ from financial.transaction_types import TransactionType
 from financial.balance_service import BalanceCalculationService
 from .models import NotificationTemplate, Notification, NotificationRecipient
 from .services import NotificationService
-from core.emailing import plain_text_to_html, send_templated_email
+from core.emailing import extract_legacy_body_html, send_templated_email
+from .common_expense_service import CommonExpenseNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,32 @@ class DebtReminderService:
         """
         if not target_month:
             target_month = timezone.now().date().replace(day=1)
+
+        office_data = {}
+        if created_by:
+            office_data = {
+                'name': getattr(created_by, 'office_name', '') or '',
+                'address': getattr(created_by, 'office_address', '') or '',
+                'phone': getattr(created_by, 'office_phone', '') or '',
+                'iban': getattr(created_by, 'office_bank_iban', '') or '',
+                'bank_name': getattr(created_by, 'office_bank_name', '') or '',
+                'beneficiary': getattr(created_by, 'office_bank_beneficiary', '') or '',
+            }
+
+        month_display = f"{DebtReminderService.GREEK_MONTHS.get(target_month.month, '')} {target_month.year}".strip()
+        deadline_month = 1 if target_month.month == 12 else target_month.month + 1
+        deadline_year = target_month.year + 1 if target_month.month == 12 else target_month.year
+        payment_deadline = f"15 {DebtReminderService.GREEK_MONTHS_GENITIVE.get(deadline_month, '')} {deadline_year}".strip()
+
+        balances_by_id: Dict[int, Any] = {}
+        try:
+            from financial.services import FinancialDashboardService
+
+            month_str = target_month.strftime('%Y-%m')
+            balances = FinancialDashboardService(building_id=building.id).get_apartment_balances(month=month_str)
+            balances_by_id = {int(b["id"]): b for b in balances if b.get("id") is not None}
+        except Exception as e:
+            logger.warning("Debt reminder balances lookup failed for building %s: %s", building.id, e)
 
         # Βασικά στοιχεία διαμερίσματος
         context = {
@@ -362,29 +389,57 @@ class DebtReminderService:
                 # Αποστολή email (αν όχι test mode)
                 if not test_mode:
                     try:
+                        balance = balances_by_id.get(int(apartment.id)) or {}
+                        amount_due = balance.get('net_obligation')
+                        if amount_due is None:
+                            amount_due = context.get('current_balance_raw', 0)
+                        apartment_data = {
+                            'apartment_number': apartment.number,
+                            'building_name': building.name or building.street,
+                            'building_address': getattr(building, 'address', '') or getattr(building, 'street', ''),
+                            'owner_name': balance.get('owner_name') or apartment.owner_name or '',
+                            'tenant_name': balance.get('tenant_name') or apartment.tenant_name or '',
+                            'participation_mills': balance.get('participation_mills') or apartment.participation_mills or 0,
+                            'month_display': month_display,
+                            'previous_balance': balance.get('previous_balance', 0),
+                            'expense_share': balance.get('expense_share', 0),
+                            'resident_expenses': balance.get('resident_expenses', 0),
+                            'owner_expenses': balance.get('owner_expenses', 0),
+                            'previous_resident_expenses': balance.get('previous_resident_expenses', 0),
+                            'previous_owner_expenses': balance.get('previous_owner_expenses', 0),
+                            'total_payments': balance.get('total_payments', 0),
+                            'net_obligation': amount_due,
+                            'payment_deadline': payment_deadline,
+                        }
+                        html_content = CommonExpenseNotificationService.generate_payment_notification_html(
+                            apartment_data,
+                            office_data,
+                        )
+                        body_html = extract_legacy_body_html(html=html_content)
                         send_templated_email(
                             to=recipient_email,
                             subject=rendered['subject'],
                             template_html="emails/wrapper.html",
                             context={
-                                "body_html": plain_text_to_html(rendered["body"]),
+                                "body_html": body_html,
                                 "wrapper_title": rendered["subject"],
                             },
                             building_manager_id=getattr(building, "manager_id", None),
+                            sender_user=created_by,
                         )
 
                         recipient.mark_as_sent()
                         results['emails_sent'] += 1
-                        results['total_debt_notified'] += context['current_balance_raw']
+                        results['total_debt_notified'] += Decimal(str(amount_due))
                         results['sent_apartments'].append({
                             'apartment': apartment.number,
                             'email': recipient_email,
-                            'debt': f"{context['current_balance_raw']:.2f}€"
+                            'debt': f"{Decimal(str(amount_due)):.2f}€"
                         })
 
                         logger.info(
                             f"✅ Sent to {apartment.number} ({recipient_email}) - "
-                            f"Debt: {context['current_balance_raw']:.2f}€"
+                            f"Debt: {Decimal(str(amount_due)):.2f}€"
                         )
 
                     except Exception as e:

@@ -679,14 +679,80 @@ class MonthlyTaskService:
         """
         from .models import MonthlyNotificationTask, NotificationTemplate
 
-        if not task.template:
+        if not task.template and task.task_type != 'common_expense':
             raise ValueError("Task must have a template to execute")
 
         # Build context for template rendering
         context = MonthlyTaskService._build_context(task)
 
-        # Render template
-        rendered = task.template.render(context)
+        # Render template (optional for common expense)
+        rendered = task.template.render(context) if task.template else {
+            'subject': '',
+            'body': '',
+            'sms': ''
+        }
+
+        if task.task_type == 'common_expense':
+            if not task.building:
+                raise ValueError("Common expense task requires a building")
+
+            from .common_expense_service import CommonExpenseNotificationService
+
+            month_display = task.period_month.strftime('%B %Y')
+            custom_message = rendered.get('body', '').strip()
+            subject_prefix = rendered.get('subject', '').strip() or None
+
+            results = CommonExpenseNotificationService.send_common_expense_notifications(
+                building_id=task.building.id,
+                month=task.period_month,
+                include_sheet=True,
+                include_notification=True,
+                custom_message=custom_message or None,
+                subject_prefix=subject_prefix,
+                sender_user=user,
+            )
+
+            subject = subject_prefix or f"Κοινόχρηστα {month_display}"
+            notification = NotificationService.create_notification(
+                building=task.building,
+                created_by=user,
+                subject=subject,
+                body=custom_message or subject,
+                sms_body=rendered.get('sms', ''),
+                notification_type='email',
+                priority='normal',
+                template=task.template,
+            )
+
+            total_recipients = results['sent_count'] + results['failed_count']
+            notification.total_recipients = total_recipients
+            notification.successful_sends = results['sent_count']
+            notification.failed_sends = results['failed_count']
+            notification.sent_at = timezone.now()
+            notification.save(update_fields=[
+                'total_recipients',
+                'successful_sends',
+                'failed_sends',
+                'sent_at',
+            ])
+
+            if results['failed_count']:
+                errors = [
+                    detail.get('error') for detail in results['details']
+                    if detail.get('status') == 'failed' and detail.get('error')
+                ]
+                error_message = "; ".join(errors[:3]) if errors else "Partial failure sending common expense notices."
+                notification.mark_as_failed(error_message)
+            else:
+                notification.mark_as_sent()
+
+            logger.info(
+                "Executed common expense task %s - %s sent, %s failed",
+                task.id,
+                results['sent_count'],
+                results['failed_count'],
+            )
+            return notification
 
         # Create notification
         notification = NotificationService.create_notification(

@@ -19,7 +19,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
 from .push_service import PushNotificationService
-from core.emailing import extract_legacy_body_html, send_templated_email
+from core.emailing import _absolute_url, extract_legacy_body_html, send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class CommonExpenseNotificationService:
         """
         Get the common expense sheet (JPG/image) for a building and month.
 
-        Returns the file path/URL if found, None otherwise.
+        Returns the storage path if found, None otherwise.
         """
         from financial.models import Expense
 
@@ -59,7 +59,7 @@ class CommonExpenseNotificationService:
         )
 
         if expense_with_sheet and expense_with_sheet.attachment:
-            return expense_with_sheet.attachment.url if hasattr(expense_with_sheet.attachment, 'url') else str(expense_with_sheet.attachment)
+            return expense_with_sheet.attachment.name or str(expense_with_sheet.attachment)
 
         return None
 
@@ -83,6 +83,16 @@ class CommonExpenseNotificationService:
                 building_id=building_id
             )
             building = apartment.building
+
+            dashboard_balance = None
+            try:
+                from financial.services import FinancialDashboardService
+
+                month_str = month.strftime('%Y-%m')
+                balances = FinancialDashboardService(building_id=building_id).get_apartment_balances(month=month_str)
+                dashboard_balance = next((b for b in balances if int(b.get('id')) == int(apartment_id)), None)
+            except Exception as e:
+                logger.warning(f"Dashboard balance lookup failed for apartment {apartment_id}: {e}")
 
             # Calculate previous balance (before current month)
             month_start = date(month.year, month.month, 1)
@@ -127,6 +137,30 @@ class CommonExpenseNotificationService:
                     'share_amount': float(share)
                 })
 
+            # Override with dashboard snapshot if available (matches modal)
+            if dashboard_balance:
+                try:
+                    previous_balance = Decimal(str(dashboard_balance.get('previous_balance', previous_balance)))
+                    expense_share = Decimal(str(dashboard_balance.get('expense_share', expense_share)))
+                    payments_this_month = Decimal(str(dashboard_balance.get('month_payments', payments_this_month)))
+                    total_payments = Decimal(str(dashboard_balance.get('total_payments', payments_this_month)))
+                    net_obligation = Decimal(str(dashboard_balance.get('net_obligation', net_obligation)))
+                    resident_expenses = Decimal(str(dashboard_balance.get('resident_expenses', expense_share)))
+                    owner_expenses = Decimal(str(dashboard_balance.get('owner_expenses', 0)))
+                    previous_resident_expenses = Decimal(str(dashboard_balance.get('previous_resident_expenses', 0)))
+                    previous_owner_expenses = Decimal(str(dashboard_balance.get('previous_owner_expenses', 0)))
+                except Exception as e:
+                    logger.warning(f"Dashboard balance override failed for apartment {apartment_id}: {e}")
+                    total_payments = payments_this_month
+                    previous_resident_expenses = Decimal('0.00')
+                    previous_owner_expenses = Decimal('0.00')
+            else:
+                total_payments = payments_this_month
+                previous_resident_expenses = Decimal('0.00')
+                previous_owner_expenses = Decimal('0.00')
+                resident_expenses = Decimal(expense_share)
+                owner_expenses = Decimal('0.00')
+
             return {
                 'apartment_id': apartment_id,
                 'apartment_number': apartment.number,
@@ -141,10 +175,12 @@ class CommonExpenseNotificationService:
                 # Financial data
                 'previous_balance': float(previous_balance),
                 'expense_share': float(expense_share),
-                'total_payments': float(payments_this_month),
-                'net_obligation': net_obligation,
-                'resident_expenses': float(expense_share),
-                'owner_expenses': 0,
+                'total_payments': float(total_payments),
+                'net_obligation': float(net_obligation),
+                'resident_expenses': float(resident_expenses),
+                'owner_expenses': float(owner_expenses),
+                'previous_resident_expenses': float(previous_resident_expenses),
+                'previous_owner_expenses': float(previous_owner_expenses),
 
                 # Breakdown
                 'expense_breakdown': expense_breakdown,
@@ -186,6 +222,91 @@ class CommonExpenseNotificationService:
                 return "0,00 €"
             return f"{float(amount):,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
 
+        def to_float(value):
+            try:
+                return float(value)
+            except Exception:
+                return 0.0
+
+        def format_currency_or_dash(amount, threshold=0.3):
+            if abs(to_float(amount)) <= threshold:
+                return "-"
+            return format_currency(amount)
+
+        net_obligation_value = to_float(apartment_data.get('net_obligation', 0))
+        net_obligation_color = '#dc2626' if net_obligation_value > 0 else '#16a34a' if net_obligation_value < 0 else '#111827'
+        net_obligation_display = format_currency(abs(net_obligation_value))
+
+        tenant_name = apartment_data.get('tenant_name') or ""
+        building_name = apartment_data.get('building_name', '') or ""
+        owner_name = apartment_data.get('owner_name', 'Μη καταχωρημένος')
+        participation_mills = apartment_data.get('participation_mills', 0)
+
+        info_row_2_label_left = "Ένοικος" if tenant_name else "Χιλιοστά Συμμετοχής"
+        info_row_2_value_left = tenant_name or participation_mills
+        info_row_2_label_right = "Χιλιοστά Συμμετοχής" if tenant_name else "Κτίριο"
+        info_row_2_value_right = participation_mills if tenant_name else building_name
+
+        previous_balance_value = apartment_data.get('previous_balance', 0)
+        previous_owner_expenses = apartment_data.get('previous_owner_expenses', 0)
+        previous_resident_expenses = apartment_data.get('previous_resident_expenses', 0)
+        has_prev_owner = to_float(previous_owner_expenses) > 0.3
+        has_prev_resident = to_float(previous_resident_expenses) > 0.3
+
+        previous_breakdown_html = ""
+        if has_prev_owner or has_prev_resident:
+            owner_prefix = "├─" if has_prev_resident else "└─"
+            resident_prefix = "└─" if has_prev_owner else "├─"
+            previous_breakdown_html = f"""
+            <div style="margin-top: 8px; padding-left: 12px; border-left: 2px solid #d8b4fe;">
+                {f'''
+                <div style="display: flex; justify-content: space-between; color: #b91c1c; margin-bottom: 4px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 11px;">{owner_prefix}</span>
+                        <span>Δαπάνες Ιδιοκτήτη</span>
+                        <span style="border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-size: 11px; padding: 1px 6px; border-radius: 6px;">Δ</span>
+                    </div>
+                    <span style="font-weight: 600;">{format_currency(previous_owner_expenses)}</span>
+                </div>
+                ''' if has_prev_owner else ''}
+                {f'''
+                <div style="display: flex; justify-content: space-between; color: #15803d;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 11px;">{resident_prefix}</span>
+                        <span>Δαπάνες Ενοίκου</span>
+                        <span style="border: 1px solid #bbf7d0; background: #f0fdf4; color: #15803d; font-size: 11px; padding: 1px 6px; border-radius: 6px;">Ε</span>
+                    </div>
+                    <span style="font-weight: 600;">{format_currency(previous_resident_expenses)}</span>
+                </div>
+                ''' if has_prev_resident else ''}
+            </div>
+            """
+
+        sheet_url = apartment_data.get('sheet_url') or ""
+        sheet_attached = bool(apartment_data.get('sheet_attached'))
+        sheet_name = apartment_data.get('sheet_name') or "Φύλλο Κοινοχρήστων"
+        sheet_is_image = sheet_url.lower().endswith(('.jpg', '.jpeg', '.png'))
+        sheet_section_html = ""
+        if sheet_attached:
+            sheet_link_html = f"""
+            <div style="margin-top: 6px;">
+                <a href="{sheet_url}" style="color: #1d4ed8; text-decoration: underline;">Προβολή {sheet_name}</a>
+            </div>
+            """ if sheet_url else ""
+            sheet_preview_html = f"""
+            <div style="margin-top: 12px;">
+                <img src="{sheet_url}" alt="{sheet_name}" style="width: 100%; max-width: 640px; border-radius: 8px; border: 1px solid #e5e7eb;" />
+            </div>
+            """ if sheet_url and sheet_is_image else ""
+            sheet_section_html = f"""
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 8px; color: #0f172a; font-size: 16px;">📄 Φύλλο Κοινοχρήστων</h3>
+                <p style="margin: 0; color: #475569; font-size: 13px;">Το φύλλο κοινοχρήστων επισυνάπτεται στο email για συνολική εικόνα.</p>
+                {sheet_link_html}
+                {sheet_preview_html}
+            </div>
+            """
+
         # Build expense breakdown HTML
         expense_breakdown_html = ""
         if apartment_data.get('expense_breakdown'):
@@ -203,7 +324,7 @@ class CommonExpenseNotificationService:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Ειδοποιητήριο Κοινοχρήστων</title>
+            <title>Ειδοποιητήριο Πληρωμής Κοινοχρήστων</title>
         </head>
         <body style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;">
 
@@ -225,7 +346,7 @@ class CommonExpenseNotificationService:
             <!-- Title -->
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="margin: 0; color: #111827; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">
-                    ΕΙΔΟΠΟΙΗΤΗΡΙΟ ΚΟΙΝΟΧΡΗΣΤΩΝ
+                    ΕΙΔΟΠΟΙΗΤΗΡΙΟ ΠΛΗΡΩΜΗΣ ΚΟΙΝΟΧΡΗΣΤΩΝ
                 </h2>
                 <p style="margin: 10px 0 0; color: #6b7280;">{apartment_data.get('month_display', '')}</p>
             </div>
@@ -235,52 +356,78 @@ class CommonExpenseNotificationService:
                 <h3 style="margin: 0 0 15px; color: #374151; font-size: 16px;">🏠 Στοιχεία Διαμερίσματος</h3>
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td style="padding: 5px 0; color: #6b7280;">Διαμέρισμα:</td>
+                        <td style="padding: 5px 0; color: #6b7280;">Αριθμός Διαμερίσματος:</td>
                         <td style="padding: 5px 0; font-weight: bold;">{apartment_data.get('apartment_number', '')}</td>
-                        <td style="padding: 5px 0; color: #6b7280;">Κτίριο:</td>
-                        <td style="padding: 5px 0; font-weight: bold;">{apartment_data.get('building_name', '')}</td>
+                        <td style="padding: 5px 0; color: #6b7280;">Ιδιοκτήτης:</td>
+                        <td style="padding: 5px 0; font-weight: bold;">{owner_name}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 5px 0; color: #6b7280;">Ιδιοκτήτης:</td>
-                        <td style="padding: 5px 0;">{apartment_data.get('owner_name', 'Μη καταχωρημένος')}</td>
-                        <td style="padding: 5px 0; color: #6b7280;">Χιλιοστά:</td>
-                        <td style="padding: 5px 0;">{apartment_data.get('participation_mills', 0)}</td>
+                        <td style="padding: 5px 0; color: #6b7280;">{info_row_2_label_left}:</td>
+                        <td style="padding: 5px 0;">{info_row_2_value_left}</td>
+                        <td style="padding: 5px 0; color: #6b7280;">{info_row_2_label_right}:</td>
+                        <td style="padding: 5px 0;">{info_row_2_value_right}</td>
                     </tr>
                 </table>
             </div>
 
-            <!-- Payment Summary -->
-            <div style="background: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
-                <p style="margin: 0 0 10px; color: #1e40af; font-size: 14px;">Ποσό Πληρωτέο:</p>
-                <p style="margin: 0; font-size: 32px; font-weight: bold; color: {'#dc2626' if apartment_data.get('net_obligation', 0) > 0 else '#16a34a'};">
-                    {format_currency(abs(apartment_data.get('net_obligation', 0)))}
-                </p>
+            <!-- Payment Info -->
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px; color: #1e3a8a; font-size: 16px;">💳 Πληροφορίες Πληρωμής</h3>
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <p style="margin: 0 0 8px; color: #1e40af; font-size: 14px;">Ποσό Πληρωτέο:</p>
+                    <p style="margin: 0; font-size: 30px; font-weight: bold; color: {net_obligation_color};">
+                        {net_obligation_display}
+                    </p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+                    <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; color: #065f46; font-size: 13px; margin-bottom: 6px;">
+                            <span>Δαπάνες Ενοίκου</span>
+                            <span style="border: 1px solid #bbf7d0; background: #f0fdf4; color: #15803d; font-size: 11px; padding: 1px 6px; border-radius: 6px;">Ε</span>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: #15803d;">
+                            {format_currency_or_dash(apartment_data.get('resident_expenses', 0))}
+                        </div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #fecaca; border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; color: #7f1d1d; font-size: 13px; margin-bottom: 6px;">
+                            <span>Δαπάνες Ιδιοκτήτη</span>
+                            <span style="border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-size: 11px; padding: 1px 6px; border-radius: 6px;">Δ</span>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: #b91c1c;">
+                            {format_currency_or_dash(apartment_data.get('owner_expenses', 0))}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Financial Breakdown -->
             <div style="margin-bottom: 20px;">
                 <h3 style="margin: 0 0 15px; color: #374151; font-size: 16px;">📊 Ανάλυση Οφειλών</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr style="background: #f9fafb;">
-                        <td style="padding: 10px; border: 1px solid #e5e7eb;">Προηγούμενο Υπόλοιπο:</td>
-                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #7c3aed;">
-                            {format_currency(apartment_data.get('previous_balance', 0))}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e5e7eb;">Κοινόχρηστα Τρέχοντος Μήνα:</td>
-                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;">
+                <div style="background: #f3e8ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: 700; color: #6b21a8;">
+                        <span>Παλαιότερες Οφειλές:</span>
+                        <span>{format_currency_or_dash(previous_balance_value)}</span>
+                    </div>
+                    {previous_breakdown_html}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+                    <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+                        <div style="color: #6b7280; font-size: 13px; margin-bottom: 6px;">Ποσό Κοινοχρήστων (Τρέχων):</div>
+                        <div style="font-size: 16px; font-weight: 600;">
                             {format_currency(apartment_data.get('expense_share', 0))}
-                        </td>
-                    </tr>
-                    <tr style="background: #f0fdf4;">
-                        <td style="padding: 10px; border: 1px solid #e5e7eb;">Πληρωμές:</td>
-                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #16a34a;">
-                            -{format_currency(apartment_data.get('total_payments', 0))}
-                        </td>
-                    </tr>
-                </table>
+                        </div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+                        <div style="color: #6b7280; font-size: 13px; margin-bottom: 6px;">Σύνολο Πληρωμών:</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #16a34a;">
+                            {format_currency(apartment_data.get('total_payments', 0))}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            {sheet_section_html}
 
             <!-- Expense Breakdown -->
             {f'''
@@ -350,6 +497,7 @@ class CommonExpenseNotificationService:
         include_notification: bool = True,
         custom_attachment: str = None,
         custom_message: str = None,
+        subject_prefix: str = None,
         sender_user = None
     ) -> Dict[str, Any]:
         """
@@ -363,6 +511,7 @@ class CommonExpenseNotificationService:
             include_notification: Whether to include personalized payment data
             custom_attachment: Optional custom attachment path
             custom_message: Optional custom message to prepend
+            subject_prefix: Optional subject prefix to override default
             sender_user: The user sending the notification (for office data)
 
         Returns:
@@ -417,6 +566,18 @@ class CommonExpenseNotificationService:
 
         # Use custom attachment if provided
         attachment_path = custom_attachment or sheet_path
+        sheet_url = None
+        sheet_name = None
+        if include_sheet and attachment_path:
+            sheet_name = attachment_path.split('/')[-1]
+            if attachment_path.startswith('http://') or attachment_path.startswith('https://'):
+                sheet_url = attachment_path
+            else:
+                try:
+                    sheet_url = default_storage.url(attachment_path)
+                except Exception:
+                    sheet_url = attachment_path
+            sheet_url = _absolute_url(sheet_url) or sheet_url
 
         # Get apartments
         apartments_query = Apartment.objects.filter(building_id=building_id)
@@ -426,6 +587,10 @@ class CommonExpenseNotificationService:
         apartments = apartments_query.select_related('owner_user', 'tenant_user', 'building')
 
         month_display = month.strftime('%B %Y')
+
+        custom_message_html = ""
+        if custom_message:
+            custom_message_html = custom_message.replace("\r\n", "\n").replace("\n", "<br>")
 
         for apartment in apartments:
             try:
@@ -446,6 +611,9 @@ class CommonExpenseNotificationService:
                     apartment_data = CommonExpenseNotificationService.get_apartment_payment_data(
                         building_id, apartment.id, month
                     )
+                    apartment_data['sheet_attached'] = bool(attachment_path)
+                    apartment_data['sheet_url'] = sheet_url or ""
+                    apartment_data['sheet_name'] = sheet_name or ""
 
                 # Send Push Notification
                 push_user = None
@@ -480,7 +648,10 @@ class CommonExpenseNotificationService:
                     continue
 
                 # Generate email content
-                subject = f"Κοινόχρηστα {month_display} - {building.name} - Διαμ. {apartment.number}"
+                subject_base = (subject_prefix or f"Κοινόχρηστα {month_display}").strip()
+                if not subject_base:
+                    subject_base = f"Κοινόχρηστα {month_display}"
+                subject = f"{subject_base} - {building.name} - Διαμ. {apartment.number}"
 
                 # Build text content
                 text_content = custom_message or ""
@@ -508,7 +679,7 @@ class CommonExpenseNotificationService:
                         # Prepend custom message to HTML
                         html_content = f"""
                         <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <p style="margin: 0;">{custom_message}</p>
+                            <p style="margin: 0;">{custom_message_html}</p>
                         </div>
                         """ + html_content
 

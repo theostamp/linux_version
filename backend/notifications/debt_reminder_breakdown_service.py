@@ -7,7 +7,7 @@ Debt Reminder Breakdown Service
 Κύρια χαρακτηριστικά:
 - Υπολογισμός οφειλών βάσει month snapshot (FinancialDashboardService.get_apartment_balances)
 - Δημιουργία Notification + NotificationRecipient records
-- Αποστολή email ανά διαμέρισμα με template emails/debt_reminder_breakdown.html
+ - Αποστολή email ανά διαμέρισμα με περιεχόμενο τύπου "Ειδοποιητήριο Πληρωμής"
 - Weekly dedupe helper (Δευτέρα–Κυριακή) με βάση Notification.status='sent'
 """
 
@@ -23,7 +23,8 @@ from django.utils import timezone
 
 from apartments.models import Apartment
 from buildings.models import Building
-from core.emailing import send_templated_email
+from core.emailing import extract_legacy_body_html, send_templated_email
+from notifications.common_expense_service import CommonExpenseNotificationService
 from notifications.models import Notification, NotificationRecipient
 from notifications.services import NotificationService
 
@@ -104,6 +105,39 @@ class DebtReminderBreakdownService:
         dashboard = FinancialDashboardService(building_id=building.id)
         balances = dashboard.get_apartment_balances(month=month)
         balances_by_id = {int(b["id"]): b for b in balances if b.get("id") is not None}
+
+        month_display = month
+        payment_deadline = ""
+        try:
+            year, mon = map(int, month.split('-'))
+            month_names = {
+                1: 'Ιανουάριος', 2: 'Φεβρουάριος', 3: 'Μάρτιος', 4: 'Απρίλιος',
+                5: 'Μάιος', 6: 'Ιούνιος', 7: 'Ιούλιος', 8: 'Αύγουστος',
+                9: 'Σεπτέμβριος', 10: 'Οκτώβριος', 11: 'Νοέμβριος', 12: 'Δεκέμβριος'
+            }
+            month_genitive = {
+                1: 'Ιανουαρίου', 2: 'Φεβρουαρίου', 3: 'Μαρτίου', 4: 'Απριλίου',
+                5: 'Μαΐου', 6: 'Ιουνίου', 7: 'Ιουλίου', 8: 'Αυγούστου',
+                9: 'Σεπτεμβρίου', 10: 'Οκτωβρίου', 11: 'Νοεμβρίου', 12: 'Δεκεμβρίου'
+            }
+            month_display = f"{month_names.get(mon, month)} {year}"
+            deadline_month = 1 if mon == 12 else mon + 1
+            deadline_year = year + 1 if mon == 12 else year
+            payment_deadline = f"15 {month_genitive.get(deadline_month, '')} {deadline_year}".strip()
+        except Exception:
+            month_display = month
+            payment_deadline = ""
+
+        office_data = {}
+        if created_by:
+            office_data = {
+                'name': getattr(created_by, 'office_name', '') or '',
+                'address': getattr(created_by, 'office_address', '') or '',
+                'phone': getattr(created_by, 'office_phone', '') or '',
+                'iban': getattr(created_by, 'office_bank_iban', '') or '',
+                'bank_name': getattr(created_by, 'office_bank_name', '') or '',
+                'beneficiary': getattr(created_by, 'office_bank_beneficiary', '') or '',
+            }
 
         # Determine target apartments
         if apartment_ids:
@@ -207,34 +241,45 @@ class DebtReminderBreakdownService:
                 )
                 continue
 
-            previous_balance = cls._fmt_money(bal.get("previous_balance", 0))
-            expense_share = Decimal(str(bal.get("expense_share", 0) or 0))
-            reserve_fund_share = Decimal(str(bal.get("reserve_fund_share", 0) or 0))
-            month_expenses_total = cls._fmt_money(expense_share + reserve_fund_share)
-
-            ctx = {
-                "occupant_name": recipient_name or "Αγαπητέ/ή ένοικε",
-                "apartment_number": apartment.number,
-                "building_name": building.name,
-                "month_label": month,
-                "previous_balance": previous_balance,
-                "month_expenses_total": month_expenses_total,
-                "resident_expenses": cls._fmt_money(bal.get("resident_expenses", 0)),
-                "owner_expenses": cls._fmt_money(bal.get("owner_expenses", 0)),
-                "reserve_fund_share": cls._fmt_money(reserve_fund_share) if reserve_fund_share else "",
-                "month_payments": cls._fmt_money(bal.get("month_payments", 0)),
-                "total_due": cls._fmt_money(total_due_raw),
-                "payment_deadline": "",
-                "custom_message": custom_message,
+            apartment_data = {
+                'apartment_number': apartment.number,
+                'building_name': building.name or building.street,
+                'building_address': getattr(building, 'address', '') or getattr(building, 'street', ''),
+                'owner_name': bal.get('owner_name') or apartment.owner_name or '',
+                'tenant_name': bal.get('tenant_name') or apartment.tenant_name or '',
+                'participation_mills': bal.get('participation_mills') or apartment.participation_mills or 0,
+                'month_display': month_display,
+                'previous_balance': bal.get('previous_balance', 0),
+                'expense_share': bal.get('expense_share', 0),
+                'resident_expenses': bal.get('resident_expenses', 0),
+                'owner_expenses': bal.get('owner_expenses', 0),
+                'previous_resident_expenses': bal.get('previous_resident_expenses', 0),
+                'previous_owner_expenses': bal.get('previous_owner_expenses', 0),
+                'total_payments': bal.get('total_payments', 0),
+                'net_obligation': total_due_raw,
+                'payment_deadline': payment_deadline,
             }
 
             try:
+                subject = f"{cls.SUBJECT_KEYWORD} {month} - Διαμέρισμα {apartment.number} ({building.name})"
+                html_content = CommonExpenseNotificationService.generate_payment_notification_html(
+                    apartment_data,
+                    office_data,
+                )
+                if custom_message:
+                    html_content = f"""
+                    <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin: 0;">{custom_message}</p>
+                    </div>
+                    """ + html_content
+                body_html = extract_legacy_body_html(html=html_content)
                 ok = send_templated_email(
                     to=recipient_email,
-                    subject=f"{cls.SUBJECT_KEYWORD} {month} - Διαμέρισμα {apartment.number} ({building.name})",
-                    template_html="emails/debt_reminder_breakdown.html",
-                    context=ctx,
+                    subject=subject,
+                    template_html="emails/wrapper.html",
+                    context={"body_html": body_html, "wrapper_title": subject},
                     building_manager_id=getattr(building, "manager_id", None),
+                    sender_user=created_by,
                 )
                 if ok:
                     recipient.mark_as_sent()
@@ -272,5 +317,3 @@ class DebtReminderBreakdownService:
             skipped=skipped,
             details=details,
         )
-
-
