@@ -153,10 +153,10 @@ export default function VoteByEmailPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
-          <p className="text-white/80">Φόρτωση ψηφοφορίας...</p>
+          <Loader2 className="w-12 h-12 text-accent-primary animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary">Φόρτωση ψηφοφορίας...</p>
         </div>
       </div>
     );
@@ -165,12 +165,12 @@ export default function VoteByEmailPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-900 via-rose-900 to-red-900 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Σφάλμα</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <p className="text-sm text-gray-500">
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-card-soft border border-gray-200">
+          <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-text-primary mb-2">Σφάλμα</h1>
+          <p className="text-text-secondary mb-6">{error}</p>
+          <p className="text-sm text-text-secondary">
             Ο σύνδεσμος ψηφοφορίας μπορεί να έχει λήξει ή να μην είναι έγκυρος.
             Παρακαλούμε επικοινωνήστε με τη διαχείριση του κτιρίου.
           </p>
@@ -182,40 +182,40 @@ export default function VoteByEmailPage() {
   // Already voted all
   if (data?.all_voted || submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-emerald-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center p-4">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl"
+          className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-card-soft border border-gray-200"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', delay: 0.2 }}
-            className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-6"
           >
-            <CheckCircle className="w-10 h-10 text-emerald-600" />
+            <CheckCircle className="w-10 h-10 text-accent-primary" />
           </motion.div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-text-primary mb-2">
             {submitted ? 'Ευχαριστούμε για τη ψήφο σας!' : 'Έχετε ήδη ψηφίσει'}
           </h1>
 
-          <p className="text-gray-600 mb-4">
+          <p className="text-text-secondary mb-4">
             {submitted
               ? `Καταχωρήθηκαν ${submittedCount} ψήφοι επιτυχώς.`
               : 'Έχετε ολοκληρώσει την ηλεκτρονική ψηφοφορία για αυτή τη συνέλευση.'}
           </p>
 
           {data && (
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <p className="text-sm text-gray-500">Συνέλευση</p>
-              <p className="font-medium text-gray-900">{data.assembly.title}</p>
-              <p className="text-sm text-gray-600">{formatDate(data.assembly.scheduled_date)}</p>
+            <div className="bg-bg-app-main rounded-xl p-4 mb-6 border border-gray-200">
+              <p className="text-sm text-text-secondary">Συνέλευση</p>
+              <p className="font-medium text-text-primary">{data.assembly.title}</p>
+              <p className="text-sm text-text-secondary">{formatDate(data.assembly.scheduled_date)}</p>
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-2 text-sm text-emerald-600">
+          <div className="flex items-center justify-center gap-2 text-sm text-accent-primary">
             <Shield className="w-4 h-4" />
             <span>Η ψήφος σας έχει καταχωρηθεί με ασφάλεια</span>
           </div>
@@ -234,17 +234,17 @@ export default function VoteByEmailPage() {
   const allVotesSelected = pendingItems.every(item => votes[item.id]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900">
+    <div className="min-h-screen bg-bg-app-main">
       {/* Header */}
-      <div className="bg-black/20 backdrop-blur-sm border-b border-white/10">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
+            <div className="w-14 h-14 bg-accent-primary rounded-2xl flex items-center justify-center shadow-lg shadow-accent-primary/20">
               <Vote className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Ηλεκτρονική Ψηφοφορία</h1>
-              <p className="text-white/60 text-sm">{data.assembly.title}</p>
+              <h1 className="text-xl font-bold text-text-primary">Ηλεκτρονική Ψηφοφορία</h1>
+              <p className="text-text-secondary text-sm">{data.assembly.title}</p>
             </div>
           </div>
         </div>
@@ -254,33 +254,33 @@ export default function VoteByEmailPage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Info cards */}
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-card-soft">
+            <div className="flex items-center gap-2 text-text-secondary text-sm mb-1">
               <Calendar className="w-4 h-4" />
               Ημερομηνία
             </div>
-            <p className="text-white font-medium">{formatDate(data.assembly.scheduled_date)}</p>
+            <p className="text-text-primary font-medium">{formatDate(data.assembly.scheduled_date)}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-card-soft">
+            <div className="flex items-center gap-2 text-text-secondary text-sm mb-1">
               <Home className="w-4 h-4" />
               Διαμέρισμα
             </div>
-            <p className="text-white font-medium">
+            <p className="text-text-primary font-medium">
               {data.attendee.apartment_number} • {data.attendee.mills} χιλιοστά •{' '}
               {quorumContributionPercent.toFixed(1)}% απαρτίας*
             </p>
           </div>
         </div>
 
-        <p className="mt-3 text-[11px] text-white/60">
+        <p className="mt-3 text-[11px] text-text-secondary">
           * Η συμμετοχή σας προσμετράται στην απαρτία ακόμη κι αν δεν είστε παρών/ούσα.
         </p>
 
         {/* Voting items */}
         <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
             <Vote className="w-5 h-5" />
             Θέματα προς ψήφιση ({pendingItems.length})
           </h2>
@@ -356,8 +356,8 @@ export default function VoteByEmailPage() {
             className={cn(
               'w-full py-6 text-lg font-semibold rounded-xl transition-all',
               allVotesSelected
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
-                : 'bg-gray-300 cursor-not-allowed'
+                ? 'bg-accent-primary text-white hover:opacity-90'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             )}
           >
             {isSubmitting ? (
@@ -374,17 +374,17 @@ export default function VoteByEmailPage() {
           </Button>
 
           {!allVotesSelected && (
-            <p className="text-center text-white/60 text-sm mt-3">
+            <p className="text-center text-text-secondary text-sm mt-3">
               Επιλέξτε ψήφο για όλα τα θέματα για να συνεχίσετε
             </p>
           )}
         </motion.div>
 
         {/* Legal notice */}
-        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
+        <div className="mt-8 p-4 bg-white rounded-xl border border-gray-200 shadow-card-soft">
           <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-white/60 mt-0.5" />
-            <div className="text-sm text-white/60">
+            <Shield className="w-5 h-5 text-text-secondary mt-0.5" />
+            <div className="text-sm text-text-secondary">
               <p>
                 Η ψήφος σας καταχωρείται με χρονοσφραγίδα και αντιστοιχεί στα χιλιοστά του
                 διαμερίσματός σας ({data.attendee.mills}). Σε περίπτωση φυσικής παρουσίας
@@ -396,7 +396,7 @@ export default function VoteByEmailPage() {
       </div>
 
       {/* Footer */}
-      <div className="mt-auto py-6 text-center text-white/40 text-sm">
+      <div className="mt-auto py-6 text-center text-text-secondary text-sm">
         <p>Powered by newconcierge.app</p>
       </div>
     </div>

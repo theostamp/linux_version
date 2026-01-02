@@ -291,21 +291,22 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 relative">
+    <div className="min-h-screen bg-bg-app-main text-text-primary relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_10%,rgba(30,78,140,0.12),transparent_55%),radial-gradient(circle_at_85%_0%,rgba(46,124,144,0.12),transparent_50%)]" />
       <BuildingRevealBackground />
       {/* Header */}
-      <header className="border-b border-gray-300 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center gap-2 text-slate-200 hover:text-white transition-colors">
+            <Link href="/" className="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors">
               <ChevronLeft className="h-4 w-4" />
               <span className="text-sm">Αρχική</span>
             </Link>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-400">Έχετε λογαριασμό;</span>
+              <span className="text-sm text-text-secondary">Έχετε λογαριασμό;</span>
               <Link
                 href="/login"
-                className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="text-sm font-medium text-accent-primary hover:opacity-80 transition-opacity"
               >
                 Σύνδεση
               </Link>
@@ -319,15 +320,15 @@ function SignupForm() {
           {/* App Description Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
-              <Building className="h-6 w-6 text-emerald-400" />
-              <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              <Building className="h-6 w-6 text-accent-primary" />
+              <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">
                 New Concierge
               </span>
             </div>
-            <h2 className="text-xl font-bold text-slate-50 mb-3">
+            <h2 className="text-xl font-bold text-text-primary mb-3">
               Η πολυκατοικία σου γίνεται κοινότητα
             </h2>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-2xl mx-auto mb-6">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-2xl mx-auto mb-6">
               Ένα σημείο ενημέρωσης με οθόνη στην είσοδο και μια πλατφόρμα για όλους τους ενοίκους.
               Διαφάνεια, συνεργασία και ομαλή επικοινωνία – χωρίς χαρτιά, χωρίς εντάσεις.
             </p>
@@ -335,10 +336,10 @@ function SignupForm() {
 
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-50 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">
               Δημιουργία Λογαριασμού
             </h1>
-            <p className="text-slate-400">
+            <p className="text-text-secondary">
               Ξεκινήστε με το {PLANS[effectivePlan].name}
               {effectivePlan !== 'free' && ` - €${displayPrice.toFixed(2)}/${isYearly ? 'έτος' : 'μήνα'}`}
             </p>
@@ -348,13 +349,13 @@ function SignupForm() {
             {/* Left: Plan Selection & Pricing */}
             <div className="lg:col-span-2 space-y-6">
               {/* Apartment Counter */}
-              <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-6 shadow-sm">
-                <h3 className="text-sm font-medium text-slate-400 mb-4">Διαμερίσματα στην πολυκατοικία</h3>
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card-soft">
+                <h3 className="text-sm font-medium text-text-secondary mb-4">Διαμερίσματα στην πολυκατοικία</h3>
                 <div className="flex items-center justify-center gap-4">
                   <button
                     type="button"
                     onClick={() => handleApartmentChange(-1)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-bg-app-main text-text-secondary hover:bg-white hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={apartments <= 1}
                   >
                     <Minus className="h-4 w-4" />
@@ -364,16 +365,16 @@ function SignupForm() {
                       type="number"
                       value={apartments}
                       onChange={(e) => setApartments(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                      className="w-20 bg-transparent text-center text-3xl font-bold text-emerald-400 focus:outline-none"
+                      className="w-20 bg-transparent text-center text-3xl font-bold text-accent-primary focus:outline-none"
                       min={1}
                       max={100}
                     />
-                    <p className="text-xs text-slate-500">διαμερίσματα</p>
+                    <p className="text-xs text-text-secondary">διαμερίσματα</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleApartmentChange(1)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-bg-app-main text-text-secondary hover:bg-white hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={apartments >= 100}
                   >
                     <Plus className="h-4 w-4" />
@@ -382,8 +383,8 @@ function SignupForm() {
               </div>
 
               {/* Plan Selection */}
-              <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-6 shadow-sm">
-                <h3 className="text-sm font-medium text-slate-400 mb-4">Επιλέξτε πακέτο</h3>
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card-soft">
+                <h3 className="text-sm font-medium text-text-secondary mb-4">Επιλέξτε πακέτο</h3>
                 <div className="space-y-3">
                   <button
                     type="button"
@@ -391,20 +392,20 @@ function SignupForm() {
                     disabled={!freeEligible}
                     className={`w-full flex items-center justify-between rounded-xl border p-4 transition-all ${
                       effectivePlan === 'free'
-                        ? 'border-emerald-500 bg-emerald-500/10'
+                        ? 'border-accent-primary bg-accent-primary/10'
                         : !freeEligible
-                        ? 'border-gray-300 bg-slate-800/30 opacity-50 cursor-not-allowed'
-                        : 'border-gray-300 bg-slate-800/50 hover:border-slate-600'
+                        ? 'border-gray-200 bg-slate-50 opacity-60 cursor-not-allowed'
+                        : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Home className="h-5 w-5 text-slate-300" />
+                      <Home className="h-5 w-5 text-text-secondary" />
                       <div className="text-left">
-                        <span className="font-medium text-slate-200">Free</span>
-                        <p className="text-xs text-slate-500">1-7 διαμερίσματα</p>
+                        <span className="font-medium text-text-primary">Free</span>
+                        <p className="text-xs text-text-secondary">1-7 διαμερίσματα</p>
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-emerald-400">€0</span>
+                    <span className="text-lg font-bold text-accent-primary">€0</span>
                   </button>
 
                   <button
@@ -413,20 +414,20 @@ function SignupForm() {
                     disabled={freeEligible}
                     className={`w-full flex items-center justify-between rounded-xl border p-4 transition-all ${
                       selectedPlan === 'web'
-                        ? 'border-emerald-500 bg-emerald-500/10'
+                        ? 'border-accent-primary bg-accent-primary/10'
                         : freeEligible
-                        ? 'border-gray-300 bg-slate-800/30 opacity-50 cursor-not-allowed'
-                        : 'border-gray-300 bg-slate-800/50 hover:border-slate-600'
+                        ? 'border-gray-200 bg-slate-50 opacity-60 cursor-not-allowed'
+                        : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Building className="h-5 w-5 text-slate-300" />
+                      <Building className="h-5 w-5 text-text-secondary" />
                       <div className="text-left">
-                        <span className="font-medium text-slate-200">Web</span>
-                        <p className="text-xs text-slate-500">Χωρίς οθόνη</p>
+                        <span className="font-medium text-text-primary">Web</span>
+                        <p className="text-xs text-text-secondary">Χωρίς οθόνη</p>
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-emerald-400">
+                    <span className="text-lg font-bold text-accent-primary">
                       €{getMonthlyPrice('web', apartments).toFixed(2)}
                     </span>
                   </button>
@@ -436,21 +437,21 @@ function SignupForm() {
                     onClick={() => setSelectedPlan('premium')}
                     className={`w-full flex items-center justify-between rounded-xl border p-4 transition-all relative ${
                       selectedPlan === 'premium'
-                        ? 'border-emerald-500 bg-emerald-500/10'
-                        : 'border-gray-300 bg-slate-800/50 hover:border-slate-600'
+                        ? 'border-accent-primary bg-accent-primary/10'
+                        : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                     }`}
                   >
-                    <span className="absolute -top-2 right-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                    <span className="absolute -top-2 right-3 rounded-full bg-accent-secondary/15 px-2 py-0.5 text-[10px] font-bold text-accent-secondary">
                       Δημοφιλές
                     </span>
                     <div className="flex items-center gap-3">
-                      <Monitor className="h-5 w-5 text-slate-300" />
+                      <Monitor className="h-5 w-5 text-text-secondary" />
                       <div className="text-left">
-                        <span className="font-medium text-slate-200">Premium</span>
-                        <p className="text-xs text-slate-500">Web + Kiosk + AI + Αρχείο</p>
+                        <span className="font-medium text-text-primary">Premium</span>
+                        <p className="text-xs text-text-secondary">Web + Kiosk + AI + Αρχείο</p>
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-emerald-400">
+                    <span className="text-lg font-bold text-accent-primary">
                       €{getMonthlyPrice('premium', apartments).toFixed(2)}
                     </span>
                   </button>
@@ -460,18 +461,18 @@ function SignupForm() {
                     onClick={() => setSelectedPlan('premium_iot')}
                     className={`w-full flex items-center justify-between rounded-xl border p-4 transition-all ${
                       selectedPlan === 'premium_iot'
-                        ? 'border-emerald-500 bg-emerald-500/10'
-                        : 'border-gray-300 bg-slate-800/50 hover:border-slate-600'
+                        ? 'border-accent-primary bg-accent-primary/10'
+                        : 'border-gray-200 bg-white hover:border-accent-primary/40 hover:bg-bg-app-main'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Monitor className="h-5 w-5 text-slate-300" />
+                      <Monitor className="h-5 w-5 text-text-secondary" />
                       <div className="text-left">
-                        <span className="font-medium text-slate-200">Premium + IoT</span>
-                        <p className="text-xs text-slate-500">Smart Heating</p>
+                        <span className="font-medium text-text-primary">Premium + IoT</span>
+                        <p className="text-xs text-text-secondary">Smart Heating</p>
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-emerald-400">
+                    <span className="text-lg font-bold text-accent-primary">
                       €{getMonthlyPrice('premium_iot', apartments).toFixed(2)}
                     </span>
                   </button>
@@ -480,14 +481,14 @@ function SignupForm() {
                 {/* Billing Toggle */}
                 {effectivePlan !== 'free' && (
                   <div className="mt-4 flex items-center justify-center gap-3">
-                    <span className={`text-sm ${!isYearly ? 'text-slate-200' : 'text-slate-500'}`}>
+                    <span className={`text-sm ${!isYearly ? 'text-text-primary' : 'text-text-secondary'}`}>
                       Μηνιαία
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsYearly(!isYearly)}
                       className={`relative h-6 w-11 rounded-full transition-colors ${
-                        isYearly ? 'bg-emerald-500' : 'bg-slate-700'
+                        isYearly ? 'bg-accent-primary' : 'bg-slate-200'
                       }`}
                     >
                       <span
@@ -496,11 +497,11 @@ function SignupForm() {
                         }`}
                       />
                     </button>
-                    <span className={`text-sm ${isYearly ? 'text-slate-200' : 'text-slate-500'}`}>
+                    <span className={`text-sm ${isYearly ? 'text-text-primary' : 'text-text-secondary'}`}>
                       Ετήσια
                     </span>
                     {isYearly && (
-                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                      <span className="rounded-full bg-accent-primary/10 px-2 py-0.5 text-xs font-medium text-accent-primary">
                         -2 μήνες
                       </span>
                     )}
@@ -509,39 +510,39 @@ function SignupForm() {
               </div>
 
               {/* Price Summary */}
-              <div className="rounded-2xl border border-emerald-500/30 bg-slate-900 p-6">
+              <div className="rounded-2xl border border-accent-primary/20 bg-gradient-to-br from-accent-primary/10 via-white to-white p-6 shadow-card-soft">
                 <div className="text-center">
-                  <p className="text-sm text-slate-400 mb-2">
+                  <p className="text-sm text-text-secondary mb-2">
                     {effectivePlan === 'free' ? 'Δωρεάν πακέτο' : 'Συνολικό κόστος'}
                   </p>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-emerald-400">
+                    <span className="text-4xl font-bold text-accent-primary">
                       €{displayPrice.toFixed(2)}
                     </span>
-                    <span className="text-slate-500">
+                    <span className="text-text-secondary">
                       /{isYearly ? 'έτος' : 'μήνα'}
                     </span>
                   </div>
                   {effectivePlan !== 'free' && isYearly && (
-                    <p className="mt-1 text-xs text-emerald-400">
+                    <p className="mt-1 text-xs text-accent-primary">
                       Εξοικονόμηση €{monthlyPrice * 2}/έτος
                     </p>
                   )}
                   {effectivePlan !== 'free' && (
-                    <p className="mt-2 text-xs text-emerald-300">
+                    <p className="mt-2 text-xs text-accent-secondary">
                       14 ημέρες δοκιμή χωρίς κάρτα.
                     </p>
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-300">
-                  <p className="text-xs font-medium text-slate-400 mb-2">
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs font-medium text-text-secondary mb-2">
                     {PLANS[effectivePlan].name} περιλαμβάνει:
                   </p>
                   <ul className="space-y-1">
                     {PLANS[effectivePlan].features.slice(0, 4).map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-xs text-slate-400">
-                        <CheckCircle className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <li key={feature} className="flex items-center gap-2 text-xs text-text-secondary">
+                        <CheckCircle className="h-3 w-3 text-accent-primary shrink-0" />
                         {feature}
                       </li>
                     ))}
@@ -552,11 +553,11 @@ function SignupForm() {
 
             {/* Right: Signup Form */}
             <div className="lg:col-span-3">
-              <div className="rounded-2xl border border-gray-300 bg-slate-900/70 p-6 sm:p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-50 mb-6">Στοιχεία Λογαριασμού</h2>
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-card-soft">
+                <h2 className="text-xl font-bold text-text-primary mb-6">Στοιχεία Λογαριασμού</h2>
 
                 {errors.general && (
-                  <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
+                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg mb-6 text-sm">
                     {errors.general}
                   </div>
                 )}
@@ -565,7 +566,7 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={handleGoogleAuth}
-                  className="w-full bg-slate-800 border border-gray-300 text-slate-200 py-3 px-6 rounded-xl font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-3 mb-6 shadow-sm"
+                  className="w-full bg-white border border-gray-200 text-text-primary py-3 px-6 rounded-xl font-medium hover:bg-bg-app-main transition-colors flex items-center justify-center gap-3 mb-6 shadow-sm"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -578,10 +579,10 @@ function SignupForm() {
 
                 <div className="relative mb-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
+                    <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-slate-900 text-slate-500">ή με email</span>
+                    <span className="px-3 bg-bg-app-main text-text-secondary">ή με email</span>
                   </div>
                 </div>
 
@@ -589,11 +590,11 @@ function SignupForm() {
                   {/* Name fields */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="firstName" className="block text-sm font-medium text-slate-300 mb-2">
+                      <label htmlFor="firstName" className="block text-sm font-medium text-text-primary mb-2">
                         Όνομα
                       </label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                         <input
                           type="text"
                           id="firstName"
@@ -601,23 +602,23 @@ function SignupForm() {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           autoComplete="given-name"
-                          className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.firstName ? 'border-red-500/50' : 'border-gray-300'
+                          className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                            errors.firstName ? 'border-rose-300' : 'border-gray-200'
                           }`}
                           placeholder="Γιώργος"
                         />
                       </div>
                       {errors.firstName && (
-                        <p className="mt-1 text-xs text-red-400">{errors.firstName}</p>
+                        <p className="mt-1 text-xs text-rose-600">{errors.firstName}</p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="lastName" className="block text-sm font-medium text-slate-300 mb-2">
+                      <label htmlFor="lastName" className="block text-sm font-medium text-text-primary mb-2">
                         Επώνυμο
                       </label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                         <input
                           type="text"
                           id="lastName"
@@ -625,25 +626,25 @@ function SignupForm() {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           autoComplete="family-name"
-                          className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.lastName ? 'border-red-500/50' : 'border-gray-300'
+                          className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                            errors.lastName ? 'border-rose-300' : 'border-gray-200'
                           }`}
                           placeholder="Παπαδόπουλος"
                         />
                       </div>
                       {errors.lastName && (
-                        <p className="mt-1 text-xs text-red-400">{errors.lastName}</p>
+                        <p className="mt-1 text-xs text-rose-600">{errors.lastName}</p>
                       )}
                     </div>
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
                       Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                       <input
                         type="email"
                         id="email"
@@ -651,52 +652,52 @@ function SignupForm() {
                         value={formData.email}
                         onChange={handleInputChange}
                         autoComplete="email"
-                        className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                          errors.email ? 'border-red-500/50' : 'border-gray-300'
+                        className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                          errors.email ? 'border-rose-300' : 'border-gray-200'
                         }`}
                         placeholder="email@example.com"
                       />
                     </div>
                     {errors.email && (
-                      <p className="mt-1 text-xs text-red-400">{errors.email}</p>
+                      <p className="mt-1 text-xs text-rose-600">{errors.email}</p>
                     )}
                   </div>
 
                   {/* Subdomain */}
                   <div>
-                    <label htmlFor="tenantSubdomain" className="block text-sm font-medium text-slate-300 mb-2">
+                    <label htmlFor="tenantSubdomain" className="block text-sm font-medium text-text-primary mb-2">
                       Subdomain (διεύθυνση πολυκατοικίας)
                     </label>
                     <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                       <input
                         type="text"
                         id="tenantSubdomain"
                         name="tenantSubdomain"
                         value={formData.tenantSubdomain}
                         onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                          errors.tenantSubdomain ? 'border-red-500/50' : 'border-gray-300'
+                        className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                          errors.tenantSubdomain ? 'border-rose-300' : 'border-gray-200'
                         }`}
                         placeholder="my-building"
                       />
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-text-secondary">
                       {formData.tenantSubdomain || 'my-building'}.newconcierge.app
                     </p>
                     {errors.tenantSubdomain && (
-                      <p className="mt-1 text-xs text-red-400">{errors.tenantSubdomain}</p>
+                      <p className="mt-1 text-xs text-rose-600">{errors.tenantSubdomain}</p>
                     )}
                   </div>
 
                   {/* Password fields */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                      <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-2">
                         Κωδικός
                       </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                         <input
                           type={showPassword ? "text" : "password"}
                           id="password"
@@ -704,30 +705,30 @@ function SignupForm() {
                           value={formData.password}
                           onChange={handleInputChange}
                           autoComplete="new-password"
-                          className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.password ? 'border-red-500/50' : 'border-gray-300'
+                          className={`w-full pl-10 pr-12 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                            errors.password ? 'border-rose-300' : 'border-gray-200'
                           }`}
                           placeholder="••••••••"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-text-primary"
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
                       {errors.password && (
-                        <p className="mt-1 text-xs text-red-400">{errors.password}</p>
+                        <p className="mt-1 text-xs text-rose-600">{errors.password}</p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-primary mb-2">
                         Επιβεβαίωση
                       </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500" />
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-secondary" />
                         <input
                           type={showConfirmPassword ? "text" : "password"}
                           id="confirmPassword"
@@ -735,21 +736,21 @@ function SignupForm() {
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
                           autoComplete="new-password"
-                          className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors ${
-                            errors.confirmPassword ? 'border-red-500/50' : 'border-gray-300'
+                          className={`w-full pl-10 pr-12 py-3 bg-white border rounded-xl text-text-primary placeholder-slate-400 focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors ${
+                            errors.confirmPassword ? 'border-rose-300' : 'border-gray-200'
                           }`}
                           placeholder="••••••••"
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-text-primary"
                         >
                           {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
                       {errors.confirmPassword && (
-                        <p className="mt-1 text-xs text-red-400">{errors.confirmPassword}</p>
+                        <p className="mt-1 text-xs text-rose-600">{errors.confirmPassword}</p>
                       )}
                     </div>
                   </div>
@@ -758,11 +759,11 @@ function SignupForm() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-emerald-500 text-slate-950 py-3 px-6 rounded-xl font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-emerald-500/25"
+                    className="w-full bg-accent-primary text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-accent-primary/20"
                   >
                     {isLoading ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent mr-2"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-transparent mr-2"></div>
                         Δημιουργία...
                       </>
                     ) : (
@@ -774,17 +775,17 @@ function SignupForm() {
                   </button>
 
                   {effectivePlan !== 'free' && (
-                    <p className="text-xs text-slate-500 text-center">
+                    <p className="text-xs text-text-secondary text-center">
                       Η κάρτα ζητείται μόνο αν συνεχίσεις μετά τη δοκιμή.
                     </p>
                   )}
 
                   {/* Terms */}
-                  <p className="text-xs text-slate-500 text-center">
+                  <p className="text-xs text-text-secondary text-center">
                     Με την εγγραφή αποδέχεστε τους{' '}
-                    <a href="/terms" className="text-emerald-400 hover:text-emerald-300">Όρους Χρήσης</a>
+                    <a href="/terms" className="text-accent-primary hover:opacity-80">Όρους Χρήσης</a>
                     {' '}και την{' '}
-                    <a href="/privacy" className="text-emerald-400 hover:text-emerald-300">Πολιτική Απορρήτου</a>
+                    <a href="/privacy" className="text-accent-primary hover:opacity-80">Πολιτική Απορρήτου</a>
                   </p>
                 </form>
               </div>
@@ -799,8 +800,8 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-pulse text-slate-400">Φόρτωση...</div>
+      <div className="min-h-screen bg-bg-app-main flex items-center justify-center">
+        <div className="animate-pulse text-text-secondary">Φόρτωση...</div>
       </div>
     }>
       <SignupForm />

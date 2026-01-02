@@ -101,72 +101,72 @@ export default function MarketplaceOfferRequestPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
       <div className="flex items-center justify-between">
-        <Link href="/marketplace" className="text-sm text-emerald-200 hover:text-emerald-100">
+        <Link href="/marketplace" className="text-sm text-accent-primary hover:opacity-80">
           ← Επιστροφή στο Marketplace
         </Link>
-        <div className="text-xs text-slate-400 font-mono">{token.slice(0, 8)}…</div>
+        <div className="text-xs text-text-secondary font-mono">{token.slice(0, 8)}…</div>
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-slate-200">Φόρτωση…</div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-text-secondary">Φόρτωση…</div>
       ) : error ? (
-        <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-6 text-red-100">{error}</div>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">{error}</div>
       ) : !data ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-slate-200">Δεν βρέθηκαν δεδομένα.</div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-text-secondary">Δεν βρέθηκαν δεδομένα.</div>
       ) : submittedOfferId ? (
-        <div className="rounded-3xl border border-emerald-300/30 bg-emerald-500/10 p-8 text-emerald-50 space-y-3">
-          <div className="flex items-center gap-2 font-semibold text-lg">
+        <div className="rounded-3xl border border-accent-primary/20 bg-accent-primary/10 p-8 text-accent-primary space-y-3">
+          <div className="flex items-center gap-2 font-semibold text-lg text-text-primary">
             <CheckCircle2 className="w-5 h-5" />
             Η προσφορά υποβλήθηκε επιτυχώς
           </div>
-          <p className="text-sm text-emerald-50/90">
+          <p className="text-sm text-text-secondary">
             Ευχαριστούμε! Η ομάδα/διαχείριση θα δει την προσφορά σας μέσα στην εφαρμογή.
           </p>
-          <p className="text-xs text-emerald-50/80 font-mono">Offer ID: {submittedOfferId}</p>
+          <p className="text-xs text-text-secondary font-mono">Offer ID: {submittedOfferId}</p>
         </div>
       ) : (
         <>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 space-y-3">
+          <div className="rounded-3xl border border-gray-200 bg-white p-8 space-y-3 shadow-card-soft">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-xs text-emerald-200/90">Αίτημα προσφοράς προς</p>
-                <h1 className="text-2xl font-semibold text-white">{data.provider_name}</h1>
+                <p className="text-xs text-text-secondary">Αίτημα προσφοράς προς</p>
+                <h1 className="text-2xl font-semibold text-text-primary">{data.provider_name}</h1>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-bg-app-main px-3 py-1 text-xs text-text-secondary">
                 <FileText className="w-4 h-4" />
                 {data.status}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
-              <p className="text-sm text-slate-200 font-semibold">{data.project_title}</p>
+            <div className="rounded-2xl border border-gray-200 bg-bg-app-main p-5">
+              <p className="text-sm text-text-primary font-semibold">{data.project_title}</p>
               {data.project_description ? (
-                <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{data.project_description}</p>
+                <p className="mt-2 text-sm text-text-secondary whitespace-pre-wrap">{data.project_description}</p>
               ) : null}
               {data.message_to_provider ? (
-                <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-500/10 p-4 text-amber-50/90 text-sm whitespace-pre-wrap">
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm whitespace-pre-wrap">
                   {data.message_to_provider}
                 </div>
               ) : null}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 space-y-5">
+          <div className="rounded-3xl border border-gray-200 bg-white p-8 space-y-5 shadow-card-soft">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-sm text-slate-200">Ποσό προσφοράς *</label>
-                <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="π.χ. 12500" />
+                <label className="text-sm text-text-secondary">Ποσό προσφοράς *</label>
+                <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="π.χ. 12500" className="focus-visible:ring-accent-primary/30 focus-visible:border-accent-primary" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-slate-200">Προκαταβολή (€)</label>
-                <Input value={advancePayment} onChange={(e) => setAdvancePayment(e.target.value)} placeholder="π.χ. 2000" />
+                <label className="text-sm text-text-secondary">Προκαταβολή (€)</label>
+                <Input value={advancePayment} onChange={(e) => setAdvancePayment(e.target.value)} placeholder="π.χ. 2000" className="focus-visible:ring-accent-primary/30 focus-visible:border-accent-primary" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-slate-200">Τρόπος πληρωμής</label>
+                <label className="text-sm text-text-secondary">Τρόπος πληρωμής</label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  className="h-10 w-full rounded-md bg-slate-950/40 border border-white/10 px-3 text-slate-100"
+                  className="h-10 w-full rounded-md bg-white border border-gray-200 px-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary"
                 >
                   <option value="one_time">Εφάπαξ πληρωμή</option>
                   <option value="installments">Δόσεις</option>
@@ -174,46 +174,47 @@ export default function MarketplaceOfferRequestPage() {
                 </select>
               </div>
               <div className={cn('space-y-1', paymentMethod !== 'installments' && 'opacity-60')}>
-                <label className="text-sm text-slate-200">Αριθμός δόσεων</label>
+                <label className="text-sm text-text-secondary">Αριθμός δόσεων</label>
                 <Input
                   value={installments}
                   onChange={(e) => setInstallments(e.target.value)}
                   placeholder="π.χ. 3"
                   disabled={paymentMethod !== 'installments'}
+                  className="focus-visible:ring-accent-primary/30 focus-visible:border-accent-primary"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-slate-200">Χρόνος ολοκλήρωσης</label>
-                <Input value={completionTime} onChange={(e) => setCompletionTime(e.target.value)} placeholder="π.χ. 2 μήνες" />
+                <label className="text-sm text-text-secondary">Χρόνος ολοκλήρωσης</label>
+                <Input value={completionTime} onChange={(e) => setCompletionTime(e.target.value)} placeholder="π.χ. 2 μήνες" className="focus-visible:ring-accent-primary/30 focus-visible:border-accent-primary" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-slate-200">Περίοδος εγγύησης</label>
-                <Input value={warrantyPeriod} onChange={(e) => setWarrantyPeriod(e.target.value)} placeholder="π.χ. 12 μήνες" />
+                <label className="text-sm text-text-secondary">Περίοδος εγγύησης</label>
+                <Input value={warrantyPeriod} onChange={(e) => setWarrantyPeriod(e.target.value)} placeholder="π.χ. 12 μήνες" className="focus-visible:ring-accent-primary/30 focus-visible:border-accent-primary" />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm text-slate-200">Περιγραφή εργασιών</label>
+              <label className="text-sm text-text-secondary">Περιγραφή εργασιών</label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Αναλυτική περιγραφή υλικών, εργασιών και χρονοδιαγράμματος"
-                className="min-h-[120px]"
+                className="min-h-[120px] focus-visible:ring-accent-primary/30"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm text-slate-200">Όροι πληρωμής / σημειώσεις</label>
+              <label className="text-sm text-text-secondary">Όροι πληρωμής / σημειώσεις</label>
               <Textarea
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
                 placeholder="Περιγράψτε τους όρους πληρωμής, τις παρατηρήσεις ή ειδικές απαιτήσεις"
-                className="min-h-[120px]"
+                className="min-h-[120px] focus-visible:ring-accent-primary/30"
               />
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-slate-200">
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Upload className="w-4 h-4" />
                 Συνημμένα (προαιρετικά)
               </div>
@@ -221,10 +222,10 @@ export default function MarketplaceOfferRequestPage() {
                 type="file"
                 multiple
                 onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                className="block w-full text-sm text-slate-200 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-white hover:file:bg-emerald-700"
+                className="block w-full text-sm text-text-secondary file:mr-4 file:rounded-md file:border-0 file:bg-accent-primary file:px-4 file:py-2 file:text-white hover:file:opacity-90"
               />
               {files.length ? (
-                <div className="text-xs text-slate-300">
+                <div className="text-xs text-text-secondary">
                   Επιλεγμένα: {files.map((f) => f.name).join(', ')}
                 </div>
               ) : null}

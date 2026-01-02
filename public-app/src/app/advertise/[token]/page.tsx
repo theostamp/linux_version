@@ -231,10 +231,10 @@ function LargeKioskShowcase({
   radiusM: number;
 }) {
   return (
-    <div className="relative w-full py-24 px-4 overflow-hidden bg-slate-950 rounded-[4rem] border border-white/10 shadow-2xl my-16">
+    <div className="relative w-full py-24 px-4 overflow-hidden bg-gradient-to-br from-accent-primary/10 via-white to-white rounded-[4rem] border border-accent-primary/20 shadow-card-soft my-16">
       {/* Background Glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 blur-[150px] rounded-full" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 blur-[150px] rounded-full" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-accent-primary/10 blur-[150px] rounded-full" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent-secondary/15 blur-[150px] rounded-full" />
 
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-4">
 
@@ -247,18 +247,18 @@ function LargeKioskShowcase({
           <div className="absolute bottom-[20%] -right-8 w-16 h-[1px] bg-gradient-to-r from-green-400/40 to-transparent" />
           <div className="absolute bottom-[20%] -right-8 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
 
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float shadow-2xl transform hover:scale-105 transition-all duration-500 relative -left-12">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 animate-float shadow-card-soft transform hover:scale-105 transition-all duration-500 relative -left-12">
             <div className="flex items-center gap-3 mb-2 text-primary font-bold text-sm uppercase">
               <Zap className="w-5 h-5" /> 24/7 ΕΚΘΕΣΗ
             </div>
-            <p className="text-slate-400 text-sm italic leading-relaxed">Το μήνυμά σας δεν σταματά ποτέ. Μόνιμη παρουσία στην είσοδο.</p>
+            <p className="text-text-secondary text-sm italic leading-relaxed">Το μήνυμά σας δεν σταματά ποτέ. Μόνιμη παρουσία στην είσοδο.</p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float-delayed shadow-2xl transform hover:scale-105 transition-all duration-500 relative -left-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 animate-float-delayed shadow-card-soft transform hover:scale-105 transition-all duration-500 relative -left-8">
             <div className="flex items-center gap-3 mb-2 text-green-400 font-bold text-sm uppercase">
               <TrendingUp className="w-5 h-5" /> SMART DATA
             </div>
-            <p className="text-slate-400 text-sm italic leading-relaxed">Στατιστικά εμφανίσεων και engagement σε πραγματικό χρόνο.</p>
+            <p className="text-text-secondary text-sm italic leading-relaxed">Στατιστικά εμφανίσεων και engagement σε πραγματικό χρόνο.</p>
           </div>
         </div>
 
@@ -283,30 +283,30 @@ function LargeKioskShowcase({
           <div className="absolute bottom-[20%] -left-8 w-16 h-[1px] bg-gradient-to-l from-blue-400/40 to-transparent" />
           <div className="absolute bottom-[20%] -left-8 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />
 
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float shadow-2xl transform hover:scale-105 transition-all duration-500 relative -right-12">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 animate-float shadow-card-soft transform hover:scale-105 transition-all duration-500 relative -right-12">
             <div className="flex items-center gap-3 mb-2 text-orange-400 font-bold text-sm uppercase">
               <Target className="w-5 h-5" /> HYPER-LOCAL
             </div>
-            <p className="text-slate-400 text-sm italic leading-relaxed">Στοχεύστε ακριβώς στη γειτονιά σας (ακτίνα {radiusM}μ).</p>
+            <p className="text-text-secondary text-sm italic leading-relaxed">Στοχεύστε ακριβώς στη γειτονιά σας (ακτίνα {radiusM}μ).</p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 animate-float-delayed shadow-2xl transform hover:scale-105 transition-all duration-500 relative -right-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 animate-float-delayed shadow-card-soft transform hover:scale-105 transition-all duration-500 relative -right-8">
             <div className="flex items-center gap-3 mb-2 text-blue-400 font-bold text-sm uppercase">
               <Smartphone className="w-5 h-5" /> WEB SYNC
             </div>
-            <p className="text-slate-400 text-sm italic leading-relaxed">Αυτόματη εμφάνιση και στα κινητά των ενοίκων.</p>
+            <p className="text-text-secondary text-sm italic leading-relaxed">Αυτόματη εμφάνιση και στα κινητά των ενοίκων.</p>
           </div>
         </div>
 
         {/* Mobile View Indicators (for small screens) */}
         <div className="grid grid-cols-2 gap-4 lg:hidden w-full mt-12">
-           <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
+           <div className="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-card-soft">
               <Zap className="w-5 h-5 text-primary mx-auto mb-2" />
-              <div className="text-[10px] font-bold text-white uppercase">24/7 PROMO</div>
+              <div className="text-[10px] font-bold text-text-secondary uppercase">24/7 PROMO</div>
            </div>
-           <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
+           <div className="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-card-soft">
               <Target className="w-5 h-5 text-orange-400 mx-auto mb-2" />
-              <div className="text-[10px] font-bold text-white uppercase">HYPER-LOCAL</div>
+              <div className="text-[10px] font-bold text-text-secondary uppercase">HYPER-LOCAL</div>
            </div>
         </div>
       </div>
@@ -679,15 +679,15 @@ export default function AdvertiseLandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="min-h-screen bg-bg-app-main text-text-primary">
       {/* Top Navigation Bar */}
-      <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b">
+      <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 rounded-lg">
+            <div className="bg-accent-primary p-1.5 rounded-lg">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight">New Concierge <span className="text-primary">InfoPoint</span></span>
+            <span className="text-xl font-bold tracking-tight">New Concierge <span className="text-accent-primary">InfoPoint</span></span>
           </div>
           <div className="hidden sm:flex items-center gap-4">
             <div className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100 flex items-center gap-1.5">
@@ -867,7 +867,7 @@ export default function AdvertiseLandingPage() {
       </section>
 
       {/* Advantage Cards */}
-      <section className="py-20 bg-slate-50/50">
+      <section className="py-20 bg-bg-app-main">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900">Γιατί να διαφημιστείτε στο InfoPoint;</h2>
@@ -984,7 +984,7 @@ export default function AdvertiseLandingPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <Card className="border-slate-100 shadow-sm overflow-hidden">
-                    <CardHeader className="bg-slate-50/50">
+                    <CardHeader className="bg-bg-app-main">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Search className="w-5 h-5 text-primary" /> Αναζήτηση στην Google
                       </CardTitle>
@@ -1314,36 +1314,36 @@ export default function AdvertiseLandingPage() {
       </section>
 
       {/* Final Footer */}
-      <footer className="bg-slate-900 text-white py-20">
+      <footer className="bg-white text-text-primary py-20 border-t border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div className="space-y-6 lg:col-span-2">
               <div className="flex items-center gap-2">
-                <div className="bg-primary p-1.5 rounded-lg">
+                <div className="bg-accent-primary p-1.5 rounded-lg">
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold tracking-tight text-white">New Concierge <span className="text-primary">InfoPoint</span></span>
+                <span className="text-xl font-bold tracking-tight">New Concierge <span className="text-accent-primary">InfoPoint</span></span>
               </div>
-              <p className="text-slate-400 max-w-sm leading-relaxed">
+              <p className="text-text-secondary max-w-sm leading-relaxed">
                 Η πιο σύγχρονη πλατφόρμα ψηφιακής διαχείρισης και τοπικής προβολής για πολυκατοικίες στην Ελλάδα.
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-slate-500">Νομικά</h4>
-              <ul className="space-y-4 text-sm text-slate-400 font-medium">
-                <li><Link href="/terms" className="hover:text-white transition-colors">Όροι Χρήσης</Link></li>
-                <li><Link href="/privacy" className="hover:text-white transition-colors">Πολιτική Απορρήτου</Link></li>
+              <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-text-secondary">Νομικά</h4>
+              <ul className="space-y-4 text-sm text-text-secondary font-medium">
+                <li><Link href="/terms" className="hover:text-accent-primary transition-colors">Όροι Χρήσης</Link></li>
+                <li><Link href="/privacy" className="hover:text-accent-primary transition-colors">Πολιτική Απορρήτου</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-slate-500">Επικοινωνία</h4>
-              <ul className="space-y-4 text-sm text-slate-400 font-medium">
+              <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-text-secondary">Επικοινωνία</h4>
+              <ul className="space-y-4 text-sm text-text-secondary font-medium">
                 <li>support@newconcierge.app</li>
                 <li>+30 210 1234567</li>
               </ul>
             </div>
           </div>
-          <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-500 font-bold uppercase tracking-widest">
+          <div className="pt-8 border-t border-gray-200 text-center text-xs text-text-secondary font-bold uppercase tracking-widest">
             © {new Date().getFullYear()} New Concierge. All rights reserved.
           </div>
         </div>
