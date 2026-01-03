@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Mail,
@@ -18,11 +18,12 @@ import {
   Eye
 } from 'lucide-react';
 import { notificationsApi } from '@/lib/api/notifications';
-import type { Notification } from '@/types/notifications';
+import type { Notification, NotificationStatistics } from '@/types/notifications';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -98,7 +99,52 @@ export default function HistoryPanel() {
   const { buildings, selectedBuilding } = useBuilding();
   const [buildingFilter, setBuildingFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<'all' | 'today' | 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+
+  const formatDateParam = (date: Date) => date.toISOString().slice(0, 10);
+
+  const dateParams = useMemo(() => {
+    if (dateRange === 'all') {
+      return { startDate: '', endDate: '' };
+    }
+
+    const now = new Date();
+    const end = new Date(now);
+    const start = new Date(now);
+
+    switch (dateRange) {
+      case 'today':
+        break;
+      case 'last7':
+        start.setDate(start.getDate() - 6);
+        break;
+      case 'last30':
+        start.setDate(start.getDate() - 29);
+        break;
+      case 'thisMonth':
+        start.setDate(1);
+        break;
+      case 'lastMonth': {
+        const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastOfLastMonth = new Date(firstOfThisMonth.getTime() - 1);
+        start.setFullYear(lastOfLastMonth.getFullYear(), lastOfLastMonth.getMonth(), 1);
+        end.setFullYear(lastOfLastMonth.getFullYear(), lastOfLastMonth.getMonth(), lastOfLastMonth.getDate());
+        break;
+      }
+      case 'custom':
+        return { startDate: customStartDate, endDate: customEndDate };
+      default:
+        break;
+    }
+
+    return {
+      startDate: formatDateParam(start),
+      endDate: formatDateParam(end),
+    };
+  }, [dateRange, customStartDate, customEndDate]);
 
   const {
     data: notifications = [],
@@ -106,7 +152,7 @@ export default function HistoryPanel() {
     refetch,
     isFetching
   } = useQuery<Notification[]>({
-    queryKey: ['notifications-history', buildingFilter, statusFilter],
+    queryKey: ['notifications-history', buildingFilter, statusFilter, dateParams.startDate, dateParams.endDate],
     queryFn: async () => {
       const params: any = {};
       if (buildingFilter !== 'all') {
@@ -115,17 +161,50 @@ export default function HistoryPanel() {
       if (statusFilter !== 'all') {
         params.status = statusFilter;
       }
+      if (dateParams.startDate) {
+        params.start_date = dateParams.startDate;
+      }
+      if (dateParams.endDate) {
+        params.end_date = dateParams.endDate;
+      }
       return notificationsApi.list(params);
     },
     staleTime: 60 * 1000,
   });
 
-  // Statistics
-  const stats = {
-    total: notifications.length,
-    sent: notifications.filter(n => n.status === 'sent').length,
-    failed: notifications.filter(n => n.status === 'failed').length,
-    totalRecipients: notifications.reduce((sum, n) => sum + (n.total_recipients || 0), 0),
+  const { data: statsData, isLoading: isStatsLoading } = useQuery<NotificationStatistics>({
+    queryKey: ['notifications-stats', buildingFilter, statusFilter, dateParams.startDate, dateParams.endDate],
+    queryFn: async () => {
+      const params: any = {};
+      if (buildingFilter !== 'all') {
+        params.building = parseInt(buildingFilter);
+      }
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      if (dateParams.startDate) {
+        params.start_date = dateParams.startDate;
+      }
+      if (dateParams.endDate) {
+        params.end_date = dateParams.endDate;
+      }
+      return notificationsApi.stats(params);
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const stats = statsData || {
+    total_notifications: 0,
+    total_sent: 0,
+    total_failed: 0,
+    total_recipients: 0,
+    total_successful_sends: 0,
+    total_failed_sends: 0,
+    delivery_rate: 0,
+    average_delivery_rate: 0,
+    by_type: {},
+    by_status: {},
+    recent_notifications: [],
   };
 
   return (
@@ -149,7 +228,7 @@ export default function HistoryPanel() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -157,7 +236,9 @@ export default function HistoryPanel() {
                 <Mail className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '—' : stats.total_notifications}
+                </p>
                 <p className="text-xs text-gray-500">Συνολικά</p>
               </div>
             </div>
@@ -170,8 +251,10 @@ export default function HistoryPanel() {
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.sent}</p>
-                <p className="text-xs text-gray-500">Επιτυχείς</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '—' : stats.total_sent}
+                </p>
+                <p className="text-xs text-gray-500">Απεστάλησαν</p>
               </div>
             </div>
           </CardContent>
@@ -183,7 +266,9 @@ export default function HistoryPanel() {
                 <XCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.failed}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '—' : stats.total_failed}
+                </p>
                 <p className="text-xs text-gray-500">Αποτυχίες</p>
               </div>
             </div>
@@ -196,8 +281,42 @@ export default function HistoryPanel() {
                 <Users className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalRecipients}</p>
-                <p className="text-xs text-gray-500">Παραλήπτες</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '—' : stats.total_recipients}
+                </p>
+                <p className="text-xs text-gray-500">Σύνολο παραληπτών</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-emerald-100">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '—' : stats.total_successful_sends}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Επιτυχείς παραλήπτες {stats.total_recipients ? `(${stats.delivery_rate.toFixed(1)}%)` : ''}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-rose-100">
+                <XCircle className="h-5 w-5 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {isStatsLoading ? '—' : stats.total_failed_sends}
+                </p>
+                <p className="text-xs text-gray-500">Αποτυχημένοι παραλήπτες</p>
               </div>
             </div>
           </CardContent>
@@ -232,6 +351,38 @@ export default function HistoryPanel() {
             <SelectItem value="failed">Αποτυχία</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={dateRange} onValueChange={(value) => setDateRange(value as typeof dateRange)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Ημερομηνία" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Όλες οι ημερομηνίες</SelectItem>
+            <SelectItem value="today">Σήμερα</SelectItem>
+            <SelectItem value="last7">Τελευταίες 7 ημέρες</SelectItem>
+            <SelectItem value="last30">Τελευταίες 30 ημέρες</SelectItem>
+            <SelectItem value="thisMonth">Τρέχων μήνας</SelectItem>
+            <SelectItem value="lastMonth">Προηγούμενος μήνας</SelectItem>
+            <SelectItem value="custom">Προσαρμοσμένο</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {dateRange === 'custom' && (
+          <div className="flex flex-wrap gap-2">
+            <Input
+              type="date"
+              value={customStartDate}
+              onChange={(event) => setCustomStartDate(event.target.value)}
+              className="w-[170px]"
+            />
+            <Input
+              type="date"
+              value={customEndDate}
+              onChange={(event) => setCustomEndDate(event.target.value)}
+              className="w-[170px]"
+            />
+          </div>
+        )}
       </div>
 
       {/* Notifications List */}

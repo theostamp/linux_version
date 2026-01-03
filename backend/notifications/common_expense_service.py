@@ -558,7 +558,10 @@ class CommonExpenseNotificationService:
         custom_attachment: str = None,
         custom_message: str = None,
         subject_prefix: str = None,
-        sender_user = None
+        sender_user = None,
+        mark_period_sent: bool = False,
+        sent_source: str = None,
+        skip_if_already_sent: bool = False
     ) -> Dict[str, Any]:
         """
         Send common expense notifications to apartments in a building.
@@ -573,6 +576,9 @@ class CommonExpenseNotificationService:
             custom_message: Optional custom message to prepend
             subject_prefix: Optional subject prefix to override default
             sender_user: The user sending the notification (for office data)
+            mark_period_sent: Whether to mark the period as notified
+            sent_source: Optional marker for audit/logging ("manual", "auto")
+            skip_if_already_sent: Skip sending if the period has notifications_sent_at
 
         Returns:
             Dict with results: {
@@ -593,6 +599,7 @@ class CommonExpenseNotificationService:
             'sent_count': 0,
             'failed_count': 0,
             'details': [],
+            'skipped': False,
             'sheet_attached': False,
             'notification_included': include_notification,
         }
@@ -615,6 +622,31 @@ class CommonExpenseNotificationService:
                 'bank_name': getattr(sender_user, 'office_bank_name', '') or '',
                 'beneficiary': getattr(sender_user, 'office_bank_beneficiary', '') or '',
             }
+
+        # Resolve the period for this month (used for dedupe/marking)
+        period = None
+        try:
+            from financial.models import CommonExpensePeriod
+            month_start = date(month.year, month.month, 1)
+            if month.month == 12:
+                month_end = date(month.year + 1, 1, 1)
+            else:
+                month_end = date(month.year, month.month + 1, 1)
+            period = CommonExpensePeriod.objects.filter(
+                building_id=building_id,
+                start_date__lt=month_end,
+                end_date__gte=month_start,
+            ).order_by('-start_date').first()
+        except Exception as period_error:
+            logger.warning("Common expense period lookup failed: %s", period_error)
+
+        if skip_if_already_sent and period and period.notifications_sent_at:
+            results['skipped'] = True
+            results['details'].append({
+                'status': 'skipped',
+                'reason': 'already_sent'
+            })
+            return results
 
         # Get the common expense sheet if requested
         sheet_path = None
@@ -795,6 +827,14 @@ class CommonExpenseNotificationService:
                     'error': str(e)
                 })
                 logger.error(f"Error sending to apartment {apartment.number}: {e}")
+
+        if mark_period_sent and period and results['sent_count'] > 0:
+            try:
+                from django.utils import timezone
+                period.notifications_sent_at = timezone.now()
+                period.save(update_fields=['notifications_sent_at'])
+            except Exception as mark_error:
+                logger.warning("Failed to mark period as notified: %s", mark_error)
 
         results['success'] = results['failed_count'] == 0
         return results

@@ -1183,6 +1183,11 @@ class CommonExpensePeriod(models.Model):
         verbose_name="Φύλλο Κοινοχρήστων",
         help_text="Αρχείο φύλλου κοινοχρήστων (JPG/PDF)"
     )
+    notifications_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When common expense notifications were sent for this period"
+    )
     is_active = models.BooleanField(default=True, verbose_name="Ενεργή")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

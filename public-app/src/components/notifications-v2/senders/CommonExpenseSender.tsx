@@ -113,6 +113,8 @@ export default function CommonExpenseSender({ onSuccess, onCancel }: Props) {
           custom_message: extraMessage || undefined,
           attachment: attachmentMode === 'manual' ? attachment : undefined,
           apartment_ids: sendToAll ? undefined : selectedIds,
+          mark_period_sent: true,
+          sent_source: 'manual',
         });
       }
 

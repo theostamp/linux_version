@@ -6,7 +6,7 @@ import logging
 from celery import shared_task
 from django.utils import timezone
 from django_tenants.utils import schema_context, get_tenant_model
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 
@@ -46,6 +46,105 @@ def send_notification_task(self, notification_id: int, schema_name: Optional[str
             active_schema,
         )
         raise self.retry(exc=exc, countdown=60)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_personalized_common_expenses_task(
+    self,
+    *,
+    building_id: int,
+    month: str,
+    schema_name: Optional[str] = None,
+    include_sheet: bool = True,
+    include_notification: bool = True,
+    custom_message: str = '',
+    mark_period_sent: bool = False,
+    sent_source: Optional[str] = None,
+    sender_user_id: Optional[int] = None,
+    skip_if_already_sent: bool = False,
+):
+    """
+    Send personalized common expense notifications asynchronously.
+    """
+    from notifications.common_expense_service import CommonExpenseNotificationService
+    from users.models import CustomUser
+
+    active_schema = schema_name or 'public'
+
+    try:
+        with schema_context(active_schema):
+            target_month = datetime.strptime(month, '%Y-%m').date()
+            sender_user = None
+            if sender_user_id:
+                sender_user = CustomUser.objects.filter(id=sender_user_id).first()
+
+            return CommonExpenseNotificationService.send_common_expense_notifications(
+                building_id=building_id,
+                month=target_month,
+                include_sheet=include_sheet,
+                include_notification=include_notification,
+                custom_message=custom_message or None,
+                sender_user=sender_user,
+                mark_period_sent=mark_period_sent,
+                sent_source=sent_source,
+                skip_if_already_sent=skip_if_already_sent,
+            )
+    except Exception as exc:
+        logger.exception(
+            "Common expense notifications task failed for building %s in schema %s",
+            building_id,
+            active_schema,
+        )
+        raise self.retry(exc=exc, countdown=120)
+
+
+@shared_task
+def ensure_common_expense_auto_tasks(
+    day_of_month: int = 1,
+    time_to_send: str = "09:00",
+):
+    """
+    Ensure next month's common expense auto-send tasks exist for each building.
+    Creates tasks only if missing, without overriding existing settings.
+    """
+    from notifications.models import MonthlyNotificationTask
+    from buildings.models import Building
+
+    now = timezone.now().date()
+    if now.month == 12:
+        period_month = now.replace(year=now.year + 1, month=1, day=1)
+    else:
+        period_month = now.replace(month=now.month + 1, day=1)
+
+    tenants_processed = 0
+    tasks_created = 0
+    TenantModel = get_tenant_model()
+
+    for tenant in TenantModel.objects.exclude(schema_name='public'):
+        with schema_context(tenant.schema_name):
+            tenants_processed += 1
+            for building in Building.objects.all():
+                exists = MonthlyNotificationTask.objects.filter(
+                    building=building,
+                    task_type='common_expense',
+                    period_month=period_month
+                ).exists()
+                if exists:
+                    continue
+
+                MonthlyNotificationTask.objects.create(
+                    building=building,
+                    task_type='common_expense',
+                    recurrence_type='monthly',
+                    day_of_month=day_of_month,
+                    time_to_send=time_to_send,
+                    auto_send_enabled=True,
+                    period_month=period_month,
+                    status='pending_confirmation'
+                )
+                tasks_created += 1
+
+    return f"Ensured common expense tasks: tenants={tenants_processed}, created={tasks_created}"
 
 
 @shared_task
@@ -91,6 +190,26 @@ def check_and_execute_monthly_tasks():
                 # Check if task is due (day and time match)
                 if task.is_due:
                     try:
+                        if task.task_type == 'common_expense':
+                            from financial.models import CommonExpensePeriod
+                            from notifications.services import MonthlyTaskService
+                            target_month = MonthlyTaskService._get_common_expense_target_month(task.period_month)
+                            month_start = target_month.replace(day=1)
+                            if target_month.month == 12:
+                                month_end = target_month.replace(year=target_month.year + 1, month=1, day=1)
+                            else:
+                                month_end = target_month.replace(month=target_month.month + 1, day=1)
+                            period = CommonExpensePeriod.objects.filter(
+                                building_id=task.building_id,
+                                start_date__lt=month_end,
+                                end_date__gte=month_start,
+                            ).order_by('-start_date').first()
+                            if period and period.notifications_sent_at:
+                                task.status = 'skipped'
+                                task.sent_at = timezone.now()
+                                task.save(update_fields=['status', 'sent_at'])
+                                continue
+
                         # Execute the task
                         notification = MonthlyTaskService.execute_task(task, system_user)
 

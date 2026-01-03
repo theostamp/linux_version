@@ -109,6 +109,8 @@ export const notificationsApi = {
     notification_type?: string;
     priority?: string;
     building?: number;
+    start_date?: string;
+    end_date?: string;
   }) => {
     const response = await apiClient.get<{ results: Notification[] }>(
       `${BASE_URL}/notifications/`,
@@ -157,9 +159,17 @@ export const notificationsApi = {
   /**
    * Get notification statistics
    */
-  stats: async () => {
+  stats: async (params?: {
+    status?: string;
+    notification_type?: string;
+    priority?: string;
+    building?: number;
+    start_date?: string;
+    end_date?: string;
+  }) => {
     const response = await apiClient.get<NotificationStatistics>(
-      `${BASE_URL}/notifications/stats/`
+      `${BASE_URL}/notifications/stats/`,
+      { params }
     );
     // The apiClient returns data directly
     return response;
@@ -212,6 +222,9 @@ export const notificationsApi = {
     custom_message?: string;
     attachment?: File | null;
     apartment_ids?: number[];
+    mark_period_sent?: boolean;
+    skip_if_already_sent?: boolean;
+    sent_source?: string;
   }) => {
     const formData = new FormData();
     formData.append('building_id', String(data.building_id));
@@ -229,6 +242,15 @@ export const notificationsApi = {
 
     if (data.apartment_ids && data.apartment_ids.length > 0) {
       formData.append('apartment_ids', data.apartment_ids.join(','));
+    }
+    if (data.mark_period_sent !== undefined) {
+      formData.append('mark_period_sent', String(data.mark_period_sent));
+    }
+    if (data.skip_if_already_sent !== undefined) {
+      formData.append('skip_if_already_sent', String(data.skip_if_already_sent));
+    }
+    if (data.sent_source) {
+      formData.append('sent_source', data.sent_source);
     }
 
     const response = await apiClient.post<{
@@ -250,6 +272,31 @@ export const notificationsApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response;
+  },
+
+  /**
+   * Queue personalized common expense notifications for multiple buildings
+   */
+  sendPersonalizedCommonExpensesBulk: async (data: {
+    building_ids: number[];
+    month: string;
+    include_sheet?: boolean;
+    include_notification?: boolean;
+    custom_message?: string;
+    mark_period_sent?: boolean;
+    skip_if_already_sent?: boolean;
+    sent_source?: string;
+    stagger_seconds?: number;
+  }) => {
+    const response = await apiClient.post<{
+      queued_count: number;
+      queued: Array<{
+        building_id: number;
+        task_id: string;
+        countdown: number;
+      }>;
+    }>(`${BASE_URL}/notifications/send_personalized_common_expenses_bulk/`, data);
     return response;
   },
 

@@ -268,6 +268,9 @@ class NotificationStatisticsSerializer(serializers.Serializer):
     total_sent = serializers.IntegerField()
     total_failed = serializers.IntegerField()
     total_recipients = serializers.IntegerField()
+    total_successful_sends = serializers.IntegerField()
+    total_failed_sends = serializers.IntegerField()
+    delivery_rate = serializers.FloatField()
     average_delivery_rate = serializers.FloatField()
 
     by_type = serializers.DictField(child=serializers.IntegerField())

@@ -757,6 +757,7 @@ class MonthlyTaskService:
                 custom_message=custom_message or None,
                 subject_prefix=subject_prefix,
                 sender_user=user,
+                mark_period_sent=True,
             )
 
             subject = subject_prefix or f"Κοινόχρηστα {month_display}"

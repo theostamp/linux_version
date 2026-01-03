@@ -132,6 +132,9 @@ export interface NotificationStatistics {
   total_sent: number;
   total_failed: number;
   total_recipients: number;
+  total_successful_sends: number;
+  total_failed_sends: number;
+  delivery_rate: number;
   average_delivery_rate: number;
   by_type: Record<string, number>;
   by_status: Record<string, number>;

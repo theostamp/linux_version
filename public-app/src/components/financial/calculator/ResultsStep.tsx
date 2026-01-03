@@ -8,6 +8,22 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   FileText,
   Send,
@@ -44,11 +60,13 @@ import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinanci
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import { api } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePayments } from '@/hooks/usePayments';
 import { useMonthlyExpenses } from '@/hooks/useMonthlyExpenses';
 import { exportToJPG } from './utils/jpgGenerator';
 import { formatAmount, toNumber } from './utils/formatters';
+import { notificationsApi } from '@/lib/api/notifications';
 
 interface ResultsStepProps {
   state: CalculatorState;
@@ -73,9 +91,14 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [calculationSuccess, setCalculationSuccess] = useState(false);
+  const [showSendPrompt, setShowSendPrompt] = useState(false);
+  const [sendScope, setSendScope] = useState<'current' | 'all' | 'selected'>('current');
+  const [selectedBuildingIds, setSelectedBuildingIds] = useState<number[]>([]);
+  const [isSendingNotifications, setIsSendingNotifications] = useState(false);
 
   // Get user office details
   const { user } = useAuth();
+  const { buildings } = useBuilding();
 
   // Dashboard summary (up to today)
   interface DashboardSummary {
@@ -89,9 +112,24 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
   // Extract month from state's customPeriod
   const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
+  const notificationMonth = selectedMonth || state.customPeriod?.startDate?.substring(0, 7);
   // Load occupants (owner/tenant) info to show consistent names
   const { apartments: aptWithFinancial, building: buildingData, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
   const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
+
+  const availableBuildings = useMemo(() => {
+    if (buildings && buildings.length > 0) {
+      return buildings;
+    }
+    if (buildingData) {
+      return [{
+        id: buildingId,
+        name: buildingData.name || buildingData.address || `Κτίριο ${buildingId}`,
+        address: buildingData.address || '',
+      }];
+    }
+    return [];
+  }, [buildings, buildingData, buildingId]);
 
   // Auto-refresh when selectedMonth changes
   useMonthRefresh(selectedMonth, forceRefresh, 'ResultsStep');
@@ -298,6 +336,63 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const getTotalPreviousBalance = useCallback(() => totalPreviousBalance, [totalPreviousBalance]);
   const getFinalTotalExpenses = useCallback(() => totalExpensesForSheet + totalPreviousBalance, [totalExpensesForSheet, totalPreviousBalance]);
 
+  const getTargetBuildingIds = useCallback(() => {
+    if (sendScope === 'current') {
+      return [buildingId];
+    }
+    if (sendScope === 'all') {
+      const ids = availableBuildings.map((b: any) => b.id).filter((id: number) => id !== undefined);
+      return ids.length > 0 ? ids : [buildingId];
+    }
+    return selectedBuildingIds;
+  }, [sendScope, buildingId, availableBuildings, selectedBuildingIds]);
+
+  const handleSendNotifications = async () => {
+    if (!notificationMonth) {
+      toast.error('Λείπει ο μήνας κοινοχρήστων για αποστολή.');
+      return;
+    }
+
+    const targetIds = getTargetBuildingIds();
+    if (sendScope === 'selected' && targetIds.length === 0) {
+      toast.error('Επιλέξτε τουλάχιστον μία πολυκατοικία.');
+      return;
+    }
+
+    setIsSendingNotifications(true);
+    try {
+      if (targetIds.length === 1) {
+        await notificationsApi.sendPersonalizedCommonExpenses({
+          building_id: targetIds[0],
+          month: notificationMonth,
+          include_sheet: true,
+          include_notification: true,
+          mark_period_sent: true,
+          sent_source: 'manual',
+        });
+        toast.success('Οι ειδοποιήσεις κοινοχρήστων στάλθηκαν.');
+      } else {
+        const response = await notificationsApi.sendPersonalizedCommonExpensesBulk({
+          building_ids: targetIds,
+          month: notificationMonth,
+          include_sheet: true,
+          include_notification: true,
+          mark_period_sent: true,
+          skip_if_already_sent: true,
+          sent_source: 'manual',
+          stagger_seconds: 60,
+        });
+        toast.success(`Μπήκαν ${response.queued_count} αποστολές σε σειρά.`);
+      }
+
+      setShowSendPrompt(false);
+    } catch (error: any) {
+      toast.error(error?.message || 'Αποτυχία αποστολής ειδοποιήσεων.');
+    } finally {
+      setIsSendingNotifications(false);
+    }
+  };
+
   const handleIssue = async () => {
     try {
       updateState({ isIssuing: true });
@@ -438,6 +533,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       if (onComplete) {
         onComplete(params);
       }
+
+      setSendScope('current');
+      setSelectedBuildingIds([buildingId]);
+      setShowSendPrompt(true);
 
     } catch (error: any) {
       toast.error('Σφάλμα κατά την έκδοση: ' + (error.message || 'Άγνωστο σφάλμα'));
@@ -1669,6 +1768,84 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         managementOfficeLogo={user?.office_logo || ""}
         />
       )}
+
+      <Dialog open={showSendPrompt} onOpenChange={setShowSendPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Αποστολή ειδοποιήσεων κοινοχρήστων</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Θέλετε να σταλούν τώρα τα κοινόχρηστα και τα ατομικά ειδοποιητήρια;
+            </p>
+
+            <div className="space-y-2">
+              <Label>Εμβέλεια αποστολής</Label>
+              <Select
+                value={sendScope}
+                onValueChange={(value) => setSendScope(value as 'current' | 'all' | 'selected')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Επιλέξτε εμβέλεια" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">Μόνο αυτή η πολυκατοικία</SelectItem>
+                  <SelectItem value="all">Όλες οι πολυκατοικίες</SelectItem>
+                  <SelectItem value="selected">Επιλογή πολυκατοικιών</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {sendScope === 'selected' && (
+              <div className="space-y-2 max-h-48 overflow-auto rounded-md border border-slate-200 p-2">
+                {availableBuildings.map((building: any) => {
+                  const label = building.name || building.address || `Κτίριο ${building.id}`;
+                  const checked = selectedBuildingIds.includes(building.id);
+                  return (
+                    <label key={building.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) => {
+                          const isChecked = value === true;
+                          setSelectedBuildingIds((prev) => {
+                            if (isChecked) {
+                              return Array.from(new Set([...prev, building.id]));
+                            }
+                            return prev.filter((id) => id !== building.id);
+                          });
+                        }}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <Alert>
+              <AlertDescription>
+                Αν δεν γίνει αποστολή τώρα, οι ειδοποιήσεις θα φύγουν αυτόματα την 1η του μήνα.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSendPrompt(false);
+                toast.message('Η αποστολή θα γίνει αυτόματα την 1η του μήνα.');
+              }}
+              disabled={isSendingNotifications}
+            >
+              Όχι τώρα
+            </Button>
+            <Button onClick={handleSendNotifications} disabled={isSendingNotifications}>
+              {isSendingNotifications ? 'Αποστολή…' : 'Αποστολή τώρα'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
