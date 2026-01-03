@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import * as XLSX from 'xlsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,14 @@ import {
   X,
   Info
 } from 'lucide-react';
-import { CalculatorState } from './types/financial';
+import {
+  CalculatorState,
+  ExpenseBreakdown,
+  ManagementFeeInfo,
+  PerApartmentAmounts,
+  ReserveFundInfo,
+  Share
+} from './types/financial';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
 import { CommonExpenseModal } from './CommonExpenseModal';
@@ -39,6 +46,9 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePayments } from '@/hooks/usePayments';
+import { useMonthlyExpenses } from '@/hooks/useMonthlyExpenses';
+import { exportToJPG } from './utils/jpgGenerator';
+import { formatAmount, toNumber } from './utils/formatters';
 
 interface ResultsStepProps {
   state: CalculatorState;
@@ -81,6 +91,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
   // Load occupants (owner/tenant) info to show consistent names
   const { apartments: aptWithFinancial, building: buildingData, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
+  const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
 
   // Auto-refresh when selectedMonth changes
   useMonthRefresh(selectedMonth, forceRefresh, 'ResultsStep');
@@ -159,13 +170,6 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     return () => { mounted = false; };
   }, [buildingId]);
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('el-GR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
-
   const getDistributionTypeLabel = (type: string) => {
     switch (type) {
       case 'by_participation_mills':
@@ -180,6 +184,119 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         return type;
     }
   };
+
+  const perApartmentAmounts = useMemo<PerApartmentAmounts>(() => {
+    const items: PerApartmentAmounts = {};
+    Object.values(state.shares as Record<string, Share>).forEach((share) => {
+      const apartmentId = (share as any).apartment_id;
+      if (!apartmentId) return;
+      const bd = (share as any).breakdown || {};
+      if (Array.isArray(bd)) {
+        const commonTotal = bd.reduce((sum, item) => sum + toNumber((item as any).apartment_share ?? 0), 0);
+        const reserveTotal = toNumber((share as any).reserve_fund_amount ?? (share as any).reserve_fund_contribution ?? 0);
+        items[apartmentId] = {
+          common: commonTotal,
+          elevator: 0,
+          heating: 0,
+          other: 0,
+          coowner: 0,
+          reserve: reserveTotal,
+          total_due: toNumber((share as any).total_due ?? 0)
+        };
+        return;
+      }
+      items[apartmentId] = {
+        common: toNumber(bd.general_expenses ?? bd.common ?? bd.general ?? 0),
+        elevator: toNumber(bd.elevator_expenses ?? bd.elevator ?? 0),
+        heating: toNumber(bd.heating_expenses ?? bd.heating ?? 0),
+        other: toNumber(bd.equal_share_expenses ?? bd.equal_share ?? bd.other ?? 0),
+        coowner: toNumber(bd.individual_expenses ?? bd.individual ?? bd.coowner ?? 0),
+        reserve: toNumber(bd.reserve_fund_contribution ?? bd.reserve_fund ?? bd.reserve ?? 0),
+        total_due: toNumber((share as any).total_due ?? 0)
+      };
+    });
+    return items;
+  }, [state.shares]);
+
+  const expenseBreakdown = useMemo<ExpenseBreakdown>(() => {
+    const breakdown: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
+    if (monthlyExpenses) {
+      breakdown.common = monthlyExpenses.total_expenses_month || 0;
+    } else if (state.advancedShares?.expense_totals) {
+      const { general, elevator, heating, equal_share, individual } = state.advancedShares.expense_totals;
+      breakdown.common = Number(general || 0);
+      breakdown.elevator = Number(elevator || 0);
+      breakdown.heating = Number(heating || 0);
+      breakdown.other = Number(equal_share || 0);
+      breakdown.coownership = Number(individual || 0);
+    } else if (state.totalExpenses) {
+      breakdown.common = Number(state.totalExpenses || 0);
+    }
+    return breakdown;
+  }, [monthlyExpenses, state.advancedShares, state.totalExpenses]);
+
+  const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
+    const apartmentsCount = Object.keys(state.shares).length;
+    let finalFee = 0;
+    if (monthlyExpenses && monthlyExpenses.total_management_cost > 0) {
+      finalFee = monthlyExpenses.management_fee_per_apartment || (apartmentsCount > 0 ? monthlyExpenses.total_management_cost / apartmentsCount : 0);
+    } else {
+      const feeFromState = state.advancedShares?.management_fee_per_apartment || 0;
+      finalFee = feeFromState > 0 ? feeFromState : (buildingData?.management_fee_per_apartment || 0);
+    }
+    return {
+      feePerApartment: finalFee,
+      totalFee: finalFee * apartmentsCount,
+      apartmentsCount,
+      hasFee: finalFee > 0
+    };
+  }, [monthlyExpenses, state.advancedShares, state.shares, buildingData?.management_fee_per_apartment]);
+
+  const reserveFundInfo = useMemo<ReserveFundInfo>(() => {
+    const goal = Number(state.advancedShares?.reserve_fund_goal || 0);
+    const duration = Number(state.advancedShares?.reserve_fund_duration || 0);
+    const startDate = state.advancedShares?.reserve_fund_start_date;
+    const targetDate = state.advancedShares?.reserve_fund_target_date;
+    let showReserveFund = true;
+
+    if (selectedMonth && startDate) {
+      const selected = new Date(`${selectedMonth}-01`);
+      if (selected < new Date(startDate)) showReserveFund = false;
+      if (targetDate && selected > new Date(targetDate)) showReserveFund = false;
+    }
+
+    let monthlyAmount = 0;
+    if (showReserveFund && goal > 0 && duration > 0) {
+      monthlyAmount = goal / duration;
+    }
+
+    const actualReserveCollected = Number(state.advancedShares?.actual_reserve_collected || 0);
+    const progressPercentage = goal > 0 ? Math.min(100, (actualReserveCollected / goal) * 100) : 0;
+
+    return {
+      monthlyAmount,
+      totalContribution: monthlyAmount,
+      displayText: goal > 0 && duration > 0 ? `Στόχος ${formatAmount(goal)}€ σε ${duration} δόσεις` : '',
+      goal,
+      duration,
+      monthsRemaining: duration,
+      actualReserveCollected,
+      progressPercentage
+    };
+  }, [state.advancedShares, selectedMonth]);
+
+  const totalPreviousBalance = useMemo(() => {
+    return aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance ?? 0), 0);
+  }, [aptWithFinancial]);
+
+  const totalExpensesForSheet = useMemo(() => {
+    const basic = Object.values(expenseBreakdown).reduce((sum, value) => sum + value, 0);
+    const hasAnyExpenses = basic > 0;
+    return basic + managementFeeInfo.totalFee + (hasAnyExpenses ? reserveFundInfo.monthlyAmount : 0);
+  }, [expenseBreakdown, managementFeeInfo, reserveFundInfo]);
+
+  const getTotalPreviousBalance = useCallback(() => totalPreviousBalance, [totalPreviousBalance]);
+  const getFinalTotalExpenses = useCallback(() => totalExpensesForSheet + totalPreviousBalance, [totalExpensesForSheet, totalPreviousBalance]);
 
   const handleIssue = async () => {
     try {
@@ -254,7 +371,61 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         expense_ids: expenseIds
       };
 
-      await issueCommonExpenses(params);
+      let sheetFile: File | null = null;
+      try {
+        const exportParams = {
+          state,
+          buildingName: buildingData?.name || 'Άγνωστο Κτίριο',
+          buildingAddress: buildingData?.address || '',
+          buildingCity: buildingData?.city || '',
+          buildingPostalCode: buildingData?.postal_code || '',
+          managerName: buildingData?.internal_manager_name || 'Διαχειριστής Κτιρίου',
+          managerApartment: buildingData?.internal_manager_apartment || '',
+          managerPhone: buildingData?.internal_manager_phone || '',
+          managerCollectionSchedule: buildingData?.internal_manager_collection_schedule || '',
+          managementOfficeName: user?.office_name || '',
+          managementOfficePhone: user?.office_phone || '',
+          managementOfficeAddress: user?.office_address || '',
+          managementOfficeLogo: user?.office_logo || '',
+          selectedMonth,
+          expenseBreakdown,
+          reserveFundInfo,
+          managementFeeInfo,
+          groupedExpenses: {},
+          perApartmentAmounts,
+          aptWithFinancial,
+          totalExpenses: totalExpensesForSheet,
+          getFinalTotalExpenses,
+          getTotalPreviousBalance,
+          monthlyExpenses,
+          buildingId
+        };
+        const jpgResult = await exportToJPG(exportParams, {
+          skipDownload: true,
+          skipKiosk: true,
+          returnBlob: true,
+          silent: true
+        });
+        if (jpgResult?.blob && jpgResult?.fileName) {
+          sheetFile = new File([jpgResult.blob], jpgResult.fileName, { type: 'image/jpeg' });
+        }
+      } catch (error) {
+        console.error('Failed to generate common expense sheet file:', error);
+        toast.error('Αποτυχία δημιουργίας φύλλου κοινοχρήστων. Η έκδοση ακυρώθηκε.');
+        return;
+      }
+
+      if (!sheetFile) {
+        toast.error('Δεν δημιουργήθηκε συνημμένο φύλλο κοινοχρήστων. Η έκδοση ακυρώθηκε.');
+        return;
+      }
+
+      const payload = {
+        ...params,
+        sheet_attachment: sheetFile
+      };
+
+      await issueCommonExpenses(payload);
 
       toast.success('Τα κοινοχρήστα εκδόθηκαν επιτυχώς!');
 

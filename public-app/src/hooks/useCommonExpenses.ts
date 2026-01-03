@@ -104,6 +104,21 @@ export const useCommonExpenses = () => {
     setError(null);
 
     try {
+      const hasAttachment = !!data.sheet_attachment;
+      if (hasAttachment) {
+        const formData = new FormData();
+        formData.append('building_id', String(data.building_id));
+        formData.append('period_data', JSON.stringify(data.period_data));
+        formData.append('shares', JSON.stringify(data.shares));
+        if (data.expense_ids) {
+          formData.append('expense_ids', JSON.stringify(data.expense_ids));
+        }
+        formData.append('sheet_attachment', data.sheet_attachment as File);
+
+        const response = await api.post('/financial/common-expenses/issue/', formData);
+        return response;
+      }
+
       // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue/', data);
       return response;
