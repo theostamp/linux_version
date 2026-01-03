@@ -13,10 +13,12 @@ from typing import List, Optional, Dict, Any
 from datetime import date, datetime
 from decimal import Decimal
 
+from django.db import connection
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from django_tenants.utils import get_public_schema_name, get_tenant_domain_model, schema_context
 
 from .push_service import PushNotificationService
 from core.emailing import _absolute_url, extract_legacy_body_html, send_templated_email
@@ -28,6 +30,36 @@ class CommonExpenseNotificationService:
     """
     Service for sending personalized common expense notifications.
     """
+
+    @staticmethod
+    def _resolve_tenant_frontend_base() -> str:
+        """
+        Resolve the correct tenant frontend base URL for links inside emails.
+        """
+        fallback = (getattr(settings, 'FRONTEND_URL', '') or '').rstrip('/')
+        schema_name = getattr(connection, 'schema_name', None)
+        if not schema_name:
+            return fallback
+
+        public_schema = get_public_schema_name()
+        if schema_name == public_schema:
+            return fallback
+
+        try:
+            with schema_context(public_schema):
+                DomainModel = get_tenant_domain_model()
+                domain = (
+                    DomainModel.objects.filter(tenant__schema_name=schema_name)
+                    .order_by('-is_primary', 'id')
+                    .first()
+                )
+            if domain and domain.domain:
+                scheme = 'http' if 'localhost' in domain.domain else 'https'
+                return f"{scheme}://{domain.domain}"
+        except Exception as exc:
+            logger.warning("Tenant domain lookup failed for schema %s: %s", schema_name, exc)
+
+        return fallback
 
     @staticmethod
     def get_common_expense_sheet(building_id: int, month: date) -> Optional[str]:
@@ -616,7 +648,7 @@ class CommonExpenseNotificationService:
 
         month_display = month.strftime('%B %Y')
         month_key = month.strftime('%Y-%m')
-        frontend_base = getattr(settings, 'FRONTEND_URL', '').rstrip('/')
+        frontend_base = CommonExpenseNotificationService._resolve_tenant_frontend_base()
         sheet_download_url = (
             f"{frontend_base}/api/financial/common-expenses/sheet/?building_id={building_id}&month={month_key}"
             if frontend_base else ""
