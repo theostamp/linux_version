@@ -5,6 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters import rest_framework as filters
 from django_filters import DateFilter
 from datetime import datetime, date
+import io
 import json
 from decimal import Decimal
 import mimetypes
@@ -2868,6 +2869,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             building_id = request.query_params.get('building_id') or request.query_params.get('building')
             period_id = request.query_params.get('period_id')
             month_str = request.query_params.get('month')
+            sheet_format = (request.query_params.get('format') or 'pdf').lower()
 
             if not building_id:
                 return Response({'error': 'building_id is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2889,6 +2891,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             period = None
             range_start = None
             range_end = None
+            range_end_inclusive = False
 
             if period_id:
                 period = CommonExpensePeriod.objects.filter(id=period_id, building_id=building_id_int).first()
@@ -2896,6 +2899,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                     return Response({'error': 'Period not found'}, status=status.HTTP_404_NOT_FOUND)
                 range_start = period.start_date
                 range_end = period.end_date
+                range_end_inclusive = True
             else:
                 if not month_str:
                     return Response({'error': 'month or period_id is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2933,7 +2937,186 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                     sheet_path = expense_with_sheet.attachment.name or str(expense_with_sheet.attachment)
 
             if not sheet_path:
-                return Response({'error': 'Sheet not found'}, status=status.HTTP_404_NOT_FOUND)
+                auto_generate = str(request.query_params.get('auto_generate', 'true')).lower() in ('true', '1', 'yes')
+                if not auto_generate:
+                    return Response({'error': 'Sheet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                if range_start and range_end:
+                    expenses_qs = Expense.objects.filter(
+                        building_id=building_id_int,
+                        date__gte=range_start,
+                        **({'date__lte': range_end} if range_end_inclusive else {'date__lt': range_end}),
+                    ).order_by('date')
+                else:
+                    expenses_qs = Expense.objects.none()
+
+                share_rows = []
+                if period:
+                    shares_qs = (
+                        ApartmentShare.objects.filter(period=period)
+                        .select_related('apartment')
+                        .order_by('apartment__number')
+                    )
+                else:
+                    shares_qs = ApartmentShare.objects.none()
+
+                if shares_qs.exists():
+                    for share in shares_qs:
+                        apartment = share.apartment
+                        owner_name = apartment.owner_name or apartment.tenant_name or ''
+                        share_rows.append({
+                            'apartment': apartment.number,
+                            'owner': owner_name,
+                            'mills': apartment.participation_mills or 0,
+                            'previous_balance': share.previous_balance,
+                            'total_amount': share.total_amount,
+                            'total_due': share.total_due,
+                        })
+                elif month_str:
+                    from .services import CommonExpenseCalculator
+                    calculator = CommonExpenseCalculator(building_id_int, month_str)
+                    calculated = calculator.calculate_shares()
+                    for share_data in calculated.values():
+                        total_amount = Decimal(str(share_data.get('total_amount', 0)))
+                        reserve_amount = Decimal(str(share_data.get('reserve_fund_amount', 0)))
+                        share_rows.append({
+                            'apartment': share_data.get('apartment_number') or share_data.get('identifier') or '',
+                            'owner': share_data.get('owner_name') or '',
+                            'mills': share_data.get('participation_mills') or 0,
+                            'previous_balance': share_data.get('previous_balance') or Decimal('0.00'),
+                            'total_amount': total_amount + reserve_amount,
+                            'total_due': share_data.get('total_due') or Decimal('0.00'),
+                        })
+
+                if not share_rows and not expenses_qs.exists():
+                    return Response({'error': 'Sheet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                def format_currency(amount):
+                    try:
+                        value = Decimal(str(amount))
+                    except Exception:
+                        value = Decimal('0.00')
+                    return f"{value:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
+
+                if sheet_format == 'csv':
+                    output = io.StringIO()
+                    output.write(f"Κτίριο,{building.name}\n")
+                    if period:
+                        output.write(f"Περίοδος,{period.period_name}\n")
+                    elif month_str:
+                        output.write(f"Περίοδος,{month_str}\n")
+                    output.write("\n")
+                    if expenses_qs.exists():
+                        output.write("Δαπάνες\n")
+                        output.write("Ημερομηνία,Περιγραφή,Ποσό\n")
+                        for expense in expenses_qs:
+                            description = expense.title or expense.category or ''
+                            output.write(f"{expense.date},{description},{expense.amount}\n")
+                        output.write("\n")
+                    output.write("Κατανομή Διαμερισμάτων\n")
+                    output.write("Διαμέρισμα,Ιδιοκτήτης,Χιλιοστά,Προηγούμενο Υπόλοιπο,Χρέωση Μήνα,Σύνολο Οφειλής\n")
+                    for row in share_rows:
+                        output.write(
+                            f"{row['apartment']},{row['owner']},{row['mills']},{row['previous_balance']},{row['total_amount']},{row['total_due']}\n"
+                        )
+                    output.seek(0)
+                    filename = f"common-expenses-{month_str or 'period'}.csv"
+                    response = FileResponse(
+                        io.BytesIO(output.getvalue().encode('utf-8')),
+                        content_type='text/csv; charset=utf-8'
+                    )
+                    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                    return response
+
+                try:
+                    from reportlab.lib.pagesizes import A4
+                    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+                    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                    from reportlab.lib import colors
+                except Exception:
+                    return Response({'error': 'Sheet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                buffer = io.BytesIO()
+                doc = SimpleDocTemplate(buffer, pagesize=A4)
+                elements = []
+
+                styles = getSampleStyleSheet()
+                title_style = ParagraphStyle(
+                    'Title',
+                    parent=styles['Heading1'],
+                    fontSize=16,
+                    spaceAfter=10,
+                    alignment=1
+                )
+
+                period_label = period.period_name if period else (month_str or '')
+                elements.append(Paragraph("Φύλλο Κοινοχρήστων", title_style))
+                elements.append(Paragraph(f"{building.name} - {period_label}", styles['Normal']))
+                elements.append(Spacer(1, 12))
+
+                if expenses_qs.exists():
+                    elements.append(Paragraph("Ανάλυση Δαπανών", styles['Heading3']))
+                    expense_rows = [["Ημερομηνία", "Περιγραφή", "Ποσό"]]
+                    for expense in expenses_qs:
+                        description = expense.title or expense.category or ''
+                        expense_rows.append([
+                            expense.date.strftime('%d/%m/%Y'),
+                            description,
+                            format_currency(expense.amount),
+                        ])
+                    expense_table = Table(expense_rows, colWidths=[80, 320, 100])
+                    expense_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+                    ]))
+                    elements.append(expense_table)
+                    elements.append(Spacer(1, 14))
+
+                elements.append(Paragraph("Κατανομή Διαμερισμάτων", styles['Heading3']))
+                share_table_rows = [[
+                    "Διαμ.",
+                    "Ιδιοκτήτης",
+                    "Χιλ.",
+                    "Προηγ. Υπόλ.",
+                    "Χρέωση Μήνα",
+                    "Σύνολο"
+                ]]
+                for row in share_rows:
+                    share_table_rows.append([
+                        str(row['apartment']),
+                        row['owner'],
+                        str(row['mills']),
+                        format_currency(row['previous_balance']),
+                        format_currency(row['total_amount']),
+                        format_currency(row['total_due']),
+                    ])
+
+                share_table = Table(share_table_rows, colWidths=[50, 160, 50, 90, 90, 90])
+                share_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 9),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
+                    ('ALIGN', (0, 0), (1, -1), 'LEFT'),
+                ]))
+                elements.append(share_table)
+
+                doc.build(elements)
+                buffer.seek(0)
+
+                filename = f"common-expenses-{month_str or 'period'}.pdf"
+                response = FileResponse(buffer, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
 
             if sheet_path.startswith('http://') or sheet_path.startswith('https://'):
                 return redirect(sheet_path)
