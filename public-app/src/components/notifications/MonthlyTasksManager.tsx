@@ -49,10 +49,10 @@ export default function MonthlyTasksManager() {
   const [formData, setFormData] = useState({
     task_type: 'common_expense' as 'common_expense' | 'balance_reminder' | 'custom',
     building: selectedBuilding?.id ?? null,
-    day_of_month: 1,
+    day_of_month: 31,
     time_to_send: '09:00',
     template: '',
-    auto_send_enabled: false,
+    auto_send_enabled: true,
   });
 
   // Fetch scheduled tasks
@@ -96,10 +96,10 @@ export default function MonthlyTasksManager() {
       setFormData({
         task_type: 'common_expense',
         building: selectedBuilding?.id ?? null,
-        day_of_month: 1,
+        day_of_month: 31,
         time_to_send: '09:00',
         template: '',
-        auto_send_enabled: false,
+        auto_send_enabled: true,
       });
     },
     onError: (error: any) => {

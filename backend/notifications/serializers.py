@@ -434,7 +434,7 @@ class MonthlyTaskConfigureSerializer(serializers.Serializer):
         allow_null=True,
         help_text="Building ID (null = applies to all buildings)"
     )
-    
+
     # Recurrence settings
     recurrence_type = serializers.ChoiceField(
         choices=['once', 'weekly', 'biweekly', 'monthly'],
@@ -475,7 +475,9 @@ class MonthlyTaskConfigureSerializer(serializers.Serializer):
     def validate(self, data):
         """Validate recurrence settings."""
         recurrence_type = data.get('recurrence_type', 'monthly')
-        
+        task_type = data.get('task_type')
+        initial_data = getattr(self, 'initial_data', {}) or {}
+
         if recurrence_type in ['weekly', 'biweekly']:
             if data.get('day_of_week') is None:
                 raise serializers.ValidationError({
@@ -483,8 +485,11 @@ class MonthlyTaskConfigureSerializer(serializers.Serializer):
                 })
         elif recurrence_type == 'monthly':
             if data.get('day_of_month') is None:
-                data['day_of_month'] = 1  # Default to 1st of month
-        
+                data['day_of_month'] = 31 if task_type == 'common_expense' else 1
+
+        if task_type == 'common_expense' and 'auto_send_enabled' not in initial_data:
+            data['auto_send_enabled'] = True
+
         return data
 
 
@@ -522,12 +527,12 @@ class UserDeviceTokenSerializer(serializers.ModelSerializer):
             'last_used_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'last_used_at']
-    
+
     def create(self, validated_data):
         """Create or update device token."""
         user = self.context['request'].user
         token = validated_data.get('token')
-        
+
         # Update existing or create new
         device, created = UserDeviceToken.objects.update_or_create(
             token=token,
@@ -569,7 +574,7 @@ class UserViberSubscriptionSerializer(serializers.ModelSerializer):
 
 class NotificationPreferenceSerializer(serializers.ModelSerializer):
     """Serializer for notification preferences."""
-    
+
     building_name = serializers.CharField(source='building.name', read_only=True, allow_null=True)
     enabled_channels = serializers.SerializerMethodField()
 
@@ -594,11 +599,11 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'building_name', 'enabled_channels']
-    
+
     def get_enabled_channels(self, obj):
         """Get list of enabled channel names."""
         return obj.get_enabled_channels()
-    
+
     def create(self, validated_data):
         """Create preference for current user."""
         validated_data['user'] = self.context['request'].user
@@ -607,7 +612,7 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
 
 class NotificationPreferenceUpdateSerializer(serializers.Serializer):
     """Serializer for batch updating notification preferences."""
-    
+
     category = serializers.CharField(default='all')
     building_id = serializers.IntegerField(required=False, allow_null=True)
     email_enabled = serializers.BooleanField(required=False)
@@ -622,7 +627,7 @@ class NotificationPreferenceUpdateSerializer(serializers.Serializer):
 
 class ChannelStatusSerializer(serializers.Serializer):
     """Serializer for channel status information."""
-    
+
     channel = serializers.CharField()
     enabled = serializers.BooleanField()
     priority = serializers.IntegerField()
@@ -633,32 +638,32 @@ class ChannelStatusSerializer(serializers.Serializer):
 
 class MultiChannelNotificationSerializer(serializers.Serializer):
     """Serializer for multi-channel notification sending."""
-    
+
     building_id = serializers.IntegerField(
         help_text="ID του κτιρίου"
     )
-    
+
     # Content
     subject = serializers.CharField(max_length=200)
     message = serializers.CharField()
     sms_message = serializers.CharField(required=False, allow_blank=True)
     push_title = serializers.CharField(max_length=100, required=False)
     push_data = serializers.DictField(required=False, default=dict)
-    
+
     # Channels
     channels = serializers.ListField(
         child=serializers.ChoiceField(choices=['email', 'sms', 'viber', 'push']),
         default=['email'],
         help_text="Κανάλια αποστολής"
     )
-    
+
     # Recipients
     apartment_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
     )
     send_to_all = serializers.BooleanField(default=False)
-    
+
     # Options
     priority = serializers.ChoiceField(
         choices=['low', 'normal', 'high', 'urgent'],
@@ -672,7 +677,7 @@ class MultiChannelNotificationSerializer(serializers.Serializer):
         default=True,
         help_text="Σεβασμός προτιμήσεων χρηστών"
     )
-    
+
     def validate(self, data):
         """Validate the request."""
         if not data.get('apartment_ids') and not data.get('send_to_all'):

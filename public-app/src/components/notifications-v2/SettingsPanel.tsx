@@ -83,9 +83,9 @@ export default function SettingsPanel() {
     buildingId: selectedBuilding?.id?.toString() ?? '',
     recurrenceType: 'monthly' as 'once' | 'weekly' | 'biweekly' | 'monthly',
     dayOfWeek: '0', // Monday default
-    dayOfMonth: '1',
+    dayOfMonth: '31',
     timeToSend: '09:00',
-    autoSend: false,
+    autoSend: true,
   });
 
   const { data: tasks = [], isLoading } = useQuery<MonthlyNotificationTask[]>({
@@ -134,9 +134,9 @@ export default function SettingsPanel() {
         buildingId: selectedBuilding?.id?.toString() ?? '',
         recurrenceType: 'monthly',
         dayOfWeek: '0',
-        dayOfMonth: '1',
+        dayOfMonth: '31',
         timeToSend: '09:00',
-        autoSend: false,
+        autoSend: true,
       });
     },
     onError: (error: any) => {

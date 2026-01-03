@@ -119,9 +119,9 @@ class Command(BaseCommand):
                     task_type='common_expense',
                     building=building,
                     template=template,
-                    day_of_month=1,
+                    day_of_month=31,
                     time_to_send='09:00',
-                    auto_send_enabled=False,
+                    auto_send_enabled=True,
                     period_month=period_month,
                     status='pending_confirmation'
                 )

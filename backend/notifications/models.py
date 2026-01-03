@@ -3,6 +3,7 @@ Notifications models for email and SMS notifications.
 """
 from django.db import models
 from django.utils import timezone
+import calendar
 from buildings.models import Building
 from apartments.models import Apartment
 from users.models import CustomUser
@@ -102,28 +103,28 @@ class NotificationTemplate(models.Model):
         """
         import logging
         logger = logging.getLogger(__name__)
-        
+
         subject = self.subject
         body = self.body_template
         sms = self.sms_template
 
         logger.info(f"🎨 [TEMPLATE RENDER] Template ID: {self.id}, Name: {self.name}")
         logger.info(f"🎨 [TEMPLATE RENDER] Context keys: {list(context.keys())}")
-        
+
         for key, value in context.items():
             # Try both with and without spaces
             placeholder_with_spaces = f"{{{{ {key} }}}}"
             placeholder_without_spaces = f"{{{{{key}}}}}"
-            
+
             logger.info(f"🎨 [TEMPLATE RENDER] Replacing '{key}' = '{value}'")
-            
+
             # Replace both formats to handle templates with or without spaces
             subject = subject.replace(placeholder_with_spaces, str(value))
             subject = subject.replace(placeholder_without_spaces, str(value))
-            
+
             body = body.replace(placeholder_with_spaces, str(value))
             body = body.replace(placeholder_without_spaces, str(value))
-            
+
             if sms:
                 sms = sms.replace(placeholder_with_spaces, str(value))
                 sms = sms.replace(placeholder_without_spaces, str(value))
@@ -375,7 +376,7 @@ class MonthlyNotificationTask(models.Model):
         default='09:00',
         help_text="Time to send notification"
     )
-    
+
     # Recurrence tracking
     last_sent_at = models.DateTimeField(
         null=True,
@@ -444,11 +445,19 @@ class MonthlyNotificationTask(models.Model):
         building_name = self.building.name if self.building else "Όλα τα κτίρια"
         return f"{self.get_task_type_display()} - {building_name} - {self.period_month.strftime('%m/%Y')}"
 
+    def _resolve_month_day(self, year: int, month: int) -> int:
+        last_day = calendar.monthrange(year, month)[1]
+        target_day = self.day_of_month or last_day
+        if target_day <= 0:
+            target_day = last_day
+        return min(target_day, last_day)
+
     @property
     def is_due(self):
         """Check if task is due to be sent."""
         now = timezone.now()
-        target_date = self.period_month.replace(day=self.day_of_month)
+        target_day = self._resolve_month_day(self.period_month.year, self.period_month.month)
+        target_date = self.period_month.replace(day=target_day)
         target_datetime = timezone.make_aware(
             timezone.datetime.combine(target_date, self.time_to_send)
         )
@@ -466,32 +475,33 @@ class MonthlyNotificationTask(models.Model):
     def calculate_next_scheduled_at(self, from_date=None):
         """
         Calculate the next scheduled execution time based on recurrence settings.
-        
+
         Args:
             from_date: Starting date for calculation (defaults to now)
-            
+
         Returns:
             datetime: Next scheduled execution time
         """
         from datetime import timedelta
-        
+
         if from_date is None:
             from_date = timezone.now()
-        
+
         # Combine date with time_to_send
         def make_scheduled_datetime(dt):
             return timezone.make_aware(
                 timezone.datetime.combine(dt.date() if hasattr(dt, 'date') else dt, self.time_to_send)
             ) if timezone.is_naive(timezone.datetime.combine(dt.date() if hasattr(dt, 'date') else dt, self.time_to_send)) else timezone.datetime.combine(dt.date() if hasattr(dt, 'date') else dt, self.time_to_send)
-        
+
         if self.recurrence_type == 'once':
             # One-time task - use period_month with day_of_month
             if self.day_of_month:
-                target_date = self.period_month.replace(day=min(self.day_of_month, 28))
+                target_day = self._resolve_month_day(self.period_month.year, self.period_month.month)
+                target_date = self.period_month.replace(day=target_day)
             else:
                 target_date = self.period_month
             return make_scheduled_datetime(target_date)
-        
+
         elif self.recurrence_type == 'weekly':
             # Weekly - find next occurrence of day_of_week
             if self.day_of_week is not None:
@@ -501,7 +511,7 @@ class MonthlyNotificationTask(models.Model):
                 next_date = from_date.date() + timedelta(days=days_ahead)
                 return make_scheduled_datetime(next_date)
             return make_scheduled_datetime(from_date.date() + timedelta(days=7))
-        
+
         elif self.recurrence_type == 'biweekly':
             # Every 2 weeks - schedule for next occurrence of day_of_week
             # If last_sent_at exists, add 14 days from that; otherwise use next occurrence
@@ -519,32 +529,26 @@ class MonthlyNotificationTask(models.Model):
             # No specific day set - just add 14 days
             base_date = self.last_sent_at.date() if self.last_sent_at else from_date.date()
             return make_scheduled_datetime(base_date + timedelta(days=14))
-        
+
         elif self.recurrence_type == 'monthly':
             # Monthly - find next occurrence of day_of_month
-            target_day = self.day_of_month or 1
             current_date = from_date.date() if hasattr(from_date, 'date') else from_date
-            
-            # Try this month first
-            try:
-                next_date = current_date.replace(day=target_day)
-                if next_date <= current_date:
-                    # Move to next month
-                    if current_date.month == 12:
-                        next_date = current_date.replace(year=current_date.year + 1, month=1, day=target_day)
-                    else:
-                        next_date = current_date.replace(month=current_date.month + 1, day=target_day)
-            except ValueError:
-                # Day doesn't exist in month (e.g., Feb 30)
-                # Use last day of month
+            target_day = self.day_of_month or 1
+            current_target = min(target_day, calendar.monthrange(current_date.year, current_date.month)[1])
+            next_date = current_date.replace(day=current_target)
+
+            if next_date <= current_date:
                 if current_date.month == 12:
-                    next_month = current_date.replace(year=current_date.year + 1, month=1, day=1)
+                    next_year = current_date.year + 1
+                    next_month = 1
                 else:
-                    next_month = current_date.replace(month=current_date.month + 1, day=1)
-                next_date = next_month - timedelta(days=1)
-            
+                    next_year = current_date.year
+                    next_month = current_date.month + 1
+                next_target = min(target_day, calendar.monthrange(next_year, next_month)[1])
+                next_date = current_date.replace(year=next_year, month=next_month, day=next_target)
+
             return make_scheduled_datetime(next_date)
-        
+
         # Fallback
         return make_scheduled_datetime(from_date)
 
@@ -815,13 +819,13 @@ class UserDeviceToken(models.Model):
     Stores device tokens for push notifications (FCM).
     Each user can have multiple devices.
     """
-    
+
     PLATFORM_CHOICES = [
         ('android', 'Android'),
         ('ios', 'iOS'),
         ('web', 'Web Browser'),
     ]
-    
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
@@ -845,7 +849,7 @@ class UserDeviceToken(models.Model):
         default=True,
         help_text="Token is valid and should receive notifications"
     )
-    
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -854,22 +858,22 @@ class UserDeviceToken(models.Model):
         blank=True,
         help_text="Last time this token was used to send notification"
     )
-    
+
     class Meta:
         ordering = ['-updated_at']
         indexes = [
             models.Index(fields=['user', 'is_active']),
             models.Index(fields=['token']),
         ]
-    
+
     def __str__(self):
         return f"{self.user.email} - {self.platform} ({self.device_name or 'Unknown'})"
-    
+
     def mark_used(self):
         """Mark token as recently used."""
         self.last_used_at = timezone.now()
         self.save(update_fields=['last_used_at'])
-    
+
     def deactivate(self):
         """Deactivate token (e.g., when FCM returns unregistered error)."""
         self.is_active = False
@@ -881,7 +885,7 @@ class UserViberSubscription(models.Model):
     Stores Viber subscription info for users who opted in.
     Viber user ID is obtained when user starts conversation with bot.
     """
-    
+
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
@@ -905,25 +909,25 @@ class UserViberSubscription(models.Model):
         default=True,
         help_text="User has not unsubscribed"
     )
-    
+
     # Metadata
     subscribed_at = models.DateTimeField(auto_now_add=True)
     unsubscribed_at = models.DateTimeField(null=True, blank=True)
     last_message_at = models.DateTimeField(null=True, blank=True)
-    
+
     class Meta:
         verbose_name = "Viber Subscription"
         verbose_name_plural = "Viber Subscriptions"
-    
+
     def __str__(self):
         return f"{self.user.email} - Viber: {self.viber_name or self.viber_user_id}"
-    
+
     def unsubscribe(self):
         """Mark user as unsubscribed from Viber."""
         self.is_subscribed = False
         self.unsubscribed_at = timezone.now()
         self.save(update_fields=['is_subscribed', 'unsubscribed_at'])
-    
+
     def resubscribe(self):
         """Mark user as resubscribed to Viber."""
         self.is_subscribed = True
@@ -936,20 +940,20 @@ class NotificationPreference(models.Model):
     User preferences for notification channels.
     Allows users to opt-in/out of specific channels per category.
     """
-    
+
     CHANNEL_CHOICES = [
         ('email', 'Email'),
         ('sms', 'SMS'),
         ('viber', 'Viber'),
         ('push', 'Push Notification'),
     ]
-    
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
         related_name='notification_preferences'
     )
-    
+
     # Can be building-specific or global (null = global)
     building = models.ForeignKey(
         Building,
@@ -958,20 +962,20 @@ class NotificationPreference(models.Model):
         blank=True,
         related_name='user_notification_preferences'
     )
-    
+
     # Category preferences (references NotificationTemplate.CATEGORY_CHOICES)
     category = models.CharField(
         max_length=50,
         default='all',
         help_text="'all' or specific category like 'announcement', 'payment', etc."
     )
-    
+
     # Channel preferences
     email_enabled = models.BooleanField(default=True)
     sms_enabled = models.BooleanField(default=False)
     viber_enabled = models.BooleanField(default=True)
     push_enabled = models.BooleanField(default=True)
-    
+
     # Timing preferences
     instant_notifications = models.BooleanField(
         default=True,
@@ -991,21 +995,21 @@ class NotificationPreference(models.Model):
         blank=True,
         help_text="...and this time"
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         unique_together = ['user', 'building', 'category']
         indexes = [
             models.Index(fields=['user', 'building']),
             models.Index(fields=['user', 'category']),
         ]
-    
+
     def __str__(self):
         building_name = self.building.name if self.building else "Γενικές"
         return f"{self.user.email} - {building_name} - {self.category}"
-    
+
     def get_enabled_channels(self):
         """Get list of enabled channels for this preference."""
         channels = []
@@ -1018,35 +1022,35 @@ class NotificationPreference(models.Model):
         if self.push_enabled:
             channels.append('push')
         return channels
-    
+
     @classmethod
     def get_user_preferences(cls, user, building=None, category=None):
         """
         Get effective notification preferences for a user.
-        
+
         Priority: Building+Category specific > Building specific > Category specific > Global
         """
         # Try to find most specific preference
         queryset = cls.objects.filter(user=user)
-        
+
         if building and category:
             pref = queryset.filter(building=building, category=category).first()
             if pref:
                 return pref
-        
+
         if building:
             pref = queryset.filter(building=building, category='all').first()
             if pref:
                 return pref
-        
+
         if category:
             pref = queryset.filter(building__isnull=True, category=category).first()
             if pref:
                 return pref
-        
+
         # Fall back to global preference
         return queryset.filter(building__isnull=True, category='all').first()
-    
+
     @classmethod
     def get_or_create_default(cls, user, building=None, category='all'):
         """Get or create a preference with default values."""

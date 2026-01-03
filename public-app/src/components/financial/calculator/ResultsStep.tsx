@@ -1543,7 +1543,25 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
 
       {/* Enhanced Floating Action Button using Popover */}
-      <div className="flex justify-end mb-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
+        <Button
+          onClick={handleIssue}
+          disabled={state.isIssuing}
+          className="bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 hover:from-rose-700 hover:via-red-700 hover:to-orange-600 text-white shadow-xl hover:shadow-rose-500/30 border-0 rounded-full px-7 py-6 h-auto transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {state.isIssuing ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Έκδοση...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-4 w-4" />
+              Οριστική Έκδοση
+            </>
+          )}
+        </Button>
+
         <Popover open={isActionsPopoverOpen} onOpenChange={setIsActionsPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -1621,28 +1639,6 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 </div>
               </Button>
 
-              <div className="my-1 border-t border-slate-200/50" />
-
-              <Button
-                onClick={() => {
-                  setIsActionsPopoverOpen(false);
-                  handleIssue();
-                }}
-                disabled={state.isIssuing}
-                className="justify-center w-full bg-primary text-primary-foreground shadow-md hover:shadow-lg mt-1"
-              >
-                {state.isIssuing ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Έκδοση...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Οριστική Έκδοση
-                  </>
-                )}
-              </Button>
             </div>
           </PopoverContent>
         </Popover>
