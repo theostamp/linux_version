@@ -4,10 +4,14 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters import rest_framework as filters
 from django_filters import DateFilter
-from datetime import datetime
+from datetime import datetime, date
 import json
 from decimal import Decimal
+import mimetypes
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.http import FileResponse
+from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -2850,6 +2854,103 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 'success': True,
                 'statistics': statistics
             })
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['get'], permission_classes=[FinancialReadPermission])
+    def sheet(self, request):
+        """Λήψη φύλλου κοινοχρήστων για συγκεκριμένο μήνα ή περίοδο."""
+        try:
+            building_id = request.query_params.get('building_id') or request.query_params.get('building')
+            period_id = request.query_params.get('period_id')
+            month_str = request.query_params.get('month')
+
+            if not building_id:
+                return Response({'error': 'building_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                building_id_int = int(building_id)
+            except (TypeError, ValueError):
+                return Response({'error': 'invalid building_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                building = Building.objects.get(id=building_id_int)
+            except Building.DoesNotExist:
+                return Response({'error': 'Building not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            permission = FinancialReadPermission()
+            if not permission.can_user_access_building(request.user, building):
+                return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+            period = None
+            range_start = None
+            range_end = None
+
+            if period_id:
+                period = CommonExpensePeriod.objects.filter(id=period_id, building_id=building_id_int).first()
+                if not period:
+                    return Response({'error': 'Period not found'}, status=status.HTTP_404_NOT_FOUND)
+                range_start = period.start_date
+                range_end = period.end_date
+            else:
+                if not month_str:
+                    return Response({'error': 'month or period_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    month_date = datetime.strptime(month_str, '%Y-%m').date()
+                except ValueError:
+                    return Response({'error': 'Invalid month format. Use YYYY-MM'}, status=status.HTTP_400_BAD_REQUEST)
+                range_start = date(month_date.year, month_date.month, 1)
+                if month_date.month == 12:
+                    range_end = date(month_date.year + 1, 1, 1)
+                else:
+                    range_end = date(month_date.year, month_date.month + 1, 1)
+                period = CommonExpensePeriod.objects.filter(
+                    building_id=building_id_int,
+                    start_date__lt=range_end,
+                    end_date__gte=range_start
+                ).order_by('-start_date').first()
+
+            sheet_path = None
+            if period and period.sheet_attachment:
+                sheet_path = period.sheet_attachment.name or str(period.sheet_attachment)
+            elif range_start and range_end:
+                expense_with_sheet = (
+                    Expense.objects.filter(
+                        building_id=building_id_int,
+                        date__gte=range_start,
+                        date__lt=range_end,
+                        attachment__isnull=False
+                    )
+                    .exclude(attachment="")
+                    .order_by('-date')
+                    .first()
+                )
+                if expense_with_sheet and expense_with_sheet.attachment:
+                    sheet_path = expense_with_sheet.attachment.name or str(expense_with_sheet.attachment)
+
+            if not sheet_path:
+                return Response({'error': 'Sheet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            if sheet_path.startswith('http://') or sheet_path.startswith('https://'):
+                return redirect(sheet_path)
+
+            try:
+                file_obj = default_storage.open(sheet_path, 'rb')
+            except Exception:
+                try:
+                    return redirect(default_storage.url(sheet_path))
+                except Exception:
+                    return Response({'error': 'Sheet not available'}, status=status.HTTP_404_NOT_FOUND)
+
+            filename = sheet_path.split('/')[-1]
+            content_type, _ = mimetypes.guess_type(filename)
+            response = FileResponse(file_obj, content_type=content_type or 'application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
 
         except Exception as e:
             return Response(

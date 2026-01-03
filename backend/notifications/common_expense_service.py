@@ -296,7 +296,7 @@ class CommonExpenseNotificationService:
         sheet_url = apartment_data.get('sheet_url') or ""
         sheet_attached = bool(apartment_data.get('sheet_attached'))
         sheet_name = apartment_data.get('sheet_name') or "Φύλλο Κοινοχρήστων"
-        sheet_portal_url = apartment_data.get('sheet_portal_url') or ""
+        sheet_download_url = apartment_data.get('sheet_download_url') or ""
         sheet_is_image = sheet_url.lower().endswith(('.jpg', '.jpeg', '.png'))
         sheet_section_html = ""
         if sheet_attached:
@@ -305,11 +305,11 @@ class CommonExpenseNotificationService:
                 <a href="{sheet_url}" style="color: #1d4ed8; text-decoration: underline;">Προβολή {sheet_name}</a>
             </div>
             """ if sheet_url else ""
-            sheet_portal_link_html = f"""
+            sheet_download_link_html = f"""
             <div style="margin-top: 6px;">
-                <a href="{sheet_portal_url}" style="color: #1d4ed8; text-decoration: underline;">Άνοιγμα φύλλου στο portal</a>
+                <a href="{sheet_download_url}" style="color: #1d4ed8; text-decoration: underline;">Λήψη φύλλου κοινοχρήστων</a>
             </div>
-            """ if sheet_portal_url else ""
+            """ if sheet_download_url else ""
             sheet_preview_html = f"""
             <div style="margin-top: 12px;">
                 <img src="{sheet_url}" alt="{sheet_name}" style="width: 100%; max-width: 640px; border-radius: 8px; border: 1px solid #e5e7eb;" />
@@ -320,17 +320,17 @@ class CommonExpenseNotificationService:
                 <h3 style="margin: 0 0 8px; color: #0f172a; font-size: 16px;">📄 Φύλλο Κοινοχρήστων</h3>
                 <p style="margin: 0; color: #475569; font-size: 13px;">Το φύλλο κοινοχρήστων επισυνάπτεται στο email για συνολική εικόνα.</p>
                 {sheet_link_html}
-                {sheet_portal_link_html}
+                {sheet_download_link_html}
                 {sheet_preview_html}
             </div>
             """
-        elif sheet_portal_url:
+        elif sheet_download_url:
             sheet_section_html = f"""
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 8px; color: #0f172a; font-size: 16px;">📄 Φύλλο Κοινοχρήστων</h3>
-                <p style="margin: 0; color: #475569; font-size: 13px;">Μπορείτε να κατεβάσετε το πλήρες φύλλο κοινοχρήστων από το portal.</p>
+                <p style="margin: 0; color: #475569; font-size: 13px;">Μπορείτε να κατεβάσετε το πλήρες φύλλο κοινοχρήστων από τον σύνδεσμο.</p>
                 <div style="margin-top: 6px;">
-                    <a href="{sheet_portal_url}" style="color: #1d4ed8; text-decoration: underline;">Άνοιγμα φύλλου στο portal</a>
+                    <a href="{sheet_download_url}" style="color: #1d4ed8; text-decoration: underline;">Λήψη φύλλου κοινοχρήστων</a>
                 </div>
             </div>
             """
@@ -617,8 +617,8 @@ class CommonExpenseNotificationService:
         month_display = month.strftime('%B %Y')
         month_key = month.strftime('%Y-%m')
         frontend_base = getattr(settings, 'FRONTEND_URL', '').rstrip('/')
-        sheet_portal_url = (
-            f"{frontend_base}/financial?building={building_id}&month={month_key}&tab=calculator"
+        sheet_download_url = (
+            f"{frontend_base}/api/financial/common-expenses/sheet/?building_id={building_id}&month={month_key}"
             if frontend_base else ""
         )
 
@@ -648,7 +648,7 @@ class CommonExpenseNotificationService:
                     apartment_data['sheet_attached'] = bool(attachment_path)
                     apartment_data['sheet_url'] = sheet_url or ""
                     apartment_data['sheet_name'] = sheet_name or ""
-                    apartment_data['sheet_portal_url'] = sheet_portal_url
+                    apartment_data['sheet_download_url'] = sheet_download_url
 
                 # Send Push Notification
                 push_user = None
