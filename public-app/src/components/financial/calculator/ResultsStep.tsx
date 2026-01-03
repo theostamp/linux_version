@@ -320,43 +320,49 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           }>;
         };
 
+        let breakdownPayload: Record<string, any> = {};
+        if (Array.isArray(typedShare.breakdown)) {
+          breakdownPayload = typedShare.breakdown.reduce(
+            (
+              acc: Record<
+                number,
+                {
+                  expense_title: string;
+                  expense_amount: number;
+                  apartment_share: number;
+                  distribution_type: string;
+                  distribution_type_display: string;
+                }
+              >,
+              item: {
+                expense_id: number;
+                expense_title: string;
+                expense_amount: number;
+                apartment_share: number;
+                distribution_type: string;
+                distribution_type_display: string;
+              }
+            ) => {
+              acc[item.expense_id] = {
+                expense_title: item.expense_title,
+                expense_amount: item.expense_amount,
+                apartment_share: item.apartment_share,
+                distribution_type: item.distribution_type,
+                distribution_type_display: item.distribution_type_display
+              };
+              // Collect expense IDs
+              if (!expenseIds.includes(item.expense_id)) {
+                expenseIds.push(item.expense_id);
+              }
+              return acc;
+            }, {} as Record<string, any>);
+        } else if (typedShare.breakdown && typeof typedShare.breakdown === 'object') {
+          breakdownPayload = typedShare.breakdown as Record<string, any>;
+        }
+
         transformedShares[apartmentId] = {
           total_amount: typedShare.total_amount,
-          breakdown: typedShare.breakdown
-            ? typedShare.breakdown.reduce(
-                (
-                  acc: Record<
-                    number,
-                    {
-                      expense_title: string;
-                      expense_amount: number;
-                      apartment_share: number;
-                      distribution_type: string;
-                      distribution_type_display: string;
-                    }
-                  >,
-                  item: {
-                    expense_id: number;
-                    expense_title: string;
-                    expense_amount: number;
-                    apartment_share: number;
-                    distribution_type: string;
-                    distribution_type_display: string;
-                  }
-                ) => {
-                  acc[item.expense_id] = {
-                    expense_title: item.expense_title,
-                    expense_amount: item.expense_amount,
-                    apartment_share: item.apartment_share,
-                    distribution_type: item.distribution_type,
-                    distribution_type_display: item.distribution_type_display
-                  };
-                  // Collect expense IDs
-                  if (!expenseIds.includes(item.expense_id)) {
-                    expenseIds.push(item.expense_id);
-                  }
-                  return acc;
-                }, {} as Record<string, any>) : {}
+          breakdown: breakdownPayload
         };
       });
 
