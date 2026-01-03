@@ -650,7 +650,7 @@ class CommonExpenseNotificationService:
         month_key = month.strftime('%Y-%m')
         frontend_base = CommonExpenseNotificationService._resolve_tenant_frontend_base()
         sheet_download_url = (
-            f"{frontend_base}/api/financial/common-expenses/sheet/?building_id={building_id}&month={month_key}"
+            f"{frontend_base}/common-expenses/sheet?building_id={building_id}&month={month_key}"
             if frontend_base else ""
         )
 
