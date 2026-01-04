@@ -1,7 +1,7 @@
 # backend/new_concierge_backend/settings.py
 import os
 from pathlib import Path
-from dotenv import load_dotenv  
+from dotenv import load_dotenv
 from datetime import timedelta
 
 load_dotenv()
@@ -46,13 +46,13 @@ if railway_domain:
     railway_origin = f'https://{railway_domain}'
     if railway_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(railway_origin)
-    
+
     # Add wildcard patterns
     if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
     if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
-    
+
     # Debug logging
     import logging
     logger = logging.getLogger('django')
@@ -64,7 +64,7 @@ else:
         CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
     if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
-    
+
     import logging
     logger = logging.getLogger('django')
     logger.info(f"CSRF_TRUSTED_ORIGINS configured (no RAILWAY_PUBLIC_DOMAIN): {CSRF_TRUSTED_ORIGINS}")
@@ -140,44 +140,44 @@ TENANT_APPS = [
     'public_info',
     'core',
     'chat',
-    
+
     # 🔧 Νέα apps για επέκταση λειτουργιών
     'maintenance',
     'projects',
     'todo_management',
     'events',
-    
+
     # 📄 Document Parser
     'document_parser',
-    
+
     # 💰 Οικονομικό σύστημα
     'financial',
 
     # 💳 Online payments (Stripe charges) - tenant schema
     'online_payments',
-    
+
     # 🖥️ Kiosk Management
     'kiosk',
-    
+
     # 👥 Διαχείριση Ομάδων, Προμηθευτών & Συνεργατών
     'teams',
     'collaborators',
-    
+
     # 🔄 AI Data Migration
     'data_migration',
-    
+
     # 🔗 Integrations
     'integrations',
 
     # 📬 Notifications System
     'notifications',
-    
+
     # 📊 Office Analytics (Command Center for Management Offices)
     'office_analytics',
-    
+
     # 💼 Office Finance (Income/Expense Management for the Office)
     'office_finance',
-    
+
     # 📋 Assembly Management (Γενικές Συνελεύσεις)
     'assemblies.apps.AssembliesConfig',
 ]
@@ -189,24 +189,24 @@ INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_
 if DEBUG:
     # Only add debug tools if they're available
     debug_apps = []
-    
+
     # Temporarily disable debug_toolbar to fix subscription endpoint
     # try:
     #     import debug_toolbar
     #     debug_apps.append('debug_toolbar')
     # except ImportError:
     #     pass
-    
+
     try:
         import django_extensions
         debug_apps.append('django_extensions')
     except ImportError:
         pass
-    
-    
-    
+
+
+
     INSTALLED_APPS += debug_apps
-    
+
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',
         'core.middleware.CustomTenantMiddleware',
@@ -225,11 +225,11 @@ if DEBUG:
         'billing.middleware.PlanFeatureMiddleware',    # Check feature access
         'billing.middleware.UsageTrackingMiddleware',  # Track usage and enforce limits
     ]
-    
+
     # Temporarily disable debug_toolbar middleware
     # if 'debug_toolbar' in INSTALLED_APPS:
     #     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-    
+
 else:
     MIDDLEWARE = [
         'corsheaders.middleware.CorsMiddleware',
@@ -256,9 +256,9 @@ INTERNAL_IPS = [
     'localhost',
 ]
 
- 
 
- 
+
+
 
 # Cache Configuration
 TENANT_SCHEMA_NAME = os.getenv('TENANT_SCHEMA_NAME', 'demo')
@@ -289,7 +289,7 @@ CACHES = {
     },
 }
 
- 
+
 
 # Database Connection Pooling
 # Parse DATABASE_URL if provided (for Railway, Heroku, etc.)
@@ -514,11 +514,11 @@ for origin in _raw_csrf:
     origin = origin.strip()
     if not origin:
         continue
-    
+
     # Normalize wildcard patterns (e.g., .railway.app -> *.railway.app)
     if origin.startswith('.'):
         origin = '*' + origin
-    
+
     # If already has protocol, use as-is
     if origin.startswith('http://') or origin.startswith('https://'):
         if origin not in CSRF_TRUSTED_ORIGINS:
@@ -791,3 +791,10 @@ MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:1
 # 🔔 Firebase Push Notifications
 # ----------------------------------------
 FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', BASE_DIR / 'credentials' / 'serviceAccountKey.json')
+
+# ----------------------------------------
+# 🔔 Web Push (VAPID)
+# ----------------------------------------
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_SUBJECT = os.getenv('VAPID_SUBJECT', DEFAULT_FROM_EMAIL or '')

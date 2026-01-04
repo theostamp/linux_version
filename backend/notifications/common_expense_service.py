@@ -21,6 +21,7 @@ from django.conf import settings
 from django_tenants.utils import get_public_schema_name, get_tenant_domain_model, schema_context
 
 from .push_service import PushNotificationService
+from .webpush_service import WebPushService
 from core.emailing import _absolute_url, extract_legacy_body_html, send_templated_email
 
 logger = logging.getLogger(__name__)
@@ -724,6 +725,18 @@ class CommonExpenseNotificationService:
                 if push_user:
                     try:
                         amount_str = f"{apartment_data.get('net_obligation', 0):.2f}€"
+                        WebPushService.send_to_user(
+                            user=push_user,
+                            title=f"Κοινόχρηστα {month_display}",
+                            body=f"Εκδόθηκαν τα κοινόχρηστα για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                            data={
+                                'type': 'bill',
+                                'month': month.strftime('%Y-%m'),
+                                'building_id': str(building_id),
+                                'apartment_id': str(apartment.id),
+                                'url': '/my-apartment',
+                            },
+                        )
                         PushNotificationService.send_to_user(
                             user=push_user,
                             title=f"Κοινόχρηστα {month_display}",

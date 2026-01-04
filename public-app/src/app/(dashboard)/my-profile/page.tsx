@@ -61,7 +61,15 @@ export default function MyProfilePage() {
   const canDeleteTenant = Boolean(
     user?.tenant && (normalizedRole === 'manager' || normalizedRole === 'superuser')
   );
-  const { requestPermission, fcmToken, permission } = usePushNotifications();
+  const {
+    isSupported,
+    permission,
+    isSubscribed,
+    isLoading: pushLoading,
+    error: pushError,
+    subscribe,
+    unsubscribe,
+  } = usePushNotifications();
 
   React.useEffect(() => {
     if (user) {
@@ -356,7 +364,7 @@ export default function MyProfilePage() {
             header={
               <div className="space-y-4 mt-4 text-sm">
                 <p className="text-muted-foreground">
-                  Λάβετε ενημερώσεις για ανακοινώσεις και λογαριασμούς στο κινητό σας.
+                  Λάβετε ενημερώσεις για ανακοινώσεις και λογαριασμούς στον browser σας.
                 </p>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -364,14 +372,23 @@ export default function MyProfilePage() {
                     <Bell className="h-4 w-4 text-muted-foreground" />
                     <span>Push Notifications</span>
                   </div>
-                  {fcmToken ? (
-                    <Badge variant="default" className="bg-green-600">Ενεργοποιημένες</Badge>
+                  {!isSupported ? (
+                    <Badge variant="secondary">Μη διαθέσιμες</Badge>
+                  ) : isSubscribed ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={unsubscribe}
+                      disabled={pushLoading}
+                    >
+                      Απενεργοποίηση
+                    </Button>
                   ) : (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={requestPermission}
-                      disabled={permission === 'denied'}
+                      onClick={subscribe}
+                      disabled={permission === 'denied' || pushLoading}
                     >
                       {permission === 'denied' ? 'Μπλοκαρισμένες' : 'Ενεργοποίηση'}
                     </Button>
@@ -380,6 +397,11 @@ export default function MyProfilePage() {
                 {permission === 'denied' && (
                   <p className="text-xs text-red-500 mt-2">
                     Οι ειδοποιήσεις έχουν αποκλειστεί από τον browser. Παρακαλώ ενεργοποιήστε τις από τις ρυθμίσεις της σελίδας.
+                  </p>
+                )}
+                {pushError && (
+                  <p className="text-xs text-red-500 mt-2">
+                    {pushError}
                   </p>
                 )}
               </div>

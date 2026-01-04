@@ -27,6 +27,7 @@ from core.emailing import extract_legacy_body_html, send_templated_email
 from notifications.common_expense_service import CommonExpenseNotificationService
 from notifications.models import Notification, NotificationRecipient
 from notifications.services import NotificationService
+from notifications.webpush_service import WebPushService
 
 logger = logging.getLogger(__name__)
 
@@ -287,6 +288,29 @@ class DebtReminderBreakdownService:
                     details.append(
                         {"apartment": apartment.number, "status": "sent", "email": recipient_email, "total_due": str(total_due_raw)}
                     )
+                    push_user = apartment.owner_user or apartment.tenant_user
+                    if push_user:
+                        try:
+                            amount_str = cls._fmt_money(total_due_raw)
+                            WebPushService.send_to_user(
+                                user=push_user,
+                                title=f"{cls.SUBJECT_KEYWORD} {month_display}",
+                                body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                                data={
+                                    'type': 'debt_reminder',
+                                    'month': month,
+                                    'building_id': str(building.id),
+                                    'apartment_id': str(apartment.id),
+                                    'url': '/my-apartment',
+                                },
+                            )
+                        except Exception as push_error:
+                            logger.warning(
+                                "Web push failed for debt reminder (user=%s, apartment=%s): %s",
+                                push_user.id,
+                                apartment.id,
+                                push_error,
+                            )
                 else:
                     recipient.mark_as_failed("Not sent (send() returned 0)")
                     failed += 1

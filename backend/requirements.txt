@@ -92,3 +92,6 @@ flower>=2.0.1
 
 # Firebase Admin SDK
 firebase-admin>=6.2.0
+
+# Web Push (VAPID) support
+pywebpush>=1.14.0

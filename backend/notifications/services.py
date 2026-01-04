@@ -13,6 +13,7 @@ from .email_templates import EmailTemplates
 from billing.models import UserSubscription
 from users.models import CustomUser
 from .push_service import PushNotificationService
+from .webpush_service import WebPushService
 from core.emailing import send_templated_email
 
 logger = logging.getLogger(__name__)
@@ -458,10 +459,21 @@ class NotificationService:
                             user = recipient.apartment.tenant_user
 
                     if user:
+                        body = notification.sms_body or notification.body[:150]
+                        WebPushService.send_to_user(
+                            user=user,
+                            title=notification.subject,
+                            body=body,
+                            data={
+                                'notification_id': str(notification.id),
+                                'url': '/dashboard',
+                                'type': 'notification',
+                            },
+                        )
                         PushNotificationService.send_to_user(
                             user=user,
                             title=notification.subject,
-                            body=notification.sms_body or notification.body[:150], # Use shorter body for push
+                            body=body,  # Use shorter body for push
                             data={'notification_id': str(notification.id)}
                         )
 
