@@ -44,13 +44,18 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       if (supported) {
         setPermission(Notification.permission as PushPermissionState);
 
-        // Check if already subscribed
+        // Check if already subscribed (avoid waiting forever when no SW is registered yet)
         try {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          setIsSubscribed(!!subscription);
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            setIsSubscribed(!!subscription);
+          } else {
+            setIsSubscribed(false);
+          }
         } catch (err) {
           console.error('[usePushNotifications] Error checking subscription:', err);
+          setIsSubscribed(false);
         }
       } else {
         setPermission('unsupported');
