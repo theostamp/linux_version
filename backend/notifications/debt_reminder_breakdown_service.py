@@ -27,6 +27,7 @@ from core.emailing import extract_legacy_body_html, send_templated_email
 from notifications.common_expense_service import CommonExpenseNotificationService
 from notifications.models import Notification, NotificationRecipient
 from notifications.services import NotificationService
+from notifications.push_service import PushNotificationService
 from notifications.webpush_service import WebPushService
 from notifications.viber_notification_service import ViberNotificationService
 
@@ -318,7 +319,18 @@ class DebtReminderBreakdownService:
                             'url': '/my-apartment',
                         },
                     )
-                    push_ok = bool(webpush_ok)
+                    fcm_ok = PushNotificationService.send_to_user(
+                        user=push_user,
+                        title=f"{cls.SUBJECT_KEYWORD} {month_display}",
+                        body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                        data={
+                            'type': 'debt_reminder',
+                            'month': month,
+                            'building_id': str(building.id),
+                            'apartment_id': str(apartment.id),
+                        },
+                    )
+                    push_ok = bool(webpush_ok or fcm_ok)
                 except Exception as push_error:
                     logger.warning(
                         "Web push failed for debt reminder (user=%s, apartment=%s): %s",

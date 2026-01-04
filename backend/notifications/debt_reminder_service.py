@@ -391,6 +391,7 @@ class DebtReminderService:
                 email_ok = False
                 push_ok = False
                 email_error_reason = None
+                sent_recorded = False
 
                 if test_mode:
                     email_ok = True
@@ -401,6 +402,7 @@ class DebtReminderService:
                         'email': recipient_email or '',
                         'debt': f"{Decimal(str(amount_due)):.2f}€"
                     })
+                    sent_recorded = True
                     recipient.mark_as_sent()
                     sent_any += 1
                     logger.info(f"🧪 TEST MODE: Would send to {apartment.number} ({recipient_email})")
@@ -455,6 +457,7 @@ class DebtReminderService:
                             'email': recipient_email,
                             'debt': f"{Decimal(str(amount_due)):.2f}€"
                         })
+                        sent_recorded = True
                     except Exception as e:
                         results['emails_failed'] += 1
                         email_error_reason = str(e)
@@ -500,6 +503,15 @@ class DebtReminderService:
                             apartment.id,
                             push_error,
                         )
+
+                if push_ok and not sent_recorded:
+                    results['total_debt_notified'] += Decimal(str(amount_due))
+                    results['sent_apartments'].append({
+                        'apartment': apartment.number,
+                        'email': recipient_email or '',
+                        'debt': f"{Decimal(str(amount_due)):.2f}€"
+                    })
+                    sent_recorded = True
 
                 if email_ok or push_ok:
                     recipient.mark_as_sent()
