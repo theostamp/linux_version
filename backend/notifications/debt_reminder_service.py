@@ -29,6 +29,8 @@ from financial.transaction_types import TransactionType
 from financial.balance_service import BalanceCalculationService
 from .models import NotificationTemplate, Notification, NotificationRecipient
 from .services import NotificationService
+from .push_service import PushNotificationService
+from .webpush_service import WebPushService
 from core.emailing import extract_legacy_body_html, send_templated_email
 from .common_expense_service import CommonExpenseNotificationService
 
@@ -313,6 +315,8 @@ class DebtReminderService:
             'failed_apartments': [],
             'sent_apartments': []
         }
+        sent_any = 0
+        failed_any = 0
 
         # Δημιουργία notification record
         notification = Notification.objects.create(
@@ -367,32 +371,47 @@ class DebtReminderService:
                 recipient_email = test_email or apartment.occupant_email or apartment.owner_email
                 recipient_name = apartment.occupant_name or apartment.owner_name
 
-                if not recipient_email:
-                    logger.warning(f"⚠️ Apartment {apartment.number}: No email address")
-                    results['emails_failed'] += 1
-                    results['failed_apartments'].append({
-                        'apartment': apartment.number,
-                        'reason': 'No email address'
-                    })
-                    continue
+                balance = balances_by_id.get(int(apartment.id)) or {}
+                amount_due = balance.get('net_obligation')
+                if amount_due is None:
+                    amount_due = context.get('current_balance_raw', 0)
+                amount_value = Decimal(str(amount_due or 0))
+                amount_str = f"{amount_value:.2f}€"
 
                 # Δημιουργία recipient record
                 recipient = NotificationRecipient.objects.create(
                     notification=notification,
                     apartment=apartment,
                     recipient_name=recipient_name or f"Διαμέρισμα {apartment.number}",
-                    email=recipient_email,
+                    email=recipient_email or '',
                     phone=apartment.occupant_phone or apartment.owner_phone or '',
                     status='pending'
                 )
 
-                # Αποστολή email (αν όχι test mode)
-                if not test_mode:
+                email_ok = False
+                push_ok = False
+                email_error_reason = None
+
+                if test_mode:
+                    email_ok = True
+                    results['emails_sent'] += 1
+                    results['total_debt_notified'] += Decimal(str(amount_due))
+                    results['sent_apartments'].append({
+                        'apartment': apartment.number,
+                        'email': recipient_email or '',
+                        'debt': f"{Decimal(str(amount_due)):.2f}€"
+                    })
+                    recipient.mark_as_sent()
+                    sent_any += 1
+                    logger.info(f"🧪 TEST MODE: Would send to {apartment.number} ({recipient_email})")
+                    continue
+
+                if not recipient_email:
+                    logger.warning(f"⚠️ Apartment {apartment.number}: No email address")
+                    results['emails_failed'] += 1
+                    email_error_reason = 'No email address'
+                else:
                     try:
-                        balance = balances_by_id.get(int(apartment.id)) or {}
-                        amount_due = balance.get('net_obligation')
-                        if amount_due is None:
-                            amount_due = context.get('current_balance_raw', 0)
                         apartment_data = {
                             'apartment_number': apartment.number,
                             'building_name': building.name or building.street,
@@ -428,7 +447,7 @@ class DebtReminderService:
                             sender_user=created_by,
                         )
 
-                        recipient.mark_as_sent()
+                        email_ok = True
                         results['emails_sent'] += 1
                         results['total_debt_notified'] += Decimal(str(amount_due))
                         results['sent_apartments'].append({
@@ -436,25 +455,67 @@ class DebtReminderService:
                             'email': recipient_email,
                             'debt': f"{Decimal(str(amount_due)):.2f}€"
                         })
+                    except Exception as e:
+                        results['emails_failed'] += 1
+                        email_error_reason = str(e)
+                        logger.error(f"❌ Failed to send email to {apartment.number}: {e}")
 
+                push_user = apartment.owner_user or apartment.tenant_user
+                if push_user:
+                    try:
+                        webpush_ok = WebPushService.send_to_user(
+                            user=push_user,
+                            title=f"Υπενθύμιση Οφειλών {month_display}",
+                            body=(
+                                f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
+                                f"Ποσό: {amount_str}"
+                            ),
+                            data={
+                                'type': 'debt_reminder',
+                                'month': target_month.strftime('%Y-%m'),
+                                'building_id': str(building.id),
+                                'apartment_id': str(apartment.id),
+                                'url': '/my-apartment',
+                            },
+                        )
+                        fcm_ok = PushNotificationService.send_to_user(
+                            user=push_user,
+                            title=f"Υπενθύμιση Οφειλών {month_display}",
+                            body=(
+                                f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
+                                f"Ποσό: {amount_str}"
+                            ),
+                            data={
+                                'type': 'debt_reminder',
+                                'month': target_month.strftime('%Y-%m'),
+                                'building_id': str(building.id),
+                                'apartment_id': str(apartment.id),
+                            }
+                        )
+                        push_ok = bool(webpush_ok or fcm_ok)
+                    except Exception as push_error:
+                        logger.warning(
+                            "Push failed for debt reminder (user=%s, apartment=%s): %s",
+                            push_user.id,
+                            apartment.id,
+                            push_error,
+                        )
+
+                if email_ok or push_ok:
+                    recipient.mark_as_sent()
+                    sent_any += 1
+                    if email_ok:
                         logger.info(
                             f"✅ Sent to {apartment.number} ({recipient_email}) - "
                             f"Debt: {Decimal(str(amount_due)):.2f}€"
                         )
-
-                    except Exception as e:
-                        recipient.mark_as_failed(str(e))
-                        results['emails_failed'] += 1
-                        results['failed_apartments'].append({
-                            'apartment': apartment.number,
-                            'reason': str(e)
-                        })
-                        logger.error(f"❌ Failed to send to {apartment.number}: {e}")
                 else:
-                    # Test mode - just log
-                    recipient.mark_as_sent()
-                    results['emails_sent'] += 1
-                    logger.info(f"🧪 TEST MODE: Would send to {apartment.number} ({recipient_email})")
+                    recipient.mark_as_failed(email_error_reason or "No delivery channels")
+                    failed_any += 1
+                    results['failed_apartments'].append({
+                        'apartment': apartment.number,
+                        'reason': email_error_reason or 'No delivery channels'
+                    })
 
             except Exception as e:
                 results['emails_failed'] += 1
@@ -466,11 +527,11 @@ class DebtReminderService:
                 continue
 
         # Update notification statistics
-        notification.total_recipients = results['emails_sent'] + results['emails_failed']
-        notification.successful_sends = results['emails_sent']
-        notification.failed_sends = results['emails_failed']
+        notification.total_recipients = sent_any + failed_any
+        notification.successful_sends = sent_any
+        notification.failed_sends = failed_any
         notification.completed_at = timezone.now()
-        notification.status = 'sent' if results['emails_failed'] == 0 else 'failed'
+        notification.status = 'sent' if failed_any == 0 else 'failed'
         notification.save()
 
         logger.info(f"✅ Campaign completed: {results['emails_sent']} sent, {results['emails_failed']} failed")

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { apiGet } from '@/lib/api';
@@ -31,7 +31,8 @@ import {
   Loader2,
   Wrench,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Bell
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
@@ -40,6 +41,10 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { sendMyApartmentLinkEmail } from '@/lib/api';
 import { useViberConnect } from '@/hooks/useViberConnect';
+import usePushNotifications from '@/hooks/usePushNotifications';
+
+const PUSH_PROMPT_DISMISS_KEY = 'push_prompt_dismissed_at';
+const PUSH_PROMPT_COOLDOWN_DAYS = 14;
 
 // Types
 interface PaymentHistory {
@@ -172,6 +177,15 @@ function MyApartmentContent() {
   const [selectedApartmentIndex, setSelectedApartmentIndex] = useState(0);
   const [isSendingLinkEmail, setIsSendingLinkEmail] = useState(false);
   const [isRelogging, setIsRelogging] = useState(false);
+  const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
+  const {
+    isSupported: pushSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    error: pushError,
+    subscribe,
+  } = usePushNotifications();
   const {
     status: viberStatus,
     isLoading: viberLoading,
@@ -182,6 +196,33 @@ function MyApartmentContent() {
   } = useViberConnect();
   const supportUrl = useMemo(() => '/users', []);
   const residentLoginUrl = '/login/resident?redirect=/my-apartment';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const raw = window.localStorage.getItem(PUSH_PROMPT_DISMISS_KEY);
+    if (!raw) {
+      return;
+    }
+    const dismissedAt = Number(raw);
+    if (Number.isNaN(dismissedAt)) {
+      return;
+    }
+    const cooldownMs = PUSH_PROMPT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+    if (Date.now() - dismissedAt < cooldownMs) {
+      setPushPromptDismissed(true);
+    }
+  }, []);
+
+  const dismissPushPrompt = () => {
+    try {
+      window.localStorage.setItem(PUSH_PROMPT_DISMISS_KEY, String(Date.now()));
+    } catch (err) {
+      console.warn('[MyApartment] Failed to persist push prompt dismissal:', err);
+    }
+    setPushPromptDismissed(true);
+  };
 
   const handleRelogin = async () => {
     setIsRelogging(true);
@@ -291,6 +332,12 @@ function MyApartmentContent() {
     return null;
   }
 
+  const showPushPrompt =
+    pushSupported &&
+    !pushSubscribed &&
+    pushPermission !== 'denied' &&
+    !pushPromptDismissed;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -306,6 +353,39 @@ function MyApartmentContent() {
         </div>
         <StatusBadge status={apartment.summary.status} />
       </div>
+
+      {/* Push Notifications Prompt */}
+      {showPushPrompt && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary" />
+              Ενεργοποίησε ειδοποιήσεις
+            </CardTitle>
+            <CardDescription>
+              Μόνο για σημαντικά events: συνέλευση, ψηφοφορίες, πληρωμές.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="text-sm text-muted-foreground">
+              Μπορείς να τις απενεργοποιήσεις οποιαδήποτε στιγμή από το προφίλ σου.
+            </div>
+            {pushError && (
+              <div className="text-xs text-destructive">
+                {pushError}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={subscribe} disabled={pushLoading}>
+                Ενεργοποίηση
+              </Button>
+              <Button type="button" variant="ghost" onClick={dismissPushPrompt} disabled={pushLoading}>
+                Όχι τώρα
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Open on laptop (email only) */}
       <Card className="border-border/60">

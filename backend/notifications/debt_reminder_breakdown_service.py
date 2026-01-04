@@ -212,11 +212,10 @@ class DebtReminderBreakdownService:
                 status="pending",
             )
 
-            if not recipient_email:
-                recipient.mark_as_failed("No email address")
-                skipped += 1
-                details.append({"apartment": apartment.number, "status": "skipped", "reason": "No email address"})
-                continue
+            email_ok = False
+            push_ok = False
+            viber_ok = False
+            email_error_reason = None
 
             bal = balances_by_id.get(int(apartment.id))
             if not bal:
@@ -262,73 +261,94 @@ class DebtReminderBreakdownService:
                 'payment_deadline': payment_deadline,
             }
 
-            try:
-                subject = f"{cls.SUBJECT_KEYWORD} {month} - Διαμέρισμα {apartment.number} ({building.name})"
-                html_content = CommonExpenseNotificationService.generate_payment_notification_html(
-                    apartment_data,
-                    office_data,
-                )
-                if custom_message:
-                    html_content = f"""
-                    <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="margin: 0;">{custom_message}</p>
-                    </div>
-                    """ + html_content
-                body_html = extract_legacy_body_html(html=html_content)
-                ok = send_templated_email(
-                    to=recipient_email,
-                    subject=subject,
-                    template_html="emails/wrapper.html",
-                    context={"body_html": body_html, "wrapper_title": subject},
-                    building_manager_id=getattr(building, "manager_id", None),
-                    sender_user=created_by,
-                )
-                if ok:
-                    recipient.mark_as_sent()
-                    sent += 1
-                    details.append(
-                        {"apartment": apartment.number, "status": "sent", "email": recipient_email, "total_due": str(total_due_raw)}
+            subject = f"{cls.SUBJECT_KEYWORD} {month} - Διαμέρισμα {apartment.number} ({building.name})"
+
+            if not recipient_email:
+                email_error_reason = "No email address"
+            else:
+                try:
+                    html_content = CommonExpenseNotificationService.generate_payment_notification_html(
+                        apartment_data,
+                        office_data,
                     )
-                    push_user = apartment.owner_user or apartment.tenant_user
-                    if push_user:
-                        try:
-                            amount_str = cls._fmt_money(total_due_raw)
-                            ViberNotificationService.send_to_user(
-                                user=push_user,
-                                message=(
-                                    f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
-                                    f"Ποσό: {amount_str}"
-                                ),
-                                building=building,
-                                office_name=office_data.get('name', '') if office_data else '',
-                            )
-                            WebPushService.send_to_user(
-                                user=push_user,
-                                title=f"{cls.SUBJECT_KEYWORD} {month_display}",
-                                body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
-                                data={
-                                    'type': 'debt_reminder',
-                                    'month': month,
-                                    'building_id': str(building.id),
-                                    'apartment_id': str(apartment.id),
-                                    'url': '/my-apartment',
-                                },
-                            )
-                        except Exception as push_error:
-                            logger.warning(
-                                "Web push failed for debt reminder (user=%s, apartment=%s): %s",
-                                push_user.id,
-                                apartment.id,
-                                push_error,
-                            )
-                else:
-                    recipient.mark_as_failed("Not sent (send() returned 0)")
-                    failed += 1
-                    details.append({"apartment": apartment.number, "status": "failed", "email": recipient_email, "error": "Not sent"})
-            except Exception as e:
-                recipient.mark_as_failed(str(e))
+                    if custom_message:
+                        html_content = f"""
+                        <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0;">{custom_message}</p>
+                        </div>
+                        """ + html_content
+                    body_html = extract_legacy_body_html(html=html_content)
+                    ok = send_templated_email(
+                        to=recipient_email,
+                        subject=subject,
+                        template_html="emails/wrapper.html",
+                        context={"body_html": body_html, "wrapper_title": subject},
+                        building_manager_id=getattr(building, "manager_id", None),
+                        sender_user=created_by,
+                    )
+                    if ok:
+                        email_ok = True
+                    else:
+                        email_error_reason = "Not sent"
+                except Exception as e:
+                    email_error_reason = str(e)
+
+            push_user = apartment.owner_user or apartment.tenant_user
+            if push_user:
+                try:
+                    amount_str = cls._fmt_money(total_due_raw)
+                    viber_ok = ViberNotificationService.send_to_user(
+                        user=push_user,
+                        message=(
+                            f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
+                            f"Ποσό: {amount_str}"
+                        ),
+                        building=building,
+                        office_name=office_data.get('name', '') if office_data else '',
+                    )
+                    webpush_ok = WebPushService.send_to_user(
+                        user=push_user,
+                        title=f"{cls.SUBJECT_KEYWORD} {month_display}",
+                        body=f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
+                        data={
+                            'type': 'debt_reminder',
+                            'month': month,
+                            'building_id': str(building.id),
+                            'apartment_id': str(apartment.id),
+                            'url': '/my-apartment',
+                        },
+                    )
+                    push_ok = bool(webpush_ok)
+                except Exception as push_error:
+                    logger.warning(
+                        "Web push failed for debt reminder (user=%s, apartment=%s): %s",
+                        push_user.id,
+                        apartment.id,
+                        push_error,
+                    )
+
+            if email_ok or push_ok or viber_ok:
+                recipient.mark_as_sent()
+                sent += 1
+                details.append(
+                    {
+                        "apartment": apartment.number,
+                        "status": "sent",
+                        "email": recipient_email or "",
+                        "total_due": str(total_due_raw),
+                    }
+                )
+            else:
+                recipient.mark_as_failed(email_error_reason or "No delivery channels")
                 failed += 1
-                details.append({"apartment": apartment.number, "status": "failed", "email": recipient_email, "error": str(e)})
+                details.append(
+                    {
+                        "apartment": apartment.number,
+                        "status": "failed",
+                        "email": recipient_email or "",
+                        "error": email_error_reason or "No delivery channels",
+                    }
+                )
 
         notification.total_recipients = sent + failed + skipped
         notification.successful_sends = sent

@@ -4,6 +4,7 @@ Handles all email notifications for the Digital Concierge platform
 """
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.utils import timezone
 from datetime import timedelta, date
@@ -25,53 +26,152 @@ class EmailNotificationService:
     def __init__(self):
         self.templates = EmailTemplates()
 
+    def _send_push_notification(
+        self,
+        user,
+        *,
+        title: str,
+        body: str,
+        url: str,
+        data: dict | None = None,
+    ) -> bool:
+        if not user:
+            return False
+
+        payload = {"url": url}
+        if data:
+            payload.update(data)
+
+        try:
+            webpush_ok = WebPushService.send_to_user(
+                user=user,
+                title=title,
+                body=body,
+                data=payload,
+            )
+            fcm_ok = PushNotificationService.send_to_user(
+                user=user,
+                title=title,
+                body=body,
+                data=payload,
+            )
+            return bool(webpush_ok or fcm_ok)
+        except Exception as e:
+            logger.warning(
+                "Push notification failed (user=%s, type=%s): %s",
+                getattr(user, "id", None),
+                payload.get("type"),
+                e,
+            )
+            return False
+
     def send_welcome_email(self, user, building_name):
         """Send welcome email after user registration"""
+        email_ok = False
         try:
-            return self.templates.send_welcome_email(user, building_name)
+            email_ok = self.templates.send_welcome_email(user, building_name)
         except Exception as e:
             logger.error(f"Failed to send welcome email: {e}")
-            return False
+
+        push_ok = self._send_push_notification(
+            user,
+            title=f"Welcome to Digital Concierge - {building_name}",
+            body="Your account is ready. Open the app to get started.",
+            url="/login",
+            data={"type": "welcome"},
+        )
+
+        return email_ok or push_ok
 
     def send_payment_confirmation(self, user, subscription, amount):
         """Send payment confirmation email"""
+        email_ok = False
         try:
-            return self.templates.send_payment_confirmation(user, subscription, amount)
+            email_ok = self.templates.send_payment_confirmation(user, subscription, amount)
         except Exception as e:
             logger.error(f"Failed to send payment confirmation: {e}")
-            return False
+
+        push_ok = self._send_push_notification(
+            user,
+            title="Payment Confirmed - Digital Concierge",
+            body="Payment confirmed. View billing for details.",
+            url="/billing",
+            data={"type": "payment_confirmation", "subscription_id": str(getattr(subscription, "id", ""))},
+        )
+
+        return email_ok or push_ok
 
     def send_subscription_renewal_reminder(self, user, subscription, days_until_renewal):
         """Send subscription renewal reminder"""
+        email_ok = False
         try:
-            return self.templates.send_subscription_renewal_reminder(user, subscription, days_until_renewal)
+            email_ok = self.templates.send_subscription_renewal_reminder(user, subscription, days_until_renewal)
         except Exception as e:
             logger.error(f"Failed to send renewal reminder: {e}")
-            return False
+
+        push_ok = self._send_push_notification(
+            user,
+            title=f"Subscription Renewal Reminder - {days_until_renewal} days",
+            body="Subscription renewal reminder. Review billing.",
+            url="/billing",
+            data={"type": "subscription_renewal", "subscription_id": str(getattr(subscription, "id", ""))},
+        )
+
+        return email_ok or push_ok
 
     def send_password_reset_email(self, user, reset_token):
         """Send password reset email"""
+        email_ok = False
         try:
-            return self.templates.send_password_reset_email(user, reset_token)
+            email_ok = self.templates.send_password_reset_email(user, reset_token)
         except Exception as e:
             logger.error(f"Failed to send password reset: {e}")
-            return False
+
+        self._send_push_notification(
+            user,
+            title="Password Reset - Digital Concierge",
+            body="Password reset requested. If this wasn't you, ignore.",
+            url="/forgot-password",
+            data={"type": "password_reset"},
+        )
+
+        return email_ok
 
     def send_account_status_notification(self, user, status, reason=None):
         """Send account status notification"""
+        email_ok = False
         try:
-            return self.templates.send_account_status_notification(user, status, reason)
+            email_ok = self.templates.send_account_status_notification(user, status, reason)
         except Exception as e:
             logger.error(f"Failed to send account status: {e}")
-            return False
+
+        push_ok = self._send_push_notification(
+            user,
+            title="Account Status Update - Digital Concierge",
+            body="Your account status was updated.",
+            url="/dashboard",
+            data={"type": "account_status", "status": str(status)},
+        )
+
+        return email_ok or push_ok
 
     def send_maintenance_notification(self, user, maintenance_info):
         """Send maintenance notification"""
+        email_ok = False
         try:
-            return self.templates.send_maintenance_notification(user, maintenance_info)
+            email_ok = self.templates.send_maintenance_notification(user, maintenance_info)
         except Exception as e:
             logger.error(f"Failed to send maintenance notification: {e}")
-            return False
+
+        push_ok = self._send_push_notification(
+            user,
+            title=f"Maintenance Update - {maintenance_info.get('title', 'System Maintenance')}",
+            body="Maintenance update available.",
+            url="/dashboard",
+            data={"type": "maintenance_notification"},
+        )
+
+        return email_ok or push_ok
 
     def send_bulk_notification(self, users, subject, message, html_message=None):
         """Send bulk notification to multiple users"""
@@ -166,20 +266,20 @@ class EmailNotificationService:
 
     def send_usage_limit_warning(self, user, usage_type, current_usage, limit):
         """Send usage limit warning"""
+        subject = f"Usage Limit Warning - {usage_type.title()}"
+        context = {
+            'user_name': user.name,
+            'usage_type': usage_type,
+            'current_usage': current_usage,
+            'limit': limit,
+            'percentage': (current_usage / limit) * 100,
+            'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
+            'billing_url': f"{settings.FRONTEND_URL}/billing",
+        }
+
+        email_ok = False
         try:
-            subject = f"Usage Limit Warning - {usage_type.title()}"
-
-            context = {
-                'user_name': user.name,
-                'usage_type': usage_type,
-                'current_usage': current_usage,
-                'limit': limit,
-                'percentage': (current_usage / limit) * 100,
-                'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
-                'billing_url': f"{settings.FRONTEND_URL}/billing",
-            }
-
-            send_templated_email(
+            email_ok = send_templated_email(
                 to=user.email,
                 subject=subject,
                 template_html="emails/usage_limit_warning.html",
@@ -187,12 +287,27 @@ class EmailNotificationService:
                 user=user,
             )
 
-            logger.info(f"Usage limit warning sent to {user.email}")
-            return True
+            if email_ok:
+                logger.info(f"Usage limit warning sent to {user.email}")
+            else:
+                logger.warning(
+                    "Usage limit warning email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    user.email,
+                )
 
         except Exception as e:
             logger.error(f"Failed to send usage limit warning: {e}")
-            return False
+
+        push_ok = self._send_push_notification(
+            user,
+            title=subject,
+            body="Usage limit warning. Review billing.",
+            url="/billing",
+            data={"type": "usage_limit_warning", "usage_type": str(usage_type)},
+        )
+
+        return email_ok or push_ok
 
 class NotificationEventService:
     """Service for managing notification events"""
@@ -424,83 +539,112 @@ class NotificationService:
         successful = 0
         failed = 0
 
+        send_email = notification.notification_type in ['email', 'both', 'all']
         send_viber = notification.notification_type in ['viber', 'all']
         if not send_viber and notification.notification_type in ['email', 'both']:
             send_viber = getattr(settings, 'VIBER_AUTO_WITH_EMAIL', True)
+        send_push = notification.notification_type in ['push', 'all']
+        if not send_push and notification.notification_type in ['email', 'both']:
+            send_push = getattr(settings, 'PUSH_AUTO_WITH_EMAIL', True)
+
+        UserModel = get_user_model() if (send_viber or send_push) else None
+
+        def resolve_user(recipient_obj):
+            user_obj = None
+            if recipient_obj.apartment:
+                if getattr(recipient_obj.apartment, 'owner_user', None):
+                    user_obj = recipient_obj.apartment.owner_user
+                elif getattr(recipient_obj.apartment, 'tenant_user', None):
+                    user_obj = recipient_obj.apartment.tenant_user
+            if not user_obj and UserModel and recipient_obj.email:
+                user_obj = UserModel.objects.filter(email__iexact=recipient_obj.email).first()
+            return user_obj
 
         for recipient in notification.recipients.all():
             try:
-                # Email delivery (primary)
-                if notification.notification_type in ['email', 'both', 'all']:
-                    if not recipient.email:
-                        recipient.mark_as_failed("No email address")
-                        failed += 1
-                        continue
+                errors = []
+                sent_any = False
 
-                    email_ok = email_service.send_bulk_notification(
-                        [recipient],  # Single recipient for now
-                        notification.subject,
-                        notification.body
-                    )
-                    if not email_ok:
-                        recipient.mark_as_failed("Email send failed")
-                        failed += 1
-                        continue
+                # Email delivery (primary)
+                if send_email:
+                    if not recipient.email:
+                        errors.append("No email address")
+                    else:
+                        try:
+                            email_ok = email_service.send_bulk_notification(
+                                [recipient],  # Single recipient for now
+                                notification.subject,
+                                notification.body
+                            )
+                            if email_ok:
+                                sent_any = True
+                            else:
+                                errors.append("Email send failed")
+                        except Exception as exc:
+                            errors.append(f"Email send failed: {exc}")
 
                 # Send SMS if notification type includes SMS
                 if notification.notification_type in ['sms', 'both', 'all'] and recipient.phone:
                     # SMS sending would be implemented here
                     pass
 
+                user = resolve_user(recipient) if (send_viber or send_push) else None
+
                 # Send Viber notification (opt-in only)
                 if send_viber:
-                    user = None
-                    if recipient.apartment:
-                        if hasattr(recipient.apartment, 'owner_user') and recipient.apartment.owner_user:
-                            user = recipient.apartment.owner_user
-                        elif hasattr(recipient.apartment, 'tenant_user') and recipient.apartment.tenant_user:
-                            user = recipient.apartment.tenant_user
-
-                    if user:
-                        ViberNotificationService.send_to_user(
-                            user=user,
-                            message=notification.sms_body or notification.body,
-                            building=notification.building,
-                            office_name=getattr(notification.created_by, 'office_name', '') or '',
-                        )
+                    if not user:
+                        errors.append("No user for Viber delivery")
+                    else:
+                        try:
+                            viber_ok = ViberNotificationService.send_to_user(
+                                user=user,
+                                message=notification.sms_body or notification.body,
+                                building=notification.building,
+                                office_name=getattr(notification.created_by, 'office_name', '') or '',
+                            )
+                            if viber_ok:
+                                sent_any = True
+                            else:
+                                errors.append("Viber send failed")
+                        except Exception as exc:
+                            errors.append(f"Viber send failed: {exc}")
 
                 # Send Push Notification
-                if notification.notification_type in ['push', 'all']:
-                    user = None
-                    if recipient.apartment:
-                        # Try to resolve user from apartment
-                        # Assuming apartment has owner_user or tenant_user linked
-                        if hasattr(recipient.apartment, 'owner_user') and recipient.apartment.owner_user:
-                            user = recipient.apartment.owner_user
-                        elif hasattr(recipient.apartment, 'tenant_user') and recipient.apartment.tenant_user:
-                            user = recipient.apartment.tenant_user
+                if send_push:
+                    if not user:
+                        errors.append("No user for push delivery")
+                    else:
+                        try:
+                            body = notification.sms_body or notification.body[:150]
+                            webpush_ok = WebPushService.send_to_user(
+                                user=user,
+                                title=notification.subject,
+                                body=body,
+                                data={
+                                    'notification_id': str(notification.id),
+                                    'url': '/dashboard',
+                                    'type': 'notification',
+                                },
+                            )
+                            fcm_ok = PushNotificationService.send_to_user(
+                                user=user,
+                                title=notification.subject,
+                                body=body,  # Use shorter body for push
+                                data={'notification_id': str(notification.id)}
+                            )
+                            if webpush_ok or fcm_ok:
+                                sent_any = True
+                            else:
+                                errors.append("Push send failed")
+                        except Exception as exc:
+                            errors.append(f"Push send failed: {exc}")
 
-                    if user:
-                        body = notification.sms_body or notification.body[:150]
-                        WebPushService.send_to_user(
-                            user=user,
-                            title=notification.subject,
-                            body=body,
-                            data={
-                                'notification_id': str(notification.id),
-                                'url': '/dashboard',
-                                'type': 'notification',
-                            },
-                        )
-                        PushNotificationService.send_to_user(
-                            user=user,
-                            title=notification.subject,
-                            body=body,  # Use shorter body for push
-                            data={'notification_id': str(notification.id)}
-                        )
-
-                recipient.mark_as_sent()
-                successful += 1
+                if sent_any:
+                    recipient.mark_as_sent()
+                    successful += 1
+                else:
+                    recipient.mark_as_failed("; ".join(errors) if errors else "No delivery channels")
+                    failed += 1
 
             except Exception as e:
                 recipient.mark_as_failed(str(e))

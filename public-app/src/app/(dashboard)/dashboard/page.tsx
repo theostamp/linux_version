@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building, Loader2, CalendarDays, Clock, MessageSquare, Vote as VoteIcon } from 'lucide-react';
+import { Building, Loader2, CalendarDays, Clock, MessageSquare, Vote as VoteIcon, Bell } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { useVotes } from '@/hooks/useVotes';
 import { useRequests } from '@/hooks/useRequests';
+import usePushNotifications from '@/hooks/usePushNotifications';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
 import ErrorMessage from '@/components/ErrorMessage';
 import AuthGate from '@/components/AuthGate';
@@ -29,6 +30,9 @@ import { isResident } from '@/lib/roleUtils';
 import { getStatusBadgeClasses } from '@/lib/design-system';
 
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
+
+const PUSH_PROMPT_DISMISS_KEY = 'push_prompt_dismissed_at';
+const PUSH_PROMPT_COOLDOWN_DAYS = 14;
 
 const parseDate = (value?: string | null) => {
   if (!value) return null;
@@ -81,6 +85,15 @@ const getRequestStatusToken = (status?: string) => {
 function DashboardContent() {
   const { user, isLoading: authLoading, isAuthReady } = useAuth();
   const router = useRouter();
+  const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
+  const {
+    isSupported: pushSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    error: pushError,
+    subscribe,
+  } = usePushNotifications();
 
   // Redirect residents to my-apartment page
   useEffect(() => {
@@ -88,6 +101,34 @@ function DashboardContent() {
       router.replace('/my-apartment');
     }
   }, [isAuthReady, user, router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const raw = window.localStorage.getItem(PUSH_PROMPT_DISMISS_KEY);
+    if (!raw) {
+      return;
+    }
+    const dismissedAt = Number(raw);
+    if (Number.isNaN(dismissedAt)) {
+      return;
+    }
+    const cooldownMs = PUSH_PROMPT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+    if (Date.now() - dismissedAt < cooldownMs) {
+      setPushPromptDismissed(true);
+    }
+  }, []);
+
+  const dismissPushPrompt = () => {
+    try {
+      window.localStorage.setItem(PUSH_PROMPT_DISMISS_KEY, String(Date.now()));
+    } catch (err) {
+      console.warn('[Dashboard] Failed to persist push prompt dismissal:', err);
+    }
+    setPushPromptDismissed(true);
+  };
+
   const { currentBuilding, selectedBuilding, buildings } = useBuilding();
   const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
   const activeBuildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
@@ -192,6 +233,12 @@ function DashboardContent() {
     })
     .slice(0, 3);
 
+  const showPushPrompt =
+    pushSupported &&
+    !pushSubscribed &&
+    pushPermission !== 'denied' &&
+    !pushPromptDismissed;
+
   return (
     <main className="px-4 py-6 md:px-8 lg:px-12 max-w-[1400px] mx-auto">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-10">
@@ -224,6 +271,46 @@ function DashboardContent() {
             />
           }
         />
+
+        {/* Push Notifications Prompt */}
+        {showPushPrompt && (
+          <BentoGridItem
+            className="md:col-span-12 border border-primary/15 bg-primary/5"
+            header={
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Bell className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Ενεργοποίησε τις σημαντικές ειδοποιήσεις
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Μόνο για κρίσιμα events: συνέλευση, ψηφοφορίες, σημαντικές πληρωμές.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Μπορείς να τις απενεργοποιήσεις από το προφίλ σου οποιαδήποτε στιγμή.
+                    </p>
+                    {pushError && (
+                      <p className="text-xs text-destructive">
+                        {pushError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={subscribe} disabled={pushLoading}>
+                    Ενεργοποίηση
+                  </Button>
+                  <Button variant="ghost" onClick={dismissPushPrompt} disabled={pushLoading}>
+                    Όχι τώρα
+                  </Button>
+                </div>
+              </div>
+            }
+          />
+        )}
 
         {/* 2. Financial Overview (Main Chart) */}
         <BentoGridItem

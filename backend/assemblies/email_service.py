@@ -16,6 +16,8 @@ import base64
 
 from .models import Assembly, AgendaItem, AssemblyAttendee, AssemblyVote
 from core.emailing import extract_legacy_body_html, send_templated_email
+from notifications.push_service import PushNotificationService
+from notifications.webpush_service import WebPushService
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ def generate_secure_vote_token(attendee_id, assembly_id) -> str:
     # Convert to string in case of UUID
     attendee_str = str(attendee_id)
     assembly_str = str(assembly_id)
-    
+
     message = f"{attendee_str}:{assembly_str}:{timezone.now().date()}"
     signature = hmac.new(
         secret.encode(),
@@ -52,7 +54,7 @@ def verify_vote_token(token: str) -> tuple[str, str] | None:
         parts = token.split('_')
         if len(parts) < 3:
             return None
-        
+
         # For UUIDs, the format is: uuid_uuid_signature
         # UUIDs have format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (no underscores)
         # So we can safely split by underscore
@@ -60,7 +62,7 @@ def verify_vote_token(token: str) -> tuple[str, str] | None:
         assembly_id = parts[1]
         # Join remaining parts in case signature had underscores (shouldn't happen now)
         provided_signature = '_'.join(parts[2:])
-        
+
         # Regenerate expected signature
         secret = settings.SECRET_KEY
         message = f"{attendee_id}:{assembly_id}:{timezone.now().date()}"
@@ -70,10 +72,10 @@ def verify_vote_token(token: str) -> tuple[str, str] | None:
             hashlib.sha256
         ).digest()
         expected_token = base64.urlsafe_b64encode(expected_signature).decode()[:32].replace('_', 'X').replace('-', 'Y')
-        
+
         if hmac.compare_digest(provided_signature, expected_token):
             return (attendee_id, assembly_id)
-        
+
         return None
     except (ValueError, IndexError):
         return None
@@ -151,14 +153,14 @@ def send_assembly_reminder_email(
 ) -> bool | None:
     """
     Στέλνει email υπενθύμισης για τη συνέλευση.
-    
+
     Args:
         attendee: Ο συμμετέχων
         assembly: Η συνέλευση
         include_voting: Αν θα περιλαμβάνει links για ψηφοφορία
         skip_if_voted: Αν θα παραλείπει όσους έχουν ψηφίσει σε όλα
         reminder_type: Τύπος υπενθύμισης ('initial', '7days', '3days', '1day', 'sameday')
-    
+
     Returns:
         True αν στάλθηκε επιτυχώς
         False αν απέτυχε
@@ -167,35 +169,35 @@ def send_assembly_reminder_email(
     try:
         # Get email tone configuration
         tone_config = EMAIL_TONES.get(reminder_type, EMAIL_TONES['initial'])
-        
-        # Get user email
+
+        # Get user
         user = attendee.user
-        if not user or not user.email:
-            logger.warning(f"No email for attendee {attendee.id}")
+        if not user:
+            logger.warning(f"No user for attendee {attendee.id}")
             return False
-        
+
         # Get voting items
         voting_items = list(assembly.agenda_items.filter(
             item_type='voting',
             allows_pre_voting=True
         ).order_by('order'))
-        
+
         # Check if already voted on all items
         voted_item_ids = set(
             AssemblyVote.objects.filter(
                 attendee=attendee
             ).values_list('agenda_item_id', flat=True)
         )
-        
+
         pending_votes = [item for item in voting_items if item.id not in voted_item_ids]
-        
+
         # Skip if user has voted on all items and skip_if_voted is True
         if skip_if_voted and voting_items and not pending_votes:
             logger.info(
                 f"Skipping reminder for attendee {attendee.id} - already voted on all items"
             )
             return None  # Indicates skipped, not failed
-        
+
         # Generate vote URL if voting is included AND voting is currently allowed.
         # Note: vote-by-email endpoint is intended for pre-voting or in-progress assemblies.
         can_vote_online_now = bool(assembly.is_pre_voting_active or assembly.status == 'in_progress')
@@ -204,7 +206,7 @@ def send_assembly_reminder_email(
             if include_voting and pending_votes and can_vote_online_now
             else None
         )
-        
+
         # Calculate days until assembly
         today = timezone.now().date()
         assembly_date = assembly.scheduled_date
@@ -226,7 +228,7 @@ def send_assembly_reminder_email(
             else:
                 # Fallback for edge-cases where dates are missing/inconsistent
                 pre_voting_state = 'inactive'
-        
+
         # Prepare voting items with individual vote links
         frontend_url = getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr')
         voting_items_with_links = []
@@ -241,7 +243,7 @@ def send_assembly_reminder_email(
                 'vote_url': None,
                 'vote_type': 'email',  # 'email' or 'direct'
             }
-            
+
             # Αν το item έχει linked_vote, χρησιμοποιούμε το direct vote URL
             if item.linked_vote:
                 item_data['linked_vote'] = {
@@ -256,9 +258,9 @@ def send_assembly_reminder_email(
                 # Αν δεν έχει linked_vote, χρησιμοποιούμε το γενικό email vote URL
                 item_data['vote_url'] = vote_url
                 item_data['vote_type'] = 'email'
-            
+
             voting_items_with_links.append(item_data)
-        
+
         # Prepare context with tone configuration
         context = {
             'attendee': attendee,
@@ -292,26 +294,84 @@ def send_assembly_reminder_email(
             'is_gentle_reminder': reminder_type in ['7days', '3days'],
             'is_urgent': reminder_type in ['1day', 'sameday'],
         }
-        
+
         # Render email with tone-specific subject
         subject = f"{tone_config['subject_prefix']} {tone_config['subject_text']} - {assembly.title}"
-        
+
         legacy_html = render_to_string('assemblies/emails/reminder.html', context)
-        send_templated_email(
-            to=user.email,
-            subject=subject,
-            template_html="emails/wrapper.html",
-            context={
-                "body_html": extract_legacy_body_html(html=legacy_html),
-                "wrapper_title": subject,
-            },
-            user=user,
-            building_manager_id=getattr(assembly.building, "manager_id", None),
-        )
-        
-        logger.info(f"Sent assembly reminder to {user.email} for assembly {assembly.id}")
-        return True
-        
+        email_ok = False
+        if user.email:
+            try:
+                send_templated_email(
+                    to=user.email,
+                    subject=subject,
+                    template_html="emails/wrapper.html",
+                    context={
+                        "body_html": extract_legacy_body_html(html=legacy_html),
+                        "wrapper_title": subject,
+                    },
+                    user=user,
+                    building_manager_id=getattr(assembly.building, "manager_id", None),
+                )
+                email_ok = True
+            except Exception as email_error:
+                logger.warning(
+                    "Email reminder failed for assembly %s (user=%s): %s",
+                    assembly.id,
+                    user.id,
+                    email_error,
+                )
+
+        push_ok = False
+        try:
+            date_str = assembly.scheduled_date.strftime("%d/%m/%Y") if assembly.scheduled_date else ""
+            time_str = assembly.scheduled_time.strftime("%H:%M") if assembly.scheduled_time else ""
+            when = " ".join(part for part in [date_str, time_str] if part).strip()
+            push_body = f"Υπενθύμιση συνέλευσης: {assembly.title}"
+            if when:
+                push_body = f"{push_body} ({when})"
+            webpush_ok = WebPushService.send_to_user(
+                user=user,
+                title=subject,
+                body=push_body,
+                data={
+                    'type': 'assembly_reminder',
+                    'reminder_type': reminder_type,
+                    'assembly_id': str(assembly.id),
+                    'url': f"/assemblies/{assembly.id}",
+                },
+            )
+            fcm_ok = PushNotificationService.send_to_user(
+                user=user,
+                title=subject,
+                body=push_body,
+                data={
+                    'type': 'assembly_reminder',
+                    'reminder_type': reminder_type,
+                    'assembly_id': str(assembly.id),
+                }
+            )
+            push_ok = bool(webpush_ok or fcm_ok)
+        except Exception as push_error:
+            logger.warning(
+                "Push reminder failed for assembly %s (user=%s): %s",
+                assembly.id,
+                user.id,
+                push_error,
+            )
+
+        if email_ok or push_ok:
+            logger.info(
+                "Sent assembly reminder for assembly %s (user=%s, email=%s, push=%s)",
+                assembly.id,
+                user.id,
+                email_ok,
+                push_ok,
+            )
+            return True
+
+        return False
+
     except Exception as e:
         logger.error(f"Failed to send assembly reminder: {e}")
         return False
@@ -323,21 +383,21 @@ def send_vote_confirmation_email(
 ) -> bool:
     """
     Στέλνει email επιβεβαίωσης μετά την ψηφοφορία.
-    
+
     Args:
         attendee: Ο ψηφοφόρος
         votes: Οι ψήφοι που καταχωρήθηκαν
-    
+
     Returns:
         True αν στάλθηκε επιτυχώς
     """
     try:
         user = attendee.user
-        if not user or not user.email:
+        if not user:
             return False
-        
+
         assembly = attendee.assembly
-        
+
         # Prepare vote summary
         vote_summary = []
         for vote in votes:
@@ -348,7 +408,7 @@ def send_vote_confirmation_email(
                 'mills': vote.mills,
                 'voted_at': vote.voted_at,
             })
-        
+
         context = {
             'user': user,
             'attendee': attendee,
@@ -360,25 +420,76 @@ def send_vote_confirmation_email(
             'frontend_url': getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr'),
             'assembly_url': f"{getattr(settings, 'FRONTEND_URL', 'https://app.newconcierge.gr')}/assemblies/{assembly.id}",
         }
-        
+
         subject = f"✅ Επιβεβαίωση ψήφου - {assembly.title}"
-        
+
         legacy_html = render_to_string('assemblies/emails/vote_confirmation.html', context)
-        send_templated_email(
-            to=user.email,
-            subject=subject,
-            template_html="emails/wrapper.html",
-            context={
-                "body_html": extract_legacy_body_html(html=legacy_html),
-                "wrapper_title": subject,
-            },
-            user=user,
-            building_manager_id=getattr(assembly.building, "manager_id", None),
-        )
-        
-        logger.info(f"Sent vote confirmation to {user.email} for assembly {assembly.id}")
-        return True
-        
+        email_ok = False
+        if user.email:
+            try:
+                send_templated_email(
+                    to=user.email,
+                    subject=subject,
+                    template_html="emails/wrapper.html",
+                    context={
+                        "body_html": extract_legacy_body_html(html=legacy_html),
+                        "wrapper_title": subject,
+                    },
+                    user=user,
+                    building_manager_id=getattr(assembly.building, "manager_id", None),
+                )
+                email_ok = True
+            except Exception as email_error:
+                logger.warning(
+                    "Email vote confirmation failed for assembly %s (user=%s): %s",
+                    assembly.id,
+                    user.id,
+                    email_error,
+                )
+
+        push_ok = False
+        try:
+            push_body = f"Η ψήφος σας καταχωρήθηκε για τη συνέλευση {assembly.title}."
+            webpush_ok = WebPushService.send_to_user(
+                user=user,
+                title=subject,
+                body=push_body,
+                data={
+                    'type': 'assembly_vote_confirmation',
+                    'assembly_id': str(assembly.id),
+                    'url': f"/assemblies/{assembly.id}",
+                },
+            )
+            fcm_ok = PushNotificationService.send_to_user(
+                user=user,
+                title=subject,
+                body=push_body,
+                data={
+                    'type': 'assembly_vote_confirmation',
+                    'assembly_id': str(assembly.id),
+                }
+            )
+            push_ok = bool(webpush_ok or fcm_ok)
+        except Exception as push_error:
+            logger.warning(
+                "Push vote confirmation failed for assembly %s (user=%s): %s",
+                assembly.id,
+                user.id,
+                push_error,
+            )
+
+        if email_ok or push_ok:
+            logger.info(
+                "Sent vote confirmation for assembly %s (user=%s, email=%s, push=%s)",
+                assembly.id,
+                user.id,
+                email_ok,
+                push_ok,
+            )
+            return True
+
+        return False
+
     except Exception as e:
         logger.error(f"Failed to send vote confirmation: {e}")
         return False
@@ -391,11 +502,11 @@ def send_assembly_reminders_batch(
     """
     Στέλνει υπενθυμίσεις σε όλους τους συμμετέχοντες.
     Εξαιρεί όσους έχουν ήδη ψηφίσει σε όλα τα θέματα.
-    
+
     Args:
         assembly: Η συνέλευση
         reminder_type: Τύπος υπενθύμισης ('initial', '7days', '3days', '1day', 'sameday')
-    
+
     Returns:
         Dict με στατιστικά αποστολής
     """
@@ -407,27 +518,27 @@ def send_assembly_reminders_batch(
         'skipped_already_voted': 0,
         'reminder_type': reminder_type,
     }
-    
+
     # Get all attendees
     attendees = assembly.attendees.select_related('user', 'apartment')
-    
+
     for attendee in attendees:
         results['total'] += 1
-        
-        # Skip if no user/email
-        if not attendee.user or not attendee.user.email:
+
+        # Skip if no user
+        if not attendee.user:
             results['skipped_no_email'] += 1
             continue
-        
+
         # Send reminder (will return None if already voted on all)
         result = send_assembly_reminder_email(
-            attendee, 
-            assembly, 
+            attendee,
+            assembly,
             include_voting=True,
             skip_if_voted=True,
             reminder_type=reminder_type
         )
-        
+
         if result is True:
             results['sent'] += 1
         elif result is None:
@@ -435,7 +546,7 @@ def send_assembly_reminders_batch(
             results['skipped_already_voted'] += 1
         else:
             results['failed'] += 1
-    
+
     # Get tone label for logging
     tone_label = EMAIL_TONES.get(reminder_type, {}).get('subject_text', reminder_type)
     logger.info(
@@ -450,7 +561,7 @@ def schedule_assembly_reminders(assembly: Assembly):
     """
     Προγραμματίζει υπενθυμίσεις για τη συνέλευση.
     Καλείται όταν η συνέλευση γίνει 'convened'.
-    
+
     Στέλνει:
     - Επόμενη ημέρα (αρχική ειδοποίηση)
     - 7 ημέρες πριν
@@ -460,11 +571,11 @@ def schedule_assembly_reminders(assembly: Assembly):
     """
     # This is now handled by Celery tasks (assemblies.tasks.schedule_assembly_email_series)
     # Triggered automatically by signal when assembly status changes to 'convened'
-    
+
     today = timezone.now().date()
     assembly_date = assembly.scheduled_date
     days_until = (assembly_date - today).days
-    
+
     if days_until == 7:
         return send_assembly_reminders_batch(assembly, 7)
     elif days_until == 3:
@@ -473,7 +584,7 @@ def schedule_assembly_reminders(assembly: Assembly):
         return send_assembly_reminders_batch(assembly, 1)
     elif days_until == 0:
         return send_assembly_reminders_batch(assembly, 0)
-    
+
     return None
 
 
@@ -481,7 +592,7 @@ def queue_vote_confirmation(attendee: AssemblyAttendee, votes: list[AssemblyVote
     """
     Προσθέτει task για αποστολή επιβεβαίωσης ψήφου στο Celery queue.
     Αντί να στέλνει άμεσα, δημιουργεί async task.
-    
+
     Args:
         attendee: Ο ψηφοφόρος
         votes: Λίστα με τις ψήφους
@@ -489,14 +600,14 @@ def queue_vote_confirmation(attendee: AssemblyAttendee, votes: list[AssemblyVote
     try:
         from django.db import connection
         from .tasks import send_vote_confirmation_task
-        
+
         schema_name = connection.schema_name
         vote_ids = [v.id for v in votes]
-        
+
         send_vote_confirmation_task.delay(attendee.id, vote_ids, schema_name)
-        
+
         logger.info(f"Queued vote confirmation for attendee {attendee.id}")
-        
+
     except Exception as e:
         # Fallback to sync send if Celery fails
         logger.warning(f"Failed to queue confirmation, sending sync: {e}")

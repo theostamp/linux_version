@@ -70,13 +70,13 @@ def create_vote_for_voting_item(sender, instance, created, **kwargs):
     """
     if not created:
         return
-    
+
     if instance.item_type != 'voting':
         return
-    
+
     if instance.linked_vote:
         return
-    
+
     # Import here to avoid circular imports
     try:
         from .services import VoteIntegrationService
@@ -96,16 +96,16 @@ def initialize_attendees_from_apartments(sender, instance, created, **kwargs):
     """
     if not created:
         return
-    
+
     # Skip if already has attendees
     if instance.attendees.exists():
         return
-    
+
     try:
         from apartments.models import Apartment
-        
+
         apartments = Apartment.objects.filter(building=instance.building)
-        
+
         attendees_to_create = []
         for apartment in apartments:
             attendee = AssemblyAttendee(
@@ -115,9 +115,9 @@ def initialize_attendees_from_apartments(sender, instance, created, **kwargs):
                 mills=getattr(apartment, 'participation_mills', 0) or getattr(apartment, 'mills', 0) or 0
             )
             attendees_to_create.append(attendee)
-        
+
         AssemblyAttendee.objects.bulk_create(attendees_to_create)
-        
+
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ def calculate_total_building_mills(sender, instance, **kwargs):
             ).aggregate(
                 total=Sum('participation_mills')
             )['total'] or 0
-            
+
             if total > 0:
                 instance.total_building_mills = total
         except Exception:
@@ -152,19 +152,19 @@ def set_default_pre_voting_dates(sender, instance, created, **kwargs):
     """
     if not created:
         return
-    
+
     if not instance.pre_voting_enabled:
         return
-    
+
     if instance.pre_voting_start_date or instance.pre_voting_end_date:
         return
-    
+
     from datetime import timedelta
-    
+
     # Default: Pre-voting starts 7 days before, ends 1 day before
     instance.pre_voting_start_date = instance.scheduled_date - timedelta(days=7)
     instance.pre_voting_end_date = instance.scheduled_date - timedelta(days=1)
-    
+
     instance.save(update_fields=['pre_voting_start_date', 'pre_voting_end_date'])
 
 
@@ -202,28 +202,28 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
     """
     if not created:
         return
-    
+
     # Έλεγχος αν η συνέλευση έχει συνδεδεμένα έργα
     linked_projects = instance.linked_projects.all()
     if not linked_projects.exists():
         return
-    
+
     try:
         from announcements.models import Announcement
         from core.utils import publish_building_event
-        
+
         assembly_date = instance.scheduled_date
         assembly_time_str = instance.scheduled_time.strftime('%H:%M') if instance.scheduled_time else '20:00'
-        
+
         location_info = ""
         if instance.is_online and instance.meeting_link:
             location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {instance.meeting_link}"
         elif instance.location:
             location_info = f"\n**Τοποθεσία:** {instance.location}"
-        
+
         today = timezone.now().date()
         title = f"Σύγκληση Γενικής Συνέλευσης - {assembly_date.strftime('%d/%m/%Y')}"
-        
+
         # Εύρεση υπάρχουσας ανακοίνωσης για αυτή την ημερομηνία
         existing_announcement = (
             Announcement.objects
@@ -235,22 +235,22 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
             .distinct()
             .first()
         )
-        
+
         if existing_announcement:
             # Ενημέρωση υπάρχουσας ανακοίνωσης με τα νέα έργα
             projects_for_description = list(existing_announcement.projects.all())
-            
+
             for project in linked_projects:
                 if not any(p.id == project.id for p in projects_for_description):
                     projects_for_description.append(project)
                     existing_announcement.projects.add(project)
-            
+
             # Αναδόμηση περιγραφής
             projects_for_description = sorted(
                 projects_for_description,
                 key=lambda p: p.created_at or timezone.now()
             )
-            
+
             existing_announcement.description = _build_assembly_description_for_projects(
                 projects_for_description,
                 assembly_date,
@@ -262,11 +262,11 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
             existing_announcement.end_date = assembly_date
             existing_announcement.updated_at = timezone.now()
             existing_announcement.save(update_fields=['description', 'start_date', 'end_date', 'updated_at'])
-            
+
             # Σύνδεση με Assembly
             instance.linked_announcement = existing_announcement
             instance.save(update_fields=['linked_announcement'])
-            
+
             publish_building_event(
                 building_id=instance.building_id,
                 event_type="announcement.updated",
@@ -289,7 +289,7 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
                     author = User.objects.filter(tenant=instance.building.tenant).first()
                 except:
                     pass
-            
+
             announcement = Announcement.objects.create(
                 building=instance.building,
                 author=author,
@@ -307,14 +307,14 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
                 start_date=today,
                 end_date=assembly_date,
             )
-            
+
             # Σύνδεση με έργα
             announcement.projects.set(linked_projects)
-            
+
             # Σύνδεση με Assembly
             instance.linked_announcement = announcement
             instance.save(update_fields=['linked_announcement'])
-            
+
             publish_building_event(
                 building_id=instance.building_id,
                 event_type="announcement.created",
@@ -324,10 +324,10 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
                     "is_urgent": announcement.is_urgent,
                 },
             )
-            
+
             try:
                 from notifications.services import NotificationEventService
-                
+
                 NotificationEventService.create_event(
                     event_type='meeting',
                     building=instance.building,
@@ -342,7 +342,7 @@ def create_announcement_for_assembly(sender, instance, created, **kwargs):
                 )
             except Exception:
                 pass  # Αν δεν υπάρχει το NotificationEventService, συνεχίζουμε
-        
+
     except Exception as e:
         logger.error(f"Failed to create announcement for assembly {instance.id}: {e}")
 
@@ -354,25 +354,25 @@ def schedule_emails_on_convened(sender, instance, created, **kwargs):
     """
     if created:
         return
-    
+
     # Get previous status
     previous_status = _assembly_previous_status.pop(instance.pk, None)
-    
+
     # Check if status just changed to 'convened'
     if previous_status != 'convened' and instance.status == 'convened':
         try:
             # Get current tenant schema
             from django.db import connection
             schema_name = connection.schema_name
-            
+
             # Schedule the email series
             from .tasks import schedule_assembly_email_series
             schedule_assembly_email_series.delay(str(instance.id), schema_name)
-            
+
             import logging
             logger = logging.getLogger(__name__)
             logger.info(f"Scheduled email series for assembly {instance.id} (convened)")
-            
+
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
@@ -402,6 +402,8 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
             from assemblies.tasks import send_same_day_assembly_reminder
 
             recipients: list[RecipientChannels] = []
+            users_for_push = []
+            seen_user_ids = set()
 
             for attendee in instance.attendees.select_related("user"):
                 user = attendee.user
@@ -413,7 +415,11 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
                     if sub and getattr(sub, "is_subscribed", False):
                         viber_id = sub.viber_user_id
 
-                # Αν δεν έχουμε κανένα κανάλι, προσπερνάμε
+                if user and user.id not in seen_user_ids:
+                    users_for_push.append(user)
+                    seen_user_ids.add(user.id)
+
+                # Αν δεν έχουμε κανένα κανάλι email/Viber, προσπερνάμε
                 if not email and not viber_id:
                     continue
 
@@ -424,9 +430,9 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
                     )
                 )
 
-            if not recipients:
+            if not recipients and not users_for_push:
                 logger.info(
-                    "[Assembly Notifications] No recipients with email or Viber for assembly %s",
+                    "[Assembly Notifications] No recipients with email, Viber, or push for assembly %s",
                     instance.id,
                 )
                 return
@@ -449,20 +455,61 @@ def send_initial_notifications_on_creation(sender, instance: Assembly, created, 
                 f"Παρακαλούμε για την παρουσία σας ή/και τη συμμετοχή μέσω ψηφοφορίας."
             )
 
-            service = MultiChannelNotificationService()
-            results = service.send_bulk(
-                recipients=recipients,
-                subject=subject,
-                message=message,
-                channels=[ChannelType.EMAIL, ChannelType.VIBER],
-            )
+            successful = 0
+            if recipients:
+                service = MultiChannelNotificationService()
+                results = service.send_bulk(
+                    recipients=recipients,
+                    subject=subject,
+                    message=message,
+                    channels=[ChannelType.EMAIL, ChannelType.VIBER],
+                )
+                successful = sum(1 for r in results if r.any_success)
 
-            successful = sum(1 for r in results if r.any_success)
+            if users_for_push:
+                try:
+                    from notifications.webpush_service import WebPushService
+                    from notifications.push_service import PushNotificationService
+
+                    when = " ".join(part for part in [date_str, time_str] if part).strip()
+                    push_body = f"Πρόσκληση: {title}"
+                    if when:
+                        push_body = f"{push_body} • {when}"
+                    if location:
+                        push_body = f"{push_body} • {location}"
+
+                    for user in users_for_push:
+                        WebPushService.send_to_user(
+                            user=user,
+                            title=subject,
+                            body=push_body,
+                            data={
+                                'type': 'assembly_invitation',
+                                'assembly_id': str(instance.id),
+                                'url': f"/assemblies/{instance.id}",
+                            },
+                        )
+                        PushNotificationService.send_to_user(
+                            user=user,
+                            title=subject,
+                            body=push_body,
+                            data={
+                                'type': 'assembly_invitation',
+                                'assembly_id': str(instance.id),
+                            }
+                        )
+                except Exception as push_error:
+                    logger.warning(
+                        "[Assembly Notifications] Push failed for assembly %s: %s",
+                        instance.id,
+                        push_error,
+                    )
+
             logger.info(
                 "[Assembly Notifications] Sent initial notifications for assembly %s (success=%s / total=%s)",
                 instance.id,
                 successful,
-                len(results),
+                len(recipients),
             )
 
             # Μαρκάρουμε ότι στάλθηκε η πρόσκληση

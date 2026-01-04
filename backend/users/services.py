@@ -37,6 +37,48 @@ class EmailService:
         logger.error("[EMAIL] Not sent (send() returned 0): %s", payload)
 
     @staticmethod
+    def _send_push_notification(
+        user,
+        *,
+        title: str,
+        body: str,
+        url: str,
+        data: dict | None = None,
+    ) -> bool:
+        if not user:
+            return False
+
+        payload = {"url": url}
+        if data:
+            payload.update(data)
+
+        try:
+            from notifications.webpush_service import WebPushService
+            from notifications.push_service import PushNotificationService
+
+            webpush_ok = WebPushService.send_to_user(
+                user=user,
+                title=title,
+                body=body,
+                data=payload,
+            )
+            fcm_ok = PushNotificationService.send_to_user(
+                user=user,
+                title=title,
+                body=body,
+                data=payload,
+            )
+            return bool(webpush_ok or fcm_ok)
+        except Exception as e:
+            logger.warning(
+                "Push notification failed (user=%s, type=%s): %s",
+                getattr(user, "id", None),
+                payload.get("type"),
+                e,
+            )
+            return False
+
+    @staticmethod
     def send_verification_email(user):
         """
         Αποστολή email επιβεβαίωσης
@@ -70,6 +112,7 @@ class EmailService:
         Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=user.email,
@@ -84,11 +127,20 @@ class EmailService:
                     user.email,
                     {"user_id": getattr(user, "id", None)},
                 )
-                return False
-            return True
+            else:
+                email_ok = True
         except Exception as e:
             logger.error("Error sending verification email to %s: %s", user.email, e, exc_info=True)
-            return False
+
+        EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Επιβεβαίωσε το email σου από την εφαρμογή.",
+            url="/login",
+            data={"type": "email_verification"},
+        )
+
+        return email_ok
 
     @staticmethod
     def send_invitation_email(invitation):
@@ -201,6 +253,7 @@ class EmailService:
         Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=user.email,
@@ -215,11 +268,20 @@ class EmailService:
                     user.email,
                     {"user_id": getattr(user, "id", None), "reset_token_id": getattr(reset_token, "id", None)},
                 )
-                return False
-            return True
+            else:
+                email_ok = True
         except Exception as e:
             logger.error("Error sending password reset email to %s: %s", user.email, e, exc_info=True)
-            return False
+
+        EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Ζητήθηκε επαναφορά κωδικού. Αν δεν είσαι εσύ, αγνόησε.",
+            url="/forgot-password",
+            data={"type": "password_reset"},
+        )
+
+        return email_ok
 
     @staticmethod
     def send_my_apartment_link_email(user, link_url: str) -> bool:
@@ -229,6 +291,7 @@ class EmailService:
         """
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Άνοιγμα σε υπολογιστή"
 
+        email_ok = False
         try:
             message = f"""
             Γεια σας {user.first_name or ''},
@@ -251,11 +314,20 @@ class EmailService:
                     getattr(settings, 'EMAIL_BACKEND', None),
                     user.email,
                 )
-                return False
-            return True
+            else:
+                email_ok = True
         except Exception as e:
             logger.error(f"Error sending my-apartment link email: {e}", exc_info=True)
-            return False
+
+        EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Σου στείλαμε σύνδεσμο για άνοιγμα σε υπολογιστή.",
+            url="/login",
+            data={"type": "my_apartment_link"},
+        )
+
+        return email_ok
 
     @staticmethod
     def send_welcome_email(user):
@@ -282,6 +354,7 @@ class EmailService:
         Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=user.email,
@@ -296,11 +369,20 @@ class EmailService:
                     user.email,
                     {"user_id": getattr(user, "id", None)},
                 )
-                return False
-            return True
+            else:
+                email_ok = True
         except Exception as e:
             logger.error("Error sending welcome email to %s: %s", user.email, e, exc_info=True)
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Καλώς ήρθες στο New Concierge! Συνδέσου για να ξεκινήσεις.",
+            url="/login",
+            data={"type": "welcome"},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_workspace_welcome_email(user, tenant_domain):
@@ -341,6 +423,7 @@ class EmailService:
         Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=user.email,
@@ -355,19 +438,29 @@ class EmailService:
                     user.email,
                     {"tenant_domain": tenant_domain, "user_id": getattr(user, "id", None)},
                 )
-                return False
-            return True
+            else:
+                email_ok = True
         except Exception as e:
             logger.error("Error sending workspace welcome email to %s: %s", user.email, e, exc_info=True)
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Ο χώρος εργασίας σου είναι έτοιμος. Συνδέσου για να ξεκινήσεις.",
+            url=workspace_url,
+            data={"type": "workspace_welcome"},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_invoice_notification(user, billing_cycle):
         """
         Send invoice notification email
         """
+        email_ok = False
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Invoice #{billing_cycle.id:06d} Ready for Payment"
         try:
-            subject = f"{settings.EMAIL_SUBJECT_PREFIX}Invoice #{billing_cycle.id:06d} Ready for Payment"
 
             # Plain text version
             message = f"""
@@ -397,20 +490,37 @@ class EmailService:
                 user=user,
             )
 
-            logger.info(f"Sent invoice notification email to {user.email}")
-            return sent
+            if sent:
+                email_ok = True
+                logger.info(f"Sent invoice notification email to {user.email}")
+            else:
+                logger.warning(
+                    "Invoice notification email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    user.email,
+                )
 
         except Exception as e:
             logger.error(f"Failed to send invoice notification to {user.email}: {e}")
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Το τιμολόγιο είναι έτοιμο. Δες το billing.",
+            url="/billing",
+            data={"type": "invoice_ready", "billing_cycle_id": str(billing_cycle.id)},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_payment_confirmation(user, billing_cycle):
         """
         Send payment confirmation email
         """
+        email_ok = False
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Confirmation - Invoice #{billing_cycle.id:06d}"
         try:
-            subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Confirmation - Invoice #{billing_cycle.id:06d}"
 
             # Plain text version
             message = f"""
@@ -442,20 +552,37 @@ class EmailService:
                 user=user,
             )
 
-            logger.info(f"Sent payment confirmation email to {user.email}")
-            return sent
+            if sent:
+                email_ok = True
+                logger.info(f"Sent payment confirmation email to {user.email}")
+            else:
+                logger.warning(
+                    "Payment confirmation email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    user.email,
+                )
 
         except Exception as e:
             logger.error(f"Failed to send payment confirmation to {user.email}: {e}")
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Η πληρωμή επιβεβαιώθηκε. Δες το billing.",
+            url="/billing",
+            data={"type": "payment_confirmation", "billing_cycle_id": str(billing_cycle.id)},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_payment_failure_notification(user, billing_cycle, failure_reason):
         """
         Send payment failure notification email
         """
+        email_ok = False
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Failed - Invoice #{billing_cycle.id:06d}"
         try:
-            subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Failed - Invoice #{billing_cycle.id:06d}"
 
             # Plain text version
             message = f"""
@@ -493,12 +620,28 @@ class EmailService:
                 user=user,
             )
 
-            logger.info(f"Sent payment failure notification to {user.email}")
-            return sent
+            if sent:
+                email_ok = True
+                logger.info(f"Sent payment failure notification to {user.email}")
+            else:
+                logger.warning(
+                    "Payment failure email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    user.email,
+                )
 
         except Exception as e:
             logger.error(f"Failed to send payment failure notification to {user.email}: {e}")
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Η πληρωμή απέτυχε. Δες το billing.",
+            url="/billing",
+            data={"type": "payment_failed", "billing_cycle_id": str(billing_cycle.id)},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_tenant_welcome_email(user, tenant, domain):
@@ -518,8 +661,9 @@ class EmailService:
         access_url = f"{frontend_url}/tenant/accept?token={secure_token}"
 
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {tenant.name}"
+        email_ok = False
         try:
-            return send_templated_email(
+            sent = send_templated_email(
                 to=user.email,
                 subject=subject,
                 template_html="emails/tenant_welcome.html",
@@ -527,9 +671,26 @@ class EmailService:
                 user=user,
                 tenant_id=getattr(tenant, "id", None),
             )
+            if sent:
+                email_ok = True
+            else:
+                logger.warning(
+                    "Tenant welcome email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    user.email,
+                )
         except Exception as e:
             logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
-            return False
+
+        EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Το workspace σου είναι έτοιμο. Δες το email σου για τον σύνδεσμο.",
+            url="/login",
+            data={"type": "tenant_welcome"},
+        )
+
+        return email_ok
 
     @staticmethod
     def send_kiosk_registration_email(invitation, building, apartment=None):
@@ -643,6 +804,7 @@ Email: {invitation.email}
 Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=user.email,
@@ -658,12 +820,21 @@ Email: {invitation.email}
                     user.email,
                     {"user_id": getattr(user, "id", None), "building_id": getattr(building, "id", None)},
                 )
-                return False
-            logger.info(f"Sent login reminder email to {user.email}")
-            return True
+            else:
+                email_ok = True
+                logger.info(f"Sent login reminder email to {user.email}")
         except Exception as e:
             logger.error(f"Failed to send login reminder email to {user.email}: {e}")
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Έχεις ήδη λογαριασμό. Συνδέσου στο New Concierge.",
+            url="/login",
+            data={"type": "login_reminder"},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_magic_login_email(user, building, apartment=None):
@@ -712,6 +883,7 @@ Email: {invitation.email}
 Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=user.email,
@@ -727,12 +899,21 @@ Email: {invitation.email}
                     user.email,
                     {"user_id": getattr(user, "id", None), "building_id": getattr(building, "id", None)},
                 )
-                return False
-            logger.info(f"Sent magic login email to {user.email} for building {building.name}")
-            return True
+            else:
+                email_ok = True
+                logger.info(f"Sent magic login email to {user.email} for building {building.name}")
         except Exception as e:
             logger.error(f"Failed to send magic login email to {user.email}: {e}")
-            return False
+
+        EmailService._send_push_notification(
+            user,
+            title=subject,
+            body="Σύνδεση διαθέσιμη. Δες το email σου για τον σύνδεσμο.",
+            url="/login",
+            data={"type": "magic_login"},
+        )
+
+        return email_ok
 
     @staticmethod
     def send_new_apartment_user_notification(invitation, building, apartment, existing_users, manager):
@@ -775,6 +956,7 @@ Email: {invitation.email}
 Η ομάδα του New Concierge
         """
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=manager.email,
@@ -795,11 +977,21 @@ Email: {invitation.email}
                     manager.email,
                     {"building_id": getattr(building, "id", None), "apartment_id": getattr(apartment, "id", None)},
                 )
-            logger.info(f"Sent new apartment user notification to {manager.email} for apartment {apartment.number}")
-            return sent
+            else:
+                email_ok = True
+                logger.info(f"Sent new apartment user notification to {manager.email} for apartment {apartment.number}")
         except Exception as e:
             logger.error(f"Failed to send new apartment user notification: {e}")
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            manager,
+            title=subject,
+            body=f"Νέα εγγραφή χρήστη στο διαμέρισμα {apartment.number}.",
+            url="/dashboard",
+            data={"type": "new_apartment_user", "apartment_id": str(apartment.id)},
+        )
+
+        return email_ok or push_ok
 
     @staticmethod
     def send_maintenance_resolved_email(ticket):
@@ -823,6 +1015,7 @@ Email: {invitation.email}
             "frontend_url": settings.FRONTEND_URL,
         }
 
+        email_ok = False
         try:
             sent = send_templated_email(
                 to=reporter.email,
@@ -832,10 +1025,26 @@ Email: {invitation.email}
                 user=reporter,
                 building_manager_id=getattr(ticket.building, "manager_id", None),
             )
-            return sent
+            if sent:
+                email_ok = True
+            else:
+                logger.warning(
+                    "Maintenance resolved email send returned 0 (not sent). backend=%s to=%s",
+                    getattr(settings, 'EMAIL_BACKEND', None),
+                    reporter.email,
+                )
         except Exception as e:
             logger.error(f"Error sending maintenance resolved email: {e}")
-            return False
+
+        push_ok = EmailService._send_push_notification(
+            reporter,
+            title=subject,
+            body="Η βλάβη αποκαταστάθηκε.",
+            url="/dashboard",
+            data={"type": "maintenance_resolved", "ticket_id": str(getattr(ticket, "id", ""))},
+        )
+
+        return email_ok or push_ok
 
 
 class InvitationService:
