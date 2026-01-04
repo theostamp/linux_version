@@ -502,6 +502,16 @@ RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@vercel.app')
 
 # ----------------------------------------
+# 🔔 Web Push (VAPID)
+# ----------------------------------------
+VAPID_PUBLIC_KEY = (os.environ.get('VAPID_PUBLIC_KEY') or '').strip()
+VAPID_PRIVATE_KEY = (os.environ.get('VAPID_PRIVATE_KEY') or '').strip()
+VAPID_SUBJECT = (os.environ.get('VAPID_SUBJECT') or DEFAULT_FROM_EMAIL or '').strip()
+
+if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:
+    logger.warning("[SETTINGS] Web push disabled: VAPID keys not configured")
+
+# ----------------------------------------
 # 💳 Stripe Payment Processing
 # ----------------------------------------
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')

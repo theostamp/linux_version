@@ -1018,12 +1018,12 @@ class PushSubscriptionViewSet(viewsets.ModelViewSet):
         """
         from django.conf import settings
 
-        vapid_key = getattr(settings, 'VAPID_PUBLIC_KEY', None)
+        vapid_key = (getattr(settings, 'VAPID_PUBLIC_KEY', '') or '').strip()
 
         if not vapid_key:
             return Response(
                 {'error': 'VAPID key δεν έχει ρυθμιστεί'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
 
         return Response({'public_key': vapid_key})
