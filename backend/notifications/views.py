@@ -8,12 +8,14 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import connection
 from django.db.models import Q, Count, Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.conf import settings
 
 from buildings.models import Building, BuildingMembership
 from apartments.models import Apartment
@@ -25,6 +27,7 @@ from .models import (
     MonthlyNotificationTask,
     NotificationEvent,
     UserDeviceToken,
+    UserViberSubscription,
 )
 from .serializers import (
     NotificationTemplateSerializer,
@@ -42,6 +45,7 @@ from .serializers import (
     DigestPreviewSerializer,
     SendDigestSerializer,
     UserDeviceTokenSerializer,
+    UserViberSubscriptionSerializer,
 )
 from .services import (
     NotificationService,
@@ -52,9 +56,68 @@ from .services import (
 )
 from .debt_reminder_breakdown_service import DebtReminderBreakdownService
 from .tasks import send_notification_task
+from .viber_utils import (
+    build_viber_context_payload,
+    build_viber_links,
+    is_viber_configured,
+    VIBER_LINK_MAX_AGE_SECONDS,
+)
 
 
 logger = logging.getLogger(__name__)
+
+
+class ViberLinkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not is_viber_configured():
+            return Response(
+                {"error": "Viber bot δεν είναι ρυθμισμένο", "configured": False},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        schema_name = connection.schema_name
+        context = build_viber_context_payload(user_id=request.user.id, schema_name=schema_name)
+        app_link, web_link = build_viber_links(context)
+
+        return Response(
+            {
+                "configured": True,
+                "link_url": app_link,
+                "web_url": web_link,
+                "expires_in": VIBER_LINK_MAX_AGE_SECONDS,
+                "chat_uri": getattr(settings, "VIBER_CHAT_URI", ""),
+            }
+        )
+
+
+class ViberSubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        subscription = UserViberSubscription.objects.filter(user=request.user).first()
+
+        if not subscription:
+            return Response(
+                {
+                    "configured": is_viber_configured(),
+                    "is_subscribed": False,
+                }
+            )
+
+        data = UserViberSubscriptionSerializer(subscription).data
+        data["configured"] = is_viber_configured()
+        data["is_subscribed"] = bool(subscription.is_subscribed)
+        return Response(data)
+
+    def delete(self, request):
+        subscription = UserViberSubscription.objects.filter(user=request.user).first()
+        if not subscription:
+            return Response({"message": "Δεν υπάρχει ενεργή σύνδεση Viber"})
+
+        subscription.unsubscribe()
+        return Response({"message": "Αποσύνδεση Viber ολοκληρώθηκε"})
 
 
 class NotificationTemplateViewSet(viewsets.ModelViewSet):

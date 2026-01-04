@@ -58,9 +58,18 @@ VIBER_SENDER_NAME = 'New Concierge'
 # Bot avatar URL (optional, should be HTTPS)
 VIBER_SENDER_AVATAR = ''
 
+# Bot chat URI (public bot name used in deep links)
+VIBER_CHAT_URI = ''
+
 # Webhook URL for receiving Viber messages
 # Must be HTTPS with valid SSL certificate
 VIBER_WEBHOOK_URL = ''
+
+# Verify incoming webhook signature (recommended true in production)
+VIBER_WEBHOOK_VERIFY = True
+
+# Auto-send Viber alongside email notifications
+VIBER_AUTO_WITH_EMAIL = True
 
 
 # =============================================================================
@@ -150,8 +159,10 @@ SMS_TWILIO_SENDER_ID=+15551234567
 VIBER_ENABLED=false
 VIBER_API_TOKEN=your_viber_token
 VIBER_SENDER_NAME=New Concierge
+VIBER_CHAT_URI=your_viber_bot_uri
+VIBER_WEBHOOK_VERIFY=true
+VIBER_AUTO_WITH_EMAIL=true
 
 PUSH_NOTIFICATIONS_ENABLED=false
 FIREBASE_CREDENTIALS_PATH=/path/to/firebase-credentials.json
 """
-

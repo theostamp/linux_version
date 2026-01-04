@@ -793,6 +793,17 @@ MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:1
 FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', BASE_DIR / 'credentials' / 'serviceAccountKey.json')
 
 # ----------------------------------------
+# 📲 Viber Notifications
+# ----------------------------------------
+VIBER_ENABLED = os.getenv('VIBER_ENABLED', 'False') == 'True'
+VIBER_API_TOKEN = os.getenv('VIBER_API_TOKEN', '')
+VIBER_SENDER_NAME = os.getenv('VIBER_SENDER_NAME', 'New Concierge')
+VIBER_SENDER_AVATAR = os.getenv('VIBER_SENDER_AVATAR', '')
+VIBER_CHAT_URI = os.getenv('VIBER_CHAT_URI', '')
+VIBER_WEBHOOK_VERIFY = os.getenv('VIBER_WEBHOOK_VERIFY', 'True') == 'True'
+VIBER_AUTO_WITH_EMAIL = os.getenv('VIBER_AUTO_WITH_EMAIL', 'True') == 'True'
+
+# ----------------------------------------
 # 🔔 Web Push (VAPID)
 # ----------------------------------------
 VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')

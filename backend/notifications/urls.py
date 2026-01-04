@@ -10,6 +10,8 @@ from .views import (
     MonthlyNotificationTaskViewSet,
     NotificationEventViewSet,
     DeviceTokenViewSet,
+    ViberLinkView,
+    ViberSubscriptionView,
 )
 
 router = DefaultRouter()
@@ -22,4 +24,6 @@ router.register(r'devices', DeviceTokenViewSet, basename='device-token')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('viber/link/', ViberLinkView.as_view(), name='viber-link'),
+    path('viber/subscription/', ViberSubscriptionView.as_view(), name='viber-subscription'),
 ]

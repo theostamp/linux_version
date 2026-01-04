@@ -28,6 +28,7 @@ from notifications.common_expense_service import CommonExpenseNotificationServic
 from notifications.models import Notification, NotificationRecipient
 from notifications.services import NotificationService
 from notifications.webpush_service import WebPushService
+from notifications.viber_notification_service import ViberNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +293,15 @@ class DebtReminderBreakdownService:
                     if push_user:
                         try:
                             amount_str = cls._fmt_money(total_due_raw)
+                            ViberNotificationService.send_to_user(
+                                user=push_user,
+                                message=(
+                                    f"Υπενθύμιση οφειλής για το διαμέρισμα {apartment.number}. "
+                                    f"Ποσό: {amount_str}"
+                                ),
+                                building=building,
+                                office_name=office_data.get('name', '') if office_data else '',
+                            )
                             WebPushService.send_to_user(
                                 user=push_user,
                                 title=f"{cls.SUBJECT_KEYWORD} {month_display}",

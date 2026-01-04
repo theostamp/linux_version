@@ -8,6 +8,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from core.media_views import serve_media
+from notifications.webhook_views import viber_webhook
 
 
 # Public home view removed - now handled by Public App (Next.js)
@@ -52,6 +53,8 @@ urlpatterns = [
     path('api/webhooks/', include('online_payments_public.urls')),
     # Ad Portal webhooks (public schema)
     path('api/webhooks/ad-portal/', include('ad_portal_public.urls')),
+    # Viber webhook (public schema)
+    path('api/webhooks/viber/', viber_webhook, name='viber-webhook'),
 
     # Automated Ad Portal (public schema)
     path('api/ad-portal/', include('ad_portal.urls')),

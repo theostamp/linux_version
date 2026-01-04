@@ -30,7 +30,8 @@ import {
   Mail,
   Loader2,
   Wrench,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
@@ -38,6 +39,7 @@ import AuthGate from '@/components/AuthGate';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { sendMyApartmentLinkEmail } from '@/lib/api';
+import { useViberConnect } from '@/hooks/useViberConnect';
 
 // Types
 interface PaymentHistory {
@@ -170,6 +172,14 @@ function MyApartmentContent() {
   const [selectedApartmentIndex, setSelectedApartmentIndex] = useState(0);
   const [isSendingLinkEmail, setIsSendingLinkEmail] = useState(false);
   const [isRelogging, setIsRelogging] = useState(false);
+  const {
+    status: viberStatus,
+    isLoading: viberLoading,
+    isConnecting: viberConnecting,
+    isDisconnecting: viberDisconnecting,
+    connect: connectViber,
+    disconnect: disconnectViber,
+  } = useViberConnect();
   const supportUrl = useMemo(() => '/users', []);
   const residentLoginUrl = '/login/resident?redirect=/my-apartment';
 
@@ -364,6 +374,55 @@ function MyApartmentContent() {
           <div className="text-xs text-muted-foreground">
             Αν δεν το βρείτε, ελέγξτε και τον φάκελο ανεπιθύμητης αλληλογραφίας (spam).
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Viber connect */}
+      <Card className="border-border/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            Viber ειδοποιήσεις
+          </CardTitle>
+          <CardDescription>
+            Συνδέστε το Viber για να λαμβάνετε τις ειδοποιήσεις κοινοχρήστων.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Κατάσταση</span>
+            <Badge variant={viberStatus?.is_subscribed ? 'default' : 'secondary'}>
+              {viberStatus?.is_subscribed ? 'Ενεργό' : 'Ανενεργό'}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {!viberStatus?.configured ? (
+              <Badge variant="secondary">Μη διαθέσιμο</Badge>
+            ) : viberStatus?.is_subscribed ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => disconnectViber()}
+                disabled={viberDisconnecting || viberLoading}
+              >
+                Αποσύνδεση Viber
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => connectViber()}
+                disabled={viberConnecting || viberLoading}
+              >
+                Σύνδεση Viber
+              </Button>
+            )}
+          </div>
+          {!viberStatus?.configured && (
+            <div className="text-xs text-muted-foreground">
+              Το Viber δεν έχει ρυθμιστεί ακόμη από το γραφείο διαχείρισης.
+            </div>
+          )}
         </CardContent>
       </Card>
 

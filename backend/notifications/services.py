@@ -14,6 +14,7 @@ from billing.models import UserSubscription
 from users.models import CustomUser
 from .push_service import PushNotificationService
 from .webpush_service import WebPushService
+from .viber_notification_service import ViberNotificationService
 from core.emailing import send_templated_email
 
 logger = logging.getLogger(__name__)
@@ -423,6 +424,10 @@ class NotificationService:
         successful = 0
         failed = 0
 
+        send_viber = notification.notification_type in ['viber', 'all']
+        if not send_viber and notification.notification_type in ['email', 'both']:
+            send_viber = getattr(settings, 'VIBER_AUTO_WITH_EMAIL', True)
+
         for recipient in notification.recipients.all():
             try:
                 # Email delivery (primary)
@@ -446,6 +451,23 @@ class NotificationService:
                 if notification.notification_type in ['sms', 'both', 'all'] and recipient.phone:
                     # SMS sending would be implemented here
                     pass
+
+                # Send Viber notification (opt-in only)
+                if send_viber:
+                    user = None
+                    if recipient.apartment:
+                        if hasattr(recipient.apartment, 'owner_user') and recipient.apartment.owner_user:
+                            user = recipient.apartment.owner_user
+                        elif hasattr(recipient.apartment, 'tenant_user') and recipient.apartment.tenant_user:
+                            user = recipient.apartment.tenant_user
+
+                    if user:
+                        ViberNotificationService.send_to_user(
+                            user=user,
+                            message=notification.sms_body or notification.body,
+                            building=notification.building,
+                            office_name=getattr(notification.created_by, 'office_name', '') or '',
+                        )
 
                 # Send Push Notification
                 if notification.notification_type in ['push', 'all']:

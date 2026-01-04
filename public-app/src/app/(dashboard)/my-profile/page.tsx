@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon, Bell, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, Building2, Shield, CreditCard, RefreshCw, User as UserIcon, Bell, AlertTriangle, MessageSquare } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { User } from '@/types/user';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { getEffectiveRole, getRoleLabel, hasOfficeAdminAccess } from '@/lib/roleUtils';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useViberConnect } from '@/hooks/useViberConnect';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
@@ -70,6 +71,14 @@ export default function MyProfilePage() {
     subscribe,
     unsubscribe,
   } = usePushNotifications();
+  const {
+    status: viberStatus,
+    isLoading: viberLoading,
+    isConnecting: viberConnecting,
+    isDisconnecting: viberDisconnecting,
+    connect: connectViber,
+    disconnect: disconnectViber,
+  } = useViberConnect();
 
   React.useEffect(() => {
     if (user) {
@@ -402,6 +411,45 @@ export default function MyProfilePage() {
                 {pushError && (
                   <p className="text-xs text-red-500 mt-2">
                     {pushError}
+                  </p>
+                )}
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    <span>Viber</span>
+                  </div>
+                  {!viberStatus?.configured ? (
+                    <Badge variant="secondary">Μη διαθέσιμο</Badge>
+                  ) : viberStatus?.is_subscribed ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => disconnectViber()}
+                      disabled={viberDisconnecting || viberLoading}
+                    >
+                      Αποσύνδεση
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => connectViber()}
+                      disabled={viberConnecting || viberLoading}
+                    >
+                      Σύνδεση Viber
+                    </Button>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Κατάσταση</span>
+                  <Badge variant={viberStatus?.is_subscribed ? 'default' : 'secondary'}>
+                    {viberStatus?.is_subscribed ? 'Ενεργό' : 'Ανενεργό'}
+                  </Badge>
+                </div>
+                {!viberStatus?.configured && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Το Viber δεν έχει ρυθμιστεί ακόμη από το γραφείο διαχείρισης.
                   </p>
                 )}
               </div>

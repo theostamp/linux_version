@@ -22,6 +22,7 @@ from django_tenants.utils import get_public_schema_name, get_tenant_domain_model
 
 from .push_service import PushNotificationService
 from .webpush_service import WebPushService
+from .viber_notification_service import ViberNotificationService
 from core.emailing import _absolute_url, extract_legacy_body_html, send_templated_email
 
 logger = logging.getLogger(__name__)
@@ -725,6 +726,15 @@ class CommonExpenseNotificationService:
                 if push_user:
                     try:
                         amount_str = f"{apartment_data.get('net_obligation', 0):.2f}€"
+                        ViberNotificationService.send_to_user(
+                            user=push_user,
+                            message=(
+                                f"Εκδόθηκαν τα κοινόχρηστα για το διαμέρισμα {apartment.number}. "
+                                f"Ποσό: {amount_str}"
+                            ),
+                            building=apartment.building,
+                            office_name=office_data.get('name', '') if office_data else '',
+                        )
                         WebPushService.send_to_user(
                             user=push_user,
                             title=f"Κοινόχρηστα {month_display}",
