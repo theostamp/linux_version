@@ -58,18 +58,18 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         import logging
         logger = logging.getLogger(__name__)
-        
+
         try:
             user = self.request.user
-            
+
             # Για superusers/office-level, επιστρέφει όλα τα chat rooms του tenant
             # (office managers/staff έχουν πρόσβαση σε όλα τα κτίρια του tenant).
             if user.is_superuser or getattr(user, "is_office_level", False) or user.is_staff:
                 return self.queryset
-            
+
             # Για άλλους χρήστες, επιστρέφει μόνο τα chat rooms των κτιρίων τους
             building_ids = []
-            
+
             # Κτίρια που διαχειρίζεται (manager_id is integer, not FK)
             try:
                 from buildings.models import Building
@@ -77,17 +77,17 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 building_ids.extend(managed_ids)
             except Exception as e:
                 logger.warning(f"Error getting managed buildings: {e}")
-            
+
             # Κτίρια που κατοικεί
             try:
                 resident_ids = list(user.memberships.values_list('building_id', flat=True))
                 building_ids.extend(resident_ids)
             except Exception as e:
                 logger.warning(f"Error getting resident buildings: {e}")
-            
+
             # Remove duplicates
             building_ids = list(set(building_ids))
-            
+
             return self.queryset.filter(building_id__in=building_ids)
         except Exception as e:
             logger.error(f"Error in ChatRoomViewSet.get_queryset: {e}")
@@ -99,14 +99,14 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         Επιστρέφει ή δημιουργεί chat room για ένα κτίριο.
         """
         from buildings.models import Building
-        
+
         building_id = request.data.get('building_id')
         if not building_id:
             return Response(
                 {"error": "Απαιτείται building_id"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             building = Building.objects.get(id=building_id)
         except Building.DoesNotExist:
@@ -114,16 +114,16 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 {"error": "Το κτίριο δεν βρέθηκε"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         user = request.user
-        
+
         # Έλεγχος πρόσβασης (consistent με το υπόλοιπο σύστημα δικαιωμάτων)
         if not user.can_access_building(building):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτό το κτίριο"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Δημιουργία ή ανάκτηση chat room
         chat_room, created = ChatRoom.objects.get_or_create(
             building=building,
@@ -132,21 +132,21 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 'is_active': True
             }
         )
-        
+
         # Δημιουργία participant αν δεν υπάρχει
         participant, _ = ChatParticipant.objects.get_or_create(
             chat_room=chat_room,
             user=user,
             defaults={'is_online': True}
         )
-        
+
         # Δημιουργία notification αν δεν υπάρχει
         ChatNotification.objects.get_or_create(
             chat_room=chat_room,
             user=user,
             defaults={'unread_count': 0}
         )
-        
+
         return Response({
             "chat_room": ChatRoomSerializer(chat_room, context={'request': request}).data,
             "created": created,
@@ -160,7 +160,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         chat_room = self.get_object()
         user = request.user
-        
+
         # Έλεγχος αν ο χρήστης έχει πρόσβαση στο chat room
         building = chat_room.building
         if not user.can_access_building(building):
@@ -168,25 +168,25 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 {"error": "Δεν έχετε πρόσβαση σε αυτό το chat room"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Δημιουργία ή ενημέρωση συμμετοχής
         participant, created = ChatParticipant.objects.get_or_create(
             chat_room=chat_room,
             user=user,
             defaults={'is_online': True}
         )
-        
+
         if not created:
             participant.is_online = True
             participant.save()
-        
+
         # Δημιουργία ή ενημέρωση ειδοποίησης
         notification, created = ChatNotification.objects.get_or_create(
             chat_room=chat_room,
             user=user,
             defaults={'unread_count': 0}
         )
-        
+
         return Response({
             "message": "Επιτυχής συμμετοχή στο chat room",
             "participant": ChatParticipantSerializer(participant).data
@@ -199,7 +199,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         chat_room = self.get_object()
         user = request.user
-        
+
         try:
             participant = ChatParticipant.objects.get(
                 chat_room=chat_room,
@@ -207,7 +207,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             )
             participant.is_online = False
             participant.save()
-            
+
             return Response({
                 "message": "Επιτυχής αποχώρηση από το chat room"
             })
@@ -223,7 +223,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         chat_room = self.get_object()
         participants = chat_room.participants.select_related('user').all()
-        
+
         return Response({
             "participants": ChatParticipantSerializer(participants, many=True).data
         })
@@ -235,7 +235,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         chat_room = self.get_object()
         user = request.user
-        
+
         try:
             notification = ChatNotification.objects.get(
                 chat_room=chat_room,
@@ -273,24 +273,24 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         Φιλτράρισμα μηνυμάτων βάσει των chat rooms που έχει πρόσβαση ο χρήστης.
         """
         user = self.request.user
-        
+
         # Για superusers/office-level, επιστρέφει όλα τα μηνύματα του tenant
         if user.is_superuser or getattr(user, "is_office_level", False) or user.is_staff:
             return self.queryset
-        
+
         # Για άλλους χρήστες, επιστρέφει μόνο τα μηνύματα των chat rooms τους
         from buildings.models import Building
-        
+
         building_ids = []
-        
+
         # Κτίρια που διαχειρίζεται (manager_id is integer, not FK)
         managed_ids = list(Building.objects.filter(manager_id=user.id).values_list('id', flat=True))
         building_ids.extend(managed_ids)
-        
+
         # Κτίρια που κατοικεί
         resident_ids = list(user.memberships.values_list('building_id', flat=True))
         building_ids.extend(resident_ids)
-        
+
         building_ids = list(set(building_ids))
         return self.queryset.filter(chat_room__building_id__in=building_ids)
 
@@ -299,17 +299,17 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         Δημιουργία μηνύματος με αυτόματη ενημέρωση ειδοποιήσεων.
         """
         message = serializer.save()
-        
+
         # Ενημέρωση ειδοποιήσεων για όλους τους συμμετέχοντες
         participants = message.chat_room.participants.exclude(user=message.sender)
-        
+
         for participant in participants:
             notification, created = ChatNotification.objects.get_or_create(
                 chat_room=message.chat_room,
                 user=participant.user,
                 defaults={'unread_count': 1}
             )
-            
+
             if not created:
                 notification.unread_count += 1
                 notification.save()
@@ -321,21 +321,21 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         """
         message = self.get_object()
         user = request.user
-        
+
         # Έλεγχος αν ο χρήστης είναι ο αποστολέας του μηνύματος
         if message.sender != user:
             return Response(
                 {"error": "Μπορείτε να επεξεργαστείτε μόνο τα δικά σας μηνύματα"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Έλεγχος αν το μήνυμα έχει διαγραφεί
         if message.is_deleted:
             return Response(
                 {"error": "Δεν μπορείτε να επεξεργαστείτε διαγραμμένο μήνυμα"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         serializer = ChatMessageUpdateSerializer(message, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -349,24 +349,24 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         """
         message = self.get_object()
         user = request.user
-        
+
         # Έλεγχος αν ο χρήστης είναι ο αποστολέας του μηνύματος
         if message.sender != user:
             return Response(
                 {"error": "Μπορείτε να διαγράψετε μόνο τα δικά σας μηνύματα"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         if message.is_deleted:
             return Response(
                 {"error": "Το μήνυμα έχει ήδη διαγραφεί"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         message.is_deleted = True
         message.deleted_at = timezone.now()
         message.save(update_fields=['is_deleted', 'deleted_at'])
-        
+
         return Response({
             "message": "Το μήνυμα διαγράφηκε επιτυχώς",
             "data": ChatMessageSerializer(message, context={'request': request}).data
@@ -380,26 +380,26 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         message = self.get_object()
         user = request.user
         emoji = request.data.get('emoji', '').strip()
-        
+
         if not emoji:
             return Response(
                 {"error": "Απαιτείται emoji"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         if message.is_deleted:
             return Response(
                 {"error": "Δεν μπορείτε να αντιδράσετε σε διαγραμμένο μήνυμα"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Toggle reaction - αν υπάρχει διαγραφή, αλλιώς δημιουργία
         reaction, created = MessageReaction.objects.get_or_create(
             message=message,
             user=user,
             emoji=emoji
         )
-        
+
         if not created:
             # Αν υπάρχει ήδη, αφαίρεσέ το (toggle)
             reaction.delete()
@@ -408,7 +408,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
                 "message": f"Αφαιρέθηκε το {emoji}",
                 "reactions": self._get_message_reactions(message, user)
             })
-        
+
         return Response({
             "action": "added",
             "message": f"Προστέθηκε το {emoji}",
@@ -423,13 +423,13 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         message = self.get_object()
         user = request.user
         emoji = request.query_params.get('emoji', '').strip()
-        
+
         if not emoji:
             return Response(
                 {"error": "Απαιτείται emoji"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             reaction = MessageReaction.objects.get(
                 message=message,
@@ -450,7 +450,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
     def _get_message_reactions(self, message, current_user):
         """Helper για να πάρουμε τα reactions ενός μηνύματος"""
         reactions = message.reactions.select_related('user').all()
-        
+
         emoji_groups = {}
         for reaction in reactions:
             emoji = reaction.emoji
@@ -468,7 +468,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
             })
             if reaction.user.id == current_user.id:
                 emoji_groups[emoji]['has_reacted'] = True
-        
+
         return list(emoji_groups.values())
 
     @action(detail=False, methods=['post'])
@@ -480,18 +480,18 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             chat_room_id = serializer.validated_data['chat_room_id']
             last_message_id = serializer.validated_data.get('last_message_id')
-            
+
             try:
                 notification = ChatNotification.objects.get(
                     chat_room_id=chat_room_id,
                     user=request.user
                 )
-                
+
                 # Ενημέρωση ειδοποίησης
                 notification.unread_count = 0
                 notification.last_read_at = timezone.now()
                 notification.save()
-                
+
                 return Response({
                     "message": "Τα μηνύματα σημειώθηκαν ως διαβασμένα"
                 })
@@ -499,7 +499,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
                 return Response({
                     "error": "Δεν βρέθηκε ειδοποίηση για αυτό το chat room"
                 }, status=status.HTTP_404_NOT_FOUND)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
@@ -508,31 +508,31 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         Συνολικός αριθμός μη διαβασμένων μηνυμάτων για τον χρήστη.
         """
         user = request.user
-        
+
         # Για superusers, επιστρέφει 0
         if user.is_superuser:
             return Response({"unread_count": 0})
-        
+
         # Για άλλους χρήστες, υπολογίζει τα μη διαβασμένα μηνύματα
         from buildings.models import Building
-        
+
         building_ids = []
-        
+
         # Κτίρια που διαχειρίζεται (manager_id is integer, not FK)
         managed_ids = list(Building.objects.filter(manager_id=user.id).values_list('id', flat=True))
         building_ids.extend(managed_ids)
-        
+
         # Κτίρια που κατοικεί
         resident_ids = list(user.memberships.values_list('building_id', flat=True))
         building_ids.extend(resident_ids)
-        
+
         building_ids = list(set(building_ids))
-        
+
         total_unread = ChatNotification.objects.filter(
             chat_room__building_id__in=building_ids,
             user=user
         ).aggregate(total=Sum('unread_count'))['total'] or 0
-        
+
         return Response({"unread_count": total_unread})
 
 
@@ -568,19 +568,19 @@ class DirectConversationViewSet(viewsets.ModelViewSet):
             data=request.data,
             context={'request': request}
         )
-        
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
         recipient = serializer.validated_data['recipient']
         building = serializer.validated_data['building']
         initial_message = serializer.validated_data.get('initial_message', '')
-        
+
         # Get or create conversation
         conversation, created = DirectConversation.get_or_create_conversation(
             request.user, recipient, building
         )
-        
+
         # Send initial message if provided
         if initial_message and created:
             DirectMessage.objects.create(
@@ -590,10 +590,10 @@ class DirectConversationViewSet(viewsets.ModelViewSet):
             )
             # Update conversation timestamp
             conversation.save()  # This triggers auto_now on updated_at
-        
+
         return Response({
             "conversation": DirectConversationSerializer(
-                conversation, 
+                conversation,
                 context={'request': request}
             ).data,
             "created": created
@@ -605,21 +605,21 @@ class DirectConversationViewSet(viewsets.ModelViewSet):
         Λίστα μηνυμάτων μιας συνομιλίας.
         """
         conversation = self.get_object()
-        
+
         # Check access
         if not conversation.has_participant(request.user):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτή τη συνομιλία"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Get messages with pagination
         page_size = int(request.query_params.get('page_size', 50))
         page = int(request.query_params.get('page', 1))
         offset = (page - 1) * page_size
-        
+
         messages = conversation.messages.order_by('-created_at')[offset:offset + page_size]
-        
+
         return Response({
             "messages": DirectMessageSerializer(
                 reversed(list(messages)),  # Reverse to get chronological order
@@ -635,21 +635,21 @@ class DirectConversationViewSet(viewsets.ModelViewSet):
         Αποστολή μηνύματος σε συνομιλία.
         """
         conversation = self.get_object()
-        
+
         # Check access
         if not conversation.has_participant(request.user):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτή τη συνομιλία"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         content = request.data.get('content', '').strip()
         if not content:
             return Response(
                 {"error": "Το μήνυμα δεν μπορεί να είναι κενό"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         message = DirectMessage.objects.create(
             conversation=conversation,
             sender=request.user,
@@ -658,10 +658,10 @@ class DirectConversationViewSet(viewsets.ModelViewSet):
             file_url=request.data.get('file_url'),
             file_name=request.data.get('file_name')
         )
-        
+
         # Update conversation timestamp
         conversation.save()
-        
+
         return Response(
             DirectMessageSerializer(message, context={'request': request}).data,
             status=status.HTTP_201_CREATED
@@ -673,21 +673,21 @@ class DirectConversationViewSet(viewsets.ModelViewSet):
         Σήμανση όλων των μηνυμάτων ως διαβασμένα.
         """
         conversation = self.get_object()
-        
+
         # Check access
         if not conversation.has_participant(request.user):
             return Response(
                 {"error": "Δεν έχετε πρόσβαση σε αυτή τη συνομιλία"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         # Mark all unread messages from the other participant as read
         unread_messages = conversation.messages.filter(
             is_read=False
         ).exclude(sender=request.user)
-        
+
         count = unread_messages.update(is_read=True, read_at=timezone.now())
-        
+
         return Response({
             "message": f"{count} μηνύματα σημειώθηκαν ως διαβασμένα"
         })
@@ -707,7 +707,7 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         return DirectMessage.objects.filter(
-            Q(conversation__participant_one=user) | 
+            Q(conversation__participant_one=user) |
             Q(conversation__participant_two=user)
         ).select_related('sender', 'conversation')
 
@@ -717,13 +717,13 @@ class DirectMessageViewSet(viewsets.ModelViewSet):
         Συνολικός αριθμός μη διαβασμένων ιδιωτικών μηνυμάτων.
         """
         user = request.user
-        
+
         count = DirectMessage.objects.filter(
-            Q(conversation__participant_one=user) | 
+            Q(conversation__participant_one=user) |
             Q(conversation__participant_two=user),
             is_read=False
         ).exclude(sender=user).count()
-        
+
         return Response({"unread_count": count})
 
 
@@ -745,14 +745,14 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         Ο client πρέπει να καλεί αυτό κάθε 15-30 δευτερόλεπτα.
         """
         user = request.user
-        
+
         online_status, created = OnlineStatus.objects.update_or_create(
             user=user,
             defaults={'is_online': True}
         )
         # Force update last_activity
         online_status.save()
-        
+
         return Response({
             'status': 'ok',
             'timestamp': timezone.now().isoformat()
@@ -764,9 +764,9 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         Σήμανση χρήστη ως offline (π.χ. όταν κλείνει το tab).
         """
         user = request.user
-        
+
         OnlineStatus.objects.filter(user=user).update(is_online=False)
-        
+
         return Response({
             'status': 'offline',
             'timestamp': timezone.now().isoformat()
@@ -779,15 +779,15 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         Αυτό μπορεί να κληθεί περιοδικά από admin ή scheduled task.
         """
         from datetime import timedelta
-        
+
         stale_threshold = timezone.now() - timedelta(seconds=60)
-        
+
         # Mark stale users as offline
         stale_count = OnlineStatus.objects.filter(
             is_online=True,
             last_activity__lt=stale_threshold
         ).update(is_online=False)
-        
+
         return Response({
             'stale_users_marked_offline': stale_count,
             'threshold_seconds': 60,
@@ -802,7 +802,7 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         user = request.user
         is_online = request.data.get('is_online', True)
         status_message = request.data.get('status_message', '')
-        
+
         online_status, created = OnlineStatus.objects.update_or_create(
             user=user,
             defaults={
@@ -810,7 +810,7 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                 'status_message': status_message
             }
         )
-        
+
         return Response(OnlineStatusSerializer(online_status).data)
 
     @action(detail=False, methods=['get'])
@@ -822,17 +822,17 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
         from django.contrib.auth import get_user_model
         from django_tenants.utils import schema_context
         import logging
-        
+
         logger = logging.getLogger(__name__)
         User = get_user_model()
-        
+
         building_id = request.query_params.get('building_id')
         if not building_id:
             return Response(
                 {"error": "Απαιτείται building_id"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             building_id = int(building_id)
             building = Building.objects.get(id=building_id)
@@ -841,7 +841,7 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                 {"error": "Το κτίριο δεν βρέθηκε"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Check access using the unified can_access_building method
         user = request.user
         if not user.can_access_building(building):
@@ -849,23 +849,23 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                 {"error": "Δεν έχετε πρόσβαση σε αυτό το κτίριο"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         try:
             # Collect user IDs from building
             # 1. Get manager_id from building (cross-schema reference)
             manager_ids = [building.manager_id] if building.manager_id else []
-            
+
             # 2. Get internal_manager if exists
             if building.internal_manager_id:
                 manager_ids.append(building.internal_manager_id)
-            
+
             # 3. Get resident IDs from BuildingMembership (tenant schema)
             resident_ids = list(BuildingMembership.objects.filter(
                 building=building
             ).values_list('resident_id', flat=True))
-            
+
             all_user_ids = list(set(manager_ids + resident_ids))
-            
+
             if not all_user_ids:
                 return Response({
                     "building_id": building_id,
@@ -874,12 +874,12 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                     "online_count": 0,
                     "total_count": 0
                 })
-            
+
             # Get users from PUBLIC schema (users are in SHARED_APPS)
             with schema_context('public'):
                 users_queryset = User.objects.filter(id__in=all_user_ids)
                 users_dict = {u.id: u for u in users_queryset}
-            
+
             # Get online statuses from TENANT schema (chat is in TENANT_APPS)
             online_statuses = {}
             try:
@@ -888,26 +888,26 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
             except Exception:
                 # OnlineStatus table might not exist yet
                 pass
-            
+
             # Build users data
             users_data = []
             for user_id in all_user_ids:
                 u = users_dict.get(user_id)
                 if not u:
                     continue
-                
+
                 # Get online status
                 online_status = online_statuses.get(user_id)
                 is_online = online_status.is_online if online_status else False
                 last_activity = online_status.last_activity.isoformat() if online_status and online_status.last_activity else None
                 status_message = online_status.status_message if online_status else None
-                
+
                 # Determine role
                 if user_id in manager_ids:
                     role = 'manager'
                 else:
                     role = 'resident'
-                
+
                 users_data.append({
                     'id': u.id,
                     'name': u.get_full_name() or u.email,
@@ -917,10 +917,10 @@ class OnlineStatusViewSet(viewsets.ModelViewSet):
                     'last_activity': last_activity,
                     'status_message': status_message,
                 })
-            
+
             # Sort: online users first, then by name
             users_data.sort(key=lambda x: (not x['is_online'], x['name'].lower()))
-            
+
             return Response({
                 "building_id": building_id,
                 "building_name": building.name,
@@ -958,14 +958,14 @@ class PushSubscriptionViewSet(viewsets.ModelViewSet):
         Εγγραφή σε push notifications.
         """
         serializer = SubscribePushSerializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
         endpoint = serializer.validated_data['endpoint']
         keys = serializer.validated_data['keys']
         user_agent = request.META.get('HTTP_USER_AGENT', '')
-        
+
         # Create or update subscription
         subscription, created = PushSubscription.objects.update_or_create(
             user=request.user,
@@ -977,7 +977,7 @@ class PushSubscriptionViewSet(viewsets.ModelViewSet):
                 'is_active': True
             }
         )
-        
+
         return Response({
             'message': 'Εγγραφή επιτυχής' if created else 'Subscription ενημερώθηκε',
             'subscription': PushSubscriptionSerializer(subscription).data
@@ -989,13 +989,13 @@ class PushSubscriptionViewSet(viewsets.ModelViewSet):
         Απεγγραφή από push notifications.
         """
         endpoint = request.data.get('endpoint')
-        
+
         if not endpoint:
             return Response(
                 {'error': 'Απαιτείται endpoint'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             subscription = PushSubscription.objects.get(
                 user=request.user,
@@ -1003,7 +1003,7 @@ class PushSubscriptionViewSet(viewsets.ModelViewSet):
             )
             subscription.is_active = False
             subscription.save()
-            
+
             return Response({'message': 'Απεγγραφή επιτυχής'})
         except PushSubscription.DoesNotExist:
             return Response(
@@ -1011,21 +1011,21 @@ class PushSubscriptionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def vapid_public_key(self, request):
         """
         Επιστρέφει το VAPID public key για εγγραφή.
         """
         from django.conf import settings
-        
+
         vapid_key = getattr(settings, 'VAPID_PUBLIC_KEY', None)
-        
+
         if not vapid_key:
             return Response(
                 {'error': 'VAPID key δεν έχει ρυθμιστεί'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
         return Response({'public_key': vapid_key})
 
 
@@ -1058,18 +1058,18 @@ class ChatNotificationPreferenceViewSet(viewsets.ModelViewSet):
         preferences, created = ChatNotificationPreference.objects.get_or_create(
             user=request.user
         )
-        
+
         if request.method == 'GET':
             return Response(ChatNotificationPreferenceSerializer(preferences).data)
-        
+
         serializer = ChatNotificationPreferenceSerializer(
-            preferences, 
-            data=request.data, 
+            preferences,
+            data=request.data,
             partial=(request.method == 'PATCH')
         )
-        
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
