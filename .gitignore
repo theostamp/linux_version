@@ -86,3 +86,6 @@ Z_logs
 
 # Local docs (do not commit)
 Bsn_plan
+
+# Local scripts
+git-sync.sh
