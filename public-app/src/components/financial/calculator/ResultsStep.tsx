@@ -95,6 +95,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [sendScope, setSendScope] = useState<'current' | 'all' | 'selected'>('current');
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<number[]>([]);
   const [isSendingNotifications, setIsSendingNotifications] = useState(false);
+  const [issuedPeriodId, setIssuedPeriodId] = useState<number | null>(null);
 
   // Get user office details
   const { user } = useAuth();
@@ -133,6 +134,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
   // Auto-refresh when selectedMonth changes
   useMonthRefresh(selectedMonth, forceRefresh, 'ResultsStep');
+  useEffect(() => {
+    setIssuedPeriodId(null);
+  }, [buildingId, notificationMonth]);
   const occupantsByApartmentId = useMemo(() => {
     const map: Record<number, { owner_name?: string; tenant_name?: string }> = {};
     aptWithFinancial.forEach((apt) => {
@@ -362,9 +366,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     setIsSendingNotifications(true);
     try {
       if (targetIds.length === 1) {
+        const periodIdForSend = targetIds[0] === buildingId ? issuedPeriodId : null;
         await notificationsApi.sendPersonalizedCommonExpenses({
           building_id: targetIds[0],
           month: notificationMonth,
+          period_id: periodIdForSend ?? undefined,
           include_sheet: true,
           include_notification: true,
           mark_period_sent: true,
@@ -526,7 +532,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         sheet_attachment: sheetFile
       };
 
-      await issueCommonExpenses(payload);
+      const issueResponse = await issueCommonExpenses(payload);
+      if (issueResponse?.period_id) {
+        setIssuedPeriodId(Number(issueResponse.period_id));
+      }
 
       toast.success('Τα κοινοχρήστα εκδόθηκαν επιτυχώς!');
 

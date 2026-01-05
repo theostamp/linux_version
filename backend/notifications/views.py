@@ -600,6 +600,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
         building_id = request.data.get('building_id')
         month_str = request.data.get('month')
+        period_id = request.data.get('period_id')
         include_sheet = request.data.get('include_sheet', True)
         include_notification = request.data.get('include_notification', True)
         custom_message = request.data.get('custom_message', '')
@@ -660,11 +661,26 @@ class NotificationViewSet(viewsets.ModelViewSet):
             path = f'common_expenses/{building_id}/{month_str}/{custom_attachment.name}'
             custom_attachment_path = default_storage.save(path, ContentFile(custom_attachment.read()))
 
+        period_id_int = None
+        if period_id:
+            try:
+                period_id_int = int(period_id)
+            except (TypeError, ValueError):
+                return Response({'error': 'Invalid period_id'}, status=status.HTTP_400_BAD_REQUEST)
+            from financial.models import CommonExpensePeriod
+            period_exists = CommonExpensePeriod.objects.filter(
+                id=period_id_int,
+                building_id=int(building_id),
+            ).exists()
+            if not period_exists:
+                return Response({'error': 'period_id not found for building'}, status=status.HTTP_404_NOT_FOUND)
+
         # Send notifications
         results = CommonExpenseNotificationService.send_common_expense_notifications(
             building_id=int(building_id),
             month=month,
             apartment_ids=apartment_ids,
+            period_id=period_id_int,
             include_sheet=include_sheet,
             include_notification=include_notification,
             custom_attachment=custom_attachment_path,

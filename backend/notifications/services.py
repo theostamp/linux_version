@@ -930,6 +930,7 @@ class MonthlyTaskService:
             results = CommonExpenseNotificationService.send_common_expense_notifications(
                 building_id=task.building.id,
                 month=target_month,
+                period_id=getattr(period, "id", None),
                 include_sheet=True,
                 include_notification=True,
                 custom_message=custom_message or None,

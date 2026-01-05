@@ -217,6 +217,7 @@ export const notificationsApi = {
   sendPersonalizedCommonExpenses: async (data: {
     building_id: number;
     month: string;
+    period_id?: number;
     include_sheet?: boolean;
     include_notification?: boolean;
     custom_message?: string;
@@ -238,6 +239,10 @@ export const notificationsApi = {
 
     if (data.attachment) {
       formData.append('attachment', data.attachment);
+    }
+
+    if (data.period_id !== undefined && data.period_id !== null) {
+      formData.append('period_id', String(data.period_id));
     }
 
     if (data.apartment_ids && data.apartment_ids.length > 0) {

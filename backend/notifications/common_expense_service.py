@@ -555,6 +555,7 @@ class CommonExpenseNotificationService:
         building_id: int,
         month: date,
         apartment_ids: List[int] = None,
+        period_id: Optional[int] = None,
         include_sheet: bool = True,
         include_notification: bool = True,
         custom_attachment: str = None,
@@ -572,6 +573,7 @@ class CommonExpenseNotificationService:
             building_id: The building ID
             month: The month for the common expenses
             apartment_ids: Optional list of specific apartment IDs (None = all)
+            period_id: Optional CommonExpensePeriod ID to pin the sheet to a specific issue run
             include_sheet: Whether to include the common expense sheet JPG
             include_notification: Whether to include personalized payment data
             custom_attachment: Optional custom attachment path
@@ -629,16 +631,22 @@ class CommonExpenseNotificationService:
         period = None
         try:
             from financial.models import CommonExpensePeriod
-            month_start = date(month.year, month.month, 1)
-            if month.month == 12:
-                month_end = date(month.year + 1, 1, 1)
-            else:
-                month_end = date(month.year, month.month + 1, 1)
-            period = CommonExpensePeriod.objects.filter(
-                building_id=building_id,
-                start_date__lt=month_end,
-                end_date__gte=month_start,
-            ).order_by('-start_date').first()
+            if period_id:
+                period = CommonExpensePeriod.objects.filter(
+                    id=period_id,
+                    building_id=building_id,
+                ).first()
+            if not period:
+                month_start = date(month.year, month.month, 1)
+                if month.month == 12:
+                    month_end = date(month.year + 1, 1, 1)
+                else:
+                    month_end = date(month.year, month.month + 1, 1)
+                period = CommonExpensePeriod.objects.filter(
+                    building_id=building_id,
+                    start_date__lt=month_end,
+                    end_date__gte=month_start,
+                ).order_by('-start_date').first()
         except Exception as period_error:
             logger.warning("Common expense period lookup failed: %s", period_error)
 
@@ -653,7 +661,10 @@ class CommonExpenseNotificationService:
         # Get the common expense sheet if requested
         sheet_path = None
         if include_sheet:
-            sheet_path = CommonExpenseNotificationService.get_common_expense_sheet(building_id, month)
+            if period and period.sheet_attachment:
+                sheet_path = period.sheet_attachment.name or str(period.sheet_attachment)
+            else:
+                sheet_path = CommonExpenseNotificationService.get_common_expense_sheet(building_id, month)
             if sheet_path:
                 results['sheet_attached'] = True
                 logger.info(f"Found common expense sheet: {sheet_path}")
@@ -684,6 +695,8 @@ class CommonExpenseNotificationService:
         month_key = month.strftime('%Y-%m')
         frontend_base = CommonExpenseNotificationService._resolve_tenant_frontend_base()
         sheet_download_url = (
+            f"{frontend_base}/common-expenses/sheet?building_id={building_id}"
+            f"&period_id={period.id}" if (frontend_base and period) else
             f"{frontend_base}/common-expenses/sheet?building_id={building_id}&month={month_key}"
             if frontend_base else ""
         )
