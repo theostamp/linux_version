@@ -12,6 +12,7 @@ import mimetypes
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.http import FileResponse
 from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
@@ -2575,6 +2576,22 @@ class CommonExpenseViewSet(viewsets.ViewSet):
     def issue(self, request):
         """Έκδοση κοινοχρήστων"""
         try:
+            def coerce_date(value):
+                if isinstance(value, datetime):
+                    return value.date()
+                if isinstance(value, date):
+                    return value
+                if isinstance(value, str):
+                    parsed = parse_date(value)
+                    if parsed:
+                        return parsed
+                    iso_value = value.replace('Z', '+00:00')
+                    try:
+                        return datetime.fromisoformat(iso_value).date()
+                    except ValueError:
+                        return None
+                return None
+
             data = request.data
             building_id = data.get('building_id') or data.get('building')
             period_data = data.get('period_data', {})
@@ -2597,8 +2614,8 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                     shares = {}
 
             # Find or create common expense period
-            start_date = period_data.get('start_date')
-            end_date = period_data.get('end_date')
+            start_date = coerce_date(period_data.get('start_date'))
+            end_date = coerce_date(period_data.get('end_date'))
             period = None
             if start_date and end_date:
                 period = CommonExpensePeriod.objects.filter(
@@ -2608,13 +2625,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 ).order_by('start_date').first()
 
             current_month_start = timezone.localdate().replace(day=1)
-            period_end_date = None
-            if end_date:
-                try:
-                    period_end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-                except (TypeError, ValueError):
-                    period_end_date = None
-
+            period_end_date = end_date
             if period_end_date and period_end_date >= current_month_start and not period:
                 return Response(
                     {'error': 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.'},
@@ -2632,7 +2643,8 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 period.period_name = period_data.get('name')
                 period.save(update_fields=['period_name'])
 
-            if period.end_date and period.end_date >= current_month_start:
+            period_end_check = coerce_date(period.end_date)
+            if period_end_check and period_end_check >= current_month_start:
                 return Response(
                     {'error': 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.'},
                     status=status.HTTP_400_BAD_REQUEST

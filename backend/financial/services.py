@@ -4,8 +4,9 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 from typing import Dict, Any, List, Optional
 from django.db.models import Sum
-from datetime import datetime
+from datetime import datetime, date
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
 from apartments.models import Apartment
 from buildings.models import Building
@@ -2177,8 +2178,25 @@ class CommonExpenseAutomationService:
         Returns:
             Dict με τα αποτελέσματα της έκδοσης
         """
+        def coerce_date(value):
+            if isinstance(value, datetime):
+                return value.date()
+            if isinstance(value, date):
+                return value
+            if isinstance(value, str):
+                parsed = parse_date(value)
+                if parsed:
+                    return parsed
+                iso_value = value.replace('Z', '+00:00')
+                try:
+                    return datetime.fromisoformat(iso_value).date()
+                except ValueError:
+                    return None
+            return None
+
         current_month_start = timezone.localdate().replace(day=1)
-        if not period.end_date or period.end_date >= current_month_start:
+        period_end_date = coerce_date(period.end_date)
+        if not period_end_date or period_end_date >= current_month_start:
             return {
                 'success': False,
                 'message': 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.',
