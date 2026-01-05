@@ -59,6 +59,7 @@ SHARED_APPS = [
     'ad_portal',            # Automated Ad Portal (public schema)
     'ad_portal_public',     # Ad Portal Stripe webhooks/idempotency (public schema)
     'marketplace_public',   # Global Marketplace (public schema)
+    'email_webhooks',       # MailerSend webhooks (public schema)
 
     'corsheaders',
     'django.contrib.contenttypes',
@@ -492,6 +493,8 @@ EMAIL_SUBJECT_PREFIX = '[New Concierge] '
 # MailerSend API Configuration
 MAILERSEND_API_KEY = os.getenv('MAILERSEND_API_KEY', '')
 MAILERSEND_FROM_EMAIL = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.app')
+MAILERSEND_WEBHOOK_SECRET = os.getenv('MAILERSEND_WEBHOOK_SECRET', '')
+MAILERSEND_WEBHOOK_VERIFY = os.getenv('MAILERSEND_WEBHOOK_VERIFY', 'False').lower() == 'true'
 
 # SendGrid API Configuration (backup)
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')

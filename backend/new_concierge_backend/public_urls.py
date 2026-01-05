@@ -55,6 +55,8 @@ urlpatterns = [
     path('api/webhooks/ad-portal/', include('ad_portal_public.urls')),
     # Viber webhook (public schema)
     path('api/webhooks/viber/', viber_webhook, name='viber-webhook'),
+    # MailerSend webhook (public schema)
+    path('api/webhooks/', include('email_webhooks.urls')),
 
     # Automated Ad Portal (public schema)
     path('api/ad-portal/', include('ad_portal.urls')),
