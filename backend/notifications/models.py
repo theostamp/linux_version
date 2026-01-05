@@ -814,6 +814,95 @@ class NotificationRecipient(models.Model):
             self.save(update_fields=['clicked_at'])
 
 
+class EmailBatch(models.Model):
+    PURPOSE_CHOICES = [
+        ('common_expense', 'Common Expense'),
+        ('debt_reminder', 'Debt Reminder'),
+        ('general', 'General'),
+    ]
+
+    purpose = models.CharField(max_length=50, choices=PURPOSE_CHOICES, db_index=True)
+    subject = models.CharField(max_length=255, blank=True)
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='email_batches'
+    )
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='email_batches'
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['purpose', 'created_at']),
+            models.Index(fields=['building', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.purpose} batch {self.id}"
+
+
+class EmailBatchRecipient(models.Model):
+    STATUS_CHOICES = [
+        ('invalid', 'Invalid'),
+        ('sent_to_provider', 'Sent to Provider'),
+        ('failed_immediate', 'Failed Immediate'),
+        ('delivered', 'Delivered'),
+        ('bounced_hard', 'Bounced Hard'),
+        ('bounced_soft', 'Bounced Soft'),
+        ('blocked', 'Blocked'),
+        ('complaint', 'Complaint'),
+        ('unknown_final', 'Unknown Final'),
+    ]
+
+    batch = models.ForeignKey(
+        EmailBatch,
+        on_delete=models.CASCADE,
+        related_name='recipients'
+    )
+    apartment = models.ForeignKey(
+        Apartment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='email_batch_recipients'
+    )
+    email = models.EmailField(blank=True)
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default='invalid',
+        db_index=True
+    )
+    provider_message_id = models.CharField(max_length=200, blank=True, db_index=True)
+    provider_request_id = models.CharField(max_length=200, blank=True)
+    error_message = models.TextField(blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    finalized_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['batch', 'status']),
+            models.Index(fields=['email', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.email or 'unknown'} ({self.status})"
+
+
 class UserDeviceToken(models.Model):
     """
     Stores device tokens for push notifications (FCM).

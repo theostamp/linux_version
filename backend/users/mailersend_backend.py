@@ -42,6 +42,9 @@ class MailerSendEmailBackend(BaseEmailBackend):
         Send a single email message using MailerSend API
         """
         try:
+            message.mailersend_message_id = ""
+            message.mailersend_request_id = ""
+
             # Extract HTML and text content from EmailMultiAlternatives
             html_content = None
             text_content = None
@@ -109,13 +112,28 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 timeout=30
             )
 
-            logger.info(f"MailerSend API response: status={response.status_code}, headers={dict(response.headers)}")
+            response_headers = dict(response.headers)
+            logger.info(f"MailerSend API response: status={response.status_code}, headers={response_headers}")
+
+            request_id = response_headers.get('X-Request-Id') or response_headers.get('x-request-id')
+            if request_id:
+                message.mailersend_request_id = request_id
+
+            message_id = response_headers.get('X-Message-Id') or response_headers.get('x-message-id')
+            if not message_id:
+                try:
+                    response_payload = response.json() if response.content else {}
+                except ValueError:
+                    response_payload = {}
+                if isinstance(response_payload, dict):
+                    message_id = response_payload.get('message_id') or response_payload.get('messageId') or response_payload.get('id')
+            if message_id:
+                message.mailersend_message_id = str(message_id)
 
             if response.status_code == 202:
                 logger.info(f"Email sent successfully via MailerSend to {message.to}")
                 return True
             else:
-                request_id = response.headers.get('X-Request-Id') or response.headers.get('x-request-id')
                 if request_id:
                     logger.error(f"MailerSend request id: {request_id}")
                 logger.error(f"MailerSend API error: {response.status_code} - {response.text}")

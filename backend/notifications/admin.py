@@ -3,7 +3,7 @@ Django admin configuration for notifications app.
 """
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import NotificationTemplate, Notification, NotificationRecipient
+from .models import NotificationTemplate, Notification, NotificationRecipient, EmailBatch, EmailBatchRecipient
 
 
 @admin.register(NotificationTemplate)
@@ -306,3 +306,58 @@ class NotificationRecipientAdmin(admin.ModelAdmin):
             obj.get_status_display()
         )
     status_badge.short_description = 'Status'
+
+
+class EmailBatchRecipientInline(admin.TabularInline):
+    model = EmailBatchRecipient
+    extra = 0
+    readonly_fields = [
+        'apartment',
+        'email',
+        'status',
+        'provider_message_id',
+        'provider_request_id',
+        'sent_at',
+        'finalized_at',
+        'error_message',
+        'created_at',
+    ]
+    fields = [
+        'apartment',
+        'email',
+        'status',
+        'provider_message_id',
+        'provider_request_id',
+        'sent_at',
+        'finalized_at',
+        'error_message',
+        'created_at',
+    ]
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(EmailBatch)
+class EmailBatchAdmin(admin.ModelAdmin):
+    list_display = [
+        'id',
+        'purpose',
+        'building',
+        'subject',
+        'created_by',
+        'created_at',
+    ]
+    list_filter = [
+        'purpose',
+        'building',
+    ]
+    search_fields = [
+        'subject',
+    ]
+    readonly_fields = [
+        'created_at',
+        'updated_at',
+    ]
+    inlines = [EmailBatchRecipientInline]

@@ -10,6 +10,7 @@ class EmailWebhookEvent(models.Model):
     occurred_at = models.DateTimeField(null=True, blank=True)
     payload = models.JSONField(default=dict, blank=True)
     received_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
     signature = models.CharField(max_length=255, blank=True)
 
     class Meta:

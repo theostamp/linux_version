@@ -18,12 +18,14 @@ from django.db.models import Q
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from django.utils import timezone
 from django_tenants.utils import get_public_schema_name, get_tenant_domain_model, schema_context
 
 from .push_service import PushNotificationService
 from .webpush_service import WebPushService
 from .viber_notification_service import ViberNotificationService
-from core.emailing import _absolute_url, extract_legacy_body_html, send_templated_email
+from .models import EmailBatch, EmailBatchRecipient
+from core.emailing import _absolute_url, extract_legacy_body_html, send_templated_email_with_result
 
 logger = logging.getLogger(__name__)
 
@@ -603,6 +605,7 @@ class CommonExpenseNotificationService:
             'sent_count': 0,
             'failed_count': 0,
             'push_sent_count': 0,
+            'batch_id': None,
             'details': [],
             'skipped': False,
             'sheet_attached': False,
@@ -695,6 +698,25 @@ class CommonExpenseNotificationService:
         month_display = month.strftime('%B %Y')
         month_key = month.strftime('%Y-%m')
         frontend_base = CommonExpenseNotificationService._resolve_tenant_frontend_base()
+        subject_base = (subject_prefix or f"Κοινόχρηστα {month_display}").strip()
+        batch = None
+        try:
+            batch = EmailBatch.objects.create(
+                purpose='common_expense',
+                subject=subject_base,
+                building=building,
+                created_by=sender_user,
+                metadata={
+                    'month': month_key,
+                    'period_id': period.id if period else None,
+                    'sent_source': sent_source,
+                    'include_sheet': bool(include_sheet),
+                    'include_notification': bool(include_notification),
+                }
+            )
+            results['batch_id'] = batch.id
+        except Exception as batch_error:
+            logger.warning("Email batch creation failed: %s", batch_error)
         sheet_download_url = (
             f"{frontend_base}/common-expenses/sheet?building_id={building_id}"
             f"&period_id={period.id}" if (frontend_base and period) else
@@ -707,6 +729,7 @@ class CommonExpenseNotificationService:
             custom_message_html = custom_message.replace("\r\n", "\n").replace("\n", "<br>")
 
         for apartment in apartments:
+            recipient_email = ""
             try:
                 # Get recipient email
                 recipient_email = None
@@ -780,6 +803,14 @@ class CommonExpenseNotificationService:
                         results['push_sent_count'] += 1
 
                 if not recipient_email:
+                    if batch:
+                        EmailBatchRecipient.objects.create(
+                            batch=batch,
+                            apartment=apartment,
+                            email="",
+                            status='invalid',
+                            error_message='No email address',
+                        )
                     results['details'].append({
                         'apartment': apartment.number,
                         'status': 'skipped',
@@ -788,9 +819,6 @@ class CommonExpenseNotificationService:
                     continue
 
                 # Generate email content
-                subject_base = (subject_prefix or f"Κοινόχρηστα {month_display}").strip()
-                if not subject_base:
-                    subject_base = f"Κοινόχρηστα {month_display}"
                 subject = f"{subject_base} - {building.name} - Διαμ. {apartment.number}"
 
                 # Build text content
@@ -842,7 +870,7 @@ class CommonExpenseNotificationService:
 
                 # Send email
                 body_html = extract_legacy_body_html(html=html_content) if html_content else ""
-                email_ok = send_templated_email(
+                send_result = send_templated_email_with_result(
                     to=recipient_email,
                     subject=subject,
                     template_html="emails/wrapper.html",
@@ -851,6 +879,7 @@ class CommonExpenseNotificationService:
                     building_manager_id=getattr(building, "manager_id", None),
                     attachments=attachments or None,
                 )
+                email_ok = send_result.get("sent", False)
 
                 if email_ok:
                     results['sent_count'] += 1
@@ -860,6 +889,16 @@ class CommonExpenseNotificationService:
                         'status': 'sent',
                         'amount': apartment_data.get('net_obligation', 0) if apartment_data else None
                     })
+                    if batch:
+                        EmailBatchRecipient.objects.create(
+                            batch=batch,
+                            apartment=apartment,
+                            email=recipient_email,
+                            status='sent_to_provider',
+                            provider_message_id=send_result.get("provider_message_id", "") or "",
+                            provider_request_id=send_result.get("provider_request_id", "") or "",
+                            sent_at=timezone.now(),
+                        )
                 else:
                     results['failed_count'] += 1
                     results['details'].append({
@@ -869,6 +908,16 @@ class CommonExpenseNotificationService:
                         'error': 'Email provider rejected the send'
                     })
                     logger.error("Email provider rejected send for apartment %s (%s)", apartment.number, recipient_email)
+                    if batch:
+                        EmailBatchRecipient.objects.create(
+                            batch=batch,
+                            apartment=apartment,
+                            email=recipient_email,
+                            status='failed_immediate',
+                            provider_message_id=send_result.get("provider_message_id", "") or "",
+                            provider_request_id=send_result.get("provider_request_id", "") or "",
+                            error_message='Email provider rejected the send',
+                        )
 
             except Exception as e:
                 results['failed_count'] += 1
@@ -878,6 +927,14 @@ class CommonExpenseNotificationService:
                     'error': str(e)
                 })
                 logger.error(f"Error sending to apartment {apartment.number}: {e}")
+                if batch:
+                    EmailBatchRecipient.objects.create(
+                        batch=batch,
+                        apartment=apartment,
+                        email=recipient_email or "",
+                        status='failed_immediate',
+                        error_message=str(e),
+                    )
 
         if mark_period_sent and period:
             should_mark = results['sent_count'] > 0 or results['push_sent_count'] > 0

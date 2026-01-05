@@ -697,6 +697,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
             'failed_count': results['failed_count'],
             'sheet_attached': results.get('sheet_attached', False),
             'notification_included': results.get('notification_included', False),
+            'batch_id': results.get('batch_id'),
             'details': results['details']
         }, status=status.HTTP_200_OK if results['success'] else status.HTTP_207_MULTI_STATUS)
 

@@ -189,6 +189,35 @@ def send_templated_email(
     - Adds default context keys: branding, app, frontend_url, year
     - Uses EmailMultiAlternatives so custom backends can extract html/text properly
     """
+    return send_templated_email_with_result(
+        to=to,
+        subject=subject,
+        template_html=template_html,
+        context=context,
+        template_text=template_text,
+        user=user,
+        tenant_id=tenant_id,
+        building_manager_id=building_manager_id,
+        sender_user=sender_user,
+        reply_to=reply_to,
+        attachments=attachments,
+    )["sent"]
+
+
+def send_templated_email_with_result(
+    *,
+    to: str | Sequence[str],
+    subject: str,
+    template_html: str,
+    context: Optional[dict[str, Any]] = None,
+    template_text: str | None = None,
+    user: CustomUser | None = None,
+    tenant_id: int | None = None,
+    building_manager_id: int | None = None,
+    sender_user: CustomUser | None = None,
+    reply_to: Sequence[str] | None = None,
+    attachments: Iterable[tuple[str, bytes, str]] | None = None,
+) -> dict[str, Any]:
     to_list = _to_list(to)
 
     branding = get_email_branding(
@@ -217,12 +246,10 @@ def send_templated_email(
     else:
         text = strip_tags(html)
 
-    # Ensure we keep the verified domain, but can vary the display-name per tenant/office.
     from_addr = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@newconcierge.gr")
     from_name = branding.get("office_name") or app.get("name") or "New Concierge"
     from_email = formataddr((from_name, from_addr))
 
-    # Prefer explicit reply_to, else use office user's email if present.
     computed_reply_to: list[str] | None = None
     if reply_to:
         computed_reply_to = list(reply_to)
@@ -244,7 +271,9 @@ def send_templated_email(
         for filename, content, mimetype in attachments:
             msg.attach(filename, content, mimetype)
 
-    sent = msg.send(fail_silently=False)
-    return bool(sent)
-
-
+    sent_count = msg.send(fail_silently=False)
+    return {
+        "sent": bool(sent_count),
+        "provider_message_id": getattr(msg, "mailersend_message_id", "") or getattr(msg, "provider_message_id", ""),
+        "provider_request_id": getattr(msg, "mailersend_request_id", "") or getattr(msg, "provider_request_id", ""),
+    }

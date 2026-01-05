@@ -56,6 +56,18 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute='*/30'),
         'args': (),
     },
+    # MailerSend webhook events processing (public schema -> tenants)
+    'process-mailersend-webhook-events': {
+        'task': 'email_webhooks.tasks.process_mailersend_webhook_events',
+        'schedule': crontab(minute='*/5'),
+        'args': (),
+    },
+    # Finalize email batch statuses after report window
+    'finalize-email-batches': {
+        'task': 'email_webhooks.tasks.finalize_email_batches',
+        'schedule': crontab(minute='*/10'),
+        'args': (30,),
+    },
     # Daily overdue debt reminders (matured balances)
     'send-daily-overdue-debt-reminders': {
         'task': 'notifications.tasks.send_daily_overdue_debt_reminders',
