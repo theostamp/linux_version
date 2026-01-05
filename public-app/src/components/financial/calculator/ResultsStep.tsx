@@ -118,6 +118,17 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const { apartments: aptWithFinancial, building: buildingData, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
   const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
 
+  const isFinalizablePeriod = useMemo(() => {
+    const dateStr = state.customPeriod?.endDate || state.customPeriod?.startDate;
+    if (!dateStr) return false;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || !month || !day) return false;
+    const periodEnd = new Date(year, month - 1, day);
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return periodEnd < currentMonthStart;
+  }, [state.customPeriod?.endDate, state.customPeriod?.startDate]);
+
   const availableBuildings = useMemo(() => {
     if (buildings && buildings.length > 0) {
       return buildings;
@@ -400,6 +411,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   };
 
   const handleIssue = async () => {
+    if (!isFinalizablePeriod) {
+      toast.error('Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.');
+      return;
+    }
     try {
       updateState({ isIssuing: true });
 
@@ -1654,7 +1669,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
         <Button
           onClick={handleIssue}
-          disabled={state.isIssuing}
+          disabled={state.isIssuing || !isFinalizablePeriod}
+          title={!isFinalizablePeriod ? 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.' : undefined}
           className="bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 hover:from-rose-700 hover:via-red-700 hover:to-orange-600 text-white shadow-xl hover:shadow-rose-500/30 border-0 rounded-full px-7 py-6 h-auto transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {state.isIssuing ? (
@@ -1665,7 +1681,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           ) : (
             <>
               <Send className="mr-2 h-4 w-4" />
-              Οριστική Έκδοση
+              Οριστική έκδοση μήνα που έχει περάσει
             </>
           )}
         </Button>

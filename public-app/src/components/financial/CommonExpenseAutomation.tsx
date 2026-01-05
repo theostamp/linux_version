@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -103,6 +103,36 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
       status: 'pending'
     }
   ]);
+
+  const isCurrentPeriodClosed = useMemo(() => {
+    const dateStr = currentPeriod?.end_date || currentPeriod?.start_date;
+    if (!dateStr) return false;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || !month || !day) return false;
+    const periodEnd = new Date(year, month - 1, day);
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return periodEnd < currentMonthStart;
+  }, [currentPeriod?.end_date, currentPeriod?.start_date]);
+
+  const canAutoProcess = useMemo(() => {
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const [year, month] = (startDate || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`)
+      .split('-')
+      .map(Number);
+    if (!year || !month) return false;
+    const monthsToAdd = periodType === 'quarterly'
+      ? 3
+      : periodType === 'semester'
+        ? 6
+        : periodType === 'yearly'
+          ? 12
+          : 1;
+    const nextPeriodStart = new Date(year, month - 1 + monthsToAdd, 1);
+    const periodEnd = new Date(nextPeriodStart.getFullYear(), nextPeriodStart.getMonth(), 0);
+    return periodEnd < currentMonthStart;
+  }, [periodType, startDate]);
 
   useEffect(() => {
     loadPeriodTemplates();
@@ -262,6 +292,14 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
       });
       return;
     }
+    if (!isCurrentPeriodClosed) {
+      toast({
+        title: "Προειδοποίηση",
+        description: "Η έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       updateStepStatus('issue-accounts', 'in-progress');
@@ -297,6 +335,14 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
   const handleAutoProcess = async () => {
     try {
+      if (!canAutoProcess) {
+        toast({
+          title: "Προειδοποίηση",
+          description: "Η αυτόματη έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.",
+          variant: "destructive",
+        });
+        return;
+      }
       // Reset steps
       resetSteps();
 
@@ -413,7 +459,8 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
             <div className="flex items-end">
               <Button
                 onClick={handleAutoProcess}
-                disabled={isLoading}
+                disabled={isLoading || !canAutoProcess}
+                title={!canAutoProcess ? 'Η αυτόματη έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.' : undefined}
                 className="w-full"
               >
                 {isLoading ? 'Επεξεργασία...' : 'Αυτόματη Επεξεργασία'}
@@ -536,7 +583,8 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
             <Button
               onClick={handleIssueAccounts}
-              disabled={isLoading || !currentPeriod || automationSteps[3].status === 'completed'}
+              disabled={isLoading || !currentPeriod || automationSteps[3].status === 'completed' || !isCurrentPeriodClosed}
+              title={!isCurrentPeriodClosed ? 'Η έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.' : undefined}
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2"
             >

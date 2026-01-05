@@ -2177,6 +2177,13 @@ class CommonExpenseAutomationService:
         Returns:
             Dict με τα αποτελέσματα της έκδοσης
         """
+        current_month_start = timezone.localdate().replace(day=1)
+        if not period.end_date or period.end_date >= current_month_start:
+            return {
+                'success': False,
+                'message': 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.',
+                'period_id': period.id
+            }
 
         if expenses is None:
             expenses = self.collect_expenses_for_period(period)

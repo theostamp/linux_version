@@ -2607,6 +2607,20 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                     end_date__gte=start_date
                 ).order_by('start_date').first()
 
+            current_month_start = timezone.localdate().replace(day=1)
+            period_end_date = None
+            if end_date:
+                try:
+                    period_end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                except (TypeError, ValueError):
+                    period_end_date = None
+
+            if period_end_date and period_end_date >= current_month_start and not period:
+                return Response(
+                    {'error': 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             if not period:
                 period = CommonExpensePeriod.objects.create(
                     building_id=building_id,
@@ -2617,6 +2631,12 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             elif period_data.get('name') and period.period_name != period_data.get('name'):
                 period.period_name = period_data.get('name')
                 period.save(update_fields=['period_name'])
+
+            if period.end_date and period.end_date >= current_month_start:
+                return Response(
+                    {'error': 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             if sheet_file:
                 period.sheet_attachment.save(sheet_file.name, sheet_file)
