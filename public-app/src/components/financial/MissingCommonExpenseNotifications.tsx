@@ -120,9 +120,9 @@ export default function MissingCommonExpenseNotifications() {
             </div>
           </div>
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           )}
         </button>
 
