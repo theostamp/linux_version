@@ -4,13 +4,14 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters import rest_framework as filters
 from django_filters import DateFilter
-from datetime import datetime, date
+from datetime import datetime, date, time, timedelta
 import io
 import json
 from decimal import Decimal
 import mimetypes
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.utils import timezone
 from django.http import FileResponse
 from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
@@ -3134,6 +3135,95 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             response = FileResponse(file_obj, content_type=content_type or 'application/octet-stream')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[FinancialReadPermission],
+        url_path='missing-notifications'
+    )
+    def missing_notifications(self, request):
+        """Έλεγχος αν έχουν σταλεί κοινοχρήστα προηγούμενου μήνα μέσα στον τρέχοντα."""
+        try:
+            today = timezone.localdate()
+            current_month_start = today.replace(day=1)
+            if current_month_start.month == 1:
+                prev_month_start = date(current_month_start.year - 1, 12, 1)
+            else:
+                prev_month_start = date(current_month_start.year, current_month_start.month - 1, 1)
+
+            current_month_start_dt = timezone.make_aware(
+                datetime.combine(current_month_start, time.min),
+                timezone.get_current_timezone()
+            )
+
+            permission = FinancialReadPermission()
+            buildings = Building.objects.all().order_by('name')
+            accessible_buildings = [
+                building for building in buildings
+                if permission.can_user_access_building(request.user, building)
+            ]
+
+            if not accessible_buildings:
+                return Response({
+                    'reference_month': prev_month_start.strftime('%Y-%m'),
+                    'current_month_start': current_month_start.isoformat(),
+                    'missing_count': 0,
+                    'missing_buildings': [],
+                })
+
+            building_ids = [building.id for building in accessible_buildings]
+            periods = CommonExpensePeriod.objects.filter(
+                building_id__in=building_ids,
+                start_date__lt=current_month_start,
+                end_date__gte=prev_month_start,
+            ).select_related('building').order_by('building_id', '-start_date')
+
+            period_by_building = {}
+            for period in periods:
+                if period.building_id not in period_by_building:
+                    period_by_building[period.building_id] = period
+
+            missing = []
+            for building in accessible_buildings:
+                period = period_by_building.get(building.id)
+                if not period:
+                    missing.append({
+                        'building_id': building.id,
+                        'building_name': building.name,
+                        'period_id': None,
+                        'period_name': None,
+                        'notifications_sent_at': None,
+                        'reason': 'no_period',
+                    })
+                    continue
+
+                sent_at = period.notifications_sent_at
+                if sent_at and timezone.is_naive(sent_at):
+                    sent_at = timezone.make_aware(sent_at, timezone.get_current_timezone())
+
+                if not sent_at or sent_at < current_month_start_dt:
+                    missing.append({
+                        'building_id': building.id,
+                        'building_name': building.name,
+                        'period_id': period.id,
+                        'period_name': period.period_name,
+                        'notifications_sent_at': sent_at.isoformat() if sent_at else None,
+                        'reason': 'not_sent_this_month',
+                    })
+
+            return Response({
+                'reference_month': prev_month_start.strftime('%Y-%m'),
+                'current_month_start': current_month_start.isoformat(),
+                'missing_count': len(missing),
+                'missing_buildings': missing,
+            })
 
         except Exception as e:
             return Response(

@@ -7,6 +7,7 @@ import GlobalHeader from '@/components/GlobalHeader';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { AIAssistantChat } from '@/components/ai-assistant/AIAssistantChat';
+import MissingCommonExpenseNotifications from '@/components/financial/MissingCommonExpenseNotifications';
 
 export default function DashboardLayout({
   children,
@@ -60,6 +61,7 @@ export default function DashboardLayout({
         </div>
       </div>
 
+      <MissingCommonExpenseNotifications />
       {/* AI Assistant Chat Widget */}
       <AIAssistantChat />
     </div>
