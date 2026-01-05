@@ -20,6 +20,51 @@ import type {
 } from '@/types/notifications';
 
 const BASE_URL = '/api/notifications';
+export const COMMON_EXPENSES_SENT_EVENT = 'common-expenses:sent';
+export const COMMON_EXPENSES_ATTEMPT_KEY = 'common-expenses:last-attempt';
+
+export type CommonExpensesSendAttempt = {
+  status: 'success' | 'failed' | 'queued';
+  mode: 'legacy' | 'personalized' | 'bulk';
+  building_id?: number;
+  building_ids?: number[];
+  month?: string;
+  queued_count?: number;
+  error?: string;
+  timestamp: string;
+};
+
+export const getLastCommonExpensesAttempt = (): CommonExpensesSendAttempt | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(COMMON_EXPENSES_ATTEMPT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CommonExpensesSendAttempt;
+    if (!parsed || !parsed.timestamp || !parsed.status) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const storeCommonExpensesAttempt = (attempt: CommonExpensesSendAttempt) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(COMMON_EXPENSES_ATTEMPT_KEY, JSON.stringify(attempt));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
+const notifyCommonExpensesSent = (detail?: Record<string, unknown>) => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(COMMON_EXPENSES_SENT_EVENT, { detail }));
+};
+
+const getAttemptErrorMessage = (error: unknown) => {
+  if (error instanceof Error && error.message) return error.message;
+  return 'Αποτυχία αποστολής.';
+};
 
 /**
  * Notification Templates
@@ -194,20 +239,40 @@ export const notificationsApi = {
     if (data.month) formData.append('month', data.month);
     formData.append('send_to_all', String(data.send_to_all ?? true));
 
-    const response = await apiClient.post<{
-      id: number;
-      status: string;
-      total_recipients: number;
-      successful_sends: number;
-      failed_sends: number;
-      attachment_url?: string;
-    }>(`${BASE_URL}/notifications/send_common_expenses/`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    // The apiClient returns data directly
-    return response;
+    try {
+      const response = await apiClient.post<{
+        id: number;
+        status: string;
+        total_recipients: number;
+        successful_sends: number;
+        failed_sends: number;
+        attachment_url?: string;
+      }>(`${BASE_URL}/notifications/send_common_expenses/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      storeCommonExpensesAttempt({
+        status: 'success',
+        mode: 'legacy',
+        building_id: data.building_id,
+        month: data.month,
+        timestamp: new Date().toISOString(),
+      });
+      notifyCommonExpensesSent({ mode: 'legacy', building_id: data.building_id });
+      return response;
+    } catch (error) {
+      storeCommonExpensesAttempt({
+        status: 'failed',
+        mode: 'legacy',
+        building_id: data.building_id,
+        month: data.month,
+        error: getAttemptErrorMessage(error),
+        timestamp: new Date().toISOString(),
+      });
+      notifyCommonExpensesSent({ mode: 'legacy', status: 'failed', building_id: data.building_id });
+      throw error;
+    }
   },
 
   /**
@@ -258,26 +323,47 @@ export const notificationsApi = {
       formData.append('sent_source', data.sent_source);
     }
 
-    const response = await apiClient.post<{
-      success: boolean;
-      sent_count: number;
-      failed_count: number;
-      sheet_attached: boolean;
-      notification_included: boolean;
-      details: Array<{
-        apartment: string;
-        email?: string;
-        status: string;
-        amount?: number;
-        error?: string;
-        reason?: string;
-      }>;
-    }>(`${BASE_URL}/notifications/send_personalized_common_expenses/`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response;
+    try {
+      const response = await apiClient.post<{
+        success: boolean;
+        sent_count: number;
+        failed_count: number;
+        sheet_attached: boolean;
+        notification_included: boolean;
+        details: Array<{
+          apartment: string;
+          email?: string;
+          status: string;
+          amount?: number;
+          error?: string;
+          reason?: string;
+        }>;
+      }>(`${BASE_URL}/notifications/send_personalized_common_expenses/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      storeCommonExpensesAttempt({
+        status: 'success',
+        mode: 'personalized',
+        building_id: data.building_id,
+        month: data.month,
+        timestamp: new Date().toISOString(),
+      });
+      notifyCommonExpensesSent({ mode: 'personalized', building_id: data.building_id });
+      return response;
+    } catch (error) {
+      storeCommonExpensesAttempt({
+        status: 'failed',
+        mode: 'personalized',
+        building_id: data.building_id,
+        month: data.month,
+        error: getAttemptErrorMessage(error),
+        timestamp: new Date().toISOString(),
+      });
+      notifyCommonExpensesSent({ mode: 'personalized', status: 'failed', building_id: data.building_id });
+      throw error;
+    }
   },
 
   /**
@@ -294,15 +380,40 @@ export const notificationsApi = {
     sent_source?: string;
     stagger_seconds?: number;
   }) => {
-    const response = await apiClient.post<{
-      queued_count: number;
-      queued: Array<{
-        building_id: number;
-        task_id: string;
-        countdown: number;
-      }>;
-    }>(`${BASE_URL}/notifications/send_personalized_common_expenses_bulk/`, data);
-    return response;
+    try {
+      const response = await apiClient.post<{
+        queued_count: number;
+        queued: Array<{
+          building_id: number;
+          task_id: string;
+          countdown: number;
+        }>;
+      }>(`${BASE_URL}/notifications/send_personalized_common_expenses_bulk/`, data);
+      storeCommonExpensesAttempt({
+        status: 'queued',
+        mode: 'bulk',
+        building_ids: data.building_ids,
+        month: data.month,
+        queued_count: response.queued_count,
+        timestamp: new Date().toISOString(),
+      });
+      notifyCommonExpensesSent({
+        mode: 'bulk',
+        queued_count: response.queued_count,
+      });
+      return response;
+    } catch (error) {
+      storeCommonExpensesAttempt({
+        status: 'failed',
+        mode: 'bulk',
+        building_ids: data.building_ids,
+        month: data.month,
+        error: getAttemptErrorMessage(error),
+        timestamp: new Date().toISOString(),
+      });
+      notifyCommonExpensesSent({ mode: 'bulk', status: 'failed' });
+      throw error;
+    }
   },
 
   /**

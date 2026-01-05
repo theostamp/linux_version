@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/lib/api';
+import {
+  COMMON_EXPENSES_SENT_EVENT,
+  getLastCommonExpensesAttempt,
+  type CommonExpensesSendAttempt,
+} from '@/lib/api/notifications';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { hasOfficeAdminAccess, userHasRole } from '@/lib/roleUtils';
 
@@ -30,6 +35,8 @@ const reasonLabels: Record<string, string> = {
   not_sent_this_month: 'Δεν στάλθηκαν email αυτόν τον μήνα',
 };
 
+const FAILURE_NOTE_WINDOW_MS = 1000 * 60 * 60 * 24 * 7;
+
 const formatReferenceMonth = (referenceMonth?: string): string => {
   if (!referenceMonth) return '';
   const [year, month] = referenceMonth.split('-').map(Number);
@@ -38,11 +45,20 @@ const formatReferenceMonth = (referenceMonth?: string): string => {
   return date.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
 };
 
+const formatAttemptTimestamp = (timestamp?: string | null) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('el-GR', { dateStyle: 'short', timeStyle: 'short' });
+};
+
 export default function MissingCommonExpenseNotifications() {
   const { user, isAuthenticated, isAuthReady } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [data, setData] = useState<MissingNotificationsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastAttempt, setLastAttempt] = useState<CommonExpensesSendAttempt | null>(null);
+  const refreshEvent = COMMON_EXPENSES_SENT_EVENT;
 
   const canView = useMemo(() => {
     return (
@@ -56,6 +72,7 @@ export default function MissingCommonExpenseNotifications() {
     let isActive = true;
 
     const loadMissing = async () => {
+      setLastAttempt(getLastCommonExpensesAttempt());
       setIsLoading(true);
       try {
         const response = await api.get<MissingNotificationsResponse>(
@@ -78,6 +95,36 @@ export default function MissingCommonExpenseNotifications() {
     };
   }, [isAuthReady, canView]);
 
+  useEffect(() => {
+    if (!isAuthReady || !canView || typeof window === 'undefined') return;
+    let isActive = true;
+
+    const handleRefresh = () => {
+      setLastAttempt(getLastCommonExpensesAttempt());
+      setIsLoading(true);
+      api
+        .get<MissingNotificationsResponse>('/financial/common-expenses/missing-notifications/')
+        .then((response) => {
+          if (!isActive) return;
+          setData(response);
+        })
+        .catch(() => {
+          if (!isActive) return;
+          setData(null);
+        })
+        .finally(() => {
+          if (!isActive) return;
+          setIsLoading(false);
+        });
+    };
+
+    window.addEventListener(refreshEvent, handleRefresh);
+    return () => {
+      isActive = false;
+      window.removeEventListener(refreshEvent, handleRefresh);
+    };
+  }, [isAuthReady, canView, refreshEvent]);
+
   const missingBuildings = data?.missing_buildings ?? EMPTY_LIST;
   const missingCount = missingBuildings.length;
 
@@ -93,7 +140,15 @@ export default function MissingCommonExpenseNotifications() {
 
   const headerMonth = referenceLabel || data?.reference_month || 'προηγούμενου μήνα';
 
-  if (!isAuthReady || !canView || isLoading || missingCount === 0) {
+  const failedAttemptNote = useMemo(() => {
+    if (!lastAttempt || lastAttempt.status !== 'failed') return null;
+    const timestamp = new Date(lastAttempt.timestamp);
+    if (Number.isNaN(timestamp.getTime())) return null;
+    if (Date.now() - timestamp.getTime() > FAILURE_NOTE_WINDOW_MS) return null;
+    return formatAttemptTimestamp(lastAttempt.timestamp);
+  }, [lastAttempt]);
+
+  if (!isAuthReady || !canView || (isLoading && !data) || missingCount === 0) {
     return null;
   }
 
@@ -153,6 +208,16 @@ export default function MissingCommonExpenseNotifications() {
                 );
               })}
             </div>
+            {failedAttemptNote && missingCount > 0 && (
+              <div className="rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+                <div className="font-medium">
+                  Η τελευταία αποστολή απέτυχε στις {failedAttemptNote}.
+                </div>
+                <div className="text-amber-800">
+                  Ελέγξτε σύνδεση email/SMTP, τα emails των διαμερισμάτων, και δοκιμάστε ξανά.
+                </div>
+              </div>
+            )}
             <div className="text-[11px] text-muted-foreground">
               Έλεγχος αποστολής για τον προηγούμενο μήνα.
             </div>
