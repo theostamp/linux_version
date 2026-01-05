@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -63,7 +63,6 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
     calculateAutomatically,
     issueAutomatically,
     autoProcessPeriod,
-    getPeriodStatistics,
     getPeriodTemplates,
     isLoading,
     error
@@ -104,35 +103,19 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
     }
   ]);
 
-  const isCurrentPeriodClosed = useMemo(() => {
-    const dateStr = currentPeriod?.end_date || currentPeriod?.start_date;
-    if (!dateStr) return false;
-    const [year, month, day] = dateStr.split('-').map(Number);
-    if (!year || !month || !day) return false;
-    const periodEnd = new Date(year, month - 1, day);
+  const getPreviousPeriodStartDate = (type: typeof periodType) => {
     const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    return periodEnd < currentMonthStart;
-  }, [currentPeriod?.end_date, currentPeriod?.start_date]);
-
-  const canAutoProcess = useMemo(() => {
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const [year, month] = (startDate || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`)
-      .split('-')
-      .map(Number);
-    if (!year || !month) return false;
-    const monthsToAdd = periodType === 'quarterly'
+    const endMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const monthsToAdd = type === 'quarterly'
       ? 3
-      : periodType === 'semester'
+      : type === 'semester'
         ? 6
-        : periodType === 'yearly'
+        : type === 'yearly'
           ? 12
           : 1;
-    const nextPeriodStart = new Date(year, month - 1 + monthsToAdd, 1);
-    const periodEnd = new Date(nextPeriodStart.getFullYear(), nextPeriodStart.getMonth(), 0);
-    return periodEnd < currentMonthStart;
-  }, [periodType, startDate]);
+    const startMonth = new Date(endMonth.getFullYear(), endMonth.getMonth() - (monthsToAdd - 1), 1);
+    return `${startMonth.getFullYear()}-${String(startMonth.getMonth() + 1).padStart(2, '0')}-01`;
+  };
 
   useEffect(() => {
     loadPeriodTemplates();
@@ -166,10 +149,11 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
     try {
       updateStepStatus('create-period', 'in-progress');
 
+      const resolvedStartDate = startDate || getPreviousPeriodStartDate(periodType);
       const result = await createPeriodAutomatically({
         building_id: buildingId,
         period_type: periodType,
-        start_date: startDate || undefined
+        start_date: resolvedStartDate
       });
 
       if (result.success) {
@@ -292,14 +276,6 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
       });
       return;
     }
-    if (!isCurrentPeriodClosed) {
-      toast({
-        title: "Προειδοποίηση",
-        description: "Η έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
       updateStepStatus('issue-accounts', 'in-progress');
@@ -335,24 +311,17 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
   const handleAutoProcess = async () => {
     try {
-      if (!canAutoProcess) {
-        toast({
-          title: "Προειδοποίηση",
-          description: "Η αυτόματη έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.",
-          variant: "destructive",
-        });
-        return;
-      }
       // Reset steps
       resetSteps();
 
       // Set all steps to in-progress
       setAutomationSteps(prev => prev.map(step => ({ ...step, status: 'in-progress' })));
 
+      const resolvedStartDate = startDate || getPreviousPeriodStartDate(periodType);
       const result = await autoProcessPeriod({
         building_id: buildingId,
         period_type: periodType,
-        start_date: startDate || undefined
+        start_date: resolvedStartDate
       });
 
       if (result.success) {
@@ -452,15 +421,16 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                placeholder="Αφήστε κενό για τρέχοντα μήνα"
+                placeholder="Αφήστε κενό για προηγούμενη περίοδο"
+                title="Αν μείνει κενό, χρησιμοποιείται η προηγούμενη περίοδος."
               />
             </div>
 
             <div className="flex items-end">
               <Button
                 onClick={handleAutoProcess}
-                disabled={isLoading || !canAutoProcess}
-                title={!canAutoProcess ? 'Η αυτόματη έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.' : undefined}
+                disabled={isLoading}
+                title="Αν μείνει κενό το πεδίο, η έκδοση γίνεται για την προηγούμενη περίοδο."
                 className="w-full"
               >
                 {isLoading ? 'Επεξεργασία...' : 'Αυτόματη Επεξεργασία'}
@@ -583,8 +553,8 @@ export const CommonExpenseAutomation: React.FC<CommonExpenseAutomationProps> = (
 
             <Button
               onClick={handleIssueAccounts}
-              disabled={isLoading || !currentPeriod || automationSteps[3].status === 'completed' || !isCurrentPeriodClosed}
-              title={!isCurrentPeriodClosed ? 'Η έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.' : undefined}
+              disabled={isLoading || !currentPeriod || automationSteps[3].status === 'completed'}
+              title="Η έκδοση αφορά την περίοδο που έχει δημιουργηθεί."
               variant="outline"
               className="h-auto p-4 flex flex-col items-center gap-2"
             >

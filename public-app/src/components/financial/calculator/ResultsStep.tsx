@@ -96,6 +96,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<number[]>([]);
   const [isSendingNotifications, setIsSendingNotifications] = useState(false);
   const [issuedPeriodId, setIssuedPeriodId] = useState<number | null>(null);
+  const [issuedMonth, setIssuedMonth] = useState<string | null>(null);
 
   // Get user office details
   const { user } = useAuth();
@@ -113,21 +114,30 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
   // Extract month from state's customPeriod
   const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
-  const notificationMonth = selectedMonth || state.customPeriod?.startDate?.substring(0, 7);
+  const notificationMonth = issuedMonth || selectedMonth || state.customPeriod?.startDate?.substring(0, 7);
   // Load occupants (owner/tenant) info to show consistent names
   const { apartments: aptWithFinancial, building: buildingData, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
   const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
 
-  const isFinalizablePeriod = useMemo(() => {
-    const dateStr = state.customPeriod?.endDate || state.customPeriod?.startDate;
-    if (!dateStr) return false;
-    const [year, month, day] = dateStr.split('-').map(Number);
-    if (!year || !month || !day) return false;
-    const periodEnd = new Date(year, month - 1, day);
+  const previousMonthInfo = useMemo(() => {
     const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    return periodEnd < currentMonthStart;
-  }, [state.customPeriod?.endDate, state.customPeriod?.startDate]);
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = prevDate.getFullYear();
+    const monthIndex = prevDate.getMonth();
+    const monthNumber = monthIndex + 1;
+    const monthNames = [
+      'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+      'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+    ];
+    const startDate = new Date(Date.UTC(year, monthIndex, 1));
+    const endDate = new Date(Date.UTC(year, monthIndex + 1, 0));
+    return {
+      monthStr: `${year}-${String(monthNumber).padStart(2, '0')}`,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      periodName: `${monthNames[monthIndex]} ${year}`,
+    };
+  }, []);
 
   const availableBuildings = useMemo(() => {
     if (buildings && buildings.length > 0) {
@@ -147,7 +157,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   useMonthRefresh(selectedMonth, forceRefresh, 'ResultsStep');
   useEffect(() => {
     setIssuedPeriodId(null);
-  }, [buildingId, notificationMonth]);
+    setIssuedMonth(null);
+  }, [buildingId, selectedMonth]);
   const occupantsByApartmentId = useMemo(() => {
     const map: Record<number, { owner_name?: string; tenant_name?: string }> = {};
     aptWithFinancial.forEach((apt) => {
@@ -411,18 +422,194 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   };
 
   const handleIssue = async () => {
-    if (!isFinalizablePeriod) {
-      toast.error('Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.');
-      return;
-    }
     try {
       updateState({ isIssuing: true });
+
+      const issuePeriod = previousMonthInfo;
+
+      toast.info(`Η οριστική έκδοση θα γίνει για ${issuePeriod.periodName}.`);
+
+      const issueMonthStr = issuePeriod.monthStr;
+      const issueStartDate = issuePeriod.startDate;
+      const issueEndDate = issuePeriod.endDate;
+      let issueMonthlyExpenses: any = null;
+      try {
+        issueMonthlyExpenses = await api.get(`/financial/dashboard/summary/?building_id=${buildingId}&month=${issueMonthStr}`);
+      } catch (error) {
+        issueMonthlyExpenses = null;
+      }
+
+      const isAdvanced = state.advancedOptions.includeReserveFund ||
+        state.advancedOptions.heatingFixedPercentage !== 30 ||
+        state.advancedOptions.elevatorMills;
+
+      let issueAdvancedShares: any = null;
+      let issueShares: Record<string, Share> = {};
+
+      if (isAdvanced) {
+        const shouldIncludeReserveFund = state.advancedOptions.includeReserveFund &&
+          checkIfPeriodInReserveFundTimeline(issueStartDate, issueEndDate);
+        const result = await calculateAdvancedShares({
+          building_id: buildingId,
+          period_start_date: issueStartDate,
+          period_end_date: issueEndDate,
+          month_filter: issueMonthStr,
+          reserve_fund_monthly_total: shouldIncludeReserveFund && state.advancedOptions.reserveFundMonthlyAmount > 0
+            ? state.advancedOptions.reserveFundMonthlyAmount
+            : undefined,
+        });
+        issueAdvancedShares = result;
+        issueShares = result?.shares || {};
+      } else {
+        const result = await calculateShares({
+          building_id: buildingId,
+          month_filter: issueMonthStr,
+        });
+        issueShares = result?.shares || {};
+      }
+
+      if (!issueShares || Object.keys(issueShares).length === 0) {
+        toast.error('Δεν υπάρχουν υπολογισμένα μερίδια για τον προηγούμενο μήνα.');
+        return;
+      }
+
+      const issueTotalExpenses = Object.values(issueShares).reduce(
+        (sum: number, share: any) => sum + (share.total_amount || 0),
+        0
+      );
+
+      const issuePerApartmentAmounts: PerApartmentAmounts = {};
+      Object.values(issueShares as Record<string, Share>).forEach((share) => {
+        const apartmentId = (share as any).apartment_id;
+        if (!apartmentId) return;
+        const bd = (share as any).breakdown || {};
+        if (Array.isArray(bd)) {
+          const commonTotal = bd.reduce((sum, item) => sum + toNumber((item as any).apartment_share ?? 0), 0);
+          const reserveTotal = toNumber((share as any).reserve_fund_amount ?? (share as any).reserve_fund_contribution ?? 0);
+          issuePerApartmentAmounts[apartmentId] = {
+            common: commonTotal,
+            elevator: 0,
+            heating: 0,
+            other: 0,
+            coowner: 0,
+            reserve: reserveTotal,
+            total_due: toNumber((share as any).total_due ?? 0)
+          };
+          return;
+        }
+        issuePerApartmentAmounts[apartmentId] = {
+          common: toNumber(bd.general_expenses ?? bd.common ?? bd.general ?? 0),
+          elevator: toNumber(bd.elevator_expenses ?? bd.elevator ?? 0),
+          heating: toNumber(bd.heating_expenses ?? bd.heating ?? 0),
+          other: toNumber(bd.equal_share_expenses ?? bd.equal_share ?? bd.other ?? 0),
+          coowner: toNumber(bd.individual_expenses ?? bd.individual ?? bd.coowner ?? 0),
+          reserve: toNumber(bd.reserve_fund_contribution ?? bd.reserve_fund ?? bd.reserve ?? 0),
+          total_due: toNumber((share as any).total_due ?? 0)
+        };
+      });
+
+      const issueExpenseBreakdown: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
+      if (issueMonthlyExpenses) {
+        issueExpenseBreakdown.common = issueMonthlyExpenses.total_expenses_month || 0;
+      } else if (issueAdvancedShares?.expense_totals) {
+        const { general, elevator, heating, equal_share, individual } = issueAdvancedShares.expense_totals;
+        issueExpenseBreakdown.common = Number(general || 0);
+        issueExpenseBreakdown.elevator = Number(elevator || 0);
+        issueExpenseBreakdown.heating = Number(heating || 0);
+        issueExpenseBreakdown.other = Number(equal_share || 0);
+        issueExpenseBreakdown.coownership = Number(individual || 0);
+      } else {
+        issueExpenseBreakdown.common = issueTotalExpenses;
+      }
+
+      const apartmentsCount = Object.keys(issueShares).length;
+      let feePerApartment = 0;
+      if (issueMonthlyExpenses?.total_management_cost > 0) {
+        feePerApartment = issueMonthlyExpenses.management_fee_per_apartment ||
+          (apartmentsCount > 0 ? issueMonthlyExpenses.total_management_cost / apartmentsCount : 0);
+      } else {
+        const feeFromResult = issueAdvancedShares?.management_fee_per_apartment || 0;
+        feePerApartment = feeFromResult > 0 ? feeFromResult : (buildingData?.management_fee_per_apartment || 0);
+      }
+      const issueManagementFeeInfo: ManagementFeeInfo = {
+        feePerApartment,
+        totalFee: feePerApartment * apartmentsCount,
+        apartmentsCount,
+        hasFee: feePerApartment > 0
+      };
+
+      let showReserveFund = true;
+      const issueMonthDate = new Date(`${issueMonthStr}-01`);
+      const reserveFundStartDate = issueAdvancedShares?.reserve_fund_start_date;
+      const reserveFundTargetDate = issueAdvancedShares?.reserve_fund_target_date;
+      if (reserveFundStartDate) {
+        if (issueMonthDate < new Date(reserveFundStartDate)) showReserveFund = false;
+      }
+      if (reserveFundTargetDate) {
+        if (issueMonthDate > new Date(reserveFundTargetDate)) showReserveFund = false;
+      }
+
+      const reserveGoal = Number(issueAdvancedShares?.reserve_fund_goal || 0);
+      const reserveDuration = Number(issueAdvancedShares?.reserve_fund_duration_months || 0);
+      const reserveMonthlyTarget = Number(issueAdvancedShares?.reserve_fund_monthly_target || 0);
+      let reserveMonthlyAmount = 0;
+      if (showReserveFund) {
+        if (reserveMonthlyTarget > 0) {
+          reserveMonthlyAmount = reserveMonthlyTarget;
+        } else if (reserveGoal > 0 && reserveDuration > 0) {
+          reserveMonthlyAmount = reserveGoal / reserveDuration;
+        }
+      }
+
+      const actualReserveCollected = Number(issueAdvancedShares?.actual_reserve_collected || 0);
+      const reserveProgressPercentage = reserveGoal > 0
+        ? Math.min(100, (actualReserveCollected / reserveGoal) * 100)
+        : 0;
+
+      const issueReserveFundInfo: ReserveFundInfo = {
+        monthlyAmount: reserveMonthlyAmount,
+        totalContribution: reserveMonthlyAmount,
+        displayText: reserveGoal > 0 && reserveDuration > 0
+          ? `Στόχος ${formatAmount(reserveGoal)}€ σε ${reserveDuration} δόσεις`
+          : '',
+        goal: reserveGoal,
+        duration: reserveDuration,
+        monthsRemaining: reserveDuration,
+        actualReserveCollected,
+        progressPercentage: reserveProgressPercentage
+      };
+
+      const issueTotalPreviousBalance = Object.values(issueShares).reduce(
+        (sum: number, share: any) => sum + Math.abs(Number(share.previous_balance || 0)),
+        0
+      );
+
+      const issueTotalExpensesForSheet = (() => {
+        const basic = Object.values(issueExpenseBreakdown).reduce((sum, value) => sum + value, 0);
+        const hasAnyExpenses = basic > 0;
+        return basic + issueManagementFeeInfo.totalFee + (hasAnyExpenses ? issueReserveFundInfo.monthlyAmount : 0);
+      })();
+
+      const getIssueTotalPreviousBalance = () => issueTotalPreviousBalance;
+      const getIssueFinalTotalExpenses = () => issueTotalExpensesForSheet + issueTotalPreviousBalance;
+
+      const issueState = {
+        ...state,
+        customPeriod: {
+          startDate: issueStartDate,
+          endDate: issueEndDate,
+          periodName: issuePeriod.periodName,
+        },
+        shares: issueShares,
+        totalExpenses: issueTotalExpenses,
+        advancedShares: issueAdvancedShares ?? null,
+      };
 
       // Transform shares to match backend expectations
       const transformedShares: Record<string, { total_amount: number; breakdown: Record<string, any> }> = {};
       const expenseIds: number[] = [];
 
-      Object.entries(state.shares).forEach(([apartmentId, share]) => {
+      Object.entries(issueShares).forEach(([apartmentId, share]) => {
         // Type assertion to ensure share has the expected structure
         const typedShare = share as {
           total_amount: number;
@@ -485,9 +672,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       const params = {
         building_id: buildingId,
         period_data: {
-          name: state.customPeriod.periodName,
-          start_date: state.customPeriod.startDate,
-          end_date: state.customPeriod.endDate
+          name: issuePeriod.periodName,
+          start_date: issueStartDate,
+          end_date: issueEndDate
         },
         shares: transformedShares,
         expense_ids: expenseIds
@@ -496,7 +683,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       let sheetFile: File | null = null;
       try {
         const exportParams = {
-          state,
+          state: issueState,
           buildingName: buildingData?.name || 'Άγνωστο Κτίριο',
           buildingAddress: buildingData?.address || '',
           buildingCity: buildingData?.city || '',
@@ -509,17 +696,17 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           managementOfficePhone: user?.office_phone || '',
           managementOfficeAddress: user?.office_address || '',
           managementOfficeLogo: user?.office_logo || '',
-          selectedMonth,
-          expenseBreakdown,
-          reserveFundInfo,
-          managementFeeInfo,
+          selectedMonth: issueMonthStr,
+          expenseBreakdown: issueExpenseBreakdown,
+          reserveFundInfo: issueReserveFundInfo,
+          managementFeeInfo: issueManagementFeeInfo,
           groupedExpenses: {},
-          perApartmentAmounts,
+          perApartmentAmounts: issuePerApartmentAmounts,
           aptWithFinancial,
-          totalExpenses: totalExpensesForSheet,
-          getFinalTotalExpenses,
-          getTotalPreviousBalance,
-          monthlyExpenses,
+          totalExpenses: issueTotalExpensesForSheet,
+          getFinalTotalExpenses: getIssueFinalTotalExpenses,
+          getTotalPreviousBalance: getIssueTotalPreviousBalance,
+          monthlyExpenses: issueMonthlyExpenses,
           buildingId
         };
         const jpgResult = await exportToJPG(exportParams, {
@@ -552,7 +739,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         setIssuedPeriodId(Number(issueResponse.period_id));
       }
 
-      toast.success('Τα κοινοχρήστα εκδόθηκαν επιτυχώς!');
+      setIssuedMonth(issueMonthStr);
+      toast.success(`Τα κοινοχρήστα για ${issuePeriod.periodName} εκδόθηκαν επιτυχώς!`);
 
       if (onComplete) {
         onComplete(params);
@@ -1669,8 +1857,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
         <Button
           onClick={handleIssue}
-          disabled={state.isIssuing || !isFinalizablePeriod}
-          title={!isFinalizablePeriod ? 'Η οριστική έκδοση επιτρέπεται μόνο για μήνα που έχει κλείσει.' : undefined}
+          disabled={state.isIssuing}
+          title="Η οριστική έκδοση γίνεται πάντα για τον προηγούμενο μήνα."
           className="bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 hover:from-rose-700 hover:via-red-700 hover:to-orange-600 text-white shadow-xl hover:shadow-rose-500/30 border-0 rounded-full px-7 py-6 h-auto transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {state.isIssuing ? (
@@ -1681,7 +1869,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           ) : (
             <>
               <Send className="mr-2 h-4 w-4" />
-              Οριστική έκδοση μήνα που έχει περάσει
+              Οριστική έκδοση προηγούμενου μήνα
             </>
           )}
         </Button>
