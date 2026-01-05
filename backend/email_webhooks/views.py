@@ -33,11 +33,12 @@ def _extract_signature(signature_header: Optional[str]) -> str:
 def _verify_signature(body: bytes, signature_header: Optional[str]) -> bool:
     secret = getattr(settings, "MAILERSEND_WEBHOOK_SECRET", "") or ""
     if not secret:
-        return True
+        logger.error("[MailerSend] Webhook secret is not configured")
+        return False
 
     signature = _extract_signature(signature_header)
     if not signature:
-        return not getattr(settings, "MAILERSEND_WEBHOOK_VERIFY", False)
+        return False
 
     expected = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
     if hmac.compare_digest(expected, signature):
@@ -47,7 +48,7 @@ def _verify_signature(body: bytes, signature_header: Optional[str]) -> bool:
     if hmac.compare_digest(expected_b64, signature):
         return True
 
-    return not getattr(settings, "MAILERSEND_WEBHOOK_VERIFY", False)
+    return False
 
 
 def _parse_event_time(value: object) -> Optional[datetime]:
