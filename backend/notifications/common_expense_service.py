@@ -842,7 +842,7 @@ class CommonExpenseNotificationService:
 
                 # Send email
                 body_html = extract_legacy_body_html(html=html_content) if html_content else ""
-                send_templated_email(
+                email_ok = send_templated_email(
                     to=recipient_email,
                     subject=subject,
                     template_html="emails/wrapper.html",
@@ -852,13 +852,23 @@ class CommonExpenseNotificationService:
                     attachments=attachments or None,
                 )
 
-                results['sent_count'] += 1
-                results['details'].append({
-                    'apartment': apartment.number,
-                    'email': recipient_email,
-                    'status': 'sent',
-                    'amount': apartment_data.get('net_obligation', 0) if apartment_data else None
-                })
+                if email_ok:
+                    results['sent_count'] += 1
+                    results['details'].append({
+                        'apartment': apartment.number,
+                        'email': recipient_email,
+                        'status': 'sent',
+                        'amount': apartment_data.get('net_obligation', 0) if apartment_data else None
+                    })
+                else:
+                    results['failed_count'] += 1
+                    results['details'].append({
+                        'apartment': apartment.number,
+                        'email': recipient_email,
+                        'status': 'failed',
+                        'error': 'Email provider rejected the send'
+                    })
+                    logger.error("Email provider rejected send for apartment %s (%s)", apartment.number, recipient_email)
 
             except Exception as e:
                 results['failed_count'] += 1
@@ -871,7 +881,7 @@ class CommonExpenseNotificationService:
 
         if mark_period_sent and period:
             should_mark = results['sent_count'] > 0 or results['push_sent_count'] > 0
-            if not should_mark and sent_source == 'manual' and results['details']:
+            if not should_mark and sent_source == 'manual' and results['details'] and results['failed_count'] == 0:
                 should_mark = True
             if should_mark:
                 try:
