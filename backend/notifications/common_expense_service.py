@@ -869,13 +869,17 @@ class CommonExpenseNotificationService:
                 })
                 logger.error(f"Error sending to apartment {apartment.number}: {e}")
 
-        if mark_period_sent and period and (results['sent_count'] > 0 or results['push_sent_count'] > 0):
-            try:
-                from django.utils import timezone
-                period.notifications_sent_at = timezone.now()
-                period.save(update_fields=['notifications_sent_at'])
-            except Exception as mark_error:
-                logger.warning("Failed to mark period as notified: %s", mark_error)
+        if mark_period_sent and period:
+            should_mark = results['sent_count'] > 0 or results['push_sent_count'] > 0
+            if not should_mark and sent_source == 'manual' and results['details']:
+                should_mark = True
+            if should_mark:
+                try:
+                    from django.utils import timezone
+                    period.notifications_sent_at = timezone.now()
+                    period.save(update_fields=['notifications_sent_at'])
+                except Exception as mark_error:
+                    logger.warning("Failed to mark period as notified: %s", mark_error)
 
         results['success'] = results['failed_count'] == 0
         return results
