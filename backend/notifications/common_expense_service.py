@@ -602,6 +602,7 @@ class CommonExpenseNotificationService:
             'success': True,
             'sent_count': 0,
             'failed_count': 0,
+            'push_sent_count': 0,
             'details': [],
             'skipped': False,
             'sheet_attached': False,
@@ -737,9 +738,10 @@ class CommonExpenseNotificationService:
                     push_user = apartment.tenant_user
 
                 if push_user:
+                    push_sent = False
                     try:
                         amount_str = f"{apartment_data.get('net_obligation', 0):.2f}€"
-                        ViberNotificationService.send_to_user(
+                        viber_sent = ViberNotificationService.send_to_user(
                             user=push_user,
                             message=(
                                 f"Εκδόθηκαν τα κοινόχρηστα για το διαμέρισμα {apartment.number}. "
@@ -748,7 +750,7 @@ class CommonExpenseNotificationService:
                             building=apartment.building,
                             office_name=office_data.get('name', '') if office_data else '',
                         )
-                        WebPushService.send_to_user(
+                        webpush_sent = WebPushService.send_to_user(
                             user=push_user,
                             title=f"Κοινόχρηστα {month_display}",
                             body=f"Εκδόθηκαν τα κοινόχρηστα για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
@@ -760,7 +762,7 @@ class CommonExpenseNotificationService:
                                 'url': '/my-apartment',
                             },
                         )
-                        PushNotificationService.send_to_user(
+                        fcm_response = PushNotificationService.send_to_user(
                             user=push_user,
                             title=f"Κοινόχρηστα {month_display}",
                             body=f"Εκδόθηκαν τα κοινόχρηστα για το διαμέρισμα {apartment.number}. Ποσό: {amount_str}",
@@ -771,8 +773,11 @@ class CommonExpenseNotificationService:
                                 'apartment_id': str(apartment.id)
                             }
                         )
+                        push_sent = bool(viber_sent) or bool(webpush_sent) or bool(getattr(fcm_response, "success_count", 0))
                     except Exception as push_error:
                         logger.error(f"Failed to send push to user {push_user.id}: {push_error}")
+                    if push_sent:
+                        results['push_sent_count'] += 1
 
                 if not recipient_email:
                     results['details'].append({
@@ -864,7 +869,7 @@ class CommonExpenseNotificationService:
                 })
                 logger.error(f"Error sending to apartment {apartment.number}: {e}")
 
-        if mark_period_sent and period and results['sent_count'] > 0:
+        if mark_period_sent and period and (results['sent_count'] > 0 or results['push_sent_count'] > 0):
             try:
                 from django.utils import timezone
                 period.notifications_sent_at = timezone.now()
