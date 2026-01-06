@@ -6,6 +6,7 @@ Handles all email notifications for the Digital Concierge platform
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
+from django.db import connection
 from django.utils import timezone
 from datetime import timedelta, date
 import logging
@@ -16,6 +17,7 @@ from users.models import CustomUser
 from .push_service import PushNotificationService
 from .webpush_service import WebPushService
 from .viber_notification_service import ViberNotificationService
+from .providers.sms_providers import SMSProviderFactory
 from core.emailing import send_templated_email
 
 logger = logging.getLogger(__name__)
@@ -548,6 +550,22 @@ class NotificationService:
             send_push = getattr(settings, 'PUSH_AUTO_WITH_EMAIL', True)
 
         UserModel = get_user_model() if (send_viber or send_push) else None
+        sms_enabled = getattr(settings, 'SMS_ENABLED', False)
+        sms_only_debt = getattr(settings, 'SMS_ONLY_FOR_DEBT_REMINDERS', True)
+
+        def resolve_subscription():
+            from billing.services import BillingService
+
+            return BillingService.resolve_subscription_for_schema(
+                connection.schema_name,
+                notification.created_by if hasattr(notification, 'created_by') else None,
+            )
+
+        def sms_allowed_for_notification():
+            if not sms_only_debt:
+                return True
+            subject = (notification.subject or "").lower()
+            return "υπενθύμιση οφειλών" in subject
 
         def resolve_user(recipient_obj):
             user_obj = None
@@ -585,8 +603,36 @@ class NotificationService:
 
                 # Send SMS if notification type includes SMS
                 if notification.notification_type in ['sms', 'both', 'all'] and recipient.phone:
-                    # SMS sending would be implemented here
-                    pass
+                    if not sms_enabled:
+                        errors.append("SMS disabled")
+                    elif not sms_allowed_for_notification():
+                        errors.append("SMS reserved for debt reminders")
+                    else:
+                        subscription = resolve_subscription()
+                        if not subscription:
+                            errors.append("No subscription for SMS quota")
+                        else:
+                            from billing.services import BillingService
+
+                            if not BillingService.check_usage_limits(subscription, 'sms', 1):
+                                errors.append("SMS quota exceeded")
+                            else:
+                                sms_text = (notification.sms_body or notification.body or "").strip()
+                                if not sms_text:
+                                    errors.append("Empty SMS body")
+                                else:
+                                    sms_text = sms_text[:160]
+                                    result = SMSProviderFactory.get_provider().send(
+                                        recipient.phone,
+                                        sms_text,
+                                    )
+                                    if result.success:
+                                        BillingService.increment_usage(subscription, 'sms', 1)
+                                        sent_any = True
+                                    else:
+                                        errors.append(
+                                            f"SMS send failed: {result.error_message or 'Unknown error'}"
+                                        )
 
                 user = resolve_user(recipient) if (send_viber or send_push) else None
 

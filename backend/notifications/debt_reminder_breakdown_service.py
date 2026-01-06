@@ -19,10 +19,13 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
+from django.conf import settings
+from django.db import connection
 from django.utils import timezone
 
 from apartments.models import Apartment
 from buildings.models import Building
+from billing.services import BillingService
 from core.emailing import extract_legacy_body_html, send_templated_email
 from notifications.common_expense_service import CommonExpenseNotificationService
 from notifications.models import Notification, NotificationRecipient
@@ -30,6 +33,7 @@ from notifications.services import NotificationService
 from notifications.push_service import PushNotificationService
 from notifications.webpush_service import WebPushService
 from notifications.viber_notification_service import ViberNotificationService
+from notifications.providers.sms_providers import SMSProviderFactory
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +203,10 @@ class DebtReminderBreakdownService:
         failed = 0
         skipped = 0
         details: List[Dict[str, Any]] = []
+        subscription = BillingService.resolve_subscription_for_schema(
+            connection.schema_name,
+            created_by,
+        )
 
         for apartment in target_apartments:
             recipient_email = apartment.occupant_email or apartment.owner_email
@@ -216,7 +224,9 @@ class DebtReminderBreakdownService:
             email_ok = False
             push_ok = False
             viber_ok = False
+            sms_ok = False
             email_error_reason = None
+            sms_error_reason = None
 
             bal = balances_by_id.get(int(apartment.id))
             if not bal:
@@ -339,7 +349,28 @@ class DebtReminderBreakdownService:
                         push_error,
                     )
 
-            if email_ok or push_ok or viber_ok:
+            if recipient.phone and getattr(settings, 'SMS_ENABLED', False):
+                if not subscription:
+                    sms_error_reason = "No subscription for SMS quota"
+                elif not BillingService.check_usage_limits(subscription, 'sms', 1):
+                    sms_error_reason = "SMS quota exceeded"
+                else:
+                    sms_text = (
+                        f"{cls.SUBJECT_KEYWORD} {month_display}: {cls._fmt_money(total_due_raw)}. "
+                        f"Προθεσμία: {payment_deadline}"
+                    ).strip()
+                    sms_text = sms_text[:160]
+                    result = SMSProviderFactory.get_provider().send(
+                        recipient.phone,
+                        sms_text,
+                    )
+                    if result.success:
+                        BillingService.increment_usage(subscription, 'sms', 1)
+                        sms_ok = True
+                    else:
+                        sms_error_reason = result.error_message or "SMS send failed"
+
+            if email_ok or push_ok or viber_ok or sms_ok:
                 recipient.mark_as_sent()
                 sent += 1
                 details.append(
@@ -347,17 +378,19 @@ class DebtReminderBreakdownService:
                         "apartment": apartment.number,
                         "status": "sent",
                         "email": recipient_email or "",
+                        "sms": "sent" if sms_ok else ("skipped" if sms_error_reason else ""),
                         "total_due": str(total_due_raw),
                     }
                 )
             else:
-                recipient.mark_as_failed(email_error_reason or "No delivery channels")
+                recipient.mark_as_failed(email_error_reason or sms_error_reason or "No delivery channels")
                 failed += 1
                 details.append(
                     {
                         "apartment": apartment.number,
                         "status": "failed",
                         "email": recipient_email or "",
+                        "sms_error": sms_error_reason or "",
                         "error": email_error_reason or "No delivery channels",
                     }
                 )

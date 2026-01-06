@@ -800,6 +800,11 @@ PUSH_AUTO_WITH_EMAIL = os.getenv('PUSH_AUTO_WITH_EMAIL', 'True') == 'True'
 # ----------------------------------------
 SMS_ENABLED = os.getenv('SMS_ENABLED', 'False') == 'True'
 SMS_ONLY_FOR_DEBT_REMINDERS = os.getenv('SMS_ONLY_FOR_DEBT_REMINDERS', 'True') == 'True'
+SMS_COST_PER_MESSAGE = os.getenv('SMS_COST_PER_MESSAGE', '0')
+SMS_BUDGET_PERCENT_OF_SUBSCRIPTION = os.getenv('SMS_BUDGET_PERCENT_OF_SUBSCRIPTION', '0')
+SMS_ALLOWANCE_PER_BUILDING = int(os.getenv('SMS_ALLOWANCE_PER_BUILDING', '0'))
+SMS_MIN_ALLOWANCE = int(os.getenv('SMS_MIN_ALLOWANCE', '0'))
+SMS_MAX_ALLOWANCE = int(os.getenv('SMS_MAX_ALLOWANCE', '0'))
 
 # ----------------------------------------
 # 📲 Viber Notifications

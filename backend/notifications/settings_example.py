@@ -16,6 +16,21 @@ SMS_ENABLED = False
 # Restrict SMS usage to debt reminders only
 SMS_ONLY_FOR_DEBT_REMINDERS = True
 
+# Provider cost per SMS (currency units, e.g. EUR)
+SMS_COST_PER_MESSAGE = '0.05'
+
+# Portion of subscription price allocated to SMS (e.g. 0.05 = 5%)
+SMS_BUDGET_PERCENT_OF_SUBSCRIPTION = '0.05'
+
+# Indicative allowance per building (monthly)
+SMS_ALLOWANCE_PER_BUILDING = 50
+
+# Optional safety bounds
+SMS_MIN_ALLOWANCE = 0
+SMS_MAX_ALLOWANCE = 0  # 0 = no explicit max, -1 = unlimited
+
+# Developer note: Effective SMS allowance = max(cost-based, per-building), then clamped by min/max.
+
 # Use sandbox/test mode (no real SMS sent)
 SMS_SANDBOX_MODE = True
 

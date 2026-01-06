@@ -721,6 +721,7 @@ class UsageTracking(models.Model):
         ('buildings', 'Buildings'),
         ('apartments', 'Apartments'),
         ('users', 'Users'),
+        ('sms', 'SMS'),
     ]
 
     subscription = models.ForeignKey(

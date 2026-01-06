@@ -307,11 +307,41 @@ class BillingService:
         ).first()
 
     @staticmethod
+    def resolve_subscription_for_schema(schema_name: str,
+                                        user: Optional[CustomUser] = None) -> Optional[UserSubscription]:
+        """
+        Resolve an active subscription for the current tenant schema.
+        Falls back to the tenant owner if a specific user subscription is unavailable.
+        """
+        if user:
+            subscription = BillingService.get_user_subscription(user)
+            if subscription:
+                return subscription
+
+        try:
+            from tenants.models import Client
+            tenant = Client.objects.filter(schema_name=schema_name).first()
+        except Exception as exc:
+            logger.warning("Failed to resolve tenant for SMS quota: %s", exc)
+            return None
+
+        if not tenant:
+            return None
+
+        return UserSubscription.objects.filter(
+            user__tenant=tenant,
+            status__in=['trial', 'active']
+        ).order_by('-current_period_start').first()
+
+    @staticmethod
     def check_usage_limits(subscription: UserSubscription,
                           metric_type: str, increment: int = 1) -> bool:
         """
         Έλεγχος αν ο user έχει ξεπεράσει τα limits του plan
         """
+        period_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        period_end = period_start + timezone.timedelta(days=32)
+
         usage_tracking = UsageTracking.objects.filter(
             subscription=subscription,
             metric_type=metric_type,
@@ -320,7 +350,14 @@ class BillingService:
         ).first()
 
         if not usage_tracking:
-            return True  # No tracking means no limit
+            usage_tracking = UsageTracking.objects.create(
+                subscription=subscription,
+                metric_type=metric_type,
+                usage_count=0,
+                usage_limit=BillingService._get_limit_for_metric(subscription, metric_type),
+                period_start=period_start,
+                period_end=period_end,
+            )
 
         # Check if unlimited (-1)
         if usage_tracking.usage_limit == -1:
@@ -337,14 +374,17 @@ class BillingService:
         """
         Αύξηση usage counter
         """
+        period_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        period_end = period_start + timezone.timedelta(days=32)
+
         usage_tracking, created = UsageTracking.objects.get_or_create(
             subscription=subscription,
             metric_type=metric_type,
-            period_start=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
-            period_end=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) + timezone.timedelta(days=32),
+            period_start=period_start,
+            period_end=period_end,
             defaults={
                 'usage_count': 0,
-                'usage_limit': BillingService._get_limit_for_metric(subscription.plan, metric_type)
+                'usage_limit': BillingService._get_limit_for_metric(subscription, metric_type)
             }
         )
 
@@ -359,14 +399,14 @@ class BillingService:
         """
         Αρχικοποίηση usage tracking για όλα τα metrics
         """
-        metrics = ['api_calls', 'buildings', 'apartments', 'users', 'storage_gb']
+        metrics = ['api_calls', 'buildings', 'apartments', 'users', 'storage_gb', 'sms']
 
         for metric in metrics:
             UsageTracking.objects.create(
                 subscription=subscription,
                 metric_type=metric,
                 usage_count=0,
-                usage_limit=BillingService._get_limit_for_metric(subscription.plan, metric),
+                usage_limit=BillingService._get_limit_for_metric(subscription, metric),
                 period_start=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
                 period_end=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) + timezone.timedelta(days=32)
             )
@@ -376,21 +416,25 @@ class BillingService:
         """
         Ενημέρωση usage limits μετά από plan change
         """
-        metrics = ['api_calls', 'buildings', 'apartments', 'users', 'storage_gb']
+        metrics = ['api_calls', 'buildings', 'apartments', 'users', 'storage_gb', 'sms']
 
         for metric in metrics:
             UsageTracking.objects.filter(
                 subscription=subscription,
                 metric_type=metric
             ).update(
-                usage_limit=BillingService._get_limit_for_metric(subscription.plan, metric)
+                usage_limit=BillingService._get_limit_for_metric(subscription, metric)
             )
 
     @staticmethod
-    def _get_limit_for_metric(plan: SubscriptionPlan, metric: str) -> int:
+    def _get_limit_for_metric(subscription: UserSubscription, metric: str) -> int:
         """
         Ανάκτηση limit για συγκεκριμένο metric από το plan
         """
+        if metric == 'sms':
+            return BillingService._get_sms_limit(subscription)
+
+        plan = subscription.plan
         limits = {
             'api_calls': plan.max_api_calls,
             'buildings': plan.max_buildings,
@@ -400,6 +444,57 @@ class BillingService:
         }
 
         return limits.get(metric, -1)
+
+    @staticmethod
+    def _get_sms_limit(subscription: UserSubscription) -> int:
+        """
+        Calculate SMS allowance based on provider cost and subscription price.
+        Allowance = max(cost-based allowance, per-building allowance), then clamp to min/max.
+        """
+        cost_raw = getattr(settings, 'SMS_COST_PER_MESSAGE', '0')
+        ratio_raw = getattr(settings, 'SMS_BUDGET_PERCENT_OF_SUBSCRIPTION', '0')
+
+        try:
+            cost_per_sms = Decimal(str(cost_raw))
+            budget_ratio = Decimal(str(ratio_raw))
+        except Exception:
+            return 0
+
+        if cost_per_sms <= 0 or budget_ratio <= 0:
+            return 0
+
+        monthly_price = subscription.price or Decimal('0')
+        if subscription.billing_interval == 'year':
+            monthly_price = (monthly_price / Decimal('12')) if monthly_price else Decimal('0')
+
+        budget = monthly_price * budget_ratio
+        allowance = int(budget / cost_per_sms)
+
+        per_building_allowance = int(getattr(settings, 'SMS_ALLOWANCE_PER_BUILDING', 0) or 0)
+        if per_building_allowance > 0:
+            tenant = getattr(subscription.user, 'tenant', None)
+            schema_name = getattr(tenant, 'schema_name', None)
+            if schema_name:
+                try:
+                    from django_tenants.utils import schema_context
+                    from buildings.models import Building
+                    with schema_context(schema_name):
+                        buildings_count = Building.objects.count()
+                    allowance = max(allowance, buildings_count * per_building_allowance)
+                except Exception as exc:
+                    logger.warning("Failed to compute per-building SMS allowance: %s", exc)
+
+        min_allowance = int(getattr(settings, 'SMS_MIN_ALLOWANCE', 0) or 0)
+        max_allowance = int(getattr(settings, 'SMS_MAX_ALLOWANCE', 0) or 0)
+
+        if min_allowance > 0:
+            allowance = max(allowance, min_allowance)
+        if max_allowance < 0:
+            return -1
+        if max_allowance > 0:
+            allowance = min(allowance, max_allowance)
+
+        return max(0, allowance)
 
     @staticmethod
     @transaction.atomic
