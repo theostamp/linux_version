@@ -553,7 +553,13 @@ export async function apiGet<T>(
 
       if (!res.ok) {
         resetRetryDelay(urlString);
-        throw createApiError("GET", urlString, res.status);
+        let errorText: string | undefined;
+        try {
+          errorText = await res.text();
+        } catch {
+          // ignore
+        }
+        throw createApiError("GET", urlString, res.status, errorText);
       }
 
       const data = attachApiResponseData(await res.json() as T);

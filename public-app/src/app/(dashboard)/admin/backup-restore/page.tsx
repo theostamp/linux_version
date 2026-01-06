@@ -115,6 +115,7 @@ export default function BackupRestorePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAdmin = !!user && (user.role === 'admin' || user.is_superuser || user.is_staff);
 
   // Backup state
   const [backupTypes, setBackupTypes] = useState<BackupType[]>([]);
@@ -158,10 +159,11 @@ export default function BackupRestorePage() {
 
   // Load initial data
   useEffect(() => {
+    if (authLoading || !user || !isAdmin) return;
     loadBackupOptions();
     loadRestoreOptions();
     loadBackupHistory();
-  }, []);
+  }, [authLoading, isAdmin, user]);
 
   const loadBackupHistory = async () => {
     setIsLoadingHistory(true);
