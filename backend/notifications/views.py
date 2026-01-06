@@ -519,121 +519,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-
-class EmailBatchViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Read-only viewset for email batches (bulk sends like common expenses).
-
-    list: Get email batches
-    stats: Get email batch statistics
-    """
-
-    serializer_class = EmailBatchSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['purpose', 'building']
-
-    def _parse_date_param(self, value, param_name):
-        try:
-            return datetime.strptime(value, '%Y-%m-%d').date()
-        except (TypeError, ValueError):
-            raise ValidationError({param_name: 'Invalid date format. Use YYYY-MM-DD.'})
-
-    def _apply_date_range(self, queryset):
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-
-        if start_date:
-            start_date = self._parse_date_param(start_date, 'start_date')
-            queryset = queryset.filter(created_at__date__gte=start_date)
-        if end_date:
-            end_date = self._parse_date_param(end_date, 'end_date')
-            queryset = queryset.filter(created_at__date__lte=end_date)
-
-        return queryset
-
-    def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-        return self._apply_date_range(queryset)
-
-    def get_queryset(self):
-        return EmailBatch.objects.select_related(
-            'building',
-            'created_by'
-        ).annotate(
-            total_recipients=Count('recipients'),
-            successful_sends=Count(
-                'recipients',
-                filter=Q(recipients__status__in=EMAIL_BATCH_SUCCESS_STATUSES)
-            ),
-            failed_sends=Count(
-                'recipients',
-                filter=Q(recipients__status__in=EMAIL_BATCH_FAILURE_STATUSES)
-            ),
-        )
-
-    @action(detail=False, methods=['get'])
-    def stats(self, request):
-        """
-        Get email batch statistics.
-
-        GET /api/notifications/email-batches/stats/
-        """
-        batches = self.filter_queryset(self.get_queryset())
-        batch_rows = list(batches)
-        total_batches = len(batch_rows)
-        total_recipients = sum((row.total_recipients or 0) for row in batch_rows)
-        total_successful_sends = sum((row.successful_sends or 0) for row in batch_rows)
-        total_failed_sends = sum((row.failed_sends or 0) for row in batch_rows)
-        delivery_rate = 0
-        if total_recipients > 0:
-            delivery_rate = (total_successful_sends / total_recipients) * 100
-
-        by_status = {'sent': 0, 'failed': 0, 'partial': 0}
-        for row in batch_rows:
-            total = row.total_recipients or 0
-            successful = row.successful_sends or 0
-            failed = row.failed_sends or 0
-            if total <= 0:
-                status_key = 'failed'
-            elif failed > 0 and successful > 0:
-                status_key = 'partial'
-            elif failed > 0:
-                status_key = 'failed'
-            else:
-                status_key = 'sent'
-            by_status[status_key] = by_status.get(status_key, 0) + 1
-
-        total_partial = by_status.get('partial', 0)
-        total_sent = by_status.get('sent', 0)
-        total_failed = by_status.get('failed', 0) + total_partial
-
-        average_delivery_rate = 0.0
-        if total_batches:
-            rates = [
-                (row.successful_sends / row.total_recipients) * 100
-                for row in batch_rows
-                if row.total_recipients
-            ]
-            if rates:
-                average_delivery_rate = sum(rates) / len(rates)
-
-        serializer = EmailBatchStatisticsSerializer(data={
-            'total_batches': total_batches,
-            'total_sent': total_sent,
-            'total_failed': total_failed,
-            'total_partial': total_partial,
-            'total_recipients': total_recipients,
-            'total_successful_sends': total_successful_sends,
-            'total_failed_sends': total_failed_sends,
-            'delivery_rate': delivery_rate,
-            'average_delivery_rate': average_delivery_rate,
-            'by_status': by_status,
-        })
-        serializer.is_valid()
-
-        return Response(serializer.data)
-
     @action(detail=False, methods=['post'])
     def send_common_expenses(self, request):
         """
@@ -952,6 +837,120 @@ class EmailBatchViewSet(viewsets.ReadOnlyModelViewSet):
             'queued': queued,
         }, status=status.HTTP_202_ACCEPTED)
 
+
+class EmailBatchViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only viewset for email batches (bulk sends like common expenses).
+
+    list: Get email batches
+    stats: Get email batch statistics
+    """
+
+    serializer_class = EmailBatchSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['purpose', 'building']
+
+    def _parse_date_param(self, value, param_name):
+        try:
+            return datetime.strptime(value, '%Y-%m-%d').date()
+        except (TypeError, ValueError):
+            raise ValidationError({param_name: 'Invalid date format. Use YYYY-MM-DD.'})
+
+    def _apply_date_range(self, queryset):
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            start_date = self._parse_date_param(start_date, 'start_date')
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            end_date = self._parse_date_param(end_date, 'end_date')
+            queryset = queryset.filter(created_at__date__lte=end_date)
+
+        return queryset
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        return self._apply_date_range(queryset)
+
+    def get_queryset(self):
+        return EmailBatch.objects.select_related(
+            'building',
+            'created_by'
+        ).annotate(
+            total_recipients=Count('recipients'),
+            successful_sends=Count(
+                'recipients',
+                filter=Q(recipients__status__in=EMAIL_BATCH_SUCCESS_STATUSES)
+            ),
+            failed_sends=Count(
+                'recipients',
+                filter=Q(recipients__status__in=EMAIL_BATCH_FAILURE_STATUSES)
+            ),
+        )
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        Get email batch statistics.
+
+        GET /api/notifications/email-batches/stats/
+        """
+        batches = self.filter_queryset(self.get_queryset())
+        batch_rows = list(batches)
+        total_batches = len(batch_rows)
+        total_recipients = sum((row.total_recipients or 0) for row in batch_rows)
+        total_successful_sends = sum((row.successful_sends or 0) for row in batch_rows)
+        total_failed_sends = sum((row.failed_sends or 0) for row in batch_rows)
+        delivery_rate = 0
+        if total_recipients > 0:
+            delivery_rate = (total_successful_sends / total_recipients) * 100
+
+        by_status = {'sent': 0, 'failed': 0, 'partial': 0}
+        for row in batch_rows:
+            total = row.total_recipients or 0
+            successful = row.successful_sends or 0
+            failed = row.failed_sends or 0
+            if total <= 0:
+                status_key = 'failed'
+            elif failed > 0 and successful > 0:
+                status_key = 'partial'
+            elif failed > 0:
+                status_key = 'failed'
+            else:
+                status_key = 'sent'
+            by_status[status_key] = by_status.get(status_key, 0) + 1
+
+        total_partial = by_status.get('partial', 0)
+        total_sent = by_status.get('sent', 0)
+        total_failed = by_status.get('failed', 0) + total_partial
+
+        average_delivery_rate = 0.0
+        if total_batches:
+            rates = [
+                (row.successful_sends / row.total_recipients) * 100
+                for row in batch_rows
+                if row.total_recipients
+            ]
+            if rates:
+                average_delivery_rate = sum(rates) / len(rates)
+
+        serializer = EmailBatchStatisticsSerializer(data={
+            'total_batches': total_batches,
+            'total_sent': total_sent,
+            'total_failed': total_failed,
+            'total_partial': total_partial,
+            'total_recipients': total_recipients,
+            'total_successful_sends': total_successful_sends,
+            'total_failed_sends': total_failed_sends,
+            'delivery_rate': delivery_rate,
+            'average_delivery_rate': average_delivery_rate,
+            'by_status': by_status,
+        })
+        serializer.is_valid()
+
+        return Response(serializer.data)
 
 class NotificationRecipientViewSet(viewsets.ReadOnlyModelViewSet):
     """
