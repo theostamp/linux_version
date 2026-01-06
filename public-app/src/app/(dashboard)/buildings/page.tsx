@@ -14,6 +14,7 @@ import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/stat-card';
 import { hasOfficeAdminAccess } from '@/lib/roleUtils';
@@ -185,9 +186,18 @@ const BuildingsPageContent = () => {
 
             {canManage && (
               <Link href="/data-migration">
-                <Button size="sm" variant="secondary">
+                <Button
+                  size="sm"
+                  className="bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
+                >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Μετανάστευση OCR
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 bg-white/90 text-teal-700 uppercase text-[10px]"
+                  >
+                    Premium
+                  </Badge>
                 </Button>
               </Link>
             )}

@@ -71,11 +71,12 @@ export default function BuildingSelectorButton({
           onClick={handleOpen}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          title={selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
           className={`flex items-center justify-between gap-3 min-w-[220px] max-w-full px-4 py-2.5 bg-slate-200/85 dark:bg-slate-700/70 border border-slate-200/70 dark:border-slate-700/50 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:bg-slate-200 dark:hover:bg-slate-700/80 transition-all duration-200 ${className}`}
         >
-          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+          <div className="flex items-start gap-2 min-w-0 overflow-hidden">
             <BuildingIcon className="w-4 h-4 text-teal-600 dark:text-teal-400 flex-shrink-0" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 line-clamp-2 break-words leading-snug">
               {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
             </span>
           </div>

@@ -8,7 +8,7 @@ import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { TodoReminderDropdown } from './todos/TodoReminderDropdown';
-import { AlertTriangle, User, Building as BuildingIcon, Settings, Calendar, Shield, HelpCircle } from 'lucide-react';
+import { AlertTriangle, User, Building as BuildingIcon, Settings, Calendar, Shield, HelpCircle, Mail, Phone } from 'lucide-react';
 import { getOfficeLogoUrl } from '@/lib/utils';
 import { getEffectiveRoleForBuilding, getRoleLabelFromRole, hasOfficeAdminAccess } from '@/lib/roleUtils';
 
@@ -76,9 +76,9 @@ export default function GlobalHeader() {
         <div className="w-full pr-4 pl-16 sm:pr-6 sm:pl-16 lg:px-8">
           <div className="w-full max-w-full">
             {/* On mobile, allow a 2nd row so the building selector never overlaps other header actions */}
-            <div className="flex flex-wrap sm:grid sm:grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6 lg:gap-8 py-3 sm:h-20">
-              {/* Left Section - Logo */}
-              <div className="flex-shrink-0 order-1">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(240px,340px)_minmax(260px,1fr)_auto] sm:items-center py-3 sm:h-20">
+              {/* Left Section - Logo + Office Identity */}
+              <div className="flex items-center gap-3 min-w-0 max-w-full">
                 {(() => {
                   const logoUrl = getOfficeLogoUrl(user?.office_logo);
                   return logoUrl && !logoError ? (
@@ -104,229 +104,212 @@ export default function GlobalHeader() {
                     </div>
                   );
                 })()}
+                {showOfficeDetails && (
+                  <div className="min-w-0 max-w-[240px] sm:max-w-[300px] lg:max-w-[340px]">
+                    <p
+                      className="text-sm font-semibold text-foreground leading-snug line-clamp-2 break-words"
+                      title={user?.office_name || 'Γραφείο Διαχείρισης'}
+                    >
+                      {user?.office_name || 'Γραφείο Διαχείρισης'}
+                    </p>
+                    {user?.office_address && (
+                      <p
+                        className="text-[11px] text-muted-foreground leading-tight truncate"
+                        title={user.office_address}
+                      >
+                        {user.office_address}
+                      </p>
+                    )}
+                    <div className="hidden md:flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground leading-tight">
+                      {user?.office_phone && (
+                        <span className="flex items-center gap-1 truncate" title={user.office_phone}>
+                          <Phone className="h-3 w-3" />
+                          {user.office_phone}
+                        </span>
+                      )}
+                      {user?.email && (
+                        <span className="flex items-center gap-1 truncate" title={user.email}>
+                          <Mail className="h-3 w-3" />
+                          {user.email}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Center Section - Office Details spread across width */}
               <div className="min-w-0">
-                {showOfficeDetails ? (
-                  <>
-            {/* Desktop: Grid Layout for even spacing */}
-            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-center">
-              {/* Office Name and Address */}
-              <div className="flex flex-col justify-center min-w-0">
-                <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
-                  {user?.office_name || 'Γραφείο Διαχείρισης'}
-                </h1>
-                {user?.office_address && (
-                  <p className="text-xs text-muted-foreground leading-tight truncate">
-                    {user.office_address}
-                  </p>
-                )}
-              </div>
-
-              {/* Contact Details */}
-              <div className="flex flex-col justify-center min-w-0">
-                {user?.office_phone && (
-                  <p className="text-xs text-gray-500 leading-tight mb-1 truncate">
-                    📞 {user.office_phone}
-                  </p>
-                )}
-                {user?.email && (
-                  <p className="text-xs text-muted-foreground leading-tight truncate">
-                    ✉️ {user.email}
-                  </p>
-                )}
-              </div>
-
-              {/* Building Selector - ADMIN & INTERNAL MANAGER */}
-              {canSelectBuilding && (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
-                  <BuildingSelectorButton
-                    onBuildingSelect={setSelectedBuilding}
-                    selectedBuilding={selectedBuilding}
-                    className="min-w-[220px]"
-                  />
-                </div>
-              )}
-            </div>
-
-                {/* Mobile version - Office Name Only */}
-                <div className="sm:hidden">
-                  <h1 className="text-sm font-bold text-foreground leading-tight truncate">
-                    {user?.office_name?.substring(0, 15) || 'ΓΔ'}
-                  </h1>
-                </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 min-w-0">
-                    {/* Building Info */}
-                    <div className="flex flex-col justify-center min-w-0">
-                      <h1 className="text-base font-bold text-foreground leading-tight mb-1 truncate">
-                        {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
-                      </h1>
-                      <p className="text-xs text-muted-foreground leading-tight truncate hidden sm:block">
-                        {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
-                      </p>
-                    </div>
-
-                {/* Building Selector for residents with multiple buildings - Desktop */}
-                {canSelectBuilding && hasMultipleBuildings && (
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                {canSelectBuilding && (showOfficeDetails || hasMultipleBuildings) ? (
+                  <div className="hidden sm:flex items-center justify-center gap-2 min-w-0">
                     <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Κτίριο:</span>
-                    <BuildingSelectorButton
-                      onBuildingSelect={setSelectedBuilding}
-                      selectedBuilding={selectedBuilding}
-                      className="min-w-[220px]"
-                    />
+                    <div className="min-w-[220px] max-w-[420px] w-full">
+                      <BuildingSelectorButton
+                        onBuildingSelect={setSelectedBuilding}
+                        selectedBuilding={selectedBuilding}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
-                )}
-
-                    {/* Mobile selector moved to its own row (see below) */}
+                ) : (
+                  <div className="flex flex-col sm:items-center sm:text-center min-w-0 max-w-[420px] mx-auto">
+                    <h1
+                      className="text-base font-semibold text-foreground leading-snug line-clamp-2 break-words"
+                      title={selectedBuilding?.name || 'Η Πολυκατοικία μου'}
+                    >
+                      {selectedBuilding?.name || 'Η Πολυκατοικία μου'}
+                    </h1>
+                    <p
+                      className="text-xs text-muted-foreground leading-snug line-clamp-2 break-words hidden sm:block"
+                      title={selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email || '')}
+                    >
+                      {selectedBuilding?.address || (isResidentUser ? 'Προσωπικός χώρος' : user?.email)}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Right Section - Actions and User Info */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Todo Reminders Dropdown - Bell Icon */}
-              <TodoReminderDropdown
-                className="hidden sm:flex"
-                onOpenCalendar={() => {
-                  const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
-                  window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-                }}
-              />
+              <div className="flex items-center justify-end gap-2 flex-shrink-0">
+                {/* Todo Reminders Dropdown - Bell Icon */}
+                <TodoReminderDropdown
+                  className="hidden sm:flex"
+                  onOpenCalendar={() => {
+                    const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
+                    window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                  }}
+                />
 
-              {/* Help Button */}
-              <Link
-                href="/help"
-                className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
-                title="Κέντρο Βοήθειας"
-              >
-                <HelpCircle className="w-5 h-5" />
-              </Link>
-
-              {/* Calendar Button */}
-              <button
-                onClick={() => {
-                  const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
-                  window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-                }}
-                className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
-                title="Άνοιγμα Ημερολογίου σε νέο παράθυρο"
-              >
-                <Calendar className="w-5 h-5" />
-              </button>
-
-              {/* Settings Button - Desktop - ADMIN-ONLY */}
-              {isAdminLevel && (
-                <button
-                  onClick={handleSettingsModalOpen}
+                {/* Help Button */}
+                <Link
+                  href="/help"
                   className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
-                  title="Ρυθμίσεις Γραφείου Διαχείρισης"
+                  title="Κέντρο Βοήθειας"
                 >
-                  <Settings className="w-5 h-5" />
-                </button>
-              )}
+                  <HelpCircle className="w-5 h-5" />
+                </Link>
 
-              {/* Help Button - Mobile */}
-              <Link
-                href="/help"
-                className="sm:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
-                title="Βοήθεια"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </Link>
-
-              {/* Settings Button - Mobile - ADMIN-ONLY */}
-              {isAdminLevel && (
+                {/* Calendar Button */}
                 <button
-                  onClick={() => setIsSettingsModalOpen(true)}
-                  className="sm:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
-                  title="Ρυθμίσεις"
+                  onClick={() => {
+                    const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
+                    window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                  }}
+                  className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                  title="Άνοιγμα Ημερολογίου σε νέο παράθυρο"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Calendar className="w-5 h-5" />
                 </button>
-              )}
 
-              {/* Todo Reminders - Mobile */}
-              <TodoReminderDropdown
-                className="sm:hidden"
-                onOpenCalendar={() => {
-                  window.location.href = '/calendar';
-                }}
-              />
+                {/* Settings Button - Desktop - ADMIN-ONLY */}
+                {isAdminLevel && (
+                  <button
+                    onClick={handleSettingsModalOpen}
+                    className="hidden sm:flex p-2.5 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                    title="Ρυθμίσεις Γραφείου Διαχείρισης"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+                )}
 
-              {/* User Info Card */}
-              {user && (
-                <div className={`flex items-center gap-3 px-4 py-2 rounded-xl shadow-sm transition-colors ${
-                  isInternalManager
-                    ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30'
-                    : 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'
-                }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isInternalManager ? 'bg-amber-500' : 'bg-teal-500 dark:bg-teal-600'
+                {/* Help Button - Mobile */}
+                <Link
+                  href="/help"
+                  className="sm:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                  title="Βοήθεια"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </Link>
+
+                {/* Settings Button - Mobile - ADMIN-ONLY */}
+                {isAdminLevel && (
+                  <button
+                    onClick={() => setIsSettingsModalOpen(true)}
+                    className="sm:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                    title="Ρυθμίσεις"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Todo Reminders - Mobile */}
+                <TodoReminderDropdown
+                  className="sm:hidden"
+                  onOpenCalendar={() => {
+                    window.location.href = '/calendar';
+                  }}
+                />
+
+                {/* User Info Card */}
+                {user && (
+                  <div className={`flex items-center gap-3 px-4 py-2 rounded-xl shadow-sm transition-colors ${
+                    isInternalManager
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30'
+                      : 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'
                   }`}>
-                    {isInternalManager ? (
-                      <Shield className="w-4 h-4 text-white" />
-                    ) : (
-                      <User className="w-4 h-4 text-white" />
-                    )}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight">
-                        {user.first_name || user.last_name
-                          ? `${user.first_name} ${user.last_name}`.trim()
-                          : user.email}
-                      </p>
-                      {isInternalManager && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-amber-500 text-white rounded">
-                          Διαχειριστής
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-xs leading-tight mt-0.5 ${
-                      isInternalManager ? 'text-amber-700 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      isInternalManager ? 'bg-amber-500' : 'bg-teal-500 dark:bg-teal-600'
                     }`}>
-                      {roleLabel}
-                    </p>
-                    {showRoleDebug && (
-                      <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-300">
-                        Debug role: {effectiveRole || '—'} • Κτίριο {roleBuilding?.id ?? '—'}
-                      </p>
-                    )}
-                  </div>
-                  <div className="sm:hidden">
-                    <div className="flex items-center gap-1">
-                      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 leading-tight">
-                        {user.first_name || user.last_name
-                          ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
-                          : user.email.split('@')[0]}
-                      </p>
-                      {isInternalManager && (
-                        <Shield className="w-3 h-3 text-amber-600" />
+                      {isInternalManager ? (
+                        <Shield className="w-4 h-4 text-white" />
+                      ) : (
+                        <User className="w-4 h-4 text-white" />
                       )}
                     </div>
+                    <div className="hidden sm:block">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-tight">
+                          {user.first_name || user.last_name
+                            ? `${user.first_name} ${user.last_name}`.trim()
+                            : user.email}
+                        </p>
+                        {isInternalManager && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-amber-500 text-white rounded">
+                            Διαχειριστής
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-xs leading-tight mt-0.5 ${
+                        isInternalManager ? 'text-amber-700 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {roleLabel}
+                      </p>
+                      {showRoleDebug && (
+                        <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-300">
+                          Debug role: {effectiveRole || '—'} • Κτίριο {roleBuilding?.id ?? '—'}
+                        </p>
+                      )}
+                    </div>
+                    <div className="sm:hidden">
+                      <div className="flex items-center gap-1">
+                        <p className="text-xs font-medium text-gray-800 dark:text-gray-100 leading-tight">
+                          {user.first_name || user.last_name
+                            ? `${user.first_name} ${user.last_name}`.trim().split(' ')[0]
+                            : user.email.split('@')[0]}
+                        </p>
+                        {isInternalManager && (
+                          <Shield className="w-3 h-3 text-amber-600" />
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Logout Button */}
-              <LogoutButton className="text-sm" />
+                {/* Logout Button */}
+                <LogoutButton className="text-sm" />
+              </div>
             </div>
 
-              {/* Mobile-only: building selector as a full-width second row to avoid crowding/overlap */}
-              {canSelectBuilding && (hasMultipleBuildings || showOfficeDetails) && (
-                <div className="sm:hidden w-full pt-1 order-4">
-                  <BuildingSelectorButton
-                    onBuildingSelect={setSelectedBuilding}
-                    selectedBuilding={selectedBuilding}
-                    className="w-full text-xs py-1.5 px-2"
-                  />
-                </div>
-              )}
+            {/* Mobile-only: building selector as a full-width second row to avoid crowding/overlap */}
+            {canSelectBuilding && (hasMultipleBuildings || showOfficeDetails) && (
+              <div className="sm:hidden w-full pt-1">
+                <BuildingSelectorButton
+                  onBuildingSelect={setSelectedBuilding}
+                  selectedBuilding={selectedBuilding}
+                  className="w-full text-xs py-1.5 px-2"
+                />
+              </div>
+            )}
           </div>
 
           {showPermissionWarning && (

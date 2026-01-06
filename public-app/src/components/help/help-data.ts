@@ -16,6 +16,7 @@ import {
   MessageCircle,
   ClipboardList,
   Wallet,
+  Server,
 } from 'lucide-react';
 
 export interface HelpLink {
@@ -722,6 +723,62 @@ export const helpChapters: HelpChapter[] = [
           { label: 'Άνοιγμα Αναβάθμισης', href: '/upgrade' },
         ],
         keywords: ['αναβάθμιση', 'premium', 'κλειδωμένο'],
+      },
+    ],
+  },
+  {
+    id: 'admin-tools',
+    title: 'Admin Εργαλεία',
+    icon: Server,
+    description: 'Εργαλεία διαχείρισης συστήματος για admin χρήστες.',
+    sections: [
+      {
+        id: 'backup-restore',
+        title: 'Backup & Restore',
+        content: [
+          'Δημιουργήστε αντίγραφα ασφαλείας ή επαναφέρετε δεδομένα για συγκεκριμένο κτίριο.',
+          'Χρησιμοποιήστε το πριν από μεγάλες αλλαγές ή όταν απαιτείται επαναφορά.',
+        ],
+        links: [
+          { label: 'Άνοιγμα Backup/Restore', href: '/admin/backup-restore' },
+        ],
+        keywords: ['backup', 'restore', 'αντίγραφα ασφαλείας'],
+      },
+      {
+        id: 'database-cleanup',
+        title: 'Εκκαθάριση Βάσης',
+        content: [
+          'Η εκκαθάριση βάσης είναι εργαλείο διαχειριστή και απαιτεί προσοχή.',
+          'Χρησιμοποιήστε το μόνο όταν γνωρίζετε τις επιπτώσεις ή κατόπιν οδηγιών.',
+        ],
+        links: [
+          { label: 'Άνοιγμα Εκκαθάρισης DB', href: '/admin/database-cleanup' },
+        ],
+        keywords: ['database', 'cleanup', 'διαγραφή'],
+      },
+      {
+        id: 'network-usage',
+        title: 'Network Usage (Ultra Admin)',
+        content: [
+          'Προβολή μετρήσεων network traffic και έλεγχος ειδικών λειτουργιών.',
+          'Απαιτείται Ultra Admin ρόλος.',
+        ],
+        links: [
+          { label: 'Άνοιγμα Network Usage', href: '/admin/network-usage' },
+        ],
+        keywords: ['network', 'ultra admin', 'traffic'],
+      },
+      {
+        id: 'ad-portal',
+        title: 'Ad Portal',
+        content: [
+          'Διαχείριση διαφημίσεων και ρυθμίσεων προβολής.',
+          'Χρησιμοποιείται από διαχειριστές για την εμπορική λειτουργία του portal.',
+        ],
+        links: [
+          { label: 'Άνοιγμα Ad Portal', href: '/admin/ad-portal' },
+        ],
+        keywords: ['ads', 'portal', 'ρυθμίσεις'],
       },
     ],
   },
