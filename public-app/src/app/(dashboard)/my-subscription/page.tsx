@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { Loader2, CreditCard, Shield, TrendingUp, CheckCircle, AlertTriangle, RefreshCcw } from 'lucide-react';
+import { Loader2, CreditCard, Shield, TrendingUp, CheckCircle, AlertTriangle, RefreshCcw, Info } from 'lucide-react';
 import { typography } from '@/lib/typography';
 import { getMonthlyPrice } from '@/lib/pricing';
 
@@ -705,6 +705,19 @@ export default function MySubscriptionPage() {
                 <Badge variant="secondary">Web: {buildingStats.web}</Badge>
                 <Badge variant="secondary">Premium: {buildingStats.premium}</Badge>
                 <Badge variant="secondary">Premium + IoT: {buildingStats.premium_iot}</Badge>
+              </div>
+              <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-700">
+                <Info className="mt-0.5 h-4 w-4 text-slate-500" />
+                <div className="space-y-1">
+                  <p className="font-medium text-slate-800">Παράδειγμα υπολογισμού (ανά κτίριο)</p>
+                  <p>
+                    Premium με 8 διαμερίσματα: 8 × €1,80 = €14,40 → χρέωση €30 (ελάχιστο).
+                  </p>
+                  <p>
+                    Premium + IoT με 8 διαμερίσματα: 8 × €2,30 = €18,40 → χρέωση €35 (ελάχιστο).
+                  </p>
+                  <p>Web: χωρίς ελάχιστο, δωρεάν έως 7 διαμερίσματα.</p>
+                </div>
               </div>
 
               <div className="grid gap-3 md:grid-cols-3">
