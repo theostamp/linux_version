@@ -22,6 +22,8 @@ from financial.models import Expense, Transaction, Payment, MonthlyBalance
 from financial.monthly_balance_service import MonthlyBalanceService
 from financial.utils.date_helpers import get_month_first_day, parse_month_string
 from notifications.services import NotificationEventService
+from notifications.models import EmailBatch
+from office_finance.models import OfficeIncome
 
 
 @ensure_csrf_cookie
@@ -429,6 +431,35 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 BuildingViewSet.update() response: {response.data}")
         print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
         return response
+
+    def destroy(self, request, *args, **kwargs):
+        building = self.get_object()
+        building_name = building.name
+        logger = logging.getLogger(__name__)
+
+        with transaction.atomic():
+            email_batches_deleted = EmailBatch.objects.filter(building=building).delete()[0]
+            office_incomes_deleted = OfficeIncome.objects.filter(building=building).delete()[0]
+            self.perform_destroy(building)
+
+        logger.warning(
+            "Building deleted with cleanup",
+            extra={
+                "building_id": building.id,
+                "building_name": building_name,
+                "email_batches_deleted": email_batches_deleted,
+                "office_incomes_deleted": office_incomes_deleted,
+            },
+        )
+
+        return Response(
+            {
+                "message": f'Το κτίριο "{building_name}" διαγράφηκε οριστικά.',
+                "email_batches_deleted": email_batches_deleted,
+                "office_incomes_deleted": office_incomes_deleted,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=['post'], url_path='cancel_reserve_fund')
     def cancel_reserve_fund(self, request, pk=None):

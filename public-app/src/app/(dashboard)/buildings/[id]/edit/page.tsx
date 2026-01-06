@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Building } from '@/lib/api';
 import { fetchBuilding, deleteBuilding } from '@/lib/api';
+import { confirmBuildingDeletion } from '@/lib/confirmations';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building as BuildingIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -99,19 +100,7 @@ export default function EditBuildingPage() {
 
   const handleDelete = async () => {
     if (!initialData) return;
-
-    const confirmed = window.confirm(
-      `Είστε βέβαιοι ότι θέλετε να διαγράψετε το κτίριο "${initialData.name}";\n\n` +
-      `⚠️ Προειδοποίηση: Αυτή η ενέργεια θα διαγράψει επίσης:\n` +
-      `• Όλα τα διαμερίσματα του κτιρίου\n` +
-      `• Όλες τις ανακοινώσεις\n` +
-      `• Όλα τα αιτήματα\n` +
-      `• Όλες τις ψηφοφορίες\n` +
-      `• Όλες τις οικονομικές κινήσεις\n\n` +
-      `Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!`
-    );
-
-    if (!confirmed) return;
+    if (!confirmBuildingDeletion(initialData.name)) return;
 
     setDeleting(true);
     try {

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import type { Building } from '@/lib/api';
 import { deleteBuilding } from '@/lib/api';
+import { confirmBuildingDeletion } from '@/lib/confirmations';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { typography } from '@/lib/typography';
@@ -39,32 +40,31 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
   const canManage = hasOfficeAdminAccess(user);
 
   const handleDelete = async (building: Building) => {
-    if (window.confirm(`Είστε βέβαιοι ότι θέλετε να διαγράψετε το κτίριο "${building.name}";`)) {
-      setDeletingId(building.id);
-      try {
-        await deleteBuilding(building.id);
-        toast.success('Το κτίριο διαγράφηκε επιτυχώς');
-        await refreshBuildings();
-        // ✅ Cascade refresh: Invalidate AND explicitly refetch for immediate UI update
-        await queryClient.invalidateQueries({ queryKey: ['buildings'] });
-        await queryClient.invalidateQueries({ queryKey: ['financial'] });
-        await queryClient.invalidateQueries({ queryKey: ['projects'] });
-        await queryClient.invalidateQueries({ queryKey: ['offers'] });
-        await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
-        await queryClient.refetchQueries({ queryKey: ['buildings'] });
-        await queryClient.refetchQueries({ queryKey: ['financial'] });
-        await queryClient.refetchQueries({ queryKey: ['projects'] });
-        await queryClient.refetchQueries({ queryKey: ['offers'] });
-        await queryClient.refetchQueries({ queryKey: ['maintenance'] });
-        if (onRefresh) {
-          onRefresh();
-        }
-      } catch (error: unknown) {
-        const err = error as { message?: string };
-        toast.error(err.message || 'Σφάλμα κατά τη διαγραφή του κτιρίου');
-      } finally {
-        setDeletingId(null);
+    if (!confirmBuildingDeletion(building.name)) return;
+    setDeletingId(building.id);
+    try {
+      await deleteBuilding(building.id);
+      toast.success('Το κτίριο διαγράφηκε επιτυχώς');
+      await refreshBuildings();
+      // ✅ Cascade refresh: Invalidate AND explicitly refetch for immediate UI update
+      await queryClient.invalidateQueries({ queryKey: ['buildings'] });
+      await queryClient.invalidateQueries({ queryKey: ['financial'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['offers'] });
+      await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+      await queryClient.refetchQueries({ queryKey: ['buildings'] });
+      await queryClient.refetchQueries({ queryKey: ['financial'] });
+      await queryClient.refetchQueries({ queryKey: ['projects'] });
+      await queryClient.refetchQueries({ queryKey: ['offers'] });
+      await queryClient.refetchQueries({ queryKey: ['maintenance'] });
+      if (onRefresh) {
+        onRefresh();
       }
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast.error(err.message || 'Σφάλμα κατά τη διαγραφή του κτιρίου');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -81,7 +81,7 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
     });
   };
 
-    if (buildings.length === 0) {
+  if (buildings.length === 0) {
     return (
       <div className="bg-card rounded-xl border border-border border-dashed p-8 text-center">
         <BuildingIcon className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
