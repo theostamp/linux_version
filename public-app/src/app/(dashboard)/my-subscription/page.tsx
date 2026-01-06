@@ -706,7 +706,7 @@ export default function MySubscriptionPage() {
                 <Badge variant="secondary">Premium + IoT: {buildingStats.premium_iot}</Badge>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-sm text-sky-900">
                   <p className="text-xs uppercase text-muted-foreground">Web</p>
                   <div className="mt-2 space-y-1 text-xs">
@@ -758,25 +758,25 @@ export default function MySubscriptionPage() {
                     </div>
                   </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-900">
-                  <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
-                  <div className="mt-2 space-y-1 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span>Κτίρια</span>
-                      <span className="font-semibold">{buildingStats.total}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Διαμερίσματα</span>
-                      <span className="font-semibold">
-                        {buildingStats.apartments.web +
-                          buildingStats.apartments.premium +
-                          buildingStats.apartments.premium_iot}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Κόστος</span>
-                      <span className="font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
-                    </div>
+              </div>
+              <div className="rounded-2xl border border-slate-300 bg-slate-100/80 p-5 text-sm text-slate-900 shadow-sm">
+                <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
+                <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2">
+                    <span>Κτίρια</span>
+                    <span className="text-base font-semibold">{buildingStats.total}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2">
+                    <span>Διαμερίσματα</span>
+                    <span className="text-base font-semibold">
+                      {buildingStats.apartments.web +
+                        buildingStats.apartments.premium +
+                        buildingStats.apartments.premium_iot}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2">
+                    <span>Κόστος</span>
+                    <span className="text-base font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
                   </div>
                 </div>
               </div>
