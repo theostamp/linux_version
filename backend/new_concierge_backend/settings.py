@@ -793,6 +793,13 @@ MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:1
 # 🔔 Firebase Push Notifications
 # ----------------------------------------
 FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', BASE_DIR / 'credentials' / 'serviceAccountKey.json')
+PUSH_AUTO_WITH_EMAIL = os.getenv('PUSH_AUTO_WITH_EMAIL', 'True') == 'True'
+
+# ----------------------------------------
+# 📩 SMS Notifications
+# ----------------------------------------
+SMS_ENABLED = os.getenv('SMS_ENABLED', 'False') == 'True'
+SMS_ONLY_FOR_DEBT_REMINDERS = os.getenv('SMS_ONLY_FOR_DEBT_REMINDERS', 'True') == 'True'
 
 # ----------------------------------------
 # 📲 Viber Notifications

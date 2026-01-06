@@ -13,6 +13,9 @@ Use environment variables or a secrets manager.
 # Enable/disable SMS notifications globally
 SMS_ENABLED = False
 
+# Restrict SMS usage to debt reminders only
+SMS_ONLY_FOR_DEBT_REMINDERS = True
+
 # Use sandbox/test mode (no real SMS sent)
 SMS_SANDBOX_MODE = True
 
@@ -81,6 +84,9 @@ PUSH_NOTIFICATIONS_ENABLED = False
 
 # Path to Firebase service account JSON file
 FIREBASE_CREDENTIALS_PATH = ''
+
+# Auto-send push alongside email notifications
+PUSH_AUTO_WITH_EMAIL = True
 
 # Or provide credentials as dict (for containerized deployments)
 # FIREBASE_CREDENTIALS_JSON = {

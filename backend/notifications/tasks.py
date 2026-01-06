@@ -4,6 +4,7 @@ Celery tasks for notifications system.
 import logging
 
 from celery import shared_task
+from django.conf import settings
 from django.utils import timezone
 from django_tenants.utils import schema_context, get_tenant_model
 from datetime import datetime, timedelta
@@ -343,6 +344,10 @@ def send_monthly_reminder_sms(task_id: int):
     Send SMS reminder to all apartments in a building that common expenses are ready.
     This is called after a monthly notification task is executed.
     """
+    if getattr(settings, "SMS_ONLY_FOR_DEBT_REMINDERS", True):
+        logger.info("SMS monthly reminders disabled: SMS reserved for debt reminders.")
+        return "SMS disabled for non-debt reminders"
+
     from notifications.models import MonthlyNotificationTask, Notification
     from apartments.models import Apartment
     # from notifications.services import SMSService  # TODO: Implement SMS service

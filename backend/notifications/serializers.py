@@ -1,6 +1,7 @@
 """
 DRF Serializers for notifications app.
 """
+from django.conf import settings
 from rest_framework import serializers
 from .models import (
     NotificationTemplate,
@@ -252,6 +253,12 @@ class NotificationCreateSerializer(serializers.Serializer):
 
         # SMS requires sms_body (or uses body as fallback)
         if data.get('notification_type') in ['sms', 'both']:
+            if getattr(settings, 'SMS_ONLY_FOR_DEBT_REMINDERS', True):
+                raise serializers.ValidationError(
+                    "SMS notifications are reserved for debt reminders."
+                )
+            if not getattr(settings, 'SMS_ENABLED', False):
+                raise serializers.ValidationError("SMS notifications are disabled.")
             if has_template:
                 # Template should have sms_template
                 pass  # Will be validated in view
