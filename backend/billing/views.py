@@ -14,7 +14,7 @@ import logging
 
 from .models import (
     SubscriptionPlan, UserSubscription, BillingCycle,
-    UsageTracking, PaymentMethod, PricingTier
+    UsageTracking, PaymentMethod, PricingTier, apply_monthly_minimum
 )
 from users.models import CustomUser
 from .serializers import (
@@ -202,6 +202,7 @@ class PriceCalculatorView(APIView):
 
         if is_per_apartment:
             monthly_per_building = tier.monthly_price * apartment_count
+            monthly_per_building = apply_monthly_minimum(plan_category, monthly_per_building, apartment_count)
             yearly_full = monthly_per_building * 12
             yearly_per_building = yearly_full - (yearly_full * (tier.yearly_discount_percent / 100))
         else:

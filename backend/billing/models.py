@@ -9,6 +9,20 @@ import uuid
 
 User = get_user_model()
 
+PREMIUM_MIN_MONTHLY = Decimal('30.00')
+PREMIUM_IOT_MIN_MONTHLY = Decimal('35.00')
+MINIMUM_MONTHLY_BY_PLAN = {
+    'premium': PREMIUM_MIN_MONTHLY,
+    'premium_iot': PREMIUM_IOT_MIN_MONTHLY,
+}
+
+
+def apply_monthly_minimum(plan_category: str, monthly_price: Decimal, apartment_count: int) -> Decimal:
+    minimum = MINIMUM_MONTHLY_BY_PLAN.get(plan_category)
+    if not minimum or apartment_count <= 0:
+        return monthly_price
+    return max(monthly_price, minimum)
+
 
 class PricingTier(models.Model):
     """
@@ -159,7 +173,8 @@ class PricingTier(models.Model):
         is_per_apartment = plan_category in per_apartment_categories
 
         def _monthly_price():
-            return tier.monthly_price * apartment_count if is_per_apartment else tier.monthly_price
+            base = tier.monthly_price * apartment_count if is_per_apartment else tier.monthly_price
+            return apply_monthly_minimum(plan_category, base, apartment_count)
 
         def _yearly_price():
             if tier.yearly_price and not is_per_apartment:

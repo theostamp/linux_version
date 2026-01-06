@@ -1,6 +1,8 @@
 export type PlanId = 'free' | 'web' | 'premium' | 'premium_iot';
 
 export const FREE_MAX_APARTMENTS = 7;
+export const PREMIUM_MIN_MONTHLY = 30;
+export const PREMIUM_IOT_MIN_MONTHLY = 35;
 
 export const PLAN_RATES: Record<Exclude<PlanId, 'free'>, number> = {
   web: 1.0,
@@ -20,7 +22,9 @@ export const getMonthlyPrice = (plan: PlanId, apartments: number) => {
   }
   const safeApartments = Math.max(0, apartments);
   const base = PLAN_RATES[plan] * safeApartments;
-  return roundTo2(base);
+  if (safeApartments === 0) return 0;
+  const minPrice = plan === 'premium' ? PREMIUM_MIN_MONTHLY : PREMIUM_IOT_MIN_MONTHLY;
+  return roundTo2(Math.max(base, minPrice));
 };
 
 export const getYearlyPrice = (monthlyPrice: number) => roundTo2(monthlyPrice * 10);

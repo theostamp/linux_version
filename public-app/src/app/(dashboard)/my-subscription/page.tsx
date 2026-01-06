@@ -394,10 +394,8 @@ export default function MySubscriptionPage() {
       stats[plan] += 1;
       const apartmentsCount = Math.max(0, building.apartments_count ?? 0);
       stats.apartments[plan] += apartmentsCount;
+      stats.charges[plan] += getMonthlyPrice(plan, apartmentsCount);
     }
-    stats.charges.web = getMonthlyPrice('web', stats.apartments.web);
-    stats.charges.premium = getMonthlyPrice('premium', stats.apartments.premium);
-    stats.charges.premium_iot = getMonthlyPrice('premium_iot', stats.apartments.premium_iot);
     stats.charges.total = stats.charges.web + stats.charges.premium + stats.charges.premium_iot;
     return stats;
   }, [buildings]);
@@ -695,7 +693,10 @@ export default function MySubscriptionPage() {
             <CardHeader>
               <CardTitle>Πολυκατοικίες & πλάνα</CardTitle>
               <CardDescription>
-                Η χρέωση υπολογίζεται ανά διαμέρισμα και ανά πλάνο που έχει επιλεγεί σε κάθε κτίριο.
+                <span>Η χρέωση υπολογίζεται ανά διαμέρισμα και ανά πλάνο που έχει επιλεγεί σε κάθε κτίριο.</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Premium: ελάχιστο €30/κτίριο • Premium + IoT: ελάχιστο €35/κτίριο
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -739,6 +740,10 @@ export default function MySubscriptionPage() {
                       <span>Κόστος</span>
                       <span className="font-semibold">{formatCurrency(buildingStats.charges.premium)}</span>
                     </div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Ελάχιστο</span>
+                      <span>€30/κτίριο</span>
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-900">
@@ -756,13 +761,17 @@ export default function MySubscriptionPage() {
                       <span>Κόστος</span>
                       <span className="font-semibold">{formatCurrency(buildingStats.charges.premium_iot)}</span>
                     </div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Ελάχιστο</span>
+                      <span>€35/κτίριο</span>
+                    </div>
                   </div>
                 </div>
               </div>
               <div className="w-full rounded-2xl border border-slate-300 bg-gradient-to-r from-slate-50/80 via-slate-100/90 to-slate-50/80 p-6 text-sm text-slate-900 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
-                  <span className="text-xs text-muted-foreground">Συγκεντρωτικά ανά πλάνο</span>
+                  <span className="text-xs text-muted-foreground">Συγκεντρωτικά ανά πλάνο (με ελάχιστα ανά κτίριο)</span>
                 </div>
                 <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                   <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
@@ -793,6 +802,7 @@ export default function MySubscriptionPage() {
                     const planLabel = planLabels[planKey];
                     const apartmentsCount = building.apartments_count ?? 0;
                     const hasApartments = apartmentsCount > 0;
+                    const buildingCharge = getMonthlyPrice(planKey, apartmentsCount);
                     const trialEndsAt = building.trial_ends_at ? new Date(building.trial_ends_at) : null;
                     const trialActive = Boolean(trialEndsAt && trialEndsAt >= new Date());
                     const premiumLocked = planKey !== 'web' && !hasApartments && !trialActive;
@@ -815,6 +825,7 @@ export default function MySubscriptionPage() {
                             </Badge>
                             {planKey === 'premium_iot' && <Badge variant="secondary">IoT</Badge>}
                             <span>Διαμερίσματα: {hasApartments ? apartmentsCount : '—'}</span>
+                            <span>Χρέωση: {formatCurrency(buildingCharge)}</span>
                           </div>
                         </div>
 
