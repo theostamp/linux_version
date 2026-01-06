@@ -24,7 +24,26 @@ router.register(r'events', NotificationEventViewSet, basename='notification-even
 router.register(r'email-batches', EmailBatchViewSet, basename='email-batch')
 router.register(r'devices', DeviceTokenViewSet, basename='device-token')
 
+notification_action_urls = [
+    path(
+        'notifications/send_common_expenses/',
+        NotificationViewSet.as_view({'post': 'send_common_expenses'}),
+        name='notification-send-common-expenses',
+    ),
+    path(
+        'notifications/send_personalized_common_expenses/',
+        NotificationViewSet.as_view({'post': 'send_personalized_common_expenses'}),
+        name='notification-send-personalized-common-expenses',
+    ),
+    path(
+        'notifications/send_personalized_common_expenses_bulk/',
+        NotificationViewSet.as_view({'post': 'send_personalized_common_expenses_bulk'}),
+        name='notification-send-personalized-common-expenses-bulk',
+    ),
+]
+
 urlpatterns = [
+    *notification_action_urls,
     path('', include(router.urls)),
     path('viber/link/', ViberLinkView.as_view(), name='viber-link'),
     path('viber/subscription/', ViberSubscriptionView.as_view(), name='viber-subscription'),
