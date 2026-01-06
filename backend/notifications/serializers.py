@@ -11,6 +11,7 @@ from .models import (
     UserDeviceToken,
     UserViberSubscription,
     NotificationPreference,
+    EmailBatch,
 )
 from apartments.models import Apartment
 
@@ -276,6 +277,109 @@ class NotificationStatisticsSerializer(serializers.Serializer):
     by_type = serializers.DictField(child=serializers.IntegerField())
     by_status = serializers.DictField(child=serializers.IntegerField())
     recent_notifications = NotificationSerializer(many=True)
+
+
+class EmailBatchSerializer(serializers.ModelSerializer):
+    """Serializer for email batches (bulk sends like common expenses)."""
+
+    purpose_display = serializers.CharField(source='get_purpose_display', read_only=True)
+    building_name = serializers.CharField(source='building.name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    total_recipients = serializers.IntegerField(read_only=True)
+    successful_sends = serializers.IntegerField(read_only=True)
+    failed_sends = serializers.IntegerField(read_only=True)
+    delivery_rate = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailBatch
+        fields = [
+            'id',
+            'purpose',
+            'purpose_display',
+            'subject',
+            'building',
+            'building_name',
+            'created_by',
+            'created_by_name',
+            'metadata',
+            'created_at',
+            'updated_at',
+            'total_recipients',
+            'successful_sends',
+            'failed_sends',
+            'delivery_rate',
+            'status',
+            'status_display',
+        ]
+        read_only_fields = fields
+
+    def _get_counts(self, obj):
+        total = getattr(obj, 'total_recipients', None)
+        successful = getattr(obj, 'successful_sends', None)
+        failed = getattr(obj, 'failed_sends', None)
+        if total is None:
+            total = obj.recipients.count()
+        if successful is None:
+            successful = obj.recipients.filter(
+                status__in=['sent_to_provider', 'delivered']
+            ).count()
+        if failed is None:
+            failed = obj.recipients.filter(
+                status__in=[
+                    'invalid',
+                    'failed_immediate',
+                    'bounced_hard',
+                    'bounced_soft',
+                    'blocked',
+                    'complaint',
+                    'unknown_final',
+                ]
+            ).count()
+        return int(total or 0), int(successful or 0), int(failed or 0)
+
+    def get_delivery_rate(self, obj):
+        total, successful, _failed = self._get_counts(obj)
+        if total <= 0:
+            return 0.0
+        return round((successful / total) * 100, 2)
+
+    def _get_status(self, obj):
+        total, successful, failed = self._get_counts(obj)
+        if total <= 0:
+            return 'failed'
+        if failed > 0 and successful > 0:
+            return 'partial'
+        if failed > 0 and successful == 0:
+            return 'failed'
+        return 'sent'
+
+    def get_status(self, obj):
+        return self._get_status(obj)
+
+    def get_status_display(self, obj):
+        status = self._get_status(obj)
+        if status == 'partial':
+            return 'Μερικώς'
+        if status == 'failed':
+            return 'Αποτυχία'
+        return 'Απεστάλη'
+
+
+class EmailBatchStatisticsSerializer(serializers.Serializer):
+    """Serializer for email batch statistics."""
+
+    total_batches = serializers.IntegerField()
+    total_sent = serializers.IntegerField()
+    total_failed = serializers.IntegerField()
+    total_partial = serializers.IntegerField()
+    total_recipients = serializers.IntegerField()
+    total_successful_sends = serializers.IntegerField()
+    total_failed_sends = serializers.IntegerField()
+    delivery_rate = serializers.FloatField()
+    average_delivery_rate = serializers.FloatField()
+    by_status = serializers.DictField(child=serializers.IntegerField())
 
 
 class MonthlyNotificationTaskSerializer(serializers.ModelSerializer):

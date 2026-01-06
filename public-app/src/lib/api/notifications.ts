@@ -9,6 +9,8 @@ import type {
   NotificationCreateRequest,
   NotificationCreateResponse,
   NotificationStatistics,
+  EmailBatch,
+  EmailBatchStatistics,
   TemplatePreviewRequest,
   TemplatePreviewResponse,
   NotificationEvent,
@@ -441,6 +443,36 @@ export const notificationsApi = {
         error?: string;
       }>;
     }>(`${BASE_URL}/notifications/send_debt_reminders/`, data);
+    return response;
+  },
+};
+
+/**
+ * Email batch history (bulk sends like common expenses)
+ */
+export const emailBatchesApi = {
+  list: async (params?: {
+    purpose?: string;
+    building?: number;
+    start_date?: string;
+    end_date?: string;
+  }) => {
+    const response = await apiClient.get<{ results?: EmailBatch[] } | EmailBatch[]>(
+      `${BASE_URL}/email-batches/`,
+      { params }
+    );
+    return Array.isArray(response) ? response : response.results || [];
+  },
+  stats: async (params?: {
+    purpose?: string;
+    building?: number;
+    start_date?: string;
+    end_date?: string;
+  }) => {
+    const response = await apiClient.get<EmailBatchStatistics>(
+      `${BASE_URL}/email-batches/stats/`,
+      { params }
+    );
     return response;
   },
 };

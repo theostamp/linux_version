@@ -21,7 +21,8 @@ export type NotificationStatus =
   | 'scheduled'
   | 'sending'
   | 'sent'
-  | 'failed';
+  | 'failed'
+  | 'partial';
 
 export type RecipientStatus =
   | 'pending'
@@ -139,6 +140,43 @@ export interface NotificationStatistics {
   by_type: Record<string, number>;
   by_status: Record<string, number>;
   recent_notifications: Notification[];
+}
+
+export type EmailBatchPurpose = 'common_expense' | 'debt_reminder' | 'general';
+
+export type EmailBatchStatus = 'sent' | 'failed' | 'partial';
+
+export interface EmailBatch {
+  id: number;
+  purpose: EmailBatchPurpose;
+  purpose_display: string;
+  subject: string;
+  building: number | null;
+  building_name: string | null;
+  created_by: number | null;
+  created_by_name: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  total_recipients: number;
+  successful_sends: number;
+  failed_sends: number;
+  delivery_rate: number;
+  status: EmailBatchStatus;
+  status_display: string;
+}
+
+export interface EmailBatchStatistics {
+  total_batches: number;
+  total_sent: number;
+  total_failed: number;
+  total_partial: number;
+  total_recipients: number;
+  total_successful_sends: number;
+  total_failed_sends: number;
+  delivery_rate: number;
+  average_delivery_rate: number;
+  by_status: Record<string, number>;
 }
 
 export interface TemplatePreviewRequest {

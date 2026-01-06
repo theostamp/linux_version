@@ -549,16 +549,32 @@ def _serialize_apartment_shares(buildings_qs, date_from=None, date_to=None):
     if date_to:
         shares = shares.filter(period__end_date__lte=date_to)
 
-    return [
-        {
-            'id': s.id,
-            'apartment_id': s.apartment_id,
-            'period_id': s.period_id,
-            'total_amount': float(s.total_amount or 0),
-            'amount_paid': float(s.amount_paid or 0),
-        }
-        for s in shares
-    ]
+    serialized = []
+    for s in shares:
+        total_amount = float(getattr(s, 'total_amount', 0) or 0)
+        previous_balance = float(getattr(s, 'previous_balance', 0) or 0)
+        total_due = float(getattr(s, 'total_due', 0) or 0)
+
+        amount_paid = getattr(s, 'amount_paid', None)
+        if amount_paid is None:
+            amount_paid = getattr(s, 'paid_amount', None)
+        if amount_paid is None:
+            derived_paid = (total_amount + previous_balance) - total_due
+            amount_paid = max(derived_paid, 0)
+
+        serialized.append(
+            {
+                'id': s.id,
+                'apartment_id': s.apartment_id,
+                'period_id': s.period_id,
+                'total_amount': total_amount,
+                'previous_balance': previous_balance,
+                'total_due': total_due,
+                'amount_paid': float(amount_paid or 0),
+            }
+        )
+
+    return serialized
 
 
 def _serialize_monthly_balances(buildings_qs):
