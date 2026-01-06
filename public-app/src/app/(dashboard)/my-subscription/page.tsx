@@ -13,7 +13,14 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { Loader2, CreditCard, Shield, TrendingUp, CheckCircle, AlertTriangle, RefreshCcw, Info } from 'lucide-react';
 import { typography } from '@/lib/typography';
-import { getMonthlyPrice } from '@/lib/pricing';
+import {
+  FREE_MAX_APARTMENTS,
+  PLAN_RATES,
+  PREMIUM_IOT_MIN_MONTHLY,
+  PREMIUM_MIN_MONTHLY,
+  getMonthlyPrice,
+} from '@/lib/pricing';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type SubscriptionPlan = {
   id: number;
@@ -399,6 +406,8 @@ export default function MySubscriptionPage() {
     stats.charges.total = stats.charges.web + stats.charges.premium + stats.charges.premium_iot;
     return stats;
   }, [buildings]);
+  const totalApartments =
+    buildingStats.apartments.web + buildingStats.apartments.premium + buildingStats.apartments.premium_iot;
 
   React.useEffect(() => {
     if (subscription?.billing_interval) {
@@ -449,6 +458,120 @@ export default function MySubscriptionPage() {
         </div>
       ) : (
         <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Σύνοψη χρεώσεων</CardTitle>
+              <CardDescription>Γρήγορη εικόνα ανά πλάνο για τα κτίριά σου.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Tabs defaultValue="total" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 gap-2 md:grid-cols-4">
+                  <TabsTrigger value="total">Σύνολο</TabsTrigger>
+                  <TabsTrigger value="web">Web</TabsTrigger>
+                  <TabsTrigger value="premium">Premium</TabsTrigger>
+                  <TabsTrigger value="premium_iot">Premium + IoT</TabsTrigger>
+                </TabsList>
+                <TabsContent value="total" className="mt-4">
+                  {buildingsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Υπολογισμός συνολικών χρεώσεων...
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+                      <p>
+                        Έχετε συνολικά <span className="font-semibold">{buildingStats.total}</span> κτίρια.
+                      </p>
+                      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+                        <span>Web: {buildingStats.web}</span>
+                        <span>Premium: {buildingStats.premium}</span>
+                        <span>Premium + IoT: {buildingStats.premium_iot}</span>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Σύνολο διαμερισμάτων: <span className="font-semibold">{totalApartments}</span>
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="web" className="mt-4">
+                  {buildingsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Υπολογισμός χρέωσης Web...
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
+                      <p>
+                        Έχετε <span className="font-semibold">{buildingStats.web}</span> κτίρια με Web πρόγραμμα,
+                        σύνολο <span className="font-semibold">{buildingStats.apartments.web}</span> διαμερίσματα.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Υπολογισμός: {buildingStats.apartments.web} × {formatCurrency(PLAN_RATES.web)} ανά διαμέρισμα
+                        (μετά τα πρώτα {FREE_MAX_APARTMENTS}/κτίριο).
+                      </p>
+                      <p className="text-sm font-semibold">
+                        Σύνολο: {formatCurrency(buildingStats.charges.web)}
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="premium" className="mt-4">
+                  {buildingsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Υπολογισμός χρέωσης Premium...
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
+                      <p>
+                        Έχετε <span className="font-semibold">{buildingStats.premium}</span> κτίρια με Premium πρόγραμμα,
+                        σύνολο <span className="font-semibold">{buildingStats.apartments.premium}</span> διαμερίσματα.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Υπολογισμός: {buildingStats.apartments.premium} × {formatCurrency(PLAN_RATES.premium)} ανά διαμέρισμα
+                        (ελάχιστο {formatCurrency(PREMIUM_MIN_MONTHLY)}/κτίριο).
+                      </p>
+                      <p className="text-sm font-semibold">
+                        Σύνολο: {formatCurrency(buildingStats.charges.premium)}
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="premium_iot" className="mt-4">
+                  {buildingsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Υπολογισμός χρέωσης Premium + IoT...
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
+                      <p>
+                        Έχετε <span className="font-semibold">{buildingStats.premium_iot}</span> κτίρια με Premium + IoT πρόγραμμα,
+                        σύνολο <span className="font-semibold">{buildingStats.apartments.premium_iot}</span> διαμερίσματα.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Υπολογισμός: {buildingStats.apartments.premium_iot} × {formatCurrency(PLAN_RATES.premium_iot)} ανά διαμέρισμα
+                        (ελάχιστο {formatCurrency(PREMIUM_IOT_MIN_MONTHLY)}/κτίριο).
+                      </p>
+                      <p className="text-sm font-semibold">
+                        Σύνολο: {formatCurrency(buildingStats.charges.premium_iot)}
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+                <span className="text-muted-foreground">Η συνολική μηνιαία σας χρέωση είναι</span>
+                {buildingsLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <span className="text-lg font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {!subscription && (
             <Card>
               <CardHeader>
