@@ -330,8 +330,7 @@ export default function GlobalHeader() {
             </div>
           )}
         </div>
-      </div>
-    </header>
+      </header>
 
       {/* Office Settings Modal */}
       <OfficeSettingsModal
