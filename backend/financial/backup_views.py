@@ -32,7 +32,7 @@ from rest_framework.response import Response
 from buildings.models import Building
 from apartments.models import Apartment
 from .models import (
-    Expense, Payment, Transaction, ApartmentShare, 
+    Expense, Payment, Transaction, ApartmentShare,
     MonthlyBalance, FinancialReceipt
 )
 
@@ -52,16 +52,16 @@ def _ensure_backup_dir():
 def _save_backup_to_server(backup_data, filename, user):
     """Save backup to server storage"""
     _ensure_backup_dir()
-    
+
     filepath = os.path.join(BACKUP_DIR, filename)
-    
+
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(backup_data, f, cls=DecimalEncoder, indent=2, ensure_ascii=False)
-    
+
     file_size = os.path.getsize(filepath)
-    
+
     logger.info(f"[BACKUP] Saved to server: {filename} ({file_size} bytes)")
-    
+
     return Response({
         'status': 'success',
         'message': f'✅ Backup αποθηκεύτηκε στον server: {filename}',
@@ -75,7 +75,7 @@ def _save_backup_to_server(backup_data, filename, user):
 def _get_server_backups():
     """Get list of backups stored on server"""
     _ensure_backup_dir()
-    
+
     backups = []
     for filename in os.listdir(BACKUP_DIR):
         if filename.endswith('.json'):
@@ -84,7 +84,7 @@ def _get_server_backups():
                 with open(filepath, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     meta = data.get('meta', {})
-                    
+
                     backups.append({
                         'id': meta.get('backup_id', filename.replace('.json', '')),
                         'filename': filename,
@@ -98,10 +98,10 @@ def _get_server_backups():
                     })
             except Exception as e:
                 logger.warning(f"[BACKUP] Error reading {filename}: {e}")
-    
+
     # Sort by created_at descending
     backups.sort(key=lambda x: x.get('created_at', ''), reverse=True)
-    
+
     return backups
 
 
@@ -120,28 +120,28 @@ class DecimalEncoder(json.JSONEncoder):
 def backup_database(request):
     """
     🔐 Database Backup API
-    
+
     GET: Get backup options and preview
     POST: Generate and download backup file
-    
+
     Request Body (POST):
         - backup_type: 'full' | 'financial' | 'buildings'
         - building_ids: list[int] - Optional, specific buildings to backup
         - include_transactions: bool - Include transaction history
         - date_from: str - Optional, filter data from date (YYYY-MM-DD)
         - date_to: str - Optional, filter data to date (YYYY-MM-DD)
-    
+
     Returns:
         JSON file download with backup data
     """
     user = request.user
-    
+
     # Security check
     if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
         return Response({
             'error': 'Δεν έχετε δικαιώματα. Απαιτείται ρόλος Admin.',
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     # GET: Show backup options
     if request.method == 'GET':
         buildings = Building.objects.all()
@@ -182,7 +182,7 @@ def backup_database(request):
                 '📥 Αποθηκεύστε το αρχείο σε ασφαλή τοποθεσία'
             ]
         })
-    
+
     # POST: Generate backup
     try:
         backup_type = request.data.get('backup_type', 'full')
@@ -191,9 +191,9 @@ def backup_database(request):
         date_from = request.data.get('date_from')
         date_to = request.data.get('date_to')
         storage = request.data.get('storage', 'local')  # local, server, google_drive, etc.
-        
+
         logger.info(f"[BACKUP] User {user.email} starting {backup_type} backup (storage: {storage})")
-        
+
         # Build backup data
         backup_data = {
             'meta': {
@@ -205,17 +205,17 @@ def backup_database(request):
             },
             'data': {}
         }
-        
+
         # Filter buildings if specified
         buildings_qs = Building.objects.all()
         if building_ids:
             buildings_qs = buildings_qs.filter(id__in=building_ids)
-        
+
         # Always include buildings and apartments
         if backup_type in ['full', 'buildings']:
             backup_data['data']['buildings'] = _serialize_buildings(buildings_qs)
             backup_data['data']['apartments'] = _serialize_apartments(buildings_qs)
-        
+
         # Include financial data
         if backup_type in ['full', 'financial']:
             backup_data['data']['expenses'] = _serialize_expenses(
@@ -227,21 +227,21 @@ def backup_database(request):
             backup_data['data']['apartment_shares'] = _serialize_apartment_shares(
                 buildings_qs, date_from, date_to
             )
-            
+
             if include_transactions:
                 backup_data['data']['transactions'] = _serialize_transactions(
                     buildings_qs, date_from, date_to
                 )
-            
+
             backup_data['data']['monthly_balances'] = _serialize_monthly_balances(
                 buildings_qs
             )
-        
+
         # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_id = str(uuid.uuid4())[:8]
         filename = f"backup_{backup_type}_{timestamp}_{backup_id}.json"
-        
+
         # Add statistics to meta
         backup_data['meta']['statistics'] = {
             key: len(value) if isinstance(value, list) else 0
@@ -249,9 +249,9 @@ def backup_database(request):
         }
         backup_data['meta']['backup_id'] = backup_id
         backup_data['meta']['storage'] = storage
-        
+
         logger.info(f"[BACKUP] Completed: {backup_data['meta']['statistics']}")
-        
+
         # Handle different storage locations
         if storage == 'server':
             # Save to server
@@ -270,7 +270,7 @@ def backup_database(request):
             )
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
-        
+
     except Exception as e:
         logger.error(f"[BACKUP] Error: {e}", exc_info=True)
         return Response({
@@ -284,10 +284,10 @@ def backup_database(request):
 def restore_database(request):
     """
     🔄 Database Restore API
-    
+
     GET: Get restore instructions and warnings
     POST: Restore data from backup file
-    
+
     Request Body (POST):
         - backup_data: dict - The parsed JSON backup data
         - mode: 'preview' | 'merge' | 'replace'
@@ -295,18 +295,18 @@ def restore_database(request):
           - merge: Add new data, update existing (safe)
           - replace: Delete existing and replace with backup (dangerous)
         - confirm: str - Must be 'CONFIRM_RESTORE' for non-preview
-    
+
     Returns:
         Preview or restoration results
     """
     user = request.user
-    
+
     # Security check
     if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
         return Response({
             'error': 'Δεν έχετε δικαιώματα. Απαιτείται ρόλος Admin.',
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     # GET: Show restore instructions
     if request.method == 'GET':
         return Response({
@@ -345,26 +345,26 @@ def restore_database(request):
                 '4. Επιβεβαιώστε και εκτελέστε'
             ]
         })
-    
+
     # POST: Process restore
     try:
         backup_data = request.data.get('backup_data')
         mode = request.data.get('mode', 'preview')
         confirm = request.data.get('confirm', '')
-        
+
         # Validate backup data
         if not backup_data:
             return Response({
                 'status': 'error',
                 'error': 'Δεν παρέχονται δεδομένα backup'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if not isinstance(backup_data, dict) or 'meta' not in backup_data or 'data' not in backup_data:
             return Response({
                 'status': 'error',
                 'error': 'Μη έγκυρη μορφή αρχείου backup'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Preview mode
         if mode == 'preview':
             preview = _preview_restore(backup_data)
@@ -380,16 +380,16 @@ def restore_database(request):
                 'preview': preview,
                 'next_step': 'Για να συνεχίσετε, στείλτε mode: "merge" ή "replace" με confirm: "CONFIRM_RESTORE"'
             })
-        
+
         # Require confirmation for actual restore
         if confirm != 'CONFIRM_RESTORE':
             return Response({
                 'status': 'error',
                 'error': 'Απαιτείται επιβεβαίωση: confirm: "CONFIRM_RESTORE"'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         logger.warning(f"[RESTORE] User {user.email} starting {mode} restore")
-        
+
         # Execute restore
         if mode == 'merge':
             result = _execute_merge_restore(backup_data, user)
@@ -400,9 +400,9 @@ def restore_database(request):
                 'status': 'error',
                 'error': f'Άγνωστο mode: {mode}'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         logger.info(f"[RESTORE] Completed by {user.email}: {result}")
-        
+
         return Response({
             'status': 'success',
             'message': '✅ Η επαναφορά ολοκληρώθηκε',
@@ -410,7 +410,7 @@ def restore_database(request):
             'result': result,
             'executed_by': user.email
         })
-        
+
     except Exception as e:
         logger.error(f"[RESTORE] Error: {e}", exc_info=True)
         return Response({
@@ -472,18 +472,21 @@ def _serialize_expenses(buildings_qs, date_from=None, date_to=None):
         expenses = expenses.filter(date__gte=date_from)
     if date_to:
         expenses = expenses.filter(date__lte=date_to)
-    
+
     return [
         {
             'id': e.id,
             'building_id': e.building_id,
             'title': e.title,
-            'description': e.description,
+            'description': (getattr(e, 'description', None) or getattr(e, 'notes', '')),
             'category': e.category,
             'amount': float(e.amount),
             'date': e.date.isoformat() if e.date else None,
-            'status': e.status,
-            'payer_type': getattr(e, 'payer_type', 'owner'),
+            'status': getattr(e, 'status', None),
+            'payer_type': (
+                getattr(e, 'payer_type', None)
+                or getattr(e, 'payer_responsibility', 'owner')
+            ),
         }
         for e in expenses
     ]
@@ -496,7 +499,7 @@ def _serialize_payments(buildings_qs, date_from=None, date_to=None):
         payments = payments.filter(date__gte=date_from)
     if date_to:
         payments = payments.filter(date__lte=date_to)
-    
+
     return [
         {
             'id': p.id,
@@ -518,7 +521,7 @@ def _serialize_transactions(buildings_qs, date_from=None, date_to=None):
         transactions = transactions.filter(date__gte=date_from)
     if date_to:
         transactions = transactions.filter(date__lte=date_to)
-    
+
     return [
         {
             'id': t.id,
@@ -545,7 +548,7 @@ def _serialize_apartment_shares(buildings_qs, date_from=None, date_to=None):
         shares = shares.filter(period__start_date__gte=date_from)
     if date_to:
         shares = shares.filter(period__end_date__lte=date_to)
-    
+
     return [
         {
             'id': s.id,
@@ -584,14 +587,14 @@ def _preview_restore(backup_data):
     """Preview what would be restored"""
     data = backup_data.get('data', {})
     preview = {}
-    
+
     for key, items in data.items():
         if isinstance(items, list):
             preview[key] = {
                 'count': len(items),
                 'sample': items[:3] if items else []
             }
-    
+
     return preview
 
 
@@ -603,7 +606,7 @@ def _execute_merge_restore(backup_data, user):
         'updated': {},
         'skipped': {}
     }
-    
+
     with db_transaction.atomic():
         # Restore buildings
         if 'buildings' in data:
@@ -622,7 +625,7 @@ def _execute_merge_restore(backup_data, user):
                     updated += 1
             result['created']['buildings'] = created
             result['updated']['buildings'] = updated
-        
+
         # Restore apartments
         if 'apartments' in data:
             created, updated = 0, 0
@@ -648,7 +651,7 @@ def _execute_merge_restore(backup_data, user):
                     updated += 1
             result['created']['apartments'] = created
             result['updated']['apartments'] = updated
-        
+
         # Restore payments
         if 'payments' in data:
             created = 0
@@ -668,7 +671,7 @@ def _execute_merge_restore(backup_data, user):
                 if was_created:
                     created += 1
             result['created']['payments'] = created
-    
+
     return result
 
 
@@ -679,25 +682,25 @@ def _execute_replace_restore(backup_data, user):
         'deleted': {},
         'created': {}
     }
-    
+
     with db_transaction.atomic():
         # Delete existing financial data
         if 'transactions' in data:
             deleted = Transaction.objects.all().delete()[0]
             result['deleted']['transactions'] = deleted
-        
+
         if 'payments' in data:
             deleted = Payment.objects.all().delete()[0]
             result['deleted']['payments'] = deleted
-        
+
         if 'expenses' in data:
             deleted = Expense.objects.all().delete()[0]
             result['deleted']['expenses'] = deleted
-        
+
         # Now restore using merge logic
         merge_result = _execute_merge_restore(backup_data, user)
         result['created'] = merge_result['created']
-    
+
     return result
 
 
@@ -710,20 +713,20 @@ def _execute_replace_restore(backup_data, user):
 def backup_history(request):
     """
     📜 Get backup history from server storage
-    
+
     Returns list of backups stored on the server
     """
     user = request.user
-    
+
     # Security check
     if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
         return Response({
             'error': 'Δεν έχετε δικαιώματα. Απαιτείται ρόλος Admin.',
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     try:
         backups = _get_server_backups()
-        
+
         return Response({
             'status': 'success',
             'backups': backups,
@@ -743,40 +746,40 @@ def backup_history(request):
 def backup_detail(request, backup_id):
     """
     📦 Get or delete a specific backup
-    
+
     GET: Download backup data (for restore)
     DELETE: Remove backup from server
     """
     user = request.user
-    
+
     # Security check
     if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
         return Response({
             'error': 'Δεν έχετε δικαιώματα. Απαιτείται ρόλος Admin.',
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     # Find backup file
     _ensure_backup_dir()
     backup_file = None
-    
+
     for filename in os.listdir(BACKUP_DIR):
         if filename.endswith('.json') and backup_id in filename:
             backup_file = filename
             break
-    
+
     if not backup_file:
         return Response({
             'status': 'error',
             'error': 'Backup δεν βρέθηκε'
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
     filepath = os.path.join(BACKUP_DIR, backup_file)
-    
+
     if request.method == 'GET':
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 backup_data = json.load(f)
-            
+
             return Response({
                 'status': 'success',
                 'backup_id': backup_id,
@@ -789,12 +792,12 @@ def backup_detail(request, backup_id):
                 'status': 'error',
                 'error': f'Σφάλμα ανάγνωσης: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     elif request.method == 'DELETE':
         try:
             os.remove(filepath)
             logger.info(f"[BACKUP] Deleted backup {backup_file} by {user.email}")
-            
+
             return Response({
                 'status': 'success',
                 'message': f'Το backup {backup_file} διαγράφηκε'
@@ -805,4 +808,3 @@ def backup_detail(request, backup_id):
                 'status': 'error',
                 'error': f'Σφάλμα διαγραφής: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
