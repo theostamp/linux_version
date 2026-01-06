@@ -9,7 +9,7 @@ import BuildingTable from '@/components/BuildingTable';
 import Pagination from '@/components/Pagination';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Filter, Building as BuildingIcon, Home, TrendingUp, Grid, List } from 'lucide-react';
+import { Plus, Search, Filter, Building as BuildingIcon, Home, TrendingUp, Grid, List, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import AuthGate from '@/components/AuthGate';
@@ -183,6 +183,14 @@ const BuildingsPageContent = () => {
               </Button>
             </div>
 
+            {canManage && (
+              <Link href="/data-migration">
+                <Button size="sm" variant="secondary">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Μετανάστευση OCR
+                </Button>
+              </Link>
+            )}
             <Button onClick={handleRefresh} variant="outline" size="sm">
               Ανανέωση
             </Button>

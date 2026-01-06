@@ -204,13 +204,6 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
         tooltip: 'Οπτικοποίηση των κτιρίων σε χάρτη',
       },
-      {
-        href: '/data-migration',
-        label: 'Μετανάστευση',
-        icon: <RefreshCw className="w-5 h-5" />,
-        roles: ['manager', 'staff', 'superuser'],
-        tooltip: 'Μεταφορά δεδομένων μεταξύ συστημάτων',
-      },
     ]
   },
   {
