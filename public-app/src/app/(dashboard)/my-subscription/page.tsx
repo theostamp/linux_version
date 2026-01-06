@@ -465,11 +465,45 @@ export default function MySubscriptionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Tabs defaultValue="total" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 gap-2 md:grid-cols-4">
-                  <TabsTrigger value="total">Σύνολο</TabsTrigger>
-                  <TabsTrigger value="web">Web</TabsTrigger>
-                  <TabsTrigger value="premium">Premium</TabsTrigger>
-                  <TabsTrigger value="premium_iot">Premium + IoT</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-1 gap-2 bg-transparent p-0 shadow-none sm:grid-cols-2 lg:grid-cols-4">
+                  <TabsTrigger
+                    value="total"
+                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-slate-700 hover:bg-slate-50/70 data-[state=active]:bg-slate-50 data-[state=active]:text-slate-900 data-[state=active]:ring-slate-200"
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-wide">Σύνολο</span>
+                    <span className="text-[11px] font-normal text-slate-600">
+                      Έχετε συνολικά {buildingStats.total} κτίρια.
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="web"
+                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-sky-700 hover:bg-sky-50/70 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-900 data-[state=active]:ring-sky-200"
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-wide">Web</span>
+                    <span className="text-[11px] font-normal text-sky-700/80">
+                      Έχετε {buildingStats.web} κτίρια με web πρόγραμμα, σύνολο {buildingStats.apartments.web}{' '}
+                      διαμερίσματα.
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="premium"
+                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-emerald-700 hover:bg-emerald-50/70 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-900 data-[state=active]:ring-emerald-200"
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-wide">Premium</span>
+                    <span className="text-[11px] font-normal text-emerald-700/80">
+                      Έχετε {buildingStats.premium} κτίρια με Premium πρόγραμμα, σύνολο{' '}
+                      {buildingStats.apartments.premium} διαμερίσματα.
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="premium_iot"
+                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-amber-700 hover:bg-amber-50/70 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-900 data-[state=active]:ring-amber-200"
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-wide">Premium + IoT</span>
+                    <span className="text-[11px] font-normal text-amber-700/80">
+                      Το ίδιο και για το Premium + IoT ({buildingStats.premium_iot} κτίρια).
+                    </span>
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="total" className="mt-4">
                   {buildingsLoading ? (
@@ -506,8 +540,8 @@ export default function MySubscriptionPage() {
                         σύνολο <span className="font-semibold">{buildingStats.apartments.web}</span> διαμερίσματα.
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Υπολογισμός: {buildingStats.apartments.web} × {formatCurrency(PLAN_RATES.web)} ανά διαμέρισμα
-                        (μετά τα πρώτα {FREE_MAX_APARTMENTS}/κτίριο).
+                        Μηνιαία χρέωση: {buildingStats.apartments.web} × {formatCurrency(PLAN_RATES.web)} ανά
+                        διαμέρισμα (μετά τα πρώτα {FREE_MAX_APARTMENTS}/κτίριο).
                       </p>
                       <p className="text-sm font-semibold">
                         Σύνολο: {formatCurrency(buildingStats.charges.web)}
@@ -528,8 +562,9 @@ export default function MySubscriptionPage() {
                         σύνολο <span className="font-semibold">{buildingStats.apartments.premium}</span> διαμερίσματα.
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Υπολογισμός: {buildingStats.apartments.premium} × {formatCurrency(PLAN_RATES.premium)} ανά διαμέρισμα
-                        (ελάχιστο {formatCurrency(PREMIUM_MIN_MONTHLY)}/κτίριο).
+                        Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES.premium)}. Σύνολο:{' '}
+                        {buildingStats.apartments.premium} × {formatCurrency(PLAN_RATES.premium)} (ελάχιστο{' '}
+                        {formatCurrency(PREMIUM_MIN_MONTHLY)}/κτίριο).
                       </p>
                       <p className="text-sm font-semibold">
                         Σύνολο: {formatCurrency(buildingStats.charges.premium)}
@@ -550,8 +585,9 @@ export default function MySubscriptionPage() {
                         σύνολο <span className="font-semibold">{buildingStats.apartments.premium_iot}</span> διαμερίσματα.
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Υπολογισμός: {buildingStats.apartments.premium_iot} × {formatCurrency(PLAN_RATES.premium_iot)} ανά διαμέρισμα
-                        (ελάχιστο {formatCurrency(PREMIUM_IOT_MIN_MONTHLY)}/κτίριο).
+                        Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES.premium_iot)}. Σύνολο:{' '}
+                        {buildingStats.apartments.premium_iot} × {formatCurrency(PLAN_RATES.premium_iot)} (ελάχιστο{' '}
+                        {formatCurrency(PREMIUM_IOT_MIN_MONTHLY)}/κτίριο).
                       </p>
                       <p className="text-sm font-semibold">
                         Σύνολο: {formatCurrency(buildingStats.charges.premium_iot)}
