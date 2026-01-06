@@ -759,24 +759,27 @@ export default function MySubscriptionPage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-300 bg-slate-100/80 p-5 text-sm text-slate-900 shadow-sm">
-                <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
-                <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-                  <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2">
+              <div className="w-full rounded-2xl border border-slate-300 bg-gradient-to-r from-slate-50/80 via-slate-100/90 to-slate-50/80 p-6 text-sm text-slate-900 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
+                  <span className="text-xs text-muted-foreground">Συγκεντρωτικά ανά πλάνο</span>
+                </div>
+                <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
                     <span>Κτίρια</span>
-                    <span className="text-base font-semibold">{buildingStats.total}</span>
+                    <span className="text-lg font-semibold">{buildingStats.total}</span>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2">
+                  <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
                     <span>Διαμερίσματα</span>
-                    <span className="text-base font-semibold">
+                    <span className="text-lg font-semibold">
                       {buildingStats.apartments.web +
                         buildingStats.apartments.premium +
                         buildingStats.apartments.premium_iot}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2">
+                  <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
                     <span>Κόστος</span>
-                    <span className="text-base font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
+                    <span className="text-lg font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
                   </div>
                 </div>
               </div>
