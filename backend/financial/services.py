@@ -1168,7 +1168,7 @@ class FinancialDashboardService:
 
                     # Υπολογισμός μεριδίου διαμερίσματος
                     if total_participation_mills > 0:
-                        apartment_ratio = Decimal(apartment.participation_mills) / Decimal(total_participation_mills)
+                        apartment_ratio = Decimal(apartment.participation_mills or 0) / Decimal(total_participation_mills)
                         previous_balance = total_carry_forward * apartment_ratio
                     else:
                         # Fallback: ισόποση κατανομή
@@ -1202,7 +1202,7 @@ class FinancialDashboardService:
                     if expense.category == 'management_fees':
                         apartment_share = expense.amount / apartment_count
                     else:
-                        apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                        apartment_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills) * expense.amount
 
                     # Διαχωρισμός ανά payer_responsibility
                     if expense.payer_responsibility == 'owner':
@@ -1231,7 +1231,7 @@ class FinancialDashboardService:
                     if expense.category == 'management_fees':
                         apartment_share = expense.amount / apartment_count
                     else:
-                        apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                        apartment_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills) * expense.amount
 
                     expense_share += apartment_share
 
@@ -1335,7 +1335,7 @@ class FinancialDashboardService:
                         if expense.category == 'management_fees':
                             apartment_share = expense.amount / apartment_count_current
                         else:
-                            apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills_current) * expense.amount
+                            apartment_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills_current) * expense.amount
 
                         if expense.payer_responsibility == 'owner':
                             current_owner_expenses_current += apartment_share
@@ -1354,7 +1354,7 @@ class FinancialDashboardService:
                 if reserve_fund_expenses_current.exists():
                     # Αν υπάρχουν Expense records, υπολογίζουμε το μερίδιο από αυτά
                     for reserve_expense in reserve_fund_expenses_current:
-                        reserve_share = Decimal(apartment.participation_mills) / Decimal(total_mills_current) * reserve_expense.amount
+                        reserve_share = Decimal(apartment.participation_mills or 0) / Decimal(total_mills_current) * reserve_expense.amount
                         reserve_fund_share += reserve_share
                     # ΣΗΜΕΙΩΣΗ: Αν υπάρχουν Expense records, το reserve_fund_share περιλαμβάνεται ήδη στο owner_expenses
                     # μέσω του loop παραπάνω, οπότε ΔΕΝ χρειάζεται να το προσθέσουμε ξανά
