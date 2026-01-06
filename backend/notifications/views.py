@@ -580,23 +580,16 @@ class EmailBatchViewSet(viewsets.ReadOnlyModelViewSet):
         GET /api/notifications/email-batches/stats/
         """
         batches = self.filter_queryset(self.get_queryset())
-
-        total_batches = batches.count()
-        totals = batches.aggregate(
-            total_recipients=Sum('total_recipients'),
-            total_successful_sends=Sum('successful_sends'),
-            total_failed_sends=Sum('failed_sends'),
-        )
-
-        total_recipients = totals['total_recipients'] or 0
-        total_successful_sends = totals['total_successful_sends'] or 0
-        total_failed_sends = totals['total_failed_sends'] or 0
+        batch_rows = list(batches)
+        total_batches = len(batch_rows)
+        total_recipients = sum((row.total_recipients or 0) for row in batch_rows)
+        total_successful_sends = sum((row.successful_sends or 0) for row in batch_rows)
+        total_failed_sends = sum((row.failed_sends or 0) for row in batch_rows)
         delivery_rate = 0
         if total_recipients > 0:
             delivery_rate = (total_successful_sends / total_recipients) * 100
 
         by_status = {'sent': 0, 'failed': 0, 'partial': 0}
-        batch_rows = list(batches)
         for row in batch_rows:
             total = row.total_recipients or 0
             successful = row.successful_sends or 0
