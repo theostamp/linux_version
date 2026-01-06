@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import connection
-from django.db.models import Q, Count, Avg, Sum, Case, When, Value, CharField
+from django.db.models import Q, Count, Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
@@ -595,20 +595,21 @@ class EmailBatchViewSet(viewsets.ReadOnlyModelViewSet):
         if total_recipients > 0:
             delivery_rate = (total_successful_sends / total_recipients) * 100
 
-        status_case = Case(
-            When(total_recipients=0, then=Value('failed')),
-            When(failed_sends__gt=0, successful_sends__gt=0, then=Value('partial')),
-            When(failed_sends__gt=0, then=Value('failed')),
-            default=Value('sent'),
-            output_field=CharField(),
-        )
-
-        by_status = dict(
-            batches.annotate(batch_status=status_case)
-            .values('batch_status')
-            .annotate(count=Count('id'))
-            .values_list('batch_status', 'count')
-        )
+        by_status = {'sent': 0, 'failed': 0, 'partial': 0}
+        batch_rows = list(batches)
+        for row in batch_rows:
+            total = row.total_recipients or 0
+            successful = row.successful_sends or 0
+            failed = row.failed_sends or 0
+            if total <= 0:
+                status_key = 'failed'
+            elif failed > 0 and successful > 0:
+                status_key = 'partial'
+            elif failed > 0:
+                status_key = 'failed'
+            else:
+                status_key = 'sent'
+            by_status[status_key] = by_status.get(status_key, 0) + 1
 
         total_partial = by_status.get('partial', 0)
         total_sent = by_status.get('sent', 0)
@@ -618,7 +619,7 @@ class EmailBatchViewSet(viewsets.ReadOnlyModelViewSet):
         if total_batches:
             rates = [
                 (row.successful_sends / row.total_recipients) * 100
-                for row in batches
+                for row in batch_rows
                 if row.total_recipients
             ]
             if rates:
