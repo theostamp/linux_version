@@ -904,10 +904,12 @@ export default function MySubscriptionPage() {
                 <div className="space-y-1">
                   <p className="font-medium text-slate-800">Παράδειγμα υπολογισμού (ανά κτίριο)</p>
                   <p>
-                    Premium με 8 διαμερίσματα: 8 × €1,80 = €14,40 → χρέωση €30 (ελάχιστο).
+                    Premium με 8 διαμερίσματα: 8 × €1,80/διαμέρισμα = €14,40 → χρέωση €30 (ελάχιστο ανά
+                    κτίριο).
                   </p>
                   <p>
-                    Premium + IoT με 8 διαμερίσματα: 8 × €2,30 = €18,40 → χρέωση €35 (ελάχιστο).
+                    Premium + IoT με 8 διαμερίσματα: 8 × €2,30/διαμέρισμα = €18,40 → χρέωση €35 (ελάχιστο
+                    ανά κτίριο).
                   </p>
                   <p>Web: χωρίς ελάχιστο, δωρεάν έως 7 διαμερίσματα.</p>
                 </div>
@@ -1268,12 +1270,12 @@ function PlanTabContent({
       </p>
       {planKey === 'web' ? (
         <p className="text-xs text-muted-foreground">
-          Μηνιαία χρέωση: {apartmentsCount} × {formatCurrency(PLAN_RATES.web)} ανά διαμέρισμα (μετά τα
-          πρώτα {FREE_MAX_APARTMENTS}/κτίριο).
+          Μηνιαία χρέωση: {apartmentsCount} × {formatCurrency(PLAN_RATES.web)}/διαμέρισμα (μετά τα πρώτα{' '}
+          {FREE_MAX_APARTMENTS}/κτίριο).
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES[planKey])}. Σύνολο:{' '}
+          Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES[planKey])}/διαμέρισμα. Σύνολο:{' '}
           {apartmentsCount} × {formatCurrency(PLAN_RATES[planKey])}
           {minCharge ? ` (ελάχιστο ${formatCurrency(minCharge)}/κτίριο).` : '.'}
         </p>
