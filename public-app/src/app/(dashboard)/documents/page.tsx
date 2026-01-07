@@ -6,7 +6,7 @@ import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { InvoiceUploadForm } from '@/components/financial/InvoiceUploadForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Sparkles, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { createArchiveDocument } from '@/lib/api';
 import { api } from '@/lib/api';
@@ -268,12 +268,8 @@ function DocumentsContent() {
             Παραστατικά
           </h1>
           <p className="text-muted-foreground mt-2">
-            Ανάλυση παραστατικών με AI για αυτόματη συμπλήρωση δαπανών
+            Ανάλυση παραστατικών από την εφαρμογή για αυτόματη συμπλήρωση δαπανών
           </p>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Sparkles className="w-4 h-4" />
-          <span>Powered by Google Gemini AI</span>
         </div>
       </div>
 
@@ -282,13 +278,13 @@ function DocumentsContent() {
         <CardHeader>
           <CardTitle>Πώς λειτουργεί</CardTitle>
           <CardDescription>
-            Ανέβασε μια φωτογραφία παραστατικού και το AI θα εξάγει αυτόματα τα στοιχεία
+            Ανέβασε μια φωτογραφία παραστατικού και η εφαρμογή θα εξάγει αυτόματα τα στοιχεία
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
             <li>Ανέβασε εικόνα ή PDF παραστατικού (JPG, PNG, WebP, PDF)</li>
-            <li>Το AI αναλύει το παραστατικό και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
+            <li>Η εφαρμογή αναλύει το παραστατικό και εξάγει: ποσό, ημερομηνία, προμηθευτή, κατηγορία</li>
             <li>Ελέγξε και επεξεργάσου τα αποτελέσματα</li>
             <li>Αποθήκευσε τη δαπάνη με ένα κλικ</li>
           </ul>
@@ -424,7 +420,7 @@ export default function DocumentsPage() {
           <DocumentsContent />
         ) : (
           <PremiumFeatureInfo
-            title="Παραστατικά με AI αναγνώριση"
+            title="Παραστατικά με αναγνώριση εφαρμογής"
             description="Σάρωσε παραστατικά και μεταμόρφωσέ τα σε έτοιμες δαπάνες με ακρίβεια. Όλα καταγράφονται αυτόματα και συνδέονται με το ηλεκτρονικό αρχείο."
             note="Απαιτείται ενεργή Premium συνδρομή για το επιλεγμένο κτίριο."
             bullets={[
@@ -435,7 +431,7 @@ export default function DocumentsPage() {
             ]}
             highlights={[
               {
-                title: 'OCR + AI ανάλυση',
+                title: 'OCR + ανάλυση εφαρμογής',
                 description: 'Διαβάζει εικόνες/PDF και μετατρέπει το παραστατικό σε δομημένα δεδομένα.',
               },
               {

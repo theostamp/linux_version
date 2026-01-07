@@ -76,12 +76,44 @@ const extractWeatherCondition = (weatherData: KioskWeatherData | null): string |
   return weatherData?.current?.condition || null;
 };
 
-type AmbientVideoKey = 'rain_city' | 'windy_city' | 'cozy_fireplace';
+type AmbientVideoKey =
+  | 'rain_city'
+  | 'windy_city'
+  | 'cozy_fireplace'
+  | 'storm_neon'
+  | 'sunlit_plaza'
+  | 'dawn_dusk_blend'
+  | 'soft_clouds'
+  | 'city_night'
+  | 'snow_glow'
+  | 'summer_golden_plaza'
+  | 'summer_sunlit_boulevard'
+  | 'summer_rooftop_breeze'
+  | 'summer_city_park_shade'
+  | 'summer_coastal_district'
+  | 'summer_white_stone';
 
-const AMBIENT_VIDEOS: Record<AmbientVideoKey, string> = {
-  rain_city: '/ambient-videos/rain_city.mp4',
-  windy_city: '/ambient-videos/windy_city.mp4',
-  cozy_fireplace: '/ambient-videos/cozy_fireplace.mp4',
+type AmbientVideoEntry = {
+  src: string;
+  enabled?: boolean;
+};
+
+const AMBIENT_VIDEOS: Record<AmbientVideoKey, AmbientVideoEntry> = {
+  rain_city: { src: '/ambient-videos/rain_city.mp4', enabled: true },
+  windy_city: { src: '/ambient-videos/windy_city.mp4', enabled: true },
+  cozy_fireplace: { src: '/ambient-videos/cozy_fireplace.mp4', enabled: true },
+  storm_neon: { src: '/ambient-videos/storm_neon.mp4', enabled: false },
+  sunlit_plaza: { src: '/ambient-videos/sunlit_plaza.mp4', enabled: false },
+  dawn_dusk_blend: { src: '/ambient-videos/dawn_dusk_blend.mp4', enabled: false },
+  soft_clouds: { src: '/ambient-videos/soft_clouds.mp4', enabled: false },
+  city_night: { src: '/ambient-videos/city_night.mp4', enabled: false },
+  snow_glow: { src: '/ambient-videos/snow_glow.mp4', enabled: false },
+  summer_golden_plaza: { src: '/ambient-videos/summer_golden_plaza.mp4', enabled: false },
+  summer_sunlit_boulevard: { src: '/ambient-videos/summer_sunlit_boulevard.mp4', enabled: false },
+  summer_rooftop_breeze: { src: '/ambient-videos/summer_rooftop_breeze.mp4', enabled: false },
+  summer_city_park_shade: { src: '/ambient-videos/summer_city_park_shade.mp4', enabled: false },
+  summer_coastal_district: { src: '/ambient-videos/summer_coastal_district.mp4', enabled: false },
+  summer_white_stone: { src: '/ambient-videos/summer_white_stone.mp4', enabled: false },
 };
 
 const normalizeGreek = (value: string): string =>
@@ -90,6 +122,9 @@ const normalizeGreek = (value: string): string =>
     .normalize('NFD')
     // Remove accents/diacritics for robust matching (e.g. "βροχή" == "βροχη")
     .replace(/\p{Diacritic}/gu, '');
+
+const includesAny = (value: string, tokens: string[]): boolean =>
+  tokens.some((token) => value.includes(token));
 
 const parseTimeHHMM = (hhmm?: string | null): { hours: number; minutes: number } | null => {
   if (!hhmm) return null;
@@ -120,29 +155,113 @@ const isNightBySunriseSunset = (now: Date, sunrise?: string, sunset?: string): b
   return now < sunriseDate || now > sunsetDate;
 };
 
+const isSummerSeason = (date: Date): boolean => {
+  const month = date.getMonth();
+  return month >= 4 && month <= 7;
+};
+
+const isNearSunriseSunset = (now: Date, sunrise?: string, sunset?: string, windowMinutes: number = 30): boolean => {
+  const sr = parseTimeHHMM(sunrise);
+  const ss = parseTimeHHMM(sunset);
+  if (!sr || !ss) return false;
+
+  const sunriseDate = new Date(now);
+  sunriseDate.setHours(sr.hours, sr.minutes, 0, 0);
+  const sunsetDate = new Date(now);
+  sunsetDate.setHours(ss.hours, ss.minutes, 0, 0);
+
+  const windowMs = windowMinutes * 60 * 1000;
+  return Math.abs(now.getTime() - sunriseDate.getTime()) <= windowMs ||
+    Math.abs(now.getTime() - sunsetDate.getTime()) <= windowMs;
+};
+
+const resolveAmbientVideoSrc = (key: AmbientVideoKey | null): string | null => {
+  if (!key) return null;
+  const entry = AMBIENT_VIDEOS[key];
+  if (!entry || entry.enabled === false) return null;
+  return entry.src;
+};
+
 const pickAmbientVideo = (weatherData: KioskWeatherData | null, now: Date): string | null => {
   const conditionRaw = extractWeatherCondition(weatherData) ?? '';
   const condition = conditionRaw ? normalizeGreek(conditionRaw) : '';
   const temp = extractTemperature(weatherData);
   const wind = weatherData?.current?.wind_speed;
+  const sunrise = weatherData?.current?.sunrise;
+  const sunset = weatherData?.current?.sunset;
+  const isSummer = isSummerSeason(now);
+
+  const isStorm = includesAny(condition, ['καταιγ', 'μπουρ', 'thunder', 'storm']);
+  const isSnow = includesAny(condition, ['χιον', 'snow']);
 
   const isRain =
-    condition.includes('βροχ') ||
-    condition.includes('μπορ') ||
-    condition.includes('καταιγ');
+    includesAny(condition, ['βροχ', 'ψιλοβροχ', 'μπορ', 'rain']) ||
+    isStorm;
   const isWindy =
-    condition.includes('ανεμ') ||
+    includesAny(condition, ['ανεμ', 'αερα', 'wind', 'breeze']) ||
     (typeof wind === 'number' && wind >= 25);
 
   // Cozy fireplace: slightly higher threshold (for kiosk ambience)
   const COZY_TEMP_C = 14;
   const isCozyCold = typeof temp === 'number' && temp <= COZY_TEMP_C;
 
-  // Note: with current available videos we keep mapping simple.
-  // Priority: rain > windy > cozy
-  if (isRain) return AMBIENT_VIDEOS.rain_city;
-  if (isWindy) return AMBIENT_VIDEOS.windy_city;
-  if (isCozyCold) return AMBIENT_VIDEOS.cozy_fireplace;
+  const isGoldenHour = isNearSunriseSunset(now, sunrise, sunset, 30);
+  const isNight = isNightBySunriseSunset(now, sunrise, sunset);
+
+  const isSunny = includesAny(condition, ['ηλιο', 'καθαρος', 'clear', 'sun']);
+  const isPartlyCloudy = includesAny(condition, ['μερικ', 'λιγα συννεφ', 'partly', 'scattered']);
+  const isOvercast = includesAny(condition, ['συννεφ', 'νεφελ', 'overcast', 'cloud']);
+  const SUMMER_HOT_TEMP_C = 26;
+  const isSummerHot = typeof temp === 'number' && temp >= SUMMER_HOT_TEMP_C;
+
+  if (isStorm) {
+    const stormVideo = resolveAmbientVideoSrc('storm_neon');
+    if (stormVideo) return stormVideo;
+  }
+  if (isSnow) {
+    const snowVideo = resolveAmbientVideoSrc('snow_glow');
+    if (snowVideo) return snowVideo;
+  }
+  if (isRain) return resolveAmbientVideoSrc('rain_city');
+  if (isWindy) {
+    if (isSummer) {
+      const summerBreeze = resolveAmbientVideoSrc('summer_rooftop_breeze');
+      if (summerBreeze) return summerBreeze;
+    }
+    return resolveAmbientVideoSrc('windy_city');
+  }
+  if (isCozyCold) return resolveAmbientVideoSrc('cozy_fireplace');
+  if (isGoldenHour) {
+    if (isSummer) {
+      const summerGolden = resolveAmbientVideoSrc('summer_golden_plaza');
+      if (summerGolden) return summerGolden;
+    }
+    const goldenVideo = resolveAmbientVideoSrc('dawn_dusk_blend');
+    if (goldenVideo) return goldenVideo;
+  }
+  if (isNight) return resolveAmbientVideoSrc('city_night');
+  if (isSunny || (typeof temp === 'number' && temp >= 22) || isSummerHot) {
+    if (isSummer) {
+      const summerSun = resolveAmbientVideoSrc('summer_sunlit_boulevard');
+      if (summerSun) return summerSun;
+    }
+    const sunnyVideo = resolveAmbientVideoSrc('sunlit_plaza');
+    if (sunnyVideo) return sunnyVideo;
+  }
+  if (isPartlyCloudy || isOvercast) {
+    if (isSummer) {
+      const summerShade = resolveAmbientVideoSrc('summer_city_park_shade');
+      if (summerShade) return summerShade;
+    }
+    const cloudsVideo = resolveAmbientVideoSrc('soft_clouds');
+    if (cloudsVideo) return cloudsVideo;
+  }
+  if (isSummer) {
+    const summerCoastal = resolveAmbientVideoSrc('summer_coastal_district');
+    if (summerCoastal) return summerCoastal;
+    const summerStone = resolveAmbientVideoSrc('summer_white_stone');
+    if (summerStone) return summerStone;
+  }
 
   // If no match, keep non-video background (e.g. gradient or configured branding image).
   return null;
@@ -518,7 +637,16 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
   const backgroundGradient = branding.background?.type === 'gradient'
     ? branding.background?.gradient
     : 'radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.25), transparent 55%), radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.22), transparent 55%), linear-gradient(135deg, #020617 0%, #0f172a 45%, #1e1b4b 100%)';
-  const backgroundVideo = useMemo(() => pickAmbientVideo(weatherData, now), [weatherData, now]);
+  const brandingVideo = branding.background?.type === 'video' ? branding.background?.src : undefined;
+  const backgroundVideo = useMemo(
+    () => brandingVideo || pickAmbientVideo(weatherData, now),
+    [brandingVideo, weatherData, now]
+  );
+  const backgroundPoster = branding.background?.type === 'video'
+    ? branding.background?.poster || backgroundImage
+    : backgroundImage;
+  const [videoError, setVideoError] = useState(false);
+  const shouldShowVideo = Boolean(backgroundVideo) && !videoError;
 
   const dateInfo = formatGreekDate(now);
   const formattedTime = now.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
@@ -584,11 +712,15 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    setVideoError(false);
+  }, [backgroundVideo]);
+
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white pb-20">
       {/* Full-screen Background (Video preferred, Image fallback) */}
       <div className="absolute inset-0">
-        {backgroundVideo ? (
+        {shouldShowVideo ? (
           <video
             key={backgroundVideo}
             className="h-full w-full object-cover"
@@ -598,7 +730,8 @@ export default function AmbientShowcaseScene({ data, buildingId, brandingConfig 
             loop
             playsInline
             preload="metadata"
-            poster={backgroundImage}
+            poster={backgroundPoster}
+            onError={() => setVideoError(true)}
           />
         ) : backgroundImage ? (
           <img
