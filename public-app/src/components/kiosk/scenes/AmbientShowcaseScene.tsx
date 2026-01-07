@@ -83,6 +83,7 @@ type AmbientVideoKey =
   | 'storm_neon'
   | 'sunlit_plaza'
   | 'dawn_dusk_blend'
+  | 'sunset'
   | 'soft_clouds'
   | 'city_night'
   | 'snow_glow'
@@ -105,6 +106,7 @@ const AMBIENT_VIDEOS: Record<AmbientVideoKey, AmbientVideoEntry> = {
   storm_neon: { src: '/ambient-videos/storm_neon.mp4', enabled: false },
   sunlit_plaza: { src: '/ambient-videos/sunlit_plaza.mp4', enabled: false },
   dawn_dusk_blend: { src: '/ambient-videos/dawn_dusk_blend.mp4', enabled: false },
+  sunset: { src: '/ambient-videos/sunset.mp4', enabled: true },
   soft_clouds: { src: '/ambient-videos/soft_clouds.mp4', enabled: false },
   city_night: { src: '/ambient-videos/city_night.mp4', enabled: false },
   snow_glow: { src: '/ambient-videos/snow_glow.mp4', enabled: false },
@@ -175,6 +177,13 @@ const isNearSunriseSunset = (now: Date, sunrise?: string, sunset?: string, windo
     Math.abs(now.getTime() - sunsetDate.getTime()) <= windowMs;
 };
 
+const isBetweenHoursInclusive = (now: Date, startHour: number, endHour: number): boolean => {
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const start = startHour * 60;
+  const end = endHour * 60;
+  return minutes >= start && minutes <= end;
+};
+
 const resolveAmbientVideoSrc = (key: AmbientVideoKey | null): string | null => {
   if (!key) return null;
   const entry = AMBIENT_VIDEOS[key];
@@ -223,6 +232,10 @@ const pickAmbientVideo = (weatherData: KioskWeatherData | null, now: Date): stri
     if (snowVideo) return snowVideo;
   }
   if (isRain) return resolveAmbientVideoSrc('rain_city');
+  if (isBetweenHoursInclusive(now, 18, 20) && (isSunny || isPartlyCloudy)) {
+    const sunsetVideo = resolveAmbientVideoSrc('sunset');
+    if (sunsetVideo) return sunsetVideo;
+  }
   if (isWindy) {
     if (isSummer) {
       const summerBreeze = resolveAmbientVideoSrc('summer_rooftop_breeze');
