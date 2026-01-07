@@ -450,21 +450,21 @@ export default function MySubscriptionPage() {
         label: planUi.web.label,
         tabClass: planUi.web.tabClass,
         noteClass: planUi.web.noteClass,
-        description: `Έχετε ${buildingStats.web} κτίρια με web πρόγραμμα, σύνολο ${buildingStats.apartments.web} διαμερίσματα.`,
+        description: `${buildingStats.web} κτίρια`,
       },
       {
         value: 'premium' as SummaryTabKey,
         label: planUi.premium.label,
         tabClass: planUi.premium.tabClass,
         noteClass: planUi.premium.noteClass,
-        description: `Έχετε ${buildingStats.premium} κτίρια με Premium πρόγραμμα, σύνολο ${buildingStats.apartments.premium} διαμερίσματα.`,
+        description: `${buildingStats.premium} κτίρια`,
       },
       {
         value: 'premium_iot' as SummaryTabKey,
         label: planUi.premium_iot.label,
         tabClass: planUi.premium_iot.tabClass,
         noteClass: planUi.premium_iot.noteClass,
-        description: `Έχετε ${buildingStats.premium_iot} κτίρια με Premium + IoT πρόγραμμα, σύνολο ${buildingStats.apartments.premium_iot} διαμερίσματα.`,
+        description: `${buildingStats.premium_iot} κτίρια`,
       },
     ],
     [buildingStats]
@@ -569,12 +569,12 @@ export default function MySubscriptionPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Tabs defaultValue="web" className="w-full">
-                <TabsList className="grid w-full grid-cols-1 gap-2 bg-transparent p-0 shadow-none sm:grid-cols-2 lg:grid-cols-4">
+                <TabsList className="grid w-full grid-cols-1 gap-2 bg-transparent p-0 shadow-none sm:grid-cols-2 lg:grid-cols-3">
                   {summaryTabs.map((tab) => (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className={`min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left ${tab.tabClass}`}
+                      className={`min-h-[64px] flex-col items-start gap-1 whitespace-normal text-left ${tab.tabClass}`}
                     >
                       <span className="text-xs font-semibold uppercase tracking-wide">{tab.label}</span>
                       <span className={`text-[11px] font-normal ${tab.noteClass}`}>
@@ -594,7 +594,7 @@ export default function MySubscriptionPage() {
                 ))}
               </Tabs>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm">
                 <span className="text-muted-foreground">Η συνολική μηνιαία σας χρέωση είναι</span>
                 {buildingsLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -665,7 +665,7 @@ export default function MySubscriptionPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-3">
-                      <div className="rounded-lg border p-4">
+                    <div className="rounded-xl bg-muted/20 p-4">
                         <p className="text-xs uppercase text-muted-foreground">Κόστος</p>
                         <p className="text-xl font-semibold">
                           {formatCurrency(subscription.price, subscription.currency || 'EUR')}
@@ -674,7 +674,7 @@ export default function MySubscriptionPage() {
                           / {subscription.billing_interval === 'year' ? 'έτος' : 'μήνα'}
                         </p>
                       </div>
-                      <div className="rounded-lg border p-4">
+                    <div className="rounded-xl bg-muted/20 p-4">
                         <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
                         <p className="text-lg font-semibold">{formatDate(subscription.current_period_end)}</p>
                         {subscription.current_period_end && (
@@ -686,7 +686,7 @@ export default function MySubscriptionPage() {
                           </p>
                         )}
                       </div>
-                      <div className="rounded-lg border p-4">
+                    <div className="rounded-xl bg-muted/20 p-4">
                         <p className="text-xs uppercase text-muted-foreground">Κατάσταση</p>
                         <p className="text-lg font-semibold">
                           {subscription.cancel_at_period_end ? 'Προς ακύρωση' : 'Ενεργό'}
@@ -786,37 +786,41 @@ export default function MySubscriptionPage() {
                   <CardHeader>
                     <CardTitle>Τιμολόγηση & ιστορικό</CardTitle>
                     <CardDescription>Επόμενες και προηγούμενες χρεώσεις</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {summaryLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                ) : upcomingInvoice ? (
-                  <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-                    <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(upcomingInvoice.amount_due, upcomingInvoice.currency)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Περίοδος {formatDate(upcomingInvoice.period_start)} →{' '}
-                      {formatDate(upcomingInvoice.period_end)}
-                    </p>
-                  </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Δεν υπάρχει διαθέσιμο ιστορικό χρεώσεων ακόμα.
-                  </p>
-                )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {upcomingInvoice ? (
+                      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm">
+                        <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
+                        <p className="text-lg font-semibold">
+                          {formatCurrency(upcomingInvoice.amount_due, upcomingInvoice.currency)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Περίοδος {formatDate(upcomingInvoice.period_start)} →{' '}
+                          {formatDate(upcomingInvoice.period_end)}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-slate-200/70 bg-white/60 p-4 text-sm text-muted-foreground">
+                        Δεν υπάρχει διαθέσιμο ιστορικό χρεώσεων ακόμα.
+                      </div>
+                    )}
 
-                <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-                  <p className="text-xs uppercase text-muted-foreground">Συνολική χρέωση</p>
-                  {buildingsLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  ) : (
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(buildingStats.charges.total)}
-                    </p>
-                  )}
-                </div>
+                    <div className="rounded-xl border border-slate-200/70 bg-white/80 p-4 text-sm">
+                      <p className="text-xs uppercase text-muted-foreground">Συνολική χρέωση</p>
+                      {buildingsLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        <p className="text-lg font-semibold">
+                          {formatCurrency(buildingStats.charges.total)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                     <Separator />
 
@@ -909,33 +913,33 @@ export default function MySubscriptionPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-4 text-sm text-emerald-900">
+              <div className="rounded-2xl border border-emerald-200/50 bg-emerald-50/40 p-4 text-sm text-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs uppercase text-emerald-700/70">Σενάριο αναβάθμισης</p>
+                    <p className="text-xs uppercase text-slate-500">Σενάριο αναβάθμισης</p>
                     <p className="text-base font-semibold">Πρόσθεσε σταδιακά κτίρια στο Premium</p>
                   </div>
-                  <Badge variant="outline" className="border-emerald-200 bg-white/80 text-emerald-900">
+                  <Badge variant="outline" className="border-slate-200/70 bg-white/80 text-slate-700">
                     +{upgradePreview.count} κτίρια
                   </Badge>
                 </div>
 
                 {buildingsLoading ? (
-                  <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700/70">
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Φόρτωση σεναρίων αναβάθμισης...
                   </div>
                 ) : upgradeCandidates.length === 0 ? (
-                  <p className="mt-3 text-xs text-emerald-700/80">
+                  <p className="mt-3 text-xs text-slate-600">
                     Δεν υπάρχουν διαθέσιμα Web κτίρια για αναβάθμιση σε Premium αυτή τη στιγμή.
                   </p>
                 ) : (
                   <>
-                    <p className="mt-2 text-xs text-emerald-700/80">
+                    <p className="mt-2 text-xs text-slate-600">
                       Σύρε το slider για να δεις το συνολικό κόστος αν αναβαθμίσεις web κτίρια σε Premium. Τα
                       κτίρια ταξινομούνται ανά αριθμό διαμερισμάτων (από τα περισσότερα προς τα λιγότερα).
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-emerald-700/80">
+                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-slate-600">
                       <span>
                         Premium κτίρια: {buildingStats.premium} → {buildingStats.premium + upgradePreview.count}
                       </span>
@@ -966,40 +970,40 @@ export default function MySubscriptionPage() {
                           [&::-moz-range-thumb]:border-0
                           [&::-moz-range-thumb]:bg-emerald-600"
                       />
-                      <div className="mt-2 flex items-center justify-between text-[11px] text-emerald-700/70">
+                      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
                         <span>0</span>
                         <span>{upgradeCandidates.length}</span>
                       </div>
                     </div>
                     <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
-                      <div className="rounded-lg border border-emerald-200/60 bg-white/80 px-3 py-2">
-                        <p className="text-[11px] uppercase text-emerald-700/70">Τρέχον σύνολο</p>
-                        <p className="text-sm font-semibold text-emerald-900">
+                      <div className="rounded-lg border border-slate-200/70 bg-white/80 px-3 py-2">
+                        <p className="text-[11px] uppercase text-slate-500">Τρέχον σύνολο</p>
+                        <p className="text-sm font-semibold text-slate-900">
                           {formatCurrency(buildingStats.charges.total)}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-emerald-200/60 bg-white/80 px-3 py-2">
-                        <p className="text-[11px] uppercase text-emerald-700/70">Επιπλέον κόστος</p>
-                        <p className="text-sm font-semibold text-emerald-900">
+                      <div className="rounded-lg border border-slate-200/70 bg-white/80 px-3 py-2">
+                        <p className="text-[11px] uppercase text-slate-500">Επιπλέον κόστος</p>
+                        <p className="text-sm font-semibold text-slate-900">
                           {upgradePreview.additionalCost > 0
                             ? `+${formatCurrency(upgradePreview.additionalCost)}`
                             : formatCurrency(0)}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-emerald-300/70 bg-white px-3 py-2">
-                        <p className="text-[11px] uppercase text-emerald-700/70">Νέο σύνολο</p>
-                        <p className="text-sm font-semibold text-emerald-900">
+                      <div className="rounded-lg border border-slate-200/80 bg-white px-3 py-2">
+                        <p className="text-[11px] uppercase text-slate-500">Νέο σύνολο</p>
+                        <p className="text-sm font-semibold text-slate-900">
                           {formatCurrency(upgradePreview.totalCost)}
                         </p>
                       </div>
                     </div>
-                    <p className="mt-3 text-[11px] text-emerald-700/70">
+                    <p className="mt-3 text-[11px] text-slate-500">
                       Επιλεγμένα κτίρια: {upgradeSelectionLabel}
                     </p>
-                    <p className="text-[11px] text-emerald-700/60">
+                    <p className="text-[11px] text-slate-500">
                       Η προσομοίωση δεν εφαρμόζει αλλαγές στα πλάνα των κτιρίων.
                     </p>
-                    <p className="mt-3 text-xs text-emerald-800/80">
+                    <p className="mt-3 text-xs text-slate-700/80">
                       Αν θέλετε πλήρη έλεγχο και πιο δυναμική παρουσία στην πολυκατοικία μέσω του info point
                       kiosk, μπορείτε να προσθέσετε νέα κτίρια στο Premium. Στο κόστος της συνδρομής
                       περιλαμβάνεται ο εξοπλισμός και η εγκατάσταση από συνεργεία μας. Η ελάχιστη διάρκεια
@@ -1012,8 +1016,8 @@ export default function MySubscriptionPage() {
               {buildingsLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               ) : buildings && buildings.length > 0 ? (
-                <div className="space-y-3">
-                  {buildings.map((building) => {
+                <div className="rounded-2xl border border-slate-200/70 bg-white/80">
+                  {buildings.map((building, index) => {
                     const planKey = resolveBuildingPlan(building);
                     const planLabel = planUi[planKey].label;
                     const apartmentsCount = building.apartments_count ?? 0;
@@ -1030,7 +1034,9 @@ export default function MySubscriptionPage() {
                     return (
                       <div
                         key={building.id}
-                        className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+                        className={`flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between ${
+                          index > 0 ? 'border-t border-slate-200/60' : ''
+                        }`}
                       >
                         <div className="space-y-1">
                           <p className="text-xs uppercase text-muted-foreground">Κτίριο</p>
@@ -1256,11 +1262,9 @@ function PlanTabContent({
         : null;
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
-      <p>
-        Έχετε <span className="font-semibold">{buildingStats[planKey]}</span> κτίρια με{' '}
-        {planUi[planKey].label} πρόγραμμα, σύνολο{' '}
-        <span className="font-semibold">{apartmentsCount}</span> διαμερίσματα.
+    <div className="rounded-xl bg-muted/20 p-4 text-sm space-y-2">
+      <p className="text-xs text-muted-foreground">
+        {planUi[planKey].label} · {buildingStats[planKey]} κτίρια · {apartmentsCount} διαμερίσματα
       </p>
       {planKey === 'web' ? (
         <p className="text-xs text-muted-foreground">
