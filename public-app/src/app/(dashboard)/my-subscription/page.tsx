@@ -80,7 +80,7 @@ type PaymentMethod = {
 };
 
 type PlanKey = 'web' | 'premium' | 'premium_iot';
-type SummaryTabKey = 'total' | PlanKey;
+type SummaryTabKey = PlanKey;
 
 type PlanSummaryStats = {
   total: number;
@@ -400,7 +400,6 @@ export default function MySubscriptionPage() {
   const upcomingInvoice =
     billingCycles.find((cycle) => cycle.status !== 'paid') ?? billingCycles[0] ?? null;
   const paymentMethods = summary?.payment_methods?.length ? summary.payment_methods : paymentMethodsData ?? [];
-  const usageTracking = summary?.usage_tracking ?? [];
   const hasActiveSubscription = Boolean(subscription);
   const hasPaymentMethod = paymentMethods.length > 0;
   const isTrial = Boolean(
@@ -444,18 +443,8 @@ export default function MySubscriptionPage() {
     stats.charges.total = stats.charges.web + stats.charges.premium + stats.charges.premium_iot;
     return stats;
   }, [buildings]);
-  const totalApartments =
-    buildingStats.apartments.web + buildingStats.apartments.premium + buildingStats.apartments.premium_iot;
   const summaryTabs = React.useMemo(
     () => [
-      {
-        value: 'total' as SummaryTabKey,
-        label: 'Σύνολο',
-        tabClass:
-          'border border-slate-200/70 bg-slate-50/70 text-slate-700 hover:bg-slate-100/70 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 data-[state=active]:ring-0 data-[state=active]:shadow-none data-[state=active]:border-slate-300',
-        noteClass: 'text-slate-600/90',
-        description: `Έχετε συνολικά ${buildingStats.total} κτίρια.`,
-      },
       {
         value: 'web' as SummaryTabKey,
         label: planUi.web.label,
@@ -579,7 +568,7 @@ export default function MySubscriptionPage() {
               <CardDescription>Γρήγορη εικόνα ανά πλάνο για τα κτίριά σου.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Tabs defaultValue="total" className="w-full">
+              <Tabs defaultValue="web" className="w-full">
                 <TabsList className="grid w-full grid-cols-1 gap-2 bg-transparent p-0 shadow-none sm:grid-cols-2 lg:grid-cols-4">
                   {summaryTabs.map((tab) => (
                     <TabsTrigger
@@ -596,19 +585,11 @@ export default function MySubscriptionPage() {
                 </TabsList>
                 {summaryTabOrder.map((tabKey) => (
                   <TabsContent key={tabKey} value={tabKey} className="mt-4">
-                    {tabKey === 'total' ? (
-                      <TotalTabContent
-                        isLoading={buildingsLoading}
-                        buildingStats={buildingStats}
-                        totalApartments={totalApartments}
-                      />
-                    ) : (
-                      <PlanTabContent
-                        planKey={tabKey}
-                        isLoading={buildingsLoading}
-                        buildingStats={buildingStats}
-                      />
-                    )}
+                    <PlanTabContent
+                      planKey={tabKey}
+                      isLoading={buildingsLoading}
+                      buildingStats={buildingStats}
+                    />
                   </TabsContent>
                 ))}
               </Tabs>
@@ -807,24 +788,35 @@ export default function MySubscriptionPage() {
                     <CardDescription>Επόμενες και προηγούμενες χρεώσεις</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {summaryLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    ) : upcomingInvoice ? (
-                      <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-                        <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
-                        <p className="text-lg font-semibold">
-                          {formatCurrency(upcomingInvoice.amount_due, upcomingInvoice.currency)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Περίοδος {formatDate(upcomingInvoice.period_start)} →{' '}
-                          {formatDate(upcomingInvoice.period_end)}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Δεν υπάρχει διαθέσιμο ιστορικό χρεώσεων ακόμα.
-                      </p>
-                    )}
+                {summaryLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : upcomingInvoice ? (
+                  <div className="rounded-lg border bg-muted/40 p-4 text-sm">
+                    <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
+                    <p className="text-lg font-semibold">
+                      {formatCurrency(upcomingInvoice.amount_due, upcomingInvoice.currency)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Περίοδος {formatDate(upcomingInvoice.period_start)} →{' '}
+                      {formatDate(upcomingInvoice.period_end)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Δεν υπάρχει διαθέσιμο ιστορικό χρεώσεων ακόμα.
+                  </p>
+                )}
+
+                <div className="rounded-lg border bg-muted/40 p-4 text-sm">
+                  <p className="text-xs uppercase text-muted-foreground">Συνολική χρέωση</p>
+                  {buildingsLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <p className="text-lg font-semibold">
+                      {formatCurrency(buildingStats.charges.total)}
+                    </p>
+                  )}
+                </div>
 
                     <Separator />
 
@@ -1231,108 +1223,8 @@ export default function MySubscriptionPage() {
               )}
             </CardContent>
           </Card>
-          {subscription && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Χρήση πλατφόρμας</CardTitle>
-                  <CardDescription>Παρακολούθηση βασικών μετρικών</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {usageTracking.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Δεν υπάρχουν μετρήσεις χρήσης διαθέσιμες.
-                    </p>
-                  ) : (
-                    usageTracking.map((metric) => (
-                      <div
-                        key={metric.id}
-                        className="rounded-lg border px-3 py-2 text-sm"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium capitalize">{metric.metric_type.replace('_', ' ')}</p>
-                          <Badge variant="outline">
-                            {metric.current_value}/{metric.limit_value}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Περίοδος {formatDate(metric.period_start)} → {formatDate(metric.period_end)}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Χρήσιμες ενέργειες</CardTitle>
-                  <CardDescription>Υποστήριξη και χρέωση</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="rounded-lg border bg-muted/50 p-3">
-                    <p className="font-medium">Χρειάζεσαι βοήθεια;</p>
-                    <p className="text-muted-foreground">
-                      Η ομάδα μας είναι διαθέσιμη για αναβαθμίσεις, εξατομίκευση ή ερωτήσεις χρέωσης.
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          window.open('mailto:support@newconcierge.app', '_blank');
-                        }}
-                      >
-                        Επικοινωνία υποστήριξης
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => window.open('https://newconcierge.app/pricing', '_blank')}
-                      >
-                        Πλάνα & τιμολόγηση
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </>
       )}
-    </div>
-  );
-}
-
-function TotalTabContent({
-  isLoading,
-  buildingStats,
-  totalApartments,
-}: {
-  isLoading: boolean;
-  buildingStats: PlanSummaryStats;
-  totalApartments: number;
-}) {
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Υπολογισμός συνολικών χρεώσεων...
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-      <p>
-        Έχετε συνολικά <span className="font-semibold">{buildingStats.total}</span> κτίρια.
-      </p>
-      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
-        <span>Web: {buildingStats.web}</span>
-        <span>Premium: {buildingStats.premium}</span>
-        <span>Premium + IoT: {buildingStats.premium_iot}</span>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Σύνολο διαμερισμάτων: <span className="font-semibold">{totalApartments}</span>
-      </p>
     </div>
   );
 }
