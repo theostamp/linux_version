@@ -491,7 +491,7 @@ export default function MySubscriptionPage() {
         name: building.name,
         apartmentsCount: Math.max(0, building.apartments_count ?? 0),
       }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'el'));
+      .sort((a, b) => b.apartmentsCount - a.apartmentsCount);
   }, [buildings]);
 
   const upgradePreview = React.useMemo(() => {
@@ -941,7 +941,7 @@ export default function MySubscriptionPage() {
                   <>
                     <p className="mt-2 text-xs text-emerald-700/80">
                       Σύρε το slider για να δεις το συνολικό κόστος αν αναβαθμίσεις web κτίρια σε Premium. Τα
-                      κτίρια ταξινομούνται αλφαβητικά για σταδιακή επιλογή.
+                      κτίρια ταξινομούνται ανά αριθμό διαμερισμάτων (από τα περισσότερα προς τα λιγότερα).
                     </p>
                     <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-emerald-700/80">
                       <span>
