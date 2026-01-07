@@ -43,7 +43,11 @@ const schema = z.object({
   payment_config: z.object({
     enabled: z.boolean().optional(),
     payment_type: z.enum(['lump_sum', 'advance_installments', 'periodic', 'milestone_based']).optional(),
-    total_amount: z.number().optional(),
+    total_amount: z.preprocess((v) => {
+      if (v === undefined || v === null || v === '') return undefined;
+      const n = Number(v);
+      return isNaN(n) ? undefined : n;
+    }, z.number().optional()),
     advance_percentage: z.preprocess((v) => {
       if (v === undefined || v === null || v === '') return undefined;
       const n = Number(v);
@@ -273,7 +277,12 @@ export default function ScheduledMaintenanceForm({
     }
   }, [initialData, reset]);
 
-  const watchedPrice = watch('price');
+  const watchedPriceRaw = watch('price');
+  const watchedPrice = useMemo(() => {
+    if (watchedPriceRaw === undefined || watchedPriceRaw === null || watchedPriceRaw === '') return undefined;
+    const n = Number(watchedPriceRaw);
+    return Number.isNaN(n) ? undefined : n;
+  }, [watchedPriceRaw]);
   const paymentConfig = watch('payment_config');
 
   if (isLoading) return null;
@@ -897,7 +906,7 @@ export default function ScheduledMaintenanceForm({
             </div>
           </div>
           {/* Payment Configuration */}
-          <PaymentConfigurationSection control={control} watch={watch as any} setValue={setValue as any} projectPrice={watchedPrice as any} />
+          <PaymentConfigurationSection control={control} watch={watch as any} setValue={setValue as any} projectPrice={watchedPrice} />
           <div>
             <label className="block text-sm font-medium mb-1">Περιγραφή</label>
             <Textarea
