@@ -80,6 +80,16 @@ type PaymentMethod = {
 };
 
 type PlanKey = 'web' | 'premium' | 'premium_iot';
+type SummaryTabKey = 'total' | PlanKey;
+
+type PlanSummaryStats = {
+  total: number;
+  web: number;
+  premium: number;
+  premium_iot: number;
+  apartments: Record<PlanKey, number>;
+  charges: Record<PlanKey, number> & { total: number };
+};
 
 type SubscriptionBuilding = {
   id: number;
@@ -158,15 +168,36 @@ const resolveBuildingPlan = (building: SubscriptionBuilding): PlanKey => {
   return 'web';
 };
 
-const planLabels: Record<PlanKey, string> = {
-  web: 'Web',
-  premium: 'Premium',
-  premium_iot: 'Premium + IoT',
-};
-const planBadgeClasses: Record<PlanKey, string> = {
-  web: 'border-sky-200 text-sky-700 bg-sky-50/70',
-  premium: 'border-emerald-200 text-emerald-700 bg-emerald-50/70',
-  premium_iot: 'border-amber-200 text-amber-700 bg-amber-50/70',
+const planUi: Record<
+  PlanKey,
+  {
+    label: string;
+    tabClass: string;
+    noteClass: string;
+    badgeClass: string;
+  }
+> = {
+  web: {
+    label: 'Web',
+    tabClass:
+      'text-sky-700 hover:bg-sky-50/70 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-900 data-[state=active]:ring-sky-200',
+    noteClass: 'text-sky-700/80',
+    badgeClass: 'border-sky-200 text-sky-700 bg-sky-50/70',
+  },
+  premium: {
+    label: 'Premium',
+    tabClass:
+      'text-emerald-700 hover:bg-emerald-50/70 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-900 data-[state=active]:ring-emerald-200',
+    noteClass: 'text-emerald-700/80',
+    badgeClass: 'border-emerald-200 text-emerald-700 bg-emerald-50/70',
+  },
+  premium_iot: {
+    label: 'Premium + IoT',
+    tabClass:
+      'text-amber-700 hover:bg-amber-50/70 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-900 data-[state=active]:ring-amber-200',
+    noteClass: 'text-amber-700/80',
+    badgeClass: 'border-amber-200 text-amber-700 bg-amber-50/70',
+  },
 };
 
 const planToFlags = (plan: PlanKey) => ({
@@ -385,8 +416,8 @@ export default function MySubscriptionPage() {
       .sort((a, b) => parseFloat(a.monthly_price) - parseFloat(b.monthly_price));
   }, [plans]);
 
-  const buildingStats = React.useMemo(() => {
-    const stats = {
+  const buildingStats = React.useMemo<PlanSummaryStats>(() => {
+    const stats: PlanSummaryStats = {
       total: 0,
       web: 0,
       premium: 0,
@@ -408,6 +439,41 @@ export default function MySubscriptionPage() {
   }, [buildings]);
   const totalApartments =
     buildingStats.apartments.web + buildingStats.apartments.premium + buildingStats.apartments.premium_iot;
+  const summaryTabs = React.useMemo(
+    () => [
+      {
+        value: 'total' as SummaryTabKey,
+        label: 'Σύνολο',
+        tabClass:
+          'text-slate-700 hover:bg-slate-50/70 data-[state=active]:bg-slate-50 data-[state=active]:text-slate-900 data-[state=active]:ring-slate-200',
+        noteClass: 'text-slate-600',
+        description: `Έχετε συνολικά ${buildingStats.total} κτίρια.`,
+      },
+      {
+        value: 'web' as SummaryTabKey,
+        label: planUi.web.label,
+        tabClass: planUi.web.tabClass,
+        noteClass: planUi.web.noteClass,
+        description: `Έχετε ${buildingStats.web} κτίρια με web πρόγραμμα, σύνολο ${buildingStats.apartments.web} διαμερίσματα.`,
+      },
+      {
+        value: 'premium' as SummaryTabKey,
+        label: planUi.premium.label,
+        tabClass: planUi.premium.tabClass,
+        noteClass: planUi.premium.noteClass,
+        description: `Έχετε ${buildingStats.premium} κτίρια με Premium πρόγραμμα, σύνολο ${buildingStats.apartments.premium} διαμερίσματα.`,
+      },
+      {
+        value: 'premium_iot' as SummaryTabKey,
+        label: planUi.premium_iot.label,
+        tabClass: planUi.premium_iot.tabClass,
+        noteClass: planUi.premium_iot.noteClass,
+        description: `Έχετε ${buildingStats.premium_iot} κτίρια με Premium + IoT πρόγραμμα, σύνολο ${buildingStats.apartments.premium_iot} διαμερίσματα.`,
+      },
+    ],
+    [buildingStats]
+  );
+  const summaryTabOrder = summaryTabs.map((tab) => tab.value);
 
   React.useEffect(() => {
     if (subscription?.billing_interval) {
@@ -466,135 +532,36 @@ export default function MySubscriptionPage() {
             <CardContent className="space-y-4">
               <Tabs defaultValue="total" className="w-full">
                 <TabsList className="grid w-full grid-cols-1 gap-2 bg-transparent p-0 shadow-none sm:grid-cols-2 lg:grid-cols-4">
-                  <TabsTrigger
-                    value="total"
-                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-slate-700 hover:bg-slate-50/70 data-[state=active]:bg-slate-50 data-[state=active]:text-slate-900 data-[state=active]:ring-slate-200"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-wide">Σύνολο</span>
-                    <span className="text-[11px] font-normal text-slate-600">
-                      Έχετε συνολικά {buildingStats.total} κτίρια.
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="web"
-                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-sky-700 hover:bg-sky-50/70 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-900 data-[state=active]:ring-sky-200"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-wide">Web</span>
-                    <span className="text-[11px] font-normal text-sky-700/80">
-                      Έχετε {buildingStats.web} κτίρια με web πρόγραμμα, σύνολο {buildingStats.apartments.web}{' '}
-                      διαμερίσματα.
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="premium"
-                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-emerald-700 hover:bg-emerald-50/70 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-900 data-[state=active]:ring-emerald-200"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-wide">Premium</span>
-                    <span className="text-[11px] font-normal text-emerald-700/80">
-                      Έχετε {buildingStats.premium} κτίρια με Premium πρόγραμμα, σύνολο{' '}
-                      {buildingStats.apartments.premium} διαμερίσματα.
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="premium_iot"
-                    className="min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left text-amber-700 hover:bg-amber-50/70 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-900 data-[state=active]:ring-amber-200"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-wide">Premium + IoT</span>
-                    <span className="text-[11px] font-normal text-amber-700/80">
-                      Το ίδιο και για το Premium + IoT ({buildingStats.premium_iot} κτίρια).
-                    </span>
-                  </TabsTrigger>
+                  {summaryTabs.map((tab) => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className={`min-h-[76px] flex-col items-start gap-1 whitespace-normal text-left ${tab.tabClass}`}
+                    >
+                      <span className="text-xs font-semibold uppercase tracking-wide">{tab.label}</span>
+                      <span className={`text-[11px] font-normal ${tab.noteClass}`}>
+                        {tab.description}
+                      </span>
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
-                <TabsContent value="total" className="mt-4">
-                  {buildingsLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Υπολογισμός συνολικών χρεώσεων...
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-                      <p>
-                        Έχετε συνολικά <span className="font-semibold">{buildingStats.total}</span> κτίρια.
-                      </p>
-                      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
-                        <span>Web: {buildingStats.web}</span>
-                        <span>Premium: {buildingStats.premium}</span>
-                        <span>Premium + IoT: {buildingStats.premium_iot}</span>
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Σύνολο διαμερισμάτων: <span className="font-semibold">{totalApartments}</span>
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="web" className="mt-4">
-                  {buildingsLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Υπολογισμός χρέωσης Web...
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
-                      <p>
-                        Έχετε <span className="font-semibold">{buildingStats.web}</span> κτίρια με Web πρόγραμμα,
-                        σύνολο <span className="font-semibold">{buildingStats.apartments.web}</span> διαμερίσματα.
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Μηνιαία χρέωση: {buildingStats.apartments.web} × {formatCurrency(PLAN_RATES.web)} ανά
-                        διαμέρισμα (μετά τα πρώτα {FREE_MAX_APARTMENTS}/κτίριο).
-                      </p>
-                      <p className="text-sm font-semibold">
-                        Σύνολο: {formatCurrency(buildingStats.charges.web)}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="premium" className="mt-4">
-                  {buildingsLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Υπολογισμός χρέωσης Premium...
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
-                      <p>
-                        Έχετε <span className="font-semibold">{buildingStats.premium}</span> κτίρια με Premium πρόγραμμα,
-                        σύνολο <span className="font-semibold">{buildingStats.apartments.premium}</span> διαμερίσματα.
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES.premium)}. Σύνολο:{' '}
-                        {buildingStats.apartments.premium} × {formatCurrency(PLAN_RATES.premium)} (ελάχιστο{' '}
-                        {formatCurrency(PREMIUM_MIN_MONTHLY)}/κτίριο).
-                      </p>
-                      <p className="text-sm font-semibold">
-                        Σύνολο: {formatCurrency(buildingStats.charges.premium)}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-                <TabsContent value="premium_iot" className="mt-4">
-                  {buildingsLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Υπολογισμός χρέωσης Premium + IoT...
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
-                      <p>
-                        Έχετε <span className="font-semibold">{buildingStats.premium_iot}</span> κτίρια με Premium + IoT πρόγραμμα,
-                        σύνολο <span className="font-semibold">{buildingStats.apartments.premium_iot}</span> διαμερίσματα.
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES.premium_iot)}. Σύνολο:{' '}
-                        {buildingStats.apartments.premium_iot} × {formatCurrency(PLAN_RATES.premium_iot)} (ελάχιστο{' '}
-                        {formatCurrency(PREMIUM_IOT_MIN_MONTHLY)}/κτίριο).
-                      </p>
-                      <p className="text-sm font-semibold">
-                        Σύνολο: {formatCurrency(buildingStats.charges.premium_iot)}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
+                {summaryTabOrder.map((tabKey) => (
+                  <TabsContent key={tabKey} value={tabKey} className="mt-4">
+                    {tabKey === 'total' ? (
+                      <TotalTabContent
+                        isLoading={buildingsLoading}
+                        buildingStats={buildingStats}
+                        totalApartments={totalApartments}
+                      />
+                    ) : (
+                      <PlanTabContent
+                        planKey={tabKey}
+                        isLoading={buildingsLoading}
+                        buildingStats={buildingStats}
+                      />
+                    )}
+                  </TabsContent>
+                ))}
               </Tabs>
 
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/40 px-4 py-3 text-sm">
@@ -654,196 +621,212 @@ export default function MySubscriptionPage() {
           {subscription && (
             <>
               <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <CardTitle>{subscription.plan.name}</CardTitle>
-                  <CardDescription>
-                    {subscription.plan.description || 'Τρέχον πλάνο workspace'}
-                  </CardDescription>
-                </div>
-                <Badge variant={subscription.status === 'active' ? 'active' : 'secondary'}>
-                  {subscription.status === 'active' ? 'Ενεργή' : subscription.status}
-                </Badge>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="rounded-lg border p-4">
-                    <p className="text-xs uppercase text-muted-foreground">Κόστος</p>
-                    <p className="text-xl font-semibold">
-                      {formatCurrency(subscription.price, subscription.currency || 'EUR')}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      / {subscription.billing_interval === 'year' ? 'έτος' : 'μήνα'}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border p-4">
-                    <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
-                    <p className="text-lg font-semibold">{formatDate(subscription.current_period_end)}</p>
-                    {subscription.current_period_end && (
-                      <p className="text-xs text-muted-foreground">
-                        σε{' '}
-                        {formatDistanceToNow(new Date(subscription.current_period_end), {
-                          locale: el,
-                        })}
+                <Card className="lg:col-span-2">
+                  <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle>{subscription.plan.name}</CardTitle>
+                      <CardDescription>
+                        {subscription.plan.description || 'Τρέχον πλάνο workspace'}
+                      </CardDescription>
+                    </div>
+                    <Badge variant={subscription.status === 'active' ? 'active' : 'secondary'}>
+                      {subscription.status === 'active' ? 'Ενεργή' : subscription.status}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs uppercase text-muted-foreground">Κόστος</p>
+                        <p className="text-xl font-semibold">
+                          {formatCurrency(subscription.price, subscription.currency || 'EUR')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          / {subscription.billing_interval === 'year' ? 'έτος' : 'μήνα'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
+                        <p className="text-lg font-semibold">{formatDate(subscription.current_period_end)}</p>
+                        {subscription.current_period_end && (
+                          <p className="text-xs text-muted-foreground">
+                            σε{' '}
+                            {formatDistanceToNow(new Date(subscription.current_period_end), {
+                              locale: el,
+                            })}
+                          </p>
+                        )}
+                      </div>
+                      <div className="rounded-lg border p-4">
+                        <p className="text-xs uppercase text-muted-foreground">Κατάσταση</p>
+                        <p className="text-lg font-semibold">
+                          {subscription.cancel_at_period_end ? 'Προς ακύρωση' : 'Ενεργό'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {subscription.cancel_at_period_end
+                            ? 'Η πρόσβαση θα σταματήσει στο τέλος της περιόδου'
+                            : 'Η αυτόματη ανανέωση είναι ενεργή'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {isTrial && (
+                      <div className="rounded-lg border border-trial-banner-text/20 bg-trial-banner-bg p-4 text-sm text-trial-banner-text">
+                        <p className="font-medium">Δοκιμή σε εξέλιξη</p>
+                        <p className="mt-1 text-trial-banner-text/80">
+                          {trialEndsAt ? `Λήγει στις ${formatDate(trialEndsAt)}.` : 'Η δοκιμή είναι ενεργή.'}{' '}
+                          Στην trial περίοδο δεν απαιτείται κάρτα — θα ζητηθεί πριν τη λήξη.
+                        </p>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-medium text-muted-foreground">Δυνατότητες πλάνου</h3>
+                        <div className="space-y-2 text-sm">
+                          <FeatureLine
+                            icon={<Shield className="h-4 w-4" />}
+                            label="Προτεραιότητα υποστήριξης"
+                            enabled={summary?.plan_features.has_priority_support}
+                          />
+                          <FeatureLine
+                            icon={<TrendingUp className="h-4 w-4" />}
+                            label="Analytics"
+                            enabled={summary?.plan_features.has_analytics}
+                          />
+                          <FeatureLine
+                            icon={<CheckCircle className="h-4 w-4" />}
+                            label="Custom Integrations"
+                            enabled={summary?.plan_features.has_custom_integrations}
+                          />
+                          <FeatureLine
+                            icon={<AlertTriangle className="h-4 w-4" />}
+                            label="White Label"
+                            enabled={summary?.plan_features.has_white_label}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-medium text-muted-foreground">Όρια</h3>
+                        <div className="grid gap-2 text-sm">
+                          <LimitPill label="Κτίρια" value={summary?.limits.buildings} />
+                          <LimitPill label="Διαμερίσματα" value={summary?.limits.apartments} />
+                          <LimitPill label="Χρήστες" value={summary?.limits.users} />
+                          <LimitPill label="Storage (GB)" value={summary?.limits.storage_gb ?? 0} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      {canReactivate ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => reactivateMutation.mutate()}
+                          disabled={reactivateMutation.isPending}
+                        >
+                          {reactivateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Επαναφορά αυτόματης ανανέωσης
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="destructive"
+                            onClick={() => cancelMutation.mutate(true)}
+                            disabled={cancelMutation.isPending || subscription.cancel_at_period_end === true}
+                          >
+                            {cancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Ακύρωση στο τέλος περιόδου
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => cancelMutation.mutate(false)}
+                            disabled={cancelMutation.isPending}
+                          >
+                            Σταμάτημα άμεσα
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Τιμολόγηση & ιστορικό</CardTitle>
+                    <CardDescription>Επόμενες και προηγούμενες χρεώσεις</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {summaryLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    ) : upcomingInvoice ? (
+                      <div className="rounded-lg border bg-muted/40 p-4 text-sm">
+                        <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
+                        <p className="text-lg font-semibold">
+                          {formatCurrency(upcomingInvoice.amount_due, upcomingInvoice.currency)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Περίοδος {formatDate(upcomingInvoice.period_start)} →{' '}
+                          {formatDate(upcomingInvoice.period_end)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Δεν υπάρχει διαθέσιμο ιστορικό χρεώσεων ακόμα.
                       </p>
                     )}
-                  </div>
-                  <div className="rounded-lg border p-4">
-                    <p className="text-xs uppercase text-muted-foreground">Κατάσταση</p>
-                    <p className="text-lg font-semibold">
-                      {subscription.cancel_at_period_end ? 'Προς ακύρωση' : 'Ενεργό'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {subscription.cancel_at_period_end
-                        ? 'Η πρόσβαση θα σταματήσει στο τέλος της περιόδου'
-                        : 'Η αυτόματη ανανέωση είναι ενεργή'}
-                    </p>
-                  </div>
-                </div>
 
-                {isTrial && (
-                  <div className="rounded-lg border border-trial-banner-text/20 bg-trial-banner-bg p-4 text-sm text-trial-banner-text">
-                    <p className="font-medium">Δοκιμή σε εξέλιξη</p>
-                    <p className="mt-1 text-trial-banner-text/80">
-                      {trialEndsAt ? `Λήγει στις ${formatDate(trialEndsAt)}.` : 'Η δοκιμή είναι ενεργή.'}{' '}
-                      Στην trial περίοδο δεν απαιτείται κάρτα — θα ζητηθεί πριν τη λήξη.
-                    </p>
-                  </div>
-                )}
+                    <Separator />
 
-                <Separator />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">Δυνατότητες πλάνου</h3>
-                    <div className="space-y-2 text-sm">
-                      <FeatureLine active icon={<Shield className="h-4 w-4" />} label="Προτεραιότητα υποστήριξης" enabled={summary?.plan_features.has_priority_support} />
-                      <FeatureLine icon={<TrendingUp className="h-4 w-4" />} label="Analytics" enabled={summary?.plan_features.has_analytics} />
-                      <FeatureLine icon={<CheckCircle className="h-4 w-4" />} label="Custom Integrations" enabled={summary?.plan_features.has_custom_integrations} />
-                      <FeatureLine icon={<AlertTriangle className="h-4 w-4" />} label="White Label" enabled={summary?.plan_features.has_white_label} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">Όρια</h3>
-                    <div className="grid gap-2 text-sm">
-                      <LimitPill label="Κτίρια" value={summary?.limits.buildings} />
-                      <LimitPill label="Διαμερίσματα" value={summary?.limits.apartments} />
-                      <LimitPill label="Χρήστες" value={summary?.limits.users} />
-                      <LimitPill label="Storage (GB)" value={summary?.limits.storage_gb ?? 0} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  {canReactivate ? (
-                    <Button
-                      variant="outline"
-                      onClick={() => reactivateMutation.mutate()}
-                      disabled={reactivateMutation.isPending}
-                    >
-                      {reactivateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Επαναφορά αυτόματης ανανέωσης
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="destructive"
-                        onClick={() => cancelMutation.mutate(true)}
-                        disabled={cancelMutation.isPending || subscription.cancel_at_period_end === true}
-                      >
-                        {cancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Ακύρωση στο τέλος περιόδου
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => cancelMutation.mutate(false)}
-                        disabled={cancelMutation.isPending}
-                      >
-                        Σταμάτημα άμεσα
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Τιμολόγηση & ιστορικό</CardTitle>
-                <CardDescription>Επόμενες και προηγούμενες χρεώσεις</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {summaryLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                ) : upcomingInvoice ? (
-                  <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-                    <p className="text-xs uppercase text-muted-foreground">Επόμενη χρέωση</p>
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(upcomingInvoice.amount_due, upcomingInvoice.currency)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Περίοδος {formatDate(upcomingInvoice.period_start)} →{' '}
-                      {formatDate(upcomingInvoice.period_end)}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Δεν υπάρχει διαθέσιμο ιστορικό χρεώσεων ακόμα.
-                  </p>
-                )}
-
-                <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs uppercase text-muted-foreground">Τρόποι πληρωμής</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          portalMutation.mutate(window.location.href);
-                        }
-                      }}
-                      disabled={portalMutation.isPending}
-                    >
-                      {portalMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {portalLabel}
-                    </Button>
-                  </div>
-                  {paymentMethods.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {isTrial
-                        ? 'Είσαι σε δοκιμαστική περίοδο. Δεν απαιτείται κάρτα τώρα — θα ζητηθεί πριν τη λήξη.'
-                        : 'Δεν έχει αποθηκευτεί κάρτα ακόμη. Πρόσθεσε κάρτα για να ολοκληρώσεις την ενεργοποίηση.'}
-                    </p>
-                  ) : (
-                    paymentMethods.map((method) => (
-                      <div
-                        key={method.id}
-                        className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">
-                              {method.card_brand?.toUpperCase()} •••• {method.card_last4}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Λήξη {method.card_exp_month}/{method.card_exp_year}
-                            </p>
-                          </div>
-                        </div>
-                        {method.is_default && <Badge>Default</Badge>}
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs uppercase text-muted-foreground">Τρόποι πληρωμής</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              portalMutation.mutate(window.location.href);
+                            }
+                          }}
+                          disabled={portalMutation.isPending}
+                        >
+                          {portalMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          {portalLabel}
+                        </Button>
                       </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                      {paymentMethods.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          {isTrial
+                            ? 'Είσαι σε δοκιμαστική περίοδο. Δεν απαιτείται κάρτα τώρα — θα ζητηθεί πριν τη λήξη.'
+                            : 'Δεν έχει αποθηκευτεί κάρτα ακόμη. Πρόσθεσε κάρτα για να ολοκληρώσεις την ενεργοποίηση.'}
+                        </p>
+                      ) : (
+                        paymentMethods.map((method) => (
+                          <div
+                            key={method.id}
+                            className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                          >
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">
+                                  {method.card_brand?.toUpperCase()} •••• {method.card_last4}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Λήξη {method.card_exp_month}/{method.card_exp_year}
+                                </p>
+                              </div>
+                            </div>
+                            {method.is_default && <Badge>Προεπιλογή</Badge>}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
             </>
           )}
@@ -861,9 +844,15 @@ export default function MySubscriptionPage() {
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2 text-xs">
                 <Badge variant="outline">Σύνολο: {buildingStats.total}</Badge>
-                <Badge variant="secondary">Web: {buildingStats.web}</Badge>
-                <Badge variant="secondary">Premium: {buildingStats.premium}</Badge>
-                <Badge variant="secondary">Premium + IoT: {buildingStats.premium_iot}</Badge>
+                <Badge variant="outline" className={planUi.web.badgeClass}>
+                  Web: {buildingStats.web}
+                </Badge>
+                <Badge variant="outline" className={planUi.premium.badgeClass}>
+                  Premium: {buildingStats.premium}
+                </Badge>
+                <Badge variant="outline" className={planUi.premium_iot.badgeClass}>
+                  Premium + IoT: {buildingStats.premium_iot}
+                </Badge>
               </div>
               <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-700">
                 <Info className="mt-0.5 h-4 w-4 text-slate-500" />
@@ -879,99 +868,13 @@ export default function MySubscriptionPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-sm text-sky-900">
-                  <p className="text-xs uppercase text-muted-foreground">Web</p>
-                  <div className="mt-2 space-y-1 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span>Κτίρια</span>
-                      <span className="font-semibold">{buildingStats.web}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Διαμερίσματα</span>
-                      <span className="font-semibold">{buildingStats.apartments.web}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Κόστος</span>
-                      <span className="font-semibold">{formatCurrency(buildingStats.charges.web)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-900">
-                  <p className="text-xs uppercase text-muted-foreground">Premium</p>
-                  <div className="mt-2 space-y-1 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span>Κτίρια</span>
-                      <span className="font-semibold">{buildingStats.premium}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Διαμερίσματα</span>
-                      <span className="font-semibold">{buildingStats.apartments.premium}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Κόστος</span>
-                      <span className="font-semibold">{formatCurrency(buildingStats.charges.premium)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Ελάχιστο</span>
-                      <span>€30/κτίριο</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-900">
-                  <p className="text-xs uppercase text-muted-foreground">Premium + IoT</p>
-                  <div className="mt-2 space-y-1 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span>Κτίρια</span>
-                      <span className="font-semibold">{buildingStats.premium_iot}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Διαμερίσματα</span>
-                      <span className="font-semibold">{buildingStats.apartments.premium_iot}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Κόστος</span>
-                      <span className="font-semibold">{formatCurrency(buildingStats.charges.premium_iot)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Ελάχιστο</span>
-                      <span>€35/κτίριο</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="w-full rounded-2xl border border-slate-300 bg-gradient-to-r from-slate-50/80 via-slate-100/90 to-slate-50/80 p-6 text-sm text-slate-900 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs uppercase text-muted-foreground">Σύνολο</p>
-                  <span className="text-xs text-muted-foreground">Συγκεντρωτικά ανά πλάνο (με ελάχιστα ανά κτίριο)</span>
-                </div>
-                <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-                  <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
-                    <span>Κτίρια</span>
-                    <span className="text-lg font-semibold">{buildingStats.total}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
-                    <span>Διαμερίσματα</span>
-                    <span className="text-lg font-semibold">
-                      {buildingStats.apartments.web +
-                        buildingStats.apartments.premium +
-                        buildingStats.apartments.premium_iot}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-white/80 px-4 py-3">
-                    <span>Κόστος</span>
-                    <span className="text-lg font-semibold">{formatCurrency(buildingStats.charges.total)}</span>
-                  </div>
-                </div>
-              </div>
-
               {buildingsLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               ) : buildings && buildings.length > 0 ? (
                 <div className="space-y-3">
                   {buildings.map((building) => {
                     const planKey = resolveBuildingPlan(building);
-                    const planLabel = planLabels[planKey];
+                    const planLabel = planUi[planKey].label;
                     const apartmentsCount = building.apartments_count ?? 0;
                     const hasApartments = apartmentsCount > 0;
                     const buildingCharge = getMonthlyPrice(planKey, apartmentsCount);
@@ -992,7 +895,7 @@ export default function MySubscriptionPage() {
                           <p className="text-xs uppercase text-muted-foreground">Κτίριο</p>
                           <p className="text-base font-semibold">{building.name}</p>
                           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline" className={planBadgeClasses[planKey]}>
+                            <Badge variant="outline" className={planUi[planKey].badgeClass}>
                               {planLabel}
                             </Badge>
                             {planKey === 'premium_iot' && <Badge variant="secondary">IoT</Badge>}
@@ -1003,20 +906,20 @@ export default function MySubscriptionPage() {
 
                         <div className="flex flex-col items-start gap-2 sm:items-end">
                           <div className="flex flex-wrap items-center gap-2">
-                          {trialActive && (
-                            <Badge variant="secondary">
-                              Trial έως {formatDate(building.trial_ends_at)}
-                            </Badge>
-                          )}
-                          {premiumLocked && (
-                            <Badge variant="destructive">Premium κλειδωμένο</Badge>
-                          )}
-                          {!hasApartments && !trialActive && planKey !== 'web' && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Λείπουν διαμερίσματα
-                            </Badge>
-                          )}
+                            {trialActive && (
+                              <Badge variant="secondary">
+                                Trial έως {formatDate(building.trial_ends_at)}
+                              </Badge>
+                            )}
+                            {premiumLocked && (
+                              <Badge variant="destructive">Premium κλειδωμένο</Badge>
+                            )}
+                            {!hasApartments && !trialActive && planKey !== 'web' && (
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Λείπουν διαμερίσματα
+                              </Badge>
+                            )}
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
@@ -1054,10 +957,10 @@ export default function MySubscriptionPage() {
                                 {isUpdating ? '...' : 'Αλλαγή'}
                               </Button>
                             )}
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/buildings/${building.id}/edit`}>Ενημέρωση κτιρίου</Link>
-                          </Button>
-                        </div>
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={`/buildings/${building.id}/edit`}>Ενημέρωση κτιρίου</Link>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1246,6 +1149,93 @@ export default function MySubscriptionPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function TotalTabContent({
+  isLoading,
+  buildingStats,
+  totalApartments,
+}: {
+  isLoading: boolean;
+  buildingStats: PlanSummaryStats;
+  totalApartments: number;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Υπολογισμός συνολικών χρεώσεων...
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+      <p>
+        Έχετε συνολικά <span className="font-semibold">{buildingStats.total}</span> κτίρια.
+      </p>
+      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+        <span>Web: {buildingStats.web}</span>
+        <span>Premium: {buildingStats.premium}</span>
+        <span>Premium + IoT: {buildingStats.premium_iot}</span>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Σύνολο διαμερισμάτων: <span className="font-semibold">{totalApartments}</span>
+      </p>
+    </div>
+  );
+}
+
+function PlanTabContent({
+  planKey,
+  isLoading,
+  buildingStats,
+}: {
+  planKey: PlanKey;
+  isLoading: boolean;
+  buildingStats: PlanSummaryStats;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Υπολογισμός χρέωσης {planUi[planKey].label}...
+      </div>
+    );
+  }
+
+  const apartmentsCount = buildingStats.apartments[planKey];
+  const minCharge =
+    planKey === 'premium'
+      ? PREMIUM_MIN_MONTHLY
+      : planKey === 'premium_iot'
+        ? PREMIUM_IOT_MIN_MONTHLY
+        : null;
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-2">
+      <p>
+        Έχετε <span className="font-semibold">{buildingStats[planKey]}</span> κτίρια με{' '}
+        {planUi[planKey].label} πρόγραμμα, σύνολο{' '}
+        <span className="font-semibold">{apartmentsCount}</span> διαμερίσματα.
+      </p>
+      {planKey === 'web' ? (
+        <p className="text-xs text-muted-foreground">
+          Μηνιαία χρέωση: {apartmentsCount} × {formatCurrency(PLAN_RATES.web)} ανά διαμέρισμα (μετά τα
+          πρώτα {FREE_MAX_APARTMENTS}/κτίριο).
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Μηνιαία χρέωση ανά διαμέρισμα {formatCurrency(PLAN_RATES[planKey])}. Σύνολο:{' '}
+          {apartmentsCount} × {formatCurrency(PLAN_RATES[planKey])}
+          {minCharge ? ` (ελάχιστο ${formatCurrency(minCharge)}/κτίριο).` : '.'}
+        </p>
+      )}
+      <p className="text-sm font-semibold">
+        Σύνολο: {formatCurrency(buildingStats.charges[planKey])}
+      </p>
     </div>
   );
 }
