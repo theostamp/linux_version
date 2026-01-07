@@ -91,6 +91,12 @@ type PlanSummaryStats = {
   charges: Record<PlanKey, number> & { total: number };
 };
 
+type UpgradeCandidate = {
+  id: number;
+  name: string;
+  apartmentsCount: number;
+};
+
 type SubscriptionBuilding = {
   id: number;
   name: string;
@@ -180,21 +186,21 @@ const planUi: Record<
   web: {
     label: 'Web',
     tabClass:
-      'text-sky-700 hover:bg-sky-50/70 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-900 data-[state=active]:ring-sky-200',
+      'border border-sky-100/80 bg-sky-50/70 text-sky-700 hover:bg-sky-100/70 data-[state=active]:bg-sky-100 data-[state=active]:text-sky-900 data-[state=active]:ring-0 data-[state=active]:shadow-none data-[state=active]:border-sky-200',
     noteClass: 'text-sky-700/80',
     badgeClass: 'border-sky-200 text-sky-700 bg-sky-50/70',
   },
   premium: {
     label: 'Premium',
     tabClass:
-      'text-emerald-700 hover:bg-emerald-50/70 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-900 data-[state=active]:ring-emerald-200',
+      'border border-emerald-100/80 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100/70 data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-900 data-[state=active]:ring-0 data-[state=active]:shadow-none data-[state=active]:border-emerald-200',
     noteClass: 'text-emerald-700/80',
     badgeClass: 'border-emerald-200 text-emerald-700 bg-emerald-50/70',
   },
   premium_iot: {
     label: 'Premium + IoT',
     tabClass:
-      'text-amber-700 hover:bg-amber-50/70 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-900 data-[state=active]:ring-amber-200',
+      'border border-amber-100/80 bg-amber-50/70 text-amber-700 hover:bg-amber-100/70 data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900 data-[state=active]:ring-0 data-[state=active]:shadow-none data-[state=active]:border-amber-200',
     noteClass: 'text-amber-700/80',
     badgeClass: 'border-amber-200 text-amber-700 bg-amber-50/70',
   },
@@ -275,6 +281,7 @@ export default function MySubscriptionPage() {
   const [billingInterval, setBillingInterval] = React.useState<'month' | 'year'>('month');
   const [planChanges, setPlanChanges] = React.useState<Record<number, PlanKey>>({});
   const [updatingBuildingId, setUpdatingBuildingId] = React.useState<number | null>(null);
+  const [premiumUpgradeCount, setPremiumUpgradeCount] = React.useState(0);
 
   const updateMutation = useMutation({
     mutationFn: async (planId: number) =>
@@ -445,8 +452,8 @@ export default function MySubscriptionPage() {
         value: 'total' as SummaryTabKey,
         label: 'Σύνολο',
         tabClass:
-          'text-slate-700 hover:bg-slate-50/70 data-[state=active]:bg-slate-50 data-[state=active]:text-slate-900 data-[state=active]:ring-slate-200',
-        noteClass: 'text-slate-600',
+          'border border-slate-200/70 bg-slate-50/70 text-slate-700 hover:bg-slate-100/70 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 data-[state=active]:ring-0 data-[state=active]:shadow-none data-[state=active]:border-slate-300',
+        noteClass: 'text-slate-600/90',
         description: `Έχετε συνολικά ${buildingStats.total} κτίρια.`,
       },
       {
@@ -475,11 +482,53 @@ export default function MySubscriptionPage() {
   );
   const summaryTabOrder = summaryTabs.map((tab) => tab.value);
 
+  const upgradeCandidates = React.useMemo<UpgradeCandidate[]>(() => {
+    if (!buildings?.length) return [];
+    return buildings
+      .filter((building) => !building.premium_enabled)
+      .map((building) => ({
+        id: building.id,
+        name: building.name,
+        apartmentsCount: Math.max(0, building.apartments_count ?? 0),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'el'));
+  }, [buildings]);
+
+  const upgradePreview = React.useMemo(() => {
+    const clampedCount = Math.min(premiumUpgradeCount, upgradeCandidates.length);
+    const selected = upgradeCandidates.slice(0, clampedCount);
+    const additionalCost = selected.reduce((sum, building) => {
+      const currentCost = getMonthlyPrice('web', building.apartmentsCount);
+      const premiumCost = getMonthlyPrice('premium', building.apartmentsCount);
+      return sum + (premiumCost - currentCost);
+    }, 0);
+    return {
+      count: clampedCount,
+      additionalCost,
+      totalCost: buildingStats.charges.total + additionalCost,
+      selected,
+    };
+  }, [premiumUpgradeCount, upgradeCandidates, buildingStats.charges.total]);
+
+  const upgradeSelectionLabel = React.useMemo(() => {
+    if (upgradePreview.selected.length === 0) {
+      return 'Δεν έχουν επιλεγεί κτίρια για αναβάθμιση.';
+    }
+    const names = upgradePreview.selected.map((building) => building.name);
+    const visible = names.slice(0, 3);
+    const remaining = names.length - visible.length;
+    return remaining > 0 ? `${visible.join(', ')} +${remaining} ακόμη` : visible.join(', ');
+  }, [upgradePreview.selected]);
+
   React.useEffect(() => {
     if (subscription?.billing_interval) {
       setBillingInterval(subscription.billing_interval);
     }
   }, [subscription?.billing_interval]);
+
+  React.useEffect(() => {
+    setPremiumUpgradeCount((prev) => Math.min(prev, upgradeCandidates.length));
+  }, [upgradeCandidates.length]);
 
   if (subscriptionError) {
     return (
@@ -866,6 +915,100 @@ export default function MySubscriptionPage() {
                   </p>
                   <p>Web: χωρίς ελάχιστο, δωρεάν έως 7 διαμερίσματα.</p>
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 p-4 text-sm text-emerald-900">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs uppercase text-emerald-700/70">Σενάριο αναβάθμισης</p>
+                    <p className="text-base font-semibold">Πρόσθεσε σταδιακά κτίρια στο Premium</p>
+                  </div>
+                  <Badge variant="outline" className="border-emerald-200 bg-white/80 text-emerald-900">
+                    +{upgradePreview.count} κτίρια
+                  </Badge>
+                </div>
+
+                {buildingsLoading ? (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700/70">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Φόρτωση σεναρίων αναβάθμισης...
+                  </div>
+                ) : upgradeCandidates.length === 0 ? (
+                  <p className="mt-3 text-xs text-emerald-700/80">
+                    Δεν υπάρχουν διαθέσιμα Web κτίρια για αναβάθμιση σε Premium αυτή τη στιγμή.
+                  </p>
+                ) : (
+                  <>
+                    <p className="mt-2 text-xs text-emerald-700/80">
+                      Σύρε το slider για να δεις το συνολικό κόστος αν αναβαθμίσεις web κτίρια σε Premium. Τα
+                      κτίρια ταξινομούνται αλφαβητικά για σταδιακή επιλογή.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-emerald-700/80">
+                      <span>
+                        Premium κτίρια: {buildingStats.premium} → {buildingStats.premium + upgradePreview.count}
+                      </span>
+                      <span>
+                        Web κτίρια: {buildingStats.web} → {Math.max(0, buildingStats.web - upgradePreview.count)}
+                      </span>
+                    </div>
+                    <div className="mt-4">
+                      <input
+                        type="range"
+                        min={0}
+                        max={upgradeCandidates.length}
+                        value={upgradePreview.count}
+                        onChange={(event) => setPremiumUpgradeCount(parseInt(event.target.value, 10))}
+                        className="h-2 w-full cursor-pointer appearance-none rounded-full bg-emerald-100/80
+                          [&::-webkit-slider-thumb]:appearance-none
+                          [&::-webkit-slider-thumb]:h-5
+                          [&::-webkit-slider-thumb]:w-5
+                          [&::-webkit-slider-thumb]:rounded-full
+                          [&::-webkit-slider-thumb]:bg-emerald-600
+                          [&::-webkit-slider-thumb]:shadow-lg
+                          [&::-webkit-slider-thumb]:shadow-emerald-600/30
+                          [&::-webkit-slider-thumb]:transition-transform
+                          [&::-webkit-slider-thumb]:hover:scale-110
+                          [&::-moz-range-thumb]:h-5
+                          [&::-moz-range-thumb]:w-5
+                          [&::-moz-range-thumb]:rounded-full
+                          [&::-moz-range-thumb]:border-0
+                          [&::-moz-range-thumb]:bg-emerald-600"
+                      />
+                      <div className="mt-2 flex items-center justify-between text-[11px] text-emerald-700/70">
+                        <span>0</span>
+                        <span>{upgradeCandidates.length}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
+                      <div className="rounded-lg border border-emerald-200/60 bg-white/80 px-3 py-2">
+                        <p className="text-[11px] uppercase text-emerald-700/70">Τρέχον σύνολο</p>
+                        <p className="text-sm font-semibold text-emerald-900">
+                          {formatCurrency(buildingStats.charges.total)}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-200/60 bg-white/80 px-3 py-2">
+                        <p className="text-[11px] uppercase text-emerald-700/70">Επιπλέον κόστος</p>
+                        <p className="text-sm font-semibold text-emerald-900">
+                          {upgradePreview.additionalCost > 0
+                            ? `+${formatCurrency(upgradePreview.additionalCost)}`
+                            : formatCurrency(0)}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-300/70 bg-white px-3 py-2">
+                        <p className="text-[11px] uppercase text-emerald-700/70">Νέο σύνολο</p>
+                        <p className="text-sm font-semibold text-emerald-900">
+                          {formatCurrency(upgradePreview.totalCost)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-[11px] text-emerald-700/70">
+                      Επιλεγμένα κτίρια: {upgradeSelectionLabel}
+                    </p>
+                    <p className="text-[11px] text-emerald-700/60">
+                      Η προσομοίωση δεν εφαρμόζει αλλαγές στα πλάνα των κτιρίων.
+                    </p>
+                  </>
+                )}
               </div>
 
               {buildingsLoading ? (
