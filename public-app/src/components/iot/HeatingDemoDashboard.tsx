@@ -87,7 +87,7 @@ const demoStats: StatItem[] = [
     label: 'Θερμοκρασία προσαγωγής',
     value: '62°C',
     helper: 'Λέβητας',
-    icon: Thermometer,
+    icon: Flame,
   },
   {
     label: 'Χρόνος λειτουργίας',
