@@ -72,9 +72,11 @@ const getLatestSeen = (devices?: HeatingDevice[]) => {
 export const HeatingControlDashboard = ({
   buildingName,
   buildingId,
+  headerControl,
 }: {
   buildingName?: string | null;
   buildingId?: number | null;
+  headerControl?: React.ReactNode;
 }) => {
   const queryClient = useQueryClient();
   const { data: devices, isLoading, refetch } = useQuery<HeatingDevice[]>({
@@ -201,7 +203,9 @@ export const HeatingControlDashboard = ({
     },
   ];
 
-  const zones: HeatingDashboardData['zones'] = devices.map((device) => {
+  const zones: HeatingDashboardData['zones'] = [...(devices ?? [])]
+    .sort((a, b) => a.id - b.id)
+    .map((device) => {
     const deviceLabel = device.device_id?.toUpperCase().includes('SHELLY') ? 'Shelly Relay' : 'Virtual';
     const status = device.current_status ? 'Σε λειτουργία' : device.is_active ? 'Σε αναμονή' : 'Κλειστή';
     const mode = device.is_active ? 'Auto' : 'Manual';
@@ -228,14 +232,14 @@ export const HeatingControlDashboard = ({
   if (activeDevices === 0) {
     alerts.push({
       title: 'Σύστημα σε αναμονή',
-      description: 'Δεν υπάρχουν ενεργές ζώνες θέρμανσης αυτή τη στιγμή.',
+      description: 'Δεν υπάρχει ενεργή θέρμανση αυτή τη στιγμή.',
     });
   }
 
   if (staleDevices.length > 0) {
     alerts.push({
       title: 'Χαμηλή επικοινωνία συσκευών',
-      description: `Χωρίς ενημέρωση: ${staleDevices.map((device) => device.name).join(', ')}.`,
+      description: `Χωρίς πρόσφατη ενημέρωση από ${staleDevices.length} συσκευές.`,
     });
   }
 
@@ -266,6 +270,7 @@ export const HeatingControlDashboard = ({
     <HeatingDashboardTemplate
       mode="live"
       buildingName={buildingName}
+      headerControl={headerControl}
       data={dashboardData}
       zoneToggleEnabled
       onZoneToggle={handleToggle}

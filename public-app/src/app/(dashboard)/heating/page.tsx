@@ -1,16 +1,24 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import BuildingSelectorButton from '@/components/BuildingSelectorButton';
 import { HeatingControlDashboard } from '@/components/iot/HeatingControlDashboard';
 import { HeatingDemoDashboard } from '@/components/iot/HeatingDemoDashboard';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
 export default function IotHeatingPage() {
-  const { buildingContext, isLoadingContext } = useBuilding();
+  const { buildingContext, isLoadingContext, selectedBuilding, setSelectedBuilding } = useBuilding();
   const iotAccess = Boolean(
     buildingContext?.billing?.iot_access ?? buildingContext?.billing?.iot_enabled ?? false
   );
   const upgradeHref = buildingContext?.id ? `/upgrade?building_id=${buildingContext.id}` : '/upgrade';
+  const headerControl = (
+    <BuildingSelectorButton
+      selectedBuilding={selectedBuilding}
+      onBuildingSelect={setSelectedBuilding}
+      className="w-full sm:w-auto"
+    />
+  );
 
   if (isLoadingContext && !buildingContext) {
     return (
@@ -28,6 +36,7 @@ export default function IotHeatingPage() {
       <HeatingDemoDashboard
         buildingName={buildingContext?.name}
         upgradeHref={upgradeHref}
+        headerControl={headerControl}
       />
     );
   }
@@ -37,6 +46,7 @@ export default function IotHeatingPage() {
       <HeatingControlDashboard
         buildingName={buildingContext?.name}
         buildingId={buildingContext?.id}
+        headerControl={headerControl}
       />
     </div>
   );
