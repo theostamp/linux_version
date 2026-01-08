@@ -11,7 +11,17 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { Loader2, CreditCard, Shield, TrendingUp, CheckCircle, AlertTriangle, RefreshCcw, Info } from 'lucide-react';
+import {
+  Loader2,
+  CreditCard,
+  Shield,
+  TrendingUp,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCcw,
+  Info,
+  HelpCircle,
+} from 'lucide-react';
 import { typography } from '@/lib/typography';
 import {
   FREE_MAX_APARTMENTS,
@@ -21,6 +31,7 @@ import {
   getMonthlyPrice,
 } from '@/lib/pricing';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 type SubscriptionPlan = {
   id: number;
@@ -210,6 +221,34 @@ const planToFlags = (plan: PlanKey) => ({
   premium_enabled: plan !== 'web',
   iot_enabled: plan === 'premium_iot',
 });
+
+const planInfo: Record<PlanKey, { title: string; details: string[] }> = {
+  web: {
+    title: 'Πότε να επιλέξω Web συνδρομή',
+    details: [
+      'Όταν χρειάζεσαι ένα πλήρες εργαλείο συμβατικής διαχείρισης πολυκατοικιών, χωρίς πρόσθετο εξοπλισμό στο κτίριο.',
+      'Προσφέρει χαμηλό και προβλέψιμο κόστος σε σχέση με την αγορά, ιδανικό για γραφεία με διαφορετικά μεγέθη χαρτοφυλακίου.',
+      'Καλύπτει τις βασικές ροές ενός γραφείου ώστε να οργανώσεις διαδικασίες και να αυξήσεις την παραγωγικότητα.',
+    ],
+  },
+  premium: {
+    title: 'Πότε να επιλέξω Premium συνδρομή',
+    details: [
+      'Όταν χρειάζεσαι όλα όσα προσφέρει το Web και επιπλέον φυσική παρουσία στο κτίριο μέσω info point kiosk.',
+      'Περιλαμβάνει τον εξοπλισμό (οθόνη/σύνδεση) και λειτουργίες όπως διαχείριση περιεχομένου, AI παραστατικά και ηλεκτρονικό αρχείο.',
+      'Αυτόματη εισαγωγή νέων πολυκατοικιών από υπάρχοντα φύλλα κοινοχρήστων, ώστε η αρχική μετάβαση να γίνεται χωρίς επανακαταχωρήσεις.',
+      'Αυτόματη εισαγωγή παραστατικών με ενημέρωση των οικονομικών και αυτόματη αρχειοθέτηση, μειώνοντας αισθητά τον χρόνο χειροκίνητων διαδικασιών.',
+    ],
+  },
+  premium_iot: {
+    title: 'Πότε να επιλέξω Premium + IoT συνδρομή',
+    details: [
+      'Όταν θέλεις τις δυνατότητες του Premium μαζί με έξυπνους αυτοματισμούς IoT.',
+      'Κατάλληλο για κτίρια όπου απαιτείται Smart Heating, ειδοποιήσεις βλαβών/διαρροών και συνεχής παρακολούθηση.',
+      'Χρήσιμο όταν η ενεργειακή διαχείριση και η άμεση εικόνα λειτουργίας βελτιώνουν την αποτελεσματικότητα του γραφείου.',
+    ],
+  },
+};
 
 const useCurrentSubscription = () =>
   useQuery({
@@ -451,6 +490,8 @@ export default function MySubscriptionPage() {
         tabClass: planUi.web.tabClass,
         noteClass: planUi.web.noteClass,
         description: `${buildingStats.web} κτίρια`,
+        infoTitle: planInfo.web.title,
+        infoBody: planInfo.web.details,
       },
       {
         value: 'premium' as SummaryTabKey,
@@ -458,6 +499,8 @@ export default function MySubscriptionPage() {
         tabClass: planUi.premium.tabClass,
         noteClass: planUi.premium.noteClass,
         description: `${buildingStats.premium} κτίρια`,
+        infoTitle: planInfo.premium.title,
+        infoBody: planInfo.premium.details,
       },
       {
         value: 'premium_iot' as SummaryTabKey,
@@ -465,6 +508,8 @@ export default function MySubscriptionPage() {
         tabClass: planUi.premium_iot.tabClass,
         noteClass: planUi.premium_iot.noteClass,
         description: `${buildingStats.premium_iot} κτίρια`,
+        infoTitle: planInfo.premium_iot.title,
+        infoBody: planInfo.premium_iot.details,
       },
     ],
     [buildingStats]
@@ -571,16 +616,40 @@ export default function MySubscriptionPage() {
               <Tabs defaultValue="web" className="w-full">
                 <TabsList className="grid w-full grid-cols-1 gap-2 bg-transparent p-0 shadow-none sm:grid-cols-2 lg:grid-cols-3">
                   {summaryTabs.map((tab) => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className={`min-h-[64px] flex-col items-start gap-1 whitespace-normal text-left ${tab.tabClass}`}
-                    >
-                      <span className="text-xs font-semibold uppercase tracking-wide">{tab.label}</span>
-                      <span className={`text-[11px] font-normal ${tab.noteClass}`}>
-                        {tab.description}
-                      </span>
-                    </TabsTrigger>
+                    <div key={tab.value} className="relative">
+                      <TabsTrigger
+                        value={tab.value}
+                        className={`min-h-[64px] w-full flex-col items-start gap-1 whitespace-normal text-left pr-10 ${tab.tabClass}`}
+                      >
+                        <span className="text-xs font-semibold uppercase tracking-wide">{tab.label}</span>
+                        <span className={`text-[11px] font-normal ${tab.noteClass}`}>
+                          {tab.description}
+                        </span>
+                      </TabsTrigger>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button
+                            type="button"
+                            className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-500 shadow-sm transition hover:border-slate-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            aria-label={`Περισσότερα για το πλάνο ${tab.label}`}
+                          >
+                            <HelpCircle className="h-4 w-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{tab.infoTitle}</DialogTitle>
+                            <DialogDescription asChild className="space-y-2 list-disc pl-4">
+                              <ul>
+                                {tab.infoBody.map((line, index) => (
+                                  <li key={`${tab.value}-${index}`}>{line}</li>
+                                ))}
+                              </ul>
+                            </DialogDescription>
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   ))}
                 </TabsList>
                 {summaryTabOrder.map((tabKey) => (
