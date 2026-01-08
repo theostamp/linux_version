@@ -107,3 +107,27 @@ class TelemetryLog(models.Model):
     class Meta:
         ordering = ['-timestamp']
 
+
+class HeatingControlProfile(models.Model):
+    """
+    Ρυθμίσεις Smart Heating ανά κτίριο.
+    Χρησιμοποιείται για αποστολή JSON config στις IoT συσκευές (ESP32).
+    """
+    building = models.OneToOneField(
+        Building,
+        on_delete=models.CASCADE,
+        related_name='heating_profile',
+        verbose_name=_("Κτίριο")
+    )
+    curve_value = models.PositiveSmallIntegerField(default=60, verbose_name=_("Καμπύλη λειτουργίας (%)"))
+    min_external_temp = models.SmallIntegerField(default=8, verbose_name=_("Ελάχιστη θερμοκρασία εκκίνησης (°C)"))
+    schedule = models.JSONField(default=list, blank=True, verbose_name=_("Ωράρια λειτουργίας"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Ημ/νία δημιουργίας"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Τελευταία ενημέρωση"))
+
+    class Meta:
+        verbose_name = _("Ρυθμίσεις Smart Heating")
+        verbose_name_plural = _("Ρυθμίσεις Smart Heating")
+
+    def __str__(self):
+        return f"Heating Profile: {self.building.name}"

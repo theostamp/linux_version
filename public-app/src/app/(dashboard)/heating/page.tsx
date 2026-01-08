@@ -1,9 +1,9 @@
 'use client';
 
-import { Flame, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { HeatingControlDashboard } from '@/components/iot/HeatingControlDashboard';
+import { HeatingDemoDashboard } from '@/components/iot/HeatingDemoDashboard';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import PremiumFeatureInfo from '@/components/premium/PremiumFeatureInfo';
 
 export default function IotHeatingPage() {
   const { buildingContext, isLoadingContext } = useBuilding();
@@ -25,41 +25,19 @@ export default function IotHeatingPage() {
 
   if (!iotAccess) {
     return (
-      <PremiumFeatureInfo
-        title="Smart Heating"
-        description="Έλεγχος κεντρικής θέρμανσης με ωράρια, θερμοκρασίες και αυτοματισμούς IoT για κάθε κτίριο."
-        note="Απαιτείται ενεργή Premium + IoT συνδρομή για το επιλεγμένο κτίριο."
-        bullets={[
-          'Χρονοπρογραμματισμός λειτουργίας ανά ημέρα και ζώνη.',
-          'Ρύθμιση θερμοκρασιών και κανόνων λειτουργίας.',
-          'Απομακρυσμένος έλεγχος και άμεση ενεργοποίηση.',
-          'Ειδοποιήσεις για κατανάλωση και εξοικονόμηση.',
-        ]}
-        highlights={[
-          {
-            title: 'Ζώνες & ωράρια',
-            description: 'Ορισμός προφίλ λειτουργίας για διαφορετικές ανάγκες.',
-          },
-          {
-            title: 'IoT αυτοματισμοί',
-            description: 'Σύνδεση με αισθητήρες για πιο έξυπνη λειτουργία.',
-          },
-          {
-            title: 'Έλεγχος κόστους',
-            description: 'Παρακολούθηση και βελτιστοποίηση κατανάλωσης.',
-          },
-        ]}
-        tags={['IoT', 'Ωράρια', 'Ζώνες', 'Ειδοποιήσεις']}
-        ctaHref={upgradeHref}
-        ctaLabel="Αναβάθμιση Premium + IoT"
-        icon={<Flame className="h-5 w-5" />}
+      <HeatingDemoDashboard
+        buildingName={buildingContext?.name}
+        upgradeHref={upgradeHref}
       />
     );
   }
 
   return (
     <div className="space-y-6">
-      <HeatingControlDashboard />
+      <HeatingControlDashboard
+        buildingName={buildingContext?.name}
+        buildingId={buildingContext?.id}
+      />
     </div>
   );
 }
