@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { api, extractResults, getActiveBuildingId, type Paginated } from '@/lib/api';
+import { api, extractResults, type Paginated } from '@/lib/api';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 export type MarketplaceProvider = {
   id: string;
@@ -39,7 +40,8 @@ export function useMarketplaceProviders(options: UseMarketplaceProvidersOptions 
     maxDistanceKm,
   } = options;
 
-  const activeBuildingId = buildingId ?? getActiveBuildingId();
+  const contextBuildingId = useActiveBuildingId();
+  const activeBuildingId = buildingId ?? contextBuildingId;
 
   const query = useQuery({
     queryKey: ['marketplace-providers', { building: activeBuildingId, serviceType, search, maxDistanceKm }],
@@ -69,7 +71,8 @@ export function useMarketplaceProviders(options: UseMarketplaceProvidersOptions 
 }
 
 export function useMarketplaceProvider(id: string | null, buildingId?: number | null) {
-  const activeBuildingId = buildingId ?? getActiveBuildingId();
+  const contextBuildingId = useActiveBuildingId();
+  const activeBuildingId = buildingId ?? contextBuildingId;
 
   return useQuery({
     queryKey: ['marketplace-provider', id, { building: activeBuildingId }],

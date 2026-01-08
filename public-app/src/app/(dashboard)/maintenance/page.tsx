@@ -14,7 +14,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
+import { api, extractCount, extractResults } from '@/lib/api';
 import { fetchPublicMaintenanceCounters } from '@/lib/apiPublic';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,7 @@ import { Trash2 } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -341,9 +342,9 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
 }
 
 function MaintenanceDashboardContent() {
-  useBuildingEvents();
   const { isAdmin, isManager } = useRole();
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
+  useBuildingEvents(buildingId);
   const [activeTab, setActiveTab] = useState('operational-expenses');
 
   const contractorsQ = useQuery({

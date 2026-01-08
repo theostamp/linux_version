@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { api, getActiveBuildingId } from '@/lib/api';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { Save, Settings as SettingsIcon, Loader2, AlertCircle } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -23,7 +24,7 @@ export default function EditProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
   const projectId = params.id as string;
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],

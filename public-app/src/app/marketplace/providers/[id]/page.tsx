@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BadgeCheck, ChevronLeft, Mail, MapPin, Phone, Star } from 'lucide-react';
@@ -8,8 +8,9 @@ import { BadgeCheck, ChevronLeft, Mail, MapPin, Phone, Star } from 'lucide-react
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { Button } from '@/components/ui/button';
-import { apiPost, getActiveBuildingId } from '@/lib/api';
+import { apiPost } from '@/lib/api';
 import { useMarketplaceProvider } from '@/hooks/useMarketplaceProviders';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 export default function MarketplaceProviderPage({ params }: { params: { id: string } }) {
   return (
@@ -24,12 +25,13 @@ export default function MarketplaceProviderPage({ params }: { params: { id: stri
 function MarketplaceProviderContent({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const activeBuildingId = useActiveBuildingId();
 
-  const buildingId = (() => {
+  const buildingId = useMemo(() => {
     const raw = searchParams.get('building_id') || searchParams.get('building');
     const parsed = raw ? Number(raw) : NaN;
-    return Number.isFinite(parsed) ? parsed : getActiveBuildingId();
-  })();
+    return Number.isFinite(parsed) ? parsed : activeBuildingId;
+  }, [searchParams, activeBuildingId]);
 
   const returnTo = searchParams.get('return_to');
   const projectId = searchParams.get('project_id');

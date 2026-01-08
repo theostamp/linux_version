@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOffers, useOfferMutations } from '@/hooks/useOffers';
-import { getActiveBuildingId } from '@/lib/api';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +68,7 @@ function OffersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
 
   const statusFilter = searchParams.get('status') || undefined;
   const [selectedStatus, setSelectedStatus] = useState<string>(statusFilter || 'all');

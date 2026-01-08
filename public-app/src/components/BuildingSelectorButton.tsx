@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import type { Building } from '@/lib/api';
-import { Building as BuildingIcon, ChevronDown, Info } from 'lucide-react';
+import { Building as BuildingIcon, ChevronDown, Info, Loader2 } from 'lucide-react';
 import BuildingSelector from './BuildingSelector';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useIsFetching } from '@tanstack/react-query';
 
 interface BuildingSelectorButtonProps {
   onBuildingSelect: (building: Building | null) => void;
@@ -18,10 +19,27 @@ export default function BuildingSelectorButton({
   selectedBuilding,
   className = '',
 }: BuildingSelectorButtonProps) {
-  const { currentBuilding } = useBuilding();
+  const { currentBuilding, isLoadingContext } = useBuilding();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasSeenTooltip, setHasSeenTooltip] = useState(false);
+  const [showSwitchIndicator, setShowSwitchIndicator] = useState(false);
+  const activeBuildingId = selectedBuilding?.id ?? currentBuilding?.id;
+  const isFetching = useIsFetching({
+    predicate: (query) => {
+      if (!activeBuildingId) return false;
+      const queryKey = query.queryKey as unknown[];
+      return queryKey.some((key) => {
+        if (!key) return false;
+        if (Array.isArray(key)) return key.includes(activeBuildingId);
+        if (typeof key === 'object') {
+          return Object.values(key as Record<string, unknown>).some((value) => value === activeBuildingId);
+        }
+        return false;
+      });
+    },
+  });
+  const isSwitching = isLoadingContext || isFetching > 0 || showSwitchIndicator;
 
   const handleOpen = React.useCallback(() => setIsOpen(true), []);
   const handleClose = React.useCallback(() => setIsOpen(false), []);
@@ -42,6 +60,13 @@ export default function BuildingSelectorButton({
       setHasSeenTooltip(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!activeBuildingId) return;
+    setShowSwitchIndicator(true);
+    const timer = setTimeout(() => setShowSwitchIndicator(false), 700);
+    return () => clearTimeout(timer);
+  }, [activeBuildingId]);
 
   useKeyboardShortcuts({
     onBuildingSelector: handleOpen,
@@ -80,7 +105,10 @@ export default function BuildingSelectorButton({
               {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
             </span>
           </div>
-          <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {isSwitching ? <Loader2 className="w-4 h-4 text-teal-600 dark:text-teal-400 animate-spin" /> : null}
+            <ChevronDown className="w-4 h-4 text-slate-400" />
+          </div>
         </button>
 
         {/* Hover Tooltip */}

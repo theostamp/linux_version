@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { deleteUserRequest, toggleSupportRequest, fetchRequest, getActiveBuildingId, updateUserRequest } from '@/lib/api';
+import { deleteUserRequest, toggleSupportRequest, fetchRequest, updateUserRequest } from '@/lib/api';
 import type { UserRequest } from '@/types/userRequests';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Trash2, Edit } from 'lucide-react';
 import { hasOfficeAdminAccess } from '@/lib/roleUtils';
 import PhotoGallery from '@/components/PhotoGallery';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 const statusLabels: Record<string, string> = {
   open: 'Ανοιχτό',
@@ -45,10 +46,11 @@ export default function RequestDetailPage() {
   const [supporting, setSupporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
+  const activeBuildingId = useActiveBuildingId();
 
   // When landing directly on /requests/[id], BuildingContext may not be ready yet.
   // Fallback to localStorage to avoid requesting without building context.
-  const buildingId = selectedBuilding?.id || currentBuilding?.id || getActiveBuildingId();
+  const buildingId = selectedBuilding?.id || currentBuilding?.id || activeBuildingId;
 
   const isOwner = request?.created_by_username === user?.username;
   const isAdmin = hasOfficeAdminAccess(user);

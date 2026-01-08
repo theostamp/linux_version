@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Building as BuildingIcon, FileText, HandCoins, ShieldCheck } from 'lucide-react';
-import { getActiveBuildingId } from '@/lib/api';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 import type { Project } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
@@ -76,7 +76,8 @@ function NewOfferPageContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { buildings, selectedBuilding, setSelectedBuilding } = useBuilding();
-  const defaultBuildingId = selectedBuilding?.id ?? getActiveBuildingId();
+  const activeBuildingId = useActiveBuildingId();
+  const defaultBuildingId = selectedBuilding?.id ?? activeBuildingId;
   const [formState, setFormState] = useState<OfferFormState>({
     ...INITIAL_FORM,
     project: '',

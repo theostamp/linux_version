@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { Calendar, AlertTriangle, CheckCircle2, Clock, Filter, Plus, Wrench, Loader2, Trash2 } from 'lucide-react';
-import { api, extractResults, getActiveBuildingId } from '@/lib/api';
+import { api, extractResults } from '@/lib/api';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { useRole } from '@/lib/auth';
 import AuthGate from '@/components/AuthGate';
@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatCard } from '@/components/ui/stat-card';
 import { typography } from '@/lib/typography';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -93,8 +94,8 @@ export default function ScheduledMaintenancePage() {
 }
 
 function ScheduledMaintenanceDashboard() {
-  useBuildingEvents();
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
+  useBuildingEvents(buildingId);
   const { isAdmin, isManager } = useRole();
   const canEdit = isAdmin || isManager;
   const queryClient = useQueryClient();

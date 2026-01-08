@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { api, getActiveBuildingId, fetchScheduledMaintenances, type ScheduledMaintenance as ApiScheduledMaintenance, createServiceReceipt } from '@/lib/api';
+import { api, fetchScheduledMaintenances, type ScheduledMaintenance as ApiScheduledMaintenance, createServiceReceipt } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { DistributionSelector } from '@/components/ui/DistributionSelector';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useExpenses } from '@/hooks/useExpenses';
 import { PaymentConfigurationSection } from '@/components/maintenance/PaymentConfigurationSection';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 const schema = z.object({
   title: z.string().trim().min(3, 'Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες').max(100, 'Ο τίτλος δεν μπορεί να ξεπερνά τους 100 χαρακτήρες'),
@@ -90,6 +91,7 @@ export default function ScheduledMaintenanceForm({
   const router = useRouter();
   const { toast } = useToast();
   const { createExpense, getExpenses, deleteExpense } = useExpenses();
+  const activeBuildingId = useActiveBuildingId();
   const [contractors, setContractors] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingContractors, setLoadingContractors] = useState(false);
   const [initialData, setInitialData] = useState<ScheduledMaintenance | null>(null);
@@ -428,7 +430,7 @@ export default function ScheduledMaintenanceForm({
 
         // Always create new installment expenses (after cleanup)
         await createInstallmentExpenses({
-          buildingId: getActiveBuildingId(),
+          buildingId,
           title: values.title,
           totalAmount: pc.total_amount,
           advancePercentage: pc.advance_percentage || 30,
@@ -525,7 +527,7 @@ export default function ScheduledMaintenanceForm({
 
   const onSubmit = async (values: FormValues, options?: { skipReceipt?: boolean }) => {
     console.log('🔥 Submit handler called with values:', values);
-    const buildingId: number = getActiveBuildingId();
+    const buildingId: number = activeBuildingId;
     const isEditing = Boolean(initialData?.id);
 
     try {
@@ -976,7 +978,7 @@ export default function ScheduledMaintenanceForm({
           <Button type="button" variant="outline" onClick={() => setShowReceiptModal(false)}>Άκυρο</Button>
           <Button type="button"
             onClick={async () => {
-              const buildingId = getActiveBuildingId();
+              const buildingId = activeBuildingId;
               const amountNum = Number(receiptAmount);
               if (!buildingId || !receiptTitle.trim() || !amountNum || isNaN(amountNum)) {
                 toast({ title: 'Σφάλμα', description: 'Συμπληρώστε τίτλο και έγκυρο ποσό.' });

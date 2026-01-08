@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, extractResults, getActiveBuildingId, invalidateApiCache, type Project } from '@/lib/api';
+import { api, extractResults, invalidateApiCache, type Project } from '@/lib/api';
 import { toast } from 'sonner';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 interface UseProjectsOptions {
   buildingId?: number | null;
@@ -10,7 +11,8 @@ interface UseProjectsOptions {
 
 export function useProjects(options: UseProjectsOptions = {}) {
   const { buildingId, status, pageSize = 1000 } = options;
-  const activeBuildingId = buildingId ?? getActiveBuildingId();
+  const contextBuildingId = useActiveBuildingId();
+  const activeBuildingId = buildingId ?? contextBuildingId;
 
   const queryKey = ['projects', { building: activeBuildingId, status }];
 

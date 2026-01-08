@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getActiveBuildingId } from './api';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 type EventPayload = {
   type?: string;
@@ -13,13 +13,14 @@ type EventPayload = {
 export function useBuildingEvents(buildingIdParam?: number) {
   const queryClient = useQueryClient();
   const wsRef = useRef<WebSocket | null>(null);
+  const activeBuildingId = useActiveBuildingId();
 
   useEffect(() => {
     // TEMPORARILY DISABLED - WebSocket connection causing hanging issues
     console.log('[useBuildingEvents] WebSocket connection temporarily disabled to debug hanging issue');
     return;
 
-    const buildingId = buildingIdParam ?? getActiveBuildingId();
+    const buildingId = buildingIdParam ?? activeBuildingId;
     // Avoid connecting in development if backend WS isn't available
     if (typeof window === 'undefined') return;
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -80,7 +81,7 @@ export function useBuildingEvents(buildingIdParam?: number) {
       wsRef.current = null;
     };
 
-  }, [buildingIdParam]);
+  }, [buildingIdParam, activeBuildingId]);
 
   const handleEvent = async (name?: string, _payload?: Record<string, unknown>) => {
     switch (name) {

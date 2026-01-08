@@ -10,16 +10,16 @@ import { Label } from '@/components/ui/label';
 import { createServiceReceipt, type ServiceReceipt } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/ui/BackButton';
-import { getActiveBuildingId } from '@/lib/api';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import { useQueryClient } from '@tanstack/react-query';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 export default function NewReceiptPage() {
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     contractor: '',

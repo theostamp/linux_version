@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { getActiveBuildingId } from '@/lib/api';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 import { useProject } from '@/hooks/useProjects';
 import { useMarketplaceProviders } from '@/hooks/useMarketplaceProviders';
 
@@ -36,12 +36,13 @@ const SERVICE_TYPES: Array<{ value: string; label: string }> = [
 function MarketplaceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const activeBuildingId = useActiveBuildingId();
 
   const buildingId = useMemo(() => {
     const raw = searchParams.get('building_id') || searchParams.get('building');
     const parsed = raw ? Number(raw) : NaN;
-    return Number.isFinite(parsed) ? parsed : getActiveBuildingId();
-  }, [searchParams]);
+    return Number.isFinite(parsed) ? parsed : activeBuildingId;
+  }, [searchParams, activeBuildingId]);
 
   const projectId = searchParams.get('project_id');
   const returnTo = searchParams.get('return_to');

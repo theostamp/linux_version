@@ -7,11 +7,12 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { api, extractResults, getActiveBuildingId } from '@/lib/api';
+import { api, extractResults } from '@/lib/api';
 import { BackButton } from '@/components/ui/BackButton';
 import { Plus, Users, Phone, Mail, Wrench } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 type Contractor = {
   id: number;
@@ -26,7 +27,7 @@ type Contractor = {
 
 export default function ContractorsPage() {
   const router = useRouter();
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
 
   const contractorsQ = useQuery({
     queryKey: ['contractors', { building: buildingId }],

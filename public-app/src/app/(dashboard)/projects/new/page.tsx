@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, getActiveBuildingId } from '@/lib/api';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
 import CreateAssemblyModal, { type ProjectDataForAssembly } from '@/components/assemblies/CreateAssemblyModal';
 import { BackButton } from '@/components/ui/BackButton';
 import { Save, Plus, Settings as SettingsIcon, Users, ExternalLink, HelpCircle, ArrowRight, FileText, CheckCircle, Vote } from 'lucide-react';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 const SUGGESTED_PROJECTS = [
   { title: 'Στεγανοποίηση Ταράτσας', description: 'Πλήρης στεγανοποίηση ταράτσας με ασφαλτόπανο και τσιμεντοκονίαμα', priority: 'high' },
@@ -36,7 +37,7 @@ type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
 
   const [formData, setFormData] = useState({
     title: '',

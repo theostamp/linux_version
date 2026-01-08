@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { api, extractResults, getActiveBuildingId } from '@/lib/api';
+import { api, extractResults } from '@/lib/api';
 import { BackButton } from '@/components/ui/BackButton';
 import { Plus, FileText, Calendar, DollarSign } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
+import { useActiveBuildingId } from '@/hooks/useActiveBuildingId';
 
 type ServiceReceipt = {
   id: number;
@@ -26,7 +27,7 @@ type ServiceReceipt = {
 };
 
 export default function ReceiptsPage() {
-  const buildingId = getActiveBuildingId();
+  const buildingId = useActiveBuildingId();
 
   const receiptsQ = useQuery({
     queryKey: ['receipts', { building: buildingId }],
