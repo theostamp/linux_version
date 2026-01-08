@@ -222,30 +222,75 @@ const planToFlags = (plan: PlanKey) => ({
   iot_enabled: plan === 'premium_iot',
 });
 
-const planInfo: Record<PlanKey, { title: string; details: string[] }> = {
+const planInfo: Record<
+  PlanKey,
+  {
+    title: string;
+    lead: string;
+    sections: Array<{ heading: string; bullets: string[] }>;
+  }
+> = {
   web: {
     title: 'Πότε να επιλέξω Web συνδρομή',
-    details: [
-      'Όταν χρειάζεσαι ένα πλήρες εργαλείο συμβατικής διαχείρισης πολυκατοικιών, χωρίς πρόσθετο εξοπλισμό στο κτίριο.',
-      'Προσφέρει χαμηλό και προβλέψιμο κόστος σε σχέση με την αγορά, ιδανικό για γραφεία με διαφορετικά μεγέθη χαρτοφυλακίου.',
-      'Καλύπτει τις βασικές ροές ενός γραφείου ώστε να οργανώσεις διαδικασίες και να αυξήσεις την παραγωγικότητα.',
+    lead: 'Μια ολοκληρωμένη λύση για τη βασική λειτουργία μιας πολυκατοικίας, χωρίς πρόσθετο εξοπλισμό.',
+    sections: [
+      {
+        heading: 'Κατάλληλο όταν',
+        bullets: [
+          'Διαχειρίζεσαι μία ή περισσότερες πολυκατοικίες ως ιδιώτης ή ως ομάδα.',
+          'Θέλεις πλήρη πλατφόρμα συμβατικής διαχείρισης, χωρίς οθόνη ή kiosk στο κτίριο.',
+        ],
+      },
+      {
+        heading: 'Τι κερδίζεις',
+        bullets: [
+          'Οργάνωση βασικών ροών (οικονομικά, ανακοινώσεις, έγγραφα) σε ένα περιβάλλον.',
+          'Προβλέψιμο κόστος και απλή τιμολόγηση ανά διαμέρισμα.',
+        ],
+      },
     ],
   },
   premium: {
     title: 'Πότε να επιλέξω Premium συνδρομή',
-    details: [
-      'Όταν χρειάζεσαι όλα όσα προσφέρει το Web και επιπλέον φυσική παρουσία στο κτίριο μέσω info point kiosk.',
-      'Περιλαμβάνει τον εξοπλισμό (οθόνη/σύνδεση) και λειτουργίες όπως διαχείριση περιεχομένου, AI παραστατικά και ηλεκτρονικό αρχείο.',
-      'Αυτόματη εισαγωγή νέων πολυκατοικιών από υπάρχοντα φύλλα κοινοχρήστων, ώστε η αρχική μετάβαση να γίνεται χωρίς επανακαταχωρήσεις.',
-      'Αυτόματη εισαγωγή παραστατικών με ενημέρωση των οικονομικών και αυτόματη αρχειοθέτηση, μειώνοντας αισθητά τον χρόνο χειροκίνητων διαδικασιών.',
+    lead: 'Συνδυάζει τα Web εργαλεία με φυσική παρουσία στο κτίριο και αυτοματοποίηση διαδικασιών.',
+    sections: [
+      {
+        heading: 'Κατάλληλο όταν',
+        bullets: [
+          'Χρειάζεσαι info point kiosk για ενημέρωση κατοίκων και παρουσία στο κτίριο.',
+          'Θέλεις το hardware να περιλαμβάνεται στην υπηρεσία (οθόνη/σύνδεση).',
+          'Διαχειρίζεσαι αυξημένο όγκο δεδομένων ως ιδιώτης ή ως ομάδα.',
+        ],
+      },
+      {
+        heading: 'Μείωση χειροκίνητου χρόνου',
+        bullets: [
+          'Αυτόματη εισαγωγή νέων πολυκατοικιών από υπάρχοντα φύλλα κοινοχρήστων.',
+          'Αυτόματη εισαγωγή παραστατικών με ενημέρωση των οικονομικών.',
+          'Αυτόματη αρχειοθέτηση παραστατικών και εγγράφων στο ηλεκτρονικό αρχείο.',
+        ],
+      },
     ],
   },
   premium_iot: {
     title: 'Πότε να επιλέξω Premium + IoT συνδρομή',
-    details: [
-      'Όταν θέλεις τις δυνατότητες του Premium μαζί με έξυπνους αυτοματισμούς IoT.',
-      'Κατάλληλο για κτίρια όπου απαιτείται Smart Heating, ειδοποιήσεις βλαβών/διαρροών και συνεχής παρακολούθηση.',
-      'Χρήσιμο όταν η ενεργειακή διαχείριση και η άμεση εικόνα λειτουργίας βελτιώνουν την αποτελεσματικότητα του γραφείου.',
+    lead: 'Όλα τα Premium features και επιπλέον IoT αυτοματισμοί για το κτίριο.',
+    sections: [
+      {
+        heading: 'Κατάλληλο όταν',
+        bullets: [
+          'Χρειάζεσαι Smart Heating ή αυτοματισμούς λειτουργίας.',
+          'Θέλεις άμεσες ειδοποιήσεις για βλάβες ή διαρροές.',
+          'Απαιτείται καλύτερη εικόνα κατανάλωσης και ενεργειακής συμπεριφοράς.',
+        ],
+      },
+      {
+        heading: 'Τι προσθέτει',
+        bullets: [
+          'Dashboard παρακολούθησης συστημάτων και συμβάντων.',
+          'Δεδομένα κατανάλωσης για καλύτερο προγραμματισμό.',
+        ],
+      },
     ],
   },
 };
@@ -490,8 +535,7 @@ export default function MySubscriptionPage() {
         tabClass: planUi.web.tabClass,
         noteClass: planUi.web.noteClass,
         description: `${buildingStats.web} κτίρια`,
-        infoTitle: planInfo.web.title,
-        infoBody: planInfo.web.details,
+        info: planInfo.web,
       },
       {
         value: 'premium' as SummaryTabKey,
@@ -499,8 +543,7 @@ export default function MySubscriptionPage() {
         tabClass: planUi.premium.tabClass,
         noteClass: planUi.premium.noteClass,
         description: `${buildingStats.premium} κτίρια`,
-        infoTitle: planInfo.premium.title,
-        infoBody: planInfo.premium.details,
+        info: planInfo.premium,
       },
       {
         value: 'premium_iot' as SummaryTabKey,
@@ -508,8 +551,7 @@ export default function MySubscriptionPage() {
         tabClass: planUi.premium_iot.tabClass,
         noteClass: planUi.premium_iot.noteClass,
         description: `${buildingStats.premium_iot} κτίρια`,
-        infoTitle: planInfo.premium_iot.title,
-        infoBody: planInfo.premium_iot.details,
+        info: planInfo.premium_iot,
       },
     ],
     [buildingStats]
@@ -636,17 +678,23 @@ export default function MySubscriptionPage() {
                             <HelpCircle className="h-4 w-4" />
                           </button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-2xl md:max-w-3xl gap-6 p-7 md:p-8 max-h-[85vh] overflow-y-auto">
                           <DialogHeader>
-                            <DialogTitle>{tab.infoTitle}</DialogTitle>
-                            <DialogDescription asChild className="space-y-2 list-disc pl-4">
-                              <ul>
-                                {tab.infoBody.map((line, index) => (
-                                  <li key={`${tab.value}-${index}`}>{line}</li>
-                                ))}
-                              </ul>
-                            </DialogDescription>
+                            <DialogTitle>{tab.info.title}</DialogTitle>
+                            <DialogDescription>{tab.info.lead}</DialogDescription>
                           </DialogHeader>
+                          <div className="space-y-6 text-sm">
+                            {tab.info.sections.map((section) => (
+                              <div key={`${tab.value}-${section.heading}`} className="space-y-2">
+                                <h4 className="text-sm font-semibold text-slate-900">{section.heading}</h4>
+                                <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
+                                  {section.bullets.map((bullet, index) => (
+                                    <li key={`${tab.value}-${section.heading}-${index}`}>{bullet}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
                         </DialogContent>
                       </Dialog>
                     </div>
