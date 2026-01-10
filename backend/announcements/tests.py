@@ -1,13 +1,19 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from users.models import User
+from django.contrib.auth import get_user_model
 from buildings.models import Building
 from .models import Announcement
 
+
+User = get_user_model()
+
 class AnnouncementViewSetTests(APITestCase):
     def setUp(self):
-        self.superuser = User.objects.create_superuser('admin', 'admin@example.com', 'password')
+        self.superuser = User.objects.create_superuser(
+            email='admin@example.com',
+            password='password'
+        )
         self.building = Building.objects.create(name='Test Building')
         self.announcement = Announcement.objects.create(
             title='Test Announcement',

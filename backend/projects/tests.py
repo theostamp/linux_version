@@ -6,7 +6,7 @@ from django_tenants.test.cases import TenantTestCase
 
 from buildings.models import Building
 from .models import Project, Offer
-from .views import ProjectViewSet, OfferViewSet, MilestoneViewSet
+from .views import ProjectViewSet, OfferViewSet
 
 
 User = get_user_model()

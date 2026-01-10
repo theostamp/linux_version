@@ -8,13 +8,25 @@ from datetime import date
 import json
 
 from .models import (
-    Expense, Transaction, Payment, ExpenseApartment, 
-    MeterReading, ExpenseCategory, DistributionType
+    Expense, Transaction, Payment, ExpenseApartment,
+    MeterReading
 )
 from buildings.models import Building, Apartment
 from tenants.models import Tenant
 
 User = get_user_model()
+
+DEFAULT_CATEGORY = Expense.EXPENSE_CATEGORIES[0][0]
+ALT_CATEGORY = (
+    Expense.EXPENSE_CATEGORIES[1][0]
+    if len(Expense.EXPENSE_CATEGORIES) > 1
+    else DEFAULT_CATEGORY
+)
+DEFAULT_DISTRIBUTION = (
+    Expense.DISTRIBUTION_TYPES[1][0]
+    if len(Expense.DISTRIBUTION_TYPES) > 1
+    else Expense.DISTRIBUTION_TYPES[0][0]
+)
 
 
 class FinancialAPIIntegrationTestCase(TestCase):
@@ -30,8 +42,6 @@ class FinancialAPIIntegrationTestCase(TestCase):
         
         # Create user
         self.user = User.objects.create_user(
-            username='testuser',
-            # TODO: Use test fixture
             email='test@example.com',
             password='testpass123'
         )
@@ -71,8 +81,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
             building=self.building,
             title='Test Expense',
             amount=Decimal('1000.00'),
-            category=ExpenseCategory.ELECTRICITY,
-            distribution_type=DistributionType.EQUAL,
+            category=DEFAULT_CATEGORY,
+            distribution_type=DEFAULT_DISTRIBUTION,
             date=date.today(),
             created_by=self.user
         )
@@ -90,8 +100,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
         expense_data = {
             'title': 'New Test Expense',
             'amount': '1500.00',
-            'category': 'ELECTRICITY',
-            'distribution_type': 'EQUAL',
+            'category': DEFAULT_CATEGORY,
+            'distribution_type': DEFAULT_DISTRIBUTION,
             'date': date.today().isoformat(),
             'description': 'Test expense creation'
         }
@@ -109,8 +119,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
             building=self.building,
             title='Test Expense',
             amount=Decimal('1000.00'),
-            category=ExpenseCategory.ELECTRICITY,
-            distribution_type=DistributionType.EQUAL,
+            category=DEFAULT_CATEGORY,
+            distribution_type=DEFAULT_DISTRIBUTION,
             date=date.today(),
             created_by=self.user
         )
@@ -128,8 +138,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
             building=self.building,
             title='Test Expense',
             amount=Decimal('1000.00'),
-            category=ExpenseCategory.ELECTRICITY,
-            distribution_type=DistributionType.EQUAL,
+            category=DEFAULT_CATEGORY,
+            distribution_type=DEFAULT_DISTRIBUTION,
             date=date.today(),
             created_by=self.user
         )
@@ -137,8 +147,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
         update_data = {
             'title': 'Updated Test Expense',
             'amount': '2000.00',
-            'category': 'WATER',
-            'distribution_type': 'EQUAL',
+            'category': ALT_CATEGORY,
+            'distribution_type': DEFAULT_DISTRIBUTION,
             'date': date.today().isoformat(),
             'description': 'Updated expense'
         }
@@ -157,8 +167,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
             building=self.building,
             title='Test Expense',
             amount=Decimal('1000.00'),
-            category=ExpenseCategory.ELECTRICITY,
-            distribution_type=DistributionType.EQUAL,
+            category=DEFAULT_CATEGORY,
+            distribution_type=DEFAULT_DISTRIBUTION,
             date=date.today(),
             created_by=self.user
         )
@@ -249,8 +259,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
             building=self.building,
             title='Test Expense',
             amount=Decimal('1000.00'),
-            category=ExpenseCategory.ELECTRICITY,
-            distribution_type=DistributionType.EQUAL,
+            category=DEFAULT_CATEGORY,
+            distribution_type=DEFAULT_DISTRIBUTION,
             date=date.today(),
             created_by=self.user
         )
@@ -357,8 +367,8 @@ class FinancialAPIIntegrationTestCase(TestCase):
         invalid_expense_data = {
             'title': 'Test Expense',
             'amount': '-100.00',
-            'category': 'ELECTRICITY',
-            'distribution_type': 'EQUAL',
+            'category': DEFAULT_CATEGORY,
+            'distribution_type': DEFAULT_DISTRIBUTION,
             'date': date.today().isoformat()
         }
         
