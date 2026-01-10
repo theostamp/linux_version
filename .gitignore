@@ -83,6 +83,7 @@ temp/
 # Debug logs
 /Z_logs/
 Z_logs
+Z_log
 
 # Local docs (do not commit)
 Bsn_plan
