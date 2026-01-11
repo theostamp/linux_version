@@ -23,6 +23,9 @@ html {
 
   /* Headings - Neutral charcoal for corporate tone */
   --heading-color: var(--text-primary);
+  --page-title-color: var(--color-accent-primary);
+  --page-title-color-dark: #D7E7FF;
+  --page-title-font: var(--font-play);
 
   /* Secondary - Soft navy */
   --secondary: 217 25% 90%;            /* Soft gray-blue */
@@ -293,6 +296,39 @@ body {
   }
   .placeholder-on-dark-muted::placeholder {
     color: var(--text-on-dark-muted);
+  }
+}
+
+@layer components {
+  .page-title {
+    @apply text-3xl font-semibold tracking-tight;
+    color: var(--page-title-color);
+    font-family: var(--page-title-font);
+  }
+
+  .page-title-sm {
+    @apply text-2xl font-semibold tracking-tight;
+    color: var(--page-title-color);
+    font-family: var(--page-title-font);
+  }
+
+  .page-title-lg {
+    @apply text-4xl font-semibold tracking-tight;
+    color: var(--page-title-color);
+    font-family: var(--page-title-font);
+  }
+
+  .page-title-hero {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--page-title-color);
+    font-family: var(--page-title-font);
+  }
+
+  .page-title-on-dark {
+    --page-title-color: var(--page-title-color-dark);
   }
 }
 

@@ -93,7 +93,7 @@ export default function BuildingRequestsPage() {
             Επιστροφή
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">🔧 Αιτήματα Κτιρίου</h1>
+        <h1 className="page-title-sm">🔧 Αιτήματα Κτιρίου</h1>
         <div></div>
       </div>
 

@@ -206,7 +206,7 @@ export default function NewProjectPage() {
       <div className="flex items-center gap-4">
         <BackButton href="/projects" label="Επιστροφή" size="sm" />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Νέο Έργο</h1>
+          <h1 className="page-title">Νέο Έργο</h1>
           <p className="text-muted-foreground">Δημιουργία νέου έργου ή συντήρησης</p>
         </div>
       </div>

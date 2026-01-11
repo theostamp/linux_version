@@ -370,7 +370,7 @@ export default function LandingPage() {
               <AnimatedSection delay={150}>
                 <h1
                   ref={heroTitleRef}
-                  className="text-balance text-center text-4xl font-bold leading-tight tracking-tight text-on-dark-title sm:text-5xl md:text-6xl lg:text-7xl"
+                  className="page-title-hero page-title-on-dark text-balance text-center"
                   style={
                     forceHeroTitleColor
                       ? { color: "#00E5FF", outline: "2px dashed #00E5FF", outlineOffset: "6px" }

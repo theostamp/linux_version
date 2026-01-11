@@ -210,7 +210,7 @@ export default function VerifyPaymentPage() {
   const renderStatusMessage = () => {
     return (
       <div className="text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-4">
+        <h1 className="page-title mb-4">
           {paymentStatus.status === 'success' ? 'Καλώς ήρθατε στο New Concierge!' :
            paymentStatus.status === 'error' ? 'Η Επαλήθευση Πληρωμής Απέτυχε' :
            paymentStatus.status === 'awaiting_email' ? 'Ελέγξτε το Email σας' :

@@ -178,7 +178,7 @@ export default function EditBuildingPage() {
               <BuildingIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Επεξεργασία Κτιρίου</h1>
+              <h1 className="page-title">Επεξεργασία Κτιρίου</h1>
               {initialData?.name && (
                 <p className="text-gray-600">{initialData.name}</p>
               )}

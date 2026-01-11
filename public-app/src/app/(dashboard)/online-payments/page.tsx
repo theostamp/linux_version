@@ -129,7 +129,7 @@ function OnlinePaymentsContent() {
               <CreditCard className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Πληρωμή Online</h1>
+              <h1 className="page-title page-title-on-dark">Πληρωμή Online</h1>
               <p className="text-muted-foreground mt-1">Εύκολη και ασφαλής πληρωμή κοινοχρήστων</p>
             </div>
           </div>

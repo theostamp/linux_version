@@ -765,7 +765,7 @@ function MarketplaceAdminContent() {
             <Store className="w-4 h-4" />
             ULTRA ADMIN
           </div>
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-4">
+          <h1 className="page-title-lg page-title-on-dark mb-4">
             Διαχείριση Marketplace
           </h1>
           <p className="text-indigo-100 text-lg md:text-xl font-medium opacity-90 max-w-2xl">

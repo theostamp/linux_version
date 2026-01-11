@@ -263,7 +263,7 @@ function DocumentsContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="page-title flex items-center gap-2">
             <FileText className="w-8 h-8" />
             Παραστατικά
           </h1>

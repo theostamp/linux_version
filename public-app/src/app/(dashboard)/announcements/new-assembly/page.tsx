@@ -15,7 +15,7 @@ export default function NewAssemblyPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
+        <h1 className="page-title mb-2">
           🏛️ Νέα Γενική Συνέλευση
         </h1>
         <p className="text-gray-600">

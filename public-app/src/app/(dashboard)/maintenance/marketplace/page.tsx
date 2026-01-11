@@ -122,7 +122,7 @@ function MarketplaceContent() {
             <ShieldCheck className="w-4 h-4" />
             ΑΞΙΟΛΟΓΗΜΕΝΟΙ ΣΥΝΕΡΓΑΤΕΣ
           </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1] mb-6">
+          <h1 className="page-title-lg page-title-on-dark mb-6">
             Βρείτε τους καλύτερους τεχνικούς για το σπίτι σας.
           </h1>
           <p className="text-indigo-100 text-lg md:text-xl font-medium leading-relaxed opacity-90 mb-10">

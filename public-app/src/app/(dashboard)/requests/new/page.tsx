@@ -38,7 +38,7 @@ export default function NewRequestPage() {
   if (!buildingToUse) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">📋 Αναφορά Βλάβης</h1>
+        <h1 className="page-title-sm mb-4">📋 Αναφορά Βλάβης</h1>
         <p className="text-red-600">Παρακαλώ επιλέξτε κτίριο για να συνεχίσετε.</p>
         <Link href="/requests">
           <Button variant="secondary" className="mt-4">⬅ Επιστροφή</Button>
@@ -116,7 +116,7 @@ export default function NewRequestPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
             <Wrench className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold font-condensed">Αναφορά Νέας Βλάβης</h1>
+          <h1 className="page-title">Αναφορά Νέας Βλάβης</h1>
           <p className="text-muted-foreground mt-2">
             Συμπληρώστε τα παρακάτω στοιχεία για να ενημερώσετε τη διαχείριση
           </p>

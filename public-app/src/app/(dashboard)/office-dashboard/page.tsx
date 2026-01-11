@@ -52,7 +52,7 @@ function OfficeDashboardContent() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <LayoutDashboard className="h-16 w-16 text-destructive mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Σφάλμα φόρτωσης</h2>
+          <h2 className="page-title-sm mb-2">Σφάλμα φόρτωσης</h2>
           <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : 'Αδυναμία φόρτωσης δεδομένων'}
           </p>
@@ -70,7 +70,7 @@ function OfficeDashboardContent() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-condensed flex items-center gap-3">
+          <h1 className="page-title flex items-center gap-3">
             <LayoutDashboard className="w-8 h-8 text-primary" />
             Κέντρο Ελέγχου Γραφείου
           </h1>

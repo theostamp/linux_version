@@ -87,7 +87,7 @@ function VerifyEmailForm() {
             <div className="flex flex-col items-center">
               {renderIcon()}
               <div className="mt-8 w-full text-center">
-                <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-4">
+                <h1 className="page-title mb-4">
                   {status === 'success' ? 'Email Επιβεβαιώθηκε!' :
                    status === 'error' ? 'Η Επιβεβαίωση Απέτυχε' :
                    'Επαλήθευση Email'}

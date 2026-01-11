@@ -78,7 +78,7 @@ export default function BuildingAnnouncementsPage() {
             Επιστροφή
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">📢 Ανακοινώσεις Κτιρίου</h1>
+        <h1 className="page-title-sm">📢 Ανακοινώσεις Κτιρίου</h1>
         <div></div>
       </div>
 

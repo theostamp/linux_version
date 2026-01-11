@@ -384,7 +384,7 @@ function CreateAssemblyContent() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Νέα Συνέλευση</h1>
+            <h1 className="page-title-sm">Νέα Συνέλευση</h1>
             <p className="text-gray-500">Δημιουργήστε μια νέα γενική συνέλευση</p>
           </div>
         </div>

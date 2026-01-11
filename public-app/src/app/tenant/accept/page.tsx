@@ -116,7 +116,7 @@ function TenantAcceptContent() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-card-soft p-8">
           <div className="text-center">
             <div className="text-rose-600 text-4xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-text-primary mb-4">Σφάλμα</h1>
+            <h1 className="page-title-sm mb-4">Σφάλμα</h1>
             <p className="text-text-secondary mb-6">{message}</p>
             <div className="space-y-3">
               <button

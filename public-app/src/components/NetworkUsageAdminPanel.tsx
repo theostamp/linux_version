@@ -66,7 +66,7 @@ export default function NetworkUsageAdminPanel() {
     <div className="p-6 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold">Network Usage Meter (Kiosk / API)</h1>
+          <h1 className="page-title-sm">Network Usage Meter (Kiosk / API)</h1>
           <p className="text-sm opacity-70">Μετράει πραγματικό transferSize από Resource Timing για /api/*.</p>
         </div>
 

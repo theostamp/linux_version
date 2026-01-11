@@ -95,7 +95,7 @@ function CreateWidgetContent() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Δημιουργία Custom Widget</h1>
+          <h1 className="page-title-sm">Δημιουργία Custom Widget</h1>
           <p className="text-sm text-gray-600">
             Δημιουργήστε ένα νέο προσαρμοσμένο widget για το kiosk
           </p>

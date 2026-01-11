@@ -117,7 +117,7 @@ const BuildingsPageContent = () => {
   if (isLoading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="page-title mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           <p className="ml-3 text-muted-foreground">Φόρτωση κτιρίων...</p>
@@ -129,7 +129,7 @@ const BuildingsPageContent = () => {
   if (error) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="page-title mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <ErrorMessage message={error} />
       </div>
     );
@@ -138,7 +138,7 @@ const BuildingsPageContent = () => {
   if (!Array.isArray(buildings)) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="page-title mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <div className="bg-card border border-border border-dashed rounded-lg p-8 text-center">
           <BuildingIcon className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">Δεν βρέθηκαν κτίρια.</p>
@@ -160,7 +160,7 @@ const BuildingsPageContent = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🏢 Διαχείριση Κτιρίων</h1>
+          <h1 className="page-title">🏢 Διαχείριση Κτιρίων</h1>
           <div className="flex gap-2">
             {/* View Mode Toggle */}
             <div className="flex items-center bg-secondary/30 rounded-lg p-1">

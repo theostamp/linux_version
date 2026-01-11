@@ -130,7 +130,7 @@ export default function MarketplaceOfferRequestPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <p className="text-xs text-text-secondary">Αίτημα προσφοράς προς</p>
-                <h1 className="text-2xl font-semibold text-text-primary">{data.provider_name}</h1>
+                <h1 className="page-title-sm">{data.provider_name}</h1>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-bg-app-main px-3 py-1 text-xs text-text-secondary">
                 <FileText className="w-4 h-4" />

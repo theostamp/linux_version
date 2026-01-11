@@ -163,7 +163,7 @@ function ResidentLoginForm() {
               <div className="w-16 h-16 rounded-full bg-accent-secondary/10 flex items-center justify-center mb-4">
                 <Home className="h-8 w-8 text-accent-secondary" />
               </div>
-              <h1 className="text-2xl font-bold text-accent-secondary mb-2">
+              <h1 className="page-title-sm mb-2">
                 Καλώς ήρθατε
               </h1>
               <p className="text-text-secondary text-sm">

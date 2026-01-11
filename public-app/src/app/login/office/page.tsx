@@ -275,7 +275,7 @@ function OfficeLoginForm() {
 
           <div className="rounded-2xl border border-gray-200 bg-[var(--bg-white)] p-8 shadow-card-soft">
             <div className="text-left mb-8">
-              <h1 className="text-2xl font-bold text-accent-primary mb-2">
+              <h1 className="page-title-sm mb-2">
                 Σύνδεση
               </h1>
               <p className="text-text-secondary">

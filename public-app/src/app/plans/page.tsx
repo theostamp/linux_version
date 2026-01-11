@@ -286,7 +286,7 @@ function PlansContent() {
                 New Concierge
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">
+            <h1 className="page-title mb-2">
               Επιλέξτε το Πακέτο σας
             </h1>
             <p className="text-text-secondary">

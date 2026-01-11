@@ -41,7 +41,7 @@ export default function LoginSelectPage() {
                 New Concierge
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-accent-primary mb-3">
+            <h1 className="page-title mb-3">
               Καλώς ήρθατε
             </h1>
             <p className="text-text-secondary leading-relaxed max-w-md">

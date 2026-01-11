@@ -39,7 +39,7 @@ export default function ChatPage() {
             <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="page-title-sm">
               Επικοινωνία Κτιρίου
             </h1>
             <p className="text-sm text-muted-foreground">

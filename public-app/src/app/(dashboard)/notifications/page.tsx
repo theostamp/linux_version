@@ -25,7 +25,7 @@ function NotificationsPageContent() {
               <Bell className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Ειδοποιήσεις</h1>
+              <h1 className="page-title-sm">Ειδοποιήσεις</h1>
               <p className="text-sm text-gray-500">
                 Αποστολή μηνυμάτων στους ενοίκους
               </p>

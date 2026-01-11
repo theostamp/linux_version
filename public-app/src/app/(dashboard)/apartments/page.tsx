@@ -544,7 +544,7 @@ const ApartmentsPageContent = () => {
       <div className="space-y-6">
         <div className="bg-card rounded-none p-8 text-center shadow-md">
           <AlertTriangle className="w-12 h-12 text-warning mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold text-foreground mb-2">Δεν έχει επιλεγεί κτίριο</h1>
+          <h1 className="page-title-sm mb-2">Δεν έχει επιλεγεί κτίριο</h1>
           <p className="text-muted-foreground mb-6">
             Για να δείτε τα διαμερίσματα, επιλέξτε πρώτα ένα κτίριο από την αριστερή στήλη ή δημιουργήστε ένα νέο.
           </p>
@@ -568,7 +568,7 @@ const ApartmentsPageContent = () => {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm text-primary font-semibold uppercase tracking-wide">Κτίριο: {activeBuilding?.name}</p>
-          <h1 className="text-3xl font-bold text-foreground font-condensed">🏘️ Διαχείριση Διαμερισμάτων</h1>
+          <h1 className="page-title">🏘️ Διαχείριση Διαμερισμάτων</h1>
           <p className="text-muted-foreground mt-1">
             Παρακολουθήστε ιδιοκτήτες, ενοικιαστές και στοιχεία συμμετοχής.
           </p>

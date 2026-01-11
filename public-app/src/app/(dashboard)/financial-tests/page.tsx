@@ -35,7 +35,7 @@ export default function FinancialTestsPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <AlertCircle className="w-8 h-8 text-blue-600" />
-        <h1 className="text-3xl font-bold">🧪 Financial Tests</h1>
+        <h1 className="page-title">🧪 Financial Tests</h1>
       </div>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">

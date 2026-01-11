@@ -88,7 +88,7 @@ function MarketplaceProviderContent({ id }: { id: string }) {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-black truncate">{provider.name}</h1>
+                <h1 className="page-title truncate">{provider.name}</h1>
                 {provider.is_verified ? <BadgeCheck className="w-6 h-6 text-accent-primary" /> : null}
               </div>
               <div className="text-text-secondary mt-1">{provider.service_type_display || provider.service_type}</div>

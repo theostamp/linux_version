@@ -237,7 +237,7 @@ function OffersPageContent() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <BackButton href="/projects" label="Επιστροφή στα έργα" size="sm" />
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προσφορές</h1>
+          <h1 className="page-title">Προσφορές</h1>
           <p className="text-sm text-muted-foreground">
             Διαχείριση προσφορών εργολάβων για τα έργα
           </p>

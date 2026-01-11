@@ -107,7 +107,7 @@ export default function CommonExpenseSheetDownloadPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
             <AlertTriangle className="h-6 w-6 text-amber-600" />
           </div>
-          <h1 className="text-xl font-semibold text-text-primary">Απαιτείται σύνδεση</h1>
+          <h1 className="page-title-sm">Απαιτείται σύνδεση</h1>
           <p className="mt-2 text-sm text-text-secondary">
             Για να κατεβάσετε το φύλλο κοινοχρήστων χρειάζεται να συνδεθείτε.
           </p>
@@ -129,7 +129,7 @@ export default function CommonExpenseSheetDownloadPage() {
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-main-light)] px-4">
         <div className="max-w-lg w-full rounded-2xl border border-gray-200 bg-white p-8 shadow-card-soft text-center">
           <AlertTriangle className="mx-auto h-10 w-10 text-red-500" />
-          <h1 className="mt-4 text-lg font-semibold text-text-primary">Λείπουν στοιχεία</h1>
+          <h1 className="page-title-sm mt-4">Λείπουν στοιχεία</h1>
           <p className="mt-2 text-sm text-text-secondary">
             Χρειάζεται building_id και month ή period_id για να βρεθεί το φύλλο κοινοχρήστων.
           </p>
@@ -144,7 +144,7 @@ export default function CommonExpenseSheetDownloadPage() {
         {status === 'loading' && (
           <>
             <Loader2 className="mx-auto h-12 w-12 text-accent-primary animate-spin" />
-            <h1 className="mt-4 text-lg font-semibold text-text-primary">Κατεβάζουμε το φύλλο...</h1>
+            <h1 className="page-title-sm mt-4">Κατεβάζουμε το φύλλο...</h1>
             <p className="mt-2 text-sm text-text-secondary">Η λήψη θα ξεκινήσει αυτόματα.</p>
           </>
         )}
@@ -152,7 +152,7 @@ export default function CommonExpenseSheetDownloadPage() {
         {status === 'success' && (
           <>
             <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-            <h1 className="mt-4 text-lg font-semibold text-text-primary">Το φύλλο κατέβηκε</h1>
+            <h1 className="page-title-sm mt-4">Το φύλλο κατέβηκε</h1>
             <p className="mt-2 text-sm text-text-secondary">
               Αν δεν ξεκίνησε η λήψη, πατήστε ξανά το κουμπί.
             </p>
@@ -168,7 +168,7 @@ export default function CommonExpenseSheetDownloadPage() {
         {status === 'error' && (
           <>
             <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
-            <h1 className="mt-4 text-lg font-semibold text-text-primary">Δεν ήταν δυνατή η λήψη</h1>
+            <h1 className="page-title-sm mt-4">Δεν ήταν δυνατή η λήψη</h1>
             <p className="mt-2 text-sm text-text-secondary">{errorMessage}</p>
             <div className="mt-6">
               <Button onClick={downloadSheet} size="full">
@@ -181,7 +181,7 @@ export default function CommonExpenseSheetDownloadPage() {
         {status === 'idle' && (
           <>
             <FileDown className="mx-auto h-12 w-12 text-accent-primary" />
-            <h1 className="mt-4 text-lg font-semibold text-text-primary">Έτοιμο για λήψη</h1>
+            <h1 className="page-title-sm mt-4">Έτοιμο για λήψη</h1>
             <p className="mt-2 text-sm text-text-secondary">
               Πατήστε το κουμπί για να κατεβάσετε το φύλλο κοινοχρήστων.
             </p>

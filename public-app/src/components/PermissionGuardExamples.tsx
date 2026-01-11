@@ -239,7 +239,7 @@ export const RealWorldExample = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Building Management</h1>
+        <h1 className="page-title-sm">Building Management</h1>
 
         <div className="flex gap-2">
           {/* View button - always visible */}
@@ -297,7 +297,7 @@ export const RealWorldExample = () => {
 export const PermissionGuardExamplesPage = () => {
   return (
     <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-3xl font-bold mb-8">PermissionGuard Examples</h1>
+      <h1 className="page-title mb-8">PermissionGuard Examples</h1>
 
       <div className="space-y-8 divide-y">
         <BasicExample />

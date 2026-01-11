@@ -98,7 +98,7 @@ export default function ApartmentDetailPage() {
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{apartment.name}</h1>
+          <h1 className="page-title-sm">{apartment.name}</h1>
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             {apartment.building_name || `Κτίριο #${apartment.building}`}

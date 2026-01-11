@@ -524,7 +524,7 @@ function OfficeFinanceContent() {
             <Wallet className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Οικονομικά Γραφείου</h1>
+            <h1 className="page-title-sm">Οικονομικά Γραφείου</h1>
             <p className="text-muted-foreground">Διαχείριση εσόδων και εξόδων του γραφείου διαχείρισης</p>
           </div>
         </div>

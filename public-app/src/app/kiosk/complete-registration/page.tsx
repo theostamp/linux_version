@@ -261,7 +261,7 @@ function CompleteRegistrationContent() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl mb-6 shadow-2xl">
             <Building2 className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">
+          <h1 className="page-title page-title-on-dark mb-3">
             Ολοκλήρωση Εγγραφής
           </h1>
           {invitationDetails && (

@@ -118,7 +118,7 @@ export default function NewBuildingPage() {
               <Plus className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέο Κτίριο</h1>
+              <h1 className="page-title">Νέο Κτίριο</h1>
               <p className="text-gray-600">Συμπληρώστε τα στοιχεία για να δημιουργήσετε νέα διαχείριση</p>
             </div>
           </div>

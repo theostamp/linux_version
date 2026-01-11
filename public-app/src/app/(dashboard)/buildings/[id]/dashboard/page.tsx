@@ -112,7 +112,7 @@ export default function BuildingDashboardPage() {
               <Settings className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Διαχείριση Κτιρίου</h1>
+              <h1 className="page-title">Διαχείριση Κτιρίου</h1>
               <p className="text-gray-600">
                 <MapPin className="w-4 h-4 inline mr-1" />
                 {building?.name}

@@ -44,7 +44,7 @@ export default function ContractorsPage() {
       <SubscriptionGate>
         <div className="space-y-6 p-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Συνεργεία</h1>
+            <h1 className="page-title">Συνεργεία</h1>
             <div className="flex items-center gap-2">
               <Button asChild>
                 <Link href="/maintenance/contractors/new">

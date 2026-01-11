@@ -245,7 +245,7 @@ export default function EditProjectPage() {
           <div className="flex items-center gap-4">
             <BackButton href={`/projects/${projectId}`} label="Επιστροφή" size="sm" />
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Επεξεργασία Έργου</h1>
+              <h1 className="page-title">Επεξεργασία Έργου</h1>
               <p className="text-muted-foreground">Ενημέρωση στοιχείων έργου</p>
             </div>
           </div>

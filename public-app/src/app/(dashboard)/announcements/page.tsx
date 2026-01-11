@@ -48,7 +48,7 @@ function AnnouncementsPageContent() {
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
+          <h1 className="page-title">📢 Ανακοινώσεις</h1>
           {canCreateAnnouncement && (
             <Button asChild>
               <Link href="/announcements/new">
@@ -72,7 +72,7 @@ function AnnouncementsPageContent() {
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
+          <h1 className="page-title">📢 Ανακοινώσεις</h1>
           {canCreateAnnouncement && (
             <Button asChild>
               <Link href="/announcements/new">
@@ -94,7 +94,7 @@ function AnnouncementsPageContent() {
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">📢 Ανακοινώσεις</h1>
+          <h1 className="page-title">📢 Ανακοινώσεις</h1>
           {canCreateAnnouncement && (
             <Button asChild>
               <Link href="/announcements/new">
@@ -124,7 +124,7 @@ function AnnouncementsPageContent() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">📢 Ανακοινώσεις</h1>
+          <h1 className="page-title">📢 Ανακοινώσεις</h1>
           <p className="text-muted-foreground mt-1">Ενημερώσεις και νέα για το κτίριο</p>
         </div>
         {canCreateAnnouncement && (

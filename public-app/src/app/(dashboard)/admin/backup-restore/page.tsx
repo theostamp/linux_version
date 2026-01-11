@@ -446,7 +446,7 @@ export default function BackupRestorePage() {
             <HardDrive className="w-8 h-8 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="page-title-sm">
               💾 Backup & Restore
             </h1>
             <p className="text-gray-500">

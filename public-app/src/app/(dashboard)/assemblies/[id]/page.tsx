@@ -379,7 +379,7 @@ function AssemblyDetailContent() {
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{assembly.title}</h1>
+              <h1 className="page-title-sm">{assembly.title}</h1>
               <div className="flex items-center gap-2 mt-1 text-gray-500">
                 <Building2 className="w-4 h-4" />
                 <span>{assembly.building_name}</span>

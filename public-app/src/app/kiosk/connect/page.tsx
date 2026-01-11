@@ -304,7 +304,7 @@ function KioskConnectContent() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl mb-6 shadow-2xl">
               <UserCheck className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-3">
+            <h1 className="page-title page-title-on-dark mb-3">
               Καλώς ήρθατε!
             </h1>
             {authState.userEmail && (
@@ -378,7 +378,7 @@ function KioskConnectContent() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-2xl">
               <Building2 className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-3">
+            <h1 className="page-title page-title-on-dark mb-3">
               Καλώς ήρθατε
             </h1>
             {buildingInfo && (
@@ -452,7 +452,7 @@ function KioskConnectContent() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl mb-6 shadow-2xl">
               <Sparkles className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="page-title page-title-on-dark mb-2">
               New Concierge
             </h1>
             <p className="text-slate-300 text-sm">
@@ -557,7 +557,7 @@ function KioskConnectContent() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-2xl">
             <Building2 className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">
+          <h1 className="page-title page-title-on-dark mb-3">
             Σύνδεση / Εγγραφή
           </h1>
           {buildingInfo && (

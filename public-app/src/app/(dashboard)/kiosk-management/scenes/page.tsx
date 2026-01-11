@@ -155,7 +155,7 @@ function ScenesContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Διαχείριση Scenes</h1>
+            <h1 className="page-title-sm">Διαχείριση Scenes</h1>
             <p className="text-sm text-gray-600">{building.name}</p>
           </div>
         </div>

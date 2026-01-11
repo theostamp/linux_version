@@ -50,7 +50,7 @@ export default function UsersPage() {
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Διαχείριση Χρηστών</h1>
+            <h1 className="page-title">Διαχείριση Χρηστών</h1>
             <p className="text-muted-foreground mt-2">
               Προσκαλέστε νέους χρήστες και διαχειριστείτε τις προσκλήσεις
             </p>

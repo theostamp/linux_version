@@ -163,7 +163,7 @@ export default function HelpPage() {
                   <p className="text-xs sm:text-sm font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wider">
                     Οδηγός Χρήσης
                   </p>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-teal-800 to-emerald-700 dark:from-white dark:via-teal-200 dark:to-emerald-300 bg-clip-text text-transparent">
+                  <h1 className="page-title">
                     Κέντρο Βοήθειας
                   </h1>
                 </div>

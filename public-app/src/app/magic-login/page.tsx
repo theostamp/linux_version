@@ -96,7 +96,7 @@ function MagicLoginContent() {
           {status === 'loading' && (
             <div className="text-left py-8">
               <Loader2 className="h-16 w-16 text-accent-secondary animate-spin mb-6" />
-              <h1 className="text-2xl font-bold text-accent-secondary mb-2">
+              <h1 className="page-title-sm mb-2">
                 Σύνδεση...
               </h1>
               <p className="text-text-secondary">
@@ -110,7 +110,7 @@ function MagicLoginContent() {
               <div className="w-20 h-20 rounded-full bg-accent-secondary/10 flex items-center justify-center mb-6">
                 <CheckCircle className="h-10 w-10 text-accent-secondary" />
               </div>
-              <h1 className="text-2xl font-bold text-accent-secondary mb-2">
+              <h1 className="page-title-sm mb-2">
                 Επιτυχής σύνδεση! 🎉
               </h1>
               <p className="text-text-secondary mb-6">
@@ -139,7 +139,7 @@ function MagicLoginContent() {
               <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-6">
                 <XCircle className="h-10 w-10 text-red-600" />
               </div>
-              <h1 className="text-2xl font-bold text-red-600 mb-2">
+              <h1 className="page-title-sm mb-2">
                 Σφάλμα σύνδεσης
               </h1>
               <p className="text-text-secondary mb-6">

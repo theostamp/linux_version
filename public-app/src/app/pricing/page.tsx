@@ -90,7 +90,7 @@ export default function PricingPage() {
             <span className="inline-flex items-center gap-2 rounded-full border border-accent-primary/20 bg-white/70 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-primary shadow-sm">
               Premium εμπειρία
             </span>
-            <h1 className="text-balance text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
+            <h1 className="page-title-hero">
               Πλάνα Premium για κάθε πολυκατοικία
             </h1>
             <p className="text-sm text-text-secondary sm:text-base">

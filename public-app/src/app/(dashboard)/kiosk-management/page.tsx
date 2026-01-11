@@ -114,8 +114,8 @@ function KioskManagementContent() {
       <div className="bg-card rounded-xl p-6 border border-slate-200/50 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center text-emerald-600 dark:text-emerald-500 font-condensed">
-              <Monitor className="w-8 h-8 mr-3 text-emerald-600 dark:text-emerald-500" />
+            <h1 className="page-title mb-2 flex items-center">
+              <Monitor className="w-8 h-8 mr-3 text-accent-primary" />
               Kiosk Management
             </h1>
             <p className="text-muted-foreground">

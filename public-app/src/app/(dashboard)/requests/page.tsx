@@ -86,7 +86,7 @@ function RequestsPageContent() {
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">🔧 Αναφορά Βλαβών</h1>
+        <h1 className="page-title-sm mb-6">🔧 Αναφορά Βλαβών</h1>
         <BuildingFilterIndicator className="mb-4" />
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -100,7 +100,7 @@ function RequestsPageContent() {
   if (isError) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">🔧 Αναφορά Βλαβών</h1>
+        <h1 className="page-title-sm mb-6">🔧 Αναφορά Βλαβών</h1>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης αναφορών." />
       </div>
@@ -151,7 +151,7 @@ function RequestsPageContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-condensed">🔧 Αναφορά Βλαβών</h1>
+          <h1 className="page-title">🔧 Αναφορά Βλαβών</h1>
           <p className="text-muted-foreground mt-1">Διαχείριση τεχνικών θεμάτων και αναφορών ενοίκων</p>
         </div>
         <div className="flex items-center gap-3">

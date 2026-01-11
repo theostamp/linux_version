@@ -148,7 +148,7 @@ function SettingsContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ρυθμίσεις Kiosk</h1>
+            <h1 className="page-title-sm">Ρυθμίσεις Kiosk</h1>
             <p className="text-sm text-gray-600">{building.name}</p>
           </div>
         </div>

@@ -168,7 +168,7 @@ export default function VoteByEmailPage() {
       <div className="min-h-screen bg-bg-app-main flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-card-soft border border-gray-200">
           <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Σφάλμα</h1>
+          <h1 className="page-title-sm mb-2">Σφάλμα</h1>
           <p className="text-text-secondary mb-6">{error}</p>
           <p className="text-sm text-text-secondary">
             Ο σύνδεσμος ψηφοφορίας μπορεί να έχει λήξει ή να μην είναι έγκυρος.
@@ -197,7 +197,7 @@ export default function VoteByEmailPage() {
             <CheckCircle className="w-10 h-10 text-accent-primary" />
           </motion.div>
 
-          <h1 className="text-2xl font-bold text-text-primary mb-2">
+          <h1 className="page-title-sm mb-2">
             {submitted ? 'Ευχαριστούμε για τη ψήφο σας!' : 'Έχετε ήδη ψηφίσει'}
           </h1>
 
@@ -243,7 +243,7 @@ export default function VoteByEmailPage() {
               <Vote className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-text-primary">Ηλεκτρονική Ψηφοφορία</h1>
+              <h1 className="page-title-sm">Ηλεκτρονική Ψηφοφορία</h1>
               <p className="text-text-secondary text-sm">{data.assembly.title}</p>
             </div>
           </div>

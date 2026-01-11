@@ -531,9 +531,9 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 	      <div className="flex flex-col space-y-4">
 	        <div className="flex items-center justify-between rounded-3xl bg-card/60 backdrop-blur-sm p-4 shadow-sm ring-1 ring-border/20">
 	          <div>
-	            <h1 className="text-2xl font-bold font-condensed bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
-	              Οικονομική Διαχείριση
-	            </h1>
+            <h1 className="page-title">
+              Οικονομική Διαχείριση
+            </h1>
 	          </div>
 	          <div className="flex items-center gap-2">
 	            <Button asChild variant="outline" size="sm" className="flex items-center gap-2">

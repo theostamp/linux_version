@@ -90,7 +90,7 @@ export default function EditRequestPage() {
         <Button variant="secondary" className="mb-4">⬅ Επιστροφή</Button>
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">✏️ Επεξεργασία Αιτήματος</h1>
+      <h1 className="page-title-sm mb-6">✏️ Επεξεργασία Αιτήματος</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

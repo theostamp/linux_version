@@ -65,7 +65,7 @@ export default function NewVoteClient() {
 
   return (
     <div className="mt-20 p-6 bg-card rounded-none shadow-md">
-      <h1 className="text-2xl font-bold mb-4 text-center">🗳️ Νέα Ψηφοφορία</h1>
+      <h1 className="page-title-sm mb-4 text-center">🗳️ Νέα Ψηφοφορία</h1>
       {error && <ErrorMessage message={error} />}
 
       <form onSubmit={handleSubmit} className="space-y-4">

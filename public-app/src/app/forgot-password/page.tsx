@@ -100,7 +100,7 @@ function ForgotPasswordForm() {
             {!isSuccess ? (
               <>
                 <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-text-primary mb-2">
+                  <h1 className="page-title mb-2">
                     Επαναφορά Κωδικού
                   </h1>
                   <p className="text-text-secondary">
@@ -168,7 +168,7 @@ function ForgotPasswordForm() {
             ) : (
               <div className="text-center">
                 <CheckCircle className="h-16 w-16 text-emerald-600 mx-auto mb-4" />
-                <h1 className="text-2xl font-bold text-text-primary mb-2">
+                <h1 className="page-title-sm mb-2">
                   Email Στάλθηκε!
                 </h1>
                 <p className="text-text-secondary mb-6">

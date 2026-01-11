@@ -14,7 +14,7 @@ export default function AssignResidentPage() {
             Επιστροφή
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">👤 Ανάθεση Ενοίκου</h1>
+        <h1 className="page-title">👤 Ανάθεση Ενοίκου</h1>
         <div></div>
       </div>
 

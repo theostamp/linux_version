@@ -161,7 +161,7 @@ function OfferDetailPageContent({ offerId }: { offerId: string }) {
               Προσφορά #{offer.id ? offer.id.slice(0, 8) : 'N/A'}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Προσφορά Εργολάβου</h1>
+          <h1 className="page-title">Προσφορά Εργολάβου</h1>
           <p className="text-sm text-slate-500">
             {offer.contractor_name || 'Άγνωστος Εργολάβος'}
           </p>

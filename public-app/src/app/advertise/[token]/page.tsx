@@ -731,7 +731,7 @@ export default function AdvertiseLandingPage() {
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-black tracking-[0.2em] uppercase animate-pulse">
               <Sparkles className="w-3.5 h-3.5" /> ΝΕΑ ΥΠΗΡΕΣΙΑ ΤΟΠΙΚΗΣ ΠΡΟΒΟΛΗΣ
             </span>
-            <h1 className="text-5xl font-extrabold tracking-tight text-text-primary sm:text-6xl md:text-7xl">
+            <h1 className="page-title-hero">
               Φτάστε στην <span className="text-primary underline decoration-primary/30 underline-offset-8">καρδιά</span> της γειτονιάς σας.
             </h1>
             <div className="flex flex-col items-center gap-2">

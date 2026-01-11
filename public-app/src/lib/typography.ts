@@ -12,7 +12,10 @@
 // 🎯 Core Typography Scale
 export const typography = {
   // Headings - Main content hierarchy (Play)
-  pageTitle: 'text-3xl font-semibold tracking-tight text-left text-emerald-600 dark:text-emerald-500',
+  pageTitle: 'page-title',
+  pageTitleSm: 'page-title-sm',
+  pageTitleLg: 'page-title-lg',
+  pageTitleHero: 'page-title-hero',
 
   // Hero titles for dark backgrounds
   heroTitle: 'text-3xl font-semibold tracking-tight text-emerald-300 sm:text-4xl lg:text-5xl', // For dark backgrounds

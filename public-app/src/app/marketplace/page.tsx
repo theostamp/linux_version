@@ -103,7 +103,7 @@ function MarketplaceContent() {
             ΠΙΣΤΟΠΟΙΗΜΕΝΟΙ ΣΥΝΕΡΓΑΤΕΣ
           </div>
           <div className="space-y-2">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.1] text-text-primary">
+            <h1 className="page-title-hero">
               Βρείτε επαγγελματίες κοντά στο κτίριό σας.
             </h1>
             <p className="text-text-secondary text-base md:text-lg font-medium leading-relaxed">

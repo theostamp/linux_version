@@ -183,7 +183,7 @@ export default function RequestDetailPage() {
 
       {/* Header with actions */}
       <div className="flex justify-between items-start">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="page-title-sm">
           {request.title}
           {request.is_urgent && <span className="ml-2 text-red-600">🚨</span>}
         </h1>

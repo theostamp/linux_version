@@ -126,7 +126,7 @@ export default function ProjectDetailPage() {
           <div className="flex items-center gap-4">
             <BackButton href="/projects" label="Επιστροφή" size="sm" />
             <div className="flex-1">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">{project.title}</h1>
+              <h1 className="page-title">{project.title}</h1>
               <div className="flex items-center gap-2 mt-2">
                 <Badge className={STATUS_COLORS[project.status] || 'bg-gray-100 text-gray-700'}>
                   {STATUS_LABELS[project.status] || project.status}

@@ -64,7 +64,7 @@ export default function NewVotePage() {
         <Button variant="secondary">⬅ Επιστροφή στις Ψηφοφορίες</Button>
       </Link>
 
-      <h1 className="text-2xl font-bold">🗳️ Νέα Ψηφοφορία</h1>
+      <h1 className="page-title-sm">🗳️ Νέα Ψηφοφορία</h1>
       <BuildingFilterIndicator className="mb-4" />
 
       <NewVoteForm onSubmit={handleSubmit} buildingId={buildingId} isSubmitting={isSubmitting} />

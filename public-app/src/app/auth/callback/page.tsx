@@ -249,7 +249,7 @@ function OAuthCallback() {
           {status === 'loading' && (
             <>
               <Loader2 className="h-16 w-16 text-accent-primary animate-spin mb-4" />
-              <h1 className="text-2xl font-bold text-text-primary mb-2">Επεξεργασία...</h1>
+              <h1 className="page-title-sm mb-2">Επεξεργασία...</h1>
               <p className="text-text-secondary">{message}</p>
             </>
           )}
@@ -257,7 +257,7 @@ function OAuthCallback() {
           {status === 'success' && (
             <>
               <CheckCircle className="h-16 w-16 text-emerald-600 mb-4" />
-              <h1 className="text-2xl font-bold text-text-primary mb-2">Επιτυχία!</h1>
+              <h1 className="page-title-sm mb-2">Επιτυχία!</h1>
               <p className="text-text-secondary">{message}</p>
               <p className="text-sm text-text-secondary mt-4">Ανακατεύθυνση...</p>
             </>
@@ -266,7 +266,7 @@ function OAuthCallback() {
           {status === 'error' && (
             <>
               <XCircle className="h-16 w-16 text-rose-600 mb-4" />
-              <h1 className="text-2xl font-bold text-text-primary mb-2">Σφάλμα</h1>
+              <h1 className="page-title-sm mb-2">Σφάλμα</h1>
               <p className="text-text-secondary mb-6">{message}</p>
               <div className="flex space-x-4">
                 <Link

@@ -388,7 +388,7 @@ function VotesPageContent() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">🗳️ Ψηφοφορίες</h1>
+            <h1 className="page-title">🗳️ Ψηφοφορίες</h1>
             <p className="text-muted-foreground mt-1">Συμμετοχή στη λήψη αποφάσεων</p>
           </div>
         </div>
@@ -408,7 +408,7 @@ function VotesPageContent() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">🗳️ Ψηφοφορίες</h1>
+        <h1 className="page-title">🗳️ Ψηφοφορίες</h1>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />
       </div>
@@ -455,13 +455,11 @@ function VotesPageContent() {
         className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-card/60 backdrop-blur-sm p-5 shadow-sm ring-1 ring-border/20"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="page-title flex items-center gap-3">
             <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
               <VoteIcon className="w-5 h-5" />
             </span>
-            <span className="bg-gradient-to-r from-primary to-primary-hover bg-clip-text text-transparent">
-              Ψηφοφορίες
-            </span>
+            <span>Ψηφοφορίες</span>
           </h1>
           <p className="text-muted-foreground mt-1 ml-13">
             Συμμετοχή στη λήψη αποφάσεων της πολυκατοικίας

@@ -132,7 +132,7 @@ function PollsContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Δημοσκοπήσεις Κοινότητας</h1>
+          <h1 className="page-title">Δημοσκοπήσεις Κοινότητας</h1>
           <p className="text-gray-500 mt-1">Γρήγορες ερωτήσεις και αποφάσεις για την καθημερινότητα της πολυκατοικίας</p>
         </div>
         {canManage && (

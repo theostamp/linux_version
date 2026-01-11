@@ -420,7 +420,7 @@ function EditAssemblyContent() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Επεξεργασία Συνέλευσης</h1>
+            <h1 className="page-title-sm">Επεξεργασία Συνέλευσης</h1>
             <p className="text-gray-500">{assembly.title}</p>
           </div>
         </div>

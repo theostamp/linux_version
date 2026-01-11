@@ -50,7 +50,7 @@ export default function AnnouncementDetailPage() {
   if (authLoading || (!isAuthReady && !error)) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">Έλεγχος πρόσβασης...</h1>
+        <h1 className="page-title mb-6">Έλεγχος πρόσβασης...</h1>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
@@ -64,7 +64,7 @@ export default function AnnouncementDetailPage() {
   if (isLoading) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">Φόρτωση ανακοίνωσης...</h1>
+        <h1 className="page-title mb-6">Φόρτωση ανακοίνωσης...</h1>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
@@ -78,7 +78,7 @@ export default function AnnouncementDetailPage() {
   if (error || !announcement) {
     return (
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">Σφάλμα</h1>
+        <h1 className="page-title mb-6">Σφάλμα</h1>
         <ErrorMessage message={error?.message || 'Η ανακοίνωση δεν βρέθηκε'} />
         <div className="mt-4">
           <Button asChild>
@@ -104,7 +104,7 @@ export default function AnnouncementDetailPage() {
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">{announcement.title}</h1>
+        <h1 className="page-title mb-2">{announcement.title}</h1>
 
         <AnnouncementContent
           title={announcement.title}

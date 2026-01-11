@@ -371,7 +371,7 @@ function NewOfferPageContent() {
               Νέα προσφορά
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Καταχώρηση προσφοράς εργολάβου</h1>
+          <h1 className="page-title">Καταχώρηση προσφοράς εργολάβου</h1>
           <p className="text-sm text-slate-500">
             Συνδέστε μία προσφορά με υπάρχον έργο για να συγκρίνετε κόστος &amp; όρους πληρωμής.
           </p>

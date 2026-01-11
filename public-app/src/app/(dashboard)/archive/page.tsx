@@ -310,7 +310,7 @@ function ArchiveContent() {
   return (
     <div className="space-y-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <h1 className="page-title flex items-center gap-2">
               <FileText className="w-7 h-7" />
               Ηλεκτρονικό Αρχείο
             </h1>

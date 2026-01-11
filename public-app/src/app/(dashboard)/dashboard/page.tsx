@@ -243,7 +243,7 @@ function DashboardContent() {
     <main className="px-4 py-6 md:px-8 lg:px-12 max-w-[1400px] mx-auto">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-10">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight font-condensed">
+          <h2 className="page-title">
             {selectedBuilding ? selectedBuilding.name : 'Επισκόπηση Χαρτοφυλακίου'}
           </h2>
           <p className="text-muted-foreground">

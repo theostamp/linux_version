@@ -126,7 +126,7 @@ export default function BuildingDetailPage() {
               <BuildingIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{building.name}</h1>
+              <h1 className="page-title">{building.name}</h1>
               <p className="text-gray-600">
                 <MapPin className="w-4 h-4 inline mr-1" />
                 {building.address}
