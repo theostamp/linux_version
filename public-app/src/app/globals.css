@@ -21,10 +21,10 @@ html {
   --primary-foreground: 0 0% 100%;     /* White on primary */
   --primary-hover: 174 63% 35%;        /* Darker teal on hover */
 
-  /* Headings - Neutral charcoal for corporate tone */
+  /* Headings - Blue-green accent for h1/page titles */
   --heading-color: var(--text-primary);
-  --page-title-color: var(--color-accent-primary);
-  --page-title-color-dark: #D7E7FF;
+  --page-title-color: var(--color-accent-secondary);
+  --page-title-color-dark: var(--text-on-dark-title);
   --page-title-font: var(--font-play);
 
   /* Secondary - Soft navy */
