@@ -98,7 +98,7 @@ export const exportToJPG = async (
     }
 
     const period = getPeriodInfo(state);
-    const paymentDueDate = getPaymentDueDate(state);
+    const paymentDueDate = getPaymentDueDate(state, selectedMonth);
     const selectedMonthDisplay = selectedMonth || period;
     const resolvedSplitRatios: ExpenseSplitRatios = expenseSplitRatios || (() => {
       const totals = (state as any)?.advancedShares?.expense_totals || {};
@@ -723,7 +723,7 @@ export const exportAndSendJPG = async (
 
     // Generate JPG using existing logic (simplified - we'll reuse the same DOM generation)
     const period = getPeriodInfo(params.state);
-    const paymentDueDate = getPaymentDueDate(params.state);
+    const paymentDueDate = getPaymentDueDate(params.state, selectedMonth);
 
     // Create the same DOM element as exportToJPG
     const element = document.createElement('div');

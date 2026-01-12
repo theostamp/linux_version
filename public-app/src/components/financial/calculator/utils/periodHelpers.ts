@@ -57,7 +57,19 @@ export const getPreviousMonthName = (state: CalculatorState): string => {
 };
 
 // Calculates the payment due date (15th of the next month)
-export const getPaymentDueDate = (state: CalculatorState): string => {
+export const getPaymentDueDate = (state: CalculatorState, selectedMonth?: string): string => {
+  if (selectedMonth) {
+    const match = selectedMonth.match(/^(\d{4})-(\d{2})$/);
+    if (match) {
+      const year = Number(match[1]);
+      const monthIndex = Number(match[2]) - 1;
+      if (!Number.isNaN(year) && !Number.isNaN(monthIndex)) {
+        const dueDate = new Date(year, monthIndex + 1, 15);
+        return dueDate.toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+    }
+  }
+
   const periodName = getPeriodInfo(state);
   const monthMatch = periodName.match(/(\w+)\s+(\d{4})/);
 

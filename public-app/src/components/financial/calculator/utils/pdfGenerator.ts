@@ -79,7 +79,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
   try {
     const period = getPeriodInfo(state);
     const periodWithCycle = getPeriodInfoWithBillingCycle(state);
-    const paymentDueDate = getPaymentDueDate(state);
+    const paymentDueDate = getPaymentDueDate(state, selectedMonth);
     const selectedMonth = params.selectedMonth || period;
 
     const htmlContent = `

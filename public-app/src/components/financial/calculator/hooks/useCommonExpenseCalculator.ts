@@ -295,6 +295,11 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       if (targetDate && selected > new Date(targetDate)) showReserveFund = false;
     }
 
+    const reserveFromShares = Object.values((effectiveShares as Record<string, Share>) || {}).reduce(
+      (sum, share) => sum + toNumber(share?.breakdown?.reserve_fund_contribution ?? 0),
+      0
+    );
+
     let monthlyAmount = 0;
     if (showReserveFund && goal > 0 && duration > 0) {
       monthlyAmount = goal / duration;
@@ -344,6 +349,10 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       resolvedMonthlyAmount = apiReserveFallback;
     }
 
+    if (showReserveFund && resolvedMonthlyAmount <= 0 && reserveFromShares > 0) {
+      resolvedMonthlyAmount = reserveFromShares;
+    }
+
     if (resolvedMonthlyAmount !== baseInfo.monthlyAmount) {
       return {
         ...baseInfo,
@@ -353,7 +362,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     }
 
     return baseInfo;
-  }, [effectiveAdvancedShares, selectedMonth, monthlyExpenses]);
+  }, [effectiveAdvancedShares, effectiveShares, selectedMonth, monthlyExpenses]);
 
   const previousBalanceTotals = useMemo(() => {
     const signed = aptWithFinancial.reduce((sum: number, apt: any) => sum + toNumber(apt.previous_balance ?? 0), 0);

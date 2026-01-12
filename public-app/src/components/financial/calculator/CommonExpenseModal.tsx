@@ -47,7 +47,7 @@ import { ExportTab } from './tabs/ExportTab';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
 import { StatisticsSection } from './StatisticsSection';
 import { HeatingAnalysisModal } from './HeatingAnalysisModal';
-import { getPeriodInfo, getPreviousMonthName } from './utils/periodHelpers';
+import { getPaymentDueDate, getPeriodInfo, getPreviousMonthName } from './utils/periodHelpers';
 import { formatAmount } from './utils/formatters';
 import { ModalPortal } from '@/components/ui/ModalPortal';
 
@@ -146,6 +146,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
       advancedShares: effectiveAdvancedShares as any
     };
   }, [state, effectiveShares, effectiveAdvancedShares]);
+  const paymentDueDate = React.useMemo(() => {
+    return getPaymentDueDate(state, expenseSheetMonth);
+  }, [state, expenseSheetMonth]);
   const resolvedBuildingName = buildingData?.name || buildingName || 'Άγνωστο Κτίριο';
   const resolvedBuildingAddress = buildingData?.address || props.buildingAddress || '';
   const resolvedBuildingCity = buildingData?.city || props.buildingCity || '';
@@ -266,10 +269,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             <div className="flex flex-col md:flex-row items-center justify-center gap-2 pt-2 border-t border-blue-200 text-xs text-blue-800">
                 <span className="text-xs font-medium text-blue-700">Πληρωτέο έως:</span>
                 <span className="text-sm font-bold text-red-600">
-                    10/{(() => {
-                                    const date = new Date(expenseSheetMonth + '-01');
-                                    return String(date.getMonth() + 2).padStart(2, '0');
-                                })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
+                  {paymentDueDate}
                 </span>
                 <span className="hidden md:inline text-slate-400">•</span>
                 <span className="flex items-center gap-1">
@@ -335,10 +335,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             <div className="text-right">
               <p className="text-xs text-gray-600 font-medium">Πληρωτέο έως:</p>
               <p className="text-lg font-bold text-red-600 mt-1">
-                10/{(() => {
-                  const date = new Date(expenseSheetMonth + '-01');
-                  return String(date.getMonth() + 2).padStart(2, '0');
-                })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
+                {paymentDueDate}
               </p>
             </div>
             </div>
