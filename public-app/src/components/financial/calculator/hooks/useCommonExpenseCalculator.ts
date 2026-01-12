@@ -169,8 +169,36 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     return items;
   }, [effectiveShares]);
 
+  const expenseSplitRatios = useMemo(() => {
+    const totals = (effectiveAdvancedShares as any)?.expense_totals || {};
+    const ratio = (residentValue: any, totalValue: any) => {
+      const total = toNumber(totalValue);
+      if (total <= 0) return 1;
+      if (residentValue === null || residentValue === undefined || residentValue === '') return 1;
+      const resident = toNumber(residentValue);
+      if (resident <= 0) return 0;
+      const computed = resident / total;
+      return Math.min(1, Math.max(0, computed));
+    };
+
+    return {
+      elevator: ratio(totals.resident_elevator, totals.elevator),
+      heating: ratio(totals.resident_heating, totals.heating),
+    };
+  }, [effectiveAdvancedShares]);
+
   const expenseBreakdown = useMemo<ExpenseBreakdown>(() => {
     const breakdown: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
+
+    if (effectiveAdvancedShares?.expense_totals) {
+      const { general, elevator, heating, equal_share, individual } = effectiveAdvancedShares.expense_totals;
+      breakdown.common = toNumber(general);
+      breakdown.elevator = toNumber(elevator);
+      breakdown.heating = toNumber(heating);
+      breakdown.other = toNumber(equal_share);
+      breakdown.coownership = toNumber(individual);
+      return breakdown;
+    }
 
     // Use month-specific data from API if available
     if (monthlyExpenses) {
@@ -184,19 +212,6 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       breakdown.coownership = 0; // Not available in API yet
 
       console.log('🔍 DEBUG expenseBreakdown: Mapped API data to breakdown:', breakdown);
-    } else if (effectiveAdvancedShares && effectiveAdvancedShares.expense_totals) {
-      // Fallback to state data if API data not available
-      const { general, elevator, heating, equal_share, individual } = effectiveAdvancedShares.expense_totals;
-      breakdown.common = parseFloat(general || 0);
-      breakdown.elevator = parseFloat(elevator || 0);
-      breakdown.heating = parseFloat(heating || 0);
-      breakdown.other = parseFloat(equal_share || 0);
-      breakdown.coownership = parseFloat(individual || 0);
-
-      console.log('🔍 DEBUG expenseBreakdown: Using fallback state data for month', selectedMonth, {
-        breakdown,
-        note: 'API data not available, using static state data'
-      });
     }
 
     return breakdown;
@@ -412,8 +427,13 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
           toNumber(breakdown.individual_expenses || 0)
       );
 
+      const residentElevator = elevatorAmount * expenseSplitRatios.elevator;
+      const residentHeating = heatingAmount * expenseSplitRatios.heating;
+      const displayElevator = residentTotal > 0 ? residentElevator : elevatorAmount;
+      const displayHeating = residentTotal > 0 ? residentHeating : heatingAmount;
+
       const commonAmountWithoutReserve = residentTotal > 0
-        ? Math.max(0, residentTotal - elevatorAmount - heatingAmount)
+        ? Math.max(0, residentTotal - displayElevator - displayHeating)
         : fallbackCommon;
 
       const commonMills = toNumber(apt.participation_mills ?? share?.participation_mills ?? 0);
@@ -431,12 +451,12 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       const previousSigned = toNumber(apt.previous_balance ?? 0);
       const previousAbs = Math.abs(previousSigned);
 
-      totals.signed += commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousSigned + ownerExpensesOnlyProjects + apartmentReserveFund;
-      totals.abs += commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousAbs + ownerExpensesOnlyProjects + apartmentReserveFund;
+      totals.signed += commonAmountWithoutReserve + displayElevator + displayHeating + previousSigned + ownerExpensesOnlyProjects + apartmentReserveFund;
+      totals.abs += commonAmountWithoutReserve + displayElevator + displayHeating + previousAbs + ownerExpensesOnlyProjects + apartmentReserveFund;
     });
 
     return totals;
-  }, [aptWithFinancial, effectiveShares, reserveFundInfo.monthlyAmount]);
+  }, [aptWithFinancial, effectiveShares, expenseSplitRatios, reserveFundInfo.monthlyAmount]);
 
   const totalExpenses = useMemo<number>(() => resolvedTotals.monthlySubtotal, [resolvedTotals]);
 
@@ -507,6 +527,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     selectedMonth,
     expenseBreakdown,
     reserveFundInfo,
+    expenseSplitRatios,
     managementFeeInfo,
     groupedExpenses: getGroupedExpenses(),
     perApartmentAmounts,
@@ -535,6 +556,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     selectedMonth,
     expenseBreakdown,
     reserveFundInfo,
+    expenseSplitRatios,
     managementFeeInfo,
     getGroupedExpenses,
     perApartmentAmounts,
@@ -800,7 +822,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   return {
     isSaving, isSending, showHeatingModal, setShowHeatingModal, heatingBreakdown, setHeatingBreakdown,
     validationResult, setValidationResult, aptWithFinancial, occupantsByApartmentId, perApartmentAmounts,
-    expenseBreakdown, managementFeeInfo, reserveFundInfo, totalExpenses, handleSave, handlePrint,
+    expenseBreakdown, managementFeeInfo, reserveFundInfo, expenseSplitRatios, totalExpenses, handleSave, handlePrint,
     handleExport, handleSendToAll, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses,
     // Expose month-specific sources so the modal can render consistent tables for the selected month
     effectiveShares,

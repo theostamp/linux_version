@@ -8,7 +8,8 @@ import {
   ManagementFeeInfo,
   GroupedExpenses,
   PerApartmentAmounts,
-  Share
+  Share,
+  ExpenseSplitRatios
 } from '../types/financial';
 import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { formatAmount, toNumber } from './formatters';
@@ -32,6 +33,7 @@ interface JpgGeneratorParams {
   selectedMonth?: string;
   expenseBreakdown: ExpenseBreakdown;
   reserveFundInfo: ReserveFundInfo;
+  expenseSplitRatios?: ExpenseSplitRatios;
   managementFeeInfo: ManagementFeeInfo;
   groupedExpenses: GroupedExpenses;
   perApartmentAmounts: PerApartmentAmounts;
@@ -71,6 +73,7 @@ export const exportToJPG = async (
     selectedMonth,
     expenseBreakdown,
     reserveFundInfo,
+    expenseSplitRatios,
     managementFeeInfo,
     groupedExpenses,
     perApartmentAmounts,
@@ -97,6 +100,23 @@ export const exportToJPG = async (
     const period = getPeriodInfo(state);
     const paymentDueDate = getPaymentDueDate(state);
     const selectedMonthDisplay = selectedMonth || period;
+    const resolvedSplitRatios: ExpenseSplitRatios = expenseSplitRatios || (() => {
+      const totals = (state as any)?.advancedShares?.expense_totals || {};
+      const ratio = (residentValue: any, totalValue: any) => {
+        const total = toNumber(totalValue);
+        if (total <= 0) return 1;
+        if (residentValue === null || residentValue === undefined || residentValue === '') return 1;
+        const resident = toNumber(residentValue);
+        if (resident <= 0) return 0;
+        const computed = resident / total;
+        return Math.min(1, Math.max(0, computed));
+      };
+
+      return {
+        elevator: ratio(totals.resident_elevator, totals.elevator),
+        heating: ratio(totals.resident_heating, totals.heating)
+      };
+    })();
 
     // Debug: Check if we have apartment data
     console.log('JPG Export - aptWithFinancial length:', aptWithFinancial?.length || 0);
@@ -120,8 +140,12 @@ export const exportToJPG = async (
           toNumber(breakdown.equal_share_expenses ?? aptAmount.other ?? 0) +
           toNumber(breakdown.individual_expenses ?? aptAmount.coowner ?? 0)
       );
+      const residentElevator = elevatorAmount * resolvedSplitRatios.elevator;
+      const residentHeating = heatingAmount * resolvedSplitRatios.heating;
+      const displayElevator = residentTotal > 0 ? residentElevator : elevatorAmount;
+      const displayHeating = residentTotal > 0 ? residentHeating : heatingAmount;
       const commonAmountWithoutReserve = residentTotal > 0
-        ? Math.max(0, residentTotal - elevatorAmount - heatingAmount)
+        ? Math.max(0, residentTotal - displayElevator - displayHeating)
         : fallbackCommon;
       const reserveFromShare = toNumber(breakdown.reserve_fund_contribution ?? 0);
       const apartmentReserveFund = reserveFromShare > 0
@@ -132,13 +156,13 @@ export const exportToJPG = async (
       const ownerExpensesOnlyProjects = ownerTotal > 0
         ? Math.max(0, ownerTotal)
         : Math.max(0, toNumber((apt as any).owner_expenses || 0));
-      const totalAmount = commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
+      const totalAmount = commonAmountWithoutReserve + displayElevator + displayHeating + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
 
       return {
         previousBalance,
         commonAmountWithoutReserve,
-        elevatorAmount,
-        heatingAmount,
+        elevatorAmount: displayElevator,
+        heatingAmount: displayHeating,
         ownerExpensesOnlyProjects,
         apartmentReserveFund,
         totalAmount,

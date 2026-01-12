@@ -31,6 +31,11 @@ export interface ExpenseBreakdown {
   coownership: number;
 }
 
+export interface ExpenseSplitRatios {
+  elevator: number;
+  heating: number;
+}
+
 export interface PerApartmentAmounts {
   [apartment_id: number]: {
     common: number;

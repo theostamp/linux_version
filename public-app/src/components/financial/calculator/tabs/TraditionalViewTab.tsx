@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Building, User, Calendar, CreditCard, Calculator, PiggyBank, Building2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { ApartmentExpenseTable } from '../components/ApartmentExpenseTable';
 import { GroupedExpenseBreakdown } from '../components/GroupedExpenseBreakdown';
-import { ValidationResult, CommonExpenseModalProps, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo, PerApartmentAmounts, GroupedExpenses } from '../types/financial';
+import { ValidationResult, CommonExpenseModalProps, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo, PerApartmentAmounts, GroupedExpenses, ExpenseSplitRatios } from '../types/financial';
 import { getPaymentDueDate, getPeriodInfo, getPeriodInfoWithBillingCycle } from '../utils/periodHelpers';
 import { formatAmount } from '../utils/formatters';
 import { useMonthlyExpenses, ExpenseBreakdownItem } from '@/hooks/useMonthlyExpenses';
@@ -27,6 +27,7 @@ interface TraditionalViewTabProps {
   expenseBreakdown: ExpenseBreakdown;
   managementFeeInfo: ManagementFeeInfo;
   reserveFundInfo: ReserveFundInfo;
+  expenseSplitRatios: ExpenseSplitRatios;
   totalExpenses: number;
   perApartmentAmounts: PerApartmentAmounts;
   validateData: () => void;
@@ -53,6 +54,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     expenseBreakdown,
     managementFeeInfo,
     reserveFundInfo,
+    expenseSplitRatios,
     totalExpenses,
     perApartmentAmounts,
     validateData,
@@ -71,13 +73,48 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
   const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
 
   // Υπολογισμός συνόλου δαπανών που εμφανίζονται
-  const displayedExpensesTotal = React.useMemo(() => {
-    let total = 0;
+  const expectedExpenseTotal = React.useMemo(() => {
+    return (expenseBreakdown.common || 0)
+      + (expenseBreakdown.elevator || 0)
+      + (expenseBreakdown.heating || 0)
+      + (expenseBreakdown.other || 0)
+      + (expenseBreakdown.coownership || 0);
+  }, [expenseBreakdown]);
 
-    // Αν υπάρχουν αναλυτικές δαπάνες από το API, χρησιμοποίησε αυτές
-    if (monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0) {
-      total = monthlyExpenses.expense_breakdown.reduce((sum, expense) => sum + expense.amount, 0);
+  const expenseItemsForDisplay = React.useMemo(() => {
+    const items = monthlyExpenses?.expense_breakdown ? [...monthlyExpenses.expense_breakdown] : [];
+    if (!items.length && expectedExpenseTotal > 0) {
+      return [{
+        category: 'monthly_total',
+        category_display: 'Δαπάνες μήνα',
+        amount: expectedExpenseTotal,
+        payer_responsibility: 'shared' as const
+      }];
     }
+
+    const itemsTotal = items.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    const missingTotal = expectedExpenseTotal - itemsTotal;
+    if (expectedExpenseTotal > 0 && missingTotal > 0.5) {
+      items.push({
+        category: 'allocation_adjustment',
+        category_display: 'Δαπάνες ιδιοκτητών (επιμερισμός)',
+        amount: missingTotal,
+        payer_responsibility: 'owner' as const
+      });
+    }
+    return items;
+  }, [monthlyExpenses, expectedExpenseTotal]);
+
+  const displayedExpensesTotal = React.useMemo(() => {
+    const fallbackBreakdownTotal = monthlyExpenses?.expense_breakdown
+      ? monthlyExpenses.expense_breakdown.reduce((sum, expense) => sum + (expense.amount || 0), 0)
+      : 0;
+
+    const baseExpenses = expectedExpenseTotal > 0
+      ? expectedExpenseTotal
+      : fallbackBreakdownTotal || (monthlyExpenses?.total_expenses_month || 0);
+
+    let total = baseExpenses;
 
     // Πρόσθεσε κόστος διαχείρισης
     total += managementFeeInfo.totalFee || 0;
@@ -89,7 +126,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     total += getTotalPreviousBalance() || 0;
 
     return total;
-  }, [monthlyExpenses, managementFeeInfo.totalFee, reserveFundInfo.monthlyAmount, getTotalPreviousBalance]);
+  }, [expectedExpenseTotal, monthlyExpenses, managementFeeInfo.totalFee, reserveFundInfo.monthlyAmount, getTotalPreviousBalance]);
 
   const showOwnerExpenses = (expenseBreakdown.other || 0) + (expenseBreakdown.coownership || 0) > 0;
 
@@ -139,8 +176,8 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
             ) : (
               // Fallback: Παλιά flat εμφάνιση αν δεν υπάρχουν grouped δεδομένα
               <div className="space-y-2">
-                {monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 && (
-                  monthlyExpenses.expense_breakdown.map((expense, index) => {
+                {expenseItemsForDisplay.length > 0 && (
+                  expenseItemsForDisplay.map((expense, index) => {
                     const isOwner = expense.payer_responsibility === 'owner';
                     const badgeColor = isOwner ? 'text-red-600' : 'text-emerald-600';
                     const badgeText = isOwner ? 'Δ' : 'Ε';
@@ -160,7 +197,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
 
                 <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium text-gray-600">{(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
+                        <span className="text-xs font-medium text-gray-600">{expenseItemsForDisplay.length + 1}</span>
                         <span className="text-xs font-bold text-emerald-600 flex-shrink-0">Ε</span>
                         <p className="text-xs font-semibold text-gray-700">Κόστος διαχείρισης</p>
                     </div>
@@ -169,7 +206,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
 
                 <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium text-gray-600">{(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
+                        <span className="text-xs font-medium text-gray-600">{expenseItemsForDisplay.length + 2}</span>
                         <span className="text-xs font-bold text-red-600 flex-shrink-0">Δ</span>
                         <p className="text-xs font-semibold text-gray-700">Αποθεματικό Ταμείο</p>
                     </div>
@@ -178,7 +215,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
 
                 <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium text-gray-600">{(monthlyExpenses?.expense_breakdown?.length || 0) + 3}</span>
+                        <span className="text-xs font-medium text-gray-600">{expenseItemsForDisplay.length + 3}</span>
                         <p className="text-xs font-semibold text-gray-700">Παλαιότερες οφειλές</p>
                     </div>
                     <span className="text-xs font-bold text-blue-600">{formatAmount(getTotalPreviousBalance() || 0)}€</span>
@@ -211,7 +248,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
 
       <div className="bg-white border rounded-lg overflow-hidden">
         {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Επικεφαλίδα "ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ" και κουμπί "Έλεγχος Δεδομένων" για μέγιστη εξοικονόμηση χώρου */}
-        <ApartmentExpenseTable shares={state.shares} aptWithFinancial={aptWithFinancial} perApartmentAmounts={perApartmentAmounts} expenseBreakdown={expenseBreakdown} managementFeeInfo={managementFeeInfo} reserveFundInfo={reserveFundInfo} totalExpenses={totalExpenses} showOwnerExpenses={showOwnerExpenses} />
+        <ApartmentExpenseTable shares={state.shares} aptWithFinancial={aptWithFinancial} perApartmentAmounts={perApartmentAmounts} expenseBreakdown={expenseBreakdown} managementFeeInfo={managementFeeInfo} reserveFundInfo={reserveFundInfo} expenseSplitRatios={expenseSplitRatios} totalExpenses={totalExpenses} showOwnerExpenses={showOwnerExpenses} />
       </div>
 
       {validationResult && (

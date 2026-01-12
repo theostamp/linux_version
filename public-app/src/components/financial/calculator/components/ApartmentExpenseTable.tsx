@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PerApartmentAmounts, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo, Share } from '../types/financial';
+import { PerApartmentAmounts, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo, Share, ExpenseSplitRatios } from '../types/financial';
 import { formatAmount, toNumber } from '../utils/formatters';
 import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 
@@ -12,6 +12,7 @@ interface ApartmentExpenseTableProps {
   expenseBreakdown: ExpenseBreakdown;
   managementFeeInfo: ManagementFeeInfo;
   reserveFundInfo: ReserveFundInfo;
+  expenseSplitRatios: ExpenseSplitRatios;
   totalExpenses: number;
   showOwnerExpenses: boolean;
 }
@@ -26,10 +27,12 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
   expenseBreakdown,
   managementFeeInfo,
   reserveFundInfo,
+  expenseSplitRatios,
   totalExpenses,
   showOwnerExpenses
 }) => {
   const sharesArray = Object.values(shares);
+  const ratios = expenseSplitRatios || { elevator: 1, heating: 1 };
   const getApartmentDataForShare = (share: Share) =>
     aptWithFinancial.find(apt => apt.id === share.apartment_id || (apt as any).apartment_id === share.apartment_id);
 
@@ -46,8 +49,12 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
         toNumber(breakdown.equal_share_expenses || 0) +
         toNumber(breakdown.individual_expenses || 0)
     );
+    const residentElevator = elevatorAmount * ratios.elevator;
+    const residentHeating = heatingAmount * ratios.heating;
+    const displayElevator = residentTotal > 0 ? residentElevator : elevatorAmount;
+    const displayHeating = residentTotal > 0 ? residentHeating : heatingAmount;
     const commonAmountWithoutReserve = residentTotal > 0
-      ? Math.max(0, residentTotal - elevatorAmount - heatingAmount)
+      ? Math.max(0, residentTotal - displayElevator - displayHeating)
       : fallbackCommon;
     const commonMills = toNumber(apartmentData?.participation_mills ?? share.participation_mills ?? 0);
     const reserveFromShare = toNumber(breakdown.reserve_fund_contribution ?? 0);
@@ -60,13 +67,13 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
       ? Math.max(0, ownerTotal)
       : Math.max(0, toNumber((apartmentData as any)?.owner_expenses || 0));
     const previousBalance = toNumber(apartmentData?.previous_balance ?? 0);
-    const finalTotalWithFees = commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
+    const finalTotalWithFees = commonAmountWithoutReserve + displayElevator + displayHeating + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
 
     return {
       apartmentData,
       commonAmountWithoutReserve,
-      elevatorAmount,
-      heatingAmount,
+      elevatorAmount: displayElevator,
+      heatingAmount: displayHeating,
       apartmentReserveFund,
       ownerExpensesOnlyProjects,
       previousBalance,
