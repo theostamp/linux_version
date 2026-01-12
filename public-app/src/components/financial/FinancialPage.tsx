@@ -353,12 +353,22 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     }
   );
 
-  const refreshFinancialData = useCallback(async (startMonth?: string, options?: { notify?: boolean }) => {
+  const refreshFinancialData = useCallback(async (startMonth?: string, options?: { notify?: boolean; compact?: boolean }) => {
     if (!activeBuildingId) return;
 
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const recalcStartMonth = startMonth || selectedMonth || currentMonth;
+    const formattedMonth = (() => {
+      try {
+        return new Date(recalcStartMonth + '-01').toLocaleDateString('el-GR', {
+          month: 'long',
+          year: 'numeric'
+        });
+      } catch {
+        return recalcStartMonth;
+      }
+    })();
 
     try {
       await api.post('/financial/dashboard/recalculate-months/', {
@@ -368,7 +378,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     } catch (error) {
       console.error('❌ FinancialPage: monthly balance recalculation failed:', error);
       if (options?.notify !== false) {
-        toast.error('Αποτυχία επανυπολογισμού μηνιαίων υπολοίπων');
+        toast.error(options?.compact ? `Αποτυχία επανυπολογισμού για ${formattedMonth}` : 'Αποτυχία επανυπολογισμού μηνιαίων υπολοίπων');
       }
     }
 
@@ -404,9 +414,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     if (expenseListRef.current) expenseListRef.current.refresh();
 
     if (options?.notify !== false) {
-      toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
-        description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
-      });
+      if (options?.compact) {
+        toast.success(`Ενημερώθηκαν τα δεδομένα για ${formattedMonth}`);
+      } else {
+        toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
+          description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
+        });
+      }
     }
   }, [activeBuildingId, queryClient, selectedMonth]);
 
@@ -446,7 +460,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     }
 
     if (selectedMonth) {
-      refreshFinancialData(selectedMonth, { notify: false });
+      refreshFinancialData(selectedMonth, { notify: true, compact: true });
     }
 
     // Αφαιρέθηκε το notification για αλλαγή μήνα
