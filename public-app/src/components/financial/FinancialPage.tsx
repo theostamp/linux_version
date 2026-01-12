@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -294,6 +294,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
+  const initialMonthChangeRef = useRef(true);
 
   // Event listener for opening maintenance overview modal
   useEffect(() => {
@@ -352,6 +353,63 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     }
   );
 
+  const refreshFinancialData = useCallback(async (startMonth?: string, options?: { notify?: boolean }) => {
+    if (!activeBuildingId) return;
+
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const recalcStartMonth = startMonth || selectedMonth || currentMonth;
+
+    try {
+      await api.post('/financial/dashboard/recalculate-months/', {
+        building_id: activeBuildingId,
+        start_month: recalcStartMonth,
+      });
+    } catch (error) {
+      console.error('❌ FinancialPage: monthly balance recalculation failed:', error);
+      if (options?.notify !== false) {
+        toast.error('Αποτυχία επανυπολογισμού μηνιαίων υπολοίπων');
+      }
+    }
+
+    // ✅ Clear API cache FIRST, then React Query cache
+    invalidateApiCache(/\/financial\//);
+
+    await queryClient.invalidateQueries({
+      queryKey: ['financial']
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['apartment-balances']
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['expenses']
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ['transactions']
+    });
+    await queryClient.refetchQueries({
+      queryKey: ['financial']
+    });
+    await queryClient.refetchQueries({
+      queryKey: ['apartment-balances']
+    });
+    await queryClient.refetchQueries({
+      queryKey: ['expenses']
+    });
+    await queryClient.refetchQueries({
+      queryKey: ['transactions']
+    });
+
+    if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
+    if (expenseListRef.current) expenseListRef.current.refresh();
+
+    if (options?.notify !== false) {
+      toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
+        description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
+      });
+    }
+  }, [activeBuildingId, queryClient, selectedMonth]);
+
   // Force refresh when building changes
   useEffect(() => {
     // Trigger refresh of all data when activeBuildingId changes
@@ -381,6 +439,15 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Monitor selectedMonth changes and refresh components
   useEffect(() => {
     console.log('Selected month changed to:', selectedMonth);
+
+    if (initialMonthChangeRef.current) {
+      initialMonthChangeRef.current = false;
+      return;
+    }
+
+    if (selectedMonth) {
+      refreshFinancialData(selectedMonth, { notify: false });
+    }
 
     // Αφαιρέθηκε το notification για αλλαγή μήνα
     // Show a brief notification for month change
@@ -415,7 +482,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     // if (selectedMonth) {
     //   showNotification();
     // }
-  }, [selectedMonth]);
+  }, [selectedMonth, refreshFinancialData]);
 
   // Handle URL parameters for browser navigation (not initial load - that's handled in useState)
   useEffect(() => {
@@ -543,66 +610,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 	              </Link>
 	            </Button>
             <Button
-              onClick={async () => {
-                const now = new Date();
-                const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                const recalcStartMonth = selectedMonth || currentMonth;
-
-                // Recalculate monthly balances from selected month to current month
-                try {
-                  await api.post('/financial/dashboard/recalculate-months/', {
-                    building_id: activeBuildingId,
-                    start_month: recalcStartMonth,
-                  });
-                } catch (error) {
-                  console.error('❌ FinancialPage: monthly balance recalculation failed:', error);
-                  toast.error('Αποτυχία επανυπολογισμού μηνιαίων υπολοίπων');
-                }
-
-                // ✅ Clear API cache FIRST, then React Query cache
-                invalidateApiCache(/\/financial\//);
-
-                // Cache invalidation AND explicit refetch - Clear and reload all financial-related queries
-                await queryClient.invalidateQueries({
-	                  queryKey: ['financial']
-	                });
-	                await queryClient.invalidateQueries({
-	                  queryKey: ['apartment-balances']
-	                });
-	                await queryClient.invalidateQueries({
-	                  queryKey: ['expenses']
-	                });
-	                await queryClient.invalidateQueries({
-	                  queryKey: ['transactions']
-	                });
-	                await queryClient.refetchQueries({
-	                  queryKey: ['financial']
-	                });
-	                await queryClient.refetchQueries({
-	                  queryKey: ['apartment-balances']
-	                });
-	                await queryClient.refetchQueries({
-	                  queryKey: ['expenses']
-	                });
-	                await queryClient.refetchQueries({
-	                  queryKey: ['transactions']
-	                });
-
-	                console.log(`🧹 FinancialPage: API cache and React Query cache cleared, data refetched`);
-
-	                // Refresh components
-	                if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
-	                if (expenseListRef.current) expenseListRef.current.refresh();
-
-	                // Show success message
-	                toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
-	                  description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
-	                });
-	              }}
-	              variant="outline"
-	              size="sm"
-	              className="flex items-center gap-2"
-	            >
+              onClick={() => refreshFinancialData(undefined, { notify: true })}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
 	              <RefreshCw className="h-4 w-4" />
 	              Ενημέρωση Δεδομένων
 	            </Button>
